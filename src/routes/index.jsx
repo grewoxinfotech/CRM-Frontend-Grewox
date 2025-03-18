@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "../auth/login";
 import AuthRedirect from "./AuthRedirect/index.jsx";
+import DashboardLayout from "../dashboard/layout";
 import Dashboard from "../dashboard";
 import SuperAdminLayout from "../superadmin/layout";
 import SuperAdminDashboard from "../superadmin/module/dashboard";
@@ -14,6 +15,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ForgotPassword from "../auth/forgot-password";
 import OTPVerification from "../auth/otp";
 
+import RoleBasedRoute from "./RoleBasedRoute";
 
 const routes = createBrowserRouter([
     {
@@ -38,11 +40,49 @@ const routes = createBrowserRouter([
     },
     {
         path: "/dashboard",
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
+        element: (
+            <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['client']}>
+                    <DashboardLayout />
+                </RoleBasedRoute>
+            </ProtectedRoute>
+        ),
+        children: [
+            {
+                path: "",
+                element: <Dashboard />
+            },
+            {
+                path: "customers",
+                element: <div>Customers Page</div>
+            },
+            {
+                path: "products",
+                element: <div>Products Page</div>
+            },
+            {
+                path: "analytics",
+                element: <div>Analytics Page</div>
+            },
+            {
+                path: "settings",
+                element: <div>Settings Page</div>
+            },
+            {
+                path: "help",
+                element: <div>Help & Support Page</div>
+            }
+        ]
     },
     {
         path: "/superadmin",
-        element: <ProtectedRoute><SuperAdminLayout /></ProtectedRoute>,
+        element: (
+            <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['super-admin']}>
+                    <SuperAdminLayout />
+                </RoleBasedRoute>
+            </ProtectedRoute>
+        ),
         children: [
             {
                 path: "",
@@ -78,6 +118,6 @@ const routes = createBrowserRouter([
             }
         ]
     }
-])
+]);
 
 export default routes;

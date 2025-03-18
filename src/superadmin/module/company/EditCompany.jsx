@@ -13,7 +13,6 @@ import {
 import {
     FiUser,
     FiPhone,
-    FiMail,
     FiMapPin,
     FiGlobe,
     FiDollarSign,
@@ -355,7 +354,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '24px' }}>
                     <Form.Item
                         name="firstName"
                         label={
@@ -559,7 +558,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                     </span>
                 </Divider>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '24px' }}>
                     <Form.Item
                         name="address"
                         label={
@@ -696,7 +695,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                     </span>
                 </Divider>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '18px', marginBottom: '24px' }}>
                     <Form.Item
                         name="bankname"
                         label={
