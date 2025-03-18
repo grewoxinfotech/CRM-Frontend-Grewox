@@ -10,6 +10,8 @@ import { settingsApi } from '../superadmin/module/settings/services/settingsApi'
 import settingsReducer from '../superadmin/module/settings/services/settingsSlice';
 import { planApi } from '../superadmin/module/plans/services/planApi';
 import planReducer from '../superadmin/module/plans/services/planSlice';
+import { policyApi } from '../superadmin/module/policy/service/policyApi';
+import policyReducer from '../superadmin/module/policy/service/policySlice';
 
 // Persist config
 const persistConfig = {
@@ -26,10 +28,12 @@ const rootReducer = combineReducers({
     [superadminProfileApi.reducerPath]: superadminProfileApi.reducer,
     [settingsApi.reducerPath]: settingsApi.reducer,
     [planApi.reducerPath]: planApi.reducer,
+    [policyApi.reducerPath]: policyApi.reducer,
     company: companyReducer,
     superadminProfile: superadminProfileReducer,
     settings: settingsReducer,
-    plan: planReducer
+    plan: planReducer,
+    policy: policyReducer
 });
 
 // Create persisted reducer
@@ -43,11 +47,13 @@ export const store = configureStore({
             serializableCheck: {
                 ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE']
             }
-        }).concat(authApi.middleware)
-            .concat(companyApi.middleware)
-            .concat(superadminProfileApi.middleware)
-            .concat(settingsApi.middleware)
-            .concat(planApi.middleware),
+        })
+        .concat(authApi.middleware)
+        .concat(companyApi.middleware)
+        .concat(superadminProfileApi.middleware)
+        .concat(settingsApi.middleware)
+        .concat(planApi.middleware)
+        .concat(policyApi.middleware),
 });
 
 export const persistor = persistStore(store);

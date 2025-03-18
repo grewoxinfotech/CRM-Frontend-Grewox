@@ -5,6 +5,7 @@ import Dashboard from "../dashboard";
 import SuperAdminLayout from "../superadmin/layout";
 import SuperAdminDashboard from "../superadmin/module/dashboard";
 import Company from "../superadmin/module/company";
+import Policy from "../superadmin/module/policy";
 import Profile from "../superadmin/module/profile/index.jsx";
 import Currencies from "../superadmin/module/settings/currencies/index.jsx";
 import Countries from "../superadmin/module/settings/countries/index.jsx";
@@ -54,6 +55,10 @@ const routes = createBrowserRouter([
             {
                 path: "company",
                 element: <Company />
+            },
+            {
+                path: "policy",
+                element: <Policy />
             },
             {
                 path: "profile",
