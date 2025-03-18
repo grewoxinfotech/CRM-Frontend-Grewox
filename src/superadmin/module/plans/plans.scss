@@ -1,0 +1,794 @@
+@import '../../../styles/theme/theme.scss';
+
+@mixin hover-shadow {
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.plans-page {
+    padding: 24px;
+    background: $background-color;
+
+    .page-breadcrumb {
+        margin-bottom: 16px;
+
+        .ant-breadcrumb {
+            font-size: 14px;
+
+            .ant-breadcrumb-link {
+                color: $text-color-light;
+                transition: all 0.3s ease;
+
+                a {
+                    color: $text-color-light;
+                    display: inline-flex;
+                    align-items: center;
+
+                    &:hover {
+                        color: #1677ff;
+                    }
+                }
+
+                &:last-child {
+                    color: $text-color-dark;
+                    font-weight: 500;
+                }
+            }
+
+            .ant-breadcrumb-separator {
+                margin: 0 8px;
+                color: $text-color-light;
+            }
+        }
+    }
+
+    .page-header {
+        @include hover-shadow;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        border: 2px solid transparent;
+        background: white;
+        padding: 24px 32px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+        .page-title {
+            text-align: left;
+            margin-bottom: 0;
+            flex-shrink: 0;
+
+            h2 {
+                color: $text-color-dark;
+                margin-bottom: 4px;
+                font-size: 28px;
+                font-weight: 600;
+                line-height: 1.2;
+            }
+
+            .ant-typography-secondary {
+                color: $text-color-light;
+                font-size: 15px;
+                display: block;
+            }
+        }
+
+        .header-actions-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            flex: 1;
+            margin: 0;
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 16px;
+                width: 100%;
+                max-width: 800px;
+
+                .search-input {
+                    flex: 1;
+                    max-width: 360px;
+                    min-width: 200px;
+
+                    .ant-input-affix-wrapper {
+                        border-radius: 40px;
+                        height: 40px;
+                        padding: 4px 16px;
+                        transition: all 0.3s ease;
+                        border: 1px solid $border-color;
+                        width: 100%;
+
+                        .anticon {
+                            color: $text-color-light;
+                            margin-right: 8px;
+                            font-size: 16px;
+                        }
+
+                        .ant-input {
+                            font-size: 14px;
+                            background: transparent;
+                            border: none;
+                            padding: 0;
+                            margin: 0 4px;
+
+                            &::placeholder {
+                                color: rgba($text-color, 0.45);
+                            }
+                        }
+
+                        &:hover,
+                        &:focus,
+                        &-focused {
+                            border-color: #1677ff;
+                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                        }
+                    }
+                }
+
+                .action-buttons {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex-shrink: 0;
+
+                    .view-toggle {
+                        display: flex;
+                        align-items: center;
+
+                        .ant-btn {
+                            height: 40px;
+                            width: 40px;
+                            padding: 0;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.3s ease;
+
+                            &:first-child {
+                                border-top-left-radius: 8px;
+                                border-bottom-left-radius: 8px;
+                            }
+
+                            &:last-child {
+                                border-top-right-radius: 8px;
+                                border-bottom-right-radius: 8px;
+                            }
+
+                            svg {
+                                font-size: 16px;
+                            }
+
+                            &.ant-btn-primary {
+                                background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                                border: none;
+
+                                &:hover {
+                                    background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                                }
+                            }
+
+                            &:hover {
+                                transform: translateY(-2px);
+                            }
+                        }
+                    }
+
+                    .export-button {
+                        height: 40px;
+                        padding: 0 20px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+                        border: 1px solid $border-color;
+                        background: white;
+
+                        svg {
+                            font-size: 16px;
+                        }
+
+                        &:hover {
+                            color: #1677ff;
+                            border-color: #1677ff;
+                            transform: translateY(-2px);
+                        }
+                    }
+
+                    .add-button {
+                        height: 40px;
+                        padding: 0 20px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+                        background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                        border: none;
+                        color: white;
+
+                        svg {
+                            font-size: 16px;
+                        }
+
+                        &:hover {
+                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                            transform: translateY(-2px);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .plans-cards-grid {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        align-items: stretch;
+
+        @media (max-width: 1200px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            padding: 16px;
+        }
+
+        .plan-card {
+            @include hover-shadow;
+            height: 100%;
+            width: 100%;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ffffff 0%, #e8f4ff 50%, #d1e9ff 100%);
+            position: relative;
+            overflow: visible;
+            box-shadow: 0 2px 8px rgba($primary-color, 0.08),
+                4px 4px 8px rgba($primary-color, 0.06),
+                -4px -4px 8px rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+
+            .ant-card-body {
+                padding: 24px;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                overflow: visible;
+            }
+
+            .plan-card-header {
+                text-align: center;
+                margin-bottom: 24px;
+                position: relative;
+
+                .plan-type-tag {
+                    margin-bottom: 16px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    background: rgba(24, 144, 255, 0.06);
+                    color: #1677ff;
+                    border: none;
+
+                    &.premium {
+                        background: rgba(82, 196, 26, 0.06);
+                        color: #52c41a;
+                    }
+
+                    &.enterprise {
+                        background: rgba(250, 173, 20, 0.06);
+                        color: #faad14;
+                    }
+                }
+
+                .plan-name {
+                    margin: 0 0 16px;
+                    font-size: 24px;
+                    color: $text-color-dark;
+                }
+
+                .price-section {
+                    display: flex;
+                    align-items: baseline;
+                    justify-content: center;
+                    gap: 4px;
+                    margin-bottom: 12px;
+
+                    .currency-icon {
+                        color: #52c41a;
+                        font-size: 24px;
+                    }
+
+                    .amount {
+                        font-size: 48px;
+                        font-weight: 700;
+                        color: $text-color-dark;
+                        line-height: 1;
+                    }
+
+                    .duration {
+                        color: $text-color-light;
+                        font-size: 16px;
+                    }
+                }
+
+                .plan-description {
+                    color: $text-color-light;
+                    font-size: 14px;
+                }
+            }
+
+            .plan-features {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 32px;
+                margin-bottom: 32px;
+                overflow: visible;
+
+                .features-group {
+                    height: auto;
+                    overflow: visible;
+
+                    .features-title {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-bottom: 16px;
+                        color: $text-color-dark;
+                        font-size: 16px;
+
+                        .section-icon {
+                            color: #1677ff;
+                            font-size: 18px;
+                        }
+                    }
+
+                    .features-list {
+                        list-style: none;
+                        padding: 0;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+
+                        li {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 14px;
+                            color: $text-color;
+
+                            .check-icon {
+                                color: #52c41a;
+                                font-size: 16px;
+                                flex-shrink: 0;
+                            }
+
+                            strong {
+                                color: $text-color-dark;
+                                font-weight: 600;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .plan-card-footer {
+                margin-top: auto;
+                text-align: center;
+
+                .status-actions {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    margin-bottom: 16px;
+
+                    .status-toggle {
+                        height: 36px;
+                        padding: 0 16px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        border-radius: 6px;
+                        font-size: 13px;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+
+                        &.active {
+                            background: rgba(82, 196, 26, 0.08);
+                            color: #52c41a;
+                            border-color: #52c41a;
+
+                            &:hover {
+                                background: rgba(82, 196, 26, 0.15);
+                            }
+                        }
+
+                        &.inactive {
+                            background: rgba(255, 77, 79, 0.08);
+                            color: #ff4d4f;
+                            border-color: #ff4d4f;
+
+                            &:hover {
+                                background: rgba(255, 77, 79, 0.15);
+                            }
+                        }
+
+                        svg {
+                            font-size: 14px;
+                        }
+                    }
+                }
+
+                .plan-status {
+                    margin: 0;
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 500;
+                    text-transform: uppercase;
+
+                    &.active {
+                        color: #52c41a;
+                        background: rgba(82, 196, 26, 0.08);
+                        border-color: #52c41a;
+                    }
+
+                    &.inactive {
+                        color: #ff4d4f;
+                        background: rgba(255, 77, 79, 0.08);
+                        border-color: #ff4d4f;
+                    }
+
+                    svg {
+                        font-size: 14px;
+                    }
+                }
+            }
+
+            .card-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .status-switch {
+                    .ant-switch {
+                        min-width: 80px;
+                        height: 24px;
+                        background: rgba(0, 0, 0, 0.05);
+
+                        &.switch-active {
+                            background: rgba(82, 196, 26, 0.15);
+                        }
+
+                        &.switch-inactive {
+                            background: rgba(255, 77, 79, 0.15);
+                        }
+
+                        .ant-switch-handle {
+                            width: 20px;
+                            height: 20px;
+                            top: 2px;
+
+                            &::before {
+                                border-radius: 50%;
+                                background: white;
+                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            }
+                        }
+
+                        .ant-switch-inner {
+
+                            .ant-switch-inner-checked,
+                            .ant-switch-inner-unchecked {
+                                font-size: 12px;
+                                font-weight: 500;
+                            }
+                        }
+
+                        &.ant-switch-checked {
+                            background: #52c41a;
+
+                            .ant-switch-inner-checked {
+                                margin-inline-start: 6px;
+                                color: white;
+                            }
+
+                            .ant-switch-handle {
+                                inset-inline-start: calc(100% - 22px);
+                            }
+                        }
+
+                        &:not(.ant-switch-checked) {
+                            .ant-switch-inner-unchecked {
+                                margin-inline-end: 6px;
+                                color: rgba(0, 0, 0, 0.45);
+                            }
+
+                            &:hover {
+                                background: rgba(255, 77, 79, 0.25);
+                            }
+                        }
+
+                        &:hover {
+                            &.ant-switch-checked {
+                                background: #73d13d;
+                            }
+                        }
+                    }
+                }
+
+                .more-actions-button {
+                    width: 32px;
+                    height: 32px;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    transition: all 0.3s ease;
+                    background: transparent;
+
+                    svg {
+                        font-size: 16px;
+                        color: $text-color-light;
+                    }
+
+                    &:hover {
+                        background: rgba($primary-color, 0.06);
+
+                        svg {
+                            color: #1677ff;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .plans-table-card {
+        @include hover-shadow;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+        .ant-table-wrapper {
+            padding: 0 1px;
+        }
+
+        .ant-table {
+            .ant-table-thead {
+                position: relative;
+                z-index: 2;
+
+                >tr>th {
+                    background: $background-color;
+                    font-weight: 600;
+                    color: $text-color-dark;
+                    padding: 12px 16px;
+                    border-bottom: 2px solid $border-color;
+                    transition: all 0.3s ease;
+                    position: relative;
+
+                    &:hover {
+                        background: darken($background-color, 5%);
+                    }
+
+                    &.ant-table-column-sort {
+                        background: rgba(24, 144, 255, 0.05);
+
+                        &:hover {
+                            background: rgba(24, 144, 255, 0.1);
+                        }
+                    }
+
+                    .ant-table-column-sorter {
+                        color: rgba(0, 0, 0, 0.45);
+
+                        &-up.active,
+                        &-down.active {
+                            color: #1677ff;
+                        }
+                    }
+                }
+            }
+
+            .ant-table-tbody {
+                >tr {
+                    >td {
+                        padding: 16px;
+                        border-bottom: 1px solid $border-color;
+                        transition: all 0.3s ease;
+
+                        .plan-name {
+                            font-weight: 500;
+                            color: $text-color-dark;
+                        }
+
+                        .price-cell {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+
+                            .price-icon {
+                                color: #52c41a;
+                                font-size: 16px;
+                            }
+
+                            .plan-price {
+                                font-weight: 600;
+                                color: $primary-color;
+                                display: flex;
+                                align-items: baseline;
+                                gap: 4px;
+
+                                .currency-duration {
+                                    color: $text-color-light;
+                                    font-size: 12px;
+                                    font-weight: normal;
+                                }
+                            }
+                        }
+
+                        .limits-cell {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 8px;
+
+                            .limits-row {
+                                display: flex;
+                                gap: 8px;
+                                justify-content: flex-start;
+
+                                .ant-tag {
+                                    margin: 0;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 4px;
+                                    padding: 4px 8px;
+                                    border-radius: 4px;
+                                    font-size: 12px;
+                                    font-weight: 500;
+                                    flex: 1;
+                                    white-space: nowrap;
+
+                                    svg {
+                                        font-size: 14px;
+                                    }
+                                }
+                            }
+                        }
+
+                        .storage-trial-cell {
+                            display: flex;
+                            gap: 8px;
+
+                            .ant-tag {
+                                margin: 0;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 4px;
+                                padding: 4px 8px;
+                                border-radius: 4px;
+                                font-size: 12px;
+                                font-weight: 500;
+
+                                svg {
+                                    font-size: 14px;
+                                }
+                            }
+                        }
+
+                        .plan-type {
+                            color: #1677ff;
+                            background: rgba(24, 144, 255, 0.08);
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-size: 13px;
+                            display: inline-block;
+                        }
+
+                        .plan-status {
+                            &.active {
+                                color: #52c41a;
+                                background: rgba(82, 196, 26, 0.08);
+                            }
+
+                            &.inactive {
+                                color: #ff4d4f;
+                                background: rgba(255, 77, 79, 0.08);
+                            }
+
+                            display: inline-block;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-size: 13px;
+                        }
+                    }
+
+                    &:hover {
+                        >td {
+                            background: rgba(24, 144, 255, 0.02);
+                        }
+                    }
+                }
+            }
+        }
+
+        .ant-pagination {
+            margin: 16px;
+
+            .ant-pagination-item {
+                transition: all 0.3s ease;
+
+                &:hover,
+                &-active {
+                    transform: translateY(-2px);
+                }
+            }
+        }
+    }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+    .plans-page {
+        .page-header {
+            flex-direction: column;
+            padding: 24px;
+            gap: 20px;
+
+            .page-title {
+                text-align: center;
+                width: 100%;
+
+                h2 {
+                    margin-bottom: 4px;
+                }
+            }
+
+            .header-actions-wrapper {
+                width: 100%;
+                margin: 0;
+
+                .header-actions {
+                    flex-direction: column;
+                    gap: 16px;
+
+                    .search-input {
+                        max-width: 100%;
+                        width: 100%;
+                    }
+
+                    .action-buttons {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+            }
+        }
+    }
+}

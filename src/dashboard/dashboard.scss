@@ -1,0 +1,92 @@
+.dashboard-container {
+    padding: 24px;
+    background-color: #f5f6fa;
+    min-height: 100vh;
+
+    .dashboard-header {
+        margin-bottom: 24px;
+        padding: 8px 24px;
+
+        .ant-avatar {
+            transition: transform 0.2s ease;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+            &:hover {
+                transform: scale(1.05);
+            }
+        }
+    }
+
+    .profile-card {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        background: white;
+
+        .ant-card-body {
+            padding: 32px;
+        }
+
+        .profile-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+
+            .ant-avatar {
+                margin-bottom: 24px;
+                border: 4px solid #fff;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .profile-info {
+                width: 100%;
+
+                .ant-typography {
+                    margin-bottom: 8px;
+                }
+
+                .role-text {
+                    font-size: 1.1rem;
+                    display: block;
+                    margin-bottom: 24px;
+                }
+
+                .user-details {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    margin-bottom: 32px;
+                    padding: 24px;
+                    background: #f8fafc;
+                    border-radius: 12px;
+
+                    .detail-item {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+
+                        .ant-typography {
+                            margin-bottom: 0;
+
+                            &.ant-typography-secondary {
+                                font-size: 0.9rem;
+                            }
+                        }
+                    }
+                }
+
+                .action-buttons {
+                    display: flex;
+                    justify-content: center;
+                    gap: 12px;
+
+                    .ant-btn {
+                        min-width: 120px;
+                    }
+                }
+            }
+        }
+    }
+}
