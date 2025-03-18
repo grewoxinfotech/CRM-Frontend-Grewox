@@ -5,18 +5,14 @@ import {
     FiEdit2,
     FiTrash2,
     FiMail,
-    FiLogIn,
     FiArrowUp,
     FiMoreVertical,
     FiPhone,
-    FiCalendar,
     FiCheckCircle,
     FiXCircle,
     FiMapPin,
-    FiGlobe,
-    FiDollarSign,
-    FiCreditCard,
-    FiUser
+    FiBriefcase,
+    FiX
 } from 'react-icons/fi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
@@ -64,11 +60,13 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
     // Determine status color and icon
     const statusConfig = {
         active: {
-            color: '#52c41a',
+            color: '#10B981',
+            bgColor: '#ECFDF5',
             icon: <FiCheckCircle style={{ marginRight: 5 }} />
         },
         inactive: {
-            color: '#ff4d4f',
+            color: '#EF4444',
+            bgColor: '#FEF2F2',
             icon: <FiXCircle style={{ marginRight: 5 }} />
         }
     };
@@ -83,62 +81,29 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                 hoverable
                 bodyStyle={{ padding: 0 }}
                 style={{
-                    width: '100%',
+                    width: '320px',
+                    minWidth: '300px',
+                    maxWidth: '100%',
                     height: '100%',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    border: 'none',
+                    background: '#FFFFFF',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                    transition: 'all 0.3s ease',
+                    margin: '12px',
+                    '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: '0 8px 30px rgba(59, 130, 246, 0.15)'
+                    }
                 }}
-                extra={
-                    <Dropdown
-                        menu={{
-                            items: actionItems,
-                            style: {
-                                borderRadius: '8px',
-                                padding: '4px',
-                                boxShadow: '0 6px 16px rgba(0,0,0,0.08)'
-                            }
-                        }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical style={{ fontSize: '20px' }} />}
-                            className="more-actions-button"
-                            style={{
-                                width: '32px',
-                                height: '32px',
-                                color: 'rgba(255, 255, 255, 0.95)',
-                                padding: 0,
-                                borderRadius: '8px',
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                backdropFilter: 'blur(10px)',
-                                border: 'none',
-                                position: 'absolute',
-                                right: '16px',
-                                top: '16px',
-                                zIndex: 2,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                            }}
-                        />
-                    </Dropdown>
-                }
             >
                 <div style={{
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                    borderRadius: '8px 8px 0 0',
-                    padding: '24px',
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                    padding: '20px',
                     position: 'relative',
                     overflow: 'hidden',
-                    minHeight: '120px'
+                    height: '110px'
                 }}>
                     <div style={{
                         position: 'absolute',
@@ -146,116 +111,141 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'radial-gradient(circle at top right, rgba(255,255,255,0.1) 0%, transparent 60%)',
-                        zIndex: 1
+                        background: 'url("data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.05" fill-rule="evenodd"%3E%3Ccircle cx="3" cy="3" r="3"/%3E%3Ccircle cx="13" cy="13" r="3"/%3E%3C/g%3E%3C/svg%3E")',
+                        opacity: 0.3
                     }} />
-                    <div className="company-card-header" style={{ position: 'relative', zIndex: 2 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                            <Avatar
-                                size={64}
-                                src={company.profilePic}
-                                style={{
-                                    border: '3px solid rgba(255, 255, 255, 0.8)',
-                                    backgroundColor: '#1677ff',
-                                    fontSize: '24px',
-                                    fontWeight: 'bold',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                    flexShrink: 0
-                                }}
-                            >
-                                {company.firstName ? `${company.firstName[0]}${company.lastName[0]}` : company.name[0]}
-                            </Avatar>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <Text style={{
-                                    fontSize: '20px',
-                                    fontWeight: '600',
-                                    color: '#fff',
-                                    display: 'block',
-                                    marginBottom: '4px',
-                                    textOverflow: 'ellipsis',
-                                    overflow: 'hidden',
-                                    whiteSpace: 'nowrap'
-                                }}>
-                                    {company.firstName ? `${company.firstName} ${company.lastName}` : company.name}
-                                </Text>
-                                <div style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    background: 'rgba(255, 255, 255, 0.15)',
-                                    backdropFilter: 'blur(10px)',
-                                    padding: '4px 12px',
-                                    borderRadius: '20px',
-                                    color: '#fff'
-                                }}>
-                                    {statusInfo.icon}
-                                    <span style={{ marginLeft: '4px' }}>{status.toUpperCase()}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+                    <Dropdown
+                        menu={{
+                            items: actionItems,
+                            style: {
+                                borderRadius: '12px',
+                                padding: '8px',
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            }
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '12px',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '10px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                backdropFilter: 'blur(8px)',
+                                border: 'none',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                                e.currentTarget.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                        />
+                    </Dropdown>
                 </div>
 
-                <div style={{ padding: '20px' }}>
+                <div style={{
+                    marginTop: '-50px',
+                    padding: '0 20px 20px',
+                    position: 'relative'
+                }}>
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        marginBottom: '20px'
+                    }}>
+                        <Avatar
+                            size={80}
+                            src={company.profilePic}
+                            style={{
+                                border: '4px solid #FFFFFF',
+                                backgroundColor: '#60A5FA',
+                                fontSize: '28px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
+                                marginBottom: '12px'
+                            }}
+                        >
+                            {company.firstName ? `${company.firstName[0]}${company.lastName[0]}` : company.name[0]}
+                        </Avatar>
+                        <Text style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            color: '#1F2937',
+                            textAlign: 'center',
+                            marginBottom: '4px'
+                        }}>
+                            {company.firstName ? `${company.firstName} ${company.lastName}` : company.name}
+                        </Text>
+                        <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            background: statusInfo.bgColor,
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            color: statusInfo.color,
+                            fontSize: '13px',
+                            fontWeight: '500'
+                        }}>
+                            {statusInfo.icon}
+                            <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                        </div>
+                    </div>
+
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
                         gap: '12px',
                         marginBottom: '20px'
                     }}>
                         {[
-                            { icon: <FiUser size={14} />, label: 'Username', value: company.name },
-                            { icon: <FiPhone size={14} />, label: 'Phone', value: `+${company.phoneCode} ${company.phone}` },
-                            {
-                                icon: <FiMail size={14} />,
-                                label: 'Email',
-                                value: company.email,
-                                span: 2,
-                                isLink: true
-                            },
-                            { icon: <FiMapPin size={14} />, label: 'Location', value: `${company.city}, ${company.state}` },
-                            {
-                                icon: <FiCalendar size={14} />,
-                                label: 'Created',
-                                value: moment(company.created_at).format('MMM DD, YYYY')
-                            }
+                            { icon: <FiMail size={15} />, value: company.email, isLink: true },
+                            { icon: <FiPhone size={15} />, value: `+${company.phoneCode} ${company.phone}` },
+                            { icon: <FiMapPin size={15} />, value: `${company.city}, ${company.state}` }
                         ].map((item, index) => (
                             <div
                                 key={index}
-                                className="info-card"
                                 style={{
-                                    padding: '12px',
-                                    background: '#f8fafc',
-                                    borderRadius: '8px',
-                                    border: '1px solid #e6e8eb',
-                                    gridColumn: item.span ? `span ${item.span}` : 'auto',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        borderColor: '#1890ff',
-                                        background: '#f0f7ff'
-                                    }
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    padding: '8px 12px',
+                                    background: '#F9FAFB',
+                                    borderRadius: '10px',
+                                    transition: 'all 0.2s ease'
                                 }}
                             >
                                 <div style={{
+                                    color: '#3B82F6',
                                     display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    marginBottom: '4px',
-                                    color: '#8c8c8c'
+                                    alignItems: 'center'
                                 }}>
                                     {item.icon}
-                                    <span style={{ fontSize: '12px' }}>{item.label}</span>
                                 </div>
                                 {item.isLink ? (
                                     <a
                                         href={`mailto:${item.value}`}
                                         style={{
                                             fontSize: '14px',
-                                            fontWeight: '500',
-                                            color: '#1890ff',
+                                            color: '#3B82F6',
                                             textDecoration: 'none',
-                                            display: 'block',
-                                            textOverflow: 'ellipsis',
+                                            flex: 1,
                                             overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
                                             whiteSpace: 'nowrap'
                                         }}
                                     >
@@ -264,9 +254,10 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                                 ) : (
                                     <div style={{
                                         fontSize: '14px',
-                                        fontWeight: '500',
-                                        textOverflow: 'ellipsis',
+                                        color: '#4B5563',
+                                        flex: 1,
                                         overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap'
                                     }}>
                                         {item.value}
@@ -283,22 +274,26 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                             onClick={() => setDetailsModalVisible(true)}
                             style={{
                                 flex: 1,
-                                height: '40px',
-                                borderRadius: '8px',
-                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                height: '38px',
+                                borderRadius: '10px',
+                                background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                                 border: 'none',
-                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.2)',
+                                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
+                                fontSize: '14px',
+                                fontWeight: '500',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '8px',
-                                transition: 'all 0.3s ease'
+                                gap: '6px',
+                                transition: 'all 0.2s ease'
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px -1px rgba(59, 130, 246, 0.4)';
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
                             }}
                         >
                             View Details
@@ -307,90 +302,266 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                             onClick={handleEdit}
                             icon={<FiEdit2 style={{ fontSize: '16px' }} />}
                             style={{
-                                height: '40px',
-                                width: '40px',
-                                borderRadius: '8px',
-                                border: '1px solid #e6e8eb',
+                                height: '38px',
+                                width: '38px',
+                                borderRadius: '10px',
+                                border: '1px solid #E5E7EB',
+                                background: '#FFFFFF',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 padding: 0,
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.2s ease'
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor = '#1890ff';
-                                e.currentTarget.style.color = '#1890ff';
+                                e.currentTarget.style.borderColor = '#3B82F6';
+                                e.currentTarget.style.color = '#3B82F6';
+                                e.currentTarget.style.transform = 'translateY(-1px)';
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor = '#e6e8eb';
+                                e.currentTarget.style.borderColor = '#E5E7EB';
                                 e.currentTarget.style.color = 'rgba(0, 0, 0, 0.88)';
+                                e.currentTarget.style.transform = 'translateY(0)';
                             }}
                         />
                     </div>
                 </div>
             </Card>
-
             <Modal
-                title="Company Details"
+                title={null}
                 open={detailsModalVisible}
                 onCancel={() => setDetailsModalVisible(false)}
                 footer={null}
-                width={700}
-                className="company-details-modal"
+                width={720}
+                destroyOnClose={true}
+                centered
+                closeIcon={null}
+                className="pro-modal custom-modal"
+                style={{
+                    '--antd-arrow-background-color': '#ffffff'
+                }}
+                styles={{
+                    body: {
+                        padding: 0,
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                    }
+                }}
             >
-                <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Company Name" span={2}>{company.name}</Descriptions.Item>
-                    <Descriptions.Item label="First Name">{company.firstName}</Descriptions.Item>
-                    <Descriptions.Item label="Last Name">{company.lastName}</Descriptions.Item>
-                    <Descriptions.Item label="Email" span={2}>{company.email}</Descriptions.Item>
-                    <Descriptions.Item label="Phone">+{company.phoneCode} {company.phone}</Descriptions.Item>
-                    <Descriptions.Item label="Status">
-                        <span style={{ color: statusInfo.color }}>
-                            {statusInfo.icon}
-                            {status.toUpperCase()}
-                        </span>
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="Bank Details" span={2}>
-                        <div style={{ marginBottom: '8px' }}>
-                            <strong>Bank Name:</strong> {company.bankname}
-                        </div>
-                        <div style={{ marginBottom: '8px' }}>
-                            <strong>Account Holder:</strong> {company.accountholder}
-                        </div>
-                        <div style={{ marginBottom: '8px' }}>
-                            <strong>Account Number:</strong> {company.accountnumber}
-                        </div>
-                        <div style={{ marginBottom: '8px' }}>
-                            <strong>Account Type:</strong> {company.accounttype}
-                        </div>
-                        <div style={{ marginBottom: '8px' }}>
-                            <strong>IFSC:</strong> {company.ifsc}
+                <div className="modal-header" style={{
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    padding: '24px',
+                    color: '#ffffff',
+                    position: 'relative'
+                }}>
+                    <Button
+                        type="text"
+                        onClick={() => setDetailsModalVisible(false)}
+                        style={{
+                            position: 'absolute',
+                            top: '16px',
+                            right: '16px',
+                            color: '#ffffff',
+                            width: '32px',
+                            height: '32px',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        }}
+                    >
+                        <FiX style={{ fontSize: '20px' }} />
+                    </Button>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                    }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            backdropFilter: 'blur(8px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <FiBriefcase style={{ fontSize: '24px', color: '#ffffff' }} />
                         </div>
                         <div>
-                            <strong>Branch:</strong> {company.banklocation}
+                            <h2 style={{
+                                margin: '0',
+                                fontSize: '24px',
+                                fontWeight: '600',
+                                color: '#ffffff',
+                            }}>
+                                Company Details
+                            </h2>
+                            <Text style={{
+                                fontSize: '14px',
+                                color: 'rgba(255, 255, 255, 0.85)'
+                            }}>
+                                View detailed company information
+                            </Text>
                         </div>
-                    </Descriptions.Item>
+                    </div>
+                </div>
+                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px'
+                    }}>
+                        <Avatar
+                            size={64}
+                            src={company.profilePic}
+                            style={{
+                                backgroundColor: '#E5E7EB',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {company.name[0]}
+                        </Avatar>
 
-                    <Descriptions.Item label="GST Number" span={2}>{company.gstIn}</Descriptions.Item>
-                    <Descriptions.Item label="Website" span={2}>
-                        {company.website && (
-                            <a href={company.website} target="_blank" rel="noopener noreferrer">
-                                {company.website}
+                        <div>
+                            <h3 style={{
+                                fontSize: '20px',
+                                fontWeight: '600',
+                                margin: '0 0 4px 0'
+                            }}>
+                                {company.name}
+                            </h3>
+                            <span style={{
+                                color: statusInfo.color,
+                                background: statusInfo.bgColor,
+                                padding: '4px 12px',
+                                borderRadius: '20px',
+                                fontSize: '13px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontWeight: '500'
+                            }}>
+                                {statusInfo.icon}
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                        </div>
+                    </div>
+
+                    <Descriptions
+                        column={1}
+                        bordered
+                        size="small"
+                        labelStyle={{
+                            width: '140px',
+                            fontWeight: '500',
+                            color: '#6B7280'
+                        }}
+                        contentStyle={{
+                            color: '#111827'
+                        }}
+                    >
+                        <Descriptions.Item label="Contact Person">
+                            {company.firstName} {company.lastName}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Email">
+                            <a href={`mailto:${company.email}`} style={{ color: '#3B82F6' }}>
+                                {company.email}
                             </a>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Phone">
+                            +{company.phoneCode} {company.phone}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="GST Number">
+                            {company.gstIn}
+                        </Descriptions.Item>
+                        {company.website && (
+                            <Descriptions.Item label="Website">
+                                <a
+                                    href={company.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        color: '#3B82F6',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    {company.website}
+                                    <FiArrowUp style={{ transform: 'rotate(45deg)', fontSize: '12px' }} />
+                                </a>
+                            </Descriptions.Item>
                         )}
-                    </Descriptions.Item>
+                        <Descriptions.Item label="Address">
+                            {company.address}<br />
+                            {company.city}, {company.state}<br />
+                            {company.country} - {company.zipcode}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Created">
+                            {moment(company.created_at).format('MMM DD, YYYY')}
+                        </Descriptions.Item>
+                    </Descriptions>
 
-                    <Descriptions.Item label="Address" span={2}>
-                        {company.address}<br />
-                        {company.city}, {company.state}<br />
-                        {company.country} - {company.zipcode}
-                    </Descriptions.Item>
-
-                    <Descriptions.Item label="Created At" span={2}>
-                        {moment(company.created_at).format('MMMM DD, YYYY, h:mm A')}
-                    </Descriptions.Item>
-                </Descriptions>
+                    <div style={{
+                        background: '#F9FAFB',
+                        borderRadius: '12px',
+                        padding: '16px'
+                    }}>
+                        <h4 style={{
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            marginBottom: '12px',
+                            color: '#374151'
+                        }}>
+                            Bank Details
+                        </h4>
+                        <div style={{ display: 'grid', gap: '8px' }}>
+                            {[
+                                { label: 'Bank Name', value: company.bankname },
+                                { label: 'Account Holder', value: company.accountholder },
+                                { label: 'Account Number', value: company.accountnumber },
+                                { label: 'Account Type', value: company.accounttype },
+                                { label: 'IFSC', value: company.ifsc },
+                                { label: 'Branch', value: company.banklocation }
+                            ].map((item, index) => (
+                                <div key={index} style={{
+                                    display: 'flex',
+                                    fontSize: '13px',
+                                    gap: '8px'
+                                }}>
+                                    <span style={{
+                                        width: '120px',
+                                        color: '#6B7280',
+                                        fontWeight: '500'
+                                    }}>
+                                        {item.label}:
+                                    </span>
+                                    <span style={{
+                                        color: '#111827',
+                                        fontFamily: item.label === 'Account Number' || item.label === 'IFSC' ? 'monospace' : 'inherit'
+                                    }}>
+                                        {item.value}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </Modal>
 
             <EditCompany
@@ -402,5 +573,31 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
         </>
     );
 };
+
+// Helper component for info items
+const InfoItem = ({ label, value, isEmail }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <span style={{ fontSize: '13px', color: '#6B7280', fontWeight: '500' }}>
+            {label}
+        </span>
+        {isEmail ? (
+            <a
+                href={`mailto:${value}`}
+                style={{
+                    fontSize: '14px',
+                    color: '#3B82F6',
+                    textDecoration: 'none',
+                    fontWeight: '500'
+                }}
+            >
+                {value}
+            </a>
+        ) : (
+            <span style={{ fontSize: '14px', color: '#111827' }}>
+                {value}
+            </span>
+        )}
+    </div>
+);
 
 export default CompanyCard; 

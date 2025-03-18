@@ -13,6 +13,8 @@ import { settingsApi } from "../superadmin/module/settings/services/settingsApi"
 import settingsReducer from "../superadmin/module/settings/services/settingsSlice";
 import { planApi } from "../superadmin/module/plans/services/planApi";
 import planReducer from "../superadmin/module/plans/services/planSlice";
+import { policyApi } from "../superadmin/module/policy/service/policyApi";
+import policyReducer from "../superadmin/module/policy/service/policySlice";
 import { notesApi } from "../superadmin/module/notes/services/NotesApi";
 
 // Persist config
@@ -30,33 +32,35 @@ const rootReducer = combineReducers({
   [superadminProfileApi.reducerPath]: superadminProfileApi.reducer,
   [settingsApi.reducerPath]: settingsApi.reducer,
   [planApi.reducerPath]: planApi.reducer,
+  [policyApi.reducerPath]: policyApi.reducer,
   [notesApi.reducerPath]: notesApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
   plan: planReducer,
+  policy: policyReducer,
 });
 
 // Create persisted reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Configure store
-const store = configureStore({
+export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ["persist/PERSIST"],
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    }).concat([
-      authApi.middleware,
-      companyApi.middleware,
-      superadminProfileApi.middleware,
-      settingsApi.middleware,
-      planApi.middleware,
-      notesApi.middleware,
-    ]),
+    })
+      .concat(authApi.middleware)
+      .concat(companyApi.middleware)
+      .concat(superadminProfileApi.middleware)
+      .concat(settingsApi.middleware)
+      .concat(planApi.middleware)
+      .concat(policyApi.middleware)
+      .concat(notesApi.middleware),
 });
 
 export const persistor = persistStore(store);
-export { store };
+export default store;

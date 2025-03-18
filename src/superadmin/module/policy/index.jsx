@@ -12,6 +12,8 @@ import {
   Col,
   Breadcrumb,
   Table,
+  Spin,
+  Empty,
 } from "antd";
 import {
   FiPlus,
@@ -27,196 +29,208 @@ import moment from "moment";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import CreateCompany from "./createPolicy";
-import CompanyCard from "./PolicyCard";
-import CompanyList from "./PolicyList";
-import {
-  useGetAllCompaniesQuery,
-  useDeleteCompanyMutation,
-} from "./services/PolicyApi";
 import { Link } from "react-router-dom";
+import PolicyList from "./PolicyList";
+import PolicyCard from "./PolicyCard";
+import CreatePolicy from "./createPolicy";
+import EditPolicy from "./EditPolicy";
+import {
+  useGetAllPoliciesQuery,
+  useCreatePolicyMutation,
+  useUpdatePolicyMutation,
+  useDeletePolicyMutation,
+} from "./service/policyApi";
 
 const { Title, Text } = Typography;
 
-const Company = () => {
-  const {
-    data: companiesData,
-    isLoading: isLoadingCompanies,
-    refetch,
-  } = useGetAllCompaniesQuery();
-  const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
-
-  const [companies, setCompanies] = useState([]);
+const Policy = () => {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [filteredCompanies, setFilteredCompanies] = useState([]);
+  const [filteredPolicies, setFilteredPolicies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const searchInputRef = useRef(null);
   const [viewMode, setViewMode] = useState("table");
 
-  useEffect(() => {
-    if (companiesData?.data) {
-      const transformedData = companiesData.data.map((company) => ({
-        id: company.id,
-        name: company.username || "N/A",
-        email: company.email || "N/A",
-        phone: company.phone || "N/A",
-        phoneCode: company.phoneCode || "",
-        status: company.role_id ? "active" : "inactive",
-        created_at: company.createdAt || "-",
-        firstName: company.firstName || "",
-        lastName: company.lastName || "",
-        bankname: company.bankname || "",
-        ifsc: company.ifsc || "",
-        banklocation: company.banklocation || "",
-        accountholder: company.accountholder || "",
-        accountnumber: company.accountnumber || "",
-        gstIn: company.gstIn || "",
-        city: company.city || "",
-        state: company.state || "",
-        website: company.website || "",
-        accounttype: company.accounttype || "",
-        country: company.country || "",
-        zipcode: company.zipcode || "",
-        address: company.address || "",
-        profilePic: company.profilePic || null,
-      }));
-      setCompanies(transformedData);
-    }
-  }, [companiesData]);
+  // API hooks
+  const {
+    data: policiesData,
+    isLoading: isPoliciesLoading,
+    error: policiesError,
+  } = useGetAllPoliciesQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [createPolicy] = useCreatePolicyMutation();
+  const [updatePolicy] = useUpdatePolicyMutation();
+  const [deletePolicy] = useDeletePolicyMutation();
 
-  useEffect(() => {
-    let result = [...companies];
-    if (searchText) {
-      result = result.filter(
-        (company) =>
-          company.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          company.email.toLowerCase().includes(searchText.toLowerCase()) ||
-          company.phone.includes(searchText) ||
-          (company.firstName &&
-            company.firstName
-              .toLowerCase()
-              .includes(searchText.toLowerCase())) ||
-          (company.lastName &&
-            company.lastName
-              .toLowerCase()
-              .includes(searchText.toLowerCase())) ||
-          (company.city &&
-            company.city.toLowerCase().includes(searchText.toLowerCase())) ||
-          (company.state &&
-            company.state.toLowerCase().includes(searchText.toLowerCase())) ||
-          (company.gstIn &&
-            company.gstIn.toLowerCase().includes(searchText.toLowerCase()))
-      );
-    }
-    setFilteredCompanies(result);
-  }, [companies, searchText]);
+  console.log("Policies Response:", policiesData); // Debug log
 
-  const handleAddCompany = () => {
-    setSelectedCompany(null);
+  // Extract data from the API response
+  const policies = policiesData?.data || [];
+  const total = policiesData?.total || 0;
+
+  const handleAddPolicy = () => {
+    setSelectedPolicy(null);
     setIsEditing(false);
     setIsFormVisible(true);
   };
 
-  const handleEditCompany = (company) => {
-    setSelectedCompany(company);
+  const handleEditPolicy = (policy) => {
+    setSelectedPolicy(policy);
     setIsEditing(true);
     setIsFormVisible(true);
   };
 
-  const handleViewCompany = (company) => {
-    setSelectedCompany(company);
+  const handleViewPolicy = (policy) => {
+    setSelectedPolicy(policy);
   };
 
-  const handleDeleteConfirm = (company) => {
-    setSelectedCompany(company);
+  const handleDeleteConfirm = (policy) => {
+    setSelectedPolicy(policy);
     setIsDeleteModalVisible(true);
   };
 
-  const handleDeleteCompany = async () => {
+  const handleDeletePolicy = async () => {
     try {
-      await deleteCompany(selectedCompany.id).unwrap();
-      message.success("Company deleted successfully");
+      setLoading(true);
+      await deletePolicy(selectedPolicy.id).unwrap();
+      message.success("Policy deleted successfully");
       setIsDeleteModalVisible(false);
-      refetch();
+      setSelectedPolicy(null);
     } catch (error) {
-      message.error(error?.data?.message || "Failed to delete company");
+      console.error("Delete Policy Error:", error);
+
+      // Handle specific error cases
+      if (
+        error?.data?.message?.includes("AccessDenied") ||
+        error?.data?.message?.includes("s3:DeleteObject")
+      ) {
+        // Show warning instead of error for S3 permission issues
+        message.warning(
+          "Policy was deleted but the associated file could not be removed due to permissions. System administrators have been notified.",
+          6
+        );
+        // Close the modal as the policy was still deleted
+        setIsDeleteModalVisible(false);
+        setSelectedPolicy(null);
+      } else {
+        // Show regular error message for other cases
+        message.error(
+          error?.data?.message || "Failed to delete policy. Please try again.",
+          5
+        );
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleFormSubmit = async (formData) => {
     try {
+      setLoading(true);
       if (isEditing) {
-        await updateCompany({
-          id: selectedCompany.id,
+        await updatePolicy({
+          id: selectedPolicy.id,
           data: formData,
         }).unwrap();
-        message.success("Company updated successfully");
+        message.success("Policy updated successfully");
       } else {
-        await createCompany(formData).unwrap();
-        message.success("Company created successfully");
+        await createPolicy(formData).unwrap();
+        message.success("Policy created successfully");
       }
       setIsFormVisible(false);
-      refetch();
     } catch (error) {
       message.error(error?.data?.message || "Operation failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSearch = (value) => {
     setSearchText(value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
-  const exportMenu = (
-    <Menu>
-      <Menu.Item
-        key="csv"
-        icon={<FiDownload />}
-        onClick={() => handleExport("csv")}
-      >
-        Export as CSV
-      </Menu.Item>
-      <Menu.Item
-        key="excel"
-        icon={<FiDownload />}
-        onClick={() => handleExport("excel")}
-      >
-        Export as Excel
-      </Menu.Item>
-      <Menu.Item
-        key="pdf"
-        icon={<FiDownload />}
-        onClick={() => handleExport("pdf")}
-      >
-        Export as PDF
-      </Menu.Item>
-    </Menu>
-  );
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // Define menu items outside of render cycle
+  const exportMenuItems = [
+    {
+      key: "csv",
+      icon: <FiDownload />,
+      label: "Export as CSV",
+      onClick: () => handleExport("csv"),
+    },
+    {
+      key: "excel",
+      icon: <FiDownload />,
+      label: "Export as Excel",
+      onClick: () => handleExport("excel"),
+    },
+    {
+      key: "pdf",
+      icon: <FiDownload />,
+      label: "Export as PDF",
+      onClick: () => handleExport("pdf"),
+    },
+  ];
+
+  // Initialize filtered policies
+  useEffect(() => {
+    if (!policies) return;
+
+    const filterPolicies = () => {
+      if (!searchText.trim()) {
+        return [...policies];
+      }
+
+      const searchLower = searchText.toLowerCase().trim();
+      return policies.filter(
+        (policy) =>
+          (policy?.branch?.toLowerCase() || "").includes(searchLower) ||
+          (policy?.title?.toLowerCase() || "").includes(searchLower) ||
+          (policy?.description?.toLowerCase() || "").includes(searchLower)
+      );
+    };
+
+    setFilteredPolicies(filterPolicies());
+  }, [policies, searchText]);
+
+  // Show error message if API call fails
+  useEffect(() => {
+    if (policiesError) {
+      message.error(policiesError?.data?.message || "Failed to fetch policies");
+      console.error("Policies Error:", policiesError);
+    }
+  }, [policiesError]);
 
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = companies.map((company) => ({
-        "Company Name": company.name,
-        Email: company.email,
-        Phone: company.phone,
-        Status: company.status,
-        "Created Date": moment(company.created_at).format("YYYY-MM-DD"),
+      const data = policies.map((policy) => ({
+        Branch: policy.branch,
+        Title: policy.title,
+        Description: policy.description,
+        "Created By": policy.created_by,
+        "Created Date": moment(policy.createdAt).format("YYYY-MM-DD"),
       }));
 
       switch (type) {
         case "csv":
-          exportToCSV(data, "companies_export");
+          exportToCSV(data, "policies_export");
           break;
         case "excel":
-          exportToExcel(data, "companies_export");
+          exportToExcel(data, "policies_export");
           break;
         case "pdf":
-          exportToPDF(data, "companies_export");
+          exportToPDF(data, "policies_export");
           break;
         default:
           break;
@@ -254,7 +268,7 @@ const Company = () => {
   const exportToExcel = (data, filename) => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Companies");
+    XLSX.utils.book_append_sheet(wb, ws, "Policies");
     XLSX.writeFile(wb, `${filename}.xlsx`);
   };
 
@@ -270,7 +284,7 @@ const Company = () => {
   };
 
   return (
-    <div className="company-page">
+    <div className="policy-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
@@ -285,8 +299,8 @@ const Company = () => {
 
       <div className="page-header">
         <div className="page-title">
-          <Title level={2}>Policy</Title>
-          <Text type="secondary">Manage all policy in the system</Text>
+          <Title level={2}>Policies</Title>
+          <Text type="secondary">Manage all policies in the system</Text>
         </div>
         <Row justify="center" className="header-actions-wrapper">
           <Col xs={24} sm={24} md={20} lg={16} xl={14}>
@@ -295,7 +309,7 @@ const Company = () => {
                 prefix={
                   <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
                 }
-                placeholder="Search policy..."
+                placeholder="Search policies..."
                 allowClear
                 onChange={(e) => handleSearch(e.target.value)}
                 value={searchText}
@@ -315,7 +329,11 @@ const Company = () => {
                     onClick={() => setViewMode("card")}
                   />
                 </Button.Group>
-                <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Dropdown
+                  menu={{ items: exportMenuItems }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                >
                   <Button className="export-button">
                     <FiDownload size={16} />
                     <span>Export</span>
@@ -325,7 +343,7 @@ const Company = () => {
                 <Button
                   type="primary"
                   icon={<FiPlus size={16} />}
-                  onClick={handleAddCompany}
+                  onClick={handleAddPolicy}
                   className="add-button"
                 >
                   Add Policy
@@ -336,30 +354,47 @@ const Company = () => {
         </Row>
       </div>
 
-      <Card className="company-table-card">
+      <Card className="policy-table-card">
         {viewMode === "table" ? (
-          <CompanyList
-            companies={filteredCompanies}
-            loading={isLoadingCompanies || isDeleting}
-            onEdit={handleEditCompany}
-            onDelete={handleDeleteConfirm}
-            onView={handleViewCompany}
+          <PolicyList
+            policies={filteredPolicies}
+            loading={isPoliciesLoading}
+            onEditPolicy={handleEditPolicy}
+            onDeletePolicy={handleDeleteConfirm}
+            onView={handleViewPolicy}
+            pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: total,
+              onChange: handlePageChange,
+              showSizeChanger: false,
+              showQuickJumper: false,
+            }}
           />
         ) : (
-          <Row gutter={[16, 16]} className="company-cards-grid">
-            {filteredCompanies
-              .slice((currentPage - 1) * 10, currentPage * 10)
-              .map((company) => (
-                <Col xs={24} sm={12} md={8} lg={6} key={company.id}>
-                  <CompanyCard
-                    company={company}
-                    onEdit={handleEditCompany}
+          <Row gutter={[16, 16]} className="policy-cards-grid">
+            {!isPoliciesLoading &&
+              filteredPolicies.map((policy) => (
+                <Col xs={24} sm={12} md={8} lg={6} key={policy.id}>
+                  <PolicyCard
+                    policy={policy}
+                    onEdit={handleEditPolicy}
                     onDelete={handleDeleteConfirm}
-                    onView={handleViewCompany}
+                    onView={handleViewPolicy}
                   />
                 </Col>
               ))}
-            {filteredCompanies.length > 10 && (
+            {isPoliciesLoading && (
+              <Col span={24} style={{ textAlign: "center", padding: "20px" }}>
+                <Spin size="large" />
+              </Col>
+            )}
+            {!isPoliciesLoading && filteredPolicies.length === 0 && (
+              <Col span={24} style={{ textAlign: "center", padding: "20px" }}>
+                <Empty description="No policies found" />
+              </Col>
+            )}
+            {total > pageSize && (
               <Col
                 span={24}
                 style={{
@@ -370,11 +405,11 @@ const Company = () => {
               >
                 <Table.Pagination
                   current={currentPage}
-                  pageSize={10}
-                  total={filteredCompanies.length}
+                  pageSize={pageSize}
+                  total={total}
+                  onChange={handlePageChange}
                   showSizeChanger={false}
                   showQuickJumper={false}
-                  onChange={(page) => setCurrentPage(page)}
                 />
               </Col>
             )}
@@ -382,19 +417,23 @@ const Company = () => {
         )}
       </Card>
 
-      <CreateCompany
-        open={isFormVisible}
-        onCancel={() => setIsFormVisible(false)}
+      <CreatePolicy
+        open={isFormVisible && !isEditing}
+        onClose={() => setIsFormVisible(false)}
         onSubmit={handleFormSubmit}
-        isEditing={isEditing}
-        initialValues={selectedCompany}
-        loading={isLoadingCompanies || isDeleting}
+      />
+
+      <EditPolicy
+        visible={isFormVisible && isEditing}
+        policy={selectedPolicy}
+        onClose={() => setIsFormVisible(false)}
+        onSubmit={handleFormSubmit}
       />
 
       <Modal
-        title="Delete Company"
+        title="Delete Policy"
         open={isDeleteModalVisible}
-        onOk={handleDeleteCompany}
+        onOk={handleDeletePolicy}
         onCancel={() => setIsDeleteModalVisible(false)}
         okText="Delete"
         okButtonProps={{
@@ -404,7 +443,7 @@ const Company = () => {
       >
         <p>
           Are you sure you want to delete{" "}
-          <strong>{selectedCompany?.name}</strong>?
+          <strong>{selectedPolicy?.name}</strong>?
         </p>
         <p>This action cannot be undone.</p>
       </Modal>
@@ -412,4 +451,4 @@ const Company = () => {
   );
 };
 
-export default Company;
+export default Policy;

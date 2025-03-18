@@ -1,6 +1,6 @@
 @import '../../../styles/theme/theme.scss';
 
-.superadmin-sidebar {
+.dashboard-sidebar {
     width: 260px;
     height: 100vh;
     background: white;
@@ -254,251 +254,143 @@
                 .arrow {
                     transform: rotate(90deg);
                     opacity: 1;
+                    color: $primary-color;
                 }
             }
 
             .dropdown-menu {
-                max-height: fit-content;
+                max-height: 800px;
                 opacity: 1;
                 transform: translateY(0);
+                visibility: visible;
                 pointer-events: all;
                 margin-top: 4px;
                 margin-bottom: 4px;
+                transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease,
+                    transform 0.2s ease,
+                    margin 0.2s ease,
+                    visibility 0s;
+
+                .sub-item {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
             }
         }
 
         .dropdown-trigger {
-            position: relative;
-            z-index: 3;
-            margin-bottom: 0;
+            transition: background 0.2s ease,
+                color 0.2s ease;
 
-            &:hover {
-                .arrow {
-                    opacity: 0.8;
-                    transform: translateX(2px) rotate(0deg);
-                }
-
-                &.open .arrow {
-                    transform: translateX(2px) rotate(90deg);
-                }
+            .arrow {
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease,
+                    color 0.2s ease;
             }
         }
 
         .dropdown-menu {
             overflow: hidden;
+            padding: 0 8px;
             max-height: 0;
             opacity: 0;
-            transform: translateY(-5px);
-            transition:
-                max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.25s ease,
-                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                margin 0.25s ease;
+            transform: translateY(-4px);
+            visibility: hidden;
             pointer-events: none;
             margin-top: 0;
             margin-bottom: 0;
-            position: relative;
-            z-index: 2;
-            border-left: 2px solid rgba($primary-color, 0.1);
-            margin-left: 20px;
-            padding-left: 10px;
-            padding-top: 0;
-            padding-bottom: 0;
-            will-change: transform, max-height, opacity;
-
-            &::before {
-                content: '';
-                position: absolute;
-                left: -2px;
-                top: 0;
-                width: 2px;
-                height: 0;
-                background: $primary-color;
-                transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                opacity: 0;
-                z-index: 1;
-            }
+            will-change: max-height, opacity, transform;
+            transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.15s ease,
+                transform 0.15s ease,
+                margin 0.15s ease,
+                visibility 0s linear 0.2s;
 
             .sub-item {
-                margin: 6px 0;
-                border-radius: 6px;
-                position: relative;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                transform: translateX(0);
-                opacity: 0.9;
+                margin: 2px 0;
+                font-size: 13px;
+                opacity: 0;
+                transform: translateX(-4px);
+                will-change: transform, opacity;
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease;
 
-                &::before {
-                    left: -12px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                @for $i from 1 through 15 {
+                    &:nth-child(#{$i}) {
+                        transition-delay: #{$i * 0.015}s;
+                    }
                 }
 
                 .nav-item-content {
+                    height: 36px;
                     padding: 8px 12px;
-                    height: 32px;
 
                     .icon {
                         font-size: 16px;
-                        min-width: 18px;
-                        width: 18px;
-                        height: 18px;
-                    }
-
-                    .title {
-                        font-size: 13px;
                     }
                 }
 
                 &:hover {
-                    background: rgba($primary-color, 0.04);
                     transform: translateX(2px);
-                    opacity: 1;
-
-                    .icon {
-                        transform: scale(1.1);
-                    }
-                }
-
-                &.active {
-                    background: rgba($primary-color, 0.08);
-                    opacity: 1;
-
-                    .icon {
-                        transform: scale(1.1);
-                    }
-
-                    &::before {
-                        width: 4px;
-                        opacity: 1;
-                    }
-                }
-
-                &:first-child {
-                    margin-top: 0;
-                }
-
-                &:last-child {
-                    margin-bottom: 0;
                 }
             }
         }
 
-        &.open .dropdown-menu::before {
-            height: 100%;
-            opacity: 1;
-        }
+        &:not(.open) {
+            .dropdown-menu {
+                transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.15s ease,
+                    transform 0.15s ease,
+                    margin 0.15s ease,
+                    visibility 0s linear 0.2s;
 
-        &:hover .dropdown-menu::before {
-            opacity: 0.5;
+                .sub-item {
+                    transition: transform 0.15s ease,
+                        opacity 0.15s ease;
+                    transition-delay: 0s !important;
+                    opacity: 0;
+                    transform: translateX(-4px);
+                }
+            }
         }
     }
 
     .sidebar-footer {
-        padding: 16px 0;
+        padding: 12px;
         border-top: 1px solid rgba($border-color, 0.1);
-        background: white;
         display: flex;
         flex-direction: column;
         gap: 8px;
 
-        .nav-item {
-            margin: 0 12px;
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .profile-btn {
+            background: rgba($primary-color, 0.04);
+            margin: 0;
 
-            &.profile-btn {
-                .nav-item-content {
-                    padding: 8px 16px;
-
-                    .icon {
-                        color: $primary-color;
-                        opacity: 1;
-                        font-size: 16px;
-                    }
-
-                    .title {
-                        font-weight: 500;
-                        color: $text-color;
-                    }
-                }
-
-                &:hover {
-                    background: rgba($primary-color, 0.06);
-                    transform: translateY(-2px);
-                }
-
-                &.active {
-                    background: rgba($primary-color, 0.08);
-                }
+            &:hover {
+                background: rgba($primary-color, 0.08);
             }
         }
 
         .logout-btn {
-            width: calc(100% - 24px);
-            background: none;
-            border-radius: 8px;
-            cursor: pointer;
-            padding: 0;
-            color: $text-color;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin: 0 12px;
-            overflow: hidden;
-            position: relative;
-
-            &::before {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 0;
-                height: 100%;
-                width: 0;
-                background: $error-color;
-                border-radius: 4px 0 0 4px;
-                opacity: 0;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .nav-item-content {
-                padding: 8px 16px;
-                position: relative;
-                z-index: 2;
-
-                .icon {
-                    color: $error-color;
-                    opacity: 1;
-                    font-size: 16px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-
-                .title {
-                    font-weight: 500;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-            }
+            color: $error-color;
+            margin: 0;
 
             &:hover {
-                background: rgba($error-color, 0.06);
+                background: rgba($error-color, 0.08);
                 color: $error-color;
-                transform: translateY(-2px);
 
                 &::before {
-                    width: 4px;
-                    opacity: 1;
+                    background: $error-color;
                 }
 
-                .title {
-                    color: $error-color;
+                .icon {
+                    color: $error-color !important;
                 }
             }
 
-            &:active {
-                transform: translateY(0);
-                background: rgba($error-color, 0.1);
-
-                &::before {
-                    width: 6px;
-                    opacity: 1;
-                }
+            &::before {
+                background: $error-color;
             }
         }
     }

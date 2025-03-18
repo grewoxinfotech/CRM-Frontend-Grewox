@@ -1,0 +1,152 @@
+@import '../../../styles/theme/theme.scss';
+
+.superadmin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    background: white;
+    height: 70px;
+    border-bottom: 1px solid $border-color;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: calc(100% - 260px);
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba($primary-color, 0.05);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    .header-left {
+        h1 {
+            font-size: 1.25rem;
+            color: $primary-color;
+            margin: 0;
+            font-weight: 600;
+        }
+    }
+
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .search-container {
+            overflow: hidden;
+
+            .search-input {
+                border-radius: $button-radius;
+                border: 1px solid $border-color;
+                padding: 8px 12px;
+                transition: all 0.3s ease;
+
+                &:hover,
+                &:focus {
+                    border-color: $primary-color;
+                    box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+                }
+
+                .ant-input-prefix {
+                    color: $text-color;
+                    margin-right: 8px;
+                }
+            }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .action-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border: none;
+                background: none;
+                border-radius: 50%;
+                color: $text-color;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                position: relative;
+
+                &:hover,
+                &.active {
+                    background: rgba($primary-color, 0.05);
+                    color: $primary-color;
+                }
+
+                svg {
+                    font-size: 1.25rem;
+                }
+            }
+
+            .ant-badge {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                .ant-badge-count {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    transform: translate(25%, -25%);
+                    background: $error-color;
+                    box-shadow: 0 0 0 2px white;
+                    font-size: 0.75rem;
+                    padding: 0 4px;
+                    min-width: 18px;
+                    height: 18px;
+                    line-height: 18px;
+                    border-radius: 9px;
+                }
+            }
+
+            .user-avatar {
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                .ant-avatar {
+                    background: $primary-color;
+                    color: white;
+                    font-weight: 500;
+                    border: 2px solid transparent;
+                    transition: all 0.2s ease;
+                    width: 40px;
+                    height: 40px;
+                    line-height: 36px;
+                    font-size: 1rem;
+
+                    &:hover {
+                        border-color: rgba($primary-color, 0.2);
+                    }
+                }
+            }
+        }
+    }
+}
+
+.dashboard-sidebar.collapsed~.main-content .superadmin-header {
+    width: calc(100% - 70px);
+}
+
+.ant-tooltip {
+    .ant-tooltip-inner {
+        background-color: rgba($text-color, 0.85);
+        backdrop-filter: blur(4px);
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    .ant-tooltip-arrow {
+        &::before {
+            background-color: rgba($text-color, 0.85);
+        }
+    }
+}
