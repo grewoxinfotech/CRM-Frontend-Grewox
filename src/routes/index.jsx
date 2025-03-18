@@ -10,58 +10,75 @@ import Currencies from "../superadmin/module/settings/currencies/index.jsx";
 import Countries from "../superadmin/module/settings/countries/index.jsx";
 import Plans from "../superadmin/module/plans/index.jsx";
 import ProtectedRoute from "./ProtectedRoute";
+import Notes from "../superadmin/module/notes/index.jsx";
 
 const routes = createBrowserRouter([
-    {
-        path: "/",
-        element: <Login />
-    },
-    {
-        path: "/login",
-        element: <Login />
-    },
-    {
-        path: "/auth-redirect",
-        element: <ProtectedRoute><AuthRedirect /></ProtectedRoute>
-    },
-    {
-        path: "/dashboard",
-        element: <ProtectedRoute><Dashboard /></ProtectedRoute>
-    },
-    {
-        path: "/superadmin",
-        element: <ProtectedRoute><SuperAdminLayout /></ProtectedRoute>,
-        children: [
-            {
-                path: "",
-                element: <SuperAdminDashboard />
-            },
-            {
-                path: "dashboard",
-                element: <SuperAdminDashboard />
-            },
-            {
-                path: "company",
-                element: <Company />
-            },
-            {
-                path: "profile",
-                element: <Profile />
-            },
-            {
-                path: "plans",
-                element: <Plans />
-            },
-            {
-                path: "settings/currencies",
-                element: <Currencies />
-            },
-            {
-                path: "settings/countries",
-                element: <Countries />
-            }
-        ]
-    }
-])
+  {
+    path: "/",
+    element: <Login />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/auth-redirect",
+    element: (
+      <ProtectedRoute>
+        <AuthRedirect />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/dashboard",
+    element: (
+      <ProtectedRoute>
+        <Dashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/superadmin",
+    element: (
+      <ProtectedRoute>
+        <SuperAdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "",
+        element: <SuperAdminDashboard />,
+      },
+      {
+        path: "dashboard",
+        element: <SuperAdminDashboard />,
+      },
+      {
+        path: "company",
+        element: <Company />,
+      },
+      {
+        path: "profile",
+        element: <Profile />,
+      },
+      {
+        path: "notes",
+        element: <Notes />,
+      },
+      {
+        path: "plans",
+        element: <Plans />,
+      },
+      {
+        path: "settings/currencies",
+        element: <Currencies />,
+      },
+      {
+        path: "settings/countries",
+        element: <Countries />,
+      },
+    ],
+  },
+]);
 
 export default routes;
