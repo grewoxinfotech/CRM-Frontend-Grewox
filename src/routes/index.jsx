@@ -10,6 +10,9 @@ import Currencies from "../superadmin/module/settings/currencies/index.jsx";
 import Countries from "../superadmin/module/settings/countries/index.jsx";
 import Plans from "../superadmin/module/plans/index.jsx";
 import ProtectedRoute from "./ProtectedRoute";
+import ForgotPassword from "../auth/forgot-password";
+import OTPVerification from "../auth/otp";
+
 
 const routes = createBrowserRouter([
     {
@@ -19,6 +22,14 @@ const routes = createBrowserRouter([
     {
         path: "/login",
         element: <Login />
+    },
+    {
+        path: "/forgot-password",
+        element: <ForgotPassword />
+    },
+    {
+        path: "/otp",
+        element: <OTPVerification />
     },
     {
         path: "/auth-redirect",
