@@ -19,6 +19,7 @@ import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
+import SubClient from "../dashboard/modual/user-management/subclient/index.jsx";
 
 const routes = createBrowserRouter([
   {
@@ -58,6 +59,10 @@ const routes = createBrowserRouter([
       {
         path: "",
         element: <Dashboard />,
+      },
+      {
+        path: "/dashboard/clients",
+        element: <SubClient />,
       },
       {
         path: "customers",

@@ -18,7 +18,8 @@ import policyReducer from "../superadmin/module/policy/service/policySlice";
 import { notesApi } from "../superadmin/module/notes/services/NotesApi";
 import { inquiryApi,inquiryReducer } from '../superadmin/module/inquary/services/index';
 import { esignatureApi, esignatureReducer } from '../superadmin/module/settings/eSignature/services/index';
-// Persist config
+import { subclientApi, subclientReducer } from "../dashboard/modual/user-management/subclient/services";
+  // Persist config
 const persistConfig = {
   key: "root",
   storage,
@@ -37,6 +38,7 @@ const rootReducer = combineReducers({
   [notesApi.reducerPath]: notesApi.reducer,
   [inquiryApi.reducerPath]: inquiryApi.reducer,
   [esignatureApi.reducerPath]: esignatureApi.reducer,
+  [subclientApi.reducerPath]: subclientApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
@@ -44,6 +46,7 @@ const rootReducer = combineReducers({
   policy: policyReducer,
   inquiry: inquiryReducer,
   esignature: esignatureReducer,
+  subclient: subclientReducer,
 });
 
 // Create persisted reducer
@@ -66,7 +69,8 @@ export const store = configureStore({
       .concat(policyApi.middleware)
       .concat(notesApi.middleware)
       .concat(inquiryApi.middleware)
-      .concat(esignatureApi.middleware),
+      .concat(esignatureApi.middleware)
+      .concat(subclientApi.middleware),
 });
 
 export const persistor = persistStore(store);
