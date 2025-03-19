@@ -13,13 +13,18 @@ import Countries from "../superadmin/module/settings/countries/index.jsx";
 import Plans from "../superadmin/module/plans/index.jsx";
 import ProtectedRoute from "./ProtectedRoute";
 import ForgotPassword from "../auth/forgot-password";
+import Branch from "../dashboard/module/hrm/Branch";
 import OTPVerification from "../auth/otp";
-
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
 import SubClient from "../dashboard/modual/user-management/subclient/index.jsx";
+import Designation from "../dashboard/module/hrm/Designation";
+import Department from "../dashboard/module/hrm/Department";
+import Training from "../dashboard/module/hrm/Training";
+import Document from "../dashboard/module/hrm/Document";
+import Announcement from "../dashboard/module/hrm/Announcement";
 
 const routes = createBrowserRouter([
   {
@@ -75,6 +80,35 @@ const routes = createBrowserRouter([
       {
         path: "analytics",
         element: <div>Analytics Page</div>,
+      },
+      {
+        path: "hrm",
+        children: [
+          {
+            path: "branch",
+            element: <Branch />
+          },
+          {
+            path: "designation",
+            element: <Designation />
+          },
+          {
+            path: "department",
+            element: <Department />
+          },
+          {
+            path: "training",
+            element: <Training />
+          },
+          {
+            path: "document",
+            element: <Document />
+          },
+          {
+            path: "announcement",
+            element: <Announcement />
+          }
+        ]
       },
       {
         path: "settings",
@@ -139,9 +173,9 @@ const routes = createBrowserRouter([
     {
         path: "inquiry",
         element: <Inquiry />
-    }
-    ],
-  },
+      }
+    ]
+  }
 ]);
 
 export default routes;
