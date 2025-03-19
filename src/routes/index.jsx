@@ -17,6 +17,8 @@ import OTPVerification from "../auth/otp";
 
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
+import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
+import Inquiry from "../superadmin/module/inquary/index.jsx";
 
 const routes = createBrowserRouter([
   {
@@ -125,6 +127,14 @@ const routes = createBrowserRouter([
         path: "settings/countries",
         element: <Countries />,
       },
+      {
+        path: "settings/esignature",
+        element: <ESignature />
+    },
+    {
+        path: "inquiry",
+        element: <Inquiry />
+    }
     ],
   },
 ]);
