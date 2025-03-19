@@ -16,10 +16,15 @@ import planReducer from "../superadmin/module/plans/services/planSlice";
 import { policyApi } from "../superadmin/module/policy/service/policyApi";
 import policyReducer from "../superadmin/module/policy/service/policySlice";
 import { notesApi } from "../superadmin/module/notes/services/NotesApi";
-import { inquiryApi,inquiryReducer } from '../superadmin/module/inquary/services/index';
+import { inquiryApi, inquiryReducer } from '../superadmin/module/inquary/services/index';
 import { esignatureApi, esignatureReducer } from '../superadmin/module/settings/eSignature/services/index';
 import { subclientApi, subclientReducer } from "../dashboard/modual/user-management/subclient/services";
-  // Persist config
+// Persist config
+import { roleApi } from "../dashboard/module/hrm/role/services/roleApi";
+import roleReducer from "../dashboard/module/hrm/role/services/roleSlice";
+import { userApi } from "../dashboard/module/user-management/users/services/userApi";
+
+// Persist config
 const persistConfig = {
   key: "root",
   storage,
@@ -39,6 +44,8 @@ const rootReducer = combineReducers({
   [inquiryApi.reducerPath]: inquiryApi.reducer,
   [esignatureApi.reducerPath]: esignatureApi.reducer,
   [subclientApi.reducerPath]: subclientApi.reducer,
+  [roleApi.reducerPath]: roleApi.reducer,
+  [userApi.reducerPath]: userApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
@@ -47,6 +54,7 @@ const rootReducer = combineReducers({
   inquiry: inquiryReducer,
   esignature: esignatureReducer,
   subclient: subclientReducer,
+  role: roleReducer
 });
 
 // Create persisted reducer
@@ -70,7 +78,9 @@ export const store = configureStore({
       .concat(notesApi.middleware)
       .concat(inquiryApi.middleware)
       .concat(esignatureApi.middleware)
-      .concat(subclientApi.middleware),
+      .concat(subclientApi.middleware)
+      .concat(roleApi.middleware)
+      .concat(userApi.middleware),
 });
 
 export const persistor = persistStore(store);

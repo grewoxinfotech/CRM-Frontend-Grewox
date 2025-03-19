@@ -25,6 +25,8 @@ import Department from "../dashboard/module/hrm/Department";
 import Training from "../dashboard/module/hrm/Training";
 import Document from "../dashboard/module/hrm/Document";
 import Announcement from "../dashboard/module/hrm/Announcement";
+import Role from "../dashboard/module/hrm/role";
+import Users from "../dashboard/module/user-management/users/index.jsx";
 
 const routes = createBrowserRouter([
   {
@@ -107,8 +109,16 @@ const routes = createBrowserRouter([
           {
             path: "announcement",
             element: <Announcement />
+          },
+          {
+            path: "role",
+            element: <Role />
           }
         ]
+      },
+      {
+        path: "user-management/users",
+        element: <Users />
       },
       {
         path: "settings",
@@ -169,8 +179,8 @@ const routes = createBrowserRouter([
       {
         path: "settings/esignature",
         element: <ESignature />
-    },
-    {
+      },
+      {
         path: "inquiry",
         element: <Inquiry />
       }

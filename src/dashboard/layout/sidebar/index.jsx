@@ -35,12 +35,6 @@ import {
     FiBell,
     FiFile,
     FiBookOpen,
-    FiGlobe,
-    FiLock,
-    FiCreditCard,
-    FiLayout,
-    FiSliders,
-    FiServer
 } from 'react-icons/fi';
 import './sidebar.scss';
 
@@ -53,6 +47,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     const [isUserManagementOpen, setUserManagementOpen] = useState(false);
     const [isHrmOpen, setHrmOpen] = useState(false);
     const [isSupportOpen, setSupportOpen] = useState(false);
+    const [isJobOpen, setJobOpen] = useState(false);
 
     // Sync local state with props
     useEffect(() => {
@@ -137,7 +132,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 {
                     title: 'Users',
                     icon: <FiUser />,
-                    path: '/dashboard/users'
+                    path: '/dashboard/user-management/users'
                 },
                 {
                     title: 'Clients',
@@ -242,6 +237,43 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                     title: 'Training Setup',
                     icon: <FiBookOpen />,
                     path: '/dashboard/hrm/training'
+                }
+            ]
+        },
+        {
+            title: 'Job',
+            icon: <FiBriefcase />,
+            isDropdown: true,
+            subItems: [
+                {
+                    title: 'Jobs',
+                    icon: <FiBriefcase />,
+                    path: '/dashboard/jobs'
+                },
+                {
+                    title: 'Job Candidates',
+                    icon: <FiUsers />,
+                    path: '/dashboard/job-candidates'
+                },
+                {
+                    title: 'Job On-Boarding',
+                    icon: <FiUserCheck />,
+                    path: '/dashboard/job-onboarding'
+                },
+                {
+                    title: 'Job Applications',
+                    icon: <FiFileText />,
+                    path: '/dashboard/job-applications'
+                },
+                {
+                    title: 'Offer Letters',
+                    icon: <FiFile />,
+                    path: '/dashboard/offer-letters'
+                },
+                {
+                    title: 'Interviews',
+                    icon: <FiCalendar />,
+                    path: '/dashboard/interviews'
                 }
             ]
         },
@@ -371,6 +403,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                             renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
                         ) : item.title === 'Support' ? (
                             renderDropdown(item, isSupportOpen, setSupportOpen)
+                        ) : item.title === 'Job' ? (
+                            renderDropdown(item, isJobOpen, setJobOpen)
                         ) : (
                             renderDropdown(item, false, () => { })
                         )}
