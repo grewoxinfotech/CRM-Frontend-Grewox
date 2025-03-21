@@ -67,7 +67,6 @@ export const {
     setSearchQuery,
     setViewMode,
     resetInquiryState,
-    updateInquiryStatus,
     addInquiry,
     updateInquiry,
     deleteInquiry,

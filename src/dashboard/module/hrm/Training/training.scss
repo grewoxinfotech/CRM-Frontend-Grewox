@@ -282,4 +282,192 @@
             }
         }
     }
+}
+
+// Action dropdown styles
+.action-dropdown-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    svg {
+        font-size: 18px;
+        color: #8c8c8c;
+    }
+}
+
+.training-actions-dropdown {
+    .ant-dropdown-menu {
+        min-width: 160px;
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+                    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+                    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            &:hover {
+                background: #f0f7ff;
+            }
+
+            svg {
+                margin-right: 4px;
+            }
+
+            &-icon {
+                min-width: 16px;
+            }
+
+            &-danger {
+                color: #ff4d4f;
+                
+                &:hover {
+                    background: #fff1f0;
+                }
+            }
+        }
+    }
+}
+
+// Table styles
+.training-table {
+    .ant-table {
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+        .ant-table-thead > tr > th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #262626;
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ant-table-tbody > tr > td {
+            padding: 16px;
+            vertical-align: middle;
+
+            .ant-tag {
+                margin: 0;
+                text-transform: uppercase;
+                font-size: 12px;
+                font-weight: 500;
+                padding: 2px 8px;
+            }
+
+            .action-dropdown-button {
+                margin: 0 auto;
+            }
+        }
+
+        .ant-table-tbody > tr:hover > td {
+            background: #fafafa;
+        }
+    }
+}
+
+// Card view styles (if you want to add card view)
+.training-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    padding: 24px;
+
+    .training-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .ant-card-body {
+            padding: 20px;
+        }
+
+        .training-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+
+            .training-info {
+                h3 {
+                    margin: 0 0 8px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #262626;
+                }
+
+                .ant-tag {
+                    margin: 0;
+                    text-transform: uppercase;
+                    font-size: 12px;
+                    font-weight: 500;
+                    padding: 2px 8px;
+                }
+            }
+        }
+
+        .training-details {
+            .detail-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 12px;
+                color: #666;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+
+                .detail-icon {
+                    font-size: 16px;
+                    color: #1890ff;
+                }
+
+                .detail-text {
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+    .training-grid {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .training-table {
+        .ant-table {
+            .ant-table-thead > tr > th,
+            .ant-table-tbody > tr > td {
+                padding: 12px 8px;
+            }
+        }
+    }
 } 

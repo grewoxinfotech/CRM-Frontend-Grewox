@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiFilter
 } from 'react-icons/fi';
 import './department.scss';
 import moment from 'moment';
@@ -14,11 +14,11 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import CreateDepartment from './CreateDepartment';
-
 import { Link } from 'react-router-dom';
 import DepartmentList from './DepartmentList';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const Department = () => {
     const [departments, setDepartments] = useState([]);
@@ -28,47 +28,12 @@ const Department = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filteredDepartments, setFilteredDepartments] = useState([]);
+    const [filters, setFilters] = useState({
+        branch: undefined
+    });
     const searchInputRef = useRef(null);
 
-    useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                department: 'Engineering',
-                branch: 'Software development and technical operations',
-                created_at: new Date().toISOString(),
-                created_by: 'Admin'
-            },
-            {
-                id: 2,
-                department: 'Human Resources',
-                branch: 'Employee management and recruitment',
-                created_at: new Date().toISOString(),
-                created_by: 'Admin'
-            },
-            {
-                id: 3,
-                department: 'Marketing',
-                branch: 'Brand management and marketing strategies',
-                created_at: new Date().toISOString(),
-                created_by: 'Admin'
-            }
-        ];
-        setDepartments(mockData);
-    }, []);
-
-    useEffect(() => {
-        let result = [...departments];
-        if (searchText) {
-            result = result.filter(department =>
-                department.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                department.description.toLowerCase().includes(searchText.toLowerCase())
-            );
-        }
-        setFilteredDepartments(result);
-    }, [departments, searchText]);
+   
 
     const handleAddDepartment = () => {
         setSelectedDepartment(null);
@@ -127,6 +92,23 @@ const Department = () => {
         setSearchText(value);
     };
 
+    const handleFilterChange = (type, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [type]: value
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            branch: undefined
+        });
+        setSearchText('');
+        if (searchInputRef.current) {
+            searchInputRef.current.input.value = '';
+        }
+    };
+
     const exportMenu = (
         <Menu>
             <Menu.Item
@@ -157,8 +139,8 @@ const Department = () => {
         try {
             setLoading(true);
             const data = departments.map(department => ({
-                'Name': department.name,
-                'Description': department.description,
+                'Department': department.department,
+                'Branch': department.branch,
                 'Created Date': moment(department.created_at).format('YYYY-MM-DD'),
                 'Created By': department.created_by
             }));
@@ -245,15 +227,19 @@ const Department = () => {
                     <Text type="secondary">Manage all departments in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search departments..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <Space size={16} className="filter-section">
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search departments..."
+                            allowClear
+                            onChange={(e) => handleSearch(e.target.value)}
+                            value={searchText}
+                            ref={searchInputRef}
+                            className="search-input"
+                            style={{ width: '250px' }}
+                        />
+                      
+                    </Space>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
                             <Button className="export-button">
@@ -276,10 +262,9 @@ const Department = () => {
 
             <Card className="department-table-card">
                 <DepartmentList
-                    departments={filteredDepartments}
-                    loading={loading}
+                    searchText={searchText}
+                    filters={filters}
                     onEdit={handleEditDepartment}
-                    onDelete={handleDeleteConfirm}
                 />
             </Card>
 
@@ -303,7 +288,7 @@ const Department = () => {
                     loading: loading
                 }}
             >
-                <p>Are you sure you want to delete <strong>{selectedDepartment?.name}</strong>?</p>
+                <p>Are you sure you want to delete this department?</p>
                 <p>This action cannot be undone.</p>
             </Modal>
         </div>

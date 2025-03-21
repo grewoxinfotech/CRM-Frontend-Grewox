@@ -1,61 +1,187 @@
-import React from 'react';
-import { Table, Button, Space, Tooltip } from 'antd';
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
-import moment from 'moment';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown } from 'antd';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
+import { useGetAllDepartmentsQuery, useDeleteDepartmentMutation } from './services/departmentApi';
+import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
+import dayjs from 'dayjs';
 
-const DepartmentList = ({ departments, loading, onEdit, onDelete }) => {
+const DepartmentList = ({ onEdit, searchText, filters }) => {
+    // RTK Query hooks
+    const { data: departmentsData = [], isLoading: isLoadingDepartments } = useGetAllDepartmentsQuery();
+    const { data: branchesData = [], isLoading: isLoadingBranches } = useGetAllBranchesQuery();
+    const [deleteDepartment] = useDeleteDepartmentMutation();
+
+    // Transform branches data into a map for quick lookup
+    const branchMap = useMemo(() => {
+        const map = {};
+        if (Array.isArray(branchesData)) {
+            branchesData.forEach(branch => {
+                map[branch.id] = branch;
+            });
+        } else if (Array.isArray(branchesData.data)) {
+            branchesData.data.forEach(branch => {
+                map[branch.id] = branch;
+            });
+        }
+        return map;
+    }, [branchesData]);
+
+    // Transform and filter departments data
+    const departments = useMemo(() => {
+        let filteredData = [];
+        
+        if (!departmentsData) return [];
+        
+        // Handle both array and object response formats
+        if (Array.isArray(departmentsData)) {
+            filteredData = departmentsData;
+        } else if (Array.isArray(departmentsData.data)) {
+            filteredData = departmentsData.data;
+        }
+
+        // Apply filters
+        return filteredData.filter(department => {
+            // Text search filter
+            if (searchText) {
+                const searchLower = searchText.toLowerCase();
+                const departmentName = (department?.department_name || '').toLowerCase();
+                const branchName = (branchMap[department?.branch]?.branchName || '').toLowerCase();
+                
+                if (!departmentName.includes(searchLower) && !branchName.includes(searchLower)) {
+                    return false;
+                }
+            }
+
+            // Status filter
+            if (filters.status && department.status !== filters.status) {
+                return false;
+            }
+
+            // Branch filter
+            if (filters.branch && department.branch !== filters.branch) {
+                return false;
+            }
+
+            return true;
+        });
+    }, [departmentsData, searchText, filters, branchMap]);
+
+    const handleDelete = (id) => {
+        Modal.confirm({
+            title: 'Delete Department',
+            content: 'Are you sure you want to delete this department?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deleteDepartment(id).unwrap();
+                    message.success('Department deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete department');
+                }
+            },
+        });
+    };
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'view',
+                icon: <FiEye  />,
+                label: 'View Details',
+                onClick: () => onEdit(record),
+            },
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: 'Edit',
+                onClick: () => onEdit(record),
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2  />,
+                label: 'Delete',
+                onClick: () => handleDelete(record.id),
+                danger: true,
+            },
+        ],
+    });
+
     const columns = [
         {
-            title: 'Department',
-            dataIndex: 'department',
-            key: 'department',
-            sorter: (a, b) => a.department.localeCompare(b.department),
+            title: 'Department Name',
+            dataIndex: 'department_name',
+            key: 'department_name',
+            render: (text, record) => (
+                <span className="text-base">
+                    {text || record.name || 'N/A'}
+                </span>
+            ),
+            sorter: (a, b) => {
+                const nameA = a.department_name || a.name || '';
+                const nameB = b.department_name || b.name || '';
+                return nameA.localeCompare(nameB);
+            },
         },
-       
         {
             title: 'Branch',
             dataIndex: 'branch',
             key: 'branch',
-            sorter: (a, b) => a.branch.localeCompare(b.branch),
+            render: (branchId) => {
+                const branch = branchMap[branchId];
+                return (
+                    <span className="text-base">
+                        {branch?.branchName || 'N/A'}
+                    </span>
+                );
+            },
+            sorter: (a, b) => {
+                const branchNameA = branchMap[a.branch]?.branchName || '';
+                const branchNameB = branchMap[b.branch]?.branchName || '';
+                return branchNameA.localeCompare(branchNameB);
+            },
         },
         {
             title: 'Actions',
             key: 'actions',
-            width: 120,
+            align: 'center',
             render: (_, record) => (
-                <Space size="middle">
-                    <Tooltip title="Edit">
-                        <Button
-                            type="text"
-                            icon={<FiEdit2 />}
-                            onClick={() => onEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            danger
-                            icon={<FiTrash2 />}
-                            onClick={() => onDelete(record)}
-                        />
-                    </Tooltip>
-                </Space>
+                <Dropdown
+                    menu={getDropdownItems(record)}
+                    trigger={['click']}
+                    placement="bottomRight"
+                    overlayClassName="department-actions-dropdown"
+                >
+                    <Button
+                        type="text"
+                        icon={<FiMoreVertical />}
+                        className="action-dropdown-button"
+                        onClick={(e) => e.preventDefault()}
+                    />
+                </Dropdown>
             ),
         },
     ];
 
     return (
-        <Table
-            columns={columns}
-            dataSource={departments}
-            loading={loading}
-            rowKey="id"
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} departments`,
-            }}
-        />
+        <div className="department-list">
+            <Table
+                columns={columns}
+                dataSource={departments}
+                // loading={isLoadingDepartments || isLoadingBranches}
+                rowKey="id"
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                className="department-table"
+            />
+        </div>
     );
 };
 

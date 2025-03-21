@@ -6,6 +6,9 @@ export const subclientApi = createApi({
     baseQuery: baseQueryWithReauth,
     tagTypes: ['Subclient'],
     endpoints: (builder) => ({
+
+
+        
         getAllSubclients: builder.query({
             query: () => ({
                 url: '/sub-clients',
@@ -13,6 +16,8 @@ export const subclientApi = createApi({
             }),
             providesTags: ['Subclient'],
         }),
+
+
         getSubclientById: builder.query({
             query: (id) => ({
                 url: `/sub-clients/${id}`,
@@ -20,6 +25,8 @@ export const subclientApi = createApi({
             }),
             providesTags: (result, error, id) => [{ type: 'Subclient', id }],
         }),
+
+
         createSubclient: builder.mutation({
             query: (data) => ({
                 url: '/sub-clients',
@@ -71,6 +78,8 @@ export const subclientApi = createApi({
             },
             invalidatesTags: ['Subclient'],
         }),
+
+
         updateSubclient: builder.mutation({
             query: ({ id, data }) => ({
                 url: `/sub-clients/${id}`,
@@ -82,6 +91,8 @@ export const subclientApi = createApi({
                 'Subclient'
             ]
         }),
+
+
         deleteSubclient: builder.mutation({
             query: (id) => ({
                 url: `/sub-clients/${id}`,

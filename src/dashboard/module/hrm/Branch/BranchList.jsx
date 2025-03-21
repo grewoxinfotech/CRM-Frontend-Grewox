@@ -1,70 +1,176 @@
-import React from 'react';
-import { Table, Button, Space, Tag } from 'antd';
+import React, { useState, useMemo } from 'react';
+import { Table, Space, Button, Tooltip, Tag, message, Modal } from 'antd';
 import { FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
-import moment from 'moment';
+import { useGetAllBranchesQuery, useDeleteBranchMutation } from './services/branchApi';
+import dayjs from 'dayjs';
+import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 
-const BranchList = ({ branches, loading, onEdit, onDelete, onView }) => {
+const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
+    // RTK Query hooks
+    const { data: branchesData = [], isLoading } = useGetAllBranchesQuery();
+    const [deleteBranch] = useDeleteBranchMutation();
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
+
+    // Create a map of user IDs to user data for quick lookup
+    const userMap = useMemo(() => {
+        const map = {};
+        if (userData?.data) {
+            userData.data.forEach(user => {
+                if (user && user.id) {
+                    map[user.id] = user;
+                }
+            });
+        }
+        return map;
+    }, [userData]);
+
+    // Transform branches data
+    const branches = useMemo(() => {
+        let filteredData = [];
+        
+        if (!branchesData) return [];
+        if (Array.isArray(branchesData)) {
+            filteredData = branchesData;
+        } else if (Array.isArray(branchesData.data)) {
+            filteredData = branchesData.data;
+        }
+
+        // Apply filters
+        return filteredData.filter(branch => {
+            if (!branch) return false;
+
+            const branchManager = userMap[branch.branchManager] || {};
+            const managerName = branchManager?.username || 'No Manager';
+
+            const matchesSearch = !searchText || searchText.toLowerCase() === '' ||
+                (branch.branchName || '').toLowerCase().includes(searchText.toLowerCase()) ||
+                managerName.toLowerCase().includes(searchText.toLowerCase());
+
+            const matchesDesignationType = !filters.designationType ||
+                branch.designation_type === filters.designationType;
+
+            const matchesStatus = !filters.status ||
+                branch.status === filters.status;
+
+            const matchesDateRange = !filters.dateRange?.length ||
+                (dayjs(branch.created_at).isAfter(filters.dateRange[0]) &&
+                dayjs(branch.created_at).isBefore(filters.dateRange[1]));
+
+            return matchesSearch && matchesDesignationType && matchesStatus && matchesDateRange;
+        });
+    }, [branchesData, searchText, filters, userMap]);
+
+    const handleDelete = (id) => {
+        Modal.confirm({
+            title: 'Delete Branch',
+            content: 'Are you sure you want to delete this branch?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: { padding: "20px" },
+            onOk: async () => {
+                try {
+                    await deleteBranch(id).unwrap();
+                    message.success('Branch deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete branch');
+                }
+            },
+        });
+    };
+
     const columns = [
         {
-            title: 'Branch',
-            dataIndex: 'name',
-            key: 'name',
-            sorter: (a, b) => a.name.localeCompare(b.name),
+            title: 'Branch Name',
+            dataIndex: 'branchName',
+            key: 'branchName',
+            render: (text) => <span className="text-base">{text || 'N/A'}</span>,
+            sorter: (a, b) => (a.branchName || '').localeCompare(b.branchName || ''),
         },
         {
             title: 'Branch Manager',
-            dataIndex: 'manager',
-            key: 'manager',
-            sorter: (a, b) => a.manager.localeCompare(b.manager),
+            dataIndex: 'branchManager',
+            key: 'branchManager',
+            render: (managerId) => {
+                const manager = userMap[managerId] || {};
+                const managerName = manager?.username || 'No Manager';
+                return (
+                    <Tooltip title={manager?.email || 'No email available'}>
+                        <span className="text-base">
+                            {managerName}
+                        </span>
+                    </Tooltip>
+                );
+            },
+            sorter: (a, b) => {
+                const managerA = userMap[a.branchManager] || {};
+                const managerB = userMap[b.branchManager] || {};
+                const nameA = managerA?.username || '';
+                const nameB = managerB?.username || '';
+                return nameA.localeCompare(nameB);
+            },
         },
         {
-            title: "Address",
-            dataIndex: "address",
-            key: "address",
-            sorter: (a, b) => a.address.localeCompare(b.address),
+            title: 'Address',
+            dataIndex: 'branchAddress',
+            key: 'branchAddress',
+            ellipsis: true,
+            render: (address) => (
+                <Tooltip title={address || 'No address'}>
+                    <span style={{ color: '#4b5563' }}>{address || 'N/A'}</span>
+                </Tooltip>
+            ),
+            sorter: (a, b) => (a.branchAddress || '').localeCompare(b.branchAddress || ''),
         },
         {
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
-                <Space size="middle" className="action-buttons">
-                    <Button
-                        type="text"
-                        icon={<FiEye size={16} />}
-                        onClick={() => onView(record)}
-                        title="View"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiEdit2 size={16} />}
-                        onClick={() => onEdit(record)}
-                        title="Edit"
-                    />
-                    <Button
-                        type="text"
-                        danger
-                        icon={<FiTrash2 size={16} />}
-                        onClick={() => onDelete(record)}
-                        title="Delete"
-                    />
+                <Space size="middle">
+                    <Tooltip title="View">
+                        <Button
+                            type="text"
+                            icon={<FiEye style={{ fontSize: '16px' }} />}
+                            onClick={() => onEdit(record)}
+                            className="action-btn"
+                        />
+                    </Tooltip>
+                    <Tooltip title="Edit">
+                        <Button
+                            type="text"
+                            icon={<FiEdit2 style={{ fontSize: '16px' }} />}
+                            onClick={() => onEdit(record)}
+                            className="action-btn"
+                        />
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                        <Button
+                            type="text"
+                            icon={<FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />}
+                            onClick={() => handleDelete(record.id)}
+                            className="action-btn delete-btn"
+                        />
+                    </Tooltip>
                 </Space>
             ),
         },
     ];
 
     return (
-        <Table
-            className="branch-list-table"
-            columns={columns}
-            dataSource={branches}
-            rowKey="id"
-            loading={loading}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: false,
-                showQuickJumper: false,
-            }}
-        />
+        <div className="branch-list">
+            <Table
+                columns={columns}
+                dataSource={branches}
+                loading={isLoading || isLoadingUsers}
+                rowKey="id"
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                className="branch-table"
+            />
+        </div>
     );
 };
 

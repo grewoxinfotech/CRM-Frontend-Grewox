@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Modal,
     Form,
@@ -13,49 +13,88 @@ import {
 } from 'antd';
 import { FiUser, FiFileText, FiGrid, FiX, FiCalendar, FiLink, FiPlus, FiTrash2 } from 'react-icons/fi';
 import moment from 'moment';
+import { useCreateTrainingMutation, useUpdateTrainingMutation } from './services/trainingApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-const CreateTraining = ({ open, onCancel, onSubmit, isEditing, initialValues, loading }) => {
+const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
     const [form] = Form.useForm();
+    const [loading, setLoading] = useState(false);
+
+    // RTK Query hooks
+    const [createTraining] = useCreateTrainingMutation();
+    const [updateTraining] = useUpdateTrainingMutation();
+
+    // Set form values when editing
+    useEffect(() => {
+        if (isEditing && initialValues) {
+            try {
+                // Parse the links if it's a string
+                const links = typeof initialValues.links === 'string' 
+                    ? JSON.parse(initialValues.links) 
+                    : initialValues.links;
+
+                // Set form values for editing
+                form.setFieldsValue({
+                    category: initialValues.category,
+                    trainingItems: [{
+                        title: initialValues.title,
+                        links: links?.url || ''
+                    }]
+                });
+            } catch (error) {
+                console.error('Error setting form values:', error);
+                message.error('Error loading training data');
+            }
+        } else {
+            // Reset form for create mode
+            form.resetFields();
+            form.setFieldsValue({
+                trainingItems: [{}]
+            });
+        }
+    }, [initialValues, isEditing, form]);
 
     const handleSubmit = async (values) => {
         try {
-            // Validate all fields
-            await form.validateFields();
-
-            // Format the training items
-            const formattedTrainingItems = values.trainingItems.map(item => ({
-                title: item.title.trim(),
-                link: item.link.trim()
-            }));
-
-            // Create the final formatted values
-            const formattedValues = {
-                category: values.category,
-                trainingItems: formattedTrainingItems,
+            setLoading(true);
+            
+            // Create the final formatted values with links as an object (not stringified)
+            const formData = {
+                category: values.category.trim(),
+                title: values.trainingItems[0].title.trim(),
+                links: {  // Send as object, not as JSON string
+                    url: values.trainingItems[0].links.trim()
+                }
             };
 
-            // Submit the form
-            await onSubmit(formattedValues);
+            if (isEditing && initialValues?.id) {
+                // Update existing training
+                await updateTraining({
+                    id: initialValues.id,
+                    data: formData
+                }).unwrap();
+                message.success('Training updated successfully!');
+            } else {
+                // Create new training
+                await createTraining(formData).unwrap();
+                message.success('Training created successfully!');
+            }
             
-            // Show success message
-            message.success(isEditing ? 'Training updated successfully!' : 'Training created successfully!');
-            
-            // Reset form and close modal
             form.resetFields();
             onCancel();
         } catch (error) {
-            // Show error message if validation fails
-            if (error.errorFields) {
-                message.error('Please fill in all required fields correctly.');
+            if (error.data?.message) {
+                message.error(error.data.message);
             } else {
-                message.error('Failed to submit the form. Please try again.');
-                console.error('Form submission failed:', error);
+                message.error('Failed to process training. Please try again.');
             }
+            console.error('Form submission failed:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -190,24 +229,23 @@ const CreateTraining = ({ open, onCancel, onSubmit, isEditing, initialValues, lo
                         </span>
                     }
                     rules={[
-                        { required: true, message: 'Please select training category' }
+                        { required: true, message: 'Please enter training category' },
+                        { max: 100, message: 'Category cannot exceed 100 characters' }
                     ]}
                 >
-                    <Select 
+                    <Input
+                        prefix={<FiGrid style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        placeholder="Enter training category"
                         size="large"
-                        placeholder="Select training category"
                         style={{
-                            width: '100%',
                             borderRadius: '10px',
+                            padding: '8px 16px',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            border: '1px solid #e6e8eb',
+                            transition: 'all 0.3s ease',
                         }}
-                    >
-                        <Option value="Technical">Technical</Option>
-                        <Option value="Soft Skills">Soft Skills</Option>
-                        <Option value="Management">Management</Option>
-                        <Option value="Leadership">Leadership</Option>
-                        <Option value="Professional">Professional</Option>
-                        <Option value="Safety">Safety & Compliance</Option>
-                    </Select>
+                    />
                 </Form.Item>
 
                 <Form.List name="trainingItems" initialValue={[{}]}>
@@ -251,7 +289,7 @@ const CreateTraining = ({ open, onCancel, onSubmit, isEditing, initialValues, lo
 
                                             <Form.Item
                                                 {...restField}
-                                                name={[name, 'link']}
+                                                name={[name, 'links']}
                                                 label={
                                                     <span style={{ fontSize: '14px', fontWeight: '500' }}>
                                                         Training Link

@@ -19,7 +19,7 @@ import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
-import SubClient from "../dashboard/modual/user-management/subclient/index.jsx";
+import SubClient from "../dashboard/module/user-management/subclient/index.jsx";
 import Designation from "../dashboard/module/hrm/Designation";
 import Department from "../dashboard/module/hrm/Department";
 import Training from "../dashboard/module/hrm/Training";
@@ -27,6 +27,8 @@ import Document from "../dashboard/module/hrm/Document";
 import Announcement from "../dashboard/module/hrm/Announcement";
 import Role from "../dashboard/module/hrm/role";
 import Users from "../dashboard/module/user-management/users/index.jsx";
+import Employee from "../dashboard/module/hrm/Employee/index.jsx";
+
 
 const routes = createBrowserRouter([
   {
@@ -86,6 +88,10 @@ const routes = createBrowserRouter([
       {
         path: "hrm",
         children: [
+          {
+            path: "employee",
+            element: <Employee />
+          },
           {
             path: "branch",
             element: <Branch />

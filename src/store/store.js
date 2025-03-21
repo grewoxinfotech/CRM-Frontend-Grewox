@@ -18,11 +18,16 @@ import policyReducer from "../superadmin/module/policy/service/policySlice";
 import { notesApi } from "../superadmin/module/notes/services/NotesApi";
 import { inquiryApi, inquiryReducer } from '../superadmin/module/inquary/services/index';
 import { esignatureApi, esignatureReducer } from '../superadmin/module/settings/eSignature/services/index';
-import { subclientApi, subclientReducer } from "../dashboard/modual/user-management/subclient/services";
+import { subclientApi, subclientReducer } from "../dashboard/module/user-management/subclient/services";
 // Persist config
 import { roleApi } from "../dashboard/module/hrm/role/services/roleApi";
 import roleReducer from "../dashboard/module/hrm/role/services/roleSlice";
 import { userApi } from "../dashboard/module/user-management/users/services/userApi";
+import { employeeApi, employeeReducer } from "../dashboard/module/hrm/Employee/services";
+import { designationApi, designationReducer } from "../dashboard/module/hrm/Designation/services";
+import { branchApi, branchReducer } from "../dashboard/module/hrm/Branch/services";
+import { departmentApi, departmentReducer } from "../dashboard/module/hrm/Department/services";
+import { trainingApi, trainingReducer } from "../dashboard/module/hrm/Training/services";
 
 // Persist config
 const persistConfig = {
@@ -46,6 +51,11 @@ const rootReducer = combineReducers({
   [subclientApi.reducerPath]: subclientApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [userApi.reducerPath]: userApi.reducer,
+  [branchApi.reducerPath]: branchApi.reducer,
+  [employeeApi.reducerPath]: employeeApi.reducer,
+  [designationApi.reducerPath]: designationApi.reducer,
+  [departmentApi.reducerPath]: departmentApi.reducer,
+  [trainingApi.reducerPath]: trainingApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
@@ -54,7 +64,12 @@ const rootReducer = combineReducers({
   inquiry: inquiryReducer,
   esignature: esignatureReducer,
   subclient: subclientReducer,
-  role: roleReducer
+  role: roleReducer,
+  branch: branchReducer,
+  employee: employeeReducer,
+  designation: designationReducer,
+  department: departmentReducer,
+  training: trainingReducer,
 });
 
 // Create persisted reducer
@@ -80,7 +95,12 @@ export const store = configureStore({
       .concat(esignatureApi.middleware)
       .concat(subclientApi.middleware)
       .concat(roleApi.middleware)
-      .concat(userApi.middleware),
+      .concat(userApi.middleware)
+      .concat(branchApi.middleware)
+      .concat(employeeApi.middleware)
+      .concat(designationApi.middleware)
+      .concat(departmentApi.middleware)
+      .concat(trainingApi.middleware),
 });
 
 export const persistor = persistStore(store);

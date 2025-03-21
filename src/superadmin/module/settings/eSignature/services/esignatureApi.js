@@ -9,9 +9,9 @@ export const esignatureApi = createApi({
     getAllSignatures: builder.query({
       query: () => ({
         url: '/esignatures',
-        method: 'GET',
+        method: 'GET'
       }),
-      providesTags: ['Esignature'],
+      providesTags: ['Esignature']
     }),
     createSignature: builder.mutation({
       query: (data) => ({

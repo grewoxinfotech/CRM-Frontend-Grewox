@@ -380,93 +380,103 @@
     }
 
     // Card View Styles
-    .subclient-cards-grid {
-        padding: 16px;
+    .subclient-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+        padding: 24px;
 
         .subclient-card {
-            @include hover-shadow;
-            height: 100%;
+            background: #ffffff;
             border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            border: 1px solid $border-color;
 
             &:hover {
-                border-color: #1677ff;
+                transform: translateY(-4px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             }
 
             .ant-card-body {
                 padding: 20px;
             }
 
-            .subclient-card-content {
-                h3 {
-                    margin: 0 0 12px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: $text-color-dark;
-                }
+            .subclient-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 20px;
 
-                p {
-                    margin: 0 0 8px;
-                    color: $text-color;
-                    font-size: 14px;
-
-                    a {
-                        color: $primary-color;
-
-                        &:hover {
-                            text-decoration: underline;
-                        }
-                    }
-                }
-
-                .subclient-card-footer {
+                .subclient-main-info {
                     display: flex;
+                    gap: 16px;
                     align-items: center;
-                    justify-content: space-between;
-                    margin-top: 16px;
+                }
+
+                .subclient-avatar {
+                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                    border: 2px solid #fff;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                }
+
+                .subclient-info {
+                    h3 {
+                        margin: 0 0 8px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #262626;
+                    }
 
                     .ant-tag {
                         margin: 0;
-                        text-transform: uppercase;
                         font-size: 12px;
                         font-weight: 500;
+                        padding: 2px 8px;
+                    }
+                }
+
+                .action-dropdown-button {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    
+                    &:hover {
+                        background: rgba(0, 0, 0, 0.04);
                     }
 
-                    .created-date {
-                        font-size: 12px;
-                        color: $text-color-light;
+                    svg {
+                        font-size: 18px;
+                        color: #8c8c8c;
                     }
                 }
             }
 
-            .ant-card-actions {
-                background: #fafafa;
-                border-top: 1px solid $border-color;
+            .subclient-details {
+                .detail-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 12px;
 
-                li {
-                    margin: 12px 0;
-
-                    span {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-
-                        svg {
-                            font-size: 16px;
-                            transition: all 0.3s ease;
-                            cursor: pointer;
-                            color: $text-color;
-
-                            &:hover {
-                                transform: translateY(-2px) scale(1.1);
-                                color: #1677ff;
-                            }
-                        }
+                    &:last-child {
+                        margin-bottom: 0;
                     }
 
-                    &:not(:last-child) {
-                        border-right: 1px solid $border-color;
+                    .detail-icon {
+                        font-size: 16px;
+                        color: #1890ff;
+                        flex-shrink: 0;
+                    }
+
+                    .detail-text {
+                        color: #595959;
+                        font-size: 14px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
                     }
                 }
             }
@@ -1012,7 +1022,7 @@
     .card-actions {
         background: #fafafa;
         padding: 12px;
-        border-top: 1px solid #f0f0f0;
+        border-top: 1px solid $border-color;
 
         .action-button {
             width: 32px;
@@ -1208,7 +1218,7 @@
             align-items: center !important;
             justify-content: center !important;
             padding: 0 8px !important;
-            background-color: transparent !important;
+            background-color: white !important;
             border: none !important;
 
             .ant-select-selection-item {
@@ -1217,19 +1227,24 @@
                 justify-content: center !important;
                 line-height: 48px !important;
                 font-weight: 500 !important;
-                color: #1890ff !important;
                 font-size: 14px !important;
                 padding-right: 15px !important;
+                color: white !important;
+                
+                &::before {
+                    content: none !important;
+                }
             }
         }
 
         .ant-select-arrow {
-            color: #1890ff !important;
+            color: white !important;
             right: 8px !important;
         }
 
         &.ant-select-focused .ant-select-selector {
             box-shadow: none !important;
+            background-color: white !important;
         }
     }
 
@@ -1241,15 +1256,11 @@
                 display: flex !important;
                 align-items: center !important;
                 gap: 8px !important;
+                color: white !important;
 
                 span:first-child {
-                    color: #1890ff !important;
+                    color: white !important;
                     font-weight: 500 !important;
-                }
-
-                span:last-child {
-                    color: #8c8c8c !important;
-                    font-size: 12px !important;
                 }
             }
 
@@ -1271,12 +1282,6 @@
         border: none !important;
         box-shadow: none !important;
         background-color: transparent !important;
-
-        .ant-input-prefix {
-            margin-right: 12px !important;
-            display: flex !important;
-            align-items: center !important;
-        }
 
         .ant-input {
             padding: 0 !important;
@@ -1357,6 +1362,88 @@
                 object-fit: cover;
             }
         }
+    }
+}
+
+.action-dropdown-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    svg {
+        font-size: 18px;
+        color: #8c8c8c;
+    }
+}
+
+.subclient-actions-dropdown {
+    .ant-dropdown-menu {
+        min-width: 160px;
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            svg {
+                font-size: 16px;
+            }
+
+            &:hover {
+                background: #f0f7ff;
+            }
+
+            &-danger {
+                color: #ff4d4f;
+
+                &:hover {
+                    background: #fff1f0;
+                }
+            }
+        }
+    }
+}
+
+// Specific styles for the card view
+.subclient-card {
+    .ant-card-actions {
+        background: #fafafa;
+        
+        li {
+            margin: 0;
+            border: none;
+        }
+    }
+}
+
+// Specific styles for the table view
+.subclient-table {
+    .ant-table-cell {
+        .action-dropdown-button {
+            margin: 0 auto;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .subclient-grid {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 16px;
     }
 }
 

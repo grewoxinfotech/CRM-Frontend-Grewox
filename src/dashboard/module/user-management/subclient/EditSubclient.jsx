@@ -275,17 +275,6 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                                                 }}
                                             />
                                         )}
-                                        <div style={{
-                                            position: 'absolute',
-                                            bottom: 0,
-                                            left: 0,
-                                            right: 0,
-                                            background: 'rgba(0,0,0,0.4)',
-                                            padding: '4px 0',
-                                            textAlign: 'center'
-                                        }}>
-                                            <FiCamera style={{ color: 'white', fontSize: '14px' }} />
-                                        </div>
                                     </div>
                                 ) : (
                                     <div style={{
@@ -331,6 +320,7 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                         }
                         rules={[{ required: true, message: 'Please enter first name' }]}
                     >
+                        
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter first name"
@@ -435,33 +425,41 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                                         width: '80px',
                                         height: '48px',
                                         display: 'flex',
-                                        alignItems: 'center'
+                                        alignItems: 'center',
+                                        backgroundColor: 'white',
+                                        cursor: 'pointer',
                                     }}
                                     loading={countriesLoading}
                                     className="phone-code-select"
                                     dropdownStyle={{
                                         padding: '8px',
                                         borderRadius: '10px',
+                                        backgroundColor: 'white',
                                     }}
                                     showSearch
                                     optionFilterProp="children"
                                 >
                                     {countries?.map(country => (
-                                        <Option key={country.phoneCode} value={country.phoneCode}>
+                                        <Option 
+                                            key={country.phoneCode} 
+                                            value={country.phoneCode}
+                                            style={{ cursor: 'pointer' }}
+                                        >
                                             <div style={{ 
                                                 display: 'flex', 
                                                 alignItems: 'center', 
                                                 justifyContent: 'center',
+                                                color: '#262626',
+                                                cursor: 'pointer',
                                             }}>
                                                 <span>{country.phoneCode}</span>
-                                                {/* <span>({country.countryCode})</span> */}
                                             </div>
                                         </Option>
                                     ))}
                                 </Select>
                             </Form.Item>
-                            <Form.Item
-                                name="phone"
+                    <Form.Item
+                        name="phone"
                                 noStyle
                                 rules={[
                                     { required: true, message: 'Please enter phone number' },
@@ -486,21 +484,12 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                                         border: 'none',
                                         borderLeft: '1px solid #e6e8eb',
                                         borderRadius: 0,
-                                        height: '48px',
+                                        height: '46px',
                                         backgroundColor: 'transparent',
                                         display: 'flex',
-                                        alignItems: 'center'
+                                        alignItems: 'center',
                                     }}
                                     placeholder="Enter 10-digit phone number"
-                                    prefix={
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center',
-                                            height: '100%',
-                                        }}>
-                                            <FiPhone style={{ color: '#1890ff', fontSize: '16px' }} />
-                                        </div>
-                                    }
                                     maxLength={10}
                                 />
                             </Form.Item>

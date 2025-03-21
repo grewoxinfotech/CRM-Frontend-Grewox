@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Space, Select, DatePicker
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiFilter
 } from 'react-icons/fi';
 import './branch.scss';
 import moment from 'moment';
@@ -16,72 +16,44 @@ import 'jspdf-autotable';
 import CreateBranch from './CreateBranch';
 import BranchList from './BranchList';
 import { Link } from 'react-router-dom';
+import { useGetAllBranchesQuery } from './services/branchApi';
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 const Branch = () => {
-    const [branches, setBranches] = useState([]);
-    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedBranch, setSelectedBranch] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filteredBranches, setFilteredBranches] = useState([]);
-    const searchInputRef = useRef(null);
+    const [filters, setFilters] = useState({
+        dateRange: [],
+        status: undefined,
+        designationType: undefined
+    });
+    const [showFilters, setShowFilters] = useState(false);
 
-    useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                name: 'Main Branch',
-                location: 'New York',
-                manager: 'John Doe',
-                phone: '+1234567890',
-                email: 'main@example.com',
-                status: 'active',
-                created_at: new Date().toISOString(),
-                address: '123 Main St',
-                city: 'New York',
-                state: 'NY',
-                country: 'USA',
-                zipcode: '10001'
-            }
-        ];
-        setBranches(mockData);
-    }, []);
+    // Fetch branches using RTK Query
+    const { data: branchData, isLoading } = useGetAllBranchesQuery();
 
-    useEffect(() => {
-        let result = [...branches];
-        if (searchText) {
-            result = result.filter(branch =>
-                branch.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                branch.location.toLowerCase().includes(searchText.toLowerCase()) ||
-                branch.manager.toLowerCase().includes(searchText.toLowerCase()) ||
-                branch.email.toLowerCase().includes(searchText.toLowerCase()) ||
-                branch.phone.includes(searchText) ||
-                (branch.city && branch.city.toLowerCase().includes(searchText.toLowerCase())) ||
-                (branch.state && branch.state.toLowerCase().includes(searchText.toLowerCase()))
-            );
-        }
-        setFilteredBranches(result);
-    }, [branches, searchText]);
-
-    const handleAddBranch = () => {
-        setSelectedBranch(null);
+    const handleCreate = () => {
         setIsEditing(false);
-        setIsFormVisible(true);
+        setSelectedBranch(null);
+        setIsModalOpen(true);
     };
 
-    const handleEditBranch = (branch) => {
-        setSelectedBranch(branch);
+    const handleEdit = (record) => {
+        setSelectedBranch(record);
         setIsEditing(true);
-        setIsFormVisible(true);
+        setIsModalOpen(true);
     };
 
     const handleViewBranch = (branch) => {
         setSelectedBranch(branch);
+        // Implement view logic if needed
     };
 
     const handleDeleteConfirm = (branch) => {
@@ -92,8 +64,9 @@ const Branch = () => {
     const handleDeleteBranch = async () => {
         try {
             // TODO: Implement delete API call
-            const updatedBranches = branches.filter(b => b.id !== selectedBranch.id);
-            setBranches(updatedBranches);
+            const updatedBranches = branchData.filter(b => b.id !== selectedBranch.id);
+            // Assuming branchData is updated in the RTK Query
+            // You might want to update the state or call the RTK Query again
             message.success('Branch deleted successfully');
             setIsDeleteModalVisible(false);
         } catch (error) {
@@ -101,95 +74,47 @@ const Branch = () => {
         }
     };
 
-    const handleFormSubmit = async (formData) => {
-        try {
-            if (isEditing) {
-                const updatedBranches = branches.map(b =>
-                    b.id === selectedBranch.id ? { ...b, ...formData } : b
-                );
-                setBranches(updatedBranches);
-                message.success('Branch updated successfully');
-            } else {
-                const newBranch = {
-                    id: Date.now(),
-                    ...formData,
-                    created_at: new Date().toISOString(),
-                    status: 'active'
-                };
-                setBranches([...branches, newBranch]);
-                message.success('Branch created successfully');
-            }
-            setIsFormVisible(false);
-        } catch (error) {
-            message.error('Operation failed');
-        }
+    const handleModalSubmit = () => {
+        setIsModalOpen(false);
+        setSelectedBranch(null);
+        setIsEditing(false);
     };
 
-    const handleSearch = (value) => {
-        setSearchText(value);
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }));
     };
 
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
-
-    const handleExport = async (type) => {
-        try {
-            setLoading(true);
-            const data = branches.map(branch => ({
-                'Branch Name': branch.name,
-                'Location': branch.location,
-                'Manager': branch.manager,
-                'Email': branch.email,
-                'Phone': branch.phone,
-                'Status': branch.status,
-                'Created Date': moment(branch.created_at).format('YYYY-MM-DD')
-            }));
-
-            switch (type) {
-                case 'csv':
-                    exportToCSV(data, 'branches_export');
-                    break;
-                case 'excel':
-                    exportToExcel(data, 'branches_export');
-                    break;
-                case 'pdf':
-                    exportToPDF(data, 'branches_export');
-                    break;
-                default:
-                    break;
-            }
-            message.success(`Successfully exported as ${type.toUpperCase()}`);
-        } catch (error) {
-            message.error(`Failed to export: ${error.message}`);
-        } finally {
-            setLoading(false);
-        }
+    const clearFilters = () => {
+        setFilters({
+            dateRange: [],
+            status: undefined,
+            designationType: undefined
+        });
+        setSearchText('');
     };
 
-    const exportToCSV = (data, filename) => {
+    const exportToExcel = (data) => {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Branches');
+        XLSX.writeFile(wb, 'branches_export.xlsx');
+    };
+
+    const exportToPDF = (data) => {
+        const doc = new jsPDF('l', 'pt', 'a4');
+        doc.autoTable({
+            head: [Object.keys(data[0])],
+            body: data.map(item => Object.values(item)),
+            margin: { top: 20 },
+            styles: { fontSize: 8 }
+        });
+        doc.save('branches_export.pdf');
+    };
+
+    const exportToCSV = (data) => {
         const csvContent = [
             Object.keys(data[0]).join(','),
             ...data.map(item => Object.values(item).map(value =>
@@ -202,30 +127,61 @@ const Branch = () => {
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `${filename}.csv`);
+            link.setAttribute('download', 'branches_export.csv');
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
     };
 
-    const exportToExcel = (data, filename) => {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Branches');
-        XLSX.writeFile(wb, `${filename}.xlsx`);
+    const handleExport = (type) => {
+        try {
+            const formattedData = branchData?.data?.map(branch => ({
+                'Branch Name': branch.branchName,
+                'Designation Type': branch.designation_type || '-',
+                'Created At': dayjs(branch.created_at).format('YYYY-MM-DD'),
+                'Status': branch.status || '-'
+            })) || [];
+
+            if (formattedData.length === 0) {
+                message.warning('No data to export');
+                return;
+            }
+
+            switch (type) {
+                case 'excel':
+                    exportToExcel(formattedData);
+                    message.success('Successfully exported as Excel');
+                    break;
+                case 'pdf':
+                    exportToPDF(formattedData);
+                    message.success('Successfully exported as PDF');
+                    break;
+                case 'csv':
+                    exportToCSV(formattedData);
+                    message.success('Successfully exported as CSV');
+                    break;
+                default:
+                    break;
+            }
+        } catch (error) {
+            message.error('Failed to export data');
+        }
     };
 
-    const exportToPDF = (data, filename) => {
-        const doc = new jsPDF('l', 'pt', 'a4');
-        doc.autoTable({
-            head: [Object.keys(data[0])],
-            body: data.map(item => Object.values(item)),
-            margin: { top: 20 },
-            styles: { fontSize: 8 }
-        });
-        doc.save(`${filename}.pdf`);
-    };
+    const exportMenu = (
+        <Menu>
+            <Menu.Item key="excel" icon={<FiDownload />} onClick={() => handleExport('excel')}>
+                Export as Excel
+            </Menu.Item>
+            <Menu.Item key="pdf" icon={<FiDownload />} onClick={() => handleExport('pdf')}>
+                Export as PDF
+            </Menu.Item>
+            <Menu.Item key="csv" icon={<FiDownload />} onClick={() => handleExport('csv')}>
+                Export as CSV
+            </Menu.Item>
+        </Menu>
+    );
 
     return (
         <div className="branch-page">
@@ -250,27 +206,32 @@ const Branch = () => {
                     <Text type="secondary">Manage all branches in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search branches..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <div className="search-filter-group">
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search by name, designation type..."
+                            allowClear
+                            onSearch={(value) => setSearchText(value)}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchText}
+                            className="search-input"
+                            style={{ width: 300 }}
+                        />
+                    </div>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                            <Button
+                                icon={<FiDownload size={16} />}
+                                className="export-button"
+                                style={{ marginRight: '10px' }}
+                            >
+                                Export
                             </Button>
                         </Dropdown>
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={handleAddBranch}
+                            onClick={handleCreate}
                             className="add-button"
                         >
                             Add Branch
@@ -279,23 +240,68 @@ const Branch = () => {
                 </div>
             </div>
 
+            {showFilters && (
+                <Card className="filter-card" style={{ marginBottom: '1rem' }}>
+                    <Row gutter={[16, 16]}>
+                        <Col xs={24} sm={12} md={6}>
+                            <Select
+                                placeholder="Select Designation Type"
+                                style={{ width: '100%' }}
+                                allowClear
+                                value={filters.designationType}
+                                onChange={(value) => handleFilterChange('designationType', value)}
+                            >
+                                <Option value="manager">Manager</Option>
+                                <Option value="supervisor">Supervisor</Option>
+                                <Option value="staff">Staff</Option>
+                            </Select>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <RangePicker
+                                style={{ width: '100%' }}
+                                value={filters.dateRange}
+                                onChange={(dates) => handleFilterChange('dateRange', dates)}
+                            />
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <Select
+                                placeholder="Select Status"
+                                style={{ width: '100%' }}
+                                allowClear
+                                value={filters.status}
+                                onChange={(value) => handleFilterChange('status', value)}
+                            >
+                                <Option value="active">Active</Option>
+                                <Option value="inactive">Inactive</Option>
+                            </Select>
+                        </Col>
+                        <Col xs={24} sm={12} md={6}>
+                            <Button type="primary" onClick={clearFilters} block>
+                                Clear Filters
+                            </Button>
+                        </Col>
+                    </Row>
+                </Card>
+            )}
+
             <Card className="branch-table-card">
-                <BranchList
-                    branches={filteredBranches}
-                    loading={loading}
-                    onEdit={handleEditBranch}
-                    onDelete={handleDeleteConfirm}
-                    onView={handleViewBranch}
+                <BranchList 
+                    onEdit={handleEdit} 
+                    searchText={searchText}
+                    filters={filters}
                 />
             </Card>
 
             <CreateBranch
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
+                open={isModalOpen}
+                onCancel={() => {
+                    setIsModalOpen(false);
+                    setSelectedBranch(null);
+                    setIsEditing(false);
+                }}
+                onSubmit={handleModalSubmit}
                 isEditing={isEditing}
                 initialValues={selectedBranch}
-                loading={loading}
             />
 
             <Modal
@@ -306,7 +312,7 @@ const Branch = () => {
                 okText="Delete"
                 okButtonProps={{
                     danger: true,
-                    loading: loading
+                    loading: isLoading
                 }}
             >
                 <p>Are you sure you want to delete <strong>{selectedBranch?.name}</strong>?</p>

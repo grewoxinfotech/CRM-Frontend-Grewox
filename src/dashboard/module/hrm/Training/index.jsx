@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Space
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -16,6 +16,7 @@ import 'jspdf-autotable';
 import CreateTraining from './CreateTraining';
 import TrainingList from './TrainingList';
 import { Link } from 'react-router-dom';
+import { useDeleteTrainingMutation } from './services/trainingApi';
 
 const { Title, Text } = Typography;
 
@@ -30,28 +31,15 @@ const Training = () => {
     const [filteredTrainings, setFilteredTrainings] = useState([]);
     const searchInputRef = useRef(null);
 
-    useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                title: 'Web Development Training',
-                category: 'Technical',
-                link: 'https://www.google.com',
-                created_at: new Date().toISOString(),
-                created_by: 'Admin'
-            }
-        ];
-        setTrainings(mockData);
-    }, []);
+    // RTK Query hooks
+    const [deleteTraining] = useDeleteTrainingMutation();
 
     useEffect(() => {
         let result = [...trainings];
         if (searchText) {
             result = result.filter(training =>
-                training.title.toLowerCase().includes(searchText.toLowerCase()) ||
-                training.type.toLowerCase().includes(searchText.toLowerCase()) ||
-                training.trainer.toLowerCase().includes(searchText.toLowerCase())
+                (training.category?.toLowerCase().includes(searchText.toLowerCase()) || false) ||
+                (training.links && JSON.parse(training.links).url.toLowerCase().includes(searchText.toLowerCase()))
             );
         }
         setFilteredTrainings(result);
@@ -76,13 +64,13 @@ const Training = () => {
 
     const handleDeleteTraining = async () => {
         try {
-            // TODO: Implement delete API call
+            await deleteTraining(selectedTraining.id).unwrap();
             const updatedTrainings = trainings.filter(t => t.id !== selectedTraining.id);
             setTrainings(updatedTrainings);
             message.success('Training deleted successfully');
             setIsDeleteModalVisible(false);
         } catch (error) {
-            message.error('Failed to delete training');
+            message.error(error?.data?.message || 'Failed to delete training');
         }
     };
 
@@ -97,6 +85,7 @@ const Training = () => {
             } else {
                 const newTraining = {
                     id: Date.now(),
+                    
                     ...formData,
                     created_at: new Date().toISOString(),
                     status: 'active'
