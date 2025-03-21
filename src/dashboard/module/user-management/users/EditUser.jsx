@@ -3,11 +3,17 @@ import { Modal, Form, Input, Select, Button, message } from 'antd';
 import { FiX, FiEdit2 } from 'react-icons/fi';
 import { useUpdateUserMutation } from './services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
-
+import { useSelector } from 'react-redux';
 const EditUser = ({ visible, onCancel, initialValues }) => {
     const [form] = Form.useForm();
     const [updateUser, { isLoading }] = useUpdateUserMutation();
     const { data: rolesData } = useGetRolesQuery();
+
+    const currentUser = useSelector(state => state.auth.user);
+
+    const filteredRoles = rolesData?.data?.filter(role =>
+        role.created_by === currentUser?.username
+    ) || [];
 
     const handleSubmit = async (values) => {
         try {
@@ -209,7 +215,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
                     >
                         <Select
                             placeholder="Select role"
-                            options={rolesData?.data?.map(role => ({
+                            options={filteredRoles.map(role => ({
                                 label: role.role_name,
                                 value: role.id
                             })) || []}

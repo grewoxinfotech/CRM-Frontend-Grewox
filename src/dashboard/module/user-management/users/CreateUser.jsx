@@ -3,11 +3,13 @@ import { Modal, Form, Input, Button, Select, message } from 'antd';
 import { FiX, FiUserPlus } from 'react-icons/fi';
 import { useCreateUserMutation } from './services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
+import { useSelector } from 'react-redux';
 
 const CreateUser = ({ visible, onCancel }) => {
     const [form] = Form.useForm();
     const [createUser, { isLoading }] = useCreateUserMutation();
     const { data: rolesData } = useGetRolesQuery();
+    const currentUser = useSelector(state => state.auth.user);
 
     const handleSubmit = async () => {
         try {
@@ -20,6 +22,10 @@ const CreateUser = ({ visible, onCancel }) => {
             message.error(error?.data?.message || 'Failed to create user');
         }
     };
+
+    const filteredRoles = rolesData?.data?.filter(role =>
+        role.created_by === currentUser?.username
+    ) || [];
 
     return (
         <Modal
@@ -218,7 +224,7 @@ const CreateUser = ({ visible, onCancel }) => {
                     >
                         <Select
                             placeholder="Select role"
-                            options={rolesData?.data?.map(role => ({
+                            options={filteredRoles.map(role => ({
                                 label: role.role_name,
                                 value: role.id
                             })) || []}
@@ -293,4 +299,4 @@ const CreateUser = ({ visible, onCancel }) => {
     );
 };
 
-export default CreateUser; 
+export default CreateUser;

@@ -6,11 +6,11 @@ import moment from 'moment';
 const UserList = ({ users, loading, onEdit, onDelete, currentPage, onPageChange }) => {
     const getRoleColor = (role) => {
         const roleColors = {
-            'Super Admin': 'purple',
-            'Admin': 'blue',
-            'Manager': 'cyan',
-            'Employee': 'green',
-            'User': 'orange'
+            'super-admin': 'purple',
+            'client': 'blue',
+            'sub-client': 'cyan',
+            'employee': 'green',
+            'o': 'default'
         };
         return roleColors[role] || 'default';
     };
@@ -57,6 +57,7 @@ const UserList = ({ users, loading, onEdit, onDelete, currentPage, onPageChange 
                     {role || 'N/A'}
                 </Tag>
             ),
+            sorter: (a, b) => (a.role_name || '').localeCompare(b.role_name || ''),
             width: '15%',
         },
         {
@@ -116,20 +117,17 @@ const UserList = ({ users, loading, onEdit, onDelete, currentPage, onPageChange 
         <Table
             dataSource={users}
             columns={columns}
-            rowKey={(record) => record.id}
             loading={loading}
-            scroll={{ x: 1100 }}
+            rowKey="id"
             pagination={{
                 current: currentPage,
                 pageSize: 10,
                 total: users.length,
-                showSizeChanger: false,
+                showSizeChanger: true,
                 showQuickJumper: false,
                 onChange: onPageChange,
+                showTotal: (total) => `Total ${total} items`,
             }}
-            onRow={(record) => ({
-                onClick: () => onEdit(record),
-            })}
         />
     );
 };

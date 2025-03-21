@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Table, Button, Tag, Space, Dropdown, Modal, Tabs, Row, Col, Typography, Tooltip, message } from "antd";
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye, FiX, FiShield, FiCheck, FiPlus, FiEdit } from "react-icons/fi";
 import EditRole from "./EditRole";
-import moment from 'moment';
 
 const { Text } = Typography;
 
@@ -14,9 +13,12 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
     const [selectedPermissions, setSelectedPermissions] = useState(null);
     const [activeTab, setActiveTab] = useState('CRM');
 
-    // Define the modules with their submodules
     const modules = ['Staff', 'CRM', 'Project', 'HRM', 'Account'];
     const subModules = {
+        Staff: [
+            { key: 'extra-users-list', title: 'Users' },
+            { key: 'extra-users-client-list', title: 'Clients' },
+        ],
         CRM: [
             { key: 'dashboards-leadcards', title: 'LeadCards' },
             { key: 'dashboards-lead', title: 'Leads' },
@@ -30,10 +32,6 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             { key: 'dashboards-calendar', title: 'Calendar' },
             { key: 'extra-pages-customersupports-ticket', title: 'Ticket Supports' },
         ],
-        Staff: [
-            { key: 'extra-users-list', title: 'Users' },
-            { key: 'extra-users-client-list', title: 'Clients' },
-        ],
         Project: [
             { key: 'dashboards-project-list', title: 'Project' },
             { key: 'dashboards-project-Contract', title: 'Contract' },
@@ -42,13 +40,31 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll-salary', title: 'Salary' },
             { key: 'extra-hrm-performance-indicator', title: 'Indicator' },
-            // ... other HRM submodules
+            { key: 'extra-hrm-performance-appraisal', title: 'Appraisal' },
+            { key: 'extra-hrm-role', title: 'Role' },
+            { key: 'extra-hrm-designation', title: 'Designation' },
+            { key: 'extra-hrm-department', title: 'Department' },
+            { key: 'extra-hrm-branch', title: 'Branch' },
+            { key: 'extra-hrm-attendance-attendancelist', title: 'Attendance' },
+            { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
+            { key: 'extra-hrm-meeting', title: 'Meeting' },
+            { key: 'extra-hrm-announcement', title: 'Announcement' },
+            { key: 'extra-hrm-jobs-joblist', title: 'Job' },
+            { key: 'extra-hrm-jobs-jobcandidate', title: 'Job Candidate' },
+            { key: 'extra-hrm-jobs-jobonbording', title: 'Job On-Bording' },
+            { key: 'extra-hrm-jobs-jobapplication', title: 'Job Application' },
+            { key: 'extra-hrm-jobs-jobofferletter', title: 'Job Offer Letter' },
+            { key: 'extra-hrm-jobs-interview', title: 'Job Interviews' },
+            { key: 'extra-hrm-document', title: 'Document' },
+            { key: 'extra-hrm-trainingSetup', title: 'TrainingSetup' }
         ],
         Account: [
             { key: 'dashboards-sales-customer', title: 'Customer' },
             { key: 'dashboards-sales-invoice', title: 'Invoice' },
             { key: 'dashboards-sales-billing', title: 'Billing' },
-            // ... other Account submodules
+            { key: 'dashboards-sales-revenue', title: 'Revenue' },
+            { key: 'dashboards-sales-estimates', title: 'Estimates' },
+            { key: 'dashboards-sales-creditnotes', title: 'Credit Notes' },
         ],
     };
 
@@ -77,9 +93,33 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             message.warning("No permissions to display");
             return;
         }
-        setSelectedRole(role);
-        setSelectedPermissions(role.permissions);
-        setViewPermissionsModal(true);
+
+        // Parse permissions if they're stored as a string
+        let parsedPermissions;
+        try {
+            parsedPermissions = typeof role.permissions === 'string'
+                ? JSON.parse(role.permissions)
+                : role.permissions;
+
+            // Find first module with permissions and set it as active
+            for (const module of modules) {
+                const hasPermissions = subModules[module]?.some(subModule => {
+                    const perms = parsedPermissions[subModule.key];
+                    return perms && perms[0]?.permissions?.length > 0;
+                });
+                if (hasPermissions) {
+                    setActiveTab(module);
+                    break;
+                }
+            }
+
+            setSelectedRole(role);
+            setSelectedPermissions(parsedPermissions);
+            setViewPermissionsModal(true);
+        } catch (error) {
+            console.error('Error parsing permissions:', error);
+            message.error("Failed to parse permissions");
+        }
     };
 
     const handleClosePermissionsModal = () => {
@@ -92,8 +132,6 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
         if (!permissions) return <div>No Permissions</div>;
 
         try {
-            const parsedPermissions = typeof permissions === 'string' ? JSON.parse(permissions) : permissions;
-
             return (
                 <Tabs
                     activeKey={activeTab}
@@ -112,10 +150,7 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                                     borderRadius: '8px',
                                 }}>
                                     <Col span={8}>
-                                        <Text strong style={{
-                                            fontSize: '14px',
-                                            color: '#262626',
-                                        }}>
+                                        <Text strong style={{ fontSize: '14px', color: '#262626' }}>
                                             Module Name
                                         </Text>
                                     </Col>
@@ -134,8 +169,10 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                                         </Row>
                                     </Col>
                                 </Row>
+
                                 {subModules[module]?.map(subModule => {
-                                    const modulePerms = parsedPermissions[subModule.key]?.[0]?.permissions || [];
+                                    const modulePerms = permissions[subModule.key]?.[0]?.permissions || [];
+
                                     return (
                                         <Row
                                             key={subModule.key}
@@ -145,13 +182,13 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                                                 padding: '12px 16px',
                                                 borderBottom: '1px solid #f0f0f0',
                                                 transition: 'background-color 0.3s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#fafafa',
+                                                }
                                             }}
                                         >
                                             <Col span={8}>
-                                                <Text style={{
-                                                    fontSize: '14px',
-                                                    color: '#595959',
-                                                }}>
+                                                <Text style={{ fontSize: '14px', color: '#595959' }}>
                                                     {subModule.title}
                                                 </Text>
                                             </Col>
@@ -160,21 +197,9 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                                                     {['view', 'create', 'update', 'delete'].map(action => (
                                                         <Col key={action} span={6} style={{ textAlign: 'center' }}>
                                                             {modulePerms.includes(action) ? (
-                                                                <FiCheck
-                                                                    style={{
-                                                                        color: '#52c41a',
-                                                                        fontSize: '18px',
-                                                                        strokeWidth: 3
-                                                                    }}
-                                                                />
+                                                                <FiCheck className="permission-check" />
                                                             ) : (
-                                                                <div style={{
-                                                                    display: 'inline-block',
-                                                                    width: '18px',
-                                                                    height: '18px',
-                                                                    borderRadius: '4px',
-                                                                    border: '1px solid #d9d9d9',
-                                                                }} />
+                                                                <div className="permission-empty" />
                                                             )}
                                                         </Col>
                                                     ))}
@@ -189,8 +214,8 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                 />
             );
         } catch (error) {
-            console.error('Error parsing permissions:', error);
-            return <div>Invalid Permissions Format</div>;
+            console.error('Error rendering permissions:', error);
+            return <div>Error displaying permissions</div>;
         }
     };
 
@@ -266,7 +291,13 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                             <Button
                                 type="primary"
                                 icon={<FiEye size={16} />}
-                                onClick={() => showAllPermissions(record)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    showAllPermissions({
+                                        ...record,
+                                        permissions: parsedPermissions // Pass the already parsed permissions
+                                    });
+                                }}
                                 style={{
                                     padding: '8px 12px',
                                     height: '36px',
@@ -303,6 +334,7 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                 </div>
             );
         } catch (error) {
+            console.error('Error rendering permission tags:', error);
             return <Tag color="default">Invalid Permissions</Tag>;
         }
     };

@@ -43,9 +43,6 @@ const Users = () => {
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(false);
-
-    // Redux
-    const currentUser = useSelector(state => state.auth.user);
     const { data: usersData, isLoading: isLoadingUsers, refetch } = useGetUsersQuery();
     const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
     const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
@@ -58,12 +55,12 @@ const Users = () => {
                 id: user.id,
                 username: user.username || 'N/A',
                 email: user.email || 'N/A',
-                role_name: user.role?.role_name || 'N/A',
+                role_name: user.role?.name || 'N/A',
                 role_id: user.role?.id,
                 created_by: user.created_by,
                 updated_by: user.updated_by,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt
+                created_at: user.createdAt,
+                updated_at: user.updatedAt
             }));
             setUsers(transformedData);
             setFilteredUsers(transformedData);
@@ -153,7 +150,7 @@ const Users = () => {
                 'Username': user.username,
                 'Email': user.email,
                 'Role': user.role_name,
-                'Created Date': moment(user.createdAt).format('YYYY-MM-DD'),
+                'Created Date': moment(user.created_at).format('YYYY-MM-DD'),
             }));
 
             switch (type) {

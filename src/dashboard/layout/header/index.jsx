@@ -9,9 +9,11 @@ import {
     FiLogOut,
     FiMail
 } from 'react-icons/fi';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
+import { useNavigate } from 'react-router-dom';
 import './header.scss';
+import { useLogout } from '../../../hooks/useLogout';
 
 const Header = () => {
     const getInitials = (name) => {
@@ -23,6 +25,9 @@ const Header = () => {
     const [unreadNotifications, setUnreadNotifications] = useState(3);
     const [unreadMails, setUnreadMails] = useState(5);
     const user = useSelector(selectCurrentUser);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const handleLogout = useLogout();
 
     const userMenuItems = [
         {
@@ -47,7 +52,8 @@ const Header = () => {
             key: 'logout',
             label: 'Logout',
             icon: <FiLogOut />,
-            danger: true
+            danger: true,
+            onClick: handleLogout
         }
     ];
 

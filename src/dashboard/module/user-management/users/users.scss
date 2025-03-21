@@ -302,6 +302,10 @@
 .user-modal {
     margin: 30px 0;
 
+    .ant-form-item-row {
+        padding: 6px 0;
+    }
+
     .ant-modal-content {
         border-radius: 12px;
         overflow: hidden;

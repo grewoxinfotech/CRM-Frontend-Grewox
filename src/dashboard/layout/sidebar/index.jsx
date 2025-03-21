@@ -37,6 +37,7 @@ import {
     FiBookOpen,
 } from 'react-icons/fi';
 import './sidebar.scss';
+import { useLogout } from '../../../hooks/useLogout';
 
 const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     const [isCollapsed, setIsCollapsed] = useState(collapsed);
@@ -48,6 +49,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     const [isHrmOpen, setHrmOpen] = useState(false);
     const [isSupportOpen, setSupportOpen] = useState(false);
     const [isJobOpen, setJobOpen] = useState(false);
+    const handleLogout = useLogout();
 
     // Sync local state with props
     useEffect(() => {
@@ -366,6 +368,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         </div>
     );
 
+
     return (
         <motion.aside
             className={`superadmin-sidebar ${isCollapsed ? 'collapsed' : ''}`}
@@ -419,7 +422,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                         {!isCollapsed && <span className="title">Profile</span>}
                     </div>
                 </NavLink>
-                <NavLink to="/logout" className="nav-item logout-btn">
+                <NavLink to="/logout" onClick={handleLogout} className="nav-item logout-btn">
                     <div className="nav-item-content">
                         <span className="icon"><FiLogOut /></span>
                         {!isCollapsed && <span className="title">Logout</span>}

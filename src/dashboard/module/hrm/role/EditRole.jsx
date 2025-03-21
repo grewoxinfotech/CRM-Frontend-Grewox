@@ -78,10 +78,11 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     // Handle initial values
     useEffect(() => {
         if (visible && initialValues) {
-            // Initialize all permissions as false
             const formattedPermissions = {};
+
+            // Initialize all permissions as false
             modules.forEach(module => {
-                subModules[module].forEach(subModule => {
+                subModules[module]?.forEach(subModule => {
                     formattedPermissions[subModule.key] = {
                         view: false,
                         create: false,
@@ -91,33 +92,34 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                 });
             });
 
-            // Set permissions from initialValues
+            // Parse and set permissions from initialValues
             if (initialValues.permissions) {
-                Object.entries(initialValues.permissions).forEach(([key, value]) => {
-                    if (value && value[0] && value[0].permissions) {
-                        const perms = value[0].permissions;
-                        formattedPermissions[key] = {
-                            view: perms.includes('view'),
-                            create: perms.includes('create'),
-                            update: perms.includes('update'),
-                            delete: perms.includes('delete')
-                        };
-                    }
-                });
+                try {
+                    // Parse the JSON string if it's a string
+                    const parsedPermissions = typeof initialValues.permissions === 'string'
+                        ? JSON.parse(initialValues.permissions)
+                        : initialValues.permissions;
+
+                    // Set the permissions
+                    Object.entries(parsedPermissions).forEach(([key, value]) => {
+                        if (value && value[0] && value[0].permissions) {
+                            const perms = value[0].permissions;
+                            formattedPermissions[key] = {
+                                view: perms.includes('view'),
+                                create: perms.includes('create'),
+                                update: perms.includes('update'),
+                                delete: perms.includes('delete')
+                            };
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error parsing permissions:', error);
+                }
             }
 
-            // Set form values
-            form.setFieldsValue({
-                id: initialValues.id,
-                role_name: initialValues.role_name,
-                permissions: formattedPermissions
-            });
-
-            setSelectedPermissions(formattedPermissions);
-
-            // Set active tab to first tab with permissions
+            // Find first module with permissions and set it as active
             for (const module of modules) {
-                const hasPermissions = subModules[module].some(subModule => {
+                const hasPermissions = subModules[module]?.some(subModule => {
                     const perms = formattedPermissions[subModule.key];
                     return perms && Object.values(perms).some(Boolean);
                 });
@@ -126,6 +128,14 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                     break;
                 }
             }
+
+            form.setFieldsValue({
+                id: initialValues.id,
+                role_name: initialValues.role_name,
+                permissions: formattedPermissions
+            });
+
+            setSelectedPermissions(formattedPermissions);
         }
     }, [visible, initialValues, form]);
 
@@ -138,50 +148,34 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
         try {
             const values = await form.validateFields();
 
-            // Validate role ID
-            if (!values.id && !initialValues?.id) {
-                throw new Error('Role ID is required');
-            }
-
-            // Validate role name
-            if (!values.role_name?.trim()) {
-                throw new Error('Role name is required');
-            }
-
-            // Format permissions
+            // Format permissions for API
             const formattedPermissions = {};
-            Object.entries(values.permissions || {}).forEach(([key, perms]) => {
-                const enabledPermissions = Object.entries(perms)
-                    .filter(([_, enabled]) => enabled === true)
-                    .map(([perm]) => perm);
+            Object.entries(values.permissions || {}).forEach(([moduleKey, permissions]) => {
+                if (permissions) {
+                    const enabledPermissions = Object.entries(permissions)
+                        .filter(([_, enabled]) => enabled)
+                        .map(([permission]) => permission);
 
-                if (enabledPermissions.length > 0) {
-                    formattedPermissions[key] = [{
-                        key: key,
-                        permissions: enabledPermissions
-                    }];
+                    if (enabledPermissions.length > 0) {
+                        formattedPermissions[moduleKey] = [{
+                            key: moduleKey,
+                            permissions: enabledPermissions
+                        }];
+                    }
                 }
             });
 
-            // Check if at least one permission is selected
-            if (Object.keys(formattedPermissions).length === 0) {
-                throw new Error('Please select at least one permission');
-            }
-
-            const submitData = {
-                id: values.id || initialValues.id,
-                role_name: values.role_name.trim(),
+            // Submit with properly formatted data
+            await onSubmit({
+                id: values.id || initialValues?.id,
+                role_name: values.role_name,
                 permissions: formattedPermissions
-            };
+            });
 
-            await onSubmit(submitData);
+            form.resetFields();
+            setSelectedPermissions({});
         } catch (error) {
-            // Handle form validation errors
-            if (error.errorFields) {
-                return; // Let antd handle form validation errors
-            }
-            // Handle custom validation errors
-            message.error(error.message || 'Failed to update role');
+            console.error('Validation failed:', error);
         }
     };
 
@@ -189,7 +183,11 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
         const newValues = { ...form.getFieldsValue() };
         if (!newValues.permissions) newValues.permissions = {};
 
-        subModules[module].forEach(subModule => {
+        // Get all submodules for this module
+        const moduleSubModules = subModules[module] || [];
+
+        // Update all permissions for all submodules in this module
+        moduleSubModules.forEach(subModule => {
             newValues.permissions[subModule.key] = {
                 view: checked,
                 create: checked,
@@ -204,25 +202,31 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
 
     const isModuleFullySelected = (module) => {
         const values = form.getFieldsValue().permissions || {};
-        return subModules[module]?.every(subModule =>
+        const moduleSubModules = subModules[module] || [];
+
+        return moduleSubModules.every(subModule =>
             permissions.every(permission =>
                 values[subModule.key]?.[permission] === true
             )
-        ) || false;
+        );
     };
 
     const isModuleIndeterminate = (module) => {
         const values = form.getFieldsValue().permissions || {};
-        const hasSelected = subModules[module]?.some(subModule =>
+        const moduleSubModules = subModules[module] || [];
+
+        const hasSelected = moduleSubModules.some(subModule =>
             permissions.some(permission =>
                 values[subModule.key]?.[permission] === true
             )
         );
-        const hasUnselected = subModules[module]?.some(subModule =>
+
+        const hasUnselected = moduleSubModules.some(subModule =>
             permissions.some(permission =>
                 values[subModule.key]?.[permission] !== true
             )
         );
+
         return hasSelected && hasUnselected;
     };
 
@@ -230,6 +234,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
         const newValues = { ...form.getFieldsValue() };
         if (!newValues.permissions) newValues.permissions = {};
 
+        // Set all permissions for this submodule
         newValues.permissions[subModuleKey] = {
             view: checked,
             create: checked,

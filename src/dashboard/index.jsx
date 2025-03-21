@@ -11,6 +11,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, logout } from '../auth/services/authSlice';
 import { useNavigate } from 'react-router-dom';
 import './dashboard.scss';
+import { useLogout } from '../hooks/useLogout';
 
 const { Title, Text } = Typography;
 
@@ -18,11 +19,7 @@ export default function Dashboard() {
     const user = useSelector(selectCurrentUser);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        dispatch(logout());
-        navigate('/login');
-    };
+    const handleLogout = useLogout();
 
     const userMenuItems = [
         {
