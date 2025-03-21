@@ -97,12 +97,12 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 {
                     title: 'Leads',
                     icon: <FiTarget />,
-                    path: '/dashboard/leads'
+                    path: '/dashboard/crm/leads'
                 },
                 {
                     title: 'Deals',
                     icon: <FiShoppingBag />,
-                    path: '/dashboard/deals'
+                    path: '/dashboard/crm/deals'
                 },
                 {
                     title: 'Proposal',

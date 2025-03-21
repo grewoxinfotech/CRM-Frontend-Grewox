@@ -14,7 +14,8 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import EmployeeList from './EmployeeList';
-import { useGetAllEmployeesQuery, useDeleteEmployeeMutation } from './services/employeeApi';
+import CreateEmployee from './CreateEmployee';
+import { useGetAllEmployeesQuery, useDeleteEmployeeMutation, useCreateEmployeeMutation, useUpdateEmployeeMutation } from './services/employeeApi';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setSelectedEmployee } from './services/employeeSlice';
@@ -26,11 +27,15 @@ const Employee = () => {
     const navigate = useNavigate();
     const { data: employeesData, isLoading: isLoadingEmployees, refetch } = useGetAllEmployeesQuery({});
     const [deleteEmployee] = useDeleteEmployeeMutation();
+    const [createEmployee] = useCreateEmployeeMutation();
+    const [updateEmployee] = useUpdateEmployeeMutation();
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const searchInputRef = useRef(null);
     const [loading, setLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingEmployee, setEditingEmployee] = useState(null);
 
     useEffect(() => {
         if (employeesData?.data) {
@@ -91,12 +96,38 @@ const Employee = () => {
     };
 
     const handleEdit = (employee) => {
-        dispatch(setSelectedEmployee(employee));
-        navigate(`/dashboard/hrm/employee/edit/${employee.id}`);
+        setEditingEmployee(employee);
+        setIsModalOpen(true);
     };
 
     const handleAddEmployee = () => {
-        navigate('/dashboard/hrm/employee/create');
+        setEditingEmployee(null);
+        setIsModalOpen(true);
+    };
+
+    const handleModalCancel = () => {
+        setIsModalOpen(false);
+        setEditingEmployee(null);
+    };
+
+    const handleModalSubmit = async (values) => {
+        try {
+            if (editingEmployee) {
+                await updateEmployee({
+                    id: editingEmployee.id,
+                    data: values
+                }).unwrap();
+                message.success('Employee updated successfully');
+            } else {
+                await createEmployee(values).unwrap();
+                message.success('Employee created successfully');
+            }
+            setIsModalOpen(false);
+            setEditingEmployee(null);
+            refetch();
+        } catch (error) {
+            message.error(error?.data?.message || 'Operation failed');
+        }
     };
 
     const exportMenu = (
@@ -259,6 +290,14 @@ const Employee = () => {
                     onView={handleView}
                 />
             </Card>
+
+            <CreateEmployee
+                open={isModalOpen}
+                onCancel={handleModalCancel}
+                onSubmit={handleModalSubmit}
+                isEditing={!!editingEmployee}
+                initialValues={editingEmployee}
+            />
         </div>
     );
 };

@@ -34,8 +34,8 @@ import JobOnboarding from "../dashboard/module/job/job onboarding/index.jsx";
 import JobApplications from "../dashboard/module/job/job applications/index.jsx";
 import OfferLetters from "../dashboard/module/job/offer letters/index.jsx";
 import Interviews from "../dashboard/module/job/interviews/index.jsx";
-
-
+import Lead from "../dashboard/module/crm/lead/index.jsx";
+import Deal from "../dashboard/module/crm/deal/index.jsx";
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -154,6 +154,19 @@ const routes = createBrowserRouter([
         {
           path: "interviews",
           element: <Interviews />
+        }
+      ]
+     },
+     {
+      path: "crm",
+      children: [
+        {
+          path: "leads",
+          element: <Lead />
+        },
+        {
+          path: "deals",
+          element: <Deal />
         }
       ]
      },
