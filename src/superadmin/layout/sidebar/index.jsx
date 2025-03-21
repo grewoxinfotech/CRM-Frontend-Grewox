@@ -20,11 +20,13 @@ import {
     FiEdit3,
     FiBox
 } from 'react-icons/fi';
+import { useLogout } from '../../../hooks/useLogout';
 import './sidebar.scss';
 
 const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     const [isCollapsed, setIsCollapsed] = useState(collapsed);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const handleLogout = useLogout();
 
     // Sync local state with props
     useEffect(() => {
@@ -233,12 +235,24 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                         {!isCollapsed && <span className="title">Profile</span>}
                     </div>
                 </NavLink>
-                <NavLink to="/logout" className="nav-item logout-btn">
+                <button 
+                    onClick={handleLogout}
+                    className="nav-item logout-btn"
+                    style={{ 
+                        width: '100%', 
+                        border: 'none', 
+                        background: 'none', 
+                        padding: '0',
+                        cursor: 'pointer',
+                        color: 'inherit',
+                        textAlign: 'left'
+                    }}
+                >
                     <div className="nav-item-content">
                         <span className="icon"><FiLogOut /></span>
                         {!isCollapsed && <span className="title">Logout</span>}
                     </div>
-                </NavLink>
+                </button>
             </div>
         </motion.aside>
     );

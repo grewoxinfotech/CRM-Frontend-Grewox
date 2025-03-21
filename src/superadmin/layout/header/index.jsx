@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
+import { useLogout } from '../../../hooks/useLogout';
 import './header.scss';
 
 const Header = () => {
@@ -23,6 +24,7 @@ const Header = () => {
     const [unreadNotifications, setUnreadNotifications] = useState(3);
     const [unreadMails, setUnreadMails] = useState(5);
     const user = useSelector(selectCurrentUser);
+    const handleLogout = useLogout();
 
     const userMenuItems = [
         {
@@ -47,7 +49,8 @@ const Header = () => {
             key: 'logout',
             label: 'Logout',
             icon: <FiLogOut />,
-            danger: true
+            danger: true,
+            onClick: handleLogout
         }
     ];
 

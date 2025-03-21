@@ -1,20 +1,26 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { selectUserRole } from '../../auth/services/authSlice';
+import { selectUserRole, selectIsLogin } from '../../auth/services/authSlice';
 
 const RoleBasedRoute = ({ children, allowedRoles }) => {
     const userRole = useSelector(selectUserRole);
+    const isLogin = useSelector(selectIsLogin);
     const location = useLocation();
+    const navigate = useNavigate();
 
-    if (!userRole || !allowedRoles.includes(userRole.role_name)) {
-        if (userRole?.role_name === 'super-admin') {
-            return <Navigate to="/superadmin" replace state={{ from: location }} />;
-        } else if (userRole?.role_name === 'client') {
-            return <Navigate to="/dashboard" replace state={{ from: location }} />;
-        } else {
-            return <Navigate to="/dashboard" replace state={{ from: location }} />;
+    useEffect(() => {
+        if (!isLogin) {
+            navigate('/login', { state: { from: location }, replace: true });
+        } else if (userRole && !allowedRoles.includes(userRole.role_name)) {
+            const redirectPath = userRole.role_name === 'super-admin' ? '/superadmin' : '/dashboard';
+            navigate(redirectPath, { replace: true });
         }
+    }, [isLogin, userRole, allowedRoles, location, navigate]);
+
+    // Show nothing while checking authentication and role
+    if (!isLogin || (userRole && !allowedRoles.includes(userRole.role_name))) {
+        return null;
     }
 
     return children;

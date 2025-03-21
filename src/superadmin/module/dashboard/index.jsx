@@ -8,11 +8,13 @@ import {
     FiActivity,
     FiCheckCircle,
     FiServer,
-    FiHome
+    FiHome,
+    FiLogOut
 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
 import { Link } from 'react-router-dom';
+import { useLogout } from '../../../hooks/useLogout';
 import './dashboard.scss';
 
 const { Title, Text } = Typography;
@@ -33,6 +35,7 @@ const staggerContainer = {
 
 const SuperAdminDashboard = () => {
     const user = useSelector(selectCurrentUser);
+    const handleLogout = useLogout();
 
     const getInitials = (name) => {
         if (!name) return 'U';
@@ -199,6 +202,13 @@ const SuperAdminDashboard = () => {
                                         </Link>
                                         <Button icon={<FiSettings />}>
                                             Settings
+                                        </Button>
+                                        <Button 
+                                            danger 
+                                            icon={<FiLogOut />}
+                                            onClick={handleLogout}
+                                        >
+                                            Logout
                                         </Button>
                                     </Space>
                                 </div>
