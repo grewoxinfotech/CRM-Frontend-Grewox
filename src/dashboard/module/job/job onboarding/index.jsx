@@ -1,86 +1,115 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
+    Dropdown, Menu, Row, Col, Breadcrumb, Table
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome, FiFilter
+    FiHome
 } from 'react-icons/fi';
-import './department.scss';
+import './jobOnboarding.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import CreateDepartment from './CreateDepartment';
+import CreateJobOnboarding from './CreateJobOnboarding';
+import JobOnboardingList from './JobOnboardingList';
 import { Link } from 'react-router-dom';
-import DepartmentList from './DepartmentList';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
-const Department = () => {
-    const [departments, setDepartments] = useState([]);
+const JobOnboarding = () => {
+    const [onboardings, setOnboardings] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    const [selectedDepartment, setSelectedDepartment] = useState(null);
+    const [selectedOnboarding, setSelectedOnboarding] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filters, setFilters] = useState({
-        branch: undefined
-    });
+    const [filteredOnboardings, setFilteredOnboardings] = useState([]);
     const searchInputRef = useRef(null);
 
-   
+    useEffect(() => {
+        // TODO: Replace with actual API call
+        const mockData = [
+            {
+                id: 1,
+                interviewer: 'John Doe',
+                days_of_week:"45",
+                salary: '100000',
+                joining_date: new Date().toLocaleDateString(),
+                salary_type: 'Monthly',
+                salary_duration: 'Monthly',
+                status: 'Active',
+            }
+        ];
+        setOnboardings(mockData);
+        setFilteredOnboardings(mockData);
+    }, []);
 
-    const handleAddDepartment = () => {
-        setSelectedDepartment(null);
+    useEffect(() => {
+        let result = [...onboardings];
+        if (searchText) {
+            result = result.filter(onboarding =>
+                onboarding.employee_name.toLowerCase().includes(searchText.toLowerCase()) ||
+                onboarding.position.toLowerCase().includes(searchText.toLowerCase()) ||
+                onboarding.department.toLowerCase().includes(searchText.toLowerCase()) ||
+                onboarding.mentor.toLowerCase().includes(searchText.toLowerCase())
+            );
+        }
+        setFilteredOnboardings(result);
+    }, [onboardings, searchText]);
+
+    const handleAddOnboarding = () => {
+        setSelectedOnboarding(null);
         setIsEditing(false);
         setIsFormVisible(true);
     };
 
-    const handleEditDepartment = (department) => {
-        setSelectedDepartment(department);
+    const handleEditOnboarding = (onboarding) => {
+        setSelectedOnboarding(onboarding);
         setIsEditing(true);
         setIsFormVisible(true);
     };
 
-    const handleDeleteConfirm = (department) => {
-        setSelectedDepartment(department);
+    const handleViewOnboarding = (onboarding) => {
+        setSelectedOnboarding(onboarding);
+    };
+
+    const handleDeleteConfirm = (onboarding) => {
+        setSelectedOnboarding(onboarding);
         setIsDeleteModalVisible(true);
     };
 
-    const handleDeleteDepartment = async () => {
+    const handleDeleteOnboarding = async () => {
         try {
             // TODO: Implement delete API call
-            const updatedDepartments = departments.filter(d => d.id !== selectedDepartment.id);
-            setDepartments(updatedDepartments);
-            message.success('Department deleted successfully');
+            const updatedOnboardings = onboardings.filter(o => o.id !== selectedOnboarding.id);
+            setOnboardings(updatedOnboardings);
+            message.success('Onboarding record deleted successfully');
             setIsDeleteModalVisible(false);
         } catch (error) {
-            message.error('Failed to delete department');
+            message.error('Failed to delete onboarding record');
         }
     };
 
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditing) {
-                const updatedDepartments = departments.map(d =>
-                    d.id === selectedDepartment.id ? { ...d, ...formData } : d
+                const updatedOnboardings = onboardings.map(o =>
+                    o.id === selectedOnboarding.id ? { ...o, ...formData } : o
                 );
-                setDepartments(updatedDepartments);
-                message.success('Department updated successfully');
+                setOnboardings(updatedOnboardings);
+                message.success('Onboarding record updated successfully');
             } else {
-                const newDepartment = {
+                const newOnboarding = {
                     id: Date.now(),
                     ...formData,
                     created_at: new Date().toISOString(),
-                    created_by: 'Admin'
                 };
-                setDepartments([...departments, newDepartment]);
-                message.success('Department created successfully');
+                setOnboardings([...onboardings, newOnboarding]);
+                message.success('Onboarding record created successfully');
             }
             setIsFormVisible(false);
         } catch (error) {
@@ -90,23 +119,6 @@ const Department = () => {
 
     const handleSearch = (value) => {
         setSearchText(value);
-    };
-
-    const handleFilterChange = (type, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [type]: value
-        }));
-    };
-
-    const clearFilters = () => {
-        setFilters({
-            branch: undefined
-        });
-        setSearchText('');
-        if (searchInputRef.current) {
-            searchInputRef.current.input.value = '';
-        }
     };
 
     const exportMenu = (
@@ -138,22 +150,27 @@ const Department = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = departments.map(department => ({
-                'Department': department.department,
-                'Branch': department.branch,
-                'Created Date': moment(department.created_at).format('YYYY-MM-DD'),
-                'Created By': department.created_by
+            const data = onboardings.map(onboarding => ({
+                'Employee Name': onboarding.employee_name,
+                'Position': onboarding.position,
+                'Department': onboarding.department,
+                'Joining Date': onboarding.joining_date,
+                'Mentor': onboarding.mentor,
+                'Status': onboarding.status,
+                'Tasks Completed': onboarding.tasks_completed,
+                'Documents Submitted': onboarding.documents_submitted,
+                'Orientation Date': onboarding.orientation_date
             }));
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'departments_export');
+                    exportToCSV(data, 'job_onboarding_export');
                     break;
                 case 'excel':
-                    exportToExcel(data, 'departments_export');
+                    exportToExcel(data, 'job_onboarding_export');
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'departments_export');
+                    exportToPDF(data, 'job_onboarding_export');
                     break;
                 default:
                     break;
@@ -189,7 +206,7 @@ const Department = () => {
     const exportToExcel = (data, filename) => {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Departments');
+        XLSX.utils.book_append_sheet(wb, ws, 'Onboarding');
         XLSX.writeFile(wb, `${filename}.xlsx`);
     };
 
@@ -205,7 +222,7 @@ const Department = () => {
     };
 
   return (
-        <div className="department-page">
+        <div className="job-onboarding-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -215,31 +232,27 @@ const Department = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        <Link to="/dashboard/hrm">HRM</Link>
+                        <Link to="/dashboard/job">Job</Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>Department</Breadcrumb.Item>
+                    <Breadcrumb.Item>Job Onboarding</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
             <div className="page-header">
                 <div className="page-title">
-                    <Title level={2}>Departments</Title>
-                    <Text type="secondary">Manage all departments in the organization</Text>
+                    <Title level={2}>Job Onboarding</Title>
+                    <Text type="secondary">Manage employee onboarding process</Text>
                 </div>
                 <div className="header-actions">
-                    <Space size={16} className="filter-section">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search departments..."
-                            allowClear
-                            onChange={(e) => handleSearch(e.target.value)}
-                            value={searchText}
-                            ref={searchInputRef}
-                            className="search-input"
-                            style={{ width: '250px' }}
-                        />
-                      
-                    </Space>
+                    <Input
+                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                        placeholder="Search onboarding..."
+                        allowClear
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchText}
+                        ref={searchInputRef}
+                        className="search-input"
+                    />
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
                             <Button className="export-button">
@@ -251,36 +264,38 @@ const Department = () => {
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={handleAddDepartment}
+                            onClick={handleAddOnboarding}
                             className="add-button"
                         >
-                            Add Department
+                            Add Onboarding
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <Card className="department-table-card">
-                <DepartmentList
-                    searchText={searchText}
-                    filters={filters}
-                    onEdit={handleEditDepartment}
+            <Card className="job-onboarding-table-card">
+                <JobOnboardingList
+                    onboardings={filteredOnboardings}
+                    loading={loading}
+                    onEdit={handleEditOnboarding}
+                    onDelete={handleDeleteConfirm}
+                    onView={handleViewOnboarding}
                 />
             </Card>
 
-            <CreateDepartment
+            <CreateJobOnboarding
                 open={isFormVisible}
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
-                initialValues={selectedDepartment}
+                initialValues={selectedOnboarding}
                 loading={loading}
             />
 
             <Modal
-                title="Delete Department"
+                title="Delete Onboarding Record"
                 open={isDeleteModalVisible}
-                onOk={handleDeleteDepartment}
+                onOk={handleDeleteOnboarding}
                 onCancel={() => setIsDeleteModalVisible(false)}
                 okText="Delete"
                 okButtonProps={{
@@ -288,11 +303,11 @@ const Department = () => {
                     loading: loading
                 }}
             >
-                <p>Are you sure you want to delete this department?</p>
+                <p>Are you sure you want to delete onboarding record for <strong>{selectedOnboarding?.employee_name}</strong>?</p>
                 <p>This action cannot be undone.</p>
             </Modal>
         </div>
     );
 };
 
-export default Department;
+export default JobOnboarding;

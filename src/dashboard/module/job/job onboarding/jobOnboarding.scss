@@ -9,7 +9,7 @@
     }
 }
 
-.announcement-page {
+.job-onboarding-page {
     padding: 24px;
     background: $background-color;
 
@@ -175,7 +175,7 @@
         }
     }
 
-    .announcement-table-card {
+    .job-onboarding-table-card {
         @include hover-shadow;
         background: white;
         border-radius: 12px;
@@ -226,8 +226,8 @@
     }
 }
 
-// Modal Styles
-.announcement-form-modal {
+// Create/Edit Modal Styles
+.job-onboarding-form-modal {
     .ant-modal-content {
         border-radius: 12px;
         overflow: hidden;
@@ -269,16 +269,45 @@
 
             .ant-input,
             .ant-select-selector,
-            .ant-picker {
+            .ant-picker,
+            .ant-input-number {
                 border-radius: 8px;
-                // border: 1px solid $border-color;
-                // transition: all 0.3s ease;
+                height: 40px;
+            }
 
-                // &:hover, 
-                // &:focus {
-                //     border-color: #1677ff;
-                //     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                // }
+            .ant-input-number {
+                width: 100%;
+            }
+
+            .ant-progress {
+                margin-bottom: 0;
+            }
+        }
+    }
+}
+
+// Add these styles for the dropdown menu
+.ant-dropdown-menu {
+    padding: 4px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    .ant-dropdown-menu-item {
+        padding: 8px 12px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        &:hover {
+            background: #f0f2f5;
+        }
+
+        &-danger {
+            color: #ff4d4f;
+            
+            &:hover {
+                background: #fff1f0;
             }
         }
     }

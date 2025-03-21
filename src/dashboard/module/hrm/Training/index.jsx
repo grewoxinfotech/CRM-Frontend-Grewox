@@ -201,7 +201,7 @@ const Training = () => {
         doc.save(`${filename}.pdf`);
     };
 
-    return (
+  return (
         <div className="training-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>

@@ -28,6 +28,12 @@ import Announcement from "../dashboard/module/hrm/Announcement";
 import Role from "../dashboard/module/hrm/role";
 import Users from "../dashboard/module/user-management/users/index.jsx";
 import Employee from "../dashboard/module/hrm/Employee/index.jsx";
+import Job from "../dashboard/module/job/jobs/index.jsx";
+import JobCandidates from "../dashboard/module/job/job candidates/index.jsx";
+import JobOnboarding from "../dashboard/module/job/job onboarding/index.jsx";
+import JobApplications from "../dashboard/module/job/job applications/index.jsx";
+import OfferLetters from "../dashboard/module/job/offer letters/index.jsx";
+import Interviews from "../dashboard/module/job/interviews/index.jsx";
 
 
 const routes = createBrowserRouter([
@@ -122,6 +128,35 @@ const routes = createBrowserRouter([
           }
         ]
       },
+     {
+      path: "job",
+      children: [
+        {
+          path: "jobs",
+          element: <Job />
+        },
+        {
+          path: "job-candidates",
+          element: <JobCandidates />
+        },
+        {
+          path: "job-onboarding",
+          element: <JobOnboarding />
+        },
+        {
+          path: "job-applications",
+          element: <JobApplications />
+        },
+        {
+          path: "offer-letters",
+          element: <OfferLetters />
+        },
+        {
+          path: "interviews",
+          element: <Interviews />
+        }
+      ]
+     },
       {
         path: "user-management/users",
         element: <Users />

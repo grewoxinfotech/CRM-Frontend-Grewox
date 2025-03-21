@@ -229,7 +229,7 @@ const Announcement = () => {
         </Menu>
     );
 
-    return (
+  return (
         <div className="announcement-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>

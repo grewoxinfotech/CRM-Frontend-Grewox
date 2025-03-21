@@ -1,86 +1,119 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
+    Dropdown, Menu, Row, Col, Breadcrumb, Table
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome, FiFilter
+    FiHome
 } from 'react-icons/fi';
-import './department.scss';
+import './jobApplications.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import CreateDepartment from './CreateDepartment';
+import CreateJobApplication from './CreateJobApplication';
+import JobApplicationList from './JobApplicationList';
 import { Link } from 'react-router-dom';
-import DepartmentList from './DepartmentList';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
-const Department = () => {
-    const [departments, setDepartments] = useState([]);
+const JobApplications = () => {
+    const [applications, setApplications] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    const [selectedDepartment, setSelectedDepartment] = useState(null);
+    const [selectedApplication, setSelectedApplication] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filters, setFilters] = useState({
-        branch: undefined
-    });
+    const [filteredApplications, setFilteredApplications] = useState([]);
     const searchInputRef = useRef(null);
 
-   
+    useEffect(() => {
+        // TODO: Replace with actual API call
+        const mockData = [
+            {
+                id: 1,
+                applicant_name: 'John Doe',
+                email: 'john.doe@example.com',
+                position: 'Software Engineer',
+                notice_period: '2 months',
+                current_location: 'San Francisco',
+                phone: '+1234567890',
+                total_experience: '5 years',
+                applied_source: 'LinkedIn',
+                cover_letter: 'i am a good candidate for this job',
+                status: 'pending',
+                resume: 'resume.pdf'
+            }
+        ];
+        setApplications(mockData);
+        setFilteredApplications(mockData);
+    }, []);
 
-    const handleAddDepartment = () => {
-        setSelectedDepartment(null);
+    useEffect(() => {
+        let result = [...applications];
+        if (searchText) {
+            result = result.filter(application =>
+                application.applicant_name.toLowerCase().includes(searchText.toLowerCase()) ||
+                application.email.toLowerCase().includes(searchText.toLowerCase()) ||
+                application.position.toLowerCase().includes(searchText.toLowerCase()) ||
+                application.status.toLowerCase().includes(searchText.toLowerCase())
+            );
+        }
+        setFilteredApplications(result);
+    }, [applications, searchText]);
+
+    const handleAddApplication = () => {
+        setSelectedApplication(null);
         setIsEditing(false);
         setIsFormVisible(true);
     };
 
-    const handleEditDepartment = (department) => {
-        setSelectedDepartment(department);
+    const handleEditApplication = (application) => {
+        setSelectedApplication(application);
         setIsEditing(true);
         setIsFormVisible(true);
     };
 
-    const handleDeleteConfirm = (department) => {
-        setSelectedDepartment(department);
+    const handleViewApplication = (application) => {
+        setSelectedApplication(application);
+    };
+
+    const handleDeleteConfirm = (application) => {
+        setSelectedApplication(application);
         setIsDeleteModalVisible(true);
     };
 
-    const handleDeleteDepartment = async () => {
+    const handleDeleteApplication = async () => {
         try {
             // TODO: Implement delete API call
-            const updatedDepartments = departments.filter(d => d.id !== selectedDepartment.id);
-            setDepartments(updatedDepartments);
-            message.success('Department deleted successfully');
+            const updatedApplications = applications.filter(a => a.id !== selectedApplication.id);
+            setApplications(updatedApplications);
+            message.success('Application deleted successfully');
             setIsDeleteModalVisible(false);
         } catch (error) {
-            message.error('Failed to delete department');
+            message.error('Failed to delete application');
         }
     };
 
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditing) {
-                const updatedDepartments = departments.map(d =>
-                    d.id === selectedDepartment.id ? { ...d, ...formData } : d
+                const updatedApplications = applications.map(a =>
+                    a.id === selectedApplication.id ? { ...a, ...formData } : a
                 );
-                setDepartments(updatedDepartments);
-                message.success('Department updated successfully');
+                setApplications(updatedApplications);
+                message.success('Application updated successfully');
             } else {
-                const newDepartment = {
+                const newApplication = {
                     id: Date.now(),
                     ...formData,
                     created_at: new Date().toISOString(),
-                    created_by: 'Admin'
                 };
-                setDepartments([...departments, newDepartment]);
-                message.success('Department created successfully');
+                setApplications([...applications, newApplication]);
+                message.success('Application created successfully');
             }
             setIsFormVisible(false);
         } catch (error) {
@@ -90,23 +123,6 @@ const Department = () => {
 
     const handleSearch = (value) => {
         setSearchText(value);
-    };
-
-    const handleFilterChange = (type, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [type]: value
-        }));
-    };
-
-    const clearFilters = () => {
-        setFilters({
-            branch: undefined
-        });
-        setSearchText('');
-        if (searchInputRef.current) {
-            searchInputRef.current.input.value = '';
-        }
     };
 
     const exportMenu = (
@@ -138,22 +154,28 @@ const Department = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = departments.map(department => ({
-                'Department': department.department,
-                'Branch': department.branch,
-                'Created Date': moment(department.created_at).format('YYYY-MM-DD'),
-                'Created By': department.created_by
+            const data = applications.map(application => ({
+                'Applicant Name': application.applicant_name,
+                'Email': application.email,
+                'Phone': application.phone,
+                'Position': application.position,
+                'Experience': application.experience,
+                'Current Salary': application.current_salary,
+                'Expected Salary': application.expected_salary,
+                'Notice Period': application.notice_period,
+                'Interview Date': application.interview_date,
+                'Status': application.status,
             }));
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'departments_export');
+                    exportToCSV(data, 'job_applications_export');
                     break;
                 case 'excel':
-                    exportToExcel(data, 'departments_export');
+                    exportToExcel(data, 'job_applications_export');
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'departments_export');
+                    exportToPDF(data, 'job_applications_export');
                     break;
                 default:
                     break;
@@ -189,7 +211,7 @@ const Department = () => {
     const exportToExcel = (data, filename) => {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Departments');
+        XLSX.utils.book_append_sheet(wb, ws, 'Applications');
         XLSX.writeFile(wb, `${filename}.xlsx`);
     };
 
@@ -205,7 +227,7 @@ const Department = () => {
     };
 
   return (
-        <div className="department-page">
+        <div className="job-applications-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -215,31 +237,27 @@ const Department = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        <Link to="/dashboard/hrm">HRM</Link>
+                        <Link to="/dashboard/job">Job</Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>Department</Breadcrumb.Item>
+                    <Breadcrumb.Item>Job Applications</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
             <div className="page-header">
                 <div className="page-title">
-                    <Title level={2}>Departments</Title>
-                    <Text type="secondary">Manage all departments in the organization</Text>
+                    <Title level={2}>Job Applications</Title>
+                    <Text type="secondary">Manage all job applications</Text>
                 </div>
                 <div className="header-actions">
-                    <Space size={16} className="filter-section">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search departments..."
-                            allowClear
-                            onChange={(e) => handleSearch(e.target.value)}
-                            value={searchText}
-                            ref={searchInputRef}
-                            className="search-input"
-                            style={{ width: '250px' }}
-                        />
-                      
-                    </Space>
+                    <Input
+                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                        placeholder="Search applications..."
+                        allowClear
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchText}
+                        ref={searchInputRef}
+                        className="search-input"
+                    />
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
                             <Button className="export-button">
@@ -251,36 +269,38 @@ const Department = () => {
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={handleAddDepartment}
+                            onClick={handleAddApplication}
                             className="add-button"
                         >
-                            Add Department
+                            Add Application
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <Card className="department-table-card">
-                <DepartmentList
-                    searchText={searchText}
-                    filters={filters}
-                    onEdit={handleEditDepartment}
+            <Card className="job-applications-table-card">
+                <JobApplicationList
+                    applications={filteredApplications}
+                    loading={loading}
+                    onEdit={handleEditApplication}
+                    onDelete={handleDeleteConfirm}
+                    onView={handleViewApplication}
                 />
             </Card>
 
-            <CreateDepartment
+            <CreateJobApplication
                 open={isFormVisible}
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
-                initialValues={selectedDepartment}
+                initialValues={selectedApplication}
                 loading={loading}
             />
 
             <Modal
-                title="Delete Department"
+                title="Delete Application"
                 open={isDeleteModalVisible}
-                onOk={handleDeleteDepartment}
+                onOk={handleDeleteApplication}
                 onCancel={() => setIsDeleteModalVisible(false)}
                 okText="Delete"
                 okButtonProps={{
@@ -288,11 +308,11 @@ const Department = () => {
                     loading: loading
                 }}
             >
-                <p>Are you sure you want to delete this department?</p>
+                <p>Are you sure you want to delete application for <strong>{selectedApplication?.applicant_name}</strong>?</p>
                 <p>This action cannot be undone.</p>
             </Modal>
         </div>
     );
 };
 
-export default Department;
+export default JobApplications;

@@ -1,86 +1,124 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
+    Dropdown, Menu, Row, Col, Breadcrumb, Table
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome, FiFilter
+    FiHome
 } from 'react-icons/fi';
-import './department.scss';
+import './job.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import CreateDepartment from './CreateDepartment';
+import CreateJob from './CreateJob';
+import JobList from './JobList';
 import { Link } from 'react-router-dom';
-import DepartmentList from './DepartmentList';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
-const Department = () => {
-    const [departments, setDepartments] = useState([]);
+const Job = () => {
+    const [jobs, setJobs] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    const [selectedDepartment, setSelectedDepartment] = useState(null);
+    const [selectedJob, setSelectedJob] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filters, setFilters] = useState({
-        branch: undefined
-    });
+    const [filteredJobs, setFilteredJobs] = useState([]);
     const searchInputRef = useRef(null);
 
-   
+    useEffect(() => {
+        // TODO: Replace with actual API call
+        const mockData = [
+            {
+                id: 1,
+                title: 'Senior React Developer',
+                category: 'Engineering',
+                interview_round: 'New York',
+                job_type: 'Full-time',
+                work_experience: '3-5 years',
+                job_location: 'New York',
+                recruiter: 'active',
+                start_date: new Date().toLocaleDateString(),
+                end_date: new Date().toLocaleDateString(),
+                expected_salary: '$80,000',
+                status: 'active',
+                description: 'We are looking for a Senior React Developer...',
+              
+            }
+        ];
+        setJobs(mockData);
+        setFilteredJobs(mockData);
+    }, []);
 
-    const handleAddDepartment = () => {
-        setSelectedDepartment(null);
+    useEffect(() => {
+        let result = [...jobs];
+        if (searchText) {
+            result = result.filter(job =>
+                job.title.toLowerCase().includes(searchText.toLowerCase()) ||
+                job.department.toLowerCase().includes(searchText.toLowerCase()) ||
+                job.location.toLowerCase().includes(searchText.toLowerCase()) ||
+                job.type.toLowerCase().includes(searchText.toLowerCase()) ||
+                job.experience.toLowerCase().includes(searchText.toLowerCase()) ||
+                (job.salaryMin && job.salaryMin.toString().includes(searchText)) ||
+                (job.salaryMax && job.salaryMax.toString().includes(searchText))
+            );
+        }
+        setFilteredJobs(result);
+    }, [jobs, searchText]);
+
+    const handleAddJob = () => {
+        setSelectedJob(null);
         setIsEditing(false);
         setIsFormVisible(true);
     };
 
-    const handleEditDepartment = (department) => {
-        setSelectedDepartment(department);
+    const handleEditJob = (job) => {
+        setSelectedJob(job);
         setIsEditing(true);
         setIsFormVisible(true);
     };
 
-    const handleDeleteConfirm = (department) => {
-        setSelectedDepartment(department);
+    const handleViewJob = (job) => {
+        setSelectedJob(job);
+    };
+
+    const handleDeleteConfirm = (job) => {
+        setSelectedJob(job);
         setIsDeleteModalVisible(true);
     };
 
-    const handleDeleteDepartment = async () => {
+    const handleDeleteJob = async () => {
         try {
             // TODO: Implement delete API call
-            const updatedDepartments = departments.filter(d => d.id !== selectedDepartment.id);
-            setDepartments(updatedDepartments);
-            message.success('Department deleted successfully');
+            const updatedJobs = jobs.filter(j => j.id !== selectedJob.id);
+            setJobs(updatedJobs);
+            message.success('Job deleted successfully');
             setIsDeleteModalVisible(false);
         } catch (error) {
-            message.error('Failed to delete department');
+            message.error('Failed to delete job');
         }
     };
 
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditing) {
-                const updatedDepartments = departments.map(d =>
-                    d.id === selectedDepartment.id ? { ...d, ...formData } : d
+                const updatedJobs = jobs.map(j =>
+                    j.id === selectedJob.id ? { ...j, ...formData } : j
                 );
-                setDepartments(updatedDepartments);
-                message.success('Department updated successfully');
+                setJobs(updatedJobs);
+                message.success('Job updated successfully');
             } else {
-                const newDepartment = {
+                const newJob = {
                     id: Date.now(),
                     ...formData,
                     created_at: new Date().toISOString(),
-                    created_by: 'Admin'
                 };
-                setDepartments([...departments, newDepartment]);
-                message.success('Department created successfully');
+                setJobs([...jobs, newJob]);
+                message.success('Job created successfully');
             }
             setIsFormVisible(false);
         } catch (error) {
@@ -90,23 +128,6 @@ const Department = () => {
 
     const handleSearch = (value) => {
         setSearchText(value);
-    };
-
-    const handleFilterChange = (type, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [type]: value
-        }));
-    };
-
-    const clearFilters = () => {
-        setFilters({
-            branch: undefined
-        });
-        setSearchText('');
-        if (searchInputRef.current) {
-            searchInputRef.current.input.value = '';
-        }
     };
 
     const exportMenu = (
@@ -138,22 +159,27 @@ const Department = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = departments.map(department => ({
-                'Department': department.department,
-                'Branch': department.branch,
-                'Created Date': moment(department.created_at).format('YYYY-MM-DD'),
-                'Created By': department.created_by
+            const data = jobs.map(job => ({
+                'Job Title': job.title,
+                'Department': job.department,
+                'Location': job.location,
+                'Type': job.type,
+                'Experience': job.experience,
+                'Minimum Salary': `$${job.salaryMin.toLocaleString()}`,
+                'Maximum Salary': `$${job.salaryMax.toLocaleString()}`,
+                'Status': job.status,
+                'Created Date': moment(job.created_at).format('YYYY-MM-DD')
             }));
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'departments_export');
+                    exportToCSV(data, 'jobs_export');
                     break;
                 case 'excel':
-                    exportToExcel(data, 'departments_export');
+                    exportToExcel(data, 'jobs_export');
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'departments_export');
+                    exportToPDF(data, 'jobs_export');
                     break;
                 default:
                     break;
@@ -189,7 +215,7 @@ const Department = () => {
     const exportToExcel = (data, filename) => {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Departments');
+        XLSX.utils.book_append_sheet(wb, ws, 'Jobs');
         XLSX.writeFile(wb, `${filename}.xlsx`);
     };
 
@@ -205,7 +231,7 @@ const Department = () => {
     };
 
   return (
-        <div className="department-page">
+        <div className="job-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -217,29 +243,25 @@ const Department = () => {
                     <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>Department</Breadcrumb.Item>
+                    <Breadcrumb.Item>Job</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
             <div className="page-header">
                 <div className="page-title">
-                    <Title level={2}>Departments</Title>
-                    <Text type="secondary">Manage all departments in the organization</Text>
+                    <Title level={2}>Jobs</Title>
+                    <Text type="secondary">Manage all jobs in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Space size={16} className="filter-section">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search departments..."
-                            allowClear
-                            onChange={(e) => handleSearch(e.target.value)}
-                            value={searchText}
-                            ref={searchInputRef}
-                            className="search-input"
-                            style={{ width: '250px' }}
-                        />
-                      
-                    </Space>
+                    <Input
+                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                        placeholder="Search jobs..."
+                        allowClear
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchText}
+                        ref={searchInputRef}
+                        className="search-input"
+                    />
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
                             <Button className="export-button">
@@ -251,36 +273,38 @@ const Department = () => {
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={handleAddDepartment}
+                            onClick={handleAddJob}
                             className="add-button"
                         >
-                            Add Department
+                            Add Job
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <Card className="department-table-card">
-                <DepartmentList
-                    searchText={searchText}
-                    filters={filters}
-                    onEdit={handleEditDepartment}
+            <Card className="job-table-card">
+                <JobList
+                    jobs={filteredJobs}
+                    loading={loading}
+                    onEdit={handleEditJob}
+                    onDelete={handleDeleteConfirm}
+                    onView={handleViewJob}
                 />
             </Card>
 
-            <CreateDepartment
+            <CreateJob
                 open={isFormVisible}
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
-                initialValues={selectedDepartment}
+                initialValues={selectedJob}
                 loading={loading}
             />
 
             <Modal
-                title="Delete Department"
+                title="Delete Job"
                 open={isDeleteModalVisible}
-                onOk={handleDeleteDepartment}
+                onOk={handleDeleteJob}
                 onCancel={() => setIsDeleteModalVisible(false)}
                 okText="Delete"
                 okButtonProps={{
@@ -288,11 +312,11 @@ const Department = () => {
                     loading: loading
                 }}
             >
-                <p>Are you sure you want to delete this department?</p>
+                <p>Are you sure you want to delete <strong>{selectedJob?.title}</strong>?</p>
                 <p>This action cannot be undone.</p>
             </Modal>
         </div>
     );
 };
 
-export default Department;
+export default Job;

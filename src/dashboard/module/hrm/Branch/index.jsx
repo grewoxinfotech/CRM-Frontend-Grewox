@@ -183,7 +183,7 @@ const Branch = () => {
         </Menu>
     );
 
-    return (
+  return (
         <div className="branch-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>

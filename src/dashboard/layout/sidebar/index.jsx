@@ -248,32 +248,32 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 {
                     title: 'Jobs',
                     icon: <FiBriefcase />,
-                    path: '/dashboard/jobs'
+                    path: '/dashboard/job/jobs'
                 },
                 {
                     title: 'Job Candidates',
                     icon: <FiUsers />,
-                    path: '/dashboard/job-candidates'
+                    path: '/dashboard/job/job-candidates'
                 },
                 {
                     title: 'Job On-Boarding',
                     icon: <FiUserCheck />,
-                    path: '/dashboard/job-onboarding'
+                    path: '/dashboard/job/job-onboarding'
                 },
                 {
                     title: 'Job Applications',
                     icon: <FiFileText />,
-                    path: '/dashboard/job-applications'
+                    path: '/dashboard/job/job-applications'
                 },
                 {
                     title: 'Offer Letters',
                     icon: <FiFile />,
-                    path: '/dashboard/offer-letters'
+                    path: '/dashboard/job/offer-letters'
                 },
                 {
                     title: 'Interviews',
                     icon: <FiCalendar />,
-                    path: '/dashboard/interviews'
+                    path: '/dashboard/job/interviews'
                 }
             ]
         },
