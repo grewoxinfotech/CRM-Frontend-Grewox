@@ -84,6 +84,7 @@ const ContractType = () => {
               height: "32px",
               borderRadius: "6px",
               transition: "all 0.3s",
+              marginBottom: "24px",
             }}
           />
           <Popconfirm

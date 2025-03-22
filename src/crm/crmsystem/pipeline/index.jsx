@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import AddPipelineModal from "./AddPipelineModal";
 import EditPipelineModal from "./EditPipelineModal";
 import {
@@ -7,6 +7,7 @@ import {
   useDeletePipelineMutation,
 } from "./services/pipelineApi";
 import "./pipeline.scss";
+import { Button } from "antd";
 
 const Pipeline = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -57,6 +58,34 @@ const Pipeline = ({ isModalOpen, setIsModalOpen }) => {
   return (
     <div className="pipeline-container">
       <div className="pipeline-table">
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "24px",
+            fontWeight: "600",
+            color: "#111827",
+          }}
+        >
+          {/* Sources */}
+        </h2>
+        <Button
+          type="primary"
+          icon={<FiPlus />}
+          onClick={() => setIsModalOpen(true)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            height: "40px",
+            padding: "0 16px",
+            borderRadius: "8px",
+            fontWeight: "500",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+            marginBottom: "24px",
+          }}
+        >
+          Add Pipeline
+        </Button>
         <div className="table-header">
           <div className="header-cell pipeline-name">Pipeline</div>
           <div className="header-cell action">Action</div>

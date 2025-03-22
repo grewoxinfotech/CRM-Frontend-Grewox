@@ -88,9 +88,9 @@ export default function Crmsystem() {
       <div className="content-area">
         <div className="content-header">
           <h2>{activeSection}</h2>
-          <button className="add-button" onClick={() => setIsModalOpen(true)}>
+          {/* <button className="add-button" onClick={() => setIsModalOpen(true)}>
             +
-          </button>
+          </button> */}
         </div>
         <div className="content-body">{renderContent()}</div>
       </div>
