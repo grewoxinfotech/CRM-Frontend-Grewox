@@ -1,7 +1,6 @@
 import React from "react";
-import { Modal, Form, Input, Button } from "antd";
+import { Modal, Form, Input, Button, message } from "antd";
 import { useAddContractTypeMutation } from "./services/ContractTypeApi";
-import { toast } from "react-toastify";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 
@@ -21,11 +20,11 @@ const AddContractTypeModal = ({ isOpen, onClose }) => {
           lableType: "contractType",
         },
       }).unwrap();
-      toast.success("Contract type added successfully");
+      message.success("Contract type added successfully");
       form.resetFields();
       onClose();
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to add contract type");
+      message.error(error?.data?.message || "Failed to add contract type");
     }
   };
 

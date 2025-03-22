@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
 import { useParams } from "react-router-dom";
-import { Button, Table, Tag, Popconfirm } from "antd";
+import { Button, Table, Tag, Popconfirm, message } from "antd";
 import AddSourceModal from "./AddSourceModal";
 import EditSourceModal from "./EditSourceModal";
 import {
   useGetSourcesQuery,
   useDeleteSourceMutation,
 } from "./services/SourceApi";
-import { toast } from "react-toastify";
 import "./source.scss";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
@@ -36,9 +35,9 @@ const Source = () => {
   const handleDeleteSource = async (sourceId) => {
     try {
       await deleteSource(sourceId).unwrap();
-      toast.success("Source deleted successfully");
+      message.success("Source deleted successfully");
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to delete source");
+      message.error(error?.data?.message || "Failed to delete source");
     }
   };
 

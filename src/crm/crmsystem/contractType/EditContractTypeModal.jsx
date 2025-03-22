@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { Modal, Form, Input, Button } from "antd";
+import { Modal, Form, Input, Button, message } from "antd";
 import { useUpdateContractTypeMutation } from "./services/ContractTypeApi";
-import { toast } from "react-toastify";
+
 
 const EditContractTypeModal = ({ isOpen, onClose, contractType }) => {
   const [form] = Form.useForm();
@@ -24,11 +24,11 @@ const EditContractTypeModal = ({ isOpen, onClose, contractType }) => {
           lableType: "contractType",
         },
       }).unwrap();
-      toast.success("Contract type updated successfully");
+      message.success("Contract type updated successfully");
       form.resetFields();
       onClose();
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to update contract type");
+      message.error(error?.data?.message || "Failed to update contract type");
     }
   };
 

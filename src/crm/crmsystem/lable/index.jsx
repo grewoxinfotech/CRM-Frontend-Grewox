@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
 import { useParams } from "react-router-dom";
-import { Button, Table, Tag, Popconfirm } from "antd";
+import { Button, Table, Tag, Popconfirm, message } from "antd";
 import AddLableModal from "./AddLableModal";
 import EditLableModal from "./EditLableModal";
 import { useGetLablesQuery, useDeleteLableMutation } from "./services/LableApi";
-import { toast } from "react-toastify";
+
 import "./lable.scss";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
@@ -33,9 +33,9 @@ const Lable = () => {
   const handleDeleteLable = async (lableId) => {
     try {
       await deleteLable(lableId).unwrap();
-      toast.success("Lable deleted successfully");
+      message.success("Lable deleted successfully");
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to delete lable");
+      message.error(error?.data?.message || "Failed to delete lable");
     }
   };
 

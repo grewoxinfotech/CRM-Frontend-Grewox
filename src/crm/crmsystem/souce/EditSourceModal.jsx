@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
-import { Modal, Form, Input, Button, ColorPicker } from "antd";
+import { Modal, Form, Input, Button, ColorPicker, message } from "antd";
 import { useUpdateSourceMutation } from "./services/SourceApi";
-import { toast } from "react-toastify";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 
@@ -21,7 +20,7 @@ const EditSourceModal = ({ isOpen, onClose, source }) => {
 
   const handleSubmit = async (values) => {
     if (!source?.id || !userdata?.id) {
-      toast.error("Invalid source or user data");
+      message.error("Invalid source or user data");
       return;
     }
 
@@ -36,10 +35,10 @@ const EditSourceModal = ({ isOpen, onClose, source }) => {
         },
       }).unwrap();
 
-      toast.success("Source updated successfully");
+      message.success("Source updated successfully");
       onClose();
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to update source");
+      message.error(error?.data?.message || "Failed to update source");
     }
   };
 

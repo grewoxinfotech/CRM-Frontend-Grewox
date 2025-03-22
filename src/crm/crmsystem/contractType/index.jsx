@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
-import { useParams } from "react-router-dom";
-import { Button, Table, Tag, Popconfirm } from "antd";
+import { Button, Table, Tag, Popconfirm, message } from "antd";
 import AddContractTypeModal from "./AddContractTypeModal";
 import EditContractTypeModal from "./EditContractTypeModal";
 import {
   useGetContractTypesQuery,
   useDeleteContractTypeMutation,
 } from "./services/ContractTypeApi";
-import { toast } from "react-toastify";
+
 import "./contractType.scss";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
@@ -36,9 +35,9 @@ const ContractType = () => {
   const handleDeleteContractType = async (contractTypeId) => {
     try {
       await deleteContractType(contractTypeId).unwrap();
-      toast.success("Contract type deleted successfully");
+      message.success("Contract type deleted successfully");
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to delete contract type");
+      message.error(error?.data?.message || "Failed to delete contract type");
     }
   };
 

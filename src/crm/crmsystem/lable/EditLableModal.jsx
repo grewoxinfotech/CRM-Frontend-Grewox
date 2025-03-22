@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { Modal, Form, Input, Button, ColorPicker } from "antd";
+import { Modal, Form, Input, Button, ColorPicker, message } from "antd";
 import { useUpdateLableMutation } from "./services/LableApi";
-import { toast } from "react-toastify";
+
 
 const EditLableModal = ({ isOpen, onClose, lable }) => {
   const [form] = Form.useForm();
@@ -27,11 +27,11 @@ const EditLableModal = ({ isOpen, onClose, lable }) => {
         },
       }).unwrap();
 
-      toast.success("Lable updated successfully");
+      message.success("Lable updated successfully");
       form.resetFields();
       onClose();
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to update lable");
+      message.error(error?.data?.message || "Failed to update lable");
     }
   };
 

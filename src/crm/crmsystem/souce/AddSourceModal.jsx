@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { Modal, Form, Input, Button, ColorPicker } from "antd";
+import { Modal, Form, Input, Button, ColorPicker, message } from "antd";
 import { useCreateSourceMutation } from "./services/SourceApi";
 import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 
@@ -21,11 +20,11 @@ const AddSourceModal = ({ isOpen, onClose }) => {
         },
       }).unwrap();
 
-      toast.success("Source created successfully");
+      message.success("Source created successfully");
       form.resetFields();
       onClose();
     } catch (error) {
-      toast.error(error?.data?.message || "Failed to create source");
+      message.error(error?.data?.message || "Failed to create source");
     }
   };
 
