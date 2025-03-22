@@ -59,6 +59,8 @@ import { sourceApi } from "../crm/crmsystem/souce/services/SourceApi";
 import { lableApi } from "../crm/crmsystem/lable/services/LableApi";
 import { contractTypeApi } from "../crm/crmsystem/contractType/services/ContractTypeApi";
 import contractTypeReducer from "../crm/crmsystem/contractType/services/ContractTypeSlice";
+import { taskApi } from "../dashboard/module/crm/task/services/taskApi";
+import taskReducer from "../dashboard/module/crm/task/services/taskSlice";
 
 // Persist config
 const persistConfig = {
@@ -109,6 +111,7 @@ const rootReducer = combineReducers({
   training: trainingReducer,
   pipeline: pipelineReducer,
   contractType: contractTypeReducer,
+  task: taskReducer,
 });
 
 // Create persisted reducer
@@ -145,7 +148,8 @@ export const store = configureStore({
       .concat(dealStageApi.middleware)
       .concat(sourceApi.middleware)
       .concat(lableApi.middleware)
-      .concat(contractTypeApi.middleware),
+      .concat(contractTypeApi.middleware)
+      .concat(taskApi.middleware),
 });
 
 export const persistor = persistStore(store);
