@@ -82,6 +82,8 @@ const Pipeline = ({ isModalOpen, setIsModalOpen }) => {
             fontWeight: "500",
             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
             marginBottom: "24px",
+            marginLeft: "1100px",
+            marginTop: "24px",
           }}
         >
           Add Pipeline

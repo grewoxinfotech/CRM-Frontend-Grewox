@@ -66,6 +66,8 @@ const DealStages = ({ isModalOpen, setIsModalOpen }) => {
             fontWeight: "500",
             boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
             marginBottom: "24px",
+            marginLeft: "1000px",
+            marginTop: "24px",
           }}
         >
           Add Deal Stage
