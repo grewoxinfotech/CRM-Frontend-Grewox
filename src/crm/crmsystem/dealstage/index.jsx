@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import AddDealStageModal from "./AddDealStageModal";
 import EditDealStageModal from "./EditDealStageModal";
 import {
@@ -7,6 +7,7 @@ import {
   useDeleteDealStageMutation,
 } from "./services/dealStageApi";
 import "./dealstage.scss";
+import { Button } from "antd";
 
 const DealStages = ({ isModalOpen, setIsModalOpen }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -41,6 +42,36 @@ const DealStages = ({ isModalOpen, setIsModalOpen }) => {
   return (
     <div className="deal-stages-wrapper">
       <div className="deal-stages-container">
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "24px",
+            fontWeight: "600",
+            color: "#111827",
+          }}
+        >
+          {/* Sources */}
+        </h2>
+        <Button
+          type="primary"
+          icon={<FiPlus />}
+          onClick={() => setIsModalOpen(true)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            height: "40px",
+            padding: "0 16px",
+            borderRadius: "8px",
+            fontWeight: "500",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+            marginBottom: "24px",
+            marginLeft: "1000px",
+            marginTop: "24px",
+          }}
+        >
+          Add Deal Stage
+        </Button>
         {Array.isArray(dealStages) && dealStages.length > 0 ? (
           <div className="deal-stages-grid">
             {dealStages.map((stage) => (

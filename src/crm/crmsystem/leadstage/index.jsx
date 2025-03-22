@@ -7,6 +7,7 @@ import {
   useDeleteLeadStageMutation,
 } from "./services/leadStageApi";
 import "./leadstage.scss";
+import { Button } from "antd";
 
 const LeadStages = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +37,36 @@ const LeadStages = () => {
   return (
     <div className="lead-stages-wrapper">
       <div className="lead-stages-container">
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "24px",
+            fontWeight: "600",
+            color: "#111827",
+          }}
+        >
+          {/* Sources */}
+        </h2>
+        <Button
+          type="primary"
+          icon={<FiPlus />}
+          onClick={() => setIsModalOpen(true)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            height: "40px",
+            padding: "0 16px",
+            borderRadius: "8px",
+            fontWeight: "500",
+            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+            marginBottom: "24px",
+            marginLeft: "1000px",
+            marginTop: "24px",
+          }}
+        >
+          Add Lead Stage
+        </Button>
         <div className="lead-stages-grid">
           {Array.isArray(leadStages) && leadStages.length > 0 ? (
             leadStages.map((stage) => (
