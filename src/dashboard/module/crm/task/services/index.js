@@ -1,2 +1,2 @@
-export * from './taskApi';
-export * from './taskSlice'; 
+export { taskApi } from './taskApi';
+export { default as taskReducer } from './taskSlice'; 

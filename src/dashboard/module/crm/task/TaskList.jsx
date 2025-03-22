@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 const { Text } = Typography;
 
 const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tasks = [], users = [] }) => {
-    console.log("users", users)
     const userMap = useMemo(() => {
         return users.reduce((acc, user) => {
             acc[user.id] = user;

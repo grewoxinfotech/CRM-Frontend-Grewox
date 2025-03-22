@@ -77,22 +77,22 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => {} }) => {
         {
           title: "Project",
           icon: <FiFolder />,
-          path: "/dashboard/project",
+          path: "/dashboard/crm/project",
         },
         {
           title: "Sales",
           icon: <FiDollarSign />,
-          path: "/dashboard/sales",
+          path: "/dashboard/crm/sales",
         },
         {
           title: "Banking",
           icon: <FiBarChart2 />,
-          path: "/dashboard/banking",
+          path: "/dashboard/crm/banking",
         },
         {
           title: "Purchase",
           icon: <FiShoppingCart />,
-          path: "/dashboard/purchase",
+          path: "/dashboard/crm/purchase",
         },
         {
           title: "Leads",
@@ -102,22 +102,22 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => {} }) => {
         {
           title: "Deals",
           icon: <FiShoppingBag />,
-          path: "/dashboard/crm/deals",
+              path: "/dashboard/crm/deals",
         },
         {
           title: "Proposal",
           icon: <FiFileText />,
-          path: "/dashboard/proposal",
+          path: "/dashboard/crm/proposal",
         },
         {
           title: "Task",
           icon: <FiCheckSquare />,
-          path: "/dashboard/task",
+          path: "/dashboard/crm/tasks",
         },
         {
           title: "Task Calendar",
           icon: <FiCalendar />,
-          path: "/dashboard/task-calendar",
+          path: "/dashboard/crm/task-calendar",
         },
         {
           title: "CRM System Setup",

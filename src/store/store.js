@@ -15,7 +15,7 @@ import { planApi } from "../superadmin/module/plans/services/planApi";
 import planReducer from "../superadmin/module/plans/services/planSlice";
 import { policyApi } from "../superadmin/module/policy/service/policyApi";
 import policyReducer from "../superadmin/module/policy/service/policySlice";
-import { notesApi } from "../superadmin/module/notes/services/NotesApi";
+import { notesApi } from "../superadmin/module/notes/services/notesApi";
 import {
   inquiryApi,
   inquiryReducer,
@@ -59,8 +59,7 @@ import { sourceApi } from "../crm/crmsystem/souce/services/SourceApi";
 import { lableApi } from "../crm/crmsystem/lable/services/LableApi";
 import { contractTypeApi } from "../crm/crmsystem/contractType/services/ContractTypeApi";
 import contractTypeReducer from "../crm/crmsystem/contractType/services/ContractTypeSlice";
-import { taskApi } from "../dashboard/module/crm/task/services/taskApi";
-import taskReducer from "../dashboard/module/crm/task/services/taskSlice";
+import { taskApi, taskReducer } from "../dashboard/module/crm/task/services";
 
 // Persist config
 const persistConfig = {
@@ -95,6 +94,7 @@ const rootReducer = combineReducers({
   [sourceApi.reducerPath]: sourceApi.reducer,
   [lableApi.reducerPath]: lableApi.reducer,
   [contractTypeApi.reducerPath]: contractTypeApi.reducer,
+  [taskApi.reducerPath]: taskApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
