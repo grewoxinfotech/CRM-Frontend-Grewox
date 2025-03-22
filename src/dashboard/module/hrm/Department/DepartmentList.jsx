@@ -29,9 +29,9 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
     // Transform and filter departments data
     const departments = useMemo(() => {
         let filteredData = [];
-        
+
         if (!departmentsData) return [];
-        
+
         // Handle both array and object response formats
         if (Array.isArray(departmentsData)) {
             filteredData = departmentsData;
@@ -46,7 +46,7 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
                 const searchLower = searchText.toLowerCase();
                 const departmentName = (department?.department_name || '').toLowerCase();
                 const branchName = (branchMap[department?.branch]?.branchName || '').toLowerCase();
-                
+
                 if (!departmentName.includes(searchLower) && !branchName.includes(searchLower)) {
                     return false;
                 }
@@ -91,7 +91,7 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
         items: [
             {
                 key: 'view',
-                icon: <FiEye  />,
+                icon: <FiEye />,
                 label: 'View Details',
                 onClick: () => onEdit(record),
             },
@@ -103,7 +103,7 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
             },
             {
                 key: 'delete',
-                icon: <FiTrash2  />,
+                icon: <FiTrash2 />,
                 label: 'Delete',
                 onClick: () => handleDelete(record.id),
                 danger: true,

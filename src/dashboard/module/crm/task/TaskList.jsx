@@ -1,94 +1,46 @@
 import React, { useMemo } from 'react';
-import { Table, Space, Button, Tooltip, Tag, Dropdown } from 'antd';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiUser } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
-const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {} }) => {
-    // Mock data for tasks
-    const mockTasks = [
-        {
-            id: 1,
-            taskName: 'Website Redesign',
-            category: 'Design',
-            task_reporter: 'Jane Smith',
-            startDate: '2024-03-20',
-            dueDate: '2024-03-25',
-            priority: 'High',
-            status: 'In Progress',
-            assignedTo: 'John Doe',
-            description: 'Redesign the company website with new brand guidelines'
-        },
-        {
-            id: 2,
-            taskName: 'Client Meeting',
-            category: 'Sales',
-            task_reporter: 'John Doe',
-            startDate: '2024-03-21',
-            dueDate: '2024-03-23',
-            priority: 'Medium',
-            status: 'Todo',
-            assignedTo: 'Sarah Smith',
-            description: 'Quarterly review meeting with major client'
-        },
-        {
-            id: 3,
-            taskName: 'Bug Fixes',
-            category: 'Development',
-            task_reporter: 'Mike Johnson',
-            startDate: '2024-03-22',
-            dueDate: '2024-03-24',
-            priority: 'High',
-            status: 'In Progress',
-            assignedTo: 'Sarah Smith',
-            description: 'Fix reported bugs in the mobile app'
-        },
-        {
-            id: 4,
-            taskName: 'Content Update',
-            category: 'Marketing',
-            task_reporter: 'Emily Brown',
-            startDate: '2024-03-26',
-            dueDate: '2024-03-28',
-            priority: 'Low',
-            status: 'Completed',
-            assignedTo: 'Emily Brown',
-            description: 'Update blog content and social media posts'
-        },
-        {
-            id: 5,
-            taskName: 'Database Optimization',
-            category: 'Development',
-            task_reporter: 'David Wilson',
-            startDate: '2024-03-27',
-            dueDate: '2024-03-29',
-            priority: 'Medium',
-            status: 'Todo',
-            assignedTo: 'Sarah Smith',
-            description: 'Optimize database queries for better performance'
-        }
-    ];
+const { Text } = Typography;
 
-    // Filter and search functionality
+const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tasks = [], users = [] }) => {
+    console.log("users", users)
+    const userMap = useMemo(() => {
+        return users.reduce((acc, user) => {
+            acc[user.id] = user;
+            return acc;
+        }, {});
+    }, [users]);
+
     const filteredTasks = useMemo(() => {
-        return mockTasks.filter(task => {
-            const matchesSearch = !searchText || 
-                task.taskName.toLowerCase().includes(searchText.toLowerCase()) ||
-                task.description.toLowerCase().includes(searchText.toLowerCase()) ||
-                task.assignedTo.toLowerCase().includes(searchText.toLowerCase());
+        const tasksArray = Array.isArray(tasks) ? tasks : [];
 
-            const matchesPriority = !filters.priority || 
-                task.priority === filters.priority;
+        return tasksArray.filter(task => {
+            const taskName = task?.taskName?.toLowerCase() || '';
+            const description = task?.description?.toLowerCase() || '';
+            const reporter = userMap[task?.task_reporter]?.username?.toLowerCase() || '';
+            const searchLower = searchText.toLowerCase();
 
-            const matchesStatus = !filters.status || 
-                task.status === filters.status;
+            const matchesSearch = !searchText ||
+                taskName.includes(searchLower) ||
+                description.includes(searchLower) ||
+                reporter.includes(searchLower);
+
+            const matchesPriority = !filters.priority ||
+                task?.priority === filters.priority;
+
+            const matchesStatus = !filters.status ||
+                task?.status === filters.status;
 
             const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(task.dueDate).isAfter(filters.dateRange[0]) &&
-                dayjs(task.dueDate).isBefore(filters.dateRange[1]));
+                (dayjs(task?.dueDate).isAfter(filters.dateRange[0]) &&
+                    dayjs(task?.dueDate).isBefore(filters.dateRange[1]));
 
             return matchesSearch && matchesPriority && matchesStatus && matchesDateRange;
         });
-    }, [mockTasks, searchText, filters]);
+    }, [tasks, searchText, filters, userMap]);
 
     const getDropdownItems = (record) => ({
         items: [
@@ -103,7 +55,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {} }) =
                 icon: <FiEdit2 />,
                 label: 'Edit',
                 onClick: () => onEdit?.(record),
-            },  
+            },
             {
                 key: 'delete',
                 icon: <FiTrash2 />,
@@ -114,63 +66,111 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {} }) =
         ],
     });
 
+    const getAssignedUsers = (assignTo) => {
+        try {
+            if (typeof assignTo === 'string') {
+                const parsed = JSON.parse(assignTo);
+                return parsed?.assignedusers || [];
+            }
+            return assignTo?.assignedusers || [];
+        } catch (error) {
+            return [];
+        }
+    };
+
     const columns = [
         {
-            title: 'Task Name',
+            title: 'Title',
             dataIndex: 'taskName',
             key: 'taskName',
-            sorter: (a, b) => (a.taskName || '').localeCompare(b.taskName || ''),
+            sorter: (a, b) => (a?.taskName || '').localeCompare(b?.taskName || ''),
+            render: (text, record) => (
+                <Text strong style={{ cursor: 'pointer' }} onClick={() => onView?.(record)}>
+                    {text}
+                </Text>
+            ),
         },
-        
         {
-            title: 'Category',
-            dataIndex: 'category',
-            key: 'category',
-            sorter: (a, b) => (a.category || '').localeCompare(b.category || ''),
+            title: 'Assigned To',
+            dataIndex: 'assignTo',
+            key: 'assignTo',
+            render: (assignTo) => {
+                const assignedUserIds = getAssignedUsers(assignTo);
+                const assignedUsers = assignedUserIds.map(id => userMap[id]).filter(Boolean);
+
+                if (assignedUsers.length === 0) {
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                            <span style={{ color: '#999' }}>Unassigned</span>
+                        </div>
+                    );
+                }
+
+                if (assignedUsers.length === 1) {
+                    const user = assignedUsers[0];
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Avatar
+                                src={user.profilePic}
+                                style={{
+                                    backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
+                                }}
+                            >
+                                {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                            </Avatar>
+                            <span>{user.username || user.email}</span>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Avatar.Group
+                            maxCount={3}
+                            maxStyle={{
+                                color: '#f56a00',
+                                backgroundColor: '#fde3cf',
+                            }}
+                        >
+                            {assignedUsers.map((user) => (
+                                <Tooltip key={user.id} title={user.username || user.email}>
+                                    <Avatar
+                                        src={user.profilePic}
+                                        style={{
+                                            backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
+                                        }}
+                                    >
+                                        {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                                    </Avatar>
+                                </Tooltip>
+                            ))}
+                        </Avatar.Group>
+                    </div>
+                );
+            },
         },
         {
             title: 'Task Reporter',
             dataIndex: 'task_reporter',
             key: 'task_reporter',
-            sorter: (a, b) => (a.task_reporter || '').localeCompare(b.task_reporter || ''),
-        },
-        {
-            title: 'Start Date',
-            dataIndex: 'startDate',
-            key: 'startDate',
-            sorter: (a, b) => (a.startDate || '').localeCompare(b.startDate || ''),
-        },
-        {
-            title: 'Due Date',
-            dataIndex: 'dueDate',
-            key: 'dueDate',
-            render: (date) => (
-                <span>{dayjs(date).format('MMM DD, YYYY')}</span>
-            ),
-            sorter: (a, b) => new Date(a.dueDate) - new Date(b.dueDate),
-        },
-        {
-            title: 'Assigned To',
-            dataIndex: 'assignedTo',
-            key: 'assignedTo',
-            render: (text) => <span>{text || 'Unassigned'}</span>,
-            sorter: (a, b) => (a.assignedTo || '').localeCompare(b.assignedTo || ''),
-        },
-        {
-            title: 'Priority',
-            dataIndex: 'priority',
-            key: 'priority',
-            render: (priority) => (
-                <Tag color={
-                    priority === 'High' ? 'red' :
-                    priority === 'Medium' ? 'orange' : 'green'
-                }
-                className={`task-priority-tag ${priority.toLowerCase()}`}
-                >
-                    {priority}
-                </Tag>
-            ),
-            sorter: (a, b) => (a.priority || '').localeCompare(b.priority || ''),
+            render: (reporterId) => {
+                const user = userMap[reporterId];
+                if (!user) return <span>-</span>;
+
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Avatar
+                            src={user.profilePic}
+                            style={{
+                                backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
+                            }}
+                        >
+                            {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                        </Avatar>
+                        <span>{user.username || user.email}</span>
+                    </div>
+                );
+            },
         },
         {
             title: 'Status',
@@ -179,20 +179,119 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {} }) =
             render: (status) => (
                 <Tag color={
                     status === 'Completed' ? 'green' :
-                    status === 'In Progress' ? 'blue' : 'orange'
+                        status === 'In Progress' ? 'blue' : 'orange'
                 }
-                className={`task-status-tag ${status.toLowerCase().replace(' ', '-')}`}
+                    className={`task-status-tag ${(status || '').toLowerCase().replace(' ', '-')}`}
                 >
-                    {status}
+                    {status || 'Pending'}
                 </Tag>
             ),
-            sorter: (a, b) => (a.status || '').localeCompare(b.status || ''),
         },
-
-      
-        
         {
-            title: 'Actions',
+            title: 'Priority',
+            dataIndex: 'priority',
+            key: 'priority',
+            render: (priority) => (
+                <Tag color={
+                    priority === 'High' ? 'red' :
+                        priority === 'Medium' ? 'orange' : 'green'
+                }
+                    className={`task-priority-tag ${(priority || '').toLowerCase()}`}
+                >
+                    {priority || 'Low'}
+                </Tag>
+            ),
+        },
+        {
+            title: 'Start Date',
+            dataIndex: 'startDate',
+            key: 'startDate',
+            render: (date) => (
+                <span>{date ? dayjs(date).format('MMM DD, YYYY') : '-'}</span>
+            ),
+        },
+        {
+            title: 'Due Date',
+            dataIndex: 'dueDate',
+            key: 'dueDate',
+            render: (date) => (
+                <span>{date ? dayjs(date).format('MMM DD, YYYY') : '-'}</span>
+            ),
+        },
+        {
+            title: 'Files',
+            dataIndex: 'file',
+            key: 'file',
+            render: (file) => {
+                if (!file) return <span>-</span>;
+
+                // Handle array of files
+                const files = Array.isArray(file) ? file : [file];
+
+                return (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {files.map((fileUrl, index) => {
+                            const fileName = fileUrl.split('/').pop();
+                            const fileExtension = fileName.split('.').pop().toLowerCase();
+
+                            // Determine if it's an image
+                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+
+                            return (
+                                <Tooltip key={index} title={fileName}>
+                                    <Button
+                                        type="text"
+                                        className="file-button"
+                                        onClick={() => window.open(fileUrl, '_blank')}
+                                        icon={
+                                            isImage ? (
+                                                <div style={{
+                                                    width: '24px',
+                                                    height: '24px',
+                                                    borderRadius: '4px',
+                                                    overflow: 'hidden',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    border: '1px solid #d9d9d9'
+                                                }}>
+                                                    <img
+                                                        src={fileUrl}
+                                                        alt={fileName}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            objectFit: 'cover'
+                                                        }}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <FiFile style={{ fontSize: '16px' }} />
+                                            )
+                                        }
+                                        style={{
+                                            padding: 4,
+                                            height: 'auto',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    />
+                                </Tooltip>
+                            );
+                        })}
+                    </div>
+                );
+            },
+        },
+        {
+            title: 'Created By',
+            dataIndex: 'created_by',
+            key: 'created_by',
+            render: (createdBy) => <span>{createdBy || '-'}</span>,
+        },
+        {
+            title: 'Action',
             key: 'actions',
             width: 80,
             align: 'center',

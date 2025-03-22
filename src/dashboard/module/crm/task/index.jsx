@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, DatePicker
+    Dropdown, Menu, Breadcrumb
 } from 'antd';
 import {
     FiPlus, FiSearch,
-    FiDownload, FiHome, FiFilter
+    FiDownload, FiHome,
+    FiChevronDown
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import TaskList from './TaskList';
@@ -16,9 +17,12 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import moment from 'moment';
-
+import { useGetAllTasksQuery } from './services/taskApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useGetUsersQuery } from '../../../module/user-management/users/services/userApi';
+import { useDeleteTaskMutation } from './services/taskApi';
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
 const Task = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -31,6 +35,16 @@ const Task = () => {
         priority: undefined
     });
     const [loading, setLoading] = useState(false);
+    const user = useSelector(selectCurrentUser);
+    const id = user?.client_id;
+    const [deleteTask] = useDeleteTaskMutation();
+    // Fetch tasks using RTK Query
+    const { data: tasks = [], isLoading: tasksLoading, refetch } = useGetAllTasksQuery(id);
+    const tasksData = tasks?.data || [];
+
+    // Fetch users for assignee selection
+    const { data: usersData = [], isLoading: usersLoading } = useGetUsersQuery();
+    const users = usersData?.data || [];
 
     const handleCreate = () => {
         setSelectedTask(null);
@@ -42,9 +56,14 @@ const Task = () => {
         setIsEditModalOpen(true);
     };
 
-    const handleModalSubmit = () => {
-        setIsCreateModalOpen(false);
-        setSelectedTask(null);
+    const handleModalSubmit = async (values) => {
+        try {
+            await refetch(); // Refetch tasks after successful creation
+            setIsCreateModalOpen(false);
+            setSelectedTask(null);
+        } catch (error) {
+            console.error('Error handling submission:', error);
+        }
     };
 
     const handleView = (record) => {
@@ -58,9 +77,16 @@ const Task = () => {
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
-            onOk: () => {
-                console.log('Delete task:', record);
-                message.success('Task deleted successfully');
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deleteTask(record.id).unwrap();
+                    message.success('Task deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete task');
+                }
             },
         });
     };
@@ -206,6 +232,7 @@ const Task = () => {
                                 loading={loading}
                             >
                                 Export
+                                <FiChevronDown size={16} />
                             </Button>
                         </Dropdown>
                         <Button
@@ -221,22 +248,24 @@ const Task = () => {
             </div>
 
             <Card className="task-table-card">
-                <TaskList 
+                <TaskList
+                    loading={tasksLoading}
+                    tasks={tasksData}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onView={handleView}
                     searchText={searchText}
                     filters={filters}
+                    users={users}
                 />
             </Card>
 
             <CreateTask
                 open={isCreateModalOpen}
                 onCancel={() => setIsCreateModalOpen(false)}
-                onSubmit={(values) => {
-                    // Handle create submission
-                    setIsCreateModalOpen(false);
-                }}
+                onSubmit={handleModalSubmit}
+                relatedId={id}
+                users={users}
             />
 
             <EditTask
@@ -245,12 +274,10 @@ const Task = () => {
                     setIsEditModalOpen(false);
                     setSelectedTask(null);
                 }}
-                onSubmit={(values) => {
-                    // Handle edit submission
-                    setIsEditModalOpen(false);
-                    setSelectedTask(null);
-                }}
+                onSubmit={handleModalSubmit}
                 initialValues={selectedTask}
+                relatedId={id}
+                users={users}
             />
         </div>
     );

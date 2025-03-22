@@ -8,10 +8,8 @@ import {
     Divider,
     message,
     Select,
-    Space,
 } from 'antd';
-import { FiUser, FiFileText, FiGrid, FiX, FiPlus } from 'react-icons/fi';
-import { useDispatch } from 'react-redux';
+import { FiGrid, FiX, FiPlus } from 'react-icons/fi';
 import {
     useCreateDepartmentMutation,
     useUpdateDepartmentMutation,
@@ -24,7 +22,6 @@ const { Option } = Select;
 
 const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }) => {
     const [form] = Form.useForm();
-    const dispatch = useDispatch();
     const [isCreateBranchModalOpen, setIsCreateBranchModalOpen] = useState(false);
 
     // RTK Query hooks
@@ -84,7 +81,7 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                     type="link"
                     icon={<FiPlus style={{ fontSize: '16px' }} />}
                     onClick={() => setIsCreateBranchModalOpen(true)}
-                    style={{ 
+                    style={{
                         padding: '8px 12px',
                         display: 'flex',
                         alignItems: 'center',
