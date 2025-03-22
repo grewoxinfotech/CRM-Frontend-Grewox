@@ -36,6 +36,9 @@ import OfferLetters from "../dashboard/module/job/offer letters/index.jsx";
 import Interviews from "../dashboard/module/job/interviews/index.jsx";
 import Lead from "../dashboard/module/crm/lead/index.jsx";
 import Deal from "../dashboard/module/crm/deal/index.jsx";
+import Task from "../dashboard/module/crm/task/index.jsx";
+
+
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -167,6 +170,10 @@ const routes = createBrowserRouter([
         {
           path: "deals",
           element: <Deal />
+        },
+        {
+          path: "tasks",
+          element: <Task />
         }
       ]
      },

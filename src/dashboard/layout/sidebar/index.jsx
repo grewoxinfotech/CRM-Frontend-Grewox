@@ -112,7 +112,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 {
                     title: 'Task',
                     icon: <FiCheckSquare />,
-                    path: '/dashboard/task'
+                    path: '/dashboard/crm/tasks'
                 },
                 {
                     title: 'Task Calendar',
