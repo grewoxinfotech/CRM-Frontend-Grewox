@@ -33,15 +33,6 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
     };
 
     const beforeUpload = (file) => {
-        const isPDF = file.type === 'application/pdf';
-        const isDoc = file.type === 'application/msword' || 
-                     file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        
-        if (!isPDF && !isDoc) {
-            message.error('You can only upload PDF or DOC files!');
-            return false;
-        }
-
         const isLt5M = file.size / 1024 / 1024 < 5;
         if (!isLt5M) {
             message.error('File must be smaller than 5MB!');

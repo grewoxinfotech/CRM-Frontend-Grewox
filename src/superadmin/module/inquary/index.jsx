@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Card, Typography, Button, Modal, Input, Avatar,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, Descriptions, Tooltip
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Descriptions, Tooltip, message
 } from 'antd';
 import {
     FiPlus, FiSearch, FiMessageSquare,
     FiChevronDown, FiDownload,
     FiHome, FiMail, FiPhone, FiCalendar,
     FiEdit2, FiTrash2, FiEye, FiX, FiCheckCircle,
-    FiBook
+    FiBook, FiMoreVertical
 } from 'react-icons/fi';
 import './inquary.scss';
 import { Link } from 'react-router-dom';
@@ -62,15 +62,55 @@ const Inquiry = () => {
         setIsFormVisible(true);
     };
 
-    const handleDelete = (inquiry) => {
-        setSelectedInquiry(inquiry);
-        setIsDeleteModalVisible(true);
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Inquiry',    
+            content: 'Are you sure you want to delete this inquiry?',
+            okText: 'Yes',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {   
+                    await deleteInquiryMutation(record.id).unwrap();
+                    dispatch(deleteInquiry(record.id));
+                    message.success('Inquiry deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete inquiry');
+                }
+            },
+        });
     };
 
     const handleView = (inquiry) => {
         setSelectedInquiry(inquiry);
         setIsViewModalVisible(true);
     };
+
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'view',
+                icon: <FiEye />,
+                label: 'View Details',  
+                onClick: () => handleView(record),
+            },
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: 'Edit Inquiry',  
+                onClick: () => handleEdit(record),
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: 'Delete Inquiry',        
+                danger: true,
+                onClick: () => handleDelete(record),
+            }
+        ]
+    });
 
     const columns = [
         {
@@ -117,26 +157,25 @@ const Inquiry = () => {
         {
             title: 'Actions',
             key: 'actions',
+            align: 'center',
             render: (_, record) => (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <Dropdown
+                    menu={getDropdownItems(record)}
+                    trigger={['click']}
+                    placement="bottomRight"
+                    overlayClassName="plan-actions-dropdown"
+                >
                     <Button
                         type="text"
-                        icon={<FiEye />}
-                        onClick={() => handleView(record)}
+                        icon={<FiMoreVertical />}
+                        className="action-dropdown-button"
+                        onClick={(e) => e.preventDefault()}
                     />
-                    <Button
-                        type="text"
-                        icon={<FiEdit2 />}
-                        onClick={() => handleEdit(record)}
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiTrash2 />}
-                        onClick={() => handleDelete(record)}
-                    />
-                </div>
-            )
-        }
+                </Dropdown>
+            ),
+            width: '80px',
+            fixed: 'right'
+        },
     ];
 
     const exportMenu = (
@@ -234,12 +273,13 @@ const Inquiry = () => {
                     setIsFormVisible(false);
                     setSelectedInquiry(null);
                 }}
+                isDeleting={handleDelete}
                 isEditing={!!selectedInquiry}
                 initialValues={selectedInquiry}
                 loading={isLoading}
             />
 
-            <Modal
+            {/* <Modal
                 title="Delete Inquiry"
                 open={isDeleteModalVisible}
                 onOk={async () => {
@@ -268,7 +308,7 @@ const Inquiry = () => {
             >
                 <p>Are you sure you want to delete this inquiry?</p>
                 <p>This action cannot be undone.</p>
-            </Modal>
+            </Modal> */}
 
             {/* Inquiry Details Modal */}
             <Modal

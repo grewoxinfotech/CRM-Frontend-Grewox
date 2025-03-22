@@ -9,7 +9,8 @@ import {
     Card,
     Dropdown,
     Menu,
-    message
+    message,
+    Modal
 } from 'antd';
 import {
     FiPlus,
@@ -39,6 +40,7 @@ import {
 import PlanList from './PlanList';
 import PlanCard from './PlanCard';
 import AddPlan from './AddPlan';
+import EditPlan from './EditPlan';
 
 const { Title, Text } = Typography;
 
@@ -46,7 +48,9 @@ const Plans = () => {
     const dispatch = useDispatch();
     const { filters, viewMode } = useSelector((state) => state.plan);
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
-
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState(null);
+    const [idd, setIdd] = useState(null);
     const {
         data: plansData,
         isLoading,
@@ -60,20 +64,44 @@ const Plans = () => {
         dispatch(setFilters({ search: value, page: 1 }));
     };
 
-    const handleEdit = (id) => {
-        const plan = plansData?.data.find((p) => p.id === id);
-        if (plan) {
-            dispatch(setSelectedPlan(plan));
-        }
+    const handleEdit = (plan) => {
+        const editData = {
+            id: plan.id,
+            name: plan.name,
+            price: plan.price?.toString(),
+            duration: plan.duration?.toString(),
+            trial_period: plan.trial_period?.toString(),
+            storage_limit: plan.storage_limit?.toString(),
+            max_users: plan.max_users?.toString(),
+            max_clients: plan.max_clients?.toString(),
+            max_vendors: plan.max_vendors?.toString(),
+            max_customers: plan.max_customers?.toString(),
+            status: plan.status
+        };
+        setIdd(plan.id);
+        setSelectedPlan(editData);
+        setIsEditModalOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        try {
-            await deletePlan(id).unwrap();
-            message.success('Plan deleted successfully');
-        } catch (error) {
-            message.error('Failed to delete plan');
-        }
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Plan',
+            content: 'Are you sure you want to delete this plan?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deletePlan(record.id).unwrap();
+                    message.success('Plan deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete plan');
+                }
+            },
+        });
     };
 
     const handleToggleStatus = async (id, newStatus) => {
@@ -85,24 +113,24 @@ const Plans = () => {
             }
 
             const updateData = {
-                id,
+                id: id,
                 name: currentPlan.name,
-                currency: currentPlan.currency,
-                price: currentPlan.price,
-                duration: currentPlan.duration,
-                trial_period: currentPlan.trial_period,
-                max_users: currentPlan.max_users,
-                max_clients: currentPlan.max_clients,
-                max_customers: currentPlan.max_customers,
-                max_vendors: currentPlan.max_vendors,
-                storage_limit: currentPlan.storage_limit,
+                price: currentPlan.price?.toString(),
+                duration: currentPlan.duration?.toString(),
+                trial_period: currentPlan.trial_period?.toString(),
+                storage_limit: currentPlan.storage_limit?.toString(),
+                max_users: currentPlan.max_users?.toString(),
+                max_clients: currentPlan.max_clients?.toString(),
+                max_vendors: currentPlan.max_vendors?.toString(),
+                max_customers: currentPlan.max_customers?.toString(),
                 status: newStatus
             };
 
-            await updatePlan(updateData).unwrap();
+            await updatePlan({ idd: id, updateData }).unwrap();
             message.success(`Plan ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`);
         } catch (error) {
-            message.error('Failed to update plan status: ' + (error.message || 'Unknown error'));
+            console.error('Status update error:', error);
+            message.error('Failed to update plan status');
         }
     };
 
@@ -191,10 +219,9 @@ const Plans = () => {
                 <PlanCard
                     key={plan.id}
                     plan={plan}
-                    onEdit={handleEdit}
+                    onEdit={() => handleEdit(plan)}
                     onDelete={handleDelete}
                     onToggleStatus={handleToggleStatus}
-                    onView={() => handleEdit(plan.id)}
                 />
             ))}
         </div>
@@ -271,6 +298,7 @@ const Plans = () => {
                         loading={isLoading || isFetching}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        onToggleStatus={handleToggleStatus}
                         pagination={{
                             current: filters.page,
                             pageSize: filters.limit,
@@ -286,6 +314,16 @@ const Plans = () => {
             <AddPlan
                 visible={isAddModalVisible}
                 onCancel={() => setIsAddModalVisible(false)}
+            />
+
+            <EditPlan
+                open={isEditModalOpen}
+                idd={idd}
+                onCancel={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedPlan(null);
+                }}
+                initialValues={selectedPlan}
             />
         </div>
     );

@@ -1,6 +1,6 @@
 import React from "react";
-import { Table, Space, Button, Tag, Tooltip } from "antd";
-import { EditOutlined, DeleteOutlined, EyeOutlined } from "@ant-design/icons";
+import { Table, Space, Button, Tag, Tooltip, Modal, message, Dropdown } from "antd";
+import { FiEye, FiEdit2, FiTrash2, FiMoreVertical } from "react-icons/fi";
 import moment from "moment";
 
 const PolicyList = ({
@@ -8,9 +8,56 @@ const PolicyList = ({
   policies = [],
   onEditPolicy,
   onDeletePolicy,
+  onDelete,
   onView,
   pagination,
-}) => {
+  }) => {
+
+    // const handleDelete = (id) => {
+    //     Modal.confirm({
+    //         title: 'Delete Policy',
+    //         content: 'Are you sure you want to delete this policy?',
+    //         okText: 'Yes',
+    //         okType: 'danger', 
+    //         bodyStyle: { padding: '20px' },
+    //         cancelText: 'No',
+    //         onOk: async () => {
+    //             try {
+    //                 await deletePolicy(id).unwrap();
+    //                 message.success('Policy deleted successfully'); 
+    //             } catch (error) {
+    //                 message.error(error?.data?.message || 'Failed to delete policy');
+    //             }
+    //         },
+    //     });
+    // };
+
+
+    const getDropdownItems = (record) => ({
+      items: [
+          {
+              key: 'view',
+              icon: <FiEye />,
+              label: 'View Details',
+              onClick: () => onView(record),
+
+          },
+          {
+              key: 'edit',
+              icon: <FiEdit2 />,
+              label: 'Edit Plan',
+              onClick: () => onEdit(record),
+
+          },
+          {
+              key: 'delete',
+              icon: <FiTrash2 />,
+              label: 'Delete Plan',
+              danger: true,
+              onClick: () => onDelete(record),
+          }
+      ]
+  });
   const columns = [
     {
       title: "Branch",
@@ -47,35 +94,27 @@ const PolicyList = ({
       sorter: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
     },
     {
-      title: "Actions",
-      key: "actions",
+      title: 'Actions',
+      key: 'actions',
+      align: 'center',
       render: (_, record) => (
-        <Space size="middle">
-          <Tooltip title="View Details">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              onClick={() => onView(record)}
-            />
-          </Tooltip>
-          <Tooltip title="Edit">
-            <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => onEditPolicy(record)}
-            />
-          </Tooltip>
-          <Tooltip title="Delete">
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => onDeletePolicy(record)}
-            />
-          </Tooltip>
-        </Space>
+          <Dropdown
+              menu={getDropdownItems(record)}
+              trigger={['click']}
+              placement="bottomRight"
+              overlayClassName="plan-actions-dropdown"
+          >
+              <Button
+                  type="text"
+                  icon={<FiMoreVertical />}
+                  className="action-dropdown-button"
+                  onClick={(e) => e.preventDefault()}
+              />
+          </Dropdown>
       ),
-    },
+      width: '80px',
+      fixed: 'right'
+  },
   ];
 
   return (

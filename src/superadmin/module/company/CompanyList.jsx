@@ -1,31 +1,41 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag } from 'antd';
-import { FiEye, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Modal } from 'antd';
+import { FiEye, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
+    
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const handleEdit = (company) => {
-        setSelectedCompany(company);
-        setEditModalVisible(true);
-    };
 
-    const handleEditCancel = () => {
-        setSelectedCompany(null);
-        setEditModalVisible(false);
-    };
 
-    const handleEditComplete = (updatedCompany) => {
-        setEditModalVisible(false);
-        setSelectedCompany(null);
-        if (onEdit) {
-            onEdit(updatedCompany);
-        }
-    };
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'view',
+                icon: <FiEye />,
+                label: 'View Details',
+                onClick: () => onView(record),
+            },
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: 'Edit Company',
+                onClick: () => onEdit(record),
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: 'Delete Company',
+                danger: true,
+                onClick: () => onDelete(record),
+            }
+        ]
+    });
 
     const columns = [
         {
@@ -80,40 +90,24 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         {
             title: 'Actions',
             key: 'actions',
-            render: (_, record) => (
-                <div className="action-buttons">
-                    <Button
-                        type="text"
-                        icon={<FiEye />}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onView(record);
-                        }}
-                        title="View Details"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiEdit2 />}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(record);
-                        }}
-                        title="Edit Company"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiTrash2 />}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(record);
-                        }}
-                        title="Delete Company"
-                        danger
-                    />
-                </div>
-            ),
-            width: '150px',
             align: 'center',
+            render: (_, record) => (
+                <Dropdown
+                    menu={getDropdownItems(record)}
+                    trigger={['click']}
+                    placement="bottomRight"
+                    overlayClassName="plan-actions-dropdown"
+                >
+                    <Button
+                        type="text"
+                        icon={<FiMoreVertical />}
+                        className="action-dropdown-button"
+                        onClick={(e) => e.preventDefault()}
+                    />
+                </Dropdown>
+            ),
+            width: '80px',
+            fixed: 'right'
         },
     ];
 
@@ -138,8 +132,17 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             {editModalVisible && (
                 <EditCompany
                     visible={editModalVisible}
-                    onCancel={handleEditCancel}
-                    onComplete={handleEditComplete}
+                    onCancel={() => {
+                        setEditModalVisible(false);
+                        setSelectedCompany(null);
+                    }}
+                    onComplete={(updatedCompany) => {
+                        setEditModalVisible(false);
+                        setSelectedCompany(null);
+                        if (onEdit) {
+                            onEdit(updatedCompany);
+                        }
+                    }}
                     initialValues={selectedCompany}
                     loading={loading}
                 />

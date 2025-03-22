@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Table, Button, Tag } from "antd";
-import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { Table, Button, Tag, Dropdown, Modal, message } from "antd";
+import { FiEye, FiEdit2, FiTrash2, FiMoreVertical } from "react-icons/fi";
 import moment from "moment";
 import EditCompany from "./EditNotes";
 
@@ -8,6 +8,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
 
   const handleEdit = (company) => {
     setSelectedCompany(company);
@@ -26,6 +27,30 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
       onEdit(updatedCompany);
     }
   };
+
+  const getDropdownItems = (record) => ({
+    items: [
+      {
+        key: 'view',
+        icon: <FiEye />,
+        label: 'View Details',
+        onClick: () => onView(record)
+      },
+      {
+        key: 'edit',
+        icon: <FiEdit2 />,
+        label: 'Edit Note',
+        onClick: () => handleEdit(record)
+      },
+      {
+        key: 'delete',
+        icon: <FiTrash2 />,
+        label: 'Delete Note',
+        danger: true,
+        onClick: () => onDelete(record)
+      }
+    ]
+  });
 
   const columns = [
     {
@@ -70,43 +95,27 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
       width: "15%",
     },
     {
-      title: "Actions",
-      key: "actions",
+      title: 'Actions',
+      key: 'actions',
+      align: 'center',
       render: (_, record) => (
-        <div className="action-buttons">
-          <Button
-            type="text"
-            icon={<FiEye />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onView(record);
-            }}
-            title="View Note"
-          />
-          <Button
-            type="text"
-            icon={<FiEdit2 />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit(record);
-            }}
-            title="Edit Note"
-          />
-          <Button
-            type="text"
-            icon={<FiTrash2 />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(record);
-            }}
-            title="Delete Note"
-            danger
-          />
-        </div>
+          <Dropdown
+              menu={getDropdownItems(record)}
+              trigger={['click']}
+              placement="bottomRight"
+              overlayClassName="plan-actions-dropdown"
+          >
+              <Button
+                  type="text"
+                  icon={<FiMoreVertical />}
+                  className="action-dropdown-button"
+                  onClick={(e) => e.preventDefault()}
+              />
+          </Dropdown>
       ),
-      width: "150px",
-      align: "center",
-    },
+      width: '80px',
+      fixed: 'right'
+  },
   ];
 
   return (

@@ -95,40 +95,63 @@ const Policy = () => {
     setIsDeleteModalVisible(true);
   };
 
-  const handleDeletePolicy = async () => {
-    try {
-      setLoading(true);
-      await deletePolicy(selectedPolicy.id).unwrap();
-      message.success("Policy deleted successfully");
-      setIsDeleteModalVisible(false);
-      setSelectedPolicy(null);
-    } catch (error) {
-      console.error("Delete Policy Error:", error);
+  // const handleDeletePolicy = async () => {
+  //   try {
+  //     setLoading(true);
+  //     await deletePolicy(selectedPolicy.id).unwrap();
+  //     message.success("Policy deleted successfully");
+  //     setIsDeleteModalVisible(false);
+  //     setSelectedPolicy(null);
+  //   } catch (error) {
+  //     console.error("Delete Policy Error:", error);
 
-      // Handle specific error cases
-      if (
-        error?.data?.message?.includes("AccessDenied") ||
-        error?.data?.message?.includes("s3:DeleteObject")
-      ) {
-        // Show warning instead of error for S3 permission issues
-        message.warning(
-          "Policy was deleted but the associated file could not be removed due to permissions. System administrators have been notified.",
-          6
-        );
-        // Close the modal as the policy was still deleted
-        setIsDeleteModalVisible(false);
-        setSelectedPolicy(null);
-      } else {
-        // Show regular error message for other cases
-        message.error(
-          error?.data?.message || "Failed to delete policy. Please try again.",
-          5
-        );
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     // Handle specific error cases
+  //     if (
+  //       error?.data?.message?.includes("AccessDenied") ||
+  //       error?.data?.message?.includes("s3:DeleteObject")
+  //     ) {
+  //       // Show warning instead of error for S3 permission issues
+  //       message.warning(
+  //         "Policy was deleted but the associated file could not be removed due to permissions. System administrators have been notified.",
+  //         6
+  //       );
+  //       // Close the modal as the policy was still deleted
+  //       setIsDeleteModalVisible(false);
+  //       setSelectedPolicy(null);
+  //     } else {
+  //       // Show regular error message for other cases
+  //       message.error(
+  //         error?.data?.message || "Failed to delete policy. Please try again.",
+          
+  //       );
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+  const handleDelete = (record) => {
+    Modal.confirm({
+        title: 'Delete Policy',
+        content: 'Are you sure you want to delete this policy?',
+        okText: 'Yes',
+        okType: 'danger',
+        cancelText: 'No',
+        bodyStyle: {
+            padding: '20px',
+        },
+        onOk: async () => {
+            try {
+                await deletePolicy(record.id).unwrap();
+                message.success('Policy deleted successfully');
+            } catch (error) {
+                message.error(error?.data?.message || 'Failed to delete policy');
+            }
+        },
+    });
+};
+
 
   const handleFormSubmit = async (formData) => {
     try {
@@ -360,7 +383,7 @@ const Policy = () => {
             policies={filteredPolicies}
             loading={isPoliciesLoading}
             onEditPolicy={handleEditPolicy}
-            onDeletePolicy={handleDeleteConfirm}
+            onDelete={handleDelete}
             onView={handleViewPolicy}
             pagination={{
               current: currentPage,
@@ -379,7 +402,7 @@ const Policy = () => {
                   <PolicyCard
                     policy={policy}
                     onEdit={handleEditPolicy}
-                    onDelete={handleDeleteConfirm}
+                    onDelete={handleDelete}
                     onView={handleViewPolicy}
                   />
                 </Col>
@@ -430,23 +453,7 @@ const Policy = () => {
         onSubmit={handleFormSubmit}
       />
 
-      <Modal
-        title="Delete Policy"
-        open={isDeleteModalVisible}
-        onOk={handleDeletePolicy}
-        onCancel={() => setIsDeleteModalVisible(false)}
-        okText="Delete"
-        okButtonProps={{
-          danger: true,
-          loading: loading,
-        }}
-      >
-        <p>
-          Are you sure you want to delete{" "}
-          <strong>{selectedPolicy?.name}</strong>?
-        </p>
-        <p>This action cannot be undone.</p>
-      </Modal>
+     
     </div>
   );
 };

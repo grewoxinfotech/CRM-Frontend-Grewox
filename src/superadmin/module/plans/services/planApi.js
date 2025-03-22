@@ -33,13 +33,13 @@ export const planApi = createApi({
         }),
 
         updatePlan: builder.mutation({
-            query: ({ id, ...data }) => ({
-                url: `/subscriptions/${id}`,
+            query: ({ idd, updateData }) => ({
+                url: `/subscriptions/${idd}`,
                 method: 'PUT',
-                body: data
+                body: updateData
             }),
-            invalidatesTags: (result, error, { id }) => [
-                { type: 'Subscriptions', id },
+            invalidatesTags: (result, error, { idd }) => [
+                { type: 'Subscriptions', idd },
                 'Subscriptions'
             ]
         }),

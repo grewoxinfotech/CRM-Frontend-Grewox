@@ -476,67 +476,16 @@
 
                 .status-switch {
                     .ant-switch {
-                        min-width: 80px;
-                        height: 24px;
-                        background: rgba(0, 0, 0, 0.05);
-
                         &.switch-active {
-                            background: rgba(82, 196, 26, 0.15);
+                            background-color: #52c41a;
                         }
-
+                        
                         &.switch-inactive {
-                            background: rgba(255, 77, 79, 0.15);
+                            background-color: #ff4d4f;
                         }
-
-                        .ant-switch-handle {
-                            width: 20px;
-                            height: 20px;
-                            top: 2px;
-
-                            &::before {
-                                border-radius: 50%;
-                                background: white;
-                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                            }
-                        }
-
-                        .ant-switch-inner {
-
-                            .ant-switch-inner-checked,
-                            .ant-switch-inner-unchecked {
-                                font-size: 12px;
-                                font-weight: 500;
-                            }
-                        }
-
-                        &.ant-switch-checked {
-                            background: #52c41a;
-
-                            .ant-switch-inner-checked {
-                                margin-inline-start: 6px;
-                                color: white;
-                            }
-
-                            .ant-switch-handle {
-                                inset-inline-start: calc(100% - 22px);
-                            }
-                        }
-
-                        &:not(.ant-switch-checked) {
-                            .ant-switch-inner-unchecked {
-                                margin-inline-end: 6px;
-                                color: rgba(0, 0, 0, 0.45);
-                            }
-
-                            &:hover {
-                                background: rgba(255, 77, 79, 0.25);
-                            }
-                        }
-
-                        &:hover {
-                            &.ant-switch-checked {
-                                background: #73d13d;
-                            }
+                        
+                        &-checked {
+                            background-color: #52c41a;
                         }
                     }
                 }
@@ -786,6 +735,193 @@
                     .action-buttons {
                         width: 100%;
                         justify-content: center;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Delete modal styles
+.delete-modal {
+    .ant-modal-content {
+        border-radius: 8px;
+        padding: 20px;
+        
+        .ant-modal-body {
+            padding: 0;
+            margin: 16px 0;
+        }
+
+        .ant-modal-confirm-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #000000;
+            text-align: center;
+        }
+
+        .ant-modal-confirm-content {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.65);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .ant-modal-confirm-btns {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 24px;
+
+            .ant-btn {
+                min-width: 80px;
+                height: 32px;
+                font-size: 14px;
+                font-weight: 400;
+                border-radius: 5px;
+                padding: 4px 15px;
+
+                &-primary {
+                    background-color: #ff4d4f;
+                    border-color: #ff4d4f;
+                    
+                    &:hover {
+                        background-color: #ff7875;
+                        border-color: #ff7875;
+                    }
+                }
+
+                &-default {
+                    border-color: #d9d9d9;
+                    
+                    &:hover {
+                        border-color: #40a9ff;
+                        color: #40a9ff;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.simple-delete-modal {
+    .ant-modal-content {
+        padding: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        
+        .ant-modal-body {
+            padding: 16px;
+            
+            .ant-modal-confirm-body-wrapper {
+                .ant-modal-confirm-body {
+                    .ant-modal-confirm-title {
+                        font-size: 16px;
+                        font-weight: 500;
+                        margin-bottom: 8px;
+                    }
+                    
+                    .ant-modal-confirm-content {
+                        font-size: 14px;
+                        color: rgba(0, 0, 0, 0.65);
+                        margin-left: 0;
+                        margin-top: 8px;
+                    }
+                }
+                
+                .ant-modal-confirm-btns {
+                    margin-top: 24px;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 8px;
+
+                    .delete-confirm-button {
+                        background: #ff4d4f;
+                        border-color: #ff4d4f;
+                        color: white;
+                        border-radius: 2px;
+                        
+                        &:hover {
+                            background: #ff7875;
+                            border-color: #ff7875;
+                        }
+                    }
+
+                    .delete-cancel-button {
+                        border-radius: 2px;
+                        
+                        &:hover {
+                            border-color: #40a9ff;
+                            color: #40a9ff;
+                        }
+                    }
+
+                    button {
+                        min-width: 60px;
+                        height: 32px;
+                        padding: 4px 16px;
+                        font-size: 14px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.custom-delete-modal {
+    .ant-modal-content {
+        padding: 20px !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        
+        .ant-modal-confirm-body {
+            .ant-modal-confirm-title {
+                font-size: 14px;
+                font-weight: 500;
+                color: #000000;
+                padding: 0;
+                margin: 0 0 16px 0;
+            }
+            
+            .ant-modal-confirm-content {
+                font-size: 14px;
+                color: rgba(0, 0, 0, 0.65);
+                margin: 0;
+                padding: 0;
+            }
+        }
+        
+        .ant-modal-confirm-btns {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+
+            .ant-btn {
+                font-size: 14px;
+                height: 32px;
+                padding: 4px 16px;
+                border-radius: 2px;
+                font-weight: normal;
+                box-shadow: none;
+
+                &-primary {
+                    background: #ff4d4f;
+                    border-color: #ff4d4f;
+                    
+                    &:hover {
+                        background: #ff7875;
+                        border-color: #ff7875;
+                    }
+                }
+
+                &-default {
+                    border: 1px solid #d9d9d9;
+                    
+                    &:hover {
+                        color: #40a9ff;
+                        border-color: #40a9ff;
                     }
                 }
             }

@@ -14,7 +14,7 @@ import {
   useCreateNotesMutation,
   useUpdateNotesMutation,
   useGetAllNotesQuery,
-} from "./services/NotesApi";
+} from "./services/notesApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 

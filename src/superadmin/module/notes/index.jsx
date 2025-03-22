@@ -33,7 +33,7 @@ import CompanyList from "./NotesList";
 import {
   useGetAllNotesQuery,
   useDeleteNotesMutation,
-} from "./services/NotesApi";
+} from "./services/notesApi";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
@@ -123,8 +123,8 @@ const Notes = () => {
     setSelectedCompany(company);
   };
 
-  const handleDeleteConfirm = (company) => {
-    setSelectedCompany(company);
+  const handleDelete = (record) => {
+    setSelectedCompany(record);
     setIsDeleteModalVisible(true);
   };
 
@@ -321,7 +321,7 @@ const Notes = () => {
             companies={filteredCompanies}
             loading={isLoadingNotes || isDeleting}
             onEdit={handleEditCompany}
-            onDelete={handleDeleteConfirm}
+            onDelete={handleDelete}
             onView={handleViewCompany}
           />
         ) : (
@@ -333,7 +333,7 @@ const Notes = () => {
                   <CompanyCard
                     company={company}
                     onEdit={handleEditCompany}
-                    onDelete={handleDeleteConfirm}
+                    onDelete={handleDelete}
                     onView={handleViewCompany}
                   />
                 </Col>
@@ -370,23 +370,7 @@ const Notes = () => {
         loading={isLoadingNotes || isDeleting}
       />
 
-      <Modal
-        title="Delete Notes"
-        open={isDeleteModalVisible}
-        onOk={handleDeleteCompany}
-        onCancel={() => setIsDeleteModalVisible(false)}
-        okText="Delete"
-        okButtonProps={{
-          danger: true,
-          loading: loading,
-        }}
-      >
-        <p>
-          Are you sure you want to delete{" "}
-          <strong>{selectedCompany?.name}</strong>?
-        </p>
-        <p>This action cannot be undone.</p>
-      </Modal>
+    
     </div>
   );
 };

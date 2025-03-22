@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Dropdown, Tag, Tooltip } from 'antd';
+import { Table, Button, Dropdown, Tag, Tooltip, Modal, message } from 'antd';
 import {
     FiEye,
     FiEdit2,
@@ -13,6 +13,37 @@ import {
 import dayjs from 'dayjs';
 
 const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPageChange }) => {
+
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'view',
+                icon: <FiEye />,
+                label: 'View Details',
+                onClick: () => onView(record),
+
+            },
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: 'Edit Plan',
+                onClick: () => onEdit(record),
+
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: 'Delete Plan',
+                danger: true,
+                onClick: () => onDelete(record),
+            }
+        ]
+    });
+
+
+    
+
     const columns = [
         {
             title: 'Name',
@@ -108,52 +139,24 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: 'Actions',
             key: 'actions',
+            align: 'center',
             render: (_, record) => (
                 <Dropdown
-                    menu={{
-                        items: [
-                            {
-                                key: 'view',
-                                icon: <FiEye />,
-                                label: 'View Details',
-                                onClick: (e) => {
-                                    e.stopPropagation();
-                                    onView(record);
-                                }
-                            },
-                            {
-                                key: 'edit',
-                                icon: <FiEdit2 />,
-                                label: 'Edit Plan',
-                                onClick: (e) => {
-                                    e.stopPropagation();
-                                    onEdit(record.id);
-                                }
-                            },
-                            {
-                                key: 'delete',
-                                icon: <FiTrash2 />,
-                                label: 'Delete Plan',
-                                danger: true,
-                                onClick: (e) => {
-                                    e.stopPropagation();
-                                    onDelete(record.id);
-                                }
-                            }
-                        ]
-                    }}
+                    menu={getDropdownItems(record)}
                     trigger={['click']}
+                    placement="bottomRight"
+                    overlayClassName="plan-actions-dropdown"
                 >
                     <Button
                         type="text"
                         icon={<FiMoreVertical />}
-                        onClick={(e) => e.stopPropagation()}
+                        className="action-dropdown-button"
+                        onClick={(e) => e.preventDefault()}
                     />
                 </Dropdown>
             ),
             width: '80px',
-            fixed: 'right',
-            align: 'center',
+            fixed: 'right'
         },
     ];
 

@@ -69,7 +69,7 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                 <div className="card-actions">
                     <div className={`status-switch ${status}`}>
                         <Switch
-                            checked={status === 'active'}
+                            checked={plan.status === 'active'}
                             onChange={handleToggleStatus}
                             checkedChildren="Active"
                             unCheckedChildren="Inactive"

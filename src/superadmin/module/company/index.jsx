@@ -106,15 +106,25 @@ const Company = () => {
         setIsDeleteModalVisible(true);
     };
 
-    const handleDeleteCompany = async () => {
-        try {
-            await deleteCompany(selectedCompany.id).unwrap();
-            message.success('Company deleted successfully');
-            setIsDeleteModalVisible(false);
-            refetch();
-        } catch (error) {
-            message.error(error?.data?.message || 'Failed to delete company');
-        }
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Company',
+            content: 'Are you sure you want to delete this company?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deleteCompany(record.id).unwrap();
+                    message.success('Company deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete company');
+                }
+            },
+        });
     };
 
     const handleFormSubmit = async (formData) => {
@@ -304,7 +314,7 @@ const Company = () => {
                         companies={filteredCompanies}
                         loading={isLoadingCompanies || isDeleting}
                         onEdit={handleEditCompany}
-                        onDelete={handleDeleteConfirm}
+                        onDelete={handleDelete}
                         onView={handleViewCompany}
                     />
                 ) : (
@@ -316,7 +326,7 @@ const Company = () => {
                                     <CompanyCard
                                         company={company}
                                         onEdit={handleEditCompany}
-                                        onDelete={handleDeleteConfirm}
+                                        onDelete={handleDelete}
                                         onView={handleViewCompany}
                                     />
                                 </Col>
@@ -346,20 +356,7 @@ const Company = () => {
                 loading={isLoadingCompanies || isDeleting}
             />
 
-            <Modal
-                title="Delete Company"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteCompany}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete <strong>{selectedCompany?.name}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
+           
         </div>
     );
 };
