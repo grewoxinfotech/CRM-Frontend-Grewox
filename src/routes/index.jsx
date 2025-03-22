@@ -15,6 +15,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ForgotPassword from "../auth/forgot-password";
 import Branch from "../dashboard/module/hrm/Branch";
 import OTPVerification from "../auth/otp";
+import Crmsystem from "../crm/crmsystem/index.jsx";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
@@ -37,7 +38,6 @@ import Interviews from "../dashboard/module/job/interviews/index.jsx";
 import Lead from "../dashboard/module/crm/lead/index.jsx";
 import Deal from "../dashboard/module/crm/deal/index.jsx";
 import Task from "../dashboard/module/crm/task/index.jsx";
-
 
 const routes = createBrowserRouter([
   {
@@ -99,87 +99,87 @@ const routes = createBrowserRouter([
         children: [
           {
             path: "employee",
-            element: <Employee />
+            element: <Employee />,
           },
           {
             path: "branch",
-            element: <Branch />
+            element: <Branch />,
           },
           {
             path: "designation",
-            element: <Designation />
+            element: <Designation />,
           },
           {
             path: "department",
-            element: <Department />
+            element: <Department />,
           },
           {
             path: "training",
-            element: <Training />
+            element: <Training />,
           },
           {
             path: "document",
-            element: <Document />
+            element: <Document />,
           },
           {
             path: "announcement",
-            element: <Announcement />
+            element: <Announcement />,
           },
           {
             path: "role",
-            element: <Role />
-          }
-        ]
+            element: <Role />,
+          },
+        ],
       },
-     {
-      path: "job",
-      children: [
-        {
-          path: "jobs",
-          element: <Job />
-        },
-        {
-          path: "job-candidates",
-          element: <JobCandidates />
-        },
-        {
-          path: "job-onboarding",
-          element: <JobOnboarding />
-        },
-        {
-          path: "job-applications",
-          element: <JobApplications />
-        },
-        {
-          path: "offer-letters",
-          element: <OfferLetters />
-        },
-        {
-          path: "interviews",
-          element: <Interviews />
-        }
-      ]
-     },
-     {
-      path: "crm",
-      children: [
-        {
-          path: "leads",
-          element: <Lead />
-        },
-        {
-          path: "deals",
-          element: <Deal />
-        },
-        {
-          path: "tasks",
-          element: <Task />
-        }
-      ]
-     },
+      {
+        path: "job",
+        children: [
+          {
+            path: "jobs",
+            element: <Job />,
+          },
+          {
+            path: "job-candidates",
+            element: <JobCandidates />,
+          },
+          {
+            path: "job-onboarding",
+            element: <JobOnboarding />,
+          },
+          {
+            path: "job-applications",
+            element: <JobApplications />,
+          },
+          {
+            path: "offer-letters",
+            element: <OfferLetters />,
+          },
+          {
+            path: "interviews",
+            element: <Interviews />,
+          },
+        ],
+      },
+      {
+        path: "crm",
+        children: [
+          {
+            path: "leads",
+            element: <Lead />,
+          },
+          {
+            path: "deals",
+            element: <Deal />,
+          },
+          {
+            path: "tasks",
+            element: <Task />,
+          },
+        ],
+      },
       {
         path: "user-management/users",
-        element: <Users />
+        element: <Users />,
       },
       {
         path: "settings",
@@ -188,6 +188,10 @@ const routes = createBrowserRouter([
       {
         path: "help",
         element: <div>Help & Support Page</div>,
+      },
+      {
+        path: "crm-setup",
+        element: <Crmsystem />,
       },
     ],
   },
@@ -239,14 +243,14 @@ const routes = createBrowserRouter([
       },
       {
         path: "settings/esignature",
-        element: <ESignature />
+        element: <ESignature />,
       },
       {
         path: "inquiry",
-        element: <Inquiry />
-      }
-    ]
-  }
+        element: <Inquiry />,
+      },
+    ],
+  },
 ]);
 
 export default routes;

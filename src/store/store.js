@@ -16,18 +16,49 @@ import planReducer from "../superadmin/module/plans/services/planSlice";
 import { policyApi } from "../superadmin/module/policy/service/policyApi";
 import policyReducer from "../superadmin/module/policy/service/policySlice";
 import { notesApi } from "../superadmin/module/notes/services/NotesApi";
-import { inquiryApi, inquiryReducer } from '../superadmin/module/inquary/services/index';
-import { esignatureApi, esignatureReducer } from '../superadmin/module/settings/eSignature/services/index';
-import { subclientApi, subclientReducer } from "../dashboard/module/user-management/subclient/services";
-// Persist config
+import {
+  inquiryApi,
+  inquiryReducer,
+} from "../superadmin/module/inquary/services/index";
+import {
+  subclientApi,
+  subclientReducer,
+} from "../dashboard/module/user-management/subclient/services";
 import { roleApi } from "../dashboard/module/hrm/role/services/roleApi";
 import roleReducer from "../dashboard/module/hrm/role/services/roleSlice";
 import { userApi } from "../dashboard/module/user-management/users/services/userApi";
-import { employeeApi, employeeReducer } from "../dashboard/module/hrm/Employee/services";
-import { designationApi, designationReducer } from "../dashboard/module/hrm/Designation/services";
-import { branchApi, branchReducer } from "../dashboard/module/hrm/Branch/services";
-import { departmentApi, departmentReducer } from "../dashboard/module/hrm/Department/services";
-import { trainingApi, trainingReducer } from "../dashboard/module/hrm/Training/services";
+import {
+  employeeApi,
+  employeeReducer,
+} from "../dashboard/module/hrm/Employee/services";
+import {
+  designationApi,
+  designationReducer,
+} from "../dashboard/module/hrm/Designation/services";
+import {
+  branchApi,
+  branchReducer,
+} from "../dashboard/module/hrm/Branch/services";
+import {
+  departmentApi,
+  departmentReducer,
+} from "../dashboard/module/hrm/Department/services";
+import {
+  trainingApi,
+  trainingReducer,
+} from "../dashboard/module/hrm/Training/services";
+import {
+  esignatureApi,
+  esignatureReducer,
+} from "../superadmin/module/settings/eSignature/services/index";
+import { pipelineApi } from "../crm/crmsystem/pipeline/services/pipelineApi";
+import pipelineReducer from "../crm/crmsystem/pipeline/services/pipelineSlice";
+import { leadStageApi } from "../crm/crmsystem/leadstage/services/leadStageApi";
+import { dealStageApi } from "../crm/crmsystem/dealstage/services/dealStageApi";
+import { sourceApi } from "../crm/crmsystem/souce/services/SourceApi";
+import { lableApi } from "../crm/crmsystem/lable/services/LableApi";
+import { contractTypeApi } from "../crm/crmsystem/contractType/services/ContractTypeApi";
+import contractTypeReducer from "../crm/crmsystem/contractType/services/ContractTypeSlice";
 
 // Persist config
 const persistConfig = {
@@ -56,6 +87,12 @@ const rootReducer = combineReducers({
   [designationApi.reducerPath]: designationApi.reducer,
   [departmentApi.reducerPath]: departmentApi.reducer,
   [trainingApi.reducerPath]: trainingApi.reducer,
+  [pipelineApi.reducerPath]: pipelineApi.reducer,
+  [leadStageApi.reducerPath]: leadStageApi.reducer,
+  [dealStageApi.reducerPath]: dealStageApi.reducer,
+  [sourceApi.reducerPath]: sourceApi.reducer,
+  [lableApi.reducerPath]: lableApi.reducer,
+  [contractTypeApi.reducerPath]: contractTypeApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
@@ -70,6 +107,8 @@ const rootReducer = combineReducers({
   designation: designationReducer,
   department: departmentReducer,
   training: trainingReducer,
+  pipeline: pipelineReducer,
+  contractType: contractTypeReducer,
 });
 
 // Create persisted reducer
@@ -100,7 +139,13 @@ export const store = configureStore({
       .concat(employeeApi.middleware)
       .concat(designationApi.middleware)
       .concat(departmentApi.middleware)
-      .concat(trainingApi.middleware),
+      .concat(trainingApi.middleware)
+      .concat(pipelineApi.middleware)
+      .concat(leadStageApi.middleware)
+      .concat(dealStageApi.middleware)
+      .concat(sourceApi.middleware)
+      .concat(lableApi.middleware)
+      .concat(contractTypeApi.middleware),
 });
 
 export const persistor = persistStore(store);
