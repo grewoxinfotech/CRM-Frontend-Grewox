@@ -11,6 +11,7 @@ import {
     Col,
     Breadcrumb,
     Card,
+    Form,
 } from 'antd';
 import {
     FiPlus,
@@ -18,18 +19,25 @@ import {
     FiSearch,
     FiHome,
     FiChevronDown,
+    FiLock,
+    FiMail,
+    FiGrid,
+    FiList,
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useGetUsersQuery, useCreateUserMutation, useUpdateUserMutation, useDeleteUserMutation } from './services/userApi';
+import { useGetRolesQuery } from '../../../../dashboard/module/hrm/role/services/roleApi';
 import CreateUser from './CreateUser';
 import EditUser from './EditUser';
 import UserList from './UserList';
+import UserCard from './UserCard';
 import './users.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const { Title, Text } = Typography;
 
@@ -39,33 +47,38 @@ const Users = () => {
     const [isCreateFormVisible, setIsCreateFormVisible] = useState(false);
     const [isEditFormVisible, setIsEditFormVisible] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [users, setUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const loggedInUser = useSelector(selectCurrentUser);
     const { data: usersData, isLoading: isLoadingUsers, refetch } = useGetUsersQuery();
+    const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
     const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
     const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
     const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+    const [viewMode, setViewMode] = useState('table');
 
-    // Effects
     useEffect(() => {
         if (usersData?.data) {
-            const transformedData = usersData.data.map(user => ({
+            const filteredData = usersData.data.filter(user => user?.created_by === loggedInUser?.username || user?.client_id === loggedInUser?.id);
+            const transformedData = filteredData.map(user => ({
                 id: user.id,
                 username: user.username || 'N/A',
                 email: user.email || 'N/A',
-                role_name: user.role?.name || 'N/A',
-                role_id: user.role?.id,
+                phone: user.phone || 'N/A',
+                status: user.status || 'inactive',
+                created_at: user.createdAt || '-',
+                updated_at: user.updatedAt || null,
+                role_name: rolesData?.data?.find(role => role.id === user.role_id)?.role_name || 'N/A',
+                role_id: user.role_id,
                 created_by: user.created_by,
                 updated_by: user.updated_by,
-                created_at: user.createdAt,
-                updated_at: user.updatedAt
+                profilePic: user.profilePic || null,
             }));
             setUsers(transformedData);
             setFilteredUsers(transformedData);
         }
-    }, [usersData]);
+    }, [usersData, rolesData]);
 
     useEffect(() => {
         const filtered = users.filter(user =>
@@ -79,6 +92,27 @@ const Users = () => {
     // Handlers
     const handleSearch = (value) => {
         setSearchText(value);
+    };
+
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete User',
+            content: 'Are you sure you want to delete this user?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deleteUser(record.id).unwrap();
+                    message.success('User deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete user');
+                }
+            },
+        });
     };
 
     const handleAddUser = () => {
@@ -95,28 +129,11 @@ const Users = () => {
         setIsEditFormVisible(true);
     };
 
-    const handleDeleteClick = (user) => {
-        setSelectedUser(user);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteUser = async () => {
-        try {
-            await deleteUser(selectedUser.id).unwrap();
-            message.success('User deleted successfully');
-            setIsDeleteModalVisible(false);
-            refetch();
-        } catch (error) {
-            message.error(error?.data?.message || 'Failed to delete user');
-        }
-    };
-
     const handleCreateSubmit = async (formData) => {
         try {
             await createUser(formData).unwrap();
             message.success('User created successfully');
             setIsCreateFormVisible(false);
-            refetch();
         } catch (error) {
             message.error(error?.data?.message || 'Failed to create user');
         }
@@ -251,6 +268,18 @@ const Users = () => {
                                 className="search-input"
                             />
                             <div className="action-buttons">
+                                <Button.Group className="view-toggle">
+                                    <Button
+                                        type={viewMode === 'table' ? 'primary' : 'default'}
+                                        icon={<FiList size={16} />}
+                                        onClick={() => setViewMode('table')}
+                                    />
+                                    <Button
+                                        type={viewMode === 'card' ? 'primary' : 'default'}
+                                        icon={<FiGrid size={16} />}
+                                        onClick={() => setViewMode('card')}
+                                    />
+                                </Button.Group>
                                 <Dropdown overlay={exportMenu} trigger={["click"]}>
                                     <Button className="export-button">
                                         <FiDownload size={16} />
@@ -273,12 +302,26 @@ const Users = () => {
             </div>
 
             <Card className="users-card">
-                <UserList
-                    users={filteredUsers}
-                    loading={isLoadingUsers || isDeleting}
-                    onEdit={handleEditUser}
-                    onDelete={handleDeleteClick}
-                />
+                {viewMode === 'table' ? (
+                    <UserList
+                        users={filteredUsers}
+                        loading={isLoadingUsers || isDeleting}
+                        onEdit={handleEditUser}
+                        onDelete={handleDelete}
+                    />
+                ) : (
+                    <div className="users-grid">
+                        {filteredUsers.map(user => (
+                            <UserCard
+                                key={user.id}
+                                user={user}
+                                onEdit={handleEditUser}
+                                onDelete={handleDelete}
+                                onView={() => { }}
+                            />
+                        ))}
+                    </div>
+                )}
             </Card>
 
             <CreateUser
@@ -295,21 +338,6 @@ const Users = () => {
                 loading={isUpdating}
                 initialValues={selectedUser}
             />
-
-            <Modal
-                title="Delete User"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteUser}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: isDeleting
-                }}
-            >
-                <p>Are you sure you want to delete <strong>{selectedUser?.username}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
         </div>
     );
 };

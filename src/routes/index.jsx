@@ -15,7 +15,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import ForgotPassword from "../auth/forgot-password";
 import Branch from "../dashboard/module/hrm/Branch";
 import OTPVerification from "../auth/otp";
-import Crmsystem from "../crm/crmsystem/index.jsx";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
@@ -37,7 +36,25 @@ import OfferLetters from "../dashboard/module/job/offer letters/index.jsx";
 import Interviews from "../dashboard/module/job/interviews/index.jsx";
 import Lead from "../dashboard/module/crm/lead/index.jsx";
 import Deal from "../dashboard/module/crm/deal/index.jsx";
+import Crmsystem from "../dashboard/module/crm/crmsystem/index.jsx";
 import Task from "../dashboard/module/crm/task/index.jsx";
+import Project from "../dashboard/module/crm/project/index.jsx";
+import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail";
+import { useSelector } from 'react-redux';
+import { parsePermissions, hasPermission } from '../utils/permissionUtils';
+import { Navigate } from 'react-router-dom';
+import { selectUserRole } from '../auth/services/authSlice';
+
+const PermissionRoute = ({ children, permissionKey }) => {
+  const userRole = useSelector(selectUserRole);
+  const permissions = parsePermissions(userRole?.permissions);
+
+  if (!hasPermission(permissions, permissionKey)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
 
 const routes = createBrowserRouter([
   {
@@ -68,10 +85,10 @@ const routes = createBrowserRouter([
     path: "/dashboard",
     element: (
       <ProtectedRoute>
-        <RoleBasedRoute allowedRoles={["client"]}>
+        <RoleBasedRoute>
           <DashboardLayout />
         </RoleBasedRoute>
-      </ProtectedRoute>
+      </ProtectedRoute >
     ),
     children: [
       {
@@ -164,6 +181,19 @@ const routes = createBrowserRouter([
         path: "crm",
         children: [
           {
+            path: "project",
+            children: [
+              {
+                path: "",
+                element: <Project />,
+              },
+              {
+                path: ":projectId",
+                element: <ProjectDetail />,
+              }
+            ]
+          },
+          {
             path: "leads",
             element: <Lead />,
           },
@@ -199,7 +229,7 @@ const routes = createBrowserRouter([
     path: "/superadmin",
     element: (
       <ProtectedRoute>
-        <RoleBasedRoute allowedRoles={["super-admin"]}>
+        <RoleBasedRoute>
           <SuperAdminLayout />
         </RoleBasedRoute>
       </ProtectedRoute>

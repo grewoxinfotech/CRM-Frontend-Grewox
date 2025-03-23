@@ -15,11 +15,11 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import CreateSubclient from './CreateSubclient';
 import SubclientCard from './SubclientCard';
-import SubclientList from './SubclientList';    
+import SubclientList from './SubclientList';
 import { useGetAllSubclientsQuery, useDeleteSubclientMutation } from './services/subClientApi';
+import { useGetRolesQuery } from '../../../../dashboard/module/hrm/role/services/roleApi';
 import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { setIsModalOpen } from './services/subClientSlice';
 import EditSubclient from './EditSubclient';
 
 const { Title, Text } = Typography;
@@ -27,6 +27,7 @@ const { Title, Text } = Typography;
 const Subclient = () => {
     const dispatch = useDispatch();
     const { data: subclientsData, isLoading: isLoadingSubclients, refetch } = useGetAllSubclientsQuery();
+    const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
     const [deleteSubclient, { isLoading: isDeleting }] = useDeleteSubclientMutation();
 
     const [subclients, setSubclients] = useState([]);
@@ -44,31 +45,16 @@ const Subclient = () => {
         if (subclientsData?.data) {
             const transformedData = subclientsData.data.map(subclient => ({
                 id: subclient.id,
-                name: subclient.username || 'N/A',
+                username: subclient.username || 'N/A',
                 email: subclient.email || 'N/A',
-                phone: subclient.phone || 'N/A',
-                phoneCode: subclient.phoneCode || '',
-                status: subclient.role_id ? 'active' : 'inactive',
+                role_name: rolesData?.data?.find(role => role?.id === subclient?.role_id)?.role_name || 'N/A',
                 created_at: subclient.createdAt || '-',
-                firstName: subclient.firstName || '',
-                lastName: subclient.lastName || '',
-                companyType: subclient.companyType || 'N/A',
-                bankname: subclient.bankname || '',
-                ifsc: subclient.ifsc || '',
-                banklocation: subclient.banklocation || '',
-                accountholder: subclient.accountholder || '',
-                accountnumber: subclient.accountnumber || '',
-                gstIn: subclient.gstIn || '',
-                city: subclient.city || '',
-                state: subclient.state || '',
-                website: subclient.website || '',
-                accounttype: subclient.accounttype || '',
-                country: subclient.country || '',
-                zipcode: subclient.zipcode || '',
-                address: subclient.address || '',
-                profilePic: subclient.profilePic || null
+                updated_at: subclient.updatedAt || null,
+                profilePic: subclient.profilePic || null,
+                status: subclient.status || 'inactive'
             }));
             setSubclients(transformedData);
+            setFilteredSubclients(transformedData);
         }
     }, [subclientsData]);
 
@@ -76,15 +62,10 @@ const Subclient = () => {
         let result = [...subclients];
         if (searchText) {
             result = result.filter(subclient =>
-                subclient.name.toLowerCase().includes(searchText.toLowerCase()) ||
+                subclient.username.toLowerCase().includes(searchText.toLowerCase()) ||
                 subclient.email.toLowerCase().includes(searchText.toLowerCase()) ||
-                subclient.phone.includes(searchText) ||
-                (subclient.firstName && subclient.firstName.toLowerCase().includes(searchText.toLowerCase())) ||
-                (subclient.lastName && subclient.lastName.toLowerCase().includes(searchText.toLowerCase())) ||
-                (subclient.companyType && subclient.companyType.toLowerCase().includes(searchText.toLowerCase())) ||
-                (subclient.city && subclient.city.toLowerCase().includes(searchText.toLowerCase())) ||
-                (subclient.state && subclient.state.toLowerCase().includes(searchText.toLowerCase())) ||
-                (subclient.gstIn && subclient.gstIn.toLowerCase().includes(searchText.toLowerCase()))
+                (subclient.username && subclient.username.toLowerCase().includes(searchText.toLowerCase())) ||
+                (subclient.email && subclient.email.toLowerCase().includes(searchText.toLowerCase()))
             );
         }
         setFilteredSubclients(result);
@@ -159,11 +140,9 @@ const Subclient = () => {
         try {
             setLoading(true);
             const data = subclients.map(subclient => ({
-                'Subclient Name': subclient.name,
+                'Subclient Name': subclient.username,
                 'Email': subclient.email,
-                'Phone': subclient.phone,
-                'Company Type': subclient.companyType,
-                'Status': subclient.status,
+                'Role': subclient.role_name,
                 'Created Date': moment(subclient.created_at).format('YYYY-MM-DD')
             }));
 

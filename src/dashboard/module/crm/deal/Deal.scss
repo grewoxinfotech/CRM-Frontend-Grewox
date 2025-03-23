@@ -108,7 +108,7 @@
                     &.ant-btn-primary {
                         background: #1890ff;
                         border-color: #1890ff;
-                        
+
                         svg {
                             color: #fff;
                         }
@@ -154,7 +154,8 @@
                     width: 100%;
                 }
 
-                .view-buttons, .ant-btn {
+                .view-buttons,
+                .ant-btn {
                     width: 100%;
                 }
             }
@@ -263,4 +264,4 @@
             }
         }
     }
-} 
+}

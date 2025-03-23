@@ -51,15 +51,17 @@ import {
   esignatureApi,
   esignatureReducer,
 } from "../superadmin/module/settings/eSignature/services/index";
-import { pipelineApi } from "../crm/crmsystem/pipeline/services/pipelineApi";
-import pipelineReducer from "../crm/crmsystem/pipeline/services/pipelineSlice";
-import { leadStageApi } from "../crm/crmsystem/leadstage/services/leadStageApi";
-import { dealStageApi } from "../crm/crmsystem/dealstage/services/dealStageApi";
-import { sourceApi } from "../crm/crmsystem/souce/services/SourceApi";
-import { lableApi } from "../crm/crmsystem/lable/services/LableApi";
-import { contractTypeApi } from "../crm/crmsystem/contractType/services/ContractTypeApi";
-import contractTypeReducer from "../crm/crmsystem/contractType/services/ContractTypeSlice";
+import { pipelineApi } from "../dashboard/module/crm/crmsystem/pipeline/services/pipelineApi";
+import pipelineReducer from "../dashboard/module/crm/crmsystem/pipeline/services/pipelineSlice";
+import { leadStageApi } from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageApi";
+import { dealStageApi } from "../dashboard/module/crm/crmsystem/dealstage/services/dealStageApi";
+import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/SourceApi";
+import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi";
+import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi";
+import contractTypeReducer from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeSlice";
 import { taskApi, taskReducer } from "../dashboard/module/crm/task/services";
+import { projectApi } from '../dashboard/module/crm/project/services/projectApi';
+import projectReducer from '../dashboard/module/crm/project/services/projectSlice';
 
 // Persist config
 const persistConfig = {
@@ -95,6 +97,7 @@ const rootReducer = combineReducers({
   [lableApi.reducerPath]: lableApi.reducer,
   [contractTypeApi.reducerPath]: contractTypeApi.reducer,
   [taskApi.reducerPath]: taskApi.reducer,
+  [projectApi.reducerPath]: projectApi.reducer,
   company: companyReducer,
   superadminProfile: superadminProfileReducer,
   settings: settingsReducer,
@@ -112,6 +115,7 @@ const rootReducer = combineReducers({
   pipeline: pipelineReducer,
   contractType: contractTypeReducer,
   task: taskReducer,
+  project: projectReducer,
 });
 
 // Create persisted reducer
@@ -149,7 +153,8 @@ export const store = configureStore({
       .concat(sourceApi.middleware)
       .concat(lableApi.middleware)
       .concat(contractTypeApi.middleware)
-      .concat(taskApi.middleware),
+      .concat(taskApi.middleware)
+      .concat(projectApi.middleware),
 });
 
 export const persistor = persistStore(store);

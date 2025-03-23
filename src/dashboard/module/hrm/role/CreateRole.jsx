@@ -11,60 +11,52 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
     const [selectedPermissions, setSelectedPermissions] = useState({});
 
     // Define the modules with their submodules and permissions
-    const modules = ['Staff', 'CRM', 'Project', 'HRM', 'Account'];
+    const modules = ['User Management', 'CRM', 'Communication', 'HRM', 'Job'];
 
     const subModules = {
         CRM: [
-            { key: 'dashboards-leadcards', title: 'LeadCards' },
+            { key: 'dashboards-project-list', title: 'Project' },
+            { key: 'dashboards-sales', title: 'Sales' },
             { key: 'dashboards-lead', title: 'Leads' },
             { key: 'dashboards-deal', title: 'Deals' },
             { key: 'dashboards-proposal', title: 'Proposal' },
             { key: 'dashboards-task', title: 'Task' },
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
-            { key: 'dashboards-systemsetup', title: 'CRM System Setup' },
+            { key: 'dashboards-systemsetup', title: 'CRM System Setup' }
+        ],
+        'User Management': [
+            { key: 'extra-users-list', title: 'Users' },
+            { key: 'extra-users-client-list', title: 'Clients' }
+        ],
+        Communication: [
             { key: 'dashboards-mail', title: 'Mail' },
             { key: 'dashboards-chat', title: 'Chat' },
-            { key: 'dashboards-calendar', title: 'Calendar' },
-            { key: 'extra-pages-customersupports-ticket', title: 'Ticket Supports' },
-        ],
-        Staff: [
-            { key: 'extra-users-list', title: 'Users' },
-            { key: 'extra-users-client-list', title: 'Clients' },
-        ],
-        Project: [
-            { key: 'dashboards-project-list', title: 'Project' },
-            { key: 'dashboards-project-Contract', title: 'Contract' },
+            { key: 'dashboards-calendar', title: 'Calendar' }
         ],
         HRM: [
             { key: 'extra-hrm-employee', title: 'Employee' },
-            { key: 'extra-hrm-payroll-salary', title: 'Salary' },
-            { key: 'extra-hrm-performance-indicator', title: 'Indicator' },
-            { key: 'extra-hrm-performance-appraisal', title: 'Appraisal' },
+            { key: 'extra-hrm-payroll', title: 'PayRoll' },
+            { key: 'extra-hrm-performance-indicator', title: 'Performance' },
             { key: 'extra-hrm-role', title: 'Role' },
+            { key: 'extra-hrm-branch', title: 'Branch' },
             { key: 'extra-hrm-designation', title: 'Designation' },
             { key: 'extra-hrm-department', title: 'Department' },
-            { key: 'extra-hrm-branch', title: 'Branch' },
             { key: 'extra-hrm-attendance-attendancelist', title: 'Attendance' },
             { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
             { key: 'extra-hrm-meeting', title: 'Meeting' },
             { key: 'extra-hrm-announcement', title: 'Announcement' },
             { key: 'extra-hrm-jobs-joblist', title: 'Job' },
-            { key: 'extra-hrm-jobs-jobcandidate', title: 'Job Candidate' },
-            { key: 'extra-hrm-jobs-jobonbording', title: 'Job On-Bording' },
-            { key: 'extra-hrm-jobs-jobapplication', title: 'Job Application' },
-            { key: 'extra-hrm-jobs-jobofferletter', title: 'Job Offer Letter' },
-            { key: 'extra-hrm-jobs-interview', title: 'Job Interviews' },
             { key: 'extra-hrm-document', title: 'Document' },
-            { key: 'extra-hrm-trainingSetup', title: 'TrainingSetup' }
+            { key: 'extra-hrm-trainingSetup', title: 'Training Setup' }
         ],
-        Account: [
-            { key: 'dashboards-sales-customer', title: 'Customer' },
-            { key: 'dashboards-sales-invoice', title: 'Invoice' },
-            { key: 'dashboards-sales-billing', title: 'Billing' },
-            { key: 'dashboards-sales-revenue', title: 'Revenue' },
-            { key: 'dashboards-sales-estimates', title: 'Estimates' },
-            { key: 'dashboards-sales-creditnotes', title: 'Credit Notes' },
-        ],
+        Job: [
+            { key: 'extra-hrm-jobs-joblist', title: 'Jobs' },
+            { key: 'extra-hrm-jobs-jobcandidate', title: 'Job Candidates' },
+            { key: 'extra-hrm-jobs-jobonbording', title: 'Job On-Boarding' },
+            { key: 'extra-hrm-jobs-jobapplication', title: 'Job Applications' },
+            { key: 'extra-hrm-jobs-jobofferletter', title: 'Offer Letters' },
+            { key: 'extra-hrm-jobs-interview', title: 'Interviews' }
+        ]
     };
 
     const permissions = ['view', 'create', 'update', 'delete'];

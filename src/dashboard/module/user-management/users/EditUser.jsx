@@ -16,6 +16,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
     ) || [];
 
     const handleSubmit = async (values) => {
+        console.log(values);
         try {
             const response = await updateUser({
                 id: initialValues.id,

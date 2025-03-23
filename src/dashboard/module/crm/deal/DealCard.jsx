@@ -66,7 +66,7 @@ const DealCard = ({ onEdit, onDelete, onView }) => {
                                 <Tag color="blue">{deal.stage}</Tag>
                             </div>
                         </div>
-                        
+
                         <Dropdown
                             menu={getDropdownItems(deal)}
                             trigger={['click']}
@@ -107,7 +107,7 @@ const DealCard = ({ onEdit, onDelete, onView }) => {
                         </div>
                     </div>
 
-                   
+
                 </Card>
             ))}
         </div>

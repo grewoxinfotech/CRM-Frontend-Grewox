@@ -1,37 +1,74 @@
 import React from 'react';
-import { Table, Avatar, Dropdown, Button } from 'antd';
-import { FiEdit2, FiTrash2, FiEye, FiUser, FiMoreVertical } from 'react-icons/fi';
-import { useGetAllSubclientsQuery } from './services/subClientApi';
+import { Table, Button, Tag, Dropdown, Menu, Avatar } from 'antd';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiUsers, FiEye } from 'react-icons/fi';
+import moment from 'moment';
 
-const SubclientList = ({ onEdit, onDelete, onView }) => {
-    const { data: subclientsData, isLoading } = useGetAllSubclientsQuery();
+const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
+    const getRoleColor = (role) => {
+        const roleColors = {
+            'sub-client': {
+                color: '#389E0D',
+                bg: '#F6FFED',
+                border: '#B7EB8F'
+            },
+            'default': {
+                color: '#595959',
+                bg: '#FAFAFA',
+                border: '#D9D9D9'
+            }
+        };
+        return roleColors[role?.toLowerCase()] || roleColors.default;
+    };
 
-    // Transform the data to ensure it's an array
-    const subclients = subclientsData?.data || [];
+    const getInitials = (username) => {
+        return username
+            ? username.split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+            : 'U';
+    };
 
-    const getDropdownItems = (record) => ({
-        items: [
-            {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => onView(record),
-            },
-            {
-                key: 'edit',
-                icon: <FiEdit2 />,
-                label: 'Edit',
-                onClick: () => onEdit(record),
-            },
-            {
-                key: 'delete',
-                icon: <FiTrash2 />,
-                label: 'Delete',
-                onClick: () => onDelete(record),
-                danger: true,
-            },
-        ],
-    });
+    const getActionMenu = (record) => (
+        <Menu className="action-menu">
+            <Menu.Item
+                key="view"
+                icon={<FiEye />}
+                onClick={() => onView(record)}
+            >
+                View Details
+            </Menu.Item>
+            <Menu.Item
+                key="edit"
+                icon={<FiEdit2 />}
+                onClick={() => onEdit(record)}
+            >
+                Edit Subclient
+            </Menu.Item>
+            <Menu.Item
+                key="resetPassword"
+                icon={<FiLock />}
+                onClick={() => console.log('Reset password')}
+            >
+                Reset Password
+            </Menu.Item>
+            <Menu.Item
+                key="status"
+                icon={<FiUserCheck />}
+                onClick={() => console.log('Change status')}
+            >
+                Change Status
+            </Menu.Item>
+            <Menu.Item
+                key="delete"
+                icon={<FiTrash2 />}
+                danger
+                onClick={() => onDelete(record)}
+            >
+                Delete Subclient
+            </Menu.Item>
+        </Menu>
+    );
 
     const columns = [
         {
@@ -40,52 +77,153 @@ const SubclientList = ({ onEdit, onDelete, onView }) => {
             key: 'profilePic',
             width: 80,
             render: (profilePic, record) => (
-                <Avatar
-                    size={40}
-                    src={profilePic}
-                    icon={!profilePic && <FiUser />}
-                    style={{
-                        backgroundColor: !profilePic ? '#1890ff' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                />
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar
+                        size={40}
+                        src={profilePic}
+                        icon={!profilePic && <FiUser />}
+                        style={{
+                            backgroundColor: !profilePic ? '#1890ff' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        {!profilePic && getInitials(record.username)}
+                    </Avatar>
+                </div>
             ),
         },
         {
             title: 'Username',
             dataIndex: 'username',
             key: 'username',
-            sorter: (a, b) => a.username.localeCompare(b.username)
+            render: (text) => (
+                <div style={{
+                    fontWeight: 500,
+                    color: '#262626',
+                    fontSize: '14px'
+                }}>
+                    {text}
+                </div>
+            ),
+            sorter: (a, b) => (a.username || '').localeCompare(b.username || ''),
+            width: '200px'
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            render: (text) => (
+                <span style={{ color: '#595959', fontSize: '14px' }}>
+                    {text || 'N/A'}
+                </span>
+            ),
+            width: '30%',
         },
         {
-            title: 'Phone',
-            dataIndex: 'phone',
-            key: 'phone',
+            title: 'Role',
+            dataIndex: 'role_name',
+            key: 'role_name',
+            width: '20%',
+            render: (role) => {
+                const roleStyle = getRoleColor(role);
+                return (
+                    <div className="role-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                            className="role-indicator"
+                            style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: roleStyle.color,
+                                boxShadow: `0 0 8px ${roleStyle.color}`
+                            }}
+                        />
+                        <Tag
+                            style={{
+                                textTransform: 'capitalize',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                margin: 0,
+                                background: roleStyle.bg,
+                                border: `1px solid ${roleStyle.border}`,
+                                color: roleStyle.color,
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}
+                        >
+                            <FiUsers size={12} />
+                            {role || 'N/A'}
+                        </Tag>
+                    </div>
+                );
+            }
+        },
+        {
+            title: 'Created At',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            render: (date) => (
+                <div className="date-cell">
+                    <span className="date">
+                        {moment(date).format('MMM DD, YYYY')}
+                    </span>
+                    <span className="time">
+                        {moment(date).format('h:mm A')}
+                    </span>
+                </div>
+            ),
+            sorter: (a, b) => moment(a.created_at).unix() - moment(b.created_at).unix(),
+            width: '180px'
+        },
+        {
+            title: 'Updated At',
+            dataIndex: 'updated_at',
+            key: 'updated_at',
+            render: (date) => (
+                <div className="date-cell">
+                    {date ? (
+                        <>
+                            <span className="date">
+                                {moment(date).format('MMM DD, YYYY')}
+                            </span>
+                            <span className="time">
+                                {moment(date).format('h:mm A')}
+                            </span>
+                        </>
+                    ) : (
+                        <span className="no-date">-</span>
+                    )}
+                </div>
+            ),
+            sorter: (a, b) => {
+                if (!a.updated_at) return -1;
+                if (!b.updated_at) return 1;
+                return moment(a.updated_at).unix() - moment(b.updated_at).unix();
+            },
+            width: '180px'
         },
         {
             title: 'Actions',
             key: 'actions',
-            width: 80,
+            width: '60px',
             align: 'center',
             render: (_, record) => (
                 <Dropdown
-                    menu={getDropdownItems(record)}
+                    overlay={getActionMenu(record)}
                     trigger={['click']}
                     placement="bottomRight"
                     overlayClassName="subclient-actions-dropdown"
                 >
                     <Button
                         type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                        onClick={(e) => e.preventDefault()}
+                        icon={<FiMoreVertical size={16} />}
+                        className="action-button"
+                        onClick={(e) => e.stopPropagation()}
                     />
                 </Dropdown>
             ),
@@ -94,16 +232,16 @@ const SubclientList = ({ onEdit, onDelete, onView }) => {
 
     return (
         <Table
-            columns={columns}
             dataSource={subclients}
-            // loading={isLoading}
+            columns={columns}
+            loading={loading}
             rowKey="id"
             pagination={{
                 pageSize: 10,
-                showSizeChanger: false,
+                showSizeChanger: true,
+                showQuickJumper: false,
                 showTotal: (total) => `Total ${total} items`,
             }}
-            className="subclient-table"
         />
     );
 };
