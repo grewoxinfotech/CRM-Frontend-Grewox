@@ -11,13 +11,9 @@ import {
     Space,
 } from 'antd';
 import { FiUser, FiFileText, FiGrid, FiX, FiPlus, FiMapPin, FiTag } from 'react-icons/fi';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-    useCreateDesignationMutation,
-    useUpdateDesignationMutation,
-    useGetDesignationByIdQuery,
-} from './services/designationApi';
+import { useCreateDesignationMutation, useUpdateDesignationMutation } from './services/designationApi';
 import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
+import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import CreateBranch from '../Branch/CreateBranch';
 
 const { Text } = Typography;
@@ -69,7 +65,7 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
     const handleSubmit = async (values) => {
         try {
             setLoading(true);
-            
+
             // Create the final formatted values
             const formData = {
                 designation_name: values.designation_name.trim(),
@@ -88,7 +84,7 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                 await createDesignation(formData).unwrap();
                 message.success('Designation created successfully!');
             }
-            
+
             form.resetFields();
             onCancel();
         } catch (error) {
@@ -120,7 +116,7 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                     type="link"
                     icon={<FiPlus style={{ fontSize: '16px' }} />}
                     onClick={() => setIsCreateBranchModalOpen(true)}
-                    style={{ 
+                    style={{
                         padding: '8px 12px',
                         display: 'flex',
                         alignItems: 'center',

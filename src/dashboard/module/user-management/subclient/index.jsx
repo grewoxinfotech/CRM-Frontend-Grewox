@@ -74,7 +74,6 @@ const Subclient = () => {
     const handleCreate = () => {
         setSelectedSubclient(null);
         setIsModalOpen(true);
-        dispatch(setIsModalOpen(true));
     };
 
     const handleEdit = (subclient) => {
@@ -313,7 +312,6 @@ const Subclient = () => {
                 open={isModalOpen}
                 onCancel={() => {
                     setIsModalOpen(false);
-                    dispatch(setIsModalOpen(false));
                 }}
             />
 

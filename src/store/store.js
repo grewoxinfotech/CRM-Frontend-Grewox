@@ -20,46 +20,22 @@ import {
   inquiryApi,
   inquiryReducer,
 } from "../superadmin/module/inquary/services/index";
-import {
-  subclientApi,
-  subclientReducer,
-} from "../dashboard/module/user-management/subclient/services";
+import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi";
 import { roleApi } from "../dashboard/module/hrm/role/services/roleApi";
-import roleReducer from "../dashboard/module/hrm/role/services/roleSlice";
 import { userApi } from "../dashboard/module/user-management/users/services/userApi";
-import {
-  employeeApi,
-  employeeReducer,
-} from "../dashboard/module/hrm/Employee/services";
-import {
-  designationApi,
-  designationReducer,
-} from "../dashboard/module/hrm/Designation/services";
-import {
-  branchApi,
-  branchReducer,
-} from "../dashboard/module/hrm/Branch/services";
-import {
-  departmentApi,
-  departmentReducer,
-} from "../dashboard/module/hrm/Department/services";
-import {
-  trainingApi,
-  trainingReducer,
-} from "../dashboard/module/hrm/Training/services";
-import {
-  esignatureApi,
-  esignatureReducer,
-} from "../superadmin/module/settings/eSignature/services/index";
+import { employeeApi } from "../dashboard/module/hrm/Employee/services";
+import { designationApi } from "../dashboard/module/hrm/Designation/services/designationApi";
+import { branchApi } from "../dashboard/module/hrm/Branch/services/branchApi";
+import { departmentApi } from "../dashboard/module/hrm/Department/services/departmentApi";
+import { trainingApi } from "../dashboard/module/hrm/Training/services";
+import { esignatureApi } from "../superadmin/module/settings/eSignature/services/index";
 import { pipelineApi } from "../dashboard/module/crm/crmsystem/pipeline/services/pipelineApi";
-import pipelineReducer from "../dashboard/module/crm/crmsystem/pipeline/services/pipelineSlice";
 import { leadStageApi } from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageApi";
 import { dealStageApi } from "../dashboard/module/crm/crmsystem/dealstage/services/dealStageApi";
 import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/SourceApi";
 import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi";
 import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi";
-import contractTypeReducer from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeSlice";
-import { taskApi, taskReducer } from "../dashboard/module/crm/task/services";
+import { taskApi } from "../dashboard/module/crm/task/services/taskApi";
 import { projectApi } from '../dashboard/module/crm/project/services/projectApi';
 import projectReducer from '../dashboard/module/crm/project/services/projectSlice';
 
@@ -67,12 +43,18 @@ import projectReducer from '../dashboard/module/crm/project/services/projectSlic
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"], // Only persist auth state
+  whitelist: ["auth"],
 };
 
 // Combine reducers
 const rootReducer = combineReducers({
   auth: authReducer,
+  company: companyReducer,
+  superadminProfile: superadminProfileReducer,
+  settings: settingsReducer,
+  plan: planReducer,
+  policy: policyReducer,
+  inquiry: inquiryReducer,
   [authApi.reducerPath]: authApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,
   [superadminProfileApi.reducerPath]: superadminProfileApi.reducer,
@@ -81,14 +63,14 @@ const rootReducer = combineReducers({
   [policyApi.reducerPath]: policyApi.reducer,
   [notesApi.reducerPath]: notesApi.reducer,
   [inquiryApi.reducerPath]: inquiryApi.reducer,
-  [esignatureApi.reducerPath]: esignatureApi.reducer,
   [subclientApi.reducerPath]: subclientApi.reducer,
   [roleApi.reducerPath]: roleApi.reducer,
   [userApi.reducerPath]: userApi.reducer,
-  [branchApi.reducerPath]: branchApi.reducer,
   [employeeApi.reducerPath]: employeeApi.reducer,
   [designationApi.reducerPath]: designationApi.reducer,
+  [branchApi.reducerPath]: branchApi.reducer,
   [departmentApi.reducerPath]: departmentApi.reducer,
+  [esignatureApi.reducerPath]: esignatureApi.reducer,
   [trainingApi.reducerPath]: trainingApi.reducer,
   [pipelineApi.reducerPath]: pipelineApi.reducer,
   [leadStageApi.reducerPath]: leadStageApi.reducer,
@@ -98,30 +80,11 @@ const rootReducer = combineReducers({
   [contractTypeApi.reducerPath]: contractTypeApi.reducer,
   [taskApi.reducerPath]: taskApi.reducer,
   [projectApi.reducerPath]: projectApi.reducer,
-  company: companyReducer,
-  superadminProfile: superadminProfileReducer,
-  settings: settingsReducer,
-  plan: planReducer,
-  policy: policyReducer,
-  inquiry: inquiryReducer,
-  esignature: esignatureReducer,
-  subclient: subclientReducer,
-  role: roleReducer,
-  branch: branchReducer,
-  employee: employeeReducer,
-  designation: designationReducer,
-  department: departmentReducer,
-  training: trainingReducer,
-  pipeline: pipelineReducer,
-  contractType: contractTypeReducer,
-  task: taskReducer,
   project: projectReducer,
 });
 
-// Create persisted reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// Configure store
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
@@ -142,9 +105,9 @@ export const store = configureStore({
       .concat(subclientApi.middleware)
       .concat(roleApi.middleware)
       .concat(userApi.middleware)
-      .concat(branchApi.middleware)
       .concat(employeeApi.middleware)
       .concat(designationApi.middleware)
+      .concat(branchApi.middleware)
       .concat(departmentApi.middleware)
       .concat(trainingApi.middleware)
       .concat(pipelineApi.middleware)

@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { Card, Typography, Button, Input, Breadcrumb, Dropdown, Menu, message, Row, Col, Select, DatePicker } from 'antd';
 import { FiPlus, FiSearch, FiHome, FiDownload, FiFilter } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
 import CreateDesignation from './CreateDesignation';
 import DesignationList from './DesignationList';
-import { setSelectedDesignation } from './services/designationSlice';
 import './designation.scss';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -18,7 +16,6 @@ const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const Designation = () => {
-    const dispatch = useDispatch();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedDesignation, setSelectedDesignation] = useState(null);
@@ -239,8 +236,8 @@ const Designation = () => {
             )}
 
             <Card className="designation-table-card">
-                <DesignationList 
-                    onEdit={handleEdit} 
+                <DesignationList
+                    onEdit={handleEdit}
                     searchText={searchText}
                     filters={filters}
                 />

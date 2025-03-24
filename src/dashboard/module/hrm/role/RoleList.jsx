@@ -64,8 +64,7 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             message.error("Cannot edit role: Missing ID");
             return;
         }
-        setSelectedRole(role);
-        setEditModalVisible(true);
+        onEdit?.(role);
     };
 
     const handleEditCancel = () => {
@@ -277,51 +276,49 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                             </Tag>
                         );
                     })}
-                    {modules.length > 3 && (
-                        <Tooltip title="View All Permissions">
-                            <Button
-                                type="primary"
-                                icon={<FiEye size={16} />}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    showAllPermissions({
-                                        ...record,
-                                        permissions: parsedPermissions // Pass the already parsed permissions
-                                    });
-                                }}
+                    <Tooltip title="View All Permissions">
+                        <Button
+                            type="primary"
+                            icon={<FiEye size={16} />}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                showAllPermissions({
+                                    ...record,
+                                    permissions: parsedPermissions
+                                });
+                            }}
+                            style={{
+                                padding: '8px 12px',
+                                height: '36px',
+                                fontSize: '14px',
+                                background: '#1890ff',
+                                border: 'none',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontWeight: '500',
+                                boxShadow: 'none'
+                            }}
+                        >
+                            <span>View All</span>
+                            <Tag
                                 style={{
-                                    padding: '8px 12px',
-                                    height: '36px',
-                                    fontSize: '14px',
-                                    background: '#1890ff',
+                                    background: 'rgba(255, 255, 255, 0.2)',
+                                    borderRadius: '4px',
+                                    padding: '0 6px',
+                                    fontSize: '12px',
                                     border: 'none',
-                                    borderRadius: '6px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    fontWeight: '500',
-                                    boxShadow: 'none'
+                                    color: '#ffffff',
+                                    margin: 0,
+                                    height: '20px',
+                                    lineHeight: '20px'
                                 }}
                             >
-                                <span>View All</span>
-                                <Tag
-                                    style={{
-                                        background: 'rgba(255, 255, 255, 0.2)',
-                                        borderRadius: '4px',
-                                        padding: '0 6px',
-                                        fontSize: '12px',
-                                        border: 'none',
-                                        color: '#ffffff',
-                                        margin: 0,
-                                        height: '20px',
-                                        lineHeight: '20px'
-                                    }}
-                                >
-                                    {modules.length}
-                                </Tag>
-                            </Button>
-                        </Tooltip>
-                    )}
+                                {modules.length}
+                            </Tag>
+                        </Button>
+                    </Tooltip>
                 </div>
             );
         } catch (error) {
@@ -432,16 +429,6 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                     boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                 }}
             />
-
-            {editModalVisible && (
-                <EditRole
-                    visible={editModalVisible}
-                    onCancel={handleEditCancel}
-                    onSubmit={handleEditComplete}
-                    initialValues={selectedRole}
-                    loading={loading}
-                />
-            )}
 
             <Modal
                 title={null}

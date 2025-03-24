@@ -9,6 +9,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     const [form] = Form.useForm();
     const [activeTab, setActiveTab] = useState('Staff');
     const [selectedPermissions, setSelectedPermissions] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const modules = ['User Management', 'CRM', 'Communication', 'HRM', 'Job'];
 
@@ -60,17 +61,33 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
 
     const permissions = ['view', 'create', 'update', 'delete'];
 
-    // Reset form when modal becomes invisible
+    // Reset form and state when modal becomes invisible
     useEffect(() => {
+        let timeoutId;
         if (!visible) {
             form.resetFields();
             setSelectedPermissions({});
+            setActiveTab('Staff');
+            setIsSubmitting(false);
+        } else {
+            // Only initialize when becoming visible with a small delay
+            timeoutId = setTimeout(() => {
+                initializeForm();
+            }, 100);
         }
+
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        };
     }, [visible, form]);
 
-    // Handle initial values
-    useEffect(() => {
-        if (visible && initialValues) {
+    // Handle initial values with proper cleanup
+    const initializeForm = () => {
+        if (!initialValues) return;
+
+        try {
             const formattedPermissions = {};
 
             // Initialize all permissions as false
@@ -87,38 +104,32 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
 
             // Parse and set permissions from initialValues
             if (initialValues.permissions) {
-                try {
-                    // Parse the JSON string if it's a string
-                    const parsedPermissions = typeof initialValues.permissions === 'string'
-                        ? JSON.parse(initialValues.permissions)
-                        : initialValues.permissions;
+                const parsedPermissions = typeof initialValues.permissions === 'string'
+                    ? JSON.parse(initialValues.permissions)
+                    : initialValues.permissions;
 
-                    // Set the permissions
-                    Object.entries(parsedPermissions).forEach(([key, value]) => {
-                        if (value && value[0] && value[0].permissions) {
-                            const perms = value[0].permissions;
-                            formattedPermissions[key] = {
-                                view: perms.includes('view'),
-                                create: perms.includes('create'),
-                                update: perms.includes('update'),
-                                delete: perms.includes('delete')
-                            };
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error parsing permissions:', error);
-                }
-            }
-
-            // Find first module with permissions and set it as active
-            for (const module of modules) {
-                const hasPermissions = subModules[module]?.some(subModule => {
-                    const perms = formattedPermissions[subModule.key];
-                    return perms && Object.values(perms).some(Boolean);
+                Object.entries(parsedPermissions).forEach(([key, value]) => {
+                    if (value && value[0] && value[0].permissions) {
+                        const perms = value[0].permissions;
+                        formattedPermissions[key] = {
+                            view: perms.includes('view'),
+                            create: perms.includes('create'),
+                            update: perms.includes('update'),
+                            delete: perms.includes('delete')
+                        };
+                    }
                 });
-                if (hasPermissions) {
-                    setActiveTab(module);
-                    break;
+
+                // Find first module with permissions and set it as active
+                for (const module of modules) {
+                    const hasPermissions = subModules[module]?.some(subModule => {
+                        const perms = formattedPermissions[subModule.key];
+                        return perms && Object.values(perms).some(Boolean);
+                    });
+                    if (hasPermissions) {
+                        setActiveTab(module);
+                        break;
+                    }
                 }
             }
 
@@ -127,18 +138,31 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                 role_name: initialValues.role_name,
                 permissions: formattedPermissions
             });
-
             setSelectedPermissions(formattedPermissions);
+        } catch (error) {
+            console.error('Error initializing form:', error);
+            message.error('Failed to initialize form data');
         }
-    }, [visible, initialValues, form]);
+    };
 
     const handlePermissionChange = () => {
         const values = form.getFieldsValue();
         setSelectedPermissions(values.permissions || {});
     };
 
+    const handleCancel = () => {
+        form.resetFields();
+        setSelectedPermissions({});
+        setActiveTab('Staff');
+        setIsSubmitting(false);
+        onCancel?.();
+    };
+
     const handleSubmit = async () => {
+        if (isSubmitting) return;
+
         try {
+            setIsSubmitting(true);
             const values = await form.validateFields();
 
             // Format permissions for API
@@ -165,10 +189,11 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                 permissions: formattedPermissions
             });
 
-            form.resetFields();
-            setSelectedPermissions({});
         } catch (error) {
             console.error('Validation failed:', error);
+            message.error('Failed to save changes');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -308,13 +333,15 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
         <Modal
             title={null}
             open={visible}
-            onCancel={onCancel}
+            onCancel={handleCancel}
             footer={null}
             width={720}
             destroyOnClose={true}
             centered
             closeIcon={null}
             className="role-modal"
+            maskClosable={false}
+            keyboard={false}
             styles={{
                 body: {
                     padding: 0,
@@ -334,7 +361,7 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             >
                 <Button
                     type="text"
-                    onClick={onCancel}
+                    onClick={handleCancel}
                     style={{
                         position: "absolute",
                         top: "16px",
@@ -509,7 +536,8 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                 >
                     <Button
                         size="large"
-                        onClick={onCancel}
+                        onClick={handleCancel}
+                        disabled={isSubmitting}
                         style={{
                             padding: "8px 24px",
                             height: "44px",
@@ -524,7 +552,8 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                         size="large"
                         type="primary"
                         onClick={handleSubmit}
-                        loading={loading}
+                        loading={loading || isSubmitting}
+                        disabled={isSubmitting}
                         style={{
                             padding: "8px 32px",
                             height: "44px",

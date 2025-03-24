@@ -55,22 +55,16 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   const handleLogout = useLogout();
 
   const userRole = useSelector(selectUserRole);
-  const permissions = parsePermissions(userRole?.permissions);
 
   useEffect(() => {
-    console.log('User Role:', userRole?.role_name);
-    console.log('Raw Permissions:', userRole?.permissions);
     try {
-      const parsed = JSON.parse(userRole?.permissions || '{}');
-      console.log('Parsed Permissions:', parsed);
-      console.log('Available Permission Keys:', Object.keys(parsed));
+      JSON.parse(userRole?.permissions || '{}');
     } catch (error) {
       console.error('Error parsing permissions:', error);
     }
   }, [userRole]);
 
   const checkPermission = (moduleKey) => {
-    // If user is a client, allow everything
     if (userRole?.role_name?.toLowerCase() === 'client') {
       return true;
     }

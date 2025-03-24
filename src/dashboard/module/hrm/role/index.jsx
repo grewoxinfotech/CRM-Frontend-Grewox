@@ -95,12 +95,19 @@ const Role = () => {
             message.error("Cannot edit role: Missing ID");
             return;
         }
-        setSelectedRole({
-            id: role.id,
-            role_name: role.role_name,
-            permissions: role.permissions || {}
-        });
-        setIsEditFormVisible(true);
+        // First close any existing modal
+        setIsEditFormVisible(false);
+        setSelectedRole(null);
+
+        // Then set the new role and open modal after a small delay
+        setTimeout(() => {
+            setSelectedRole({
+                id: role.id,
+                role_name: role.role_name,
+                permissions: role.permissions || {}
+            });
+            setIsEditFormVisible(true);
+        }, 100);
     };
 
     const handleDeleteClick = (role) => {
@@ -147,6 +154,7 @@ const Role = () => {
             await updateRole(updateData).unwrap();
             message.success('Role updated successfully');
             setIsEditFormVisible(false);
+            setSelectedRole(null);
             refetch();
         } catch (error) {
             message.error(error?.data?.message || 'Failed to update role');
@@ -300,7 +308,10 @@ const Role = () => {
 
             <EditRole
                 visible={isEditFormVisible}
-                onCancel={() => setIsEditFormVisible(false)}
+                onCancel={() => {
+                    setIsEditFormVisible(false);
+                    setSelectedRole(null);
+                }}
                 onSubmit={handleEditSubmit}
                 loading={isUpdating}
                 initialValues={selectedRole}

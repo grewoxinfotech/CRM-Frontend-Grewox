@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Button, Typography, Divider, message, Alert } from 'antd';
 import { FiUser, FiMail, FiLock, FiX } from 'react-icons/fi';
 import { useCreateSubclientMutation, useVerifySignupMutation, useResendSignupOtpMutation } from './services/subClientApi';
-import { useDispatch } from 'react-redux';
-import { setIsModalOpen } from './services/subClientSlice';
 import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
@@ -11,7 +9,6 @@ const { Text } = Typography;
 const CreateSubclient = ({ open, onCancel }) => {
     const [form] = Form.useForm();
     const [otpForm] = Form.useForm();
-    const dispatch = useDispatch();
     const navigate = useNavigate();
     const [createSubclient, { isLoading }] = useCreateSubclientMutation();
     const [verifySignup] = useVerifySignupMutation();
@@ -24,16 +21,12 @@ const CreateSubclient = ({ open, onCancel }) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-
             const response = await createSubclient(values).unwrap();
 
             if (response.success) {
                 setUserFormData(values);
                 setSessionToken(response.data.sessionToken);
                 setIsOtpModalVisible(true);
-                message.success(response.message || 'Please verify your email to complete registration');
-            } else {
-                message.error(response.message || 'Failed to create subclient');
             }
         } catch (error) {
             message.error(error?.data?.message || 'Failed to create subclient');
@@ -45,21 +38,19 @@ const CreateSubclient = ({ open, onCancel }) => {
             setOtpLoading(true);
             const otpValue = await otpForm.validateFields();
 
-            const verifyResponse = await verifySignup({
+            await verifySignup({
                 otp: otpValue.otp,
                 token: sessionToken
             }).unwrap();
 
-            if (verifyResponse.success) {
-                message.success('Subclient verified successfully');
-                setIsOtpModalVisible(false);
-                otpForm.resetFields();
-                form.resetFields();
-                onCancel();
-                navigate('/dashboard/subclient');
-            }
+            setIsOtpModalVisible(false);
+            otpForm.resetFields();
+            form.resetFields();
+            message.success('Subclient created successfully');
+            onCancel();
+            navigate('/dashboard/client');
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to verify OTP');
+            message.error(error?.data?.message || 'Invalid OTP');
         } finally {
             setOtpLoading(false);
         }
@@ -70,15 +61,18 @@ const CreateSubclient = ({ open, onCancel }) => {
             await resendSignupOtp({
                 token: sessionToken
             }).unwrap();
-            message.success('OTP resent successfully');
+            message.success('OTP sent successfully');
         } catch (error) {
-            message.error(error?.data?.message || 'Failed to resend OTP');
+            message.error('Failed to send OTP');
         }
     };
 
     const handleCancel = () => {
         form.resetFields();
-        dispatch(setIsModalOpen(false));
+        otpForm.resetFields();
+        setIsOtpModalVisible(false);
+        setSessionToken(null);
+        setUserFormData(null);
         onCancel();
     };
 

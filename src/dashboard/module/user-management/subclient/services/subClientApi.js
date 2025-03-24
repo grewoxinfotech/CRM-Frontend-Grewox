@@ -6,9 +6,6 @@ export const subclientApi = createApi({
     baseQuery: baseQueryWithReauth,
     tagTypes: ['Subclient'],
     endpoints: (builder) => ({
-
-
-
         getAllSubclients: builder.query({
             query: () => ({
                 url: '/sub-clients',
@@ -16,7 +13,6 @@ export const subclientApi = createApi({
             }),
             providesTags: ['Subclient'],
         }),
-
 
         getSubclientById: builder.query({
             query: (id) => ({
@@ -26,47 +22,36 @@ export const subclientApi = createApi({
             providesTags: (result, error, id) => [{ type: 'Subclient', id }],
         }),
 
-
         createSubclient: builder.mutation({
             query: (data) => ({
                 url: '/sub-clients',
                 method: 'POST',
-                body: {
-                    username: data.username,
-                    email: data.email,
-                    password: data.password,
-                    role: 'sub-client',
-                    status: 'pending',
-                    isEmailVerified: false,
-                    createdAt: new Date().toISOString()
-                }
+                body: data
             }),
-            transformResponse: (response) => {
-                console.log('Create Subclient Response:', response);
-                // Check if the response has a token or sessionToken
-                const token = response.token || response.sessionToken || response.data?.token || response.data?.sessionToken;
-
-                if (!token) {
-                    throw new Error('No session token received from server');
-                }
-
-                return {
-                    ...response,
-                    success: true,
-                    sessionToken: token
-                };
-            },
             invalidatesTags: ['Subclient'],
         }),
-        verifyOTP: builder.mutation({
-            query: (data) => ({
-                url: 'auth/verify-otp',
+
+        verifySignup: builder.mutation({
+            query: ({ otp, token }) => ({
+                url: '/auth/verify-signup',
                 method: 'POST',
-                body: data,
+                body: { otp },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             }),
-            invalidatesTags: ['Subclient'],
+            invalidatesTags: ['Subclient']
         }),
 
+        resendSignupOtp: builder.mutation({
+            query: ({ token }) => ({
+                url: '/auth/resend-signup-otp',
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+        }),
 
         updateSubclient: builder.mutation({
             query: ({ id, data }) => ({
@@ -80,42 +65,12 @@ export const subclientApi = createApi({
             ]
         }),
 
-
         deleteSubclient: builder.mutation({
             query: (id) => ({
                 url: `/sub-clients/${id}`,
                 method: 'DELETE'
             }),
             invalidatesTags: ['Subclient']
-        }),
-
-        verifySignup: builder.mutation({
-            query: ({ otp, token }) => ({
-                url: 'auth/verify-signup',
-                method: 'POST',
-                body: { otp },
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }),
-            invalidatesTags: ['Subclient']
-        }),
-
-        resendSignupOtp: builder.mutation({
-            query: ({ token }) => ({
-                url: 'auth/resend-signup-otp',
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-        }),
-
-        resendOtp: builder.mutation({
-            query: (userId) => ({
-                url: `auth/resend-otp/${userId}`,
-                method: 'POST',
-            }),
         })
     })
 });
@@ -127,7 +82,5 @@ export const {
     useUpdateSubclientMutation,
     useDeleteSubclientMutation,
     useVerifySignupMutation,
-    useResendSignupOtpMutation,
-    useVerifyOTPMutation,
-    useResendOtpMutation
+    useResendSignupOtpMutation
 } = subclientApi;
