@@ -5,6 +5,27 @@
 
     .page-breadcrumb {
         margin-bottom: 16px;
+
+        .ant-breadcrumb {
+            font-size: 14px;
+
+            .ant-breadcrumb-link {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                a {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #6b7280;
+
+                    &:hover {
+                        color: #1890ff;
+                    }
+                }
+            }
+        }
     }
 
     .page-header {
@@ -26,7 +47,6 @@
             }
 
             .subtitle {
-                margin: 0;
                 color: #6b7280;
                 font-size: 14px;
             }
@@ -34,29 +54,48 @@
 
         .header-right {
             display: flex;
-            align-items: center;
             gap: 12px;
 
-            .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
-
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                }
-            }
-
             .ant-btn {
-                height: 36px;
-                padding: 0 16px;
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                height: 44px;
+                padding: 0 24px;
+                border-radius: 10px;
+                font-weight: 500;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid #e6e8eb;
+
+                &:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+
+                &.ant-btn-primary {
+                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                    border: none;
+                    color: white;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                        box-shadow: 0 8px 16px rgba(24, 144, 255, 0.2);
+                    }
+                }
+
+                &.ant-btn-default {
+                    background: white;
+                    color: #1f2937;
+
+                    &:hover {
+                        border-color: #1890ff;
+                        color: #1890ff;
+                    }
+                }
+
+                .anticon {
+                    font-size: 18px;
+                }
             }
         }
     }
@@ -164,10 +203,6 @@
                 flex-direction: column;
                 width: 100%;
 
-                .search-input {
-                    width: 100%;
-                }
-
                 .ant-btn {
                     width: 100%;
                 }
@@ -212,48 +247,61 @@
 
     .project-tabs {
         .ant-tabs-nav {
-            margin-bottom: 0;
-            padding: 16px 0;
-            width: 240px;
-            background: #f8fafc;
-            border-right: 1px solid #e6e8eb;
-            border-radius: 8px 0 0 8px;
+            margin-bottom: 24px;
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
 
             .ant-tabs-tab {
-                margin: 0 !important;
-                padding: 12px 24px;
+                padding: 12px 20px;
+                margin: 0 4px;
+                border-radius: 6px;
                 transition: all 0.3s ease;
+                border: none;
+                background: transparent;
 
                 &:hover {
+                    color: #1890ff;
                     background: rgba(24, 144, 255, 0.04);
                 }
 
                 &.ant-tabs-tab-active {
-                    background: rgba(24, 144, 255, 0.1);
+                    background: linear-gradient(135deg, rgba(24, 144, 255, 0.12) 0%, rgba(24, 144, 255, 0.08) 100%);
 
                     .ant-tabs-tab-btn {
                         color: #1890ff;
+                        font-weight: 500;
                     }
                 }
 
                 .ant-tabs-tab-btn {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 8px;
                     color: #4b5563;
+                    transition: all 0.3s ease;
+                    font-weight: 500;
 
-                    .anticon {
-                        margin: 0;
-                        font-size: 16px;
+                    svg {
+                        font-size: 18px;
+                    }
+
+                    &:hover {
+                        color: #1890ff;
                     }
                 }
+            }
+
+            .ant-tabs-ink-bar {
+                display: none;
             }
         }
 
         .ant-tabs-content-holder {
-            padding: 24px;
             background: #ffffff;
-            border-radius: 0 8px 8px 0;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
     }
 }

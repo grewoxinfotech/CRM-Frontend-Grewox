@@ -1,8 +1,6 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "../../../../../../src/store/baseQuery";
 
-// Default to a fallback URL if environment variable is not set
-const API_URL = import.meta.env?.VITE_API_URL || "http://localhost:3001";
 
 export const dealApi = createApi({
   reducerPath: "dealApi",
@@ -16,7 +14,6 @@ export const dealApi = createApi({
         params,
       }),
       transformResponse: (response) => {
-        // Handle different response structures
         if (Array.isArray(response)) {
           return response;
         }
