@@ -7,7 +7,8 @@ import {
     Select,
     TimePicker,
     Typography,
-    DatePicker
+    DatePicker,
+    message
 } from 'antd';
 import {
     FiUser,
@@ -21,6 +22,9 @@ import {
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
+import { useGetAllJobsQuery } from '../jobs/services/jobApi';
+import { useCreateInterviewMutation } from './services/interviewApi';
 
 // Extend dayjs with plugins
 dayjs.extend(customParseFormat);
@@ -42,13 +46,16 @@ const statuses = [
     { value: 'Offline', label: 'Offline' }
 ];
 
-const CreateInterview = ({ open, onCancel, onSubmit, selectedDate }) => {
+const CreateInterview = ({ open, onCancel, selectedDate }) => {
     const [form] = Form.useForm();
+    const [createInterview, { isLoading: isCreating }] = useCreateInterviewMutation();
+    const { data: jobApplications, isLoading: applicationsLoading } = useGetAllJobApplicationsQuery();
+    const { data: jobs, isLoading: isLoadingJobs } = useGetAllJobsQuery();
 
     useEffect(() => {
         if (open && selectedDate) {
             form.setFieldsValue({
-                date: selectedDate,
+                start_date: dayjs(selectedDate),
             });
         }
     }, [open, selectedDate, form]);
@@ -56,27 +63,58 @@ const CreateInterview = ({ open, onCancel, onSubmit, selectedDate }) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            const formattedValues = {
-                ...values,
-                start_time: values.start_time?.format('HH:mm'),
-                start_date: values.start_date?.format('YYYY-MM-DD'),
-                interviewer_comments: values.interviewer_comments?.trim(),
-                candidate_comments: values.candidate_comments?.trim()
+            
+            // Format the data for API
+            const formData = new FormData();
+            
+            // Create payload object
+            const payload = {
+                job: values.job,                   // job ID
+                candidate: values.candidate,        // candidate ID
+                interviewer: values.interviewer,
+                round: values.round,
+                interviewType: values.interview_type,
+                startOn: values.start_date.format('YYYY-MM-DD'),
+                startTime: values.start_time.format('HH:mm:ss'),
+                // mode: values.interview_type,        // online/offline
+                commentForInterviewer: values.interviewer_comments?.trim() || '',
+                commentForCandidate: values.candidate_comments?.trim() || '',
+                status: 'scheduled',
+                client_id: localStorage.getItem('client_id'),
+                created_by: localStorage.getItem('user_id')
             };
 
-            if (!formattedValues.start_date || !formattedValues.start_time) {
-                throw new Error('Start date and time are required');
-            }
+            // Append all fields to formData
+            Object.entries(payload).forEach(([key, value]) => {
+                if (value !== undefined && value !== null) {
+                    formData.append(key, value);
+                }
+            });
 
-            await onSubmit(formattedValues);
-            form.resetFields();
+            // Log the payload for debugging
+            console.log('Interview Payload:', payload);
+
+            // Call the create interview mutation
+            const response = await createInterview(payload).unwrap();
+            console.log('API Response:', response);
+
+            if (response.success) {
+                message.success('Interview scheduled successfully');
+                form.resetFields();
+                onCancel();
+            } else {
+                message.error(response.message || 'Failed to schedule interview');
+            }
         } catch (error) {
+            console.error('Error:', error);
             if (error.errorFields) {
                 // Form validation error
-                console.error('Form validation failed:', error.errorFields);
+                error.errorFields.forEach(field => {
+                    message.error(`${field.name}: ${field.errors[0]}`);
+                });
             } else {
-                // Other errors
-                console.error('Error submitting form:', error.message);
+                // API error
+                message.error(error?.data?.message || 'Failed to schedule interview');
             }
         }
     };
@@ -189,7 +227,10 @@ const CreateInterview = ({ open, onCancel, onSubmit, selectedDate }) => {
                                 color: 'rgba(255, 255, 255, 0.85)',
                             }}
                         >
-                            Schedule an interview for {selectedDate?.format('MMMM D, YYYY')}
+                            {selectedDate ? 
+                                `Schedule an interview for ${dayjs(selectedDate).format('MMMM D, YYYY')}` : 
+                                'Schedule a new interview'
+                            }
                         </Text>
                     </div>
                 </div>
@@ -208,74 +249,91 @@ const CreateInterview = ({ open, onCancel, onSubmit, selectedDate }) => {
                     <Form.Item
                         name="job"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job</span>}
-                        rules={[{ required: true, message: 'Please select job' }]}
+                        rules={[{ required: true, message: 'Please select a job position' }]}
                     >
                         <Select
-                            placeholder="Select job"
+                            placeholder="Select job position"
+                            loading={isLoadingJobs}
                             size="large"
                             style={{
                                 width: '100%',
+                                borderRadius: '10px',
                                 height: '48px',
+                                backgroundColor: '#f8fafc',
                             }}
                         >
-                            <Option value="job1">Job 1</Option>
-                            <Option value="job2">Job 2</Option>
+                            {jobs?.map((job) => (
+                                <Option key={job.id} value={job.id}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <FiBriefcase style={{ color: '#1890ff', fontSize: '16px', marginRight: '8px' }} />
+                                        <span>{job.title}</span>
+                                    </div>
+                                </Option>
+                            ))}
                         </Select>
                     </Form.Item>
 
                     <Form.Item
                         name="candidate"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Candidate</span>}
-                        rules={[{ required: true, message: 'Please select candidate' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Candidate</span>}
+                        rules={[{ required: true, message: 'Please select a candidate' }]}
                     >
                         <Select
-                            placeholder="Select candidate" 
+                            loading={applicationsLoading}
+                            placeholder="Select candidate"
                             size="large"
                             style={{
                                 width: '100%',
+                                borderRadius: '10px',
                                 height: '48px',
+                                backgroundColor: '#f8fafc',
                             }}
+                            optionFilterProp="children"
+                            showSearch
                         >
-                            <Option value="candidate1">Candidate 1</Option>
-                            <Option value="candidate2">Candidate 2</Option>
+                            {jobApplications?.data?.map((application) => (
+                                <Option key={application.id} value={application.id}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <FiUser style={{ color: '#1890ff', fontSize: '16px', marginRight: '8px' }} />
+                                        <span>{application.name}</span>
+                                    </div>
+                                </Option>
+                            ))}
                         </Select>
                     </Form.Item>
 
                     <Form.Item
                         name="interviewer"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interviewer</span>}
-                        rules={[{ required: true, message: 'Please select interviewer' }]}
+                        rules={[{ required: true, message: 'Please enter interviewer name' }]}
                     >
-                        <Select
-                            placeholder="Select interviewer"
-                            size="large" 
+                        <Input
+                            placeholder="Enter interviewer name"
+                            size="large"
                             style={{
                                 width: '100%',
                                 height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
                             }}
-                        >
-                            <Option value="interviewer1">Interviewer 1</Option>
-                            <Option value="interviewer2">Interviewer 2</Option>
-                        </Select>
+                        />
                     </Form.Item>
 
                     <Form.Item
                         name="round"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interview Round</span>}
-                        rules={[{ required: true, message: 'Please select round' }]}
+                        rules={[{ required: true, message: 'Please enter round number' }]}
                     >
-                        <Select
-                            placeholder="Select round"
+                        <Input
+                            placeholder="Enter round number" 
                             size="large"
                             style={{
                                 width: '100%',
                                 height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
                             }}
-                        >
-                            <Option value="round1">Round 1</Option>
-                            <Option value="round2">Round 2</Option>
-                            <Option value="round3">Round 3</Option>
-                        </Select>
+                        />
                     </Form.Item>
 
                     <Form.Item
@@ -389,6 +447,7 @@ const CreateInterview = ({ open, onCancel, onSubmit, selectedDate }) => {
                         type="primary"
                         htmlType="submit"
                         size="large"
+                        loading={isCreating}
                         style={{
                             borderRadius: '8px',
                             padding: '8px 24px',

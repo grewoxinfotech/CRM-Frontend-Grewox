@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Space, Button, Tooltip, Tag, message, Modal } from 'antd';
-import { FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
 import { useGetAllBranchesQuery, useDeleteBranchMutation } from './services/branchApi';
 import dayjs from 'dayjs';
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
@@ -125,34 +125,45 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
         {
             title: 'Actions',
             key: 'actions',
-            render: (_, record) => (
-                <Space size="middle">
-                    <Tooltip title="View">
+            render: (_, record) => {
+                const items = [
+                    {
+                        key: 'view',
+                        icon: <FiEye style={{ fontSize: '14px' }} />,
+                        label: 'View',
+                        onClick: () => onEdit(record),
+                    },
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
+                        label: 'Edit',
+                        onClick: () => onEdit(record),
+                    },
+                    {
+                        key: 'delete',
+                        icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => handleDelete(record.id),
+                    },
+                ];
+
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="branch-actions-dropdown"
+                    >
                         <Button
                             type="text"
-                            icon={<FiEye style={{ fontSize: '16px' }} />}
-                            onClick={() => onEdit(record)}
-                            className="action-btn"
+                            icon={<FiMoreVertical />}
+                            className="action-dropdown-button"
+                            onClick={(e) => e.preventDefault()}
                         />
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                        <Button
-                            type="text"
-                            icon={<FiEdit2 style={{ fontSize: '16px' }} />}
-                            onClick={() => onEdit(record)}
-                            className="action-btn"
-                        />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            icon={<FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />}
-                            onClick={() => handleDelete(record.id)}
-                            className="action-btn delete-btn"
-                        />
-                    </Tooltip>
-                </Space>
-            ),
+                    </Dropdown>
+                );
+            },
         },
     ];
 

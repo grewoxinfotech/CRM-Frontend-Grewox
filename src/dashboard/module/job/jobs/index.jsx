@@ -16,59 +16,38 @@ import 'jspdf-autotable';
 import CreateJob from './CreateJob';
 import JobList from './JobList';
 import { Link } from 'react-router-dom';
+import { useGetAllJobsQuery, useDeleteJobMutation } from './services/jobApi';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
+const { confirm } = Modal;
 
 const Job = () => {
-    const [jobs, setJobs] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filteredJobs, setFilteredJobs] = useState([]);
     const searchInputRef = useRef(null);
 
-    useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                title: 'Senior React Developer',
-                category: 'Engineering',
-                interview_round: 'New York',
-                job_type: 'Full-time',
-                work_experience: '3-5 years',
-                job_location: 'New York',
-                recruiter: 'active',
-                start_date: new Date().toLocaleDateString(),
-                end_date: new Date().toLocaleDateString(),
-                expected_salary: '$80,000',
-                status: 'active',
-                description: 'We are looking for a Senior React Developer...',
-              
-            }
-        ];
-        setJobs(mockData);
-        setFilteredJobs(mockData);
-    }, []);
+    const { data: jobsData, isLoading, error } = useGetAllJobsQuery();
+    const [deleteJob] = useDeleteJobMutation();
 
-    useEffect(() => {
-        let result = [...jobs];
-        if (searchText) {
-            result = result.filter(job =>
-                job.title.toLowerCase().includes(searchText.toLowerCase()) ||
-                job.department.toLowerCase().includes(searchText.toLowerCase()) ||
-                job.location.toLowerCase().includes(searchText.toLowerCase()) ||
-                job.type.toLowerCase().includes(searchText.toLowerCase()) ||
-                job.experience.toLowerCase().includes(searchText.toLowerCase()) ||
-                (job.salaryMin && job.salaryMin.toString().includes(searchText)) ||
-                (job.salaryMax && job.salaryMax.toString().includes(searchText))
+    const filteredJobs = React.useMemo(() => {
+        if (!jobsData?.data) return [];
+        
+        return jobsData.data.filter(job => {
+            if (!searchText) return true;
+            
+            const searchTerm = searchText.toLowerCase();
+            return (
+                job.title?.toLowerCase().includes(searchTerm) ||
+                job.category?.toLowerCase().includes(searchTerm) ||
+                job.job_location?.toLowerCase().includes(searchTerm) ||
+                job.status?.toLowerCase().includes(searchTerm)
             );
-        }
-        setFilteredJobs(result);
-    }, [jobs, searchText]);
+        });
+    }, [jobsData, searchText]);
 
     const handleAddJob = () => {
         setSelectedJob(null);
@@ -86,30 +65,32 @@ const Job = () => {
         setSelectedJob(job);
     };
 
-    const handleDeleteConfirm = (job) => {
-        setSelectedJob(job);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteJob = async () => {
-        try {
-            // TODO: Implement delete API call
-            const updatedJobs = jobs.filter(j => j.id !== selectedJob.id);
-            setJobs(updatedJobs);
-            message.success('Job deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete job');
-        }
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this designation?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteJob(record.id).unwrap();
+                    message.success('Job deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete job');
+                }
+            },
+        });
     };
 
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditing) {
-                const updatedJobs = jobs.map(j =>
+                const updatedJobs = jobsData.data.map(j =>
                     j.id === selectedJob.id ? { ...j, ...formData } : j
                 );
-                setJobs(updatedJobs);
+                // Assuming jobsData.data is updated in the API
+                // You might want to refetch the data after update
                 message.success('Job updated successfully');
             } else {
                 const newJob = {
@@ -117,7 +98,8 @@ const Job = () => {
                     ...formData,
                     created_at: new Date().toISOString(),
                 };
-                setJobs([...jobs, newJob]);
+                // Assuming jobsData.data is updated in the API
+                // You might want to refetch the data after creation
                 message.success('Job created successfully');
             }
             setIsFormVisible(false);
@@ -159,7 +141,7 @@ const Job = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = jobs.map(job => ({
+            const data = jobsData.data.map(job => ({
                 'Job Title': job.title,
                 'Department': job.department,
                 'Location': job.location,
@@ -230,7 +212,7 @@ const Job = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
+    return (
         <div className="job-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -285,9 +267,9 @@ const Job = () => {
             <Card className="job-table-card">
                 <JobList
                     jobs={filteredJobs}
-                    loading={loading}
+                    loading={isLoading}
                     onEdit={handleEditJob}
-                    onDelete={handleDeleteConfirm}
+                    onDelete={handleDelete}
                     onView={handleViewJob}
                 />
             </Card>
@@ -298,23 +280,8 @@ const Job = () => {
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
                 initialValues={selectedJob}
-                loading={loading}
+                loading={isLoading}
             />
-
-            <Modal
-                title="Delete Job"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteJob}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete <strong>{selectedJob?.title}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
         </div>
     );
 };

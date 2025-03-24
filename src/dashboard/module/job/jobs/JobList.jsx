@@ -1,29 +1,32 @@
 import React from 'react';
 import { Table, Tag, Dropdown, Button } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import { useGetAllJobsQuery } from './services/jobApi';
 import moment from 'moment';
 
 const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
+    const { data: jobsData, isLoading, error } = useGetAllJobsQuery();
+
     // Function to get menu items for each row
     const getActionItems = (record) => [
         {
             key: 'view',
-            icon: <FiEye style={{ fontSize: '16px' }} />,
+            icon: <FiEye className="text-base" />,
             label: 'View',
-            onClick: () => onView(record)
+            onClick: () => onView?.(record)
         },
         {
             key: 'edit',
-            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
+            icon: <FiEdit2 className="text-base" />,
             label: 'Edit',
-            onClick: () => onEdit(record)
+            onClick: () => onEdit?.(record)
         },
         {
             key: 'delete',
-            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
+            icon: <FiTrash2 className="text-base text-red-500" />,
             label: 'Delete',
             danger: true,
-            onClick: () => onDelete(record)
+            onClick: () => onDelete?.(record)
         }
     ];
 
@@ -42,18 +45,20 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
         },
         {
             title: 'Location',
-            dataIndex: 'job_location',
-            key: 'job_location'
+            dataIndex: 'location',
+            key: 'location'
         },
         {
             title: 'Experience',
-            dataIndex: 'work_experience',
-            key: 'work_experience'
+            dataIndex: 'workExperience',
+            key: 'workExperience'
         },
         {
             title: 'Salary',
-            dataIndex: 'expected_salary',
-            key: 'expected_salary'
+            key: 'salary',
+            render: (record) => (
+                <span>{record.currency} {record.expectedSalary}</span>
+            )
         },
         {
             title: 'Status',
@@ -61,7 +66,7 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
             key: 'status',
             render: (status) => {
                 let color = 'blue';
-                switch (status.toLowerCase()) {
+                switch (status?.toLowerCase()) {
                     case 'active':
                         color = 'green';
                         break;
@@ -76,7 +81,7 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
                 }
                 return (
                     <Tag color={color} style={{ textTransform: 'capitalize' }}>
-                        {status.replace(/_/g, ' ')}
+                        {status?.replace(/_/g, ' ') || 'N/A'}
                     </Tag>
                 );
             }
@@ -90,37 +95,22 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
                     menu={{ items: getActionItems(record) }}
                     trigger={['click']}
                     placement="bottomRight"
-                    overlayStyle={{ minWidth: '150px' }}
                 >
                     <Button
                         type="text"
-                        icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-                        style={{
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '6px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#f0f2f5';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                        }}
+                        icon={<FiMoreVertical className="text-lg" />}
+                        className="action-button"
                     />
                 </Dropdown>
-            )
-        }
+            ),
+        },
     ];
 
     return (
         <Table
             columns={columns}
-            dataSource={jobs}
-            loading={loading}
+            dataSource={jobsData}
+            loading={isLoading}
             rowKey="id"
             pagination={{
                 pageSize: 10,

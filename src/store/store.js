@@ -38,15 +38,18 @@ import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/
 import { taskApi } from "../dashboard/module/crm/task/services/taskApi";
 import { projectApi } from '../dashboard/module/crm/project/services/projectApi';
 import projectReducer from '../dashboard/module/crm/project/services/projectSlice';
+import { jobApi, jobReducer } from "../dashboard/module/job/jobs/services";
+import { jobApplicationApi, jobApplicationReducer } from "../dashboard/module/job/job applications/services";
+import { jobOnboardingApi, jobOnboardingReducer } from "../dashboard/module/job/job onboarding/services";
+import { offerLetterApi, offerLetterReducer } from '../dashboard/module/job/offer letters/services';
+import { interviewApi, interviewReducer } from '../dashboard/module/job/interviews/services';
 
-// Persist config
 const persistConfig = {
   key: "root",
   storage,
   whitelist: ["auth"],
 };
 
-// Combine reducers
 const rootReducer = combineReducers({
   auth: authReducer,
   company: companyReducer,
@@ -55,6 +58,12 @@ const rootReducer = combineReducers({
   plan: planReducer,
   policy: policyReducer,
   inquiry: inquiryReducer,
+  project: projectReducer,
+  job: jobReducer,
+  jobApplication: jobApplicationReducer,
+  jobOnboarding: jobOnboardingReducer,
+  offerLetter: offerLetterReducer,
+  interview: interviewReducer,
   [authApi.reducerPath]: authApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,
   [superadminProfileApi.reducerPath]: superadminProfileApi.reducer,
@@ -80,7 +89,11 @@ const rootReducer = combineReducers({
   [contractTypeApi.reducerPath]: contractTypeApi.reducer,
   [taskApi.reducerPath]: taskApi.reducer,
   [projectApi.reducerPath]: projectApi.reducer,
-  project: projectReducer,
+  [jobApi.reducerPath]: jobApi.reducer,
+  [jobApplicationApi.reducerPath]: jobApplicationApi.reducer,
+  [jobOnboardingApi.reducerPath]: jobOnboardingApi.reducer,
+  [offerLetterApi.reducerPath]: offerLetterApi.reducer,
+  [interviewApi.reducerPath]: interviewApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -117,7 +130,12 @@ export const store = configureStore({
       .concat(lableApi.middleware)
       .concat(contractTypeApi.middleware)
       .concat(taskApi.middleware)
-      .concat(projectApi.middleware),
+      .concat(projectApi.middleware)
+      .concat(jobApi.middleware)
+      .concat(jobApplicationApi.middleware)
+      .concat(jobOnboardingApi.middleware)
+      .concat(offerLetterApi.middleware)
+      .concat(interviewApi.middleware),
 });
 
 export const persistor = persistStore(store);
