@@ -36,13 +36,29 @@ import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/Sour
 import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi";
 import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi";
 import { taskApi } from "../dashboard/module/crm/task/services/taskApi";
-import { projectApi } from '../dashboard/module/crm/project/services/projectApi';
-import projectReducer from '../dashboard/module/crm/project/services/projectSlice';
+import { projectApi } from "../dashboard/module/crm/project/services/projectApi";
+import projectReducer from "../dashboard/module/crm/project/services/projectSlice";
 import { jobApi, jobReducer } from "../dashboard/module/job/jobs/services";
-import { jobApplicationApi, jobApplicationReducer } from "../dashboard/module/job/job applications/services";
-import { jobOnboardingApi, jobOnboardingReducer } from "../dashboard/module/job/job onboarding/services";
-import { offerLetterApi, offerLetterReducer } from '../dashboard/module/job/offer letters/services';
-import { interviewApi, interviewReducer } from '../dashboard/module/job/interviews/services';
+import {
+  jobApplicationApi,
+  jobApplicationReducer,
+} from "../dashboard/module/job/job applications/services";
+import {
+  jobOnboardingApi,
+  jobOnboardingReducer,
+} from "../dashboard/module/job/job onboarding/services";
+import {
+  offerLetterApi,
+  offerLetterReducer,
+} from "../dashboard/module/job/offer letters/services";
+import {
+  interviewApi,
+  interviewReducer,
+} from "../dashboard/module/job/interviews/services";
+import { leadApi } from "../dashboard/module/crm/lead/services/LeadApi";
+import leadReducer from "../dashboard/module/crm/lead/services/leadSlice";
+import { dealApi } from "../dashboard/module/crm/deal/services/DealApi";
+import dealReducer from "../dashboard/module/crm/deal/services/dealSlice";
 
 const persistConfig = {
   key: "root",
@@ -64,6 +80,8 @@ const rootReducer = combineReducers({
   jobOnboarding: jobOnboardingReducer,
   offerLetter: offerLetterReducer,
   interview: interviewReducer,
+  lead: leadReducer,
+  deal: dealReducer,
   [authApi.reducerPath]: authApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,
   [superadminProfileApi.reducerPath]: superadminProfileApi.reducer,
@@ -94,6 +112,8 @@ const rootReducer = combineReducers({
   [jobOnboardingApi.reducerPath]: jobOnboardingApi.reducer,
   [offerLetterApi.reducerPath]: offerLetterApi.reducer,
   [interviewApi.reducerPath]: interviewApi.reducer,
+  [leadApi.reducerPath]: leadApi.reducer,
+  [dealApi.reducerPath]: dealApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -135,7 +155,9 @@ export const store = configureStore({
       .concat(jobApplicationApi.middleware)
       .concat(jobOnboardingApi.middleware)
       .concat(offerLetterApi.middleware)
-      .concat(interviewApi.middleware),
+      .concat(interviewApi.middleware)
+      .concat(leadApi.middleware)
+      .concat(dealApi.middleware),
 });
 
 export const persistor = persistStore(store);
