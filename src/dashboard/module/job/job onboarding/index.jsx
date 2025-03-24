@@ -16,6 +16,7 @@ import 'jspdf-autotable';
 import CreateJobOnboarding from './CreateJobOnboarding';
 import JobOnboardingList from './JobOnboardingList';
 import { Link } from 'react-router-dom';
+import { useGetAllJobOnboardingQuery, useDeleteJobOnboardingMutation } from './services/jobOnboardingApi';
 
 const { Title, Text } = Typography;
 
@@ -30,32 +31,25 @@ const JobOnboarding = () => {
     const [filteredOnboardings, setFilteredOnboardings] = useState([]);
     const searchInputRef = useRef(null);
 
+    // Use RTK Query hooks
+    const { data: onboardingsData, isLoading } = useGetAllJobOnboardingQuery();
+    const [deleteOnboarding] = useDeleteJobOnboardingMutation();
+
     useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                interviewer: 'John Doe',
-                days_of_week:"45",
-                salary: '100000',
-                joining_date: new Date().toLocaleDateString(),
-                salary_type: 'Monthly',
-                salary_duration: 'Monthly',
-                status: 'Active',
-            }
-        ];
-        setOnboardings(mockData);
-        setFilteredOnboardings(mockData);
-    }, []);
+        if (onboardingsData?.data) {
+            setOnboardings(onboardingsData.data);
+            setFilteredOnboardings(onboardingsData.data);
+        }
+    }, [onboardingsData]);
 
     useEffect(() => {
         let result = [...onboardings];
         if (searchText) {
             result = result.filter(onboarding =>
-                onboarding.employee_name.toLowerCase().includes(searchText.toLowerCase()) ||
-                onboarding.position.toLowerCase().includes(searchText.toLowerCase()) ||
-                onboarding.department.toLowerCase().includes(searchText.toLowerCase()) ||
-                onboarding.mentor.toLowerCase().includes(searchText.toLowerCase())
+                onboarding.Interviewer?.toLowerCase().includes(searchText.toLowerCase()) ||
+                onboarding.Status?.toLowerCase().includes(searchText.toLowerCase()) ||
+                onboarding.SalaryType?.toLowerCase().includes(searchText.toLowerCase()) ||
+                onboarding.JobType?.toLowerCase().includes(searchText.toLowerCase())
             );
         }
         setFilteredOnboardings(result);
@@ -77,21 +71,22 @@ const JobOnboarding = () => {
         setSelectedOnboarding(onboarding);
     };
 
-    const handleDeleteConfirm = (onboarding) => {
-        setSelectedOnboarding(onboarding);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteOnboarding = async () => {
-        try {
-            // TODO: Implement delete API call
-            const updatedOnboardings = onboardings.filter(o => o.id !== selectedOnboarding.id);
-            setOnboardings(updatedOnboardings);
-            message.success('Onboarding record deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete onboarding record');
-        }
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this designation?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteOnboarding(record.id).unwrap();
+                    message.success('Job deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete job');
+                }
+            },
+        });
     };
 
     const handleFormSubmit = async (formData) => {
@@ -246,7 +241,7 @@ const JobOnboarding = () => {
                 <div className="header-actions">
                     <Input
                         prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search onboarding..."
+                        placeholder="Search by interviewer, status, salary type..."
                         allowClear
                         onChange={(e) => handleSearch(e.target.value)}
                         value={searchText}
@@ -276,9 +271,9 @@ const JobOnboarding = () => {
             <Card className="job-onboarding-table-card">
                 <JobOnboardingList
                     onboardings={filteredOnboardings}
-                    loading={loading}
+                    loading={isLoading}
                     onEdit={handleEditOnboarding}
-                    onDelete={handleDeleteConfirm}
+                    onDelete={handleDelete}
                     onView={handleViewOnboarding}
                 />
             </Card>
@@ -288,24 +283,12 @@ const JobOnboarding = () => {
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
+                
                 initialValues={selectedOnboarding}
                 loading={loading}
             />
 
-            <Modal
-                title="Delete Onboarding Record"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteOnboarding}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete onboarding record for <strong>{selectedOnboarding?.employee_name}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
+           
         </div>
     );
 };

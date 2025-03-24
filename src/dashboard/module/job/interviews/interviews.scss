@@ -91,7 +91,6 @@
             .interview-card {
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
                 padding: 16px;
                 background: white;
                 border-radius: 8px;
@@ -101,43 +100,53 @@
 
                 &:hover {
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-                    .delete-btn {
-                        opacity: 1;
-                    }
                 }
 
                 .card-content {
                     flex: 1;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
 
-                    .candidate-name {
-                        font-size: 16px;
-                        font-weight: 500;
-                        color: #2c3e50;
-                        margin-bottom: 4px;
+                    .candidate-info {
+                        flex: 1;
+
+                        .candidate-name {
+                            font-size: 16px;
+                            font-weight: 500;
+                            color: #2c3e50;
+                            margin-bottom: 4px;
+                        }
+
+                        .interview-datetime {
+                            font-size: 13px;
+                            color: #666;
+                            line-height: 1.5;
+                        }
                     }
 
-                    .interview-datetime {
-                        font-size: 13px;
-                        color: #666;
-                        line-height: 1.5;
-                    }
-                }
-
-                .delete-btn {
-                    opacity: 0;
-                    transition: opacity 0.3s ease;
-                    margin-left: 16px;
-                    padding: 4px 8px;
-                    height: 32px;
-
-                    &:hover {
-                        background: #fff1f0;
+                    .delete-button {
+                        width: 32px;
+                        height: 32px;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 6px;
                         color: #ff4d4f;
-                    }
+                        background: transparent;
+                        border: 1px solid #ff4d4f;
+                        
+                        &:hover {
+                            background: #ff4d4f;
+                            color: white;
+                        }
 
-                    .anticon {
-                        font-size: 16px;
+                        svg {
+                            width: 16px;
+                            height: 16px;
+                        }
                     }
                 }
             }
@@ -443,14 +452,34 @@
 // Popconfirm styling
 .ant-popconfirm {
     .ant-popconfirm-message {
-        padding: 12px 16px;
+        padding: 16px;
         
         .ant-popconfirm-title {
             font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .ant-popconfirm-description {
+            color: #666;
         }
     }
 
     .ant-popconfirm-buttons {
-        padding: 8px 16px;
+        padding: 0 16px 16px;
+        
+        .ant-btn {
+            border-radius: 6px;
+            height: 32px;
+            
+            &-primary {
+                background: #ff4d4f;
+                border-color: #ff4d4f;
+                
+                &:hover {
+                    background: #ff7875;
+                    border-color: #ff7875;
+                }
+            }
+        }
     }
 } 

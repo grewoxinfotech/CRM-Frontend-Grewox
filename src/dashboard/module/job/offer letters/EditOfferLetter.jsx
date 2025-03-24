@@ -30,23 +30,21 @@ import {
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-// import isValid from 'dayjs/plugin/isValid';
 import TextArea from 'antd/es/input/TextArea';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
-import { useCreateOfferLetterMutation } from './services/offerLetterApi';
+import { useUpdateOfferLetterMutation } from './services/offerLetterApi';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
-// dayjs.extend(isValid);
 
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateOfferLetter = ({ open, onCancel, loading }) => {
+const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
     const [form] = Form.useForm();
-    const [createOfferLetter, { isLoading: createLoading }] = useCreateOfferLetterMutation();
+    const [updateOfferLetter, { isLoading: updateLoading }] = useUpdateOfferLetterMutation();
     const [fileList, setFileList] = useState([]);
 
     const { data: jobApplications, isLoading: applicationsLoading } = useGetAllJobApplicationsQuery();
@@ -56,60 +54,97 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
         limit: 100
     });
 
+    console.log("sdfsfsd",initialValues);
+
     useEffect(() => {
-        if (open) {
+        if (open && initialValues) {
             form.resetFields();
-            setFileList([]);
+            
+            // Handle file list
+            if (initialValues.file) {
+                setFileList([
+                    {
+                        uid: '-1',
+                        name: initialValues.file.split('/').pop(),
+                        status: 'done',
+                        url: initialValues.file
+                    }
+                ]);
+            } else {
+                setFileList([]);
+            }
+
+            // Format and set form values
+            const formattedValues = {
+                job: initialValues.job,  // Direct job ID
+                job_applicant: initialValues.job_applicant,  // Direct job_applicant ID
+                offer_expiry: dayjs(initialValues.offer_expiry),  // Convert to dayjs
+                expected_joining_date: dayjs(initialValues.expected_joining_date),  // Convert to dayjs
+                salary: initialValues.salary,
+                rate: initialValues.rate || '',
+                currency: initialValues.currency || 'USD',
+                description: initialValues.description,
+                status: initialValues.status
+            };
+
+            // Log formatted values for debugging
+            console.log('Setting formatted values:', formattedValues);
+
+            // Set form values
+            form.setFieldsValue(formattedValues);
         }
-    }, [open, form]);
+    }, [open, form, initialValues]);
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
             
-            // Create FormData instance
-            const formData = new FormData();
-            
-            // Extract file and other values
-            const { file, ...otherValues } = values;
-
-            // Add the file if it exists
-            if (fileList?.[0]?.originFileObj) {
-                formData.append('file', fileList[0].originFileObj);
-            }
-
-            // Add all other fields to formData
+            // Create payload
             const payload = {
-                ...otherValues,
+                job: values.job || initialValues.job,
+                job_applicant: values.job_applicant || initialValues.job_applicant,
                 offer_expiry: dayjs(values.offer_expiry).format('YYYY-MM-DD'),
                 expected_joining_date: dayjs(values.expected_joining_date).format('YYYY-MM-DD'),
-                salary: values.salary.toString(),
-                rate: values.rate.toString(),
-                description: values.description || '',
+                salary: values.salary,
+                rate: values.rate,
+                description: values.description,
+                currency: values.currency || 'USD',
+                status: initialValues.status || 'pending',
                 client_id: localStorage.getItem('client_id'),
                 created_by: localStorage.getItem('user_id')
             };
 
-            // Append all other fields to formData
-            Object.entries(payload).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    formData.append(key, value);
-                }
-            });
-
-            const response = await createOfferLetter(formData).unwrap();
+            let response;
+            if (fileList?.[0]?.originFileObj) {
+                const formData = new FormData();
+                formData.append('file', fileList[0].originFileObj);
+                Object.entries(payload).forEach(([key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        formData.append(key, value);
+                    }
+                });
+                response = await updateOfferLetter({
+                    id: initialValues.id,
+                    data: formData
+                }).unwrap();
+            } else {
+                response = await updateOfferLetter({
+                id: initialValues.id,
+                    data: payload
+            }).unwrap();
+            }
 
             if (response.success) {
-                message.success('Offer letter created successfully');
-                onCancel();
-                form.resetFields();
-                setFileList([]);
+                message.success('Offer letter updated successfully');
+                setFileList([]); // Clear file list
+                form.resetFields(); // Reset form
+                onCancel(); // Close modal
             } else {
-                message.error(response.message || 'Failed to create offer letter');
+                message.error(response.message || 'Failed to update offer letter');
             }
         } catch (error) {
-            console.error('Failed to create offer letter:', error);
-            message.error(error.data?.message || 'Failed to create offer letter');
+            console.error('Failed to update offer letter:', error);
+            message.error(error.data?.message || 'Failed to update offer letter');
         }
     };
 
@@ -217,7 +252,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                 color: "#ffffff",
                             }}
                         >
-                            Create New Offer Letter
+                            Edit Offer Letter
                         </h2>
                         <Text
                             style={{
@@ -225,24 +260,25 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                 color: "rgba(255, 255, 255, 0.85)",
                             }}
                         >
-                            Fill in the information to create offer letter
+                            Update offer letter information
                         </Text>
                     </div>
                 </div>
             </div>
 
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
                 requiredMark={false}
                 style={{ padding: "24px" }}
-            >
+                >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="job"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Position</span>}
                         rules={[{ required: true, message: 'Please select a job position' }]}
+                        initialValue={initialValues.job}
                     >
                         <Select
                             placeholder="Select job position"
@@ -462,7 +498,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                     <Form.Item
                         name="file"
                         label="Offer Letter Document"
-                        rules={[{ required: true, message: 'Please upload offer letter document' }]}
+                        rules={[{ required: false, message: 'Please upload offer letter document' }]}
                     >
                         <Upload
                             fileList={fileList}
@@ -501,54 +537,54 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
 
                 <Divider style={{ margin: '24px 0' }} />
 
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: "12px",
-                        marginTop: "24px",
-                    }}
-                >
-                    <Button
-                        size="large"
-                        onClick={onCancel}
+                    <div
                         style={{
-                            padding: "8px 24px",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: "12px",
+                            marginTop: "24px",
+                        }}
+                    >
+                        <Button
+                        size="large"
+                            onClick={onCancel}
+                            style={{
+                                padding: "8px 24px",
                             height: "44px",
                             borderRadius: "10px",
                             border: "1px solid #e6e8eb",
                             fontWeight: "500",
-                            display: "flex",
-                            alignItems: "center",
+                                display: "flex",
+                                alignItems: "center",
                             justifyContent: "center",
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
                         size="large"
-                        type="primary"
-                        htmlType="submit"
-                        loading={loading || createLoading}
-                        style={{
+                            type="primary"
+                            htmlType="submit"
+                            loading={loading || updateLoading}
+                            style={{
                             padding: "8px 32px",
                             height: "44px",
                             borderRadius: "10px",
                             fontWeight: "500",
                             background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
+                                border: "none",
                             boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
-                            display: "flex",
-                            alignItems: "center",
+                                display: "flex",
+                                alignItems: "center",
                             justifyContent: "center",
                         }}
                     >
-                        Create Offer Letter
-                    </Button>
-                </div>
-            </Form>
+                        Update Offer Letter
+                        </Button>
+                    </div>
+                </Form>
         </Modal>
     );
 };
 
-export default CreateOfferLetter;
+export default EditOfferLetter; 

@@ -15,6 +15,8 @@ import { FiUser, FiFileText, FiMapPin, FiBriefcase, FiDollarSign, FiX, FiClock }
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import { useCreateJobMutation, useUpdateJobMutation } from './services/jobApi';
+import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrAfter);
@@ -50,47 +52,126 @@ const experienceLevels = [
     '7+ years'
 ];
 
+const skillOptions = [
+    'JavaScript',
+    'React',
+    'Node.js',
+    'Python',
+    'Java',
+    'SQL',
+    'HTML/CSS',
+    'TypeScript',
+    'Docker',
+    'AWS',
+    // Add more skills as needed
+];
+
+const interviewRoundOptions = [
+    'Technical Round',
+    'HR Round',
+    'System Design',
+    'Coding Test',
+    'Cultural Fit',
+    'Final Interview'
+];
+
 const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading }) => {
     const [form] = Form.useForm();
+    const [createJob] = useCreateJobMutation();
+    const [updateJob] = useUpdateJobMutation();
+    const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
 
     useEffect(() => {
         if (open) {
             console.log('Modal Opened');
             form.resetFields();
             if (initialValues) {
+                // Format the initial values for editing
                 const formattedValues = {
                     ...initialValues,
-                    start_date: initialValues.start_date ? dayjs(initialValues.start_date) : undefined,
-                    end_date: initialValues.end_date ? dayjs(initialValues.end_date) : undefined
+                    // Format dates
+                    startDate: initialValues.startDate ? dayjs(initialValues.startDate) : undefined,
+                    endDate: initialValues.endDate ? dayjs(initialValues.endDate) : undefined,
+                    
+                    skills: initialValues.skills?.Skills || [],
+                
+                    // Extract and format interview rounds
+                    interviewRounds: initialValues.interviewRounds?.InterviewRounds || [],
+                    
+                    // Keep other fields as they are
+                    title: initialValues.title,
+                    category: initialValues.category,
+                    location: initialValues.location,
+                    totalOpenings: initialValues.totalOpenings,
+                    status: initialValues.status,
+                    recruiter: initialValues.recruiter,
+                    jobType: initialValues.jobType,
+                    workExperience: initialValues.workExperience,
+                    currency: initialValues.currency,
+                    expectedSalary: initialValues.expectedSalary,
+                    description: initialValues.description
                 };
+                
                 console.log('Setting Initial Values:', formattedValues);
                 form.setFieldsValue(formattedValues);
+            } else {
+                // Set default currency when no initial values are provided
+                if (currencies?.length > 0) {
+                    form.setFieldValue('currency', currencies[0].currencyCode);
+                }
             }
         }
-    }, [open, form, initialValues]);
+    }, [open, form, initialValues, currencies]);
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
             console.log('Form Values:', values);
 
+            // Format the data according to the required payload structure
             const formattedValues = {
-                ...values,
-                id: initialValues?.id,
-                start_date: values.start_date?.format('YYYY-MM-DD'),
-                end_date: values.end_date?.format('YYYY-MM-DD'),
-                created_at: initialValues?.created_at || dayjs().format('YYYY-MM-DD'),
-                updated_at: dayjs().format('YYYY-MM-DD')
+                title: values.title,
+                category: values.category,
+                skills: {
+                    Skills: values.skills  // Changed to match API response format
+                },
+                location: values.location,
+                interviewRounds: {
+                    InterviewRounds: values.interviewRounds  // Changed to match API response format
+                },
+                startDate: values.startDate?.format('YYYY-MM-DD'),
+                endDate: values.endDate?.format('YYYY-MM-DD'),
+                totalOpenings: values.totalOpenings || 1,
+                status: values.status,
+                recruiter: values.recruiter,
+                jobType: values.jobType || 'Full-time',
+                workExperience: values.workExperience,
+                currency: values.currency,
+                expectedSalary: values.expectedSalary,
+                description: values.description
             };
 
-            console.log('Submitting Values:', formattedValues);
-            await onSubmit(formattedValues);
-            message.success(isEditing ? 'Job updated successfully!' : 'Job created successfully!');
-            form.resetFields();
+            if (isEditing && initialValues?.id) {
+                // Update existing job
+                await updateJob({
+                    id: initialValues.id,
+                    ...formattedValues
+                }).unwrap();
+                message.success('Job updated successfully!');
+            } else {
+                // Create new job
+                const response = await createJob(formattedValues).unwrap();
+                console.log('Job created:', response);
+                message.success('Job created successfully!');
+            }
+
             onCancel();
         } catch (error) {
             console.error('Form Error:', error);
-            message.error('Please check your input and try again.');
+            message.error(error.data?.message || 'Please check your input and try again.');
         }
     };
 
@@ -260,32 +341,60 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             ))}
                         </Select>
                     </Form.Item>
-
                     <Form.Item
-                        name="interview_round"
+                        name="skills"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Interview Round
+                                Skills
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select interview round' }]}
+                        rules={[{ required: true, message: 'Please select skills' }]}
                     >
                         <Select
-                            placeholder="Select interview round"
+                            mode="multiple"
+                            placeholder="Select required skills"
                             size="large"
                             style={{
                                 width: '100%',
-                                height: '48px',
+                                borderRadius: '10px',
+                                minHeight: '48px',
+                                backgroundColor: '#f8fafc',
                             }}
                         >
-                            {jobTypes.map(type => (
-                                <Option key={type} value={type}>{type}</Option>
+                            {skillOptions.map(skill => (
+                                <Option key={skill} value={skill}>{skill}</Option>
                             ))}
                         </Select>
                     </Form.Item>
 
                     <Form.Item
-                        name="work_experience"
+                        name="interviewRounds"
+                        label={
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                Interview Rounds
+                            </span>
+                        }
+                        rules={[{ required: true, message: 'Please select interview rounds' }]}
+                    >
+                        <Select
+                            mode="multiple"
+                            placeholder="Select interview rounds"
+                            size="large"
+                            style={{
+                                width: '100%',
+                                borderRadius: '10px',
+                                minHeight: '48px',
+                                backgroundColor: '#f8fafc',
+                            }}
+                        >
+                            {interviewRoundOptions.map(round => (
+                                <Option key={round} value={round}>{round}</Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                        name="workExperience"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
                                 Work Experience
@@ -306,6 +415,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             ))}
                         </Select>
                     </Form.Item>
+                    
 
                     <Form.Item
                         name="recruiter"
@@ -332,7 +442,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     </Form.Item>
 
                     <Form.Item  
-                        name="start_date"
+                        name="startDate"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
                                 Start Date
@@ -351,18 +461,18 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     </Form.Item>
 
                     <Form.Item
-                        name="end_date"
+                        name="endDate"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
                                 End Date
                             </span>
                         }
-                        dependencies={['start_date']}
+                        dependencies={['startDate']}
                         rules={[
                             { required: true, message: 'Please select end date' },
                             ({ getFieldValue }) => ({
                                 validator(_, value) {
-                                    const startDate = getFieldValue('start_date');
+                                    const startDate = getFieldValue('startDate');
                                     if (!startDate || !value) {
                                         return Promise.resolve();
                                     }
@@ -410,33 +520,87 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         </Select>
                     </Form.Item>
 
+                    <div style={{ display: 'flex', gap: '16px' }}>
                     <Form.Item
-                        name="expected_salary"
+                        name="expectedSalary"
                         label={
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                            }}>
                                 Expected Salary
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter expected salary' }]}
+                        style={{ flex: 1 }}
                     >
-                        <InputNumber
-                            prefix={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            placeholder="Enter expected salary"
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
+                        <Input.Group compact className="price-input-group" style={{
+                            display: 'flex',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '10px',
+                            border: '1px solid #e6e8eb',
+                            overflow: 'hidden',
+                            marginBottom: 0
+                        }}>
+                            <Form.Item
+                                name="currency"
+                                noStyle
+                                rules={[{ required: true }]}
+                            >
+                                <Select
+                                    size="large"
+                                    style={{
+                                        width: '100px',
+                                        height: '48px'
+                                    }}
+                                    loading={currenciesLoading}
+                                    className="currency-select"
+                                    dropdownStyle={{
+                                        padding: '8px',
+                                        borderRadius: '10px',
+                                    }}
+                                    showSearch
+                                    optionFilterProp="children"
+                                    filterOption={(input, option) =>
+                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    }
+                                >
+                                    {currencies?.map(currency => (
+                                        <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>{currency.currencyIcon}</span>
+                                                <span>{currency.currencyCode}</span>
+                                            </div>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <Form.Item
+                                name="expectedSalary"
+                                noStyle
+                                rules={[{ required: true, message: 'Please enter price' }]}
+                            >
+                                <Input
+                                    placeholder="Enter price"
+                                    size="large"
+                                    style={{
+                                        flex: 1,
+                                        width: '100%',
+                                        border: 'none',
+                                        borderLeft: '1px solid #e6e8eb',
+                                        borderRadius: 0,
+                                        height: '48px',
+                                    }}
+                                    className="price-input"
+                                />
+                            </Form.Item>
+                        </Input.Group>
                     </Form.Item>
 
+                </div>
+
                     <Form.Item
-                        name="job_location"
+                        name="location"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500'  }}>
                                 Job Location

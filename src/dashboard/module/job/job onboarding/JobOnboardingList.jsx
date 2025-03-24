@@ -30,36 +30,38 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
     const columns = [
         {
             title: 'Interviewer',
-            dataIndex: 'interviewer',
-            key: 'interviewer',
-            sorter: (a, b) => a.interviewer.localeCompare(b.interviewer)
+            dataIndex: 'Interviewer',
+            key: 'Interviewer',
+            sorter: (a, b) => a.Interviewer?.localeCompare(b.Interviewer || '')
         },
         {
             title: 'Joining Date',
-            dataIndex: 'joining_date',
-            key: 'joining_date',
-            render: (date) => moment(date).format('DD MMM YYYY')
+            dataIndex: 'JoiningDate',
+            key: 'JoiningDate',
+            render: (date) => date ? moment(date).format('DD MMM YYYY') : 'N/A'
         },
         {
             title: 'Days of Week',
-            dataIndex: 'days_of_week',
-            key: 'days_of_week'
+            dataIndex: 'DaysOfWeek',
+            key: 'DaysOfWeek'
         },
         {
             title: 'Salary',
-            dataIndex: 'salary',
-            key: 'salary'
+            dataIndex: 'Salary',
+            key: 'Salary'
         },
         {
             title: 'Salary Type',
-            dataIndex: 'salary_type',
-            key: 'salary_type'
+            dataIndex: 'SalaryType',
+            key: 'SalaryType'
         },
         {
             title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
+            dataIndex: 'Status',
+            key: 'Status',
             render: (status) => {
+                if (!status) return <Tag color="default">N/A</Tag>;
+                
                 let color;
                 switch (status.toLowerCase()) {
                     case 'pending':

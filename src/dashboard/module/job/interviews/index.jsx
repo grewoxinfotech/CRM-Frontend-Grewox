@@ -1,33 +1,20 @@
 import React, { useState } from 'react';
-import { Calendar, Badge, Typography, Breadcrumb, Card, List, message, Button, Popconfirm } from 'antd';
+import { Calendar, Badge, Typography, Breadcrumb, Card, List, message, Button, Popconfirm, Empty } from 'antd';
 import { FiHome, FiCalendar, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import './interviews.scss';
 import CreateInterview from './CreateInterview';
+import { useGetAllInterviewsQuery } from './services/interviewApi';
+import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 
 const { Title, Text } = Typography;
 
 const Interviews = () => {
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [interviews, setInterviews] = useState([
-        {
-            id: 1,
-            candidate: 'John Doe',
-            type: 'technical',
-            date: '2024-03-21',
-            time: '10:00 am',
-        },
-        {
-            id: 2,
-            candidate: 'Jane Smith',
-            type: 'hr',
-            date: '2024-03-21',
-            time: '2:00 pm',
-        },
-        // Add more mock data as needed
-    ]);
+    const { data: interviews, isLoading } = useGetAllInterviewsQuery();
+    const { data: jobApplications } = useGetAllJobApplicationsQuery();
 
     const handleDateSelect = (date) => {
         setSelectedDate(date);
@@ -36,38 +23,58 @@ const Interviews = () => {
 
     const handleCreateInterview = async (values) => {
         const newInterview = {
-            id: interviews.length + 1,
+            id: interviews?.length ? interviews.length + 1 : 1,
             ...values,
             date: selectedDate.format('YYYY-MM-DD')
         };
-        setInterviews([...interviews, newInterview]);
+        // Here you would call the API to create the interview
         setIsModalVisible(false);
         message.success('Interview scheduled successfully');
     };
 
     const handleDeleteInterview = (interviewId) => {
-        setInterviews(interviews.filter(interview => interview.id !== interviewId));
+        // Here you would call the API to delete the interview
         message.success('Interview deleted successfully');
     };
 
+    // Helper function to get candidate name
+    const getCandidateName = (candidateId) => {
+        const application = jobApplications?.data?.find(app => app.id === candidateId);
+        return application?.name || 'Unknown Candidate';
+    };
+
     const dateCellRender = (date) => {
-        const dayInterviews = interviews.filter(
-            interview => interview.date === date.format('YYYY-MM-DD')
+        if (!interviews?.data) return null;
+
+        // Filter interviews for the current date
+        const dayInterviews = interviews.data.filter(
+            interview => dayjs(interview.startOn).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
         );
 
-        return (
+        return dayInterviews.length > 0 ? (
             <div className="interview-cell">
                 {dayInterviews.map(interview => (
                     <div key={interview.id} className="interview-item">
-                        <div className="interview-details">
-                            <div className="interview-time">{interview.time}</div>
-                            <div className="interview-candidate">{interview.candidate}</div>
-                            <div className="interview-type">{interview.type}</div>
-                        </div>
+                        {/* <Badge 
+                            status="processing" 
+                            text={ */}
+                                <div className="interview-details">
+                                    <div>
+
+                                    <span className="interview-time">
+                                        {interview.startTime?.slice(0, 5)}
+                                    </span>
+                                    </div>
+                                    <span className="interview-candidate">
+                                        {getCandidateName(interview.candidate)}
+                                    </span>
+                                </div>
+                            {/* } 
+                        /> */}
                     </div>
                 ))}
             </div>
-        );
+        ) : null;
     };
 
     return (
@@ -95,7 +102,7 @@ const Interviews = () => {
             </div>
 
             <div className="interviews-content">
-                <Card className="upcoming-interviews">
+                <Card className="upcoming-interviews" loading={isLoading}>
                     <div className="section-header">
                         <Title level={4}>
                             <FiCalendar style={{ marginRight: '8px' }} />
@@ -103,42 +110,63 @@ const Interviews = () => {
                         </Title>
                     </div>
                     <div className="interview-cards">
-                        {interviews.map(interview => (
-                            <div key={interview.id} className="interview-card">
-                                <div className="card-content">
-                                    <div className="candidate-name">{interview.candidate}</div>
-                                    <div className="interview-datetime">
-                                        {dayjs(interview.date).format('MMM DD, YYYY')}
-                                        <br />
-                                        {interview.time} · {interview.status || 'Online'}
+                        {!interviews?.data?.length ? (
+                            <Empty 
+                                description="No interviews scheduled" 
+                                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                            />
+                        ) : (
+                            interviews.data.map(interview => (
+                                <div key={interview.id} className="interview-card">
+                                    <div className="card-content">
+                                        <div className="candidate-info">
+                                            <div className="candidate-name">
+                                                {getCandidateName(interview.candidate)}
+                                            </div>
+                                            <div className="interview-datetime">
+                                                {dayjs(interview.date).format('MMM DD, YYYY')}
+                                                <br />
+                                                {interview.startTime} · {interview.status || 'Online'}
+                                            </div>
+                                        </div>
+                                        <Popconfirm
+                                            title="Delete Interview"
+                                            description="Are you sure you want to delete this interview?"
+                                            onConfirm={() => handleDeleteInterview(interview.id)}
+                                            okText="Yes"
+                                            cancelText="No"
+                                            placement="left"
+                                        >
+                                            <Button 
+                                                className="delete-button"
+                                                type="text" 
+                                                danger
+                                                icon={<FiTrash2 size={16} />}
+                                            />
+                                        </Popconfirm>
                                     </div>
                                 </div>
-                                <Popconfirm
-                                    title="Delete Interview"
-                                    description="Are you sure you want to delete this interview?"
-                                    onConfirm={() => handleDeleteInterview(interview.id)}
-                                    okText="Yes"
-                                    cancelText="No"
-                                >
-                                    <Button 
-                                        className="delete-btn"
-                                        type="text" 
-                                        danger 
-                                        icon={<FiTrash2 />}
-                                    />
-                                </Popconfirm>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </Card>
 
-                <Card className="calendar-card">
+                <Card className="calendar-card" loading={isLoading}>
                     <Calendar
                         dateCellRender={dateCellRender}
                         onSelect={handleDateSelect}
                     />
                 </Card>
             </div>
+
+            {/* <Button
+                type="primary"
+                icon={<FiPlus />}
+                onClick={() => setIsModalVisible(true)}
+                className="schedule-button"
+            >
+                Schedule Interview
+            </Button> */}
 
             <CreateInterview
                 open={isModalVisible}

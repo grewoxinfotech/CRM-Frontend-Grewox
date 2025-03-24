@@ -15,6 +15,8 @@ import { FiUser, FiFileText, FiMapPin, FiBriefcase, FiDollarSign, FiX, FiClock, 
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import { useCreateJobOnboardingMutation, useUpdateJobOnboardingMutation } from './services/jobOnboardingApi';
+import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrBefore);
@@ -60,35 +62,86 @@ const jobTypes = [
     'Part-Time',
     'Contract',
 ];
-const CreateJobOnboarding = ({ open, onCancel, onSubmit, isEditing, initialValues, loading }) => {
+
+const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
     const [form] = Form.useForm();
+    const [createJobOnboarding, { isLoading: isCreating }] = useCreateJobOnboardingMutation();
+    const [updateJobOnboarding, { isLoading: isUpdating }] = useUpdateJobOnboardingMutation();
+    const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
+
+    useEffect(() => {
+        if (currencies?.length && !isEditing) {
+            const defaultCurrency = currencies.find(c => c.currencyCode === 'USD') || currencies[0];
+            form.setFieldValue('currency', defaultCurrency.currencyCode);
+        }
+    }, [currencies, form, isEditing]);
 
     useEffect(() => {
         if (open) {
             form.resetFields();
-            if (initialValues) {
+            if (isEditing && initialValues) {
                 const formattedValues = {
-                    ...initialValues,
-                    joining_date: initialValues.joining_date ? dayjs(initialValues.joining_date) : undefined,
-                    orientation_date: initialValues.orientation_date ? dayjs(initialValues.orientation_date) : undefined
+                    interviewer: initialValues.Interviewer,
+                    joining_date: initialValues.JoiningDate ? dayjs(initialValues.JoiningDate) : undefined,
+                    days_of_week: initialValues.DaysOfWeek,
+                    salary: initialValues.Salary,
+                    currency: initialValues.Currency || 'USD',
+                    salary_type: initialValues.SalaryType,
+                    salary_duration: initialValues.SalaryDuration,
+                    job_type: initialValues.JobType,
+                    status: initialValues.Status?.toLowerCase()
                 };
                 form.setFieldsValue(formattedValues);
+            } else {
+                form.setFieldsValue({
+                    currency: 'USD',
+                    status: 'pending',
+                    salary_type: 'Monthly'
+                });
             }
         }
-    }, [open, form, initialValues]);
+    }, [open, isEditing, initialValues, form]);
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            const formattedValues = {
-                ...values,
-                joining_date: values.joining_date ? values.joining_date.format('YYYY-MM-DD') : undefined,
-                orientation_date: values.orientation_date ? values.orientation_date.format('YYYY-MM-DD') : undefined
+            
+            const formData = {
+                Interviewer: values.interviewer,
+                JoiningDate: values.joining_date?.format('YYYY-MM-DD'),
+                DaysOfWeek: values.days_of_week,
+                Salary: values.salary,
+                SalaryType: values.salary_type,
+                SalaryDuration: values.salary_duration,
+                JobType: values.job_type,
+                Status: values.status,
+                client_id: localStorage.getItem('client_id'),
+                created_by: localStorage.getItem('user_id')
             };
-            await onSubmit(formattedValues);
+
+            if (isEditing) {
+                await updateJobOnboarding({
+                    id: initialValues.id,
+                    ...formData,
+                    updated_by: localStorage.getItem('user_id')
+                }).unwrap();
+                message.success('Job onboarding updated successfully');
+            } else {
+                await createJobOnboarding({
+                    ...formData,
+                    created_by: localStorage.getItem('user_id')
+                }).unwrap();
+                message.success('Job onboarding created successfully');
+            }
+
             form.resetFields();
+            onCancel();
         } catch (error) {
-            console.error('Validation failed:', error);
+            console.error('Operation failed:', error);
+            message.error(error?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} job onboarding`);
         }
     };
 
@@ -202,11 +255,10 @@ const CreateJobOnboarding = ({ open, onCancel, onSubmit, isEditing, initialValue
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                initialValues={{ 
-                    ...initialValues, 
+                initialValues={{
+                    currency: 'USD',
                     status: 'pending',
-                    tasks_completed: '0/10',
-                    documents_submitted: '0/5'
+                    salary_type: 'Monthly'
                 }}
                 requiredMark={false}
                 style={{
@@ -245,7 +297,7 @@ const CreateJobOnboarding = ({ open, onCancel, onSubmit, isEditing, initialValue
                                 Joining Date
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter joining date' }]}
+                        rules={[{ required: true, message: 'Please select joining date' }]}
                     >
                         <DatePicker
                             prefix={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -271,9 +323,9 @@ const CreateJobOnboarding = ({ open, onCancel, onSubmit, isEditing, initialValue
                                 Days of Week
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select days of week' }]}
+                        rules={[{ required: true, message: 'Please enter days of week' }]}
                     >
-                       <Input
+                        <Input
                             prefix={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter days of week"
                             size="large"
@@ -286,35 +338,86 @@ const CreateJobOnboarding = ({ open, onCancel, onSubmit, isEditing, initialValue
                                 transition: 'all 0.3s ease',
                             }}
                         />
-                            {/* daysOfWeek.map(day => (
-                                <Option key={day} value={day}>{day}</Option>
-                            )) */}
-                       
                     </Form.Item>
 
+                    <div style={{ display: 'flex', gap: '16px' }}>
                     <Form.Item
                         name="salary"
                         label={
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Salary
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
+                            }}>
+                                Expected Salary
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter salary' }]}
+                        style={{ flex: 1 }}
                     >
-                        <Input
-                            prefix={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            placeholder="Enter salary"
-                            size="large"
-                            style={{
-                                borderRadius: '10px',
-                                padding: '8px 16px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                                transition: 'all 0.3s ease',
-                            }}
-                        />
+                        <Input.Group compact className="price-input-group" style={{
+                            display: 'flex',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '10px',
+                            border: '1px solid #e6e8eb',
+                            overflow: 'hidden',
+                            marginBottom: 0
+                        }}>
+                            <Form.Item
+                                name="currency"
+                                noStyle
+                                rules={[{ required: true }]}
+                            >
+                                <Select
+                                    size="large"
+                                    style={{
+                                        width: '100px',
+                                        height: '48px'
+                                    }}
+                                    loading={currenciesLoading}
+                                    className="currency-select"
+                                    defaultValue="USD"
+                                    dropdownStyle={{
+                                        padding: '8px',
+                                        borderRadius: '10px',
+                                    }}
+                                    showSearch
+                                    optionFilterProp="children"
+                                    filterOption={(input, option) =>
+                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    }
+                                >
+                                    {currencies?.map(currency => (
+                                        <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>{currency.currencyIcon}</span>
+                                            </div>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <Form.Item
+                                name="salary"
+                                noStyle
+                                rules={[{ required: true, message: 'Please enter price' }]}
+                            >
+                                <Input
+                                    placeholder="Enter price"
+                                    size="large"
+                                    style={{
+                                        flex: 1,
+                                        width: '100%',
+                                        border: 'none',
+                                        borderLeft: '1px solid #e6e8eb',
+                                        borderRadius: 0,
+                                        height: '48px',
+                                    }}
+                                    className="price-input"
+                                />
+                            </Form.Item>
+                        </Input.Group>
                     </Form.Item>
+
+                </div>
 
                     <Form.Item
                         name="salary_type"
@@ -440,7 +543,7 @@ const CreateJobOnboarding = ({ open, onCancel, onSubmit, isEditing, initialValue
                         size="large"
                         type="primary"
                         htmlType="submit"
-                        loading={loading}
+                        loading={isCreating || isUpdating}
                         style={{
                             padding: '8px 32px',
                             height: '44px',

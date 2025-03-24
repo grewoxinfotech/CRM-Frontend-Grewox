@@ -414,13 +414,13 @@
 
 // Action dropdown styles
 .action-dropdown-button {
-    width: 50px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
+    border-radius: 4px;
     transition: all 0.3s ease;
     
     &:hover {

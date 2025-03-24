@@ -16,13 +16,18 @@ import 'jspdf-autotable';
 import CreateOfferLetter from './CreateOfferLetter';
 import OfferLetterList from './OfferLetterList';
 import { Link } from 'react-router-dom';
+import { useGetAllOfferLettersQuery, useDeleteOfferLetterMutation, useCreateOfferLetterMutation, useUpdateOfferLetterMutation } from './services/offerLetterApi';
+import EditOfferLetter from './EditOfferLetter';
+import { useGetAllJobsQuery } from '../jobs/services/jobApi';
+import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 
 const { Title, Text } = Typography;
 
 const OfferLetters = () => {
+    const { data: offerLettersData, isLoading } = useGetAllOfferLettersQuery();
+    const [deleteOfferLetter] = useDeleteOfferLetterMutation();
     const [offerLetters, setOfferLetters] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedLetter, setSelectedLetter] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -30,35 +35,53 @@ const OfferLetters = () => {
     const [filteredLetters, setFilteredLetters] = useState([]);
     const searchInputRef = useRef(null);
 
-    useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                job: 'Senior React Developer',
-                job_application: 'John Doe',
-                salary: '$100,000',
-                expected_joining_date: new Date().toLocaleDateString(),
-                offer_expiry: new Date().toLocaleDateString(),
-                description: 'i am a senior react developer',
-            }
-        ];
-        setOfferLetters(mockData);
-        setFilteredLetters(mockData);
-    }, []);
+    const { data: jobs } = useGetAllJobsQuery();
+    const { data: applicationsData } = useGetAllJobApplicationsQuery();
+
+    const getJobTitle = (jobId) => {
+        if (!jobs) return 'Loading...';
+        const job = jobs.find(job => job.id === jobId);
+        return job ? job.title : 'N/A';
+    };
+
+    const applicationMap = React.useMemo(() => {
+        if (!applicationsData?.data) return {};
+        return applicationsData.data.reduce((acc, application) => {
+            acc[application.id] = application.name || application.applicant_name;
+            return acc;
+        }, {});
+    }, [applicationsData]);
 
     useEffect(() => {
-        let result = [...offerLetters];
-        if (searchText) {
-            result = result.filter(letter =>
-                letter.candidate_name.toLowerCase().includes(searchText.toLowerCase()) ||
-                letter.position.toLowerCase().includes(searchText.toLowerCase()) ||
-                letter.department.toLowerCase().includes(searchText.toLowerCase()) ||
-                letter.status.toLowerCase().includes(searchText.toLowerCase())
-            );
+        if (offerLettersData?.data) {
+            if (!searchText) {
+                setFilteredLetters(offerLettersData.data);
+                return;
+            }
+
+            const searchLower = searchText.toLowerCase();
+            const filtered = offerLettersData.data.filter(letter => {
+                // Search in job details
+                const jobMatch = letter.job && getJobTitle(letter.job)?.toLowerCase().includes(searchLower);
+                
+                // Search in applicant details
+                const applicantMatch = letter.job_applicant && 
+                    applicationMap[letter.job_applicant]?.toLowerCase().includes(searchLower);
+                
+                // Search in other fields
+                const otherFieldsMatch = (
+                    letter.description?.toLowerCase().includes(searchLower) ||
+                    letter.salary?.toString().includes(searchLower) ||
+                    (letter.offer_expiry && moment(letter.offer_expiry).format('DD MMM YYYY').toLowerCase().includes(searchLower)) ||
+                    (letter.expected_joining_date && moment(letter.expected_joining_date).format('DD MMM YYYY').toLowerCase().includes(searchLower))
+                );
+
+                return jobMatch || applicantMatch || otherFieldsMatch;
+            });
+
+            setFilteredLetters(filtered);
         }
-        setFilteredLetters(result);
-    }, [offerLetters, searchText]);
+    }, [offerLettersData, searchText, applicationMap, jobs]);
 
     const handleAddLetter = () => {
         setSelectedLetter(null);
@@ -77,44 +100,22 @@ const OfferLetters = () => {
         // TODO: Implement view functionality
     };
 
-    const handleDeleteConfirm = (letter) => {
-        setSelectedLetter(letter);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteLetter = async () => {
-        try {
-            // TODO: Implement delete API call
-            const updatedLetters = offerLetters.filter(l => l.id !== selectedLetter.id);
-            setOfferLetters(updatedLetters);
-            message.success('Offer letter deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete offer letter');
-        }
-    };
-
-    const handleFormSubmit = async (formData) => {
-        try {
-            if (isEditing) {
-                const updatedLetters = offerLetters.map(l =>
-                    l.id === selectedLetter.id ? { ...l, ...formData } : l
-                );
-                setOfferLetters(updatedLetters);
-                message.success('Offer letter updated successfully');
-            } else {
-                const newLetter = {
-                    id: Date.now(),
-                    ...formData,
-                    created_at: new Date().toISOString(),
-                };
-                setOfferLetters([...offerLetters, newLetter]);
-                message.success('Offer letter created successfully');
-            }
-            setIsFormVisible(false);
-        } catch (error) {
-            message.error('Operation failed');
-        }
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this offer letter?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteOfferLetter(record.id).unwrap();
+                    message.success('Offer letter deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete offer letter');
+                }
+            },
+        });
     };
 
     const handleSearch = (value) => {
@@ -151,7 +152,7 @@ const OfferLetters = () => {
         try {
             setLoading(true);
             const data = offerLetters.map(letter => ({
-                'Candidate Name': letter.candidate_name,
+                ' job': letter.job,
                 'Position': letter.position,
                 'Department': letter.department,
                 'Salary': letter.salary,
@@ -220,7 +221,13 @@ const OfferLetters = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
+    const handleEditModalClose = () => {
+        setIsFormVisible(false);
+        setIsEditing(false);
+        setSelectedLetter(null);
+    };
+
+    return (
         <div className="offer-letters-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -245,12 +252,16 @@ const OfferLetters = () => {
                 <div className="header-actions">
                     <Input
                         prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search offer letters..."
+                        placeholder="Search by job, applicant, salary, dates..."
                         allowClear
                         onChange={(e) => handleSearch(e.target.value)}
                         value={searchText}
                         ref={searchInputRef}
                         className="search-input"
+                        style={{
+                            width: '300px',
+                            marginRight: '16px'
+                        }}
                     />
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
@@ -275,36 +286,32 @@ const OfferLetters = () => {
             <Card className="offer-letters-table-card">
                 <OfferLetterList
                     offerLetters={filteredLetters}
-                    loading={loading}
+                    loading={isLoading}
                     onEdit={handleEditLetter}
-                    onDelete={handleDeleteConfirm}
+                    onDelete={handleDelete}
                     onView={handleViewLetter}
                 />
             </Card>
 
-            <CreateOfferLetter
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
-                isEditing={isEditing}
-                initialValues={selectedLetter}
-                loading={loading}
-            />
-
-            <Modal
-                title="Delete Offer Letter"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteLetter}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete offer letter for <strong>{selectedLetter?.candidate_name}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
+            {isEditing ? (
+                <EditOfferLetter
+                    open={isFormVisible}
+                    onCancel={handleEditModalClose}
+                    isEditing={isEditing}
+                    initialValues={selectedLetter}
+                    loading={loading}
+                />
+            ) : (
+                <CreateOfferLetter
+                    open={isFormVisible}
+                    onCancel={() => {
+                        setIsFormVisible(false);
+                        setSelectedLetter(null);
+                    }}
+                    initialValues={selectedLetter}
+                    loading={loading}
+                />
+            )}
         </div>
     );
 };

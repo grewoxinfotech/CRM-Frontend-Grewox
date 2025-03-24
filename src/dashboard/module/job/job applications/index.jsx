@@ -16,53 +16,53 @@ import 'jspdf-autotable';
 import CreateJobApplication from './CreateJobApplication';
 import JobApplicationList from './JobApplicationList';
 import { Link } from 'react-router-dom';
+import { useGetAllJobApplicationsQuery, useDeleteJobApplicationMutation } from './services/jobApplicationApi';
+import { useSelector, useDispatch } from 'react-redux';
+
 
 const { Title, Text } = Typography;
 
 const JobApplications = () => {
-    const [applications, setApplications] = useState([]);
+    const dispatch = useDispatch();
+    const { filters, pagination, sorting } = useSelector(state => state.jobApplication);
+    
+    const { data: applications, isLoading } = useGetAllJobApplicationsQuery({
+        ...filters,
+        page: pagination.current,
+        limit: pagination.pageSize,
+        sortField: sorting.field,
+        sortOrder: sorting.order,
+    });
+
+    const [deleteApplication] = useDeleteJobApplicationMutation();
+
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedApplication, setSelectedApplication] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filteredApplications, setFilteredApplications] = useState([]);
     const searchInputRef = useRef(null);
 
-    useEffect(() => {
-        // TODO: Replace with actual API call
-        const mockData = [
-            {
-                id: 1,
-                applicant_name: 'John Doe',
-                email: 'john.doe@example.com',
-                position: 'Software Engineer',
-                notice_period: '2 months',
-                current_location: 'San Francisco',
-                phone: '+1234567890',
-                total_experience: '5 years',
-                applied_source: 'LinkedIn',
-                cover_letter: 'i am a good candidate for this job',
-                status: 'pending',
-                resume: 'resume.pdf'
-            }
-        ];
-        setApplications(mockData);
-        setFilteredApplications(mockData);
-    }, []);
-
-    useEffect(() => {
-        let result = [...applications];
-        if (searchText) {
-            result = result.filter(application =>
-                application.applicant_name.toLowerCase().includes(searchText.toLowerCase()) ||
-                application.email.toLowerCase().includes(searchText.toLowerCase()) ||
-                application.position.toLowerCase().includes(searchText.toLowerCase()) ||
-                application.status.toLowerCase().includes(searchText.toLowerCase())
+    const filteredApplications = React.useMemo(() => {
+        if (!applications?.data) return [];
+        
+        return applications.data.filter(application => {
+            if (!searchText) return true;
+            
+            const searchTerm = searchText.toLowerCase();
+            return (
+                application.name?.toLowerCase().includes(searchTerm) ||
+                application.email?.toLowerCase().includes(searchTerm) ||
+                application.phone?.toLowerCase().includes(searchTerm) ||
+                application.location?.toLowerCase().includes(searchTerm) ||
+                application.total_experience?.toLowerCase().includes(searchTerm) ||
+                application.current_location?.toLowerCase().includes(searchTerm) ||
+                application.notice_period?.toLowerCase().includes(searchTerm) ||
+                application.status?.toLowerCase().includes(searchTerm) ||
+                application.applied_source?.toLowerCase().includes(searchTerm)
             );
-        }
-        setFilteredApplications(result);
+        });
     }, [applications, searchText]);
 
     const handleAddApplication = () => {
@@ -81,47 +81,32 @@ const JobApplications = () => {
         setSelectedApplication(application);
     };
 
-    const handleDeleteConfirm = (application) => {
-        setSelectedApplication(application);
-        setIsDeleteModalVisible(true);
+    const handleDelete = (record) => {
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this application?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteApplication(record.id).unwrap();
+                    message.success('Application deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete application');
+                }
+            },
+        });
     };
 
-    const handleDeleteApplication = async () => {
-        try {
-            // TODO: Implement delete API call
-            const updatedApplications = applications.filter(a => a.id !== selectedApplication.id);
-            setApplications(updatedApplications);
-            message.success('Application deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete application');
-        }
+    const handleFormClose = () => {
+        setIsFormVisible(false);
+        setSelectedApplication(null);
+        setIsEditing(false);
     };
 
-    const handleFormSubmit = async (formData) => {
-        try {
-            if (isEditing) {
-                const updatedApplications = applications.map(a =>
-                    a.id === selectedApplication.id ? { ...a, ...formData } : a
-                );
-                setApplications(updatedApplications);
-                message.success('Application updated successfully');
-            } else {
-                const newApplication = {
-                    id: Date.now(),
-                    ...formData,
-                    created_at: new Date().toISOString(),
-                };
-                setApplications([...applications, newApplication]);
-                message.success('Application created successfully');
-            }
-            setIsFormVisible(false);
-        } catch (error) {
-            message.error('Operation failed');
-        }
-    };
-
-    const handleSearch = (value) => {
+    const handleSearch = (e) => {
+        const value = e.target.value;
         setSearchText(value);
     };
 
@@ -154,12 +139,13 @@ const JobApplications = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = applications.map(application => ({
-                'Applicant Name': application.applicant_name,
+            const data = filteredApplications.map(application => ({
+
+                'Applicant Name': application.name,
                 'Email': application.email,
                 'Phone': application.phone,
-                'Position': application.position,
-                'Experience': application.experience,
+                'Position': application.job,
+                'Experience': application.total_experience,
                 'Current Salary': application.current_salary,
                 'Expected Salary': application.expected_salary,
                 'Notice Period': application.notice_period,
@@ -251,12 +237,15 @@ const JobApplications = () => {
                 <div className="header-actions">
                     <Input
                         prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search applications..."
+                        placeholder="Search by name, email, phone, location..."
                         allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
+                        onChange={handleSearch}
                         value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
+                        style={{
+                            width: '300px',
+                            marginRight: '16px',
+                            borderRadius: '6px'
+                        }}
                     />
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
@@ -281,36 +270,20 @@ const JobApplications = () => {
             <Card className="job-applications-table-card">
                 <JobApplicationList
                     applications={filteredApplications}
-                    loading={loading}
+                    loading={isLoading}
                     onEdit={handleEditApplication}
-                    onDelete={handleDeleteConfirm}
+                    onDelete={handleDelete}
                     onView={handleViewApplication}
                 />
             </Card>
 
             <CreateJobApplication
                 open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
+                onCancel={handleFormClose}
                 isEditing={isEditing}
                 initialValues={selectedApplication}
-                loading={loading}
             />
 
-            <Modal
-                title="Delete Application"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteApplication}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete application for <strong>{selectedApplication?.applicant_name}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
         </div>
     );
 };
