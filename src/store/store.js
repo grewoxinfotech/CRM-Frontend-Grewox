@@ -3,6 +3,7 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import authReducer from "../auth/services/authSlice";
 import { authApi } from "../auth/services/authApi";
+import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
 import {
   companyApi,
   companyReducer,
@@ -83,6 +84,7 @@ const rootReducer = combineReducers({
   lead: leadReducer,
   deal: dealReducer,
   [authApi.reducerPath]: authApi.reducer,
+  [documentApi.reducerPath]: documentApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,
   [superadminProfileApi.reducerPath]: superadminProfileApi.reducer,
   [settingsApi.reducerPath]: settingsApi.reducer,
@@ -127,6 +129,7 @@ export const store = configureStore({
       },
     })
       .concat(authApi.middleware)
+      .concat(documentApi.middleware)
       .concat(companyApi.middleware)
       .concat(superadminProfileApi.middleware)
       .concat(settingsApi.middleware)
