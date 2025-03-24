@@ -10,10 +10,9 @@ import {
     Select,
     Space,
 } from 'antd';
-import { FiUser, FiFileText, FiGrid, FiX, FiPlus, FiMapPin, FiTag } from 'react-icons/fi';
+import { FiGrid, FiX, FiPlus } from 'react-icons/fi';
 import { useCreateDesignationMutation, useUpdateDesignationMutation } from './services/designationApi';
 import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
-import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import CreateBranch from '../Branch/CreateBranch';
 
 const { Text } = Typography;

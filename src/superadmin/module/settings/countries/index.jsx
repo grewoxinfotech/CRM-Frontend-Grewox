@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState } from 'react';
 import {
     Card, Typography, Button, Table, Input,
     Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip
@@ -14,7 +13,6 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useGetAllCountriesQuery } from '../services/settingsApi';
-import { setCountries, setCountryLoading, setCountryError } from '../services/settingsSlice';
 import { Link } from 'react-router-dom';
 import './countries.scss';
 
@@ -25,39 +23,26 @@ const formatDate = (date) => moment(date).format('MMM DD, YYYY');
 const formatDateTime = (date) => moment(date).format('MMM DD, YYYY HH:mm');
 
 const Countries = () => {
-    const dispatch = useDispatch();
-    const { list: countries, isLoading, error } = useSelector((state) => state.settings.countries);
     const [viewMode, setViewMode] = useState('table');
     const [searchText, setSearchText] = useState('');
-    const [filteredCountries, setFilteredCountries] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const { data, error: queryError, isLoading: queryLoading } = useGetAllCountriesQuery({
+    const { data: countries = [], error, isLoading } = useGetAllCountriesQuery({
         page: currentPage,
         limit: 10
     });
 
-    useEffect(() => {
-        if (data) {
-            dispatch(setCountries(data));
-        }
-        if (queryError) {
-            dispatch(setCountryError(queryError.message));
-        }
-        dispatch(setCountryLoading(queryLoading));
-    }, [data, queryError, queryLoading, dispatch]);
+    const filteredCountries = searchText
+        ? countries.filter(country =>
+            country.countryName?.toLowerCase().includes(searchText.toLowerCase()) ||
+            country.countryCode?.toLowerCase().includes(searchText.toLowerCase()) ||
+            country.phoneCode?.includes(searchText)
+        )
+        : countries;
 
-    useEffect(() => {
-        let result = [...countries];
-        if (searchText) {
-            result = result.filter(country =>
-                country.countryName?.toLowerCase().includes(searchText.toLowerCase()) ||
-                country.countryCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-                country.phoneCode?.includes(searchText)
-            );
-        }
-        setFilteredCountries(result);
-    }, [countries, searchText]);
+    const handleTableChange = (pagination) => {
+        setCurrentPage(pagination.current);
+    };
 
     const handleSearch = (value) => {
         setSearchText(value);
@@ -195,6 +180,10 @@ const Countries = () => {
         }
     ];
 
+    if (error) {
+        message.error('Failed to load countries');
+    }
+
     return (
         <div className="countries-page">
             <div className="page-breadcrumb">
@@ -252,64 +241,21 @@ const Countries = () => {
                 </Row>
             </div>
 
-            {viewMode === 'card' ? (
-                <Row gutter={[16, 16]} className="countries-cards-grid">
-                    {filteredCountries.map((country) => (
-                        <Col xs={24} sm={12} md={8} lg={6} key={country.countryCode}>
-                            <div className="country-card">
-                                <div className="country-info">
-                                    <div className="country-header">
-                                        <div className="country-name">{country.countryName}</div>
-                                    </div>
-                                    <div className="info-grid">
-                                        <div className="info-item">
-                                            <span className="info-label">Country Code</span>
-                                            <div className="info-value country-code">{country.countryCode}</div>
-                                        </div>
-                                        <div className="info-item">
-                                            <span className="info-label">Phone Code</span>
-                                            <div className="info-value phone-code">{country.phoneCode}</div>
-                                        </div>
-                                    </div>
-                                    <div className="country-dates">
-                                        <div className="date-item">
-                                            <div className="date-label">
-                                                <FiCalendar className="date-icon" />
-                                                <Text type="secondary">Created</Text>
-                                            </div>
-                                            <div className="date-value">{formatDate(country.createdAt)}</div>
-                                        </div>
-                                        <div className="date-item">
-                                            <div className="date-label">
-                                                <FiClock className="date-icon" />
-                                                <Text type="secondary">Updated</Text>
-                                            </div>
-                                            <div className="date-value">{formatDate(country.updatedAt)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </Col>
-                    ))}
-                </Row>
-            ) : (
-                <div className="countries-table-card">
-                    <Table
-                        columns={columns}
-                        dataSource={filteredCountries}
-                        loading={isLoading}
-                        rowKey="countryCode"
-                        pagination={{
-                            current: currentPage,
-                            onChange: (page) => setCurrentPage(page),
-                            pageSize: 10,
-                            showSizeChanger: false,
-                            showQuickJumper: false,
-                            total: data?.total || 0
-                        }}
-                    />
-                </div>
-            )}
+            <Card className="countries-table-card">
+                <Table
+                    dataSource={filteredCountries}
+                    columns={columns}
+                    loading={isLoading}
+                    onChange={handleTableChange}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: 10,
+                        total: countries.length,
+                        showSizeChanger: false
+                    }}
+                    rowKey="id"
+                />
+            </Card>
         </div>
     );
 };

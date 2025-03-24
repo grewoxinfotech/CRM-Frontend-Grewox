@@ -14,8 +14,6 @@ import './inquary.scss';
 import { Link } from 'react-router-dom';
 import CreateInquary from './CreateInquary';
 import { useGetAllInquiriesQuery, useDeleteInquiryMutation } from './services/inquaryApi';
-import { useDispatch } from 'react-redux';
-import { setInquiries, deleteInquiry } from './services/inquarySlice';
 import moment from 'moment';
 
 const { Title, Text } = Typography;
@@ -30,15 +28,8 @@ const Inquiry = () => {
     const [selectedInquiry, setSelectedInquiry] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
 
-    const dispatch = useDispatch();
     const { data: inquiriesData, isLoading, error } = useGetAllInquiriesQuery();
     const [deleteInquiryMutation, { isLoading: isDeleting }] = useDeleteInquiryMutation();
-
-    useEffect(() => {
-        if (inquiriesData?.data) {
-            dispatch(setInquiries(inquiriesData.data));
-        }
-    }, [inquiriesData, dispatch]);
 
     // Add the filtering logic using useMemo to avoid unnecessary recalculations
     const filteredInquiries = useMemo(() => {
@@ -49,7 +40,7 @@ const Inquiry = () => {
         return inquiriesData.data.filter(inquiry => {
             return (
                 (inquiry.name && inquiry.name.toLowerCase().includes(searchLower)) ||
-                (inquiry.email && inquiry.email.toLowerCase().includes(searchLower)) || 
+                (inquiry.email && inquiry.email.toLowerCase().includes(searchLower)) ||
                 (inquiry.phone && inquiry.phone.toLowerCase().includes(searchLower)) ||
                 (inquiry.subject && inquiry.subject.toLowerCase().includes(searchLower)) ||
                 (inquiry.message && inquiry.message.toLowerCase().includes(searchLower))
@@ -64,16 +55,15 @@ const Inquiry = () => {
 
     const handleDelete = (record) => {
         Modal.confirm({
-            title: 'Delete Inquiry',    
+            title: 'Delete Inquiry',
             content: 'Are you sure you want to delete this inquiry?',
             okText: 'Yes',
             okType: 'danger',
             bodyStyle: { padding: '20px' },
             cancelText: 'No',
             onOk: async () => {
-                try {   
+                try {
                     await deleteInquiryMutation(record.id).unwrap();
-                    dispatch(deleteInquiry(record.id));
                     message.success('Inquiry deleted successfully');
                 } catch (error) {
                     message.error(error?.data?.message || 'Failed to delete inquiry');
@@ -87,25 +77,24 @@ const Inquiry = () => {
         setIsViewModalVisible(true);
     };
 
-
     const getDropdownItems = (record) => ({
         items: [
             {
                 key: 'view',
                 icon: <FiEye />,
-                label: 'View Details',  
+                label: 'View Details',
                 onClick: () => handleView(record),
             },
             {
                 key: 'edit',
                 icon: <FiEdit2 />,
-                label: 'Edit Inquiry',  
+                label: 'Edit Inquiry',
                 onClick: () => handleEdit(record),
             },
             {
                 key: 'delete',
                 icon: <FiTrash2 />,
-                label: 'Delete Inquiry',        
+                label: 'Delete Inquiry',
                 danger: true,
                 onClick: () => handleDelete(record),
             }
@@ -147,7 +136,7 @@ const Inquiry = () => {
             render: (date) => (
                 <Tooltip title={formatDateTime(date)}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FiCalendar/>
+                        <FiCalendar />
                         <span>{formatDate(date)}</span>
                     </div>
                 </Tooltip>
@@ -257,12 +246,13 @@ const Inquiry = () => {
                 <Table
                     columns={columns}
                     dataSource={filteredInquiries}
-                    rowKey="id"
                     loading={isLoading}
+                    rowKey="id"
                     pagination={{
                         pageSize: 10,
-                        showSizeChanger: false,
-                        showQuickJumper: false
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total) => `Total ${total} items`,
                     }}
                 />
             </Card>
@@ -273,208 +263,45 @@ const Inquiry = () => {
                     setIsFormVisible(false);
                     setSelectedInquiry(null);
                 }}
-                isDeleting={handleDelete}
-                isEditing={!!selectedInquiry}
-                initialValues={selectedInquiry}
-                loading={isLoading}
-            />
-
-            {/* <Modal
-                title="Delete Inquiry"
-                open={isDeleteModalVisible}
-                onOk={async () => {
-                    try {
-                        await deleteInquiryMutation(selectedInquiry.id).unwrap();
-                        dispatch(deleteInquiry(selectedInquiry.id));
-                    } catch (error) {
-                        Modal.error({
-                            title: 'Error',
-                            content: error?.data?.message || 'Something went wrong while deleting the inquiry.'
-                        });
-                    } finally {
-                        setIsDeleteModalVisible(false);
-                        setSelectedInquiry(null);
-                    }
-                }}
-                confirmLoading={isDeleting}
-                onCancel={() => {
-                    setIsDeleteModalVisible(false);
+                onSubmit={() => {
+                    setIsFormVisible(false);
                     setSelectedInquiry(null);
                 }}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true
-                }}
-            >
-                <p>Are you sure you want to delete this inquiry?</p>
-                <p>This action cannot be undone.</p>
-            </Modal> */}
+                isEditing={!!selectedInquiry}
+                initialValues={selectedInquiry}
+            />
 
-            {/* Inquiry Details Modal */}
             <Modal
-                title={null}
-                open={isViewModalVisible && selectedInquiry}
-                onCancel={() => setIsViewModalVisible(false)}
-                footer={null}
-                width={700}
-                className="inquiry-details-modal"
-                closeIcon={null}
-                styles={{
-                    body: { padding: 0 }
+                title="View Inquiry Details"
+                open={isViewModalVisible}
+                onCancel={() => {
+                    setIsViewModalVisible(false);
+                    setSelectedInquiry(null);
                 }}
+                footer={null}
+                width={600}
             >
-                <div style={{
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                    padding: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    position: 'relative'
-                }}>
-                    <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '12px',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <FiMessageSquare style={{ fontSize: '24px', color: '#fff' }} />
-                    </div>
-                    <div>
-                        <h2 style={{
-                            margin: 0,
-                            fontSize: '24px',
-                            fontWeight: '600',
-                            color: '#fff'
-                        }}>
-                            Inquiry Details
-                        </h2>
-                        <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-                            View detailed inquiry information
-                        </Text>
-                    </div>
-                    <Button
-                        type="text"
-                        icon={<FiX />}
-                        onClick={() => setIsViewModalVisible(false)}
-                        style={{
-                            position: 'absolute',
-                            top: '16px',
-                            right: '16px',
-                            color: '#fff',
-                            background: 'rgba(255, 255, 255, 0.2)',
-                            borderRadius: '8px',
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: 'none'
-                        }}
-                    />
-                </div>
-
                 {selectedInquiry && (
-                    <div style={{ padding: '24px' }}>
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            marginBottom: '20px',
-                            justifyContent: 'space-between'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <Avatar size={64} style={{ backgroundColor: '#1890ff' }}>
-                                    {selectedInquiry.name ? selectedInquiry.name[0].toUpperCase() : '?'}
-                                </Avatar>
-                                <div>
-                                    <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
-                                        {selectedInquiry.name}
-                                    </h3>
-                                    {selectedInquiry.status && (
-                                        <div style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            padding: '4px 12px',
-                                            borderRadius: '16px',
-                                            background: selectedInquiry.status === 'pending' ? '#fff7e6' : '#f6ffed',
-                                            color: selectedInquiry.status === 'pending' ? '#fa8c16' : '#52c41a',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                        }}>
-                                            <FiCheckCircle style={{ marginRight: '4px' }} />
-                                            {selectedInquiry.status.charAt(0).toUpperCase() + selectedInquiry.status.slice(1)}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        <Descriptions bordered column={1} style={{ marginBottom: '24px' }}>
-                            <Descriptions.Item 
-                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FiMail /> Email</span>}
-                            >
-                                <a href={`mailto:${selectedInquiry.email}`}>{selectedInquiry.email}</a>
-                            </Descriptions.Item>
-                            <Descriptions.Item 
-                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FiPhone /> Phone</span>}
-                            >
-                                {selectedInquiry.phone}
-                            </Descriptions.Item>
-                            <Descriptions.Item 
-                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FiBook /> Subject</span>}
-                            >
-                                {selectedInquiry.subject}
-                            </Descriptions.Item>
-                            <Descriptions.Item 
-                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FiMessageSquare /> Message</span>}
-                            >
-                                <div>
-                                    {selectedInquiry.message}
-                                </div>
-                            </Descriptions.Item>
-                            <Descriptions.Item 
-                                label={<span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FiCalendar /> Created At</span>}
-                            >
-                                {selectedInquiry.createdAt ? moment(selectedInquiry.createdAt).format('MMMM DD, YYYY') : 'N/A'}
-                            </Descriptions.Item>
-                        </Descriptions>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                            <Button 
-                                icon={<FiEdit2 />}
-                                onClick={() => {
-                                    setIsViewModalVisible(false);
-                                    handleEdit(selectedInquiry);
-                                }}
-                                style={{
-                                    height: '40px',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
-                            >
-                                Edit Inquiry
-                            </Button>
-                            <Button 
-                                type="primary"
-                                onClick={() => setIsViewModalVisible(false)}
-                                style={{
-                                    height: '40px',
-                                    borderRadius: '8px',
-                                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                    border: 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
-                            >
-                                Close
-                            </Button>
-                        </div>
-                    </div>
+                    <Descriptions column={1}>
+                        <Descriptions.Item label="Name">
+                            {selectedInquiry.name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Email">
+                            {selectedInquiry.email}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Phone">
+                            {selectedInquiry.phone}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Subject">
+                            {selectedInquiry.subject}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Message">
+                            {selectedInquiry.message}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Created Date">
+                            {formatDateTime(selectedInquiry.createdAt)}
+                        </Descriptions.Item>
+                    </Descriptions>
                 )}
             </Modal>
         </div>

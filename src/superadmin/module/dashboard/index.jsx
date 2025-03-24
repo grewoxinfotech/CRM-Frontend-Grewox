@@ -203,8 +203,8 @@ const SuperAdminDashboard = () => {
                                         <Button icon={<FiSettings />}>
                                             Settings
                                         </Button>
-                                        <Button 
-                                            danger 
+                                        <Button
+                                            danger
                                             icon={<FiLogOut />}
                                             onClick={handleLogout}
                                         >

@@ -11,6 +11,12 @@ export const esignatureApi = createApi({
         url: '/esignatures',
         method: 'GET'
       }),
+      transformResponse: (response) => {
+        // Ensure we always return an array
+        if (!response) return [];
+        if (response.data) return Array.isArray(response.data) ? response.data : [];
+        return Array.isArray(response) ? response : [];
+      },
       providesTags: ['Esignature']
     }),
     createSignature: builder.mutation({

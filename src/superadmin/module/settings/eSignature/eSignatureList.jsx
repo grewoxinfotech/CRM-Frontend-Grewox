@@ -1,11 +1,11 @@
 import React from 'react';
-import { 
+import {
     Table, Empty, Tag, Button, Tooltip,
     Typography, Space, Spin
 } from 'antd';
 import {
-     FiTrash2, 
-    FiCalendar,FiEye
+    FiTrash2,
+    FiCalendar, FiEye
 } from 'react-icons/fi';
 import moment from 'moment';
 
@@ -42,10 +42,10 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             key: 'e_signatures',
             render: (data, record) => (
                 <div className="signature-preview">
-                    <img 
-                        src={data} 
-                        alt={`Signature: ${record.esignature_name}`} 
-                        className="signature-thumb" 
+                    <img
+                        src={data}
+                        alt={`Signature: ${record.esignature_name}`}
+                        className="signature-thumb"
                     />
                 </div>
             )
@@ -97,7 +97,7 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
                     <Tooltip title="Download">
                         <Button
                             type="text"
-                            icon={<FiEye  />}
+                            icon={<FiEye />}
                             onClick={() => onDownload(record)}
                             className="action-button download"
                         />

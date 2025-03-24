@@ -2,7 +2,6 @@
 
 .esignature-page {
   padding: 24px;
-  background-color: #f0f2f5;
   height: 100%;
 
   .page-breadcrumb {
@@ -75,7 +74,7 @@
 
   .signature-list {
     .signatures-table {
-      .ant-table-thead > tr > th {
+      .ant-table-thead>tr>th {
         background-color: #f8fafc;
         font-weight: 600;
         color: #1f2937;
@@ -171,7 +170,8 @@
         border: 1px solid #e6e8eb;
         background-color: #f8fafc;
 
-        &:focus, &:hover {
+        &:focus,
+        &:hover {
           border-color: #1890ff;
           box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
         }
@@ -189,7 +189,7 @@
         border-radius: 6px;
         overflow: hidden;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        
+
         .toggle-item {
           display: flex;
           align-items: center;
@@ -198,21 +198,21 @@
           font-size: 14px;
           cursor: pointer;
           transition: all 0.2s ease;
-          
+
           &:first-child {
             border-bottom: 1px solid #d9d9d9;
           }
-          
+
           &.active {
             background-color: #1890ff;
             color: white;
             font-weight: 500;
           }
-          
+
           &:not(.active) {
             background-color: white;
             color: rgba(0, 0, 0, 0.65);
-            
+
             &:hover {
               background-color: #f5f5f5;
             }
@@ -224,7 +224,7 @@
         display: flex;
         width: 100%;
         max-width: 500px;
-        
+
         .type-button {
           flex: 1;
           height: 48px;
@@ -251,13 +251,13 @@
             color: #fff;
             box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
           }
-          
+
           &:hover:not(.ant-radio-button-wrapper-checked) {
             background-color: #f0f7ff;
             border-color: #1890ff;
             color: #1890ff;
           }
-          
+
           svg {
             font-size: 18px;
           }
@@ -299,7 +299,7 @@
         border-radius: 8px;
         overflow: hidden;
         background-color: #f8fafc;
-        
+
         .signature-canvas {
           touch-action: none;
           width: 100%;
@@ -350,11 +350,11 @@
         overflow: hidden;
         height: 200px;
         background-color: #f8fafc;
-        
+
         .signature-dragger {
           height: 100%;
           padding: 20px;
-          
+
           .ant-upload {
             background: transparent;
             border: none;
@@ -363,25 +363,25 @@
             flex-direction: column;
             justify-content: center;
           }
-          
+
           .ant-upload-drag-icon {
             margin-bottom: 8px;
             color: #1890ff;
           }
-          
+
           .ant-upload-text {
             font-size: 16px;
             font-weight: 500;
             color: #1f2937;
             margin-bottom: 8px;
           }
-          
+
           .ant-upload-hint {
             font-size: 14px;
             color: #6b7280;
             margin-bottom: 16px;
           }
-          
+
           .upload-button {
             margin: 8px auto 0;
             height: 40px;
@@ -391,7 +391,7 @@
             font-weight: 500;
             box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
             transition: all 0.3s ease;
-            
+
             &:hover {
               background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
               box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
@@ -448,14 +448,14 @@
             display: flex;
             gap: 12px;
             margin-top: 16px;
-            
+
             button {
               height: 36px;
               display: flex;
               align-items: center;
               gap: 8px;
               border-radius: 6px;
-              
+
               &[type='primary'] {
                 background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
                 border: none;
@@ -494,9 +494,11 @@
   0% {
     box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4);
   }
+
   70% {
     box-shadow: 0 0 0 10px rgba(24, 144, 255, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
   }
@@ -516,7 +518,7 @@
           height: 180px;
         }
       }
-      
+
       .signature-upload-container {
         height: 220px;
       }
@@ -524,7 +526,7 @@
   }
 }
 
-.loading-container, 
+.loading-container,
 .signatures-loading {
   display: flex;
   flex-direction: column;
@@ -532,7 +534,7 @@
   justify-content: center;
   padding: 48px;
   text-align: center;
-  
+
   .ant-spin {
     margin-bottom: 16px;
   }

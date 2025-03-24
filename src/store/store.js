@@ -3,63 +3,37 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import authReducer from "../auth/services/authSlice";
 import { authApi } from "../auth/services/authApi";
+import { companyApi } from "../superadmin/module/company/services/companyApi.js";
+import { superadminProfileApi } from "../superadmin/module/profile/services/superadminProfileApi.js";
+import superadminProfileReducer from "../superadmin/module/profile/services/superadminProfileSlice.js";
+import { settingsApi } from "../superadmin/module/settings/services/settingsApi.js";
+import { planApi } from "../superadmin/module/plans/services/planApi.js";
+import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
+import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
+import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
+import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
+import { roleApi } from "../dashboard/module/hrm/role/services/roleApi.js";
+import { userApi } from "../dashboard/module/user-management/users/services/userApi.js";
+import { employeeApi } from "../dashboard/module/hrm/Employee/services/employeeApi.js";
+import { designationApi } from "../dashboard/module/hrm/Designation/services/designationApi.js";
+import { branchApi } from "../dashboard/module/hrm/Branch/services/branchApi.js";
+import { departmentApi } from "../dashboard/module/hrm/Department/services/departmentApi.js";
+import { trainingApi } from "../dashboard/module/hrm/Training/services/trainingApi.js";
+import { esignatureApi } from "../superadmin/module/settings/eSignature/services/esignatureApi.js";
+import { pipelineApi } from "../dashboard/module/crm/crmsystem/pipeline/services/pipelineApi.js";
+import { leadStageApi } from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageApi.js";
+import { dealStageApi } from "../dashboard/module/crm/crmsystem/dealstage/services/dealStageApi.js";
+import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/SourceApi.js";
+import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi.js";
+import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi.js";
+import { taskApi } from "../dashboard/module/crm/task/services/taskApi.js";
+import { projectApi } from '../dashboard/module/crm/project/services/projectApi.js';
+import { jobApi } from "../dashboard/module/job/jobs/services/jobApi.js";
+import { jobApplicationApi } from "../dashboard/module/job/job applications/services/jobApplicationApi.js";
+import { jobOnboardingApi } from "../dashboard/module/job/job onboarding/services/jobOnboardingApi.js";
+import { offerLetterApi } from '../dashboard/module/job/offer letters/services/offerLetterApi.js';
+import { interviewApi } from '../dashboard/module/job/interviews/services/interviewApi.js';
 import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
-import {
-  companyApi,
-  companyReducer,
-} from "../superadmin/module/company/services";
-import { superadminProfileApi } from "../superadmin/module/profile/services/superadminProfileApi";
-import superadminProfileReducer from "../superadmin/module/profile/services/superadminProfileSlice";
-import { settingsApi } from "../superadmin/module/settings/services/settingsApi";
-import settingsReducer from "../superadmin/module/settings/services/settingsSlice";
-import { planApi } from "../superadmin/module/plans/services/planApi";
-import planReducer from "../superadmin/module/plans/services/planSlice";
-import { policyApi } from "../superadmin/module/policy/service/policyApi";
-import policyReducer from "../superadmin/module/policy/service/policySlice";
-import { notesApi } from "../superadmin/module/notes/services/notesApi";
-import {
-  inquiryApi,
-  inquiryReducer,
-} from "../superadmin/module/inquary/services/index";
-import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi";
-import { roleApi } from "../dashboard/module/hrm/role/services/roleApi";
-import { userApi } from "../dashboard/module/user-management/users/services/userApi";
-import { employeeApi } from "../dashboard/module/hrm/Employee/services";
-import { designationApi } from "../dashboard/module/hrm/Designation/services/designationApi";
-import { branchApi } from "../dashboard/module/hrm/Branch/services/branchApi";
-import { departmentApi } from "../dashboard/module/hrm/Department/services/departmentApi";
-import { trainingApi } from "../dashboard/module/hrm/Training/services";
-import { esignatureApi } from "../superadmin/module/settings/eSignature/services/index";
-import { pipelineApi } from "../dashboard/module/crm/crmsystem/pipeline/services/pipelineApi";
-import { leadStageApi } from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageApi";
-import { dealStageApi } from "../dashboard/module/crm/crmsystem/dealstage/services/dealStageApi";
-import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/SourceApi";
-import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi";
-import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi";
-import { taskApi } from "../dashboard/module/crm/task/services/taskApi";
-import { projectApi } from "../dashboard/module/crm/project/services/projectApi";
-import projectReducer from "../dashboard/module/crm/project/services/projectSlice";
-import { jobApi, jobReducer } from "../dashboard/module/job/jobs/services";
-import {
-  jobApplicationApi,
-  jobApplicationReducer,
-} from "../dashboard/module/job/job applications/services";
-import {
-  jobOnboardingApi,
-  jobOnboardingReducer,
-} from "../dashboard/module/job/job onboarding/services";
-import {
-  offerLetterApi,
-  offerLetterReducer,
-} from "../dashboard/module/job/offer letters/services";
-import {
-  interviewApi,
-  interviewReducer,
-} from "../dashboard/module/job/interviews/services";
-import { leadApi } from "../dashboard/module/crm/lead/services/LeadApi";
-import leadReducer from "../dashboard/module/crm/lead/services/leadSlice";
-import { dealApi } from "../dashboard/module/crm/deal/services/DealApi";
-import dealReducer from "../dashboard/module/crm/deal/services/dealSlice";
 
 const persistConfig = {
   key: "root",
@@ -69,20 +43,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: authReducer,
-  company: companyReducer,
   superadminProfile: superadminProfileReducer,
-  settings: settingsReducer,
-  plan: planReducer,
-  policy: policyReducer,
-  inquiry: inquiryReducer,
-  project: projectReducer,
-  job: jobReducer,
-  jobApplication: jobApplicationReducer,
-  jobOnboarding: jobOnboardingReducer,
-  offerLetter: offerLetterReducer,
-  interview: interviewReducer,
-  lead: leadReducer,
-  deal: dealReducer,
   [authApi.reducerPath]: authApi.reducer,
   [documentApi.reducerPath]: documentApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,
@@ -164,4 +125,5 @@ export const store = configureStore({
 });
 
 export const persistor = persistStore(store);
+
 export default store;

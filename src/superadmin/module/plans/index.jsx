@@ -22,7 +22,6 @@ import {
     FiHome
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import './plans.scss';
 
@@ -31,11 +30,6 @@ import {
     useDeletePlanMutation,
     useUpdatePlanMutation
 } from './services/planApi';
-import {
-    setFilters,
-    setViewMode,
-    setSelectedPlan
-} from './services/planSlice';
 
 import PlanList from './PlanList';
 import PlanCard from './PlanCard';
@@ -45,12 +39,13 @@ import EditPlan from './EditPlan';
 const { Title, Text } = Typography;
 
 const Plans = () => {
-    const dispatch = useDispatch();
-    const { filters, viewMode } = useSelector((state) => state.plan);
+    const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
+    const [viewMode, setViewMode] = useState('table');
     const [isAddModalVisible, setIsAddModalVisible] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [idd, setIdd] = useState(null);
+
     const {
         data: plansData,
         isLoading,
@@ -61,7 +56,7 @@ const Plans = () => {
     const [updatePlan] = useUpdatePlanMutation();
 
     const handleSearch = (value) => {
-        dispatch(setFilters({ search: value, page: 1 }));
+        setFilters(prev => ({ ...prev, search: value, page: 1 }));
     };
 
     const handleEdit = (plan) => {
@@ -210,7 +205,7 @@ const Plans = () => {
     };
 
     const handlePageChange = (page, pageSize) => {
-        dispatch(setFilters({ page, limit: pageSize }));
+        setFilters(prev => ({ ...prev, page, limit: pageSize }));
     };
 
     const renderCardView = () => (
@@ -262,12 +257,12 @@ const Plans = () => {
                                     <Button
                                         type={viewMode === 'table' ? 'primary' : 'default'}
                                         icon={<FiList size={16} />}
-                                        onClick={() => dispatch(setViewMode('table'))}
+                                        onClick={() => setViewMode('table')}
                                     />
                                     <Button
                                         type={viewMode === 'card' ? 'primary' : 'default'}
                                         icon={<FiGrid size={16} />}
-                                        onClick={() => dispatch(setViewMode('card'))}
+                                        onClick={() => setViewMode('card')}
                                     />
                                 </Button.Group>
                                 <Dropdown overlay={exportMenu} trigger={['click']}>

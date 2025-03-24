@@ -115,7 +115,7 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
             pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total, range) => 
+                showTotal: (total, range) =>
                     `${range[0]}-${range[1]} of ${total} jobs`
             }}
             style={{ background: '#ffffff', borderRadius: '8px' }}

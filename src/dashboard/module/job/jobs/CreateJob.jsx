@@ -95,12 +95,12 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     // Format dates
                     startDate: initialValues.startDate ? dayjs(initialValues.startDate) : undefined,
                     endDate: initialValues.endDate ? dayjs(initialValues.endDate) : undefined,
-                    
+
                     skills: initialValues.skills?.Skills || [],
-                
+
                     // Extract and format interview rounds
                     interviewRounds: initialValues.interviewRounds?.InterviewRounds || [],
-                    
+
                     // Keep other fields as they are
                     title: initialValues.title,
                     category: initialValues.category,
@@ -114,7 +114,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     expectedSalary: initialValues.expectedSalary,
                     description: initialValues.description
                 };
-                
+
                 console.log('Setting Initial Values:', formattedValues);
                 form.setFieldsValue(formattedValues);
             } else {
@@ -415,7 +415,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             ))}
                         </Select>
                     </Form.Item>
-                    
+
 
                     <Form.Item
                         name="recruiter"
@@ -441,7 +441,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         />
                     </Form.Item>
 
-                    <Form.Item  
+                    <Form.Item
                         name="startDate"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
@@ -521,88 +521,88 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     </Form.Item>
 
                     <div style={{ display: 'flex', gap: '16px' }}>
-                    <Form.Item
-                        name="expectedSalary"
-                        label={
-                            <span style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
+                        <Form.Item
+                            name="expectedSalary"
+                            label={
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                }}>
+                                    Expected Salary
+                                </span>
+                            }
+                            style={{ flex: 1 }}
+                        >
+                            <Input.Group compact className="price-input-group" style={{
+                                display: 'flex',
+                                height: '48px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '10px',
+                                border: '1px solid #e6e8eb',
+                                overflow: 'hidden',
+                                marginBottom: 0
                             }}>
-                                Expected Salary
-                            </span>
-                        }
-                        style={{ flex: 1 }}
-                    >
-                        <Input.Group compact className="price-input-group" style={{
-                            display: 'flex',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '10px',
-                            border: '1px solid #e6e8eb',
-                            overflow: 'hidden',
-                            marginBottom: 0
-                        }}>
-                            <Form.Item
-                                name="currency"
-                                noStyle
-                                rules={[{ required: true }]}
-                            >
-                                <Select
-                                    size="large"
-                                    style={{
-                                        width: '100px',
-                                        height: '48px'
-                                    }}
-                                    loading={currenciesLoading}
-                                    className="currency-select"
-                                    dropdownStyle={{
-                                        padding: '8px',
-                                        borderRadius: '10px',
-                                    }}
-                                    showSearch
-                                    optionFilterProp="children"
-                                    filterOption={(input, option) =>
-                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                    }
+                                <Form.Item
+                                    name="currency"
+                                    noStyle
+                                    rules={[{ required: true }]}
                                 >
-                                    {currencies?.map(currency => (
-                                        <Option key={currency.currencyCode} value={currency.currencyCode}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span>{currency.currencyIcon}</span>
-                                                <span>{currency.currencyCode}</span>
-                                            </div>
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                            <Form.Item
-                                name="expectedSalary"
-                                noStyle
-                                rules={[{ required: true, message: 'Please enter price' }]}
-                            >
-                                <Input
-                                    placeholder="Enter price"
-                                    size="large"
-                                    style={{
-                                        flex: 1,
-                                        width: '100%',
-                                        border: 'none',
-                                        borderLeft: '1px solid #e6e8eb',
-                                        borderRadius: 0,
-                                        height: '48px',
-                                    }}
-                                    className="price-input"
-                                />
-                            </Form.Item>
-                        </Input.Group>
-                    </Form.Item>
+                                    <Select
+                                        size="large"
+                                        style={{
+                                            width: '100px',
+                                            height: '48px'
+                                        }}
+                                        loading={currenciesLoading}
+                                        className="currency-select"
+                                        dropdownStyle={{
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                        }}
+                                        showSearch
+                                        optionFilterProp="children"
+                                        filterOption={(input, option) =>
+                                            option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                        }
+                                    >
+                                        {currencies?.map(currency => (
+                                            <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span>{currency.currencyIcon}</span>
+                                                    <span>{currency.currencyCode}</span>
+                                                </div>
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                                <Form.Item
+                                    name="expectedSalary"
+                                    noStyle
+                                    rules={[{ required: true, message: 'Please enter price' }]}
+                                >
+                                    <Input
+                                        placeholder="Enter price"
+                                        size="large"
+                                        style={{
+                                            flex: 1,
+                                            width: '100%',
+                                            border: 'none',
+                                            borderLeft: '1px solid #e6e8eb',
+                                            borderRadius: 0,
+                                            height: '48px',
+                                        }}
+                                        className="price-input"
+                                    />
+                                </Form.Item>
+                            </Input.Group>
+                        </Form.Item>
 
-                </div>
+                    </div>
 
                     <Form.Item
                         name="location"
                         label={
-                            <span style={{ fontSize: '14px', fontWeight: '500'  }}>
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
                                 Job Location
                             </span>
                         }
@@ -615,15 +615,15 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             style={{
                                 borderRadius: '10px',
                                 padding: '8px 16px',
-                                height: '48px', 
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
                             }}
                         />
-                    </Form.Item>    
-                    
-                    
-                    
+                    </Form.Item>
+
+
+
                 </div>
 
                 <Form.Item

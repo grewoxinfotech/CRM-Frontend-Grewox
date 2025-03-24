@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import {
     Card, Typography, Button, Table, Input,
     Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip
@@ -14,7 +13,6 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useGetAllCurrenciesQuery } from '../services/settingsApi';
-import { setCurrencies, setCurrencyLoading, setCurrencyError } from '../services/settingsSlice';
 import { Link } from 'react-router-dom';
 import './currencies.scss';
 
@@ -25,39 +23,22 @@ const formatDate = (date) => moment(date).format('MMM DD, YYYY');
 const formatDateTime = (date) => moment(date).format('MMM DD, YYYY HH:mm');
 
 const Currencies = () => {
-    const dispatch = useDispatch();
-    const { list: currencies, isLoading } = useSelector((state) => state.settings.currencies);
     const [viewMode, setViewMode] = useState('table');
     const [searchText, setSearchText] = useState('');
-    const [filteredCurrencies, setFilteredCurrencies] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const { data, error: queryError, isLoading: queryLoading } = useGetAllCurrenciesQuery({
+    const { data: currencies = [], error, isLoading } = useGetAllCurrenciesQuery({
         page: currentPage,
         limit: 10
     });
 
-    useEffect(() => {
-        if (data) {
-            dispatch(setCurrencies(data));
-        }
-        if (queryError) {
-            dispatch(setCurrencyError(queryError.message));
-        }
-        dispatch(setCurrencyLoading(queryLoading));
-    }, [data, queryError, queryLoading, dispatch]);
-
-    useEffect(() => {
-        let result = [...currencies];
-        if (searchText) {
-            result = result.filter(currency =>
-                currency.currencyName?.toLowerCase().includes(searchText.toLowerCase()) ||
-                currency.currencyCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-                currency.currencyIcon?.includes(searchText)
-            );
-        }
-        setFilteredCurrencies(result);
-    }, [currencies, searchText]);
+    const filteredCurrencies = searchText
+        ? currencies.filter(currency =>
+            currency.currencyName?.toLowerCase().includes(searchText.toLowerCase()) ||
+            currency.currencyCode?.toLowerCase().includes(searchText.toLowerCase()) ||
+            currency.currencyIcon?.includes(searchText)
+        )
+        : currencies;
 
     const handleTableChange = (pagination) => {
         setCurrentPage(pagination.current);
@@ -199,6 +180,10 @@ const Currencies = () => {
         }
     ];
 
+    if (error) {
+        message.error('Failed to load currencies');
+    }
+
     return (
         <div className="currencies-page">
             <div className="page-breadcrumb">
@@ -256,64 +241,21 @@ const Currencies = () => {
                 </Row>
             </div>
 
-            {viewMode === 'card' ? (
-                <Row gutter={[16, 16]} className="currencies-cards-grid">
-                    {filteredCurrencies.map((currency) => (
-                        <Col xs={24} sm={12} md={8} lg={6} key={currency.currencyCode}>
-                            <div className="currency-card">
-                                <div className="currency-info">
-                                    <div className="currency-header">
-                                        <div className="currency-name">{currency.currencyName}</div>
-                                    </div>
-                                    <div className="info-grid">
-                                        <div className="info-item">
-                                            <span className="info-label">Currency Code</span>
-                                            <div className="info-value currency-code">{currency.currencyCode}</div>
-                                        </div>
-                                        <div className="info-item">
-                                            <span className="info-label">Symbol</span>
-                                            <div className="info-value currency-symbol">{currency.currencyIcon}</div>
-                                        </div>
-                                    </div>
-                                    <div className="currency-dates">
-                                        <div className="date-item">
-                                            <div className="date-label">
-                                                <FiCalendar className="date-icon" />
-                                                <Text type="secondary">Created</Text>
-                                            </div>
-                                            <div className="date-value">{formatDate(currency.createdAt)}</div>
-                                        </div>
-                                        <div className="date-item">
-                                            <div className="date-label">
-                                                <FiClock className="date-icon" />
-                                                <Text type="secondary">Updated</Text>
-                                            </div>
-                                            <div className="date-value">{formatDate(currency.updatedAt)}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </Col>
-                    ))}
-                </Row>
-            ) : (
-                <div className="currencies-table-card">
-                    <Table
-                        columns={columns}
-                        dataSource={filteredCurrencies}
-                        loading={isLoading}
-                        rowKey="currencyCode"
-                        pagination={{
-                            current: currentPage,
-                            onChange: (page) => setCurrentPage(page),
-                            pageSize: 10,
-                            showSizeChanger: false,
-                            showQuickJumper: false,
-                            total: data?.total || 0
-                        }}
-                    />
-                </div>
-            )}
+            <Card className="currencies-table-card">
+                <Table
+                    dataSource={filteredCurrencies}
+                    columns={columns}
+                    loading={isLoading}
+                    onChange={handleTableChange}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: 10,
+                        total: currencies.length,
+                        showSizeChanger: false
+                    }}
+                    rowKey="id"
+                />
+            </Card>
         </div>
     );
 };
