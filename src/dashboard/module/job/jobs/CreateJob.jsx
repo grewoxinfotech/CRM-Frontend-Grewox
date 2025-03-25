@@ -18,6 +18,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { useCreateJobMutation, useUpdateJobMutation } from './services/jobApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
+// Initialize dayjs plugins
 dayjs.extend(customParseFormat);
 dayjs.extend(isSameOrAfter);
 
@@ -84,6 +85,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
         limit: 100
     });
 
+     // Add this useEffect to set default currency when form is initialized
+     React.useEffect(() => {
+        form.setFieldsValue({
+            currency: 'INR'
+        });
+    }, [form]);
+
     useEffect(() => {
         if (open) {
             console.log('Modal Opened');
@@ -108,19 +116,40 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     totalOpenings: initialValues.totalOpenings,
                     status: initialValues.status,
                     recruiter: initialValues.recruiter,
-                    jobType: initialValues.jobType,
+                    jobType: initialValues.jobType || 'Full-time',
                     workExperience: initialValues.workExperience,
-                    currency: initialValues.currency,
+                    currency: initialValues.currency || 'INR',
                     expectedSalary: initialValues.expectedSalary,
                     description: initialValues.description
                 };
 
                 console.log('Setting Initial Values:', formattedValues);
+                // Ensure dates are valid before setting
+                if (formattedValues.startDate && !dayjs.isDayjs(formattedValues.startDate)) {
+                    formattedValues.startDate = null;
+                }
+                if (formattedValues.endDate && !dayjs.isDayjs(formattedValues.endDate)) {
+                    formattedValues.endDate = null;
+                }
+                
                 form.setFieldsValue(formattedValues);
             } else {
-                // Set default currency when no initial values are provided
+                // Set default values for new job
+                form.setFieldsValue({
+                    status: 'active',
+                    jobType: 'Full-time',
+                    currency: 'INR'
+                });
+                
+                // If currencies are loaded but we still want INR as default
                 if (currencies?.length > 0) {
-                    form.setFieldValue('currency', currencies[0].currencyCode);
+                    // Find INR in the currencies array
+                    const inrCurrency = currencies.find(c => c.currencyCode === 'INR');
+                    if (inrCurrency) {
+                        form.setFieldValue('currency', 'INR');
+                    } else {
+                        form.setFieldValue('currency', currencies[0].currencyCode);
+                    }
                 }
             }
         }
@@ -130,6 +159,26 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
         try {
             const values = await form.validateFields();
             console.log('Form Values:', values);
+
+            // Format dates properly
+            let startDate = null;
+            let endDate = null;
+            
+            if (values.startDate) {
+                if (dayjs.isDayjs(values.startDate)) {
+                    startDate = values.startDate.format('YYYY-MM-DD');
+                } else {
+                    startDate = dayjs(values.startDate).format('YYYY-MM-DD');
+                }
+            }
+            
+            if (values.endDate) {
+                if (dayjs.isDayjs(values.endDate)) {
+                    endDate = values.endDate.format('YYYY-MM-DD');
+                } else {
+                    endDate = dayjs(values.endDate).format('YYYY-MM-DD');
+                }
+            }
 
             // Format the data according to the required payload structure
             const formattedValues = {
@@ -142,27 +191,52 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                 interviewRounds: {
                     InterviewRounds: values.interviewRounds  // Changed to match API response format
                 },
-                startDate: values.startDate?.format('YYYY-MM-DD'),
-                endDate: values.endDate?.format('YYYY-MM-DD'),
+                startDate: startDate,
+                endDate: endDate,
                 totalOpenings: values.totalOpenings || 1,
                 status: values.status,
                 recruiter: values.recruiter,
-                jobType: values.jobType || 'Full-time',
+                jobType: values.jobType, // Ensure jobType is included and required
                 workExperience: values.workExperience,
                 currency: values.currency,
                 expectedSalary: values.expectedSalary,
                 description: values.description
             };
 
+            // Validate required fields
+            const requiredFields = ['title', 'category', 'location', 'jobType', 'workExperience', 'recruiter'];
+            for (const field of requiredFields) {
+                if (!formattedValues[field]) {
+                    console.error(`${field} is missing!`);
+                    message.error(`${field} is required`);
+                    return;
+                }
+            }
+
+            // Check if jobType exists, if not, add a default
+            if (!formattedValues.jobType) {
+                console.error('JobType is missing!');
+                formattedValues.jobType = 'Full-time';
+            }
+
+            // Ensure title is present
+            if (!formattedValues.title) {
+                console.error('Title is missing!');
+                throw new Error('Title is required');
+            }
+
             if (isEditing && initialValues?.id) {
                 // Update existing job
-                await updateJob({
+                console.log('Updating job with data:', { id: initialValues.id, data: formattedValues });
+                const result = await updateJob({
                     id: initialValues.id,
-                    ...formattedValues
+                    data: formattedValues
                 }).unwrap();
+                console.log('Update response:', result);
                 message.success('Job updated successfully!');
             } else {
                 // Create new job
+                console.log('Creating job with data:', formattedValues);
                 const response = await createJob(formattedValues).unwrap();
                 console.log('Job created:', response);
                 message.success('Job created successfully!');
@@ -285,7 +359,11 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                initialValues={{ ...initialValues, status: 'active' }}
+                initialValues={{ 
+                    status: 'active',
+                    jobType: 'Full-time',
+                    currency: 'INR'
+                }}
                 requiredMark={false}
                 style={{
                     padding: '24px',
@@ -452,7 +530,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     >
                         <DatePicker
                             size="large"
-                            format="DD-MM-YYYY"
+                            format="YYYY-MM-DD"
                             style={{
                                 width: '100%',
                                 height: '48px',
@@ -476,9 +554,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                     if (!startDate || !value) {
                                         return Promise.resolve();
                                     }
-                                    if (value.isAfter(startDate)) {
-                                        return Promise.resolve();
+                                    
+                                    if (dayjs.isDayjs(value) && dayjs.isDayjs(startDate)) {
+                                        if (value.isAfter(startDate)) {
+                                            return Promise.resolve();
+                                        }
                                     }
+                                    
                                     return Promise.reject(new Error('End date must be after start date'));
                                 }
                             })
@@ -486,7 +568,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     >
                         <DatePicker
                             size="large"
-                            format="DD-MM-YYYY"
+                            format="YYYY-MM-DD"
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',

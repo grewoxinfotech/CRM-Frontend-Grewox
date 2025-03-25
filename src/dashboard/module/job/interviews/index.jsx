@@ -60,13 +60,14 @@ const Interviews = () => {
                             text={ */}
                                 <div className="interview-details">
                                     <div>
-
-                                    <span className="interview-time">
-                                        {interview.startTime?.slice(0, 5)}
-                                    </span>
-                                    </div>
                                     <span className="interview-candidate">
                                         {getCandidateName(interview.candidate)}
+                                    </span>
+                                    
+                                    </div>
+                                    
+                                    <span className="interview-time">
+                                        {interview.startTime?.slice(0, 5)}
                                     </span>
                                 </div>
                             {/* } 

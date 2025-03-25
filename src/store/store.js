@@ -36,7 +36,6 @@ import { interviewApi } from '../dashboard/module/job/interviews/services/interv
 import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
 import { leadApi } from "../dashboard/module/crm/lead/services/leadApi.js";
 import { dealApi } from "../dashboard/module/crm/deal/services/dealApi.js";
-
 const persistConfig = {
   key: "root",
   storage,

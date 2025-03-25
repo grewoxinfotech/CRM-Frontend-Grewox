@@ -1,30 +1,36 @@
 import React from 'react';
-import { Table, Tag, Dropdown, Button } from 'antd';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown } from 'antd';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import { useGetAllJobsQuery } from './services/jobApi';
 import moment from 'moment';
 
-const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
-    const { data: jobsData, isLoading, error } = useGetAllJobsQuery();
+const JobList = ({ onEdit, onDelete, onView }) => {
+    const { data: jobsData, isLoading } = useGetAllJobsQuery();
 
-    // Function to get menu items for each row
+    // Ensure we have an array of jobs, even if empty
+    const jobs = React.useMemo(() => {
+        if (!jobsData) return [];
+        return Array.isArray(jobsData) ? jobsData : jobsData.data || [];
+    }, [jobsData]);
+
+    // Define action items for dropdown
     const getActionItems = (record) => [
         {
             key: 'view',
-            icon: <FiEye className="text-base" />,
-            label: 'View',
+            icon: <FiEye />,
+            label: 'View Details',
             onClick: () => onView?.(record)
         },
         {
             key: 'edit',
-            icon: <FiEdit2 className="text-base" />,
-            label: 'Edit',
+            icon: <FiEdit2 />,
+            label: 'Edit Job',
             onClick: () => onEdit?.(record)
         },
         {
             key: 'delete',
-            icon: <FiTrash2 className="text-base text-red-500" />,
-            label: 'Delete',
+            icon: <FiTrash2 />,
+            label: 'Delete Job',
             danger: true,
             onClick: () => onDelete?.(record)
         }
@@ -35,13 +41,13 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
-            sorter: (a, b) => a.title.localeCompare(b.title)
+            sorter: (a, b) => (a.title || '').localeCompare(b.title || '')
         },
         {
             title: 'Department',
             dataIndex: 'category',
             key: 'category',
-            sorter: (a, b) => a.category.localeCompare(b.category)
+            sorter: (a, b) => (a.category || '').localeCompare(b.category || '')
         },
         {
             title: 'Location',
@@ -57,7 +63,7 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
             title: 'Salary',
             key: 'salary',
             render: (record) => (
-                <span>{record.currency} {record.expectedSalary}</span>
+                <span>{record.currency || ''} {record.expectedSalary || 'N/A'}</span>
             )
         },
         {
@@ -92,7 +98,9 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
             width: 80,
             render: (_, record) => (
                 <Dropdown
-                    menu={{ items: getActionItems(record) }}
+                    menu={{ 
+                        items: getActionItems(record)
+                    }}
                     trigger={['click']}
                     placement="bottomRight"
                 >
@@ -100,25 +108,38 @@ const JobList = ({ jobs, onEdit, onDelete, onView, loading }) => {
                         type="text"
                         icon={<FiMoreVertical className="text-lg" />}
                         className="action-button"
+                        onClick={(e) => e.stopPropagation()}
                     />
                 </Dropdown>
             ),
         },
     ];
 
+    // Transform the jobs data to ensure each row has a unique key
+    const tableData = React.useMemo(() => {
+        return jobs.map(job => ({
+            ...job,
+            key: job.id
+        }));
+    }, [jobs]);
+
     return (
         <Table
             columns={columns}
-            dataSource={jobsData}
+            dataSource={tableData}
             loading={isLoading}
-            rowKey="id"
             pagination={{
                 pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total, range) =>
-                    `${range[0]}-${range[1]} of ${total} jobs`
+                showSizeChanger: false,
+                showTotal: (total) => `Total ${total} jobs`,
             }}
-            style={{ background: '#ffffff', borderRadius: '8px' }}
+            className="custom-table"
+            scroll={{ x: 1000 }}
+            style={{
+                background: '#ffffff',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+            }}
         />
     );
 };

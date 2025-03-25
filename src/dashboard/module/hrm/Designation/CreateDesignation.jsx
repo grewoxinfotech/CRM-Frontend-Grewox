@@ -26,10 +26,6 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
 
     // RTK Query hooks
     const { data: branchesData, isLoading: isLoadingBranches } = useGetAllBranchesQuery();
-    const { data: designationData, isLoading: isLoadingDesignation } = useGetDesignationByIdQuery(
-        initialValues?.id,
-        { skip: !isEditing || !initialValues?.id }
-    );
 
     const [createDesignation] = useCreateDesignationMutation();
     const [updateDesignation] = useUpdateDesignationMutation();

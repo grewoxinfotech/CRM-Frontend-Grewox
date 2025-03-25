@@ -1,57 +1,41 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '../../../../../store/baseQuery';
 
 export const jobOnboardingApi = createApi({
     reducerPath: 'jobOnboardingApi',
-    baseQuery: fetchBaseQuery({
-        baseUrl: import.meta.env.VITE_API_URL,
-        prepareHeaders: (headers, { getState }) => {
-            const token = getState().auth.token;
-            if (token) {
-                headers.set('authorization', `Bearer ${token}`);
-            }
-            return headers;
-        },
-    }),
+    baseQuery: baseQueryWithReauth,
     tagTypes: ['JobOnboarding'],
     endpoints: (builder) => ({
         getAllJobOnboarding: builder.query({
-            query: (params) => ({
-                url: '/job-onboarding',
-                method: 'GET',
-                params: params,
-            }),
+            query: () => '/job-onboarding',
             providesTags: ['JobOnboarding'],
         }),
-
         createJobOnboarding: builder.mutation({
             query: (data) => ({
-                url: '/job-onboarding',
+                url: 'job-onboarding',
                 method: 'POST',
                 body: data,
             }),
             invalidatesTags: ['JobOnboarding'],
         }),
-
         updateJobOnboarding: builder.mutation({
-            query: ({ id, ...data }) => ({
-                url: `/job-onboarding/${id}`,
+            query: ({ id, data }) => ({
+                url: `job-onboarding/${id}`,
                 method: 'PUT',
                 body: data,
             }),
             invalidatesTags: ['JobOnboarding'],
         }),
-
         deleteJobOnboarding: builder.mutation({
             query: (id) => ({
-                url: `/job-onboarding/${id}`,
+                url: `job-onboarding/${id}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['JobOnboarding'],
         }),
-
         getJobOnboardingById: builder.query({
-            query: (id) => `/job-onboarding/${id}`,
-            providesTags: (result, error, id) => [{ type: 'JobOnboarding', id }],
+            query: (id) => `job-onboarding/${id}`,
+            providesTags: ['JobOnboarding'],
         }),
     }),
 });
@@ -62,4 +46,6 @@ export const {
     useUpdateJobOnboardingMutation,
     useDeleteJobOnboardingMutation,
     useGetJobOnboardingByIdQuery,
-} = jobOnboardingApi; 
+} = jobOnboardingApi;
+
+export default jobOnboardingApi; 

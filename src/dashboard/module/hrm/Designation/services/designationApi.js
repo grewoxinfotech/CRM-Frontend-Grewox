@@ -22,16 +22,6 @@ export const designationApi = createApi({
             ],
         }),
 
-        getDesignationById: builder.query({
-            query: (id) => ({
-                url: `/designations/${id}`,
-                method: 'GET',
-            }),
-            transformResponse: (response) => {
-                return response?.data || response;
-            },
-            providesTags: (result, error, id) => [{ type: 'Designations', id }],
-        }),
 
         createDesignation: builder.mutation({
             query: (data) => ({
@@ -84,7 +74,6 @@ export const designationApi = createApi({
 
 export const {
     useGetAllDesignationsQuery,
-    useGetDesignationByIdQuery,
     useCreateDesignationMutation,
     useUpdateDesignationMutation,
     useDeleteDesignationMutation,

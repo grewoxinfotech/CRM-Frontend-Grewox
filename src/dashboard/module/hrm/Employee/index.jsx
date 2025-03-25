@@ -1,77 +1,105 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Typography,
+    Button,
+    Modal,
+    message,
+    Input,
+    Dropdown,
+    Menu,
+    Row,
+    Col,
+    Breadcrumb,
+    Card,
+    Form,
 } from 'antd';
 import {
-    FiPlus, FiSearch,
-    FiChevronDown, FiDownload,
-    FiGrid, FiList, FiHome
+    FiPlus,
+    FiDownload,
+    FiSearch,
+    FiHome,
+    FiChevronDown,
+    FiGrid,
+    FiList,
 } from 'react-icons/fi';
-import './Employee.scss';
+import { Link } from 'react-router-dom';
+import { useGetEmployeesQuery, useCreateEmployeeMutation, useUpdateEmployeeMutation, useDeleteEmployeeMutation } from './services/employeeApi';
+import CreateEmployee from './CreateEmployee';
+// import EditEmployee from './EditEmployee';
+import EmployeeList from './EmployeeList';
+import EmployeeCard from './EmployeeCard';
+import './Employee.scss';                                   
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import EmployeeList from './EmployeeList';
-import CreateEmployee from './CreateEmployee';
-import { useGetAllEmployeesQuery, useDeleteEmployeeMutation, useCreateEmployeeMutation, useUpdateEmployeeMutation } from './services/employeeApi';
-import { Link, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { setSelectedEmployee } from './services/employeeSlice';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import EditEmployee from './EditEmployee';
 
 const { Title, Text } = Typography;
 
 const Employee = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { data: employeesData, isLoading: isLoadingEmployees, refetch } = useGetAllEmployeesQuery({});
-    const [deleteEmployee] = useDeleteEmployeeMutation();
-    const [createEmployee] = useCreateEmployeeMutation();
-    const [updateEmployee] = useUpdateEmployeeMutation();
+    // States
     const [searchText, setSearchText] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [isCreateFormVisible, setIsCreateFormVisible] = useState(false);
+    const [isEditFormVisible, setIsEditFormVisible] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [employees, setEmployees] = useState([]);
     const [filteredEmployees, setFilteredEmployees] = useState([]);
-    const searchInputRef = useRef(null);
     const [loading, setLoading] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingEmployee, setEditingEmployee] = useState(null);
+    const loggedInUser = useSelector(selectCurrentUser);
+    const [createEmployee, { isLoading: isCreating }] = useCreateEmployeeMutation();
+    const [updateEmployee, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
+    const [deleteEmployee, { isLoading: isDeleting }] = useDeleteEmployeeMutation();
+    const { data: employeesData, isLoading: isLoadingEmployees, refetch } = useGetEmployeesQuery();
+
+    const [viewMode, setViewMode] = useState('table');
 
     useEffect(() => {
         if (employeesData?.data) {
-            const transformedData = employeesData.data.map(employee => ({
+            const filteredData = employeesData.data.filter(employee => 
+                employee?.created_by === loggedInUser?.username || 
+                employee?.client_id === loggedInUser?.id
+            );
+            const transformedData = filteredData.map(employee => ({
                 id: employee.id,
                 name: `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A',
                 email: employee.email || 'N/A',
                 phone: employee.phone || 'N/A',
                 department: employee.department || 'N/A',
                 designation: employee.designation || 'N/A',
-                status: employee.status || 'active',
-                created_at: employee.createdAt || '-'
+                status: employee.status || 'inactive',
+                created_at: employee.createdAt || '-',
+                updated_at: employee.updatedAt || null,
+                created_by: employee.created_by,
+                updated_by: employee.updated_by,
+                profilePic: employee.profilePic || null,
             }));
+            setEmployees(transformedData);
             setFilteredEmployees(transformedData);
         }
     }, [employeesData]);
 
+    useEffect(() => {
+        const filtered = employees.filter(employee =>
+            employee.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+            employee.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+            employee.department?.toLowerCase().includes(searchText.toLowerCase()) ||
+            employee.designation?.toLowerCase().includes(searchText.toLowerCase())
+        );
+        setFilteredEmployees(filtered);
+    }, [employees, searchText]);
+
+    // Handlers
     const handleSearch = (value) => {
         setSearchText(value);
-        if (employeesData?.data) {
-            const filtered = employeesData.data.filter(employee =>
-                employee.firstName?.toLowerCase().includes(value.toLowerCase()) ||
-                employee.lastName?.toLowerCase().includes(value.toLowerCase()) ||
-                employee.email?.toLowerCase().includes(value.toLowerCase()) ||
-                employee.phone?.includes(value) ||
-                employee.department?.toLowerCase().includes(value.toLowerCase()) ||
-                employee.designation?.toLowerCase().includes(value.toLowerCase())
-            );
-            setFilteredEmployees(filtered);
-        }
     };
 
-    const handleDelete = (employee) => {
+    const handleDelete = (record) => {
         Modal.confirm({
-            title: 'Are you sure you want to delete this employee?',
-            content: 'This action cannot be undone.',
+            title: 'Delete Employee',
+            content: 'Are you sure you want to delete this employee?',
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
@@ -80,53 +108,91 @@ const Employee = () => {
             },
             onOk: async () => {
                 try {
-                    await deleteEmployee(employee.id).unwrap();
+                    await deleteEmployee(record.id).unwrap();
                     message.success('Employee deleted successfully');
                     refetch();
                 } catch (error) {
-                    message.error('Failed to delete employee');
+                    message.error(error?.data?.message || 'Failed to delete employee');
                 }
             },
         });
     };
 
-    const handleView = (employee) => {
-        dispatch(setSelectedEmployee(employee));
-        navigate(`/dashboard/hrm/employee/view/${employee.id}`);
-    };
-
-    const handleEdit = (employee) => {
-        setEditingEmployee(employee);
-        setIsModalOpen(true);
-    };
-
     const handleAddEmployee = () => {
-        setEditingEmployee(null);
-        setIsModalOpen(true);
+        setSelectedEmployee(null);
+        setIsCreateFormVisible(true);
     };
 
-    const handleModalCancel = () => {
-        setIsModalOpen(false);
-        setEditingEmployee(null);
+    const handleEditEmployee = (employee) => {
+        // Format the employee data for the edit form
+        const formattedEmployee = {
+            id: employee.id,
+            firstName: employee.firstName,
+            lastName: employee.lastName,
+            username: employee.username,
+            email: employee.email,
+            // Split phone number into code and number
+            phone: employee.phone?.replace(/^\+\d+\s*/, ''),
+            phoneCode: employee.phoneCode || employee.phone?.match(/^\+(\d+)/)?.[1] || '91',
+            address: employee.address,
+            gender: employee.gender,
+            joiningDate: employee.joiningDate,
+            leaveDate: employee.leaveDate,
+            // IDs for dropdowns
+            branch: employee.branch?.id || employee.branch,
+            department_name: employee.department_name?.id || employee.department_name,
+            designation_name: employee.designation_name?.id || employee.designation_name,
+            // Salary information
+            salary: employee.salary,
+            currency: employee.currency,
+            // Bank details
+            accountholder: employee.accountholder,
+            accountnumber: employee.accountnumber,
+            bankname: employee.bankname,
+            ifsc: employee.ifsc,
+            banklocation: employee.banklocation,
+        };
+
+        setSelectedEmployee(formattedEmployee);
+        setIsEditFormVisible(true);
     };
 
-    const handleModalSubmit = async (values) => {
+    const handleEditSuccess = () => {
+        setIsEditFormVisible(false);
+        setSelectedEmployee(null);
+        refetch(); // Refresh the employee list
+        message.success('Employee updated successfully');
+    };
+
+    const handleCreateSubmit = async (formData) => {
         try {
-            if (editingEmployee) {
-                await updateEmployee({
-                    id: editingEmployee.id,
-                    data: values
-                }).unwrap();
-                message.success('Employee updated successfully');
-            } else {
-                await createEmployee(values).unwrap();
-                message.success('Employee created successfully');
-            }
-            setIsModalOpen(false);
-            setEditingEmployee(null);
+            await createEmployee(formData).unwrap();
+            message.success('Employee created successfully');
+            
+            setIsCreateFormVisible(false);
             refetch();
         } catch (error) {
-            message.error(error?.data?.message || 'Operation failed');
+            message.error(error?.data?.message || 'Failed to create employee');
+        }
+    };
+
+    const handleEditSubmit = async (formData) => {
+        try {
+            if (!formData?.id) {
+                throw new Error('Employee ID is required for update');
+            }
+
+            const updateData = {
+                id: formData.id,
+                data: formData
+            };
+
+            await updateEmployee(updateData).unwrap();
+            message.success('Employee updated successfully');
+            setIsEditFormVisible(false);
+            refetch();
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to update employee');
         }
     };
 
@@ -228,6 +294,10 @@ const Employee = () => {
         doc.save(`${filename}.pdf`);
     };
 
+    const handleCreateSuccess = () => {
+        refetch();
+    };
+
     return (
         <div className="employee-page">
             <div className="page-breadcrumb">
@@ -252,15 +322,26 @@ const Employee = () => {
                         <div className="header-actions">
                             <Input
                                 prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                placeholder="Search employees by name, email, phone, or department"
+                                placeholder="Search employees by name, email, department, or designation"
                                 allowClear
                                 onChange={(e) => handleSearch(e.target.value)}
                                 value={searchText}
-                                ref={searchInputRef}
                                 className="search-input"
                             />
                             <div className="action-buttons">
-                                <Dropdown overlay={exportMenu} trigger={['click']}>
+                                <Button.Group className="view-toggle">
+                                    <Button
+                                        type={viewMode === 'table' ? 'primary' : 'default'}
+                                        icon={<FiList size={16} />}
+                                        onClick={() => setViewMode('table')}
+                                    />
+                                    <Button
+                                        type={viewMode === 'card' ? 'primary' : 'default'}
+                                        icon={<FiGrid size={16} />}
+                                        onClick={() => setViewMode('card')}
+                                    />
+                                </Button.Group>
+                                <Dropdown overlay={exportMenu} trigger={["click"]}>
                                     <Button className="export-button">
                                         <FiDownload size={16} />
                                         <span>Export</span>
@@ -281,22 +362,40 @@ const Employee = () => {
                 </Row>
             </div>
 
-            <Card className="employee-table-card">
-                <EmployeeList
-                    employees={filteredEmployees}
-                    loading={isLoadingEmployees}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    onView={handleView}
-                />
+            <Card className="employee-card">
+                {viewMode === 'table' ? (
+                    <EmployeeList
+                        employees={filteredEmployees}
+                        loading={isLoadingEmployees}
+                        onEdit={handleEditEmployee}
+                        onDelete={handleDelete}
+                    />
+                ) : (
+                    <div className="employee-grid">
+                        {filteredEmployees.map(employee => (
+                            <EmployeeCard
+                                key={employee.id}
+                                employee={employee}
+                                onEdit={handleEditEmployee}
+                                onDelete={handleDelete}
+                            />
+                        ))}
+                    </div>
+                )}
             </Card>
 
             <CreateEmployee
-                open={isModalOpen}
-                onCancel={handleModalCancel}
-                onSubmit={handleModalSubmit}
-                isEditing={!!editingEmployee}
-                initialValues={editingEmployee}
+                visible={isCreateFormVisible}
+                onCancel={() => setIsCreateFormVisible(false)}
+                onSubmit={handleCreateSubmit}
+                loading={isCreating}
+                onSuccess={handleCreateSuccess}
+            />
+            <EditEmployee
+                visible={isEditFormVisible}
+                onCancel={() => setIsEditFormVisible(false)}
+                initialValues={selectedEmployee}
+                onSuccess={handleEditSuccess}
             />
         </div>
     );
