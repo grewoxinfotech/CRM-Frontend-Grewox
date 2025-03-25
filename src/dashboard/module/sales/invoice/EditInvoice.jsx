@@ -1,415 +1,805 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, Select, DatePicker, InputNumber, Row, Col, Divider, Space, Typography } from 'antd';
-import { FiX, FiFileText, FiPlus, FiTrash2 } from 'react-icons/fi';
-import dayjs from 'dayjs';
+import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  Form,
+  Input,
+  Button,
+  Typography,
+  Select,
+  Row,
+  Col,
+  Divider,
+  InputNumber,
+  DatePicker,
+  Space,
+  message,
+} from "antd";
+import {
+  FiFileText,
+  FiX,
+  FiUser,
+  FiCalendar,
+  FiHash,
+  FiDollarSign,
+  FiPlus,
+  FiTrash2,
+  FiPackage,
+} from "react-icons/fi";
+import dayjs from "dayjs";
+import "./invoice.scss";
+import { useGetCustomersQuery } from "../customer/services/custApi";
 
 const { Text } = Typography;
 const { Option } = Select;
-const { TextArea } = Input;
 
 const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
-    const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const { data: custdata } = useGetCustomersQuery();
+  const customers = custdata?.data;
 
-    useEffect(() => {
-        if (initialValues) {
-            form.setFieldsValue({
-                ...initialValues,
-                date: initialValues.date ? dayjs(initialValues.date) : null,
-                due_date: initialValues.due_date ? dayjs(initialValues.due_date) : null,
-                items: initialValues.items ? JSON.parse(initialValues.items) : [{}]
-            });
-            calculateTotals(initialValues.items ? JSON.parse(initialValues.items) : []);
+  useEffect(() => {
+    if (initialValues) {
+      let items = [];
+      try {
+        if (Array.isArray(initialValues.items)) {
+          items = initialValues.items;
+        } else if (typeof initialValues.items === "string") {
+          items = JSON.parse(initialValues.items);
         }
-    }, [initialValues, form]);
+      } catch (error) {
+        console.error("Error parsing items:", error);
+        items = [];
+      }
 
-    const handleSubmit = async (values) => {
-        try {
-            setLoading(true);
-            const formData = new FormData();
+      // Format the initial values
+      const formattedValues = {
+        customer: initialValues.customer || "",
+        issueDate: initialValues.issueDate
+          ? dayjs(initialValues.issueDate)
+          : null,
+        dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : null,
+        category: initialValues.category || "",
+        reference_number: initialValues.reference_number || "",
+        currency: initialValues.currency || "",
+        items:
+          items.length > 0
+            ? items
+            : [{ description: "", quantity: 1, unit_price: 0, discount: 0 }],
+        sub_total: initialValues.sub_total || 0,
+        item_discount: initialValues.item_discount || 0,
+        total_tax: initialValues.total_tax || 0,
+        total: initialValues.total || 0,
+      };
 
-            formData.append('invoice_number', values.invoice_number || '');
-            formData.append('customer_id', values.customer_id || '');
-            formData.append('date', values.date?.format('YYYY-MM-DD') || '');
-            formData.append('due_date', values.due_date?.format('YYYY-MM-DD') || '');
-            formData.append('status', values.status || 'draft');
-            formData.append('items', JSON.stringify(values.items || []));
-            formData.append('subtotal', values.subtotal || 0);
-            formData.append('tax', values.tax || 0);
-            formData.append('discount', values.discount || 0);
-            formData.append('total', values.total || 0);
-            formData.append('notes', values.notes || '');
-            formData.append('terms', values.terms || '');
+      // Set form values
+      form.setFieldsValue(formattedValues);
 
-            await onSubmit(formData);
-            form.resetFields();
-        } catch (error) {
-            console.error('Submit Error:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+      // Calculate initial totals
+      calculateTotals(items);
+    }
+  }, [initialValues, form]);
 
-    const calculateTotals = (items = []) => {
-        const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        const tax = form.getFieldValue('tax') || 0;
-        const discount = form.getFieldValue('discount') || 0;
-        const total = subtotal + (subtotal * tax / 100) - discount;
+  const calculateTotals = (items = []) => {
+    if (!Array.isArray(items)) {
+      items = [];
+    }
 
-        form.setFieldsValue({
-            subtotal,
-            total: Math.round(total * 100) / 100
-        });
-    };
+    const subTotal = items.reduce((sum, item) => {
+      const quantity = Number(item.quantity) || 0;
+      const price = Number(item.unit_price) || 0;
+      const discount = Number(item.discount) || 0;
+      const amount = quantity * price - discount;
+      return sum + amount;
+    }, 0);
 
-    return (
-        <Modal
-            title={null}
-            open={open}
-            onCancel={onCancel}
-            footer={null}
-            width={1000}
-            destroyOnClose={true}
-            centered
-            closeIcon={null}
-            className="pro-modal custom-modal"
-            styles={{
-                body: {
-                    padding: 0,
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                }
-            }}
+    const itemDiscount = form.getFieldValue("item_discount") || 0;
+    const totalTax = form.getFieldValue("total_tax") || 0;
+    const totalAmount = subTotal - itemDiscount + totalTax;
+
+    form.setFieldsValue({
+      sub_total: subTotal.toFixed(2),
+      total: totalAmount.toFixed(2),
+    });
+  };
+
+  const handleItemChange = () => {
+    const items = form.getFieldValue("items");
+    calculateTotals(items);
+  };
+
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true);
+
+      // Convert items array to object with numbered keys
+      const itemsObject = {};
+      values.items?.forEach((item, index) => {
+        itemsObject[`item${index + 1}`] = item;
+      });
+
+      const formData = {
+        customer: values.customer,
+        issueDate: values.issueDate?.format("YYYY-MM-DD"),
+        dueDate: values.dueDate?.format("YYYY-MM-DD"),
+        category: values.category,
+        reference_number: values.reference_number,
+        currency: values.currency,
+        items: itemsObject,
+        sub_total: values.sub_total,
+        item_discount: values.item_discount,
+        total_tax: values.total_tax,
+        total: values.total,
+      };
+
+      await onSubmit(formData);
+      message.success("Invoice updated successfully");
+    } catch (error) {
+      message.error("Failed to update invoice");
+      console.error("Submit Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reset form when modal is closed
+  const handleCancel = () => {
+    form.resetFields();
+    onCancel();
+  };
+
+  return (
+    <Modal
+      title={null}
+      open={open}
+      onCancel={handleCancel}
+      footer={null}
+      width={1000}
+      destroyOnClose={true}
+      centered
+      closeIcon={null}
+      className="pro-modal custom-modal"
+      styles={{
+        body: {
+          padding: 0,
+          borderRadius: "8px",
+          overflow: "hidden",
+        },
+      }}
+    >
+      <div
+        className="modal-header"
+        style={{
+          background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
+          padding: "24px",
+          color: "#ffffff",
+          position: "relative",
+        }}
+      >
+        <Button
+          type="text"
+          onClick={handleCancel}
+          style={{
+            position: "absolute",
+            top: "16px",
+            right: "16px",
+            color: "#ffffff",
+            width: "32px",
+            height: "32px",
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.2)",
+            borderRadius: "8px",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+          }}
         >
-            <div
-                className="modal-header"
+          <FiX style={{ fontSize: "20px" }} />
+        </Button>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <FiFileText style={{ fontSize: "24px", color: "#ffffff" }} />
+          </div>
+          <div>
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#ffffff",
+              }}
+            >
+              Edit Invoice
+            </h2>
+            <Text
+              style={{
+                fontSize: "14px",
+                color: "rgba(255, 255, 255, 0.85)",
+              }}
+            >
+              Update invoice information
+            </Text>
+          </div>
+        </div>
+      </div>
+
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        requiredMark={false}
+        style={{
+          padding: "24px",
+        }}
+      >
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              name="customer"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Customer <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select customer" }]}
+            >
+              <Select
+                placeholder="Select Customer"
+                showSearch
+                optionFilterProp="children"
+                size="large"
                 style={{
-                    background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
-                    padding: '24px',
-                    color: '#ffffff',
-                    position: 'relative',
+                  width: "100%",
+                  borderRadius: "10px",
                 }}
+              >
+                {customers?.map((customer) => (
+                  <Option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="category"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiPackage style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Category <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please enter category" }]}
             >
-                <Button
-                    type="text"
-                    onClick={onCancel}
-                    className="close-button"
+              <Input
+                placeholder="Enter category"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="reference_number"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Reference Number <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[
+                { required: true, message: "Please enter reference number" },
+              ]}
+            >
+              <Input
+                prefix={<FiHash style={{ color: "#1890ff" }} />}
+                placeholder="Enter reference number"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                }}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item
+              name="issueDate"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiCalendar
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Issue Date <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select issue date" }]}
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                }}
+                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="dueDate"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiCalendar
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Due Date <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select due date" }]}
+            >
+              <DatePicker
+                format="YYYY-MM-DD"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                }}
+                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              name="currency"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiDollarSign
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select currency" }]}
+            >
+              <Select
+                placeholder="Select Currency"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+              >
+                <Option value="INR">INR - Indian Rupee</Option>
+                <Option value="USD">USD - US Dollar</Option>
+                <Option value="EUR">EUR - Euro</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Divider orientation="left" style={{ margin: "24px 0" }}>
+          <span
+            style={{ fontSize: "16px", fontWeight: "500", color: "#1f2937" }}
+          >
+            <FiPackage style={{ marginRight: "8px", color: "#1890ff" }} />
+            Products & Services
+          </span>
+        </Divider>
+
+        <Form.List name="items">
+          {(fields, { add, remove }) => (
+            <>
+              <div style={{ marginBottom: "16px" }}>
+                <Row
+                  gutter={16}
+                  style={{
+                    padding: "12px 0",
+                    borderBottom: "1px solid #e6e8eb",
+                  }}
                 >
-                    <FiX style={{ fontSize: '20px' }} />
-                </Button>
-                <div className="header-content">
-                    <div className="header-icon">
-                        <FiFileText style={{ fontSize: '24px' }} />
-                    </div>
-                    <div className="header-text">
-                        <h2>Edit Invoice</h2>
-                        <Text style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-                            Update invoice information
-                        </Text>
-                    </div>
-                </div>
-            </div>
+                  <Col span={6}>
+                    <Text strong>Item*</Text>
+                  </Col>
+                  <Col span={3}>
+                    <Text strong>Quantity*</Text>
+                  </Col>
+                  <Col span={4}>
+                    <Text strong>Unit Price*</Text>
+                  </Col>
+                  <Col span={4}>
+                    <Text strong>HSN/SAC</Text>
+                  </Col>
+                  <Col span={3}>
+                    <Text strong>Discount</Text>
+                  </Col>
+                  <Col span={2}>
+                    <Text strong>TAX (%)</Text>
+                  </Col>
+                  <Col span={2}>
+                    <Text strong>Amount</Text>
+                  </Col>
+                </Row>
+              </div>
 
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                requiredMark={false}
-                initialValues={{
-                    status: 'draft',
-                    tax: 0,
-                    discount: 0,
-                    items: [{}]
+              {fields.map(({ key, name, ...restField }, index) => (
+                <div
+                  key={key}
+                  style={{
+                    marginBottom: "16px",
+                    padding: "16px",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "8px",
+                  }}
+                >
+                  <Row gutter={16}>
+                    <Col span={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "item_name"]}
+                        rules={[{ required: true, message: "Required" }]}
+                      >
+                        <Input
+                          placeholder="Item Name"
+                          size="large"
+                          style={{
+                            borderRadius: "8px",
+                            height: "40px",
+                          }}
+                          onChange={handleItemChange}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={3}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "quantity"]}
+                        rules={[{ required: true, message: "Required" }]}
+                      >
+                        <InputNumber
+                          min={1}
+                          size="large"
+                          style={{
+                            width: "100%",
+                            borderRadius: "8px",
+                            height: "40px",
+                            textAlign: "center",
+                          }}
+                          onChange={handleItemChange}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={4}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "unit_price"]}
+                        rules={[{ required: true, message: "Required" }]}
+                      >
+                        <InputNumber
+                          placeholder="₹0"
+                          min={0}
+                          size="large"
+                          style={{
+                            width: "100%",
+                            borderRadius: "8px",
+                            height: "40px",
+                          }}
+                          formatter={(value) =>
+                            `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                          }
+                          parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
+                          onChange={handleItemChange}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={4}>
+                      <Form.Item {...restField} name={[name, "hsn_sac"]}>
+                        <Input
+                          placeholder="HSN/SAC"
+                          size="large"
+                          style={{
+                            borderRadius: "8px",
+                            height: "40px",
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={3}>
+                      <Form.Item {...restField} name={[name, "discount"]}>
+                        <InputNumber
+                          placeholder="%"
+                          min={0}
+                          max={100}
+                          size="large"
+                          style={{
+                            width: "100%",
+                            borderRadius: "8px",
+                            height: "40px",
+                          }}
+                          formatter={(value) => `${value}%`}
+                          parser={(value) => value.replace("%", "")}
+                          onChange={handleItemChange}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={2}>
+                      <Form.Item {...restField} name={[name, "tax"]}>
+                        <InputNumber
+                          placeholder="%"
+                          min={0}
+                          max={100}
+                          size="large"
+                          style={{
+                            width: "100%",
+                            borderRadius: "8px",
+                            height: "40px",
+                          }}
+                          onChange={handleItemChange}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={2}>
+                      <Form.Item {...restField} name={[name, "amount"]}>
+                        <InputNumber
+                          disabled
+                          size="large"
+                          style={{
+                            width: "100%",
+                            borderRadius: "8px",
+                            height: "40px",
+                          }}
+                          formatter={(value) =>
+                            `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                          }
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  <Row gutter={16}>
+                    <Col span={23}>
+                      <Form.Item {...restField} name={[name, "description"]}>
+                        <Input.TextArea
+                          placeholder="Description"
+                          rows={2}
+                          style={{
+                            borderRadius: "8px",
+                            backgroundColor: "#ffffff",
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={1}>
+                      {fields.length > 1 && (
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                          onClick={() => {
+                            remove(name);
+                            handleItemChange();
+                          }}
+                        />
+                      )}
+                    </Col>
+                  </Row>
+                </div>
+              ))}
+
+              <Button
+                onClick={() => add()}
+                icon={<FiPlus />}
+                style={{
+                  width: "150px",
+                  height: "48px",
+                  borderRadius: "8px",
+                  marginTop: "16px",
+                  borderColor: "#1890ff",
+                  color: "#1890ff",
                 }}
-                className="invoice-form"
+              >
+                Add Item
+              </Button>
+            </>
+          )}
+        </Form.List>
+
+        <Divider orientation="left" style={{ margin: "24px 0" }}>
+          <span
+            style={{ fontSize: "16px", fontWeight: "500", color: "#1f2937" }}
+          >
+            <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+            Total Amount
+          </span>
+        </Divider>
+
+        <Row justify="end">
+          <Col span={8}>
+            <div
+              style={{
+                backgroundColor: "#f8fafc",
+                padding: "16px",
+                borderRadius: "8px",
+              }}
             >
-                <Row gutter={16} style={{ padding: '24px' }}>
-                    <Col span={8}>
-                        <Form.Item
-                            name="invoice_number"
-                            label={<span className="form-label">Invoice Number</span>}
-                            rules={[
-                                { required: true, message: 'Please enter invoice number' }
-                            ]}
-                        >
-                            <Input
-                                prefix={<FiFileText style={{ color: '#1890ff' }} />}
-                                placeholder="Enter invoice number"
-                                size="large"
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                        <Form.Item
-                            name="customer_id"
-                            label={<span className="form-label">Customer</span>}
-                            rules={[
-                                { required: true, message: 'Please select customer' }
-                            ]}
-                        >
-                            <Select
-                                placeholder="Select customer"
-                                size="large"
-                                showSearch
-                                optionFilterProp="children"
-                            >
-                                {/* Add customer options here */}
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                        <Form.Item
-                            name="status"
-                            label={<span className="form-label">Status</span>}
-                        >
-                            <Select size="large">
-                                <Option value="draft">Draft</Option>
-                                <Option value="pending">Pending</Option>
-                                <Option value="paid">Paid</Option>
-                                <Option value="overdue">Overdue</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "12px",
+                }}
+              >
+                <Text>Sub Total</Text>
+                <Form.Item name="sub_total" style={{ margin: 0 }}>
+                  <InputNumber
+                    disabled
+                    size="large"
+                    style={{
+                      width: "120px",
+                      borderRadius: "8px",
+                      height: "40px",
+                    }}
+                    formatter={(value) =>
+                      `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
+                  />
+                </Form.Item>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "12px",
+                }}
+              >
+                <Text>Item Discount</Text>
+                <Space>
+                  <Form.Item name="item_discount" style={{ margin: 0 }}>
+                    <InputNumber
+                      placeholder="%"
+                      size="large"
+                      style={{
+                        width: "100px",
+                        borderRadius: "8px",
+                        height: "40px",
+                      }}
+                      formatter={(value) => `${value}`}
+                      parser={(value) => value.replace("%", "")}
+                      onChange={handleItemChange}
+                    />
+                  </Form.Item>
+                  <Text>%</Text>
+                </Space>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "12px",
+                }}
+              >
+                <Text>Total Tax</Text>
+                <Form.Item name="total_tax" style={{ margin: 0 }}>
+                  <InputNumber
+                    disabled
+                    size="large"
+                    style={{
+                      width: "120px",
+                      borderRadius: "8px",
+                      height: "40px",
+                    }}
+                    formatter={(value) =>
+                      `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
+                  />
+                </Form.Item>
+              </div>
+              <Divider style={{ margin: "12px 0" }} />
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <Text strong>Total Amount</Text>
+                <Form.Item name="total" style={{ margin: 0 }}>
+                  <InputNumber
+                    disabled
+                    size="large"
+                    style={{
+                      width: "120px",
+                      borderRadius: "8px",
+                      height: "40px",
+                    }}
+                    formatter={(value) =>
+                      `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                    }
+                  />
+                </Form.Item>
+              </div>
+            </div>
+          </Col>
+        </Row>
 
-                <Row gutter={16} style={{ padding: '0 24px' }}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="date"
-                            label={<span className="form-label">Invoice Date</span>}
-                            rules={[
-                                { required: true, message: 'Please select invoice date' }
-                            ]}
-                        >
-                            <DatePicker size="large" style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            name="due_date"
-                            label={<span className="form-label">Due Date</span>}
-                            rules={[
-                                { required: true, message: 'Please select due date' }
-                            ]}
-                        >
-                            <DatePicker size="large" style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Col>
-                </Row>
+        <Divider style={{ margin: "24px 0" }} />
 
-                <Divider orientation="left" style={{ margin: '24px 0 12px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: '500' }}>Invoice Items</span>
-                </Divider>
-
-                <div className="invoice-items" style={{ padding: '0 24px' }}>
-                    <Form.List name="items">
-                        {(fields, { add, remove }) => (
-                            <>
-                                {fields.map(({ key, name, ...restField }) => (
-                                    <Row gutter={16} key={key} style={{ marginBottom: 16 }}>
-                                        <Col span={8}>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'description']}
-                                                rules={[
-                                                    { required: true, message: 'Please enter item description' }
-                                                ]}
-                                            >
-                                                <Input
-                                                    placeholder="Item description"
-                                                    size="large"
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                        <Col span={5}>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'quantity']}
-                                                rules={[
-                                                    { required: true, message: 'Please enter quantity' }
-                                                ]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="Quantity"
-                                                    size="large"
-                                                    min={1}
-                                                    style={{ width: '100%' }}
-                                                    onChange={() => calculateTotals(form.getFieldValue('items'))}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                        <Col span={5}>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'price']}
-                                                rules={[
-                                                    { required: true, message: 'Please enter price' }
-                                                ]}
-                                            >
-                                                <InputNumber
-                                                    placeholder="Price"
-                                                    size="large"
-                                                    min={0}
-                                                    style={{ width: '100%' }}
-                                                    onChange={() => calculateTotals(form.getFieldValue('items'))}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                        <Col span={5}>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'amount']}
-                                            >
-                                                <InputNumber
-                                                    placeholder="Amount"
-                                                    size="large"
-                                                    disabled
-                                                    style={{ width: '100%' }}
-                                                    formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                />
-                                            </Form.Item>
-                                        </Col>
-                                        <Col span={1}>
-                                            {fields.length > 1 && (
-                                                <Button
-                                                    type="text"
-                                                    icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                                                    onClick={() => {
-                                                        remove(name);
-                                                        calculateTotals(form.getFieldValue('items'));
-                                                    }}
-                                                />
-                                            )}
-                                        </Col>
-                                    </Row>
-                                ))}
-                                <Form.Item>
-                                    <Button
-                                        type="dashed"
-                                        onClick={() => add()}
-                                        icon={<FiPlus />}
-                                        style={{ width: '100%' }}
-                                    >
-                                        Add Item
-                                    </Button>
-                                </Form.Item>
-                            </>
-                        )}
-                    </Form.List>
-                </div>
-
-                <Row gutter={16} justify="end" style={{ padding: '0 24px' }}>
-                    <Col span={8}>
-                        <div className="totals-section">
-                            <Space direction="vertical" style={{ width: '100%' }}>
-                                <Row justify="space-between">
-                                    <Text>Subtotal:</Text>
-                                    <Form.Item
-                                        name="subtotal"
-                                        style={{ margin: 0 }}
-                                    >
-                                        <InputNumber
-                                            disabled
-                                            style={{ width: '150px', textAlign: 'right' }}
-                                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        />
-                                    </Form.Item>
-                                </Row>
-                                <Row justify="space-between">
-                                    <Text>Tax (%):</Text>
-                                    <Form.Item
-                                        name="tax"
-                                        style={{ margin: 0 }}
-                                    >
-                                        <InputNumber
-                                            style={{ width: '150px' }}
-                                            min={0}
-                                            max={100}
-                                            onChange={() => calculateTotals(form.getFieldValue('items'))}
-                                        />
-                                    </Form.Item>
-                                </Row>
-                                <Row justify="space-between">
-                                    <Text>Discount:</Text>
-                                    <Form.Item
-                                        name="discount"
-                                        style={{ margin: 0 }}
-                                    >
-                                        <InputNumber
-                                            style={{ width: '150px' }}
-                                            min={0}
-                                            onChange={() => calculateTotals(form.getFieldValue('items'))}
-                                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        />
-                                    </Form.Item>
-                                </Row>
-                                <Divider style={{ margin: '12px 0' }} />
-                                <Row justify="space-between">
-                                    <Text strong>Total:</Text>
-                                    <Form.Item
-                                        name="total"
-                                        style={{ margin: 0 }}
-                                    >
-                                        <InputNumber
-                                            disabled
-                                            style={{ width: '150px', textAlign: 'right' }}
-                                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                        />
-                                    </Form.Item>
-                                </Row>
-                            </Space>
-                        </div>
-                    </Col>
-                </Row>
-
-                <Row gutter={16} style={{ padding: '24px' }}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="notes"
-                            label={<span className="form-label">Notes</span>}
-                        >
-                            <TextArea
-                                placeholder="Enter notes"
-                                rows={4}
-                            />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item
-                            name="terms"
-                            label={<span className="form-label">Terms & Conditions</span>}
-                        >
-                            <TextArea
-                                placeholder="Enter terms and conditions"
-                                rows={4}
-                            />
-                        </Form.Item>
-                    </Col>
-                </Row>
-
-                <Divider style={{ margin: '0' }} />
-
-                <div className="form-actions">
-                    <Button
-                        size="large"
-                        onClick={onCancel}
-                        className="cancel-button"
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        size="large"
-                        type="primary"
-                        htmlType="submit"
-                        loading={loading}
-                        className="submit-button"
-                    >
-                        Update Invoice
-                    </Button>
-                </div>
-            </Form>
-        </Modal>
-    );
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+          }}
+        >
+          <Button
+            size="large"
+            onClick={handleCancel}
+            style={{
+              padding: "8px 24px",
+              height: "44px",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              fontWeight: "500",
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="large"
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+            style={{
+              padding: "8px 32px",
+              height: "44px",
+              borderRadius: "10px",
+              fontWeight: "500",
+              background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+              border: "none",
+              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
+            }}
+          >
+            Update Invoice
+          </Button>
+        </div>
+      </Form>
+    </Modal>
+  );
 };
 
-export default EditInvoice; 
+export default EditInvoice;

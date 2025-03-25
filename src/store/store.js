@@ -27,12 +27,12 @@ import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/Sour
 import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi.js";
 import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi.js";
 import { taskApi } from "../dashboard/module/crm/task/services/taskApi.js";
-import { projectApi } from '../dashboard/module/crm/project/services/projectApi.js';
+import { projectApi } from "../dashboard/module/crm/project/services/projectApi.js";
 import { jobApi } from "../dashboard/module/job/jobs/services/jobApi.js";
 import { jobApplicationApi } from "../dashboard/module/job/job applications/services/jobApplicationApi.js";
 import { jobOnboardingApi } from "../dashboard/module/job/job onboarding/services/jobOnboardingApi.js";
-import { offerLetterApi } from '../dashboard/module/job/offer letters/services/offerLetterApi.js';
-import { interviewApi } from '../dashboard/module/job/interviews/services/interviewApi.js';
+import { offerLetterApi } from "../dashboard/module/job/offer letters/services/offerLetterApi.js";
+import { interviewApi } from "../dashboard/module/job/interviews/services/interviewApi.js";
 import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
 import { leadApi } from "../dashboard/module/crm/lead/services/leadApi.js";
 import { dealApi } from "../dashboard/module/crm/deal/services/dealApi.js";
@@ -78,6 +78,9 @@ const rootReducer = combineReducers({
   [interviewApi.reducerPath]: interviewApi.reducer,
   [leadApi.reducerPath]: leadApi.reducer,
   [dealApi.reducerPath]: dealApi.reducer,
+  [customerApi.reducerPath]: customerApi.reducer,
+  [creditNoteApi.reducerPath]: creditNoteApi.reducer,
+  [invoiceApi.reducerPath]: invoiceApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -122,7 +125,10 @@ export const store = configureStore({
       .concat(offerLetterApi.middleware)
       .concat(interviewApi.middleware)
       .concat(leadApi.middleware)
-      .concat(dealApi.middleware),
+      .concat(dealApi.middleware)
+      .concat(customerApi.middleware)
+      .concat(creditNoteApi.middleware)
+      .concat(invoiceApi.middleware),
 });
 
 export const persistor = persistStore(store);
