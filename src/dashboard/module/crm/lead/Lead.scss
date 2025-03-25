@@ -2,7 +2,7 @@
 
 .lead-page {
     padding: 24px;
-    
+
     .page-breadcrumb {
         margin-bottom: 16px;
     }
@@ -79,8 +79,8 @@
 
             .view-buttons {
                 display: flex;
-                    align-items: center;
-                    flex-shrink: 0;
+                align-items: center;
+                flex-shrink: 0;
 
                 .view-toggle {
                     display: flex;
@@ -113,7 +113,7 @@
                         &.ant-btn-primary {
                             background: #1890ff;
                             border-color: #1890ff;
-                            
+
                             svg {
                                 color: #fff;
                             }
@@ -134,7 +134,7 @@
                         }
                     }
                 }
-                
+
             }
 
             .ant-btn {
@@ -251,7 +251,8 @@
                     width: 100%;
                 }
 
-                .view-buttons, .ant-btn {
+                .view-buttons,
+                .ant-btn {
                     width: 100%;
                 }
             }
@@ -262,4 +263,492 @@
             padding: 16px;
         }
     }
-} 
+}
+
+.ant-input-group {
+    display: flex;
+    align-items: center;
+
+    .ant-select {
+        .ant-select-selector {
+            height: 48px !important;
+            display: flex;
+            align-items: center;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+        }
+    }
+
+    .ant-input {
+        height: 48px !important;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+}
+
+.currency-select {
+    .ant-select-selector {
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+        border: none !important;
+        color: white !important;
+        height: 48px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 2px 6px rgba(24, 144, 255, 0.15);
+        display: flex;
+        align-items: center;
+
+        .ant-select-selection-item {
+            color: white;
+            font-weight: 500;
+        }
+    }
+
+    &:hover .ant-select-selector {
+        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+    }
+}
+
+// Update input group styles
+.value-input-group,
+.phone-input-group {
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e6e8eb;
+    background-color: #f8fafc;
+
+    .ant-select {
+        .ant-select-selector {
+            height: 48px !important;
+            display: flex;
+            align-items: center;
+            border: none !important;
+            background-color: transparent !important;
+            border-right: 1px solid #e6e8eb !important;
+            border-radius: 10px 0 0 10px !important;
+            padding: 0 16px !important;
+
+            .ant-select-selection-item {
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+            }
+        }
+    }
+
+    .ant-input {
+        height: 48px !important;
+        border: none !important;
+        background-color: transparent !important;
+        padding: 0 16px !important;
+
+        &:focus {
+            box-shadow: none;
+        }
+    }
+
+    &:hover {
+        border-color: #1890ff;
+    }
+
+    &:focus-within {
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+}
+
+// Country option in phone code select
+.country-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    span {
+        font-weight: 500;
+    }
+
+    small {
+        color: #8c8c8c;
+        margin-left: 8px;
+    }
+}
+
+// Currency select in value input
+.currency-select {
+    .ant-select-selector {
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+        color: white !important;
+
+        .ant-select-selection-item {
+            color: white;
+            font-weight: 500;
+        }
+    }
+
+    &:hover .ant-select-selector {
+        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+    }
+}
+
+// Update input groups
+.value-input-group,
+.phone-input-group {
+    height: 48px;
+
+    .ant-select-selector,
+    .ant-input {
+        height: 48px !important;
+    }
+}
+
+.lead-form {
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .ant-form-item {
+        margin-bottom: 0;
+
+        .ant-form-item-label {
+            padding-bottom: 8px;
+
+            >label {
+                height: 22px;
+                color: #1f2937;
+            }
+        }
+
+        .ant-form-item-control-input {
+            min-height: 48px;
+        }
+
+        .ant-input,
+        .ant-select-selector,
+        .ant-input-affix-wrapper {
+            height: 48px !important;
+            border-radius: 10px;
+            background-color: #f8fafc;
+            border: 1px solid #e6e8eb;
+            transition: all 0.3s ease;
+
+            &::placeholder {
+                color: #9ca3af;
+                font-size: 14px;
+            }
+
+            .ant-select-selection-placeholder {
+                color: #9ca3af;
+                font-size: 14px;
+                line-height: 46px;
+            }
+        }
+
+        .ant-input-affix-wrapper {
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+
+            .ant-input {
+                height: 46px !important;
+                background-color: transparent;
+                border: none;
+                padding: 0 8px;
+                font-size: 14px;
+
+                &::placeholder {
+                    color: #9ca3af;
+                }
+            }
+
+            .ant-input-prefix {
+                display: flex;
+                align-items: center;
+            }
+        }
+
+        .ant-select {
+
+            &.currency-select,
+            &.phone-code-select {
+                .ant-select-selector {
+                    padding: 0 16px;
+                    display: flex;
+                    align-items: center;
+
+                    .ant-select-selection-item {
+                        line-height: 46px;
+                        font-weight: 500;
+                    }
+                }
+            }
+        }
+    }
+
+    // Input groups specific styles
+    .value-input-group,
+    .phone-input-group {
+        display: flex;
+        align-items: center;
+        border-radius: 10px;
+        border: 1px solid #e6e8eb;
+        background-color: #f8fafc;
+        height: 48px;
+        overflow: hidden;
+
+        .ant-select-selector {
+            border: none !important;
+            border-right: 1px solid #e6e8eb !important;
+            border-radius: 10px 0 0 10px !important;
+        }
+
+        .ant-input {
+            border: none !important;
+            border-radius: 0 10px 10px 0 !important;
+        }
+    }
+
+    .combined-input-item {
+        .ant-form-item-control-input {
+            min-height: 48px;
+        }
+
+        .value-input-group,
+        .phone-input-group {
+            display: flex;
+            align-items: stretch;
+            border-radius: 10px;
+            border: 1px solid #e6e8eb;
+            background-color: #f8fafc;
+            height: 48px;
+            overflow: hidden;
+
+            .ant-select {
+                .ant-select-selector {
+                    height: 48px !important;
+                    padding: 0 8px !important;
+                    border: none !important;
+                    border-right: 1px solid #e6e8eb !important;
+                    border-radius: 10px 0 0 10px !important;
+                    display: flex;
+                    align-items: center;
+
+                    .ant-select-selection-item {
+                        line-height: normal;
+                        display: flex;
+                        align-items: center;
+                    }
+                }
+            }
+
+            .ant-input-affix-wrapper {
+                flex: 1;
+                height: 48px !important;
+                border: none !important;
+                border-radius: 0 10px 10px 0 !important;
+                padding: 0 8px;
+                display: flex;
+                align-items: center;
+
+                .ant-input {
+                    height: 46px !important;
+                    padding: 0 8px;
+                    font-size: 14px;
+
+                    &::placeholder {
+                        color: #9ca3af;
+                    }
+                }
+
+                .ant-input-prefix {
+                    margin-right: 8px;
+                    display: flex;
+                    align-items: center;
+                }
+            }
+        }
+
+        // Specific styles for currency select
+        .currency-select {
+            .ant-select-selector {
+                background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+                color: white !important;
+
+                .ant-select-selection-item {
+                    color: white;
+                    font-weight: 500;
+                }
+            }
+        }
+
+        // Specific styles for phone code select
+        .phone-code-select {
+            .ant-select-selector {
+                background-color: #f8fafc !important;
+            }
+
+            .country-option {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                span {
+                    font-weight: 500;
+                    font-size: 13px;
+                }
+
+                small {
+                    color: #9ca3af;
+                    font-size: 11px;
+                }
+            }
+        }
+    }
+
+    // Error state handling
+    .ant-form-item-has-error {
+
+        .value-input-group,
+        .phone-input-group {
+            border-color: #ff4d4f;
+        }
+    }
+}
+
+.combined-input-item {
+
+    .value-input-group,
+    .phone-input-group {
+        .ant-select {
+            width: 80px !important;
+
+            .ant-select-selector {
+                padding: 0 28px 0 12px !important;
+                justify-content: center !important;
+
+                .ant-select-selection-item {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 0 !important;
+                    margin-right: 0 !important;
+
+                    .currency-option,
+                    .phone-code-option {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        width: 100%;
+
+                        .currency-details,
+                        .currency-name,
+                        .country-name,
+                        .country-code {
+                            display: none;
+                        }
+
+                        .currency-icon {
+                            font-size: 18px;
+                            font-weight: 600;
+                            margin: 0;
+                        }
+
+                        .phone-code {
+                            font-size: 15px;
+                            font-weight: 500;
+                            margin: 0;
+                        }
+                    }
+                }
+
+                .ant-select-arrow {
+                    right: 6px;
+                }
+            }
+        }
+
+        .ant-input-affix-wrapper {
+            width: calc(100% - 100px) !important;
+        }
+    }
+}
+
+// Dropdown styles
+.ant-select-dropdown {
+    padding: 4px;
+
+    // Search input styling
+    .ant-select-item-empty {
+        .ant-select-search {
+            padding: 8px;
+
+            .ant-select-search-input {
+                height: 36px;
+                border-radius: 6px;
+                border: 1px solid #e5e7eb;
+
+                &:focus {
+                    border-color: #1890ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+            }
+        }
+    }
+
+    .currency-option,
+    .phone-code-option {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        gap: 8px;
+
+        .currency-icon,
+        .phone-code {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .currency-details,
+        .phone-code-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .currency-name,
+        .country-name {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .country-code {
+            font-size: 12px;
+            padding: 2px 4px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            color: #6b7280;
+        }
+    }
+
+    .ant-select-item {
+        padding: 4px 8px;
+        border-radius: 6px;
+        margin: 2px 0;
+
+        &-option-selected {
+            background-color: #e6f4ff !important;
+            font-weight: 500;
+        }
+
+        &-option-active {
+            background-color: #f0f7ff !important;
+        }
+    }
+}

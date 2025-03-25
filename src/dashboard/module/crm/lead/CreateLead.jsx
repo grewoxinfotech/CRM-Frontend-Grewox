@@ -20,12 +20,24 @@ import {
   FiDollarSign,
   FiMapPin,
   FiCamera,
+  FiChevronDown,
 } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { useCreateLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
+import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 
 const { Text } = Typography;
 const { Option } = Select;
+
+// Find the Indian currency and phone code IDs
+const findIndianDefaults = (currencies, countries) => {
+  const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
+  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  return {
+    defaultCurrency: inrCurrency?.currencyCode || 'INR',
+    defaultPhoneCode: indiaCountry?.phoneCode?.replace('+', '') || '91'
+  };
+};
 
 const CreateLead = ({ open, onCancel }) => {
   const [form] = Form.useForm();
@@ -66,9 +78,38 @@ const CreateLead = ({ open, onCancel }) => {
     { value: "lost", label: "Lost" },
   ];
 
+  const { data: currencies = [] } = useGetAllCurrenciesQuery({
+    page: 1,
+    limit: 100
+  });
+  const { data: countries = [] } = useGetAllCountriesQuery({
+    page: 1,
+    limit: 100
+  });
+
+  const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
+
   const handleSubmit = async (values) => {
     try {
-      await createLead(values).unwrap();
+      // Format phone number with country code
+      const formattedPhone = values.telephone ?
+        `+${values.phoneCode} ${values.telephone}` :
+        null;
+
+      const formData = {
+        ...values,
+        telephone: formattedPhone,
+        // Make sure other null fields have default values
+        assigned: values.assigned || [],
+        lead_members: values.lead_members || [],
+        files: values.files || [],
+        tag: values.tag || [],
+        leadStage: values.leadStage || 'new',
+        status: values.status || 'active',
+        source: values.source || 'website'
+      };
+
+      const response = await createLead(formData).unwrap();
       message.success("Lead created successfully");
       form.resetFields();
       onCancel();
@@ -83,6 +124,27 @@ const CreateLead = ({ open, onCancel }) => {
   const handleCancel = () => {
     form.resetFields();
     onCancel();
+  };
+
+  // Add these consistent styles
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500"
+  };
+
+  const inputStyle = {
+    height: "48px",
+    borderRadius: "10px",
+    padding: "8px 16px",
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e6e8eb",
+    transition: "all 0.3s ease"
+  };
+
+  const prefixIconStyle = {
+    color: "#1890ff",
+    fontSize: "16px",
+    marginRight: "8px"
   };
 
   return (
@@ -175,104 +237,50 @@ const CreateLead = ({ open, onCancel }) => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        requiredMark={false}
-        style={{
-          padding: "24px",
-        }}
+        className="lead-form"
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: "24px",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <Form.Item
-              name="leadTitle"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Lead Title
-                </span>
-              }
-              rules={[
-                { required: true, message: "Please enter lead title" },
-                { min: 3, message: "Lead title must be at least 3 characters" },
-              ]}
-            >
-              <Input
-                prefix={
-                  <FiUser style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter lead title"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                  transition: "all 0.3s ease",
-                }}
-              />
-            </Form.Item>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "16px",
-            marginBottom: "24px",
-          }}
-        >
+        <div className="form-grid">
           <Form.Item
             name="firstName"
-            label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                First Name
-              </span>
-            }
+            label={<span style={formItemStyle}>First Name</span>}
             rules={[{ required: true, message: "Please enter first name" }]}
           >
             <Input
-              prefix={<FiUser style={{ color: "#1890ff", fontSize: "16px" }} />}
+              prefix={<FiUser style={prefixIconStyle} />}
               placeholder="Enter first name"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
+              style={inputStyle}
             />
           </Form.Item>
 
           <Form.Item
             name="lastName"
-            label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                Last Name
-              </span>
-            }
+            label={<span style={formItemStyle}>Last Name</span>}
             rules={[{ required: true, message: "Please enter last name" }]}
           >
             <Input
-              prefix={<FiUser style={{ color: "#1890ff", fontSize: "16px" }} />}
+              prefix={<FiUser style={prefixIconStyle} />}
               placeholder="Enter last name"
+              style={inputStyle}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="leadTitle"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Lead Title
+              </span>
+            }
+            rules={[
+              { required: true, message: "Please enter lead title" },
+              { min: 3, message: "Lead title must be at least 3 characters" },
+            ]}
+          >
+            <Input
+              prefix={
+                <FiUser style={prefixIconStyle} />
+              }
+              placeholder="Enter lead title"
               size="large"
               style={{
                 borderRadius: "10px",
@@ -314,120 +322,131 @@ const CreateLead = ({ open, onCancel }) => {
           </Form.Item>
 
           <Form.Item
-            name="currency"
-            label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                Currency
-              </span>
-            }
+            name="leadValueGroup"
+            label={<span style={formItemStyle}>Lead Value</span>}
+            className="combined-input-item"
           >
-            <Select
-              placeholder="Select currency"
-              size="large"
-              style={{
-                borderRadius: "10px",
-              }}
-            >
-              <Option value="USD">USD</Option>
-              <Option value="EUR">EUR</Option>
-              <Option value="GBP">GBP</Option>
-            </Select>
+            <Input.Group compact className="value-input-group">
+              <Form.Item
+                name="currency"
+                noStyle
+                initialValue={defaultCurrency}
+              >
+                <Select
+                  style={{ width: '100px' }}
+                  className="currency-select"
+                  dropdownMatchSelectWidth={false}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={(input, option) => {
+                    const currencyData = currencies.find(c => c.currencyCode === option.value);
+                    return (
+                      currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
+                      currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
+                    );
+                  }}
+                  dropdownStyle={{ minWidth: '180px' }}
+                  dropdownRender={(menu) => (
+                    <div>
+                      {menu}
+                    </div>
+                  )}
+                >
+                  {currencies?.map((currency) => (
+                    <Option key={currency.id} value={currency.currencyCode}>
+                      <div className="currency-option">
+                        <span className="currency-icon">{currency.currencyIcon}</span>
+                        <div className="currency-details">
+                          <span className="currency-code">{currency.currencyCode}</span>
+                          <span className="currency-name">{currency.currencyName}</span>
+                        </div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="leadValue"
+                noStyle
+                rules={[{ required: true, message: 'Please enter lead value' }]}
+              >
+                <Input
+                  style={{ width: 'calc(100% - 100px)' }}
+                  placeholder="Enter amount"
+                  prefix={<FiDollarSign style={prefixIconStyle} />}
+                />
+              </Form.Item>
+            </Input.Group>
           </Form.Item>
 
           <Form.Item
-            name="leadValue"
-            label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                Lead Value
-              </span>
-            }
+            name="phoneGroup"
+            label={<span style={formItemStyle}>Phone Number</span>}
+            className="combined-input-item"
           >
-            <Input
-              prefix={
-                <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
-              }
-              placeholder="Enter lead value"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="telephone"
-            label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
+            <Input.Group compact className="phone-input-group">
+              <Form.Item
+                name="phoneCode"
+                noStyle
+                initialValue={defaultPhoneCode}
               >
-                Telephone
-              </span>
-            }
-          >
-            <Input
-              prefix={
-                <FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />
-              }
-              placeholder="Enter telephone number"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
-            />
+                <Select
+                  style={{ width: '100px' }}
+                  dropdownMatchSelectWidth={false}
+                  showSearch
+                  optionFilterProp="children"
+                  className="phone-code-select"
+                  suffixIcon={<FiChevronDown size={14} />}
+                  filterOption={(input, option) => {
+                    const countryData = countries.find(c => c.phoneCode.replace('+', '') === option.value);
+                    return (
+                      countryData?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
+                      countryData?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
+                      countryData?.phoneCode?.includes(input)
+                    );
+                  }}
+                  dropdownStyle={{ minWidth: '200px' }}
+                >
+                  {countries?.map((country) => (
+                    <Option key={country.id} value={country.phoneCode.replace('+', '')}>
+                      <div className="phone-code-option">
+                        <div className="phone-code-main">
+                          <span className="phone-code">+{country.phoneCode.replace('+', '')}</span>
+                          <span className="country-code">{country.countryCode}</span>
+                        </div>
+                        <span className="country-name">{country.countryName}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="telephone"
+                noStyle
+                rules={[{ required: true, message: 'Please enter phone number' }]}
+              >
+                <Input
+                  style={{ width: 'calc(100% - 100px)' }}
+                  placeholder="Enter phone number"
+                  prefix={<FiPhone style={prefixIconStyle} />}
+                />
+              </Form.Item>
+            </Input.Group>
           </Form.Item>
 
           <Form.Item
             name="email"
-            label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                Email
-              </span>
-            }
+            label={<span style={formItemStyle}>Email</span>}
             rules={[
               { required: true, message: "Please enter email" },
-              { type: "email", message: "Please enter a valid email" },
+              { type: "email", message: "Please enter a valid email" }
             ]}
           >
             <Input
-              prefix={<FiMail style={{ color: "#1890ff", fontSize: "16px" }} />}
-              placeholder="Enter email"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
+              prefix={<FiMail style={prefixIconStyle} />}
+              placeholder="Enter email address"
+              style={inputStyle}
             />
           </Form.Item>
 
@@ -638,7 +657,7 @@ const CreateLead = ({ open, onCancel }) => {
           >
             <Input
               prefix={
-                <FiBriefcase style={{ color: "#1890ff", fontSize: "16px" }} />
+                <FiBriefcase style={prefixIconStyle} />
               }
               placeholder="Enter company name"
               size="large"
@@ -667,7 +686,7 @@ const CreateLead = ({ open, onCancel }) => {
             }
           >
             <Input
-              prefix={<FiHash style={{ color: "#1890ff", fontSize: "16px" }} />}
+              prefix={<FiHash style={prefixIconStyle} />}
               placeholder="Enter client ID"
               size="large"
               style={{

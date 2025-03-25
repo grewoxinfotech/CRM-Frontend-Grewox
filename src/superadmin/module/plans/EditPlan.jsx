@@ -188,7 +188,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                             />
                         </Form.Item>
                     </Col>
-                                
+
                 </Row>
 
                 <Row gutter={16}>
@@ -242,7 +242,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                     className="price-input"
                                     placeholder="Enter price"
                                     min={0}
-                                    style={{ flex: 1, border: 'none', borderRadius: 0 ,padding: '0 16px'}}
+                                    style={{ flex: 1, border: 'none', borderRadius: 0, padding: '0 16px' }}
                                     onChange={(value) => form.setFieldsValue({ price_group: value?.toString() })}
                                 />
                             </Input.Group>
@@ -456,7 +456,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     />
                 </Form.Item>
 
-              
+
 
                 <Divider style={{ margin: '24px 0' }} />
 

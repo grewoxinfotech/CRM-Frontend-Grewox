@@ -5,6 +5,12 @@
     padding: 0 !important;
 }
 
+*:focus {
+    outline: none;
+}
+
+
+
 /* Fix for browser autofill background color */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

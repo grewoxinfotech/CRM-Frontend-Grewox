@@ -681,15 +681,15 @@
                             height: 20px;
                             min-width: 40px;
                         }
-                        
+
                         &.switch-active {
                             background-color: #52c41a;
                         }
-                        
+
                         &.switch-inactive {
                             background-color: #ff4d4f;
                         }
-                        
+
                         &-checked {
                             background-color: #52c41a;
                         }
@@ -1086,11 +1086,11 @@
     .ant-modal-content {
         border-radius: 8px;
         padding: 20px;
-        
+
         @media (max-width: 576px) {
             padding: 16px;
         }
-        
+
         .ant-modal-body {
             padding: 0;
             margin: 16px 0;
@@ -1113,7 +1113,7 @@
             text-align: center;
             margin-top: 8px;
 
-            
+
             .ant-modal-confirm-body-wrapper {
                 .ant-modal-confirm-body {
                     .ant-modal-confirm-title {
@@ -1121,7 +1121,7 @@
                         font-weight: 500;
                         margin-bottom: 8px;
                     }
-                    
+
                     .ant-modal-confirm-content {
                         font-size: 14px;
                         color: rgba(0, 0, 0, 0.65);
@@ -1129,7 +1129,7 @@
                         margin-top: 8px;
                     }
                 }
-                
+
                 .ant-modal-confirm-btns {
                     margin-top: 24px;
                     display: flex;
@@ -1141,7 +1141,7 @@
                         border-color: #ff4d4f;
                         color: white;
                         border-radius: 2px;
-                        
+
                         &:hover {
                             background: #ff7875;
                             border-color: #ff7875;
@@ -1150,7 +1150,7 @@
 
                     .delete-cancel-button {
                         border-radius: 2px;
-                        
+
                         &:hover {
                             border-color: #40a9ff;
                             color: #40a9ff;
@@ -1174,7 +1174,7 @@
         padding: 20px !important;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        
+
         .ant-modal-confirm-body {
             .ant-modal-confirm-title {
                 font-size: 14px;
@@ -1183,7 +1183,7 @@
                 padding: 0;
                 margin: 0 0 16px 0;
             }
-            
+
             .ant-modal-confirm-content {
                 font-size: 14px;
                 color: rgba(0, 0, 0, 0.65);
@@ -1191,7 +1191,7 @@
                 padding: 0;
             }
         }
-        
+
         .ant-modal-confirm-btns {
             margin-top: 20px;
             display: flex;
@@ -1209,7 +1209,7 @@
                 &-primary {
                     background: #ff4d4f;
                     border-color: #ff4d4f;
-                    
+
                     &:hover {
                         background: #ff7875;
                         border-color: #ff7875;
@@ -1218,7 +1218,7 @@
 
                 &-default {
                     border: 1px solid #d9d9d9;
-                    
+
                     &:hover {
                         color: #40a9ff;
                         border-color: #40a9ff;

@@ -320,7 +320,7 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                         }
                         rules={[{ required: true, message: 'Please enter first name' }]}
                     >
-                        
+
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter first name"
@@ -440,14 +440,14 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                                     optionFilterProp="children"
                                 >
                                     {countries?.map(country => (
-                                        <Option 
-                                            key={country.phoneCode} 
+                                        <Option
+                                            key={country.phoneCode}
                                             value={country.phoneCode}
                                             style={{ cursor: 'pointer' }}
                                         >
-                                            <div style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
                                                 justifyContent: 'center',
                                                 color: '#262626',
                                                 cursor: 'pointer',
@@ -458,8 +458,8 @@ const EditSubclient = ({ open, onCancel, initialValues }) => {
                                     ))}
                                 </Select>
                             </Form.Item>
-                    <Form.Item
-                        name="phone"
+                            <Form.Item
+                                name="phone"
                                 noStyle
                                 rules={[
                                     { required: true, message: 'Please enter phone number' },

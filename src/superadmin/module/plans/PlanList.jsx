@@ -42,7 +42,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
     });
 
 
-    
+
 
     const columns = [
         {
