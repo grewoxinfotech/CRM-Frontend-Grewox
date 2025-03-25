@@ -1,0 +1,162 @@
+import React from 'react';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Modal } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiMail, FiPhone } from 'react-icons/fi';
+import dayjs from 'dayjs';
+
+const { Text } = Typography;
+
+    const CustomerList = ({ onEdit, onDelete, onView, searchText = '', customers = [] }) => {
+    const filteredCustomers = React.useMemo(() => {
+        return customers.filter(customer => {
+            const searchLower = searchText.toLowerCase();
+            const name = customer?.name?.toLowerCase() || '';
+            const email = customer?.email?.toLowerCase() || '';
+            const company = customer?.company?.toLowerCase() || '';
+            const phone = customer?.phone?.toLowerCase() || '';
+
+            return !searchText ||
+                name.includes(searchLower) ||
+                email.includes(searchLower) ||
+                company.includes(searchLower) ||
+                phone.includes(searchLower);
+        });
+    }, [customers, searchText]);
+
+    const handleDelete = (id) => {
+        Modal.confirm({
+            title: 'Delete Customer',
+            content: 'Are you sure you want to delete this customer?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deleteCustomer(id).unwrap();
+                    message.success('Customer deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete customer');
+                }
+            },
+        });
+    };
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'view',
+                icon: <FiEye />,
+                label: 'View Details',
+                onClick: () => onView?.(record),
+            },
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: 'Edit',
+                onClick: () => onEdit?.(record),
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: 'Delete',
+                onClick: () => handleDelete(record.id),
+                danger: true,
+            },
+        ],
+    });
+
+    const columns = [
+        {
+            title: 'Customer Number',
+            dataIndex: 'customer_number',
+            key: 'customer_number',
+            sorter: (a, b) => (a?.customer_number || '').localeCompare(b?.customer_number || ''),
+            render: (text, record) => (
+                <Text strong style={{ cursor: 'pointer' }} onClick={() => onView?.(record)}>
+                    {text}
+                </Text>
+            ),
+        },
+        {
+            title: 'Name',
+            dataIndex: 'name',
+            key: 'name',
+            sorter: (a, b) => (a?.name || '').localeCompare(b?.name || ''),
+        },
+        {
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+            render: (email) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FiMail style={{ color: '#1890ff' }} />
+                    <a href={`mailto:${email}`}>{email}</a>
+                </div>
+            ),
+        },
+        {
+            title: 'Contact',
+            dataIndex: 'phone',
+            key: 'phone',
+            render: (phone) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FiPhone style={{ color: '#1890ff' }} />
+                    <a href={`tel:${phone}`}>{phone}</a>
+                </div>
+            ),
+        },
+        {
+            title: 'Alternate Number',
+            dataIndex: 'alternate_number',
+            key: 'alternate_number',
+            sorter: (a, b) => (a?.alternate_number || '').localeCompare(b?.alternate_number || ''),
+        },
+        {
+            title: 'Text Number',
+            dataIndex: 'text_number',
+            key: 'text_number',
+            sorter: (a, b) => (a?.text_number || '').localeCompare(b?.text_number || ''),
+        },
+        {
+            title: 'Action',
+            key: 'actions',
+            width: 80,
+            align: 'center',
+            render: (_, record) => (
+                <Dropdown
+                    menu={getDropdownItems(record)}
+                    trigger={['click']}
+                    placement="bottomRight"
+                    overlayClassName="customer-actions-dropdown"
+                >
+                    <Button
+                        type="text"
+                        icon={<FiMoreVertical />}
+                        className="action-dropdown-button"
+                        onClick={(e) => e.preventDefault()}
+                    />
+                </Dropdown>
+            ),
+        },
+    ];
+
+    return (
+        <div className="customer-list">
+            <Table
+                columns={columns}
+                dataSource={filteredCustomers}
+                rowKey="id"
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                className="customer-table"
+            />
+        </div>
+    );
+};
+
+export default CustomerList; 

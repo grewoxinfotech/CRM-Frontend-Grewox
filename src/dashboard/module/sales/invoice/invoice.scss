@@ -1,0 +1,698 @@
+@import '../../../../styles/theme/theme.scss';
+
+// Variables
+$modal-radius: 12px;
+$input-height: 44px;
+$border-radius: 10px;
+$gradient-primary: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+$gradient-primary-hover: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+$border-color: #e6e8eb;
+$bg-light: #f8fafc;
+
+// Common hover effect mixin
+@mixin hover-shadow {
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.invoice-page {
+    padding: 24px;
+    background: $background-color;
+
+    .page-breadcrumb {
+        margin-bottom: 16px;
+
+        .ant-breadcrumb {
+            font-size: 14px;
+
+            .ant-breadcrumb-link {
+                color: $text-color-light;
+                transition: all 0.3s ease;
+
+                a {
+                    color: $text-color-light;
+                    display: inline-flex;
+                    align-items: center;
+
+                    &:hover {
+                        color: #1677ff;
+                    }
+                }
+
+                &:last-child {
+                    color: $text-color-dark;
+                    font-weight: 500;
+                }
+            }
+
+            .ant-breadcrumb-separator {
+                margin: 0 8px;
+                color: $text-color-light;
+            }
+        }
+    }
+
+    .page-header {
+        @include hover-shadow;
+        margin-bottom: 24px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        background: white;
+        padding: 24px 32px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+        .page-title {
+            text-align: left;
+            margin-bottom: 0;
+            flex-shrink: 0;
+
+            h2 {
+                color: $text-color-dark;
+                margin-bottom: 4px;
+                font-size: 28px;
+                font-weight: 600;
+                line-height: 1.2;
+            }
+
+            .ant-typography-secondary {
+                color: $text-color-light;
+                font-size: 15px;
+                display: block;
+            }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 16px;
+            width: 100%;
+            max-width: 800px;
+
+            .search-input {
+                flex: 1;
+                max-width: 360px;
+                min-width: 200px;
+
+                .ant-input-affix-wrapper {
+                    border-radius: 40px;
+                    height: 40px;
+                    padding: 4px 16px;
+                    transition: all 0.3s ease;
+                    border: 1px solid $border-color;
+                    width: 100%;
+
+                    .anticon {
+                        color: $text-color-light;
+                        margin-right: 8px;
+                        font-size: 16px;
+                    }
+
+                    .ant-input {
+                        font-size: 14px;
+                        background: transparent;
+                        border: none;
+                        padding: 0;
+                        margin: 0 4px;
+
+                        &::placeholder {
+                            color: rgba($text-color, 0.45);
+                        }
+                    }
+
+                    &:hover,
+                    &:focus,
+                    &-focused {
+                        border-color: #1677ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+                }
+            }
+
+            .action-buttons {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-shrink: 0;
+
+                .export-button,
+                .add-button {
+                    height: 40px;
+                    padding: 0 20px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+
+                    svg {
+                        font-size: 16px;
+                    }
+                }
+
+                .export-button {
+                    border: 1px solid $border-color;
+                    background: white;
+
+                    &:hover {
+                        color: #1677ff;
+                        border-color: #1677ff;
+                        transform: translateY(-2px);
+                    }
+                }
+
+                .add-button {
+                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                    border: none;
+                    color: white;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                        transform: translateY(-2px);
+                    }
+                }
+            }
+        }
+    }
+
+    .invoice-table-card {
+        @include hover-shadow;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+        .ant-card-body {
+            padding: 0;
+        }
+
+        .ant-table-wrapper {
+            .ant-table {
+                background: transparent;
+
+                .ant-table-thead>tr>th {
+                    background: #fafafa;
+                    font-weight: 600;
+                    color: $text-color-dark;
+                    padding: 16px 24px;
+                    border-bottom: 1px solid $border-color;
+
+                    &::before {
+                        display: none;
+                    }
+                }
+
+                .ant-table-tbody>tr>td {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid $border-color;
+
+                    &:last-child {
+                        padding-right: 24px;
+                    }
+                }
+
+                .ant-table-row {
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        background: #fafafa;
+                    }
+                }
+            }
+
+            .ant-table-pagination {
+                margin: 16px 24px;
+            }
+        }
+    }
+}
+
+// Form Elements
+.custom-input {
+    height: $input-height;
+    border-radius: $border-radius;
+    border: 1px solid $border-color;
+    background-color: #f8fafc;
+    transition: all 0.3s ease;
+    padding: 8px 16px;
+
+    &:hover, &:focus {
+        background-color: #fff;
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+
+    &.ant-input-affix-wrapper {
+        .ant-input {
+            background: transparent;
+            border: none;
+            padding: 0;
+            height: 100%;
+        }
+
+        .ant-input-prefix {
+            margin-right: 8px;
+            color: #1890ff;
+        }
+    }
+}
+
+.custom-select {
+    .ant-select-selector {
+        height: $input-height;
+        border-radius: $border-radius;
+        border: 1px solid $border-color;
+        background-color: #f8fafc;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        padding: 0 16px !important;
+
+        &:hover, &:focus {
+            background-color: #fff;
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+        }
+
+        .ant-select-selection-search {
+            left: 16px;
+            
+            .ant-select-selection-search-input {
+                height: 42px !important;
+            }
+        }
+
+        .ant-select-selection-item {
+            line-height: 42px !important;
+        }
+    }
+
+    &.ant-select-focused {
+        .ant-select-selector {
+            background-color: #fff !important;
+            border-color: #1890ff !important;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+        }
+    }
+}
+
+.custom-datepicker {
+    height: $input-height;
+    border-radius: $border-radius;
+    border: 1px solid $border-color;
+    background-color: #f8fafc;
+    transition: all 0.3s ease;
+    width: 100%;
+
+    &:hover, &:focus {
+        background-color: #fff;
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+
+    .ant-picker-input {
+        > input {
+            font-size: 14px;
+            color: $text-color;
+        }
+
+        .ant-picker-suffix {
+            color: #1890ff;
+        }
+    }
+}
+
+.custom-input-number {
+    height: $input-height;
+    border-radius: $border-radius;
+    border: 1px solid $border-color;
+    background-color: #f8fafc;
+    transition: all 0.3s ease;
+    width: 100%;
+    padding: 4px 12px;
+
+    &:hover, &:focus {
+        background-color: #fff;
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+
+    .ant-input-number-input {
+        height: 100%;
+        padding: 0;
+        font-size: 14px;
+    }
+
+    &.ant-input-number-disabled {
+        background-color: #f8fafc !important;
+        color: $text-color !important;
+        cursor: not-allowed;
+
+        &:hover {
+            border-color: $border-color !important;
+            box-shadow: none !important;
+        }
+    }
+}
+
+// Modal Styles
+.pro-modal.custom-modal {
+    .ant-modal-content {
+        padding: 0;
+        border-radius: $modal-radius;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: $gradient-primary;
+        padding: 24px;
+        margin-bottom: 0;
+        position: relative;
+
+        .close-button {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            border: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+        }
+    }
+
+    .ant-form {
+        padding: 24px;
+
+        .ant-form-item {
+            margin-bottom: 24px;
+
+            &-label {
+                padding-bottom: 4px;
+
+                label {
+                    height: 24px;
+                    color: $text-color-dark;
+                    font-weight: 500;
+                    font-size: 14px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+
+                    .anticon {
+                        color: #1890ff;
+                        font-size: 16px;
+                    }
+                }
+            }
+        }
+
+        // Products Section
+        .products-section {
+            margin: 24px 0;
+
+            .products-header {
+                background: #f8fafc;
+                padding: 12px;
+                border-radius: $border-radius;
+                margin-bottom: 16px;
+
+                .ant-typography {
+                    color: #64748b;
+                    font-size: 14px;
+                }
+            }
+
+            .product-row {
+                margin-bottom: 16px;
+                padding: 16px;
+                border: 1px solid $border-color;
+                border-radius: $border-radius;
+                background: #fff;
+
+                .ant-form-item {
+                    margin-bottom: 8px;
+                }
+
+                .description-textarea {
+                    .ant-input {
+                        border-radius: $border-radius;
+                        min-height: 60px;
+                    }
+                }
+            }
+
+            .add-item-button {
+                width: auto;
+                height: 40px;
+                border-radius: $border-radius;
+                border: 1px dashed #1890ff;
+                color: #1890ff;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 0 20px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background: rgba(24, 144, 255, 0.04);
+                }
+            }
+        }
+
+        // Totals Section
+        .totals-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: $border-radius;
+            border: 1px solid $border-color;
+
+            .total-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+
+                &:last-child {
+                    margin-bottom: 0;
+                    padding-top: 16px;
+                    border-top: 1px solid $border-color;
+
+                    .ant-typography {
+                        font-weight: 600;
+                        color: $text-color-dark;
+                    }
+                }
+
+                .ant-typography {
+                    color: #64748b;
+                    font-size: 14px;
+                }
+
+                .ant-input-number {
+                    width: 150px;
+                }
+
+                .ant-space {
+                    .ant-typography {
+                        width: 20px;
+                        text-align: center;
+                    }
+                }
+            }
+        }
+    }
+
+    // Form Actions
+    .form-actions {
+        padding: 16px 24px;
+        border-top: 1px solid $border-color;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+
+        .custom-button {
+            height: 44px;
+            padding: 0 24px;
+            border-radius: $border-radius;
+            font-weight: 500;
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-1px);
+            }
+        }
+
+        .custom-button-primary {
+            background: $gradient-primary;
+            border: none;
+            color: #fff;
+            padding: 0 32px;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+
+            &:hover {
+                background: $gradient-primary-hover;
+                box-shadow: 0 6px 16px rgba(24, 144, 255, 0.25);
+            }
+        }
+    }
+}
+
+// Invoice Status Tag Styles
+.invoice-status-tag {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+
+    &.draft {
+        color: #d97706;
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
+    }
+
+    &.pending {
+        color: #2563eb;
+        background: #dbeafe;
+        border: 1px solid #60a5fa;
+    }
+
+    &.paid {
+        color: #059669;
+        background: #d1fae5;
+        border: 1px solid #34d399;
+    }
+
+    &.overdue {
+        color: #dc2626;
+        background: #fee2e2;
+        border: 1px solid #f87171;
+    }
+}
+
+// Custom Delete Modal Styles
+.custom-delete-modal {
+    .ant-modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 0;
+
+        .ant-modal-body {
+            padding: 24px;
+        }
+
+        .ant-modal-confirm-btns {
+            margin-top: 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+
+            .ant-btn {
+                height: 40px;
+                padding: 0 24px;
+                border-radius: 8px;
+                font-weight: 500;
+
+                &-primary {
+                    background: #ff4d4f;
+                    border-color: #ff4d4f;
+
+                    &:hover {
+                        background: #ff7875;
+                        border-color: #ff7875;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+    .invoice-page {
+        .page-header {
+            flex-direction: column;
+            padding: 16px;
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+
+                .search-input {
+                    max-width: 100%;
+                }
+
+                .action-buttons {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+            }
+        }
+
+        .invoice-table-card {
+            .ant-table {
+                .ant-table-thead>tr>th,
+                .ant-table-tbody>tr>td {
+                    padding: 12px 8px;
+                }
+            }
+        }
+    }
+
+    .pro-modal.custom-modal {
+        .ant-form {
+            padding: 16px;
+
+            .products-section {
+                .product-row {
+                    padding: 12px;
+                }
+            }
+
+            .totals-section {
+                padding: 16px;
+
+                .total-row {
+                    .ant-input-number {
+                        width: 120px;
+                    }
+                }
+            }
+        }
+
+        .form-actions {
+            padding: 12px 16px;
+            flex-direction: column;
+
+            .custom-button {
+                width: 100%;
+            }
+        }
+    }
+} 

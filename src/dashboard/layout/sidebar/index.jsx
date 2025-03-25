@@ -38,6 +38,7 @@ import {
   FiBell,
   FiFile,
   FiBookOpen,
+  FiPackage,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
@@ -52,6 +53,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   const [isHrmOpen, setHrmOpen] = useState(false);
   const [isSupportOpen, setSupportOpen] = useState(false);
   const [isJobOpen, setJobOpen] = useState(false);
+  const [isSalesOpen, setSalesOpen] = useState(false);
   const handleLogout = useLogout();
 
   const userRole = useSelector(selectUserRole);
@@ -137,12 +139,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
           permission: "dashboards-project-list"
         },
         {
-          title: "Sales",
-          icon: <FiDollarSign />,
-          path: "/dashboard/crm/sales",
-          permission: "dashboards-sales"
-        },
-        {
           title: "Leads",
           icon: <FiTarget />,
           path: "/dashboard/crm/leads",
@@ -177,6 +173,45 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
           icon: <FiSettings />,
           path: "/dashboard/crm-setup",
           permission: "dashboards-systemsetup"
+        }
+      ].filter(item => shouldShowMenuItem(item)),
+    },
+    {
+      title: "Sales",
+      icon: <FiShoppingCart />,
+      isDropdown: true,
+      permission: 'dashboards-sales',
+      subItems: [
+
+        {
+          title: "Product & Services",
+          icon: <FiPackage />,
+          path: "/dashboard/sales/product-services",
+          permission: "dashboards-sales-product-services"
+        },
+        {
+          title: "Customer",
+          icon: <FiUsers />,
+          path: "/dashboard/sales/customer",
+          permission: "dashboards-sales-customer"
+        },
+        {
+          title: "Invoice",
+          icon: <FiFileText />,
+          path: "/dashboard/sales/invoice",
+          permission: "dashboards-sales-invoice"
+        },
+        {
+          title: "Revenue",
+          icon: <FiTrendingUp />,
+          path: "/dashboard/sales/revenue",
+          permission: "dashboards-sales-revenue"
+        },
+        {
+          title: "Credit Notes",
+          icon: <FiFile />,
+          path: "/dashboard/sales/credit-notes",
+          permission: "dashboards-sales-credit-notes"
         }
       ].filter(item => shouldShowMenuItem(item)),
     },
@@ -474,6 +509,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
               ? renderNavItem(item)
               : item.title === "CRM"
                 ? renderDropdown(item, isCrmOpen, setCrmOpen)
+                : item.title === "Sales"
+                  ? renderDropdown(item, isSalesOpen, setSalesOpen)
                 : item.title === "User Management"
                   ? renderDropdown(
                     item,

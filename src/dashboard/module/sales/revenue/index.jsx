@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
     Dropdown, Menu, Breadcrumb
@@ -9,111 +9,104 @@ import {
     FiChevronDown
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import TaskList from './TaskList';
-import CreateTask from './CreateTask';
-import EditTask from './EditTask';
-import './task.scss';
+import RevenueList from './RevenueList';
+import CreateRevenue from './CreateRevenue';
+import EditRevenue from './EditRevenue';
+import './revenue.scss';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import moment from 'moment';
-import { useGetAllTasksQuery } from './services/taskApi';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../auth/services/authSlice';
-import { useGetUsersQuery } from '../../../module/user-management/users/services/userApi';
-import { useDeleteTaskMutation } from './services/taskApi';
+
 const { Title, Text } = Typography;
 
-const Task = () => {
+const Revenue = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedTask, setSelectedTask] = useState(null);
+    const [selectedRevenue, setSelectedRevenue] = useState(null);
     const [searchText, setSearchText] = useState('');
-    const [filters, setFilters] = useState({
-        dateRange: [],
-        status: undefined,
-        priority: undefined
-    });
     const [loading, setLoading] = useState(false);
-    const user = useSelector(selectCurrentUser);
-    const id = user?.client_id;
-    const [deleteTask] = useDeleteTaskMutation();
-    // Fetch tasks using RTK Query
-    const { data: tasks = [], isLoading: tasksLoading, refetch } = useGetAllTasksQuery(id);
-    const tasksData = tasks?.data || [];
-    console.log("tasksData", tasksData)
-    // Fetch users for assignee selection
-    const { data: usersData = [], isLoading: usersLoading } = useGetUsersQuery();
-    const users = usersData?.data || [];
+
+    // Dummy data for demonstration
+    const revenueData = [
+        {
+            id: 1,
+            amount: 1500.00,
+            account: "1234567890",
+            date: "2023-12-01",
+            customer: "John Doe",
+            category: "Sales",
+            description: "Product sales revenue",
+            status: "Completed"
+
+            
+        },
+        // Add more dummy data as needed
+    ];
 
     const handleCreate = () => {
-        setSelectedTask(null);
+        setSelectedRevenue(null);
         setIsCreateModalOpen(true);
     };
 
     const handleEdit = (record) => {
-        setSelectedTask(record);
+        setSelectedRevenue(record);
         setIsEditModalOpen(true);
     };
 
-    const handleModalSubmit = async (values) => {
-        try {
-            await refetch(); // Refetch tasks after successful creation
-            setIsCreateModalOpen(false);
-            setSelectedTask(null);
-        } catch (error) {
-            console.error('Error handling submission:', error);
-        }
-    };
-
     const handleView = (record) => {
-        console.log('View task:', record);
+        console.log('View revenue:', record);
     };
 
     const handleDelete = (record) => {
         Modal.confirm({
-            title: 'Delete Task',
-            content: 'Are you sure you want to delete this task?',
+            title: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#faad14', fontSize: '22px' }}>⚠</span>
+                    Delete Revenue Entry
+                </div>
+            ),
+            content: 'Are you sure you want to delete this revenue entry?',
             okText: 'Yes',
-            okType: 'danger',
             cancelText: 'No',
-            bodyStyle: {
-                padding: '20px',
+            centered: true,
+            className: 'custom-delete-modal',
+            icon: null,
+            maskClosable: true,
+            okButtonProps: {
+                danger: true,
+                size: 'middle'
             },
-            onOk: async () => {
-                try {
-                    await deleteTask(record.id).unwrap();
-                    message.success('Task deleted successfully');
-                } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete task');
-                }
+            cancelButtonProps: {
+                size: 'middle'
             },
+            onOk: () => {
+                message.success('Revenue entry deleted successfully');
+            }
         });
     };
 
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = tasks.map(task => ({
-                'Task Name': task.taskName,
-                'Category': task.category,
-                'Status': task.status,
-                'Priority': task.priority,
-                'Assigned To': task.assignedTo,
-                'Start Date': moment(task.startDate).format('YYYY-MM-DD'),
-                'Due Date': moment(task.dueDate).format('YYYY-MM-DD'),
-                'Created Date': moment(task.created_at).format('YYYY-MM-DD')
+            const data = revenueData.map(revenue => ({
+                'Amount': revenue.amount,
+                'Date': revenue.date,
+                'Payment Method': revenue.payment_method,
+                'Category': revenue.category,
+                'Description': revenue.description,
+                'Status': revenue.status
             }));
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'tasks_export');
+                    exportToCSV(data, 'revenue_export');
                     break;
                 case 'excel':
-                    exportToExcel(data, 'tasks_export');
+                    exportToExcel(data, 'revenue_export');
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'tasks_export');
+                    exportToPDF(data, 'revenue_export');
                     break;
                 default:
                     break;
@@ -149,7 +142,7 @@ const Task = () => {
     const exportToExcel = (data, filename) => {
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Tasks');
+        XLSX.utils.book_append_sheet(wb, ws, 'Revenue');
         XLSX.writeFile(wb, `${filename}.xlsx`);
     };
 
@@ -191,7 +184,7 @@ const Task = () => {
     );
 
   return (
-        <div className="task-page">
+        <div className="customer-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -201,22 +194,22 @@ const Task = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        <Link to="/dashboard/crm">CRM</Link>
+                        <Link to="/dashboard/sales">Sales</Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>Tasks</Breadcrumb.Item>
+                    <Breadcrumb.Item>Revenue</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
             <div className="page-header">
                 <div className="page-title">
-                    <Title level={2}>Tasks</Title>
-                    <Text type="secondary">Manage all tasks in the organization</Text>
+                    <Title level={2}>Revenue</Title>
+                    <Text type="secondary">Manage all revenue entries in the organization</Text>
                 </div>
                 <div className="header-actions">
                     <div className="search-filter-group">
                         <Input
                             prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search tasks..."
+                            placeholder="Search revenue entries..."
                             allowClear
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
@@ -241,46 +234,46 @@ const Task = () => {
                             onClick={handleCreate}
                             className="add-button"
                         >
-                            Add Task
+                            Add Revenue
                         </Button>
                     </div>
                 </div>
             </div>
 
-            <Card className="task-table-card">
-                <TaskList
-                    loading={tasksLoading}
-                    tasks={tasksData}
+            <Card className="customer-table-card">
+                <RevenueList
+                    revenues={revenueData}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onView={handleView}
                     searchText={searchText}
-                    filters={filters}
-                    users={users}
                 />
             </Card>
 
-            <CreateTask
+            <CreateRevenue
                 open={isCreateModalOpen}
                 onCancel={() => setIsCreateModalOpen(false)}
-                onSubmit={handleModalSubmit}
-                relatedId={id}
-                users={users}
+                onSubmit={() => {
+                    setIsCreateModalOpen(false);
+                    message.success('Revenue entry created successfully');
+                }}
             />
 
-            <EditTask
+            <EditRevenue
                 open={isEditModalOpen}
                 onCancel={() => {
                     setIsEditModalOpen(false);
-                    setSelectedTask(null);
+                    setSelectedRevenue(null);
                 }}
-                onSubmit={handleModalSubmit}
-                initialValues={selectedTask}
-                relatedId={id}
-                users={users}
+                onSubmit={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedRevenue(null);
+                    message.success('Revenue entry updated successfully');
+                }}
+                initialValues={selectedRevenue}
             />
         </div>
     );
 };
 
-export default Task;
+export default Revenue;

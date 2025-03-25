@@ -40,12 +40,16 @@ import Crmsystem from "../dashboard/module/crm/crmsystem/index.jsx";
 import Task from "../dashboard/module/crm/task/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail";
+import Customer from "../dashboard/module/sales/customer/index.jsx";
 import { useSelector } from 'react-redux';
 import { parsePermissions, hasPermission } from '../utils/permissionUtils';
 import { Navigate } from 'react-router-dom';
 import { selectUserRole } from '../auth/services/authSlice';
-
-const PermissionRoute = ({ children, permissionKey }) => {
+import Invoice from "../dashboard/module/sales/invoice/index.jsx";
+import ProductServices from "../dashboard/module/sales/product&services/index.jsx";
+import Revenue from "../dashboard/module/sales/revenue/index.jsx";
+import CreditNotes from "../dashboard/module/sales/creditnotes/index.jsx";
+  const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -205,6 +209,31 @@ const routes = createBrowserRouter([
             path: "tasks",
             element: <Task />,
           },
+        ],
+      },
+      {
+        path: "sales",
+        children: [
+          {
+            path: "product-services",
+            element: <ProductServices />,
+          },
+          {
+            path: "customer",
+            element: <Customer />,
+          },
+          {
+            path: "invoice",
+            element: <Invoice />,
+          },
+          {
+            path: "revenue",
+            element: <Revenue />,
+          },
+          {
+            path: "credit-notes",
+            element: <CreditNotes />,
+          }
         ],
       },
       {

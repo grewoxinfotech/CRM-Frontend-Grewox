@@ -9,10 +9,6 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-
-
-
-
     const getDropdownItems = (record) => ({
         items: [
             {
