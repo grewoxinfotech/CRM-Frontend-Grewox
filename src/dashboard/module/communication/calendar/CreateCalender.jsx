@@ -1,0 +1,342 @@
+import React, { useEffect } from 'react';
+import {
+    Modal,
+    Form,
+    Input,
+    Button,
+    TimePicker,
+    Typography,
+    DatePicker,
+    Badge,
+    Select,
+    message
+} from 'antd';
+import {
+    FiCalendar,
+    FiClock,
+    FiX,
+    FiTag
+} from 'react-icons/fi';
+import dayjs from 'dayjs';
+
+const { Text } = Typography;
+const { Option } = Select;
+
+// Simple label options with colors
+const labelOptions = [
+    { value: 'personal', label: 'Personal', color: '#1890ff' },
+    { value: 'work', label: 'Work', color: '#52c41a' },
+    { value: 'important', label: 'Important', color: '#ff4d4f' },
+    { value: 'other', label: 'Other', color: '#faad14' }
+];
+
+const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
+    const [form] = Form.useForm();
+
+    useEffect(() => {
+        if (open) {
+            form.setFieldsValue({
+                date: selectedDate ? dayjs(selectedDate) : dayjs(),
+                label: 'other',
+                color: '#faad14'
+            });
+        }
+    }, [open, selectedDate, form]);
+
+    const handleSubmit = async () => {
+        try {
+            const values = await form.validateFields();
+            
+            // Create event data
+            const eventData = {
+                title: values.title.trim(),
+                startDate: selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
+                start_time: values.start_time.format('HH:mm'),
+                end_time: values.end_time.format('HH:mm'),
+                label: values.label || 'other',
+                color: values.color || '#faad14',
+                event_type: 'meeting' // Default event type
+            };
+
+        
+            
+            // Submit event
+            await onSubmit(eventData);
+            message.success('Event created successfully');
+            form.resetFields();
+            onCancel();
+
+        } catch (error) {
+            console.error('Form validation error:', error);
+            if (error.errorFields) {
+                error.errorFields.forEach(field => {
+                    message.error(`${field.name}: ${field.errors[0]}`);
+                });
+            } else {
+                message.error('Please fill all required fields correctly');
+            }
+        }
+    };
+
+    return (
+        <Modal
+            title={null}
+            open={open}
+            onCancel={onCancel}
+            footer={null}
+            width={720}
+            destroyOnClose={true}
+            centered
+            closeIcon={null}
+            className="pro-modal custom-modal"
+            style={{
+                '--antd-arrow-background-color': '#ffffff',
+            }}
+            styles={{
+                body: {
+                    padding: 0,
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                }
+            }}
+        >
+            <div
+                className="modal-header"
+                style={{
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    padding: '24px',
+                    color: '#ffffff',
+                    position: 'relative',
+                }}
+            >
+                <Button
+                    type="text"
+                    onClick={onCancel}
+                    style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        color: '#ffffff',
+                        width: '32px',
+                        height: '32px',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                    }}
+                >
+                    <FiX style={{ fontSize: '20px' }} />
+                </Button>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                    }}
+                >
+                    <div
+                        style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            backdropFilter: 'blur(8px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <FiCalendar style={{ fontSize: '24px', color: '#ffffff' }} />
+                    </div>
+                    <div>
+                        <h2
+                            style={{
+                                margin: '0',
+                                fontSize: '24px',
+                                fontWeight: '600',
+                                color: '#ffffff',
+                            }}
+                        >
+                            Create Event
+                        </h2>
+                        <Text
+                            style={{
+                                fontSize: '14px',
+                                color: 'rgba(255, 255, 255, 0.85)',
+                            }}
+                        >
+                            {selectedDate ? 
+                                `Create a new event for ${dayjs(selectedDate).format('MMMM D, YYYY')}` : 
+                                'Create a new event'
+                            }
+                        </Text>
+                    </div>
+                </div>
+            </div>
+
+            <Form
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                requiredMark={false}
+                style={{
+                    padding: '24px',
+                }}
+            >
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    {/* Event Title Field */}
+                    <Form.Item
+                        name="title"
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Event Title</span>}
+                        rules={[{ required: true, message: 'Please enter event title' }]}
+                        style={{ gridColumn: 'span 2' }}
+                    >
+                        <Input
+                            placeholder="Enter event title"
+                            size="large"
+                            style={{
+                                width: '100%',
+                                height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                            }}
+                        />
+                    </Form.Item>
+
+                    
+
+                    {/* Label Field */}
+                    <Form.Item
+                        name="label"
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Label</span>}
+                        rules={[{ required: true, message: 'Please select a label' }]}
+                    >
+                        <Select
+                            placeholder="Select label"
+                            size="large"
+                            style={{
+                                width: '100%',
+                                height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                            }}
+                            onChange={(value) => {
+                                const selectedOption = labelOptions.find(option => option.value === value);
+                                if (selectedOption) {
+                                    form.setFieldsValue({ color: selectedOption.color });
+                                }
+                            }}
+                        >
+                            {labelOptions.map(option => (
+                                <Option key={option.value} value={option.value}>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <Badge color={option.color} />
+                                        <span style={{ marginLeft: '8px' }}>{option.label}</span>
+                                    </div>
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+
+                    {/* Start Time Field */}
+                    <Form.Item
+                        name="start_time"
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
+                        rules={[{ required: true, message: 'Please select start time' }]}
+                    >
+                        <TimePicker
+                            size="large"
+                            style={{
+                                width: '100%',
+                                height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e6e8eb',
+                            }}
+                            format="HH:mm"
+                            minuteStep={15}
+                        />
+                    </Form.Item>
+
+                    {/* End Time Field */}
+                    <Form.Item
+                        name="end_time"
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time</span>}
+                        rules={[{ required: true, message: 'Please select end time' }]}
+                    >
+                        <TimePicker
+                            size="large"
+                            style={{
+                                width: '100%',
+                                height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e6e8eb',
+                            }}
+                            format="HH:mm"
+                            minuteStep={15}
+                        />
+                    </Form.Item>
+                    
+                    {/* Hidden color field */}
+                    <Form.Item
+                        name="color"
+                        hidden={true}
+                    >
+                        <Input type="hidden" />
+                    </Form.Item>
+                </div>
+
+                {/* Form Actions */}
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '12px',
+                        marginTop: '24px'
+                    }}
+                >
+                    <Button
+                        size="large"
+                        onClick={onCancel}
+                        style={{
+                            borderRadius: '8px',
+                            padding: '8px 24px',
+                            height: '48px',
+                            border: '1px solid #e6e8eb',
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        size="large"
+                        style={{
+                            borderRadius: '8px',
+                            padding: '8px 24px',
+                            height: '48px',
+                            background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
+                            border: 'none',
+                        }}
+                    >
+                        Create Event
+                    </Button>
+                </div>
+            </Form>
+        </Modal>
+    );
+};
+
+export default CreateEvent;

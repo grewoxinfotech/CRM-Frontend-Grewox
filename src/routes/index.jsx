@@ -47,8 +47,11 @@ import { Navigate } from 'react-router-dom';
 import { selectUserRole } from '../auth/services/authSlice';
 import Invoice from "../dashboard/module/sales/invoice/index.jsx";
 import ProductServices from "../dashboard/module/sales/product&services/index.jsx";
+import Meeting from "../dashboard/module/hrm/Meeting/index.jsx";
 import Revenue from "../dashboard/module/sales/revenue/index.jsx";
 import CreditNotes from "../dashboard/module/sales/creditnotes/index.jsx";
+import Calendar from "../dashboard/module/communication/calendar/index.jsx";
+import TaskCalendar from "../dashboard/module/crm/taskcalendar/index.jsx";
   const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
@@ -150,6 +153,10 @@ const routes = createBrowserRouter([
             path: "role",
             element: <Role />,
           },
+          {
+            path:"meeting",
+            element:<Meeting/>
+          }
         ],
       },
       {
@@ -209,6 +216,10 @@ const routes = createBrowserRouter([
             path: "tasks",
             element: <Task />,
           },
+          {
+            path: "task-calendar",
+            element: <TaskCalendar />,
+          },
         ],
       },
       {
@@ -235,6 +246,15 @@ const routes = createBrowserRouter([
             element: <CreditNotes />,
           }
         ],
+      },
+      {
+        path: "communication",
+        children: [
+          {
+            path: "calendar",
+            element: <Calendar/>,
+          }
+        ]
       },
       {
         path: "user-management/users",

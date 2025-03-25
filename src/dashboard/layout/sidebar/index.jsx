@@ -255,7 +255,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         {
           title: "Calendar",
           icon: <FiCalendar />,
-          path: "/dashboard/calendar",
+          path: "/dashboard/communication/calendar",
           permission: "dashboards-calendar"
         },
       ].filter(item => shouldShowMenuItem(item)),

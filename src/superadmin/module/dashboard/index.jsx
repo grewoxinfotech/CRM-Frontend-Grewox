@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Row, Col, Button, Typography, Space, Badge, Breadcrumb } from 'antd';
+import { Card, Row, Col, Button, Typography, Space, Badge, Breadcrumb, Dropdown, Menu } from 'antd';
 import { motion } from 'framer-motion';
 import {
     FiEdit2,
@@ -9,7 +9,8 @@ import {
     FiCheckCircle,
     FiServer,
     FiHome,
-    FiLogOut
+    FiLogOut,
+    FiMoreVertical
 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
@@ -194,23 +195,26 @@ const SuperAdminDashboard = () => {
                                         </div>
                                     </div>
 
-                                    <Space direction="horizontal" size="middle" className="action-buttons">
-                                        <Link to="/superadmin/profile">
-                                            <Button type="primary" icon={<FiEdit2 />}>
-                                                Edit Profile
+                                    <div className="action-buttons">
+                                        <Space direction="horizontal" size="middle" className="desktop-buttons">
+                                            <Link to="/superadmin/profile">
+                                                <Button type="primary" icon={<FiEdit2 />}>
+                                                    Edit Profile
+                                                </Button>
+                                            </Link>
+                                            <Button icon={<FiSettings />}>
+                                                Settings
                                             </Button>
-                                        </Link>
-                                        <Button icon={<FiSettings />}>
-                                            Settings
-                                        </Button>
-                                        <Button
-                                            danger
-                                            icon={<FiLogOut />}
-                                            onClick={handleLogout}
-                                        >
-                                            Logout
-                                        </Button>
-                                    </Space>
+                                            <Button
+                                                danger
+                                                icon={<FiLogOut />}
+                                                onClick={handleLogout}
+                                            >
+                                                Logout
+                                            </Button>
+                                        </Space>
+                                        
+                                    </div>
                                 </div>
                             </div>
                         </Card>
