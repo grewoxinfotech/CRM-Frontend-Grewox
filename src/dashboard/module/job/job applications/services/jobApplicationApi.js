@@ -1,22 +1,14 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '../../../../../store/baseQuery';
 
 export const jobApplicationApi = createApi({
     reducerPath: 'jobApplicationApi',
-    baseQuery: fetchBaseQuery({
-        baseUrl: import.meta.env.VITE_API_URL,
-        prepareHeaders: (headers, { getState }) => {
-            const token = getState().auth.token;
-            if (token) {
-                headers.set('authorization', `Bearer ${token}`);
-            }
-            return headers;
-        },
-    }),
+    baseQuery: baseQueryWithReauth,
     tagTypes: ['JobApplications'],
     endpoints: (builder) => ({
         getAllJobApplications: builder.query({
             query: (params) => ({
-                url: '/job-applications',
+                url: 'job-applications',
                 method: 'GET',
                 params: params,
             }),
@@ -25,7 +17,7 @@ export const jobApplicationApi = createApi({
 
         createJobApplication: builder.mutation({
             query: (data) => ({
-                url: '/job-applications',
+                url: 'job-applications',
                 method: 'POST',
                 body: data,
             }),
@@ -34,7 +26,7 @@ export const jobApplicationApi = createApi({
 
         updateJobApplication: builder.mutation({
             query: ({ id, data }) => ({
-                url: `/job-applications/${id}`,
+                url: `job-applications/${id}`,
                 method: 'PUT',
                 body: data,
             }),
@@ -43,13 +35,11 @@ export const jobApplicationApi = createApi({
 
         deleteJobApplication: builder.mutation({
             query: (id) => ({
-                url: `/job-applications/${id}`,
+                url: `job-applications/${id}`,
                 method: 'DELETE',
             }),
             invalidatesTags: ['JobApplications'],
         }),
-
-       
     }),
 });
 
@@ -58,4 +48,6 @@ export const {
     useCreateJobApplicationMutation,
     useUpdateJobApplicationMutation,
     useDeleteJobApplicationMutation,
-} = jobApplicationApi; 
+} = jobApplicationApi;
+
+export default jobApplicationApi; 

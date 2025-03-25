@@ -18,6 +18,7 @@ import CompanyCard from './CompanyCard';
 import CompanyList from './CompanyList';
 import { useGetAllCompaniesQuery, useDeleteCompanyMutation } from './services/companyApi';
 import { Link } from 'react-router-dom';
+import EditCompany from './EditCompany';
 
 const { Title, Text } = Typography;
 
@@ -29,7 +30,7 @@ const Company = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filteredCompanies, setFilteredCompanies] = useState([]);
@@ -87,14 +88,13 @@ const Company = () => {
 
     const handleAddCompany = () => {
         setSelectedCompany(null);
-        setIsEditing(false);
+        setIsEditModalVisible(false);
         setIsFormVisible(true);
     };
 
     const handleEditCompany = (company) => {
         setSelectedCompany(company);
-        setIsEditing(true);
-        setIsFormVisible(true);
+        setIsEditModalVisible(true);
     };
 
     const handleViewCompany = (company) => {
@@ -129,7 +129,7 @@ const Company = () => {
 
     const handleFormSubmit = async (formData) => {
         try {
-            if (isEditing) {
+            if (selectedCompany) {
                 await updateCompany({ id: selectedCompany.id, data: formData }).unwrap();
                 message.success('Company updated successfully');
             } else {
@@ -351,12 +351,19 @@ const Company = () => {
                 open={isFormVisible}
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
-                isEditing={isEditing}
                 initialValues={selectedCompany}
                 loading={isLoadingCompanies || isDeleting}
             />
 
-           
+            <EditCompany
+                visible={isEditModalVisible}
+                onCancel={() => {
+                    setIsEditModalVisible(false);
+                    setSelectedCompany(null);
+                }}
+                initialValues={selectedCompany}
+                loading={isLoadingCompanies}
+            />
         </div>
     );
 };

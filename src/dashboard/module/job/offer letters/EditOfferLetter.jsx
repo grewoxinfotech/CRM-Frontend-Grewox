@@ -54,7 +54,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
         limit: 100
     });
 
-    console.log("sdfsfsd",initialValues);
 
     useEffect(() => {
         if (open && initialValues) {
@@ -81,14 +80,11 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                 offer_expiry: dayjs(initialValues.offer_expiry),  // Convert to dayjs
                 expected_joining_date: dayjs(initialValues.expected_joining_date),  // Convert to dayjs
                 salary: initialValues.salary,
-                rate: initialValues.rate || '',
-                currency: initialValues.currency || 'USD',
+                currency: initialValues.currency || '₹',
                 description: initialValues.description,
                 status: initialValues.status
             };
 
-            // Log formatted values for debugging
-            console.log('Setting formatted values:', formattedValues);
 
             // Set form values
             form.setFieldsValue(formattedValues);
@@ -106,9 +102,8 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                 offer_expiry: dayjs(values.offer_expiry).format('YYYY-MM-DD'),
                 expected_joining_date: dayjs(values.expected_joining_date).format('YYYY-MM-DD'),
                 salary: values.salary,
-                rate: values.rate,
                 description: values.description,
-                currency: values.currency || 'USD',
+                currency: values.currency || '₹',
                 status: initialValues.status || 'pending',
                 client_id: localStorage.getItem('client_id'),
                 created_by: localStorage.getItem('user_id')
@@ -291,7 +286,7 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                 backgroundColor: '#f8fafc',
                             }}
                         >
-                            {jobs?.map((job) => (
+                            {jobs?.data?.map((job) => (
                                 <Option key={job.id} value={job.id}>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <FiBriefcase style={{ color: '#1890ff', fontSize: '16px', marginRight: '8px' }} />
@@ -470,48 +465,8 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                         </Form.Item>
                     </div>
 
-                    <Form.Item
-                        name="rate"
-                        label={
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Rate
-                            </span>
-                        }
-                        rules={[{ required: true, message: 'Please enter rate' }]}
-                    >
-                        <Input
-                            placeholder="Enter rate"
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
-                    </Form.Item>
 
                 </div>
-                    <Form.Item
-                        name="file"
-                        label="Offer Letter Document"
-                        rules={[{ required: false, message: 'Please upload offer letter document' }]}
-                    >
-                        <Upload
-                            fileList={fileList}
-                            onChange={handleFileChange}
-                            maxCount={1}
-                            beforeUpload={() => false}
-                            accept=".pdf,.doc,.docx"
-                        >
-                            <Button icon={<FiUpload />}>
-                                {fileList.length > 0 ? 'Replace Document' : 'Upload Document'}
-                            </Button>
-                        </Upload>
-                    </Form.Item>
 
                 <Form.Item
                     name="description"
@@ -535,7 +490,35 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                     />
                 </Form.Item>
 
-                <Divider style={{ margin: '24px 0' }} />
+                <Form.Item
+                        name="file"
+                        label="Offer Letter Document"
+                        rules={[{ required: true, message: 'Please upload offer letter document' }]}
+                        className="full-width"
+                    >
+                        <Upload.Dragger
+                            name="file"
+                            multiple={false}
+                            beforeUpload={() => false}
+                            maxCount={1}
+                            accept=".pdf,.doc,.docx"
+                            fileList={fileList}
+                            onChange={handleFileChange}
+                        >
+                            <p className="ant-upload-drag-icon">
+                                <FiUpload style={{ fontSize: '24px', color: '#1890ff' }} />
+                            </p>
+                            <p className="ant-upload-text">Click or drag file to upload document</p>
+                            <p className="ant-upload-hint">
+                                Support for PDF, DOC, DOCX files
+                            </p>
+                        </Upload.Dragger>
+                    </Form.Item>
+
+
+                
+
+                {/* <Divider style={{ margin: '24px 0' }} /> */}
 
                     <div
                         style={{

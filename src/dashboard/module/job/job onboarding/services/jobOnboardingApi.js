@@ -18,6 +18,7 @@ export const jobOnboardingApi = createApi({
             }),
             invalidatesTags: ['JobOnboarding'],
         }),
+        
         updateJobOnboarding: builder.mutation({
             query: ({ id, data }) => ({
                 url: `job-onboarding/${id}`,

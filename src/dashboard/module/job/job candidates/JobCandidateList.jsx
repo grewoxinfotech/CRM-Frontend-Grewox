@@ -13,7 +13,7 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
         if (!jobs) return 'Loading...';
-        const job = jobs.find(job => job.id === jobId);
+        const job = jobs.data.find(job => job.id === jobId);
         return job ? job.title : 'N/A';
     };
 

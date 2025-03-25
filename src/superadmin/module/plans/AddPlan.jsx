@@ -148,7 +148,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 layout="vertical"
                 onFinish={handleSubmit}
                 initialValues={{
-                    currency: initialValues?.currency || (currencies?.[0]?.currencyCode || 'USD'),
+                    currency: 'INR',
                     duration: 'Per Month',
                     status: true,
                     trial_period: '7',
@@ -226,6 +226,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                     }}
                                     loading={currenciesLoading}
                                     className="currency-select"
+                                    defaultValue="INR"
                                     dropdownStyle={{
                                         padding: '8px',
                                         borderRadius: '10px',
@@ -261,6 +262,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                         borderLeft: '1px solid #e6e8eb',
                                         borderRadius: 0,
                                         height: '48px',
+                                        padding: '0 16px',
                                     }}
                                     min={0}
                                     precision={2}

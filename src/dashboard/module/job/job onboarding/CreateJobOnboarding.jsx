@@ -74,7 +74,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
 
     useEffect(() => {
         if (currencies?.length && !isEditing) {
-            const defaultCurrency = currencies.find(c => c.currencyCode === 'USD') || currencies[0];
+            const defaultCurrency = currencies.find(c => c.currencyCode === 'INR') || currencies[0];
             form.setFieldValue('currency', defaultCurrency.currencyCode);
         }
     }, [currencies, form, isEditing]);
@@ -84,11 +84,11 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
             form.resetFields();
             if (isEditing && initialValues) {
                 const formattedValues = {
-                    interviewer: initialValues.Interviewer,
+                    Interviewer: initialValues.Interviewer,
                     joining_date: initialValues.JoiningDate ? dayjs(initialValues.JoiningDate) : undefined,
                     days_of_week: initialValues.DaysOfWeek,
                     salary: initialValues.Salary,
-                    currency: initialValues.Currency || 'USD',
+                    currency: initialValues.Currency || 'INR',
                     salary_type: initialValues.SalaryType,
                     salary_duration: initialValues.SalaryDuration,
                     job_type: initialValues.JobType,
@@ -97,7 +97,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                 form.setFieldsValue(formattedValues);
             } else {
                 form.setFieldsValue({
-                    currency: 'USD',
+                    currency: '₹',
                     status: 'pending',
                     salary_type: 'Monthly'
                 });
@@ -110,30 +110,35 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
             const values = await form.validateFields();
             
             const formData = {
-                Interviewer: values.interviewer,
+                Interviewer: values.Interviewer,
                 JoiningDate: values.joining_date?.format('YYYY-MM-DD'),
                 DaysOfWeek: values.days_of_week,
                 Salary: values.salary,
+                Currency: values.currency,
                 SalaryType: values.salary_type,
                 SalaryDuration: values.salary_duration,
                 JobType: values.job_type,
-                Status: values.status,
+                Status: values.status?.charAt(0).toUpperCase() + values.status?.slice(1),
                 client_id: localStorage.getItem('client_id'),
                 created_by: localStorage.getItem('user_id')
             };
 
+            console.log('FormData being sent:', formData);
+
+            const data = {
+                ...formData,
+                created_by: localStorage.getItem('user_id')
+            }
+
             if (isEditing) {
                 await updateJobOnboarding({
                     id: initialValues.id,
-                    ...formData,
+                    data,
                     updated_by: localStorage.getItem('user_id')
                 }).unwrap();
                 message.success('Job onboarding updated successfully');
             } else {
-                await createJobOnboarding({
-                    ...formData,
-                    created_by: localStorage.getItem('user_id')
-                }).unwrap();
+                await createJobOnboarding(data).unwrap();
                 message.success('Job onboarding created successfully');
             }
 
@@ -141,7 +146,8 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
             onCancel();
         } catch (error) {
             console.error('Operation failed:', error);
-            message.error(error?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} job onboarding`);
+            const errorMessage = error?.data?.message || error?.error?.message || `Failed to ${isEditing ? 'update' : 'create'} job onboarding`;
+            message.error(errorMessage);
         }
     };
 
@@ -256,7 +262,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                 layout="vertical"
                 onFinish={handleSubmit}
                 initialValues={{
-                    currency: 'USD',
+                    currency: 'INR',
                     status: 'pending',
                     salary_type: 'Monthly'
                 }}
@@ -267,7 +273,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
             >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
-                        name="interviewer"
+                        name="Interviewer"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
                                 Interviewer
@@ -370,12 +376,12 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                                 <Select
                                     size="large"
                                     style={{
-                                        width: '100px',
+                                        width: '80px',
                                         height: '48px'
                                     }}
                                     loading={currenciesLoading}
                                     className="currency-select"
-                                    defaultValue="USD"
+                                    defaultValue="INR"
                                     dropdownStyle={{
                                         padding: '8px',
                                         borderRadius: '10px',

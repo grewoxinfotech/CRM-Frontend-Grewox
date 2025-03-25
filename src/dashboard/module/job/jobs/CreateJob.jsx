@@ -85,16 +85,15 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
         limit: 100
     });
 
-     // Add this useEffect to set default currency when form is initialized
-     React.useEffect(() => {
-        form.setFieldsValue({
-            currency: 'INR'
-        });
-    }, [form]);
+    useEffect(() => {
+        if (currencies?.length && !isEditing) {
+            const defaultCurrency = currencies.find(c => c.currencyCode === 'INR') || currencies[0];
+            form.setFieldValue('currency', defaultCurrency.currencyCode);
+        }
+    }, [currencies, form, isEditing]);
 
     useEffect(() => {
         if (open) {
-            console.log('Modal Opened');
             form.resetFields();
             if (initialValues) {
                 // Format the initial values for editing
@@ -123,7 +122,6 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     description: initialValues.description
                 };
 
-                console.log('Setting Initial Values:', formattedValues);
                 // Ensure dates are valid before setting
                 if (formattedValues.startDate && !dayjs.isDayjs(formattedValues.startDate)) {
                     formattedValues.startDate = null;
@@ -138,17 +136,14 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                 form.setFieldsValue({
                     status: 'active',
                     jobType: 'Full-time',
-                    currency: 'INR'
+                    currency: '₹'
                 });
                 
                 // If currencies are loaded but we still want INR as default
                 if (currencies?.length > 0) {
-                    // Find INR in the currencies array
-                    const inrCurrency = currencies.find(c => c.currencyCode === 'INR');
+                    const inrCurrency = currencies.find(c => c.currencyCode === '₹');
                     if (inrCurrency) {
-                        form.setFieldValue('currency', 'INR');
-                    } else {
-                        form.setFieldValue('currency', currencies[0].currencyCode);
+                        form.setFieldValue('currency', '₹');
                     }
                 }
             }
@@ -158,7 +153,6 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            console.log('Form Values:', values);
 
             // Format dates properly
             let startDate = null;
@@ -226,25 +220,19 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
             }
 
             if (isEditing && initialValues?.id) {
-                // Update existing job
-                console.log('Updating job with data:', { id: initialValues.id, data: formattedValues });
-                const result = await updateJob({
+
+               await updateJob({
                     id: initialValues.id,
                     data: formattedValues
                 }).unwrap();
-                console.log('Update response:', result);
                 message.success('Job updated successfully!');
             } else {
-                // Create new job
-                console.log('Creating job with data:', formattedValues);
                 const response = await createJob(formattedValues).unwrap();
-                console.log('Job created:', response);
                 message.success('Job created successfully!');
             }
 
             onCancel();
         } catch (error) {
-            console.error('Form Error:', error);
             message.error(error.data?.message || 'Please check your input and try again.');
         }
     };
@@ -581,6 +569,28 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         />
                     </Form.Item>
                     <Form.Item
+                        name="jobType"
+                        label={
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                Job Type
+                            </span>
+                        }
+                        rules={[{ required: true, message: 'Please select job type' }]}
+                    >
+                        <Select
+                            placeholder="Select job type"
+                            size="large"
+                            style={{
+                                width: '100%',
+                                height: '48px',
+                            }}
+                        >
+                            {jobTypes.map(type => (
+                                <Option key={type} value={type}>{type}</Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
                         name="status"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
@@ -632,15 +642,12 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                     <Select
                                         size="large"
                                         style={{
-                                            width: '100px',
+                                            width: '80px',
                                             height: '48px'
                                         }}
                                         loading={currenciesLoading}
                                         className="currency-select"
-                                        dropdownStyle={{
-                                            padding: '8px',
-                                            borderRadius: '10px',
-                                        }}
+                                        defaultValue="INR"
                                         showSearch
                                         optionFilterProp="children"
                                         filterOption={(input, option) =>
@@ -648,7 +655,11 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                         }
                                     >
                                         {currencies?.map(currency => (
-                                            <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                            <Option 
+                                                key={currency.currencyCode} 
+                                                value={currency.currencyCode}
+                                                selected={currency.currencyCode === 'INR'}
+                                            >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <span>{currency.currencyIcon}</span>
                                                     <span>{currency.currencyCode}</span>

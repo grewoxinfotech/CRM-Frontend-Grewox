@@ -1002,7 +1002,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <span>{currency.currencyIcon}</span>
-                                                <span>{currency.currencyCode}</span>
                                             </div>
                                         </Option>
                                     ))}

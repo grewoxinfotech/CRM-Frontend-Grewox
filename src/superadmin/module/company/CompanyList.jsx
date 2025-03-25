@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Modal } from 'antd';
-import { FiEye, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Modal, Avatar } from 'antd';
+import { FiEye, FiEdit2, FiTrash2, FiMoreVertical, FiUser } from 'react-icons/fi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
 
@@ -9,6 +9,15 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const getInitials = (username) => {
+        return username
+            ? username.split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+            : 'U';
+    };
+    
     const getDropdownItems = (record) => ({
         items: [
             {
@@ -34,6 +43,29 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     });
 
     const columns = [
+        {
+            title: 'Profile',
+            dataIndex: 'profilePic',
+            key: 'profilePic',
+            width: 80,
+            render: (profilePic, record) => (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar
+                        size={40}
+                        src={profilePic}
+                        icon={!profilePic && <FiUser />}
+                        style={{
+                            backgroundColor: !profilePic ? '#1890ff' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        {!profilePic && getInitials(record.username)}
+                    </Avatar>
+                </div>
+            ),
+        },
         {
             title: 'Company Name',
             dataIndex: 'name',

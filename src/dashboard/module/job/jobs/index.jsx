@@ -68,7 +68,7 @@ const Job = () => {
     const handleDelete = (record) => {
         Modal.confirm({
             title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this designation?',
+            content: 'Are you sure you want to delete this job?',
             okType: 'danger',
             bodyStyle: { padding: '20px' },
             cancelText: 'No',

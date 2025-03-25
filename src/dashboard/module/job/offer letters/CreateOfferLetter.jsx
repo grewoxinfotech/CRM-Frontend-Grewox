@@ -133,7 +133,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
             open={open}
             onCancel={onCancel}
             footer={null}
-            width={800}
+            width={720}
             destroyOnClose={true}
             centered
             closeIcon={null}
@@ -255,7 +255,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                 backgroundColor: '#f8fafc',
                             }}
                         >
-                            {jobs?.map((job) => (
+                            {jobs?.data?.map((job) => (
                                 <Option key={job.id} value={job.id}>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <FiBriefcase style={{ color: '#1890ff', fontSize: '16px', marginRight: '8px' }} />
@@ -386,12 +386,12 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                     <Select
                                         size="large"
                                         style={{
-                                            width: '100px',
+                                            width: '80px',
                                             height: '48px'
                                         }}
                                         loading={currenciesLoading}
                                         className="currency-select"
-                                        defaultValue="USD"
+                                        defaultValue="₹"
                                         dropdownStyle={{
                                             padding: '8px',
                                             borderRadius: '10px',
@@ -434,48 +434,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                         </Form.Item>
                     </div>
 
-                    <Form.Item
-                        name="rate"
-                        label={
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Rate
-                            </span>
-                        }
-                        rules={[{ required: true, message: 'Please enter rate' }]}
-                    >
-                        <Input
-                            placeholder="Enter rate"
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                        />
-                    </Form.Item>
-
                 </div>
-                    <Form.Item
-                        name="file"
-                        label="Offer Letter Document"
-                        rules={[{ required: true, message: 'Please upload offer letter document' }]}
-                    >
-                        <Upload
-                            fileList={fileList}
-                            onChange={handleFileChange}
-                            maxCount={1}
-                            beforeUpload={() => false}
-                            accept=".pdf,.doc,.docx"
-                        >
-                            <Button icon={<FiUpload />}>
-                                {fileList.length > 0 ? 'Replace Document' : 'Upload Document'}
-                            </Button>
-                        </Upload>
-                    </Form.Item>
 
                 <Form.Item
                     name="description"
@@ -499,48 +458,66 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                     />
                 </Form.Item>
 
-                <Divider style={{ margin: '24px 0' }} />
+                    <Form.Item
+                        name="file"
+                        label="Offer Letter Document"
+                        rules={[{ required: true, message: 'Please upload offer letter document' }]}
+                        className="full-width"
+                    >
+                        <Upload.Dragger
+                            name="file"
+                            multiple={false}
+                            beforeUpload={() => false}
+                            maxCount={1}
+                            accept=".pdf,.doc,.docx"
+                            fileList={fileList}
+                            onChange={handleFileChange}
+                        >
+                            <p className="ant-upload-drag-icon">
+                                <FiUpload style={{ fontSize: '24px', color: '#1890ff' }} />
+                            </p>
+                            <p className="ant-upload-text">Click or drag file to upload document</p>
+                            <p className="ant-upload-hint">
+                                Support for PDF, DOC, DOCX files
+                            </p>
+                        </Upload.Dragger>
+                    </Form.Item>
+
+                
+
+                {/* <Divider style={{ margin: '24px 0' }} /> */}
 
                 <div
                     style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: "12px",
-                        marginTop: "24px",
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '12px',
+                        marginTop: '24px'
                     }}
                 >
                     <Button
-                        size="large"
                         onClick={onCancel}
+                        size="large"
                         style={{
-                            padding: "8px 24px",
-                            height: "44px",
-                            borderRadius: "10px",
-                            border: "1px solid #e6e8eb",
-                            fontWeight: "500",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            borderRadius: '8px',
+                            padding: '8px 24px',
+                            height: '48px',
+                            border: '1px solid #e6e8eb',
                         }}
                     >
                         Cancel
                     </Button>
                     <Button
-                        size="large"
                         type="primary"
                         htmlType="submit"
                         loading={loading || createLoading}
+                        size="large"
                         style={{
-                            padding: "8px 32px",
-                            height: "44px",
-                            borderRadius: "10px",
-                            fontWeight: "500",
-                            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            borderRadius: '8px',
+                            padding: '8px 24px',
+                            height: '48px',
+                            background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
+                            border: 'none',
                         }}
                     >
                         Create Offer Letter

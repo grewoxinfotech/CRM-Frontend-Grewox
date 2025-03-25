@@ -18,7 +18,12 @@ import {
     FiDollarSign,
     FiX,
     FiCamera,
-    FiBriefcase
+    FiBriefcase,
+    FiFileText,
+    FiVideo,
+    FiPercent,
+    FiCreditCard,
+    FiBox
 } from 'react-icons/fi';
 import { useUpdateCompanyMutation } from './services/companyApi';
 import { useGetAllCountriesQuery } from '../settings/services/settingsApi';
@@ -28,8 +33,8 @@ const { Option } = Select;
 
 const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
     const [form] = Form.useForm();
-    const [fileList, setFileList] = useState([]);
     const [updateCompany, { isLoading: isUpdating }] = useUpdateCompanyMutation();
+    const [fileList, setFileList] = useState([]);
 
     // Fetch countries for phone codes
     const { data: countries, isLoading: countriesLoading } = useGetAllCountriesQuery({
@@ -90,18 +95,22 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                     formData.append('profilePic', fileList[0].originFileObj);
                 }
 
-                // Add text fields - only add if they have a value
+                // Add all form values to formData
                 Object.keys(values).forEach(key => {
                     if (key !== 'profilePic' && values[key] !== undefined && values[key] !== '') {
                         formData.append(key, values[key]);
                     }
                 });
 
-                updateCompany({ id: initialValues.id, data: formData })
+                // Call the update mutation
+                updateCompany({ 
+                    id: initialValues.id, 
+                    data: formData 
+                })
                     .unwrap()
                     .then(() => {
                         message.success('Company updated successfully');
-                        onCancel();
+                        onCancel(); // Close the modal
                     })
                     .catch((error) => {
                         message.error(error?.data?.message || 'Failed to update company');
@@ -492,7 +501,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                                         backgroundColor: 'transparent'
                                     }}
                                     placeholder="Enter 10-digit phone number"
-                                    prefix={<FiPhone style={{ color: '#1890ff' }} />}
+                                    // prefix={<FiPhone style={{ color: '#1890ff' }} />}
                                     maxLength={10}
                                 />
                             </Form.Item>
@@ -537,7 +546,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         }
                     >
                         <Input
-                            prefix={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            prefix={<FiFileText style={{ color: '#1890ff', fontSize: '16px' }} />} 
                             placeholder="Enter GST number"
                             size="large"
                             style={{
@@ -708,7 +717,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         }
                     >
                         <Input
-                            prefix={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            prefix={<FiBriefcase style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter bank name"
                             size="large"
                             style={{
@@ -744,6 +753,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                                 padding: '8px',
                                 borderRadius: '10px',
                             }}
+                            prefix={<FiBox style={{ color: '#1890ff', fontSize: '16px' }} />}
                         >
                             <Option value="savings">Savings</Option>
                             <Option value="current">Current</Option>
@@ -788,7 +798,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         }
                     >
                         <Input
-                            prefix={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            prefix={<FiCreditCard style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter account number"
                             size="large"
                             style={{
@@ -814,7 +824,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         }
                     >
                         <Input
-                            prefix={<FiDollarSign style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            prefix={<FiFileText style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter IFSC code"
                             size="large"
                             style={{

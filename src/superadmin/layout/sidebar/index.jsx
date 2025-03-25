@@ -235,24 +235,18 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                         {!isCollapsed && <span className="title">Profile</span>}
                     </div>
                 </NavLink>
-                <button 
+                <NavLink
+                    to="/logout"
                     onClick={handleLogout}
                     className="nav-item logout-btn"
-                    style={{ 
-                        width: '100%', 
-                        border: 'none', 
-                        background: 'none', 
-                        padding: '0',
-                        cursor: 'pointer',
-                        color: 'inherit',
-                        textAlign: 'left'
-                    }}
                 >
                     <div className="nav-item-content">
-                        <span className="icon"><FiLogOut /></span>
+                        <span className="icon">
+                            <FiLogOut />
+                        </span>
                         {!isCollapsed && <span className="title">Logout</span>}
                     </div>
-                </button>
+                </NavLink>
             </div>
         </motion.aside>
     );

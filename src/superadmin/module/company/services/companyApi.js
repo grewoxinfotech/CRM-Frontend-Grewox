@@ -36,6 +36,27 @@ export const companyApi = createApi({
             }),
             invalidatesTags: ['Companies'],
         }),
+        verifySignup: builder.mutation({
+            query: ({ otp, token }) => ({
+                url: '/auth/verify-signup',
+                method: 'POST',
+                body: { otp },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }),
+            invalidatesTags: ['Subclient']
+        }),
+
+        resendSignupOtp: builder.mutation({
+            query: ({ token }) => ({
+                url: '/auth/resend-signup-otp',
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+        }),
     }),
 });
 
@@ -44,4 +65,6 @@ export const {
     useCreateCompanyMutation,
     useUpdateCompanyMutation,
     useDeleteCompanyMutation,
-} = companyApi; 
+    useVerifySignupMutation,
+    useResendSignupOtpMutation, 
+} = companyApi;

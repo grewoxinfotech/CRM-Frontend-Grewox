@@ -299,7 +299,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                             View Details
                         </Button>
                         <Button
-                            onClick={handleEdit}
+                            onClick={() => onEdit(company)}
                             icon={<FiEdit2 style={{ fontSize: '16px' }} />}
                             style={{
                                 height: '38px',

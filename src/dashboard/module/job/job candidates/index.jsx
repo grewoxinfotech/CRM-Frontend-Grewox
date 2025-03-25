@@ -22,14 +22,29 @@ const { Title, Text } = Typography;
 
 const JobCandidates = () => {
     const dispatch = useDispatch();
-    const { filters, pagination, sorting } = useSelector(state => state.jobApplication);
+    const filterState = useSelector(state => state.jobApplication) || {};
     
+    // Add default values for all potentially undefined properties
+    const { 
+        filters = {}, 
+        pagination = { 
+            current: 1, 
+            pageSize: 10,
+            total: 0 
+        }, 
+        sorting = { 
+            field: undefined, 
+            order: undefined 
+        } 
+    } = filterState;
+    
+    // Use optional chaining and provide default values
     const { data: applications, isLoading } = useGetAllJobApplicationsQuery({
         ...filters,
-        page: pagination.current,
-        limit: pagination.pageSize,
-        sortField: sorting.field,
-        sortOrder: sorting.order,
+        page: pagination?.current || 1,
+        limit: pagination?.pageSize || 10,
+        sortField: sorting?.field,
+        sortOrder: sorting?.order,
     });
 
     const [deleteApplication] = useDeleteJobApplicationMutation();

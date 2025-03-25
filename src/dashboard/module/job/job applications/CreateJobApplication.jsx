@@ -105,7 +105,6 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                     data: formData
                 }).unwrap();
                 message.success('Job application updated successfully');
-                console.log("sfsdfsdf",formData);
             } else {
                 await createJobApplication(formData).unwrap();
                 message.success('Job application created successfully');
@@ -260,7 +259,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                 backgroundColor: '#f8fafc',
                             }}
                         >
-                            {jobs?.map((job) => (
+                            {jobs?.data?.map((job) => (
                                 <Option key={job.id} value={job.id}>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <FiBriefcase style={{ color: '#1890ff', fontSize: '16px', marginRight: '8px' }} />

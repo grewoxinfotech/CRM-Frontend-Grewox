@@ -2,19 +2,26 @@ import React from 'react';
 import { Modal, Form, Input, Button, Typography, Select, InputNumber, Row, Col, Divider, Switch } from 'antd';
 import { FiPackage, FiX, FiDollarSign, FiUsers, FiCalendar, FiList, FiClock, FiHardDrive } from 'react-icons/fi';
 import { useUpdatePlanMutation } from './services/planApi';
+import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
 import { message } from 'antd';
 
 const { Text } = Typography;
+const { Option } = Select;
 
 const EditPlan = ({ open, onCancel, initialValues, idd }) => {
     const [form] = Form.useForm();
     const [updatePlan, { isLoading }] = useUpdatePlanMutation();
+    const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
 
     React.useEffect(() => {
         if (initialValues) {
             form.setFieldsValue({
                 name: initialValues.name,
-                price_group: initialValues.price?.toString(),
+                price: initialValues.price?.toString(),
+                currency: initialValues.currency || 'INR',
                 duration: initialValues.duration?.toString(),
                 trial_period: initialValues.trial_period?.toString(),
                 storage_limit: initialValues.storage_limit?.toString(),
@@ -32,6 +39,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
             const updateData = {
                 name: values.name,
                 price: values.price_group?.toString(),
+                currency: values.currency,
                 duration: values.duration?.toString(),
                 trial_period: values.trial_period?.toString(),
                 storage_limit: values.storage_limit?.toString(),
@@ -41,8 +49,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 max_customers: values.max_customers?.toString(),
                 status: values.status ? 'active' : 'inactive'
             };
-
-          
 
             await updatePlan({ idd, updateData }).unwrap();
             message.success('Plan updated successfully');
@@ -190,28 +196,56 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         <Form.Item
                             name="price_group"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Price</span>}
-                            rules={[
-                                { required: true, message: 'Please enter price' },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value || isNaN(value)) {
-                                            return Promise.reject('Please enter a valid price');
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }
-                            ]}
+                            style={{ marginBottom: 0 }}
                         >
-                            <InputNumber
-                                prefix={<FiDollarSign style={{ color: '#1890ff' }} />}
-                                placeholder="Enter price"
-                                size="large"
-                                style={{ width: '100%', borderRadius: '10px', height: '48px' }}
-                                min={0}
-                                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                                onChange={(value) => form.setFieldsValue({ price_group: value?.toString() })}
-                            />
+                            <Input.Group compact className="price-input-group" style={{
+                                display: 'flex',
+                                height: '48px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '10px',
+                                border: '1px solid #e6e8eb',
+                                overflow: 'hidden'
+                            }}>
+                                <Form.Item
+                                    name="currency"
+                                    noStyle
+                                    rules={[{ required: true }]}
+                                >
+                                    <Select
+                                        size="large"
+                                        style={{
+                                            width: '100px',
+                                            height: '48px'
+                                        }}
+                                        loading={currenciesLoading}
+                                        className="currency-select"
+                                        defaultValue="INR"
+                                        dropdownStyle={{
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                        }}
+                                        showSearch
+                                        optionFilterProp="children"
+                                        filterOption={(input, option) =>
+                                            option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                        }
+                                    >
+                                        {currencies?.data?.map(currency => (
+                                            <Option key={currency.code} value={currency.code}>
+                                                {currency.code}
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                                <InputNumber
+                                    name='price'
+                                    className="price-input"
+                                    placeholder="Enter price"
+                                    min={0}
+                                    style={{ flex: 1, border: 'none', borderRadius: 0 ,padding: '0 16px'}}
+                                    onChange={(value) => form.setFieldsValue({ price_group: value?.toString() })}
+                                />
+                            </Input.Group>
                         </Form.Item>
                     </Col>
                     <Col span={12}>
@@ -465,8 +499,114 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     </Button>
                 </div>
             </Form>
+
+            <style jsx>{`
+                .currency-select .ant-select-selector {
+                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+                    border: none !important;
+                    color: white !important;
+                    height: 48px !important;
+                    line-height: 46px !important;
+                    padding: 0 12px !important;
+                    display: flex;
+                    align-items: center;
+                    box-shadow: none !important;
+                }
+
+                .currency-select .ant-select-selection-item {
+                    color: white !important;
+                    font-weight: 500 !important;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    height: 46px !important;
+                    line-height: 46px !important;
+                    font-size: 14px;
+                }
+
+                .currency-select .ant-select-arrow {
+                    color: white !important;
+                }
+
+                .price-input-group {
+                    margin-bottom: 0 !important;
+                    display: flex !important;
+                    width: 100% !important;
+
+                    .ant-select-selector,
+                    .ant-input-number {
+                        height: 46px !important;
+                        line-height: 46px !important;
+                    }
+
+                    .ant-select-selector {
+                        border: none !important;
+                        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+                        color: white !important;
+                        padding: 0 16px !important;
+                        display: flex;
+                        align-items: center;
+                        box-shadow: none !important;
+                        height: 46px !important;
+                    }
+
+                    .ant-select-selection-item {
+                        color: white !important;
+                        font-weight: 500 !important;
+                        display: flex;
+                        align-items: center;
+                        height: 46px !important;
+                        line-height: 46px !important;
+                    }
+
+                    .price-input {
+                        flex: 1 !important;
+                        width: calc(100% - 100px) !important;
+                    }
+
+                    .ant-input-number {
+                        background-color: transparent;
+                        height: 46px !important;
+                        
+                        &:hover, &:focus {
+                            border-color: transparent !important;
+                            box-shadow: none !important;
+                        }
+
+                        .ant-input-number-input-wrap {
+                            height: 46px !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            
+                            input {
+                                height: 46px !important;
+                                font-size: 14px;
+                                padding: 0 16px;
+                                line-height: 46px !important;
+                            }
+                        }
+
+                        .ant-input-number-handler-wrap {
+                            display: none;
+                        }
+                    }
+
+                    &:hover {
+                        border-color: #1890ff;
+                        
+                        .ant-select-selector {
+                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+                        }
+                    }
+
+                    &:focus-within {
+                        border-color: #1890ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+                }
+            `}</style>
         </Modal>
     );
 };
 
-export default EditPlan; 
+export default EditPlan;

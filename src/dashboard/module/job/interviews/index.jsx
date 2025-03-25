@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Calendar, Badge, Typography, Breadcrumb, Card, List, message, Button, Popconfirm, Empty } from 'antd';
+import { Calendar, Badge, Typography, Breadcrumb, Card, List, message, Button, Popconfirm, Empty, Modal } from 'antd';
 import { FiHome, FiCalendar, FiPlus, FiTrash2 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import './interviews.scss';
 import CreateInterview from './CreateInterview';
-import { useGetAllInterviewsQuery } from './services/interviewApi';
+import { useDeleteInterviewMutation, useGetAllInterviewsQuery } from './services/interviewApi';
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 
 const { Title, Text } = Typography;
@@ -15,10 +15,32 @@ const Interviews = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const { data: interviews, isLoading } = useGetAllInterviewsQuery();
     const { data: jobApplications } = useGetAllJobApplicationsQuery();
+    const [deleteInterview] = useDeleteInterviewMutation();
 
     const handleDateSelect = (date) => {
         setSelectedDate(date);
         setIsModalVisible(true);
+    };
+
+    const handleDelete = (interviewId) => {
+        Modal.confirm({
+            title: 'Delete Interview',
+            content: 'Are you sure you want to delete this interview?',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: '20px',
+            },
+            onOk: async () => {
+                try {
+                    await deleteInterview(interviewId).unwrap();
+                    message.success('Interview deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete interview');
+                }
+            },
+        });
     };
 
     const handleCreateInterview = async (values) => {
@@ -30,11 +52,6 @@ const Interviews = () => {
         // Here you would call the API to create the interview
         setIsModalVisible(false);
         message.success('Interview scheduled successfully');
-    };
-
-    const handleDeleteInterview = (interviewId) => {
-        // Here you would call the API to delete the interview
-        message.success('Interview deleted successfully');
     };
 
     // Helper function to get candidate name
@@ -130,21 +147,13 @@ const Interviews = () => {
                                                 {interview.startTime} · {interview.status || 'Online'}
                                             </div>
                                         </div>
-                                        <Popconfirm
-                                            title="Delete Interview"
-                                            description="Are you sure you want to delete this interview?"
-                                            onConfirm={() => handleDeleteInterview(interview.id)}
-                                            okText="Yes"
-                                            cancelText="No"
-                                            placement="left"
-                                        >
-                                            <Button 
-                                                className="delete-button"
-                                                type="text" 
-                                                danger
-                                                icon={<FiTrash2 size={16} />}
-                                            />
-                                        </Popconfirm>
+                                        <Button
+                                            className="delete-button"
+                                            type="text"
+                                            danger
+                                            icon={<FiTrash2 size={16} />}
+                                            onClick={() => handleDelete(interview.id)}
+                                        />
                                     </div>
                                 </div>
                             ))
