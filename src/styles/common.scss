@@ -79,3 +79,11 @@ input[type="password"]:-webkit-autofill:focus,
 input[type="password"]:-webkit-autofill:active {
     -webkit-text-security: disc !important;
 }
+
+.ant-select-multiple .ant-select-selection-wrap {
+    align-self: center;
+}
+
+.ant-select-multiple .ant-select-selection-item {
+    align-self: center;
+}

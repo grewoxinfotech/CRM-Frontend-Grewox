@@ -22,11 +22,8 @@ import {
   FiMessageSquare,
   FiUser,
   FiHelpCircle,
-  FiTool,
   FiGrid,
-  FiBarChart2,
   FiCheckSquare,
-  FiDatabase,
   FiBriefcase,
   FiTrendingUp,
   FiUserCheck,
@@ -37,8 +34,11 @@ import {
   FiVideo,
   FiBell,
   FiFile,
+  FiEdit3,
+  FiCreditCard,
   FiBookOpen,
   FiPackage,
+  FiGlobe,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
@@ -397,10 +397,36 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
       ].filter(item => shouldShowMenuItem(item)),
     },
     {
-      title: "Settings",
+      title: 'Setting',
       icon: <FiSettings />,
       isDropdown: true,
-      subItems: [],
+      subItems: [
+        {
+          title: 'General',
+          icon: <FiSettings />,
+          path: '/superadmin/settings/general'
+        },
+        {
+          title: 'Payment',
+          icon: <FiDollarSign />,
+          path: '/superadmin/settings/payment'
+        },
+        {
+          title: 'Countries',
+          icon: <FiGlobe />,
+          path: '/superadmin/settings/countries'
+        },
+        {
+          title: 'Currencies',
+          icon: <FiCreditCard />,
+          path: '/superadmin/settings/currencies'
+        },
+        {
+          title: 'ESignature',
+          icon: <FiEdit3 />,
+          path: '/superadmin/settings/esignature'
+        }
+      ]
     },
     {
       title: "Support",
@@ -511,23 +537,23 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 ? renderDropdown(item, isCrmOpen, setCrmOpen)
                 : item.title === "Sales"
                   ? renderDropdown(item, isSalesOpen, setSalesOpen)
-                : item.title === "User Management"
-                  ? renderDropdown(
-                    item,
-                    isUserManagementOpen,
-                    setUserManagementOpen
-                  )
-                  : item.title === "Communication"
-                    ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
-                    : item.title === "HRM"
-                      ? renderDropdown(item, isHrmOpen, setHrmOpen)
-                      : item.title === "Settings"
-                        ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
-                        : item.title === "Support"
-                          ? renderDropdown(item, isSupportOpen, setSupportOpen)
-                          : item.title === "Job"
-                            ? renderDropdown(item, isJobOpen, setJobOpen)
-                            : renderDropdown(item, false, () => { })}
+                  : item.title === "User Management"
+                    ? renderDropdown(
+                      item,
+                      isUserManagementOpen,
+                      setUserManagementOpen
+                    )
+                    : item.title === "Communication"
+                      ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
+                      : item.title === "HRM"
+                        ? renderDropdown(item, isHrmOpen, setHrmOpen)
+                        : item.title === "Setting"
+                          ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
+                          : item.title === "Support"
+                            ? renderDropdown(item, isSupportOpen, setSupportOpen)
+                            : item.title === "Job"
+                              ? renderDropdown(item, isJobOpen, setJobOpen)
+                              : renderDropdown(item, false, () => { })}
           </motion.div>
         ))}
       </nav>

@@ -33,7 +33,6 @@ import './project.scss';
 import { useGetAllProjectsQuery, useCreateProjectMutation } from './services/projectApi';
 import CreateProjectModal from './CreateProjectModal';
 import ProjectCard from './ProjectCard';
-import ProjectList from './ProjectList';
 import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;

@@ -16,7 +16,6 @@ import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
 import CreateBranch from '../Branch/CreateBranch';
 
 const { Text } = Typography;
-const { TextArea } = Input;
 const { Option } = Select;
 
 const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {

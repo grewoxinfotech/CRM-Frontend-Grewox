@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, Button, Typography, Divider, message, Alert } from 'antd';
 import { FiUser, FiMail, FiLock, FiX } from 'react-icons/fi';
 import { useCreateSubclientMutation, useVerifySignupMutation, useResendSignupOtpMutation } from './services/subClientApi';
-import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
 const CreateSubclient = ({ open, onCancel }) => {
     const [form] = Form.useForm();
     const [otpForm] = Form.useForm();
-    const navigate = useNavigate();
     const [createSubclient, { isLoading }] = useCreateSubclientMutation();
     const [verifySignup] = useVerifySignupMutation();
     const [resendSignupOtp] = useResendSignupOtpMutation();
@@ -48,7 +46,6 @@ const CreateSubclient = ({ open, onCancel }) => {
             form.resetFields();
             message.success('Subclient created successfully');
             onCancel();
-            navigate('/dashboard/client');
         } catch (error) {
             message.error(error?.data?.message || 'Invalid OTP');
         } finally {

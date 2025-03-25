@@ -8,8 +8,12 @@ import SuperAdminDashboard from "../superadmin/module/dashboard";
 import Company from "../superadmin/module/company";
 import Policy from "../superadmin/module/policy";
 import Profile from "../superadmin/module/profile/index.jsx";
-import Currencies from "../superadmin/module/settings/currencies/index.jsx";
-import Countries from "../superadmin/module/settings/countries/index.jsx";
+import SuperAdminCurrencies from "../superadmin/module/settings/currencies/index.jsx";
+import SuperAdminCountries from "../superadmin/module/settings/countries/index.jsx";
+import SuperAdminESignature from "../superadmin/module/settings/eSignature/index.jsx";
+import Currencies from "../dashboard/module/settings/currencies/index.jsx";
+import Countries from "../dashboard/module/settings/countries/index.jsx";
+import ESignature from "../dashboard/module/settings/eSignature/index.jsx";
 import Plans from "../superadmin/module/plans/index.jsx";
 import ProtectedRoute from "./ProtectedRoute";
 import ForgotPassword from "../auth/forgot-password";
@@ -17,7 +21,6 @@ import Branch from "../dashboard/module/hrm/Branch";
 import OTPVerification from "../auth/otp";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
-import ESignature from "../superadmin/module/settings/eSignature/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
 import SubClient from "../dashboard/module/user-management/subclient/index.jsx";
 import Designation from "../dashboard/module/hrm/Designation";
@@ -261,8 +264,20 @@ const routes = createBrowserRouter([
         element: <Users />,
       },
       {
-        path: "settings",
-        element: <div>Settings Page</div>,
+        path: "settings/currencies",
+        element: <Currencies />,
+      },
+      {
+        path: "settings/countries",
+        element: <Countries />,
+      },
+      {
+        path: "settings/esignature",
+        element: <ESignature />,
+      },
+      {
+        path: "inquiry",
+        element: <Inquiry />,
       },
       {
         path: "help",
@@ -314,15 +329,15 @@ const routes = createBrowserRouter([
       },
       {
         path: "settings/currencies",
-        element: <Currencies />,
+        element: <SuperAdminCurrencies />,
       },
       {
         path: "settings/countries",
-        element: <Countries />,
+        element: <SuperAdminCountries />,
       },
       {
         path: "settings/esignature",
-        element: <ESignature />,
+        element: <SuperAdminESignature />,
       },
       {
         path: "inquiry",
