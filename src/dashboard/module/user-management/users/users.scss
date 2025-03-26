@@ -346,14 +346,7 @@
                         }
                     }
 
-                    .ant-input {
-
-                        &:hover,
-                        &:focus {
-                            border-color: #1890ff;
-                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                        }
-                    }
+                    .ant-input {}
                 }
             }
         }

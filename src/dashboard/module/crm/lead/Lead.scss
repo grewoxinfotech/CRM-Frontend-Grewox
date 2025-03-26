@@ -349,9 +349,7 @@
         }
     }
 
-    &:hover {
-        border-color: #1890ff;
-    }
+
 
     &:focus-within {
         border-color: #1890ff;
@@ -533,7 +531,6 @@
             .ant-select {
                 .ant-select-selector {
                     height: 48px !important;
-                    padding: 0 8px !important;
                     border: none !important;
                     border-right: 1px solid #e6e8eb !important;
                     border-radius: 10px 0 0 10px !important;
@@ -627,7 +624,6 @@
     .value-input-group,
     .phone-input-group {
         .ant-select {
-            width: 80px !important;
 
             .ant-select-selector {
                 padding: 0 28px 0 12px !important;
@@ -694,10 +690,7 @@
                 border-radius: 6px;
                 border: 1px solid #e5e7eb;
 
-                &:focus {
-                    border-color: #1890ff;
-                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                }
+
             }
         }
     }

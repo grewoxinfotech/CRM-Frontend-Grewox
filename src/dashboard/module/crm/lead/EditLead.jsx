@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -7,21 +7,28 @@ import {
   Typography,
   Select,
   Divider,
-  Upload,
   message,
+  InputNumber,
 } from "antd";
 import {
   FiUser,
   FiMail,
-  FiPhone,
   FiX,
   FiBriefcase,
-  FiHash,
-  FiDollarSign,
   FiMapPin,
   FiCamera,
+  FiChevronDown,
+  FiTag,
+  FiUserPlus,
+  FiShield,
 } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
 import { useUpdateLeadMutation } from "./services/LeadApi";
+import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
+import { useGetUsersQuery } from '../../user-management/users/services/userApi';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import CreateUser from '../../user-management/users/CreateUser';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -29,11 +36,131 @@ const { Option } = Select;
 const EditLead = ({ open, onCancel, initialValues }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);
+  const dispatch = useDispatch();
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
+  const loggedInUser = useSelector(selectCurrentUser);
+  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
 
-  React.useEffect(() => {
+  // Fetch users data with roles
+  const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
+  const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: countries = [] } = useGetAllCountriesQuery();
+
+  // Get subclient role ID to filter it out
+  const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+
+  // Filter users to get team members (excluding subclients)
+  const users = usersResponse?.data?.filter(user =>
+    user?.created_by === loggedInUser?.username &&
+    user?.role_id !== subclientRoleId
+  ) || [];
+
+  // Find default currency and phone code
+  const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
+  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  const defaultCurrency = inrCurrency?.currencyCode || 'INR';
+  const defaultPhoneCode = indiaCountry?.phoneCode?.replace('+', '') || '91';
+
+  // Lead stage options
+  const leadStages = [
+    { value: "new", label: "New" },
+    { value: "contacted", label: "Contacted" },
+    { value: "qualified", label: "Qualified" },
+    { value: "proposal", label: "Proposal" },
+    { value: "negotiation", label: "Negotiation" },
+    { value: "closed", label: "Closed" },
+  ];
+
+  // Source options
+  const sources = [
+    { value: "website", label: "Website" },
+    { value: "referral", label: "Referral" },
+    { value: "social", label: "Social Media" },
+    { value: "email", label: "Email Campaign" },
+    { value: "cold_call", label: "Cold Call" },
+    { value: "event", label: "Event" },
+  ];
+
+  // Status options
+  const statuses = [
+    { value: "active", label: "Active" },
+    { value: "pending", label: "Pending" },
+    { value: "converted", label: "Converted" },
+    { value: "lost", label: "Lost" },
+  ];
+
+  // Interest level options
+  const interestLevels = [
+    { value: "high", label: "High Interest", color: "#52c41a" },
+    { value: "medium", label: "Medium Interest", color: "#faad14" },
+    { value: "low", label: "Low Interest", color: "#ff4d4f" },
+  ];
+
+  // Add getRoleColor function
+  const getRoleColor = (role) => {
+    const roleColors = {
+      'employee': {
+        color: '#D46B08',
+        bg: '#FFF7E6',
+        border: '#FFD591'
+      },
+      'admin': {
+        color: '#096DD9',
+        bg: '#E6F7FF',
+        border: '#91D5FF'
+      },
+      'manager': {
+        color: '#08979C',
+        bg: '#E6FFFB',
+        border: '#87E8DE'
+      },
+      'default': {
+        color: '#531CAD',
+        bg: '#F9F0FF',
+        border: '#D3ADF7'
+      }
+    };
+    return roleColors[role?.toLowerCase()] || roleColors.default;
+  };
+
+  // Set form values when initialValues changes
+  useEffect(() => {
     if (initialValues) {
-      form.setFieldsValue(initialValues);
+      // Parse phone number to extract country code and number
+      const phoneMatch = initialValues.telephone?.match(/^\+(\d+)\s(.*)$/);
+      const phoneCode = phoneMatch ? phoneMatch[1] : defaultPhoneCode;
+      const phoneNumber = phoneMatch ? phoneMatch[2] : initialValues.telephone || '';
+
+      // Parse lead value and currency
+      const leadValue = initialValues.leadValue || initialValues.lead_value;
+      const currency = initialValues.currency || defaultCurrency;
+
+      // Parse lead_members from string if needed
+      let leadMembers = [];
+      try {
+        if (typeof initialValues.lead_members === 'string') {
+          const parsedMembers = JSON.parse(initialValues.lead_members);
+          leadMembers = parsedMembers.lead_members || [];
+        } else if (initialValues.lead_members?.lead_members) {
+          leadMembers = initialValues.lead_members.lead_members;
+        }
+      } catch (error) {
+        console.error('Error parsing lead_members:', error);
+      }
+
+      form.setFieldsValue({
+        ...initialValues,
+        phoneCode,
+        telephone: phoneNumber,
+        currency,
+        leadValue,
+        lead_members: leadMembers,
+        tags: initialValues.tags || [],
+        files: initialValues.files || []
+      });
+
       if (initialValues.profilePic) {
         setFileList([
           {
@@ -45,26 +172,65 @@ const EditLead = ({ open, onCancel, initialValues }) => {
         ]);
       }
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, defaultPhoneCode, defaultCurrency]);
 
   const handleSubmit = async (values) => {
     try {
-      await updateLead({
-        id: initialValues.id,
-        data: {
-          ...values,
-          profilePic: fileList[0]?.url || initialValues?.profilePic,
-        },
-      }).unwrap();
+      // Format phone number with country code
+      const formattedPhone = values.telephone ?
+        `+${values.phoneCode} ${values.telephone}` :
+        null;
 
+      // Format lead value
+      const leadValue = values.leadValue || 0;
+
+      // Format lead_members as an object (not a string)
+      const leadMembers = {
+        lead_members: values.lead_members || []
+      };
+
+      // Format the payload with all required fields
+      const formData = {
+        id: initialValues.id,
+        leadTitle: values.leadTitle,
+        firstName: values.firstName || '',
+        lastName: values.lastName || '',
+        email: values.email || '',
+        telephone: formattedPhone,
+        company_name: values.company_name || '',
+        address: values.address || '',
+        leadValue: leadValue,
+        currency: values.currency || defaultCurrency,
+        lead_members: leadMembers, // Send as object
+        leadStage: values.leadStage || 'new',
+        status: values.status || 'active',
+        source: values.source || 'website',
+        category: values.category || '',
+        interest_level: values.interest_level || 'medium',
+        assigned: values.assigned || [],
+        files: values.files || [],
+        tags: values.tags || [],
+        profilePic: fileList[0]?.url || initialValues?.profilePic || '',
+        created_by: loggedInUser?.username || '',
+        updated_by: loggedInUser?.username || ''
+      };
+
+      // Remove any undefined or null values
+      Object.keys(formData).forEach(key => {
+        if (formData[key] === undefined || formData[key] === null) {
+          delete formData[key];
+        }
+      });
+
+      console.log('Submitting lead data:', formData);
+      await updateLead({ id: initialValues.id, data: formData }).unwrap();
       message.success("Lead updated successfully");
-      form.resetFields();
       onCancel();
     } catch (error) {
+      console.error("Update Lead Error:", error);
       message.error(
-        "Failed to update lead: " + (error.data?.message || "Unknown error")
+        error.data?.message || "Failed to update lead"
       );
-      console.error("Edit Lead Error:", error);
     }
   };
 
@@ -73,17 +239,102 @@ const EditLead = ({ open, onCancel, initialValues }) => {
     onCancel();
   };
 
+  const handleCreateUser = () => {
+    setIsCreateUserVisible(true);
+  };
+
+  const handleCreateUserSuccess = (newUser) => {
+    setIsCreateUserVisible(false);
+    // Add the newly created user to the selected team members
+    const currentMembers = form.getFieldValue('lead_members') || [];
+    form.setFieldValue('lead_members', [...currentMembers, newUser.id]);
+  };
+
+  // Add these consistent styles
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500"
+  };
+
+  const inputStyle = {
+    height: "48px",
+    borderRadius: "10px",
+    padding: "8px 16px",
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e6e8eb",
+    transition: "all 0.3s ease",
+    '&.ant-select-focused': {
+      borderColor: '#1890ff',
+      boxShadow: '0 0 0 2px rgba(24, 144, 255, 0.2)',
+    }
+  };
+
+  const prefixIconStyle = {
+    color: "#1890ff",
+    fontSize: "16px",
+    marginRight: "8px"
+  };
+
+  // Add selectStyle for Select components
+  const selectStyle = {
+    width: '100%',
+    height: '48px',
+    '& .ant-select-selector': {
+      height: '48px !important',
+      padding: '8px 16px !important',
+      backgroundColor: '#f8fafc !important',
+      border: '1px solid #e6e8eb !important',
+      borderRadius: '10px !important',
+      display: 'flex',
+      alignItems: 'center',
+    }
+  };
+
+  // Add multiSelectStyle for multiple select components
+  const multiSelectStyle = {
+    ...selectStyle,
+    '& .ant-select-selector': {
+      minHeight: '48px !important',
+      height: 'auto !important',
+      padding: '4px 12px !important',
+      backgroundColor: '#f8fafc !important',
+      border: '1px solid #e6e8eb !important',
+      borderRadius: '10px !important',
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Modal
+        open={open}
+        footer={null}
+        closable={false}
+        centered
+        width={800}
+      >
+        <div style={{
+          padding: "48px 24px",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <div>Loading lead data...</div>
+        </div>
+      </Modal>
+    );
+  }
+
   return (
     <Modal
       title={null}
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={720}
+      width={800}
       destroyOnClose={true}
       centered
       closeIcon={null}
-      className="pro-modal custom-modal"
+      className="pro-modal custom-modal lead-form-modal"
       style={{
         "--antd-arrow-background-color": "#ffffff",
       }}
@@ -93,6 +344,12 @@ const EditLead = ({ open, onCancel, initialValues }) => {
           borderRadius: "8px",
           overflow: "hidden",
         },
+        mask: {
+          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        },
+        content: {
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        }
       }}
     >
       <div
@@ -163,395 +420,492 @@ const EditLead = ({ open, onCancel, initialValues }) => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        requiredMark={false}
-        style={{
-          padding: "24px",
-        }}
-        initialValues={initialValues}
+        style={{ padding: "24px" }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: "24px",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <Form.Item
-              name="leadTitle"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Lead Title
-                </span>
-              }
-              rules={[
-                { required: true, message: "Please enter lead title" },
-                { min: 3, message: "Lead title must be at least 3 characters" },
-              ]}
-            >
-              <Input
-                prefix={
-                  <FiUser style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter lead title"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                  transition: "all 0.3s ease",
-                }}
-              />
-            </Form.Item>
-          </div>
+        {/* Lead Details - Moved to top */}
+        <div className="section-title" style={{ marginBottom: '16px' }}>
+          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Lead Details</Text>
         </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "16px",
-            marginBottom: "24px",
-          }}
-        >
+        <div className="form-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '16px',
+          marginBottom: '32px'
+        }}>
           <Form.Item
-            name="firstName"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                First Name
-              </span>
-            }
-            rules={[{ required: true, message: "Please enter first name" }]}
+            name="leadTitle"
+            label={<span style={formItemStyle}>Lead Title</span>}
+            rules={[
+              { required: true, message: "Please enter lead title" },
+              { min: 3, message: "Lead title must be at least 3 characters" },
+            ]}
           >
             <Input
-              prefix={<FiUser style={{ color: "#1890ff", fontSize: "16px" }} />}
-              placeholder="Enter first name"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
+              prefix={<FiUser style={prefixIconStyle} />}
+              placeholder="Enter lead title"
+              style={inputStyle}
             />
           </Form.Item>
 
+          {/* Interest Level */}
           <Form.Item
-            name="lastName"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Last Name
-              </span>
-            }
-            rules={[{ required: true, message: "Please enter last name" }]}
+            name="interest_level"
+            label={<span style={formItemStyle}>Interest Level</span>}
           >
-            <Input
-              prefix={<FiUser style={{ color: "#1890ff", fontSize: "16px" }} />}
-              placeholder="Enter last name"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
-            />
+            <Select
+              placeholder="Select interest level"
+              style={selectStyle}
+              popupClassName="custom-select-dropdown"
+            >
+              {interestLevels.map((level) => (
+                <Option key={level.value} value={level.value}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: level.color
+                    }} />
+                    {level.label}
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="leadValueGroup"
+            label={<span style={formItemStyle}>Lead Value</span>}
+            className="combined-input-item"
+          >
+            <Input.Group compact className="value-input-group">
+              <Form.Item
+                name="currency"
+                noStyle
+                initialValue={defaultCurrency}
+                rules={[{ required: true, message: 'Please select currency' }]}
+              >
+                <Select
+                  style={{ width: '120px' }}
+                  className="currency-select"
+                  dropdownMatchSelectWidth={120}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  popupClassName="custom-select-dropdown"
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={(input, option) => {
+                    const currencyCode = option?.children?.props?.children?.[1]?.props?.children;
+                    const currencyIcon = option?.children?.props?.children?.[0]?.props?.children;
+                    return (
+                      currencyCode?.toString().toLowerCase().includes(input.toLowerCase()) ||
+                      currencyIcon?.toString().toLowerCase().includes(input.toLowerCase())
+                    );
+                  }}
+                >
+                  {currencies?.map((currency) => (
+                    <Option key={currency.id} value={currency.currencyCode}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
+                        <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="leadValue"
+                noStyle
+                rules={[{ required: true, message: 'Please enter lead value' }]}
+              >
+                <InputNumber
+                  style={{ width: 'calc(100% - 120px)', padding: '0px 16px' }}
+                  placeholder="Enter amount"
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  min={0}
+                  step={1}
+                />
+              </Form.Item>
+            </Input.Group>
           </Form.Item>
 
           <Form.Item
             name="leadStage"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Lead Stage
-              </span>
-            }
+            label={<span style={formItemStyle}>Lead Stage</span>}
+            rules={[{ required: true, message: "Please select lead stage" }]}
           >
             <Select
               placeholder="Select lead stage"
-              size="large"
-              style={{ borderRadius: "10px" }}
+              style={selectStyle}
+              popupClassName="custom-select-dropdown"
             >
-              <Option value="new">New</Option>
-              <Option value="contacted">Contacted</Option>
-              <Option value="qualified">Qualified</Option>
-              <Option value="proposal">Proposal</Option>
-              <Option value="negotiation">Negotiation</Option>
-              <Option value="closed">Closed</Option>
+              {leadStages?.map((stage) => (
+                <Option key={stage.value} value={stage.value}>
+                  {stage.label}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="currency"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Currency
-              </span>
-            }
-          >
-            <Select
-              placeholder="Select currency"
-              size="large"
-              style={{ borderRadius: "10px" }}
-            >
-              <Option value="USD">USD</Option>
-              <Option value="EUR">EUR</Option>
-              <Option value="GBP">GBP</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="leadValue"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Lead Value
-              </span>
-            }
-          >
-            <Input
-              prefix={
-                <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
-              }
-              placeholder="Enter lead value"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="telephone"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Telephone
-              </span>
-            }
-          >
-            <Input
-              prefix={
-                <FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />
-              }
-              placeholder="Enter telephone number"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="email"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>Email</span>
-            }
-            rules={[
-              { required: true, message: "Please enter email" },
-              { type: "email", message: "Please enter a valid email" },
-            ]}
-          >
-            <Input
-              prefix={<FiMail style={{ color: "#1890ff", fontSize: "16px" }} />}
-              placeholder="Enter email"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="assigned"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Assigned To
-              </span>
-            }
-          >
-            <Select
-              placeholder="Select assignee"
-              size="large"
-              style={{ borderRadius: "10px" }}
-            >
-              <Option value="user1">User 1</Option>
-              <Option value="user2">User 2</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="lead_members"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Lead Members
-              </span>
-            }
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select lead members"
-              size="large"
-              style={{ borderRadius: "10px" }}
-            >
-              <Option value="member1">Member 1</Option>
-              <Option value="member2">Member 2</Option>
-            </Select>
-          </Form.Item>
-
+          {/* Source Select */}
           <Form.Item
             name="source"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Source
-              </span>
-            }
+            label={<span style={formItemStyle}>Source</span>}
+            rules={[{ required: true, message: "Please select source" }]}
           >
             <Select
               placeholder="Select source"
-              size="large"
-              style={{ borderRadius: "10px" }}
+              style={selectStyle}
+              popupClassName="custom-select-dropdown"
             >
-              <Option value="website">Website</Option>
-              <Option value="referral">Referral</Option>
-              <Option value="social">Social Media</Option>
+              {sources.map((source) => (
+                <Option key={source.value} value={source.value}>
+                  {source.label}
+                </Option>
+              ))}
             </Select>
           </Form.Item>
 
+          {/* Status Select */}
+          <Form.Item
+            name="status"
+            label={<span style={formItemStyle}>Status</span>}
+          >
+            <Select
+              placeholder="Select status"
+              style={selectStyle}
+              popupClassName="custom-select-dropdown"
+            >
+              {statuses.map((status) => (
+                <Option key={status.value} value={status.value}>
+                  {status.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          {/* Category Select */}
           <Form.Item
             name="category"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Category
-              </span>
-            }
+            label={<span style={formItemStyle}>Category</span>}
           >
             <Select
               placeholder="Select category"
-              size="large"
-              style={{ borderRadius: "10px" }}
+              style={selectStyle}
+              popupClassName="custom-select-dropdown"
             >
               <Option value="cat1">Category 1</Option>
               <Option value="cat2">Category 2</Option>
             </Select>
           </Form.Item>
+        </div>
 
+        {/* Team Members Section */}
+        <div style={{ marginBottom: '32px' }}>
           <Form.Item
-            name="tags"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>Tags</span>
-            }
-          >
-            <Select
-              mode="tags"
-              placeholder="Add tags"
-              size="large"
-              style={{ borderRadius: "10px" }}
-            >
-              <Option value="tag1">Tag 1</Option>
-              <Option value="tag2">Tag 2</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="files"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>Files</span>
-            }
+            name="lead_members"
+            label={<span style={formItemStyle}>Team Members</span>}
+            style={{ marginBottom: '16px' }}
           >
             <Select
               mode="multiple"
-              placeholder="Select files"
-              size="large"
-              style={{ borderRadius: "10px" }}
+              placeholder="Select team members"
+              style={{
+                width: '100%',
+                height: 'auto',
+                minHeight: '48px'
+              }}
+              popupClassName="custom-select-dropdown"
+              showSearch
+              optionFilterProp="children"
+              maxTagCount={5}
+              maxTagTextLength={15}
+              loading={usersLoading}
+              open={teamMembersOpen}
+              onDropdownVisibleChange={setTeamMembersOpen}
+              filterOption={(input, option) => {
+                const username = option?.username?.toLowerCase();
+                return username?.includes(input.toLowerCase());
+              }}
+              dropdownRender={(menu) => (
+                <>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    padding: '0 8px',
+                    justifyContent: 'flex-end'
+                  }}>
+                    <Button
+                      type="text"
+                      icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                      onClick={handleCreateUser}
+                      style={{
+                        height: '36px',
+                        padding: '8px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                      }}
+                    >
+                      Add New User
+                    </Button>
+                    <Button
+                      type="text"
+                      icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTeamMembersOpen(false);
+                      }}
+                      style={{
+                        height: '36px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        background: '#ffffff',
+                        border: '1px solid #1890ff',
+                        color: '#1890ff',
+                        fontWeight: '500'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#e6f4ff';
+                        e.currentTarget.style.borderColor = '#69b1ff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#ffffff';
+                        e.currentTarget.style.borderColor = '#1890ff';
+                      }}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </>
+              )}
             >
-              <Option value="file1">File 1</Option>
-              <Option value="file2">File 2</Option>
+              {Array.isArray(users) && users.map(user => {
+                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                const roleStyle = getRoleColor(userRole?.role_name);
+
+                return (
+                  <Option key={user.id} value={user.id} username={user.username}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '4px 0'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: '#e6f4ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#1890ff',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textTransform: 'uppercase'
+                      }}>
+                        {user.profilePic ? (
+                          <img
+                            src={user.profilePic}
+                            alt={user.username}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '50%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        ) : (
+                          user.username?.charAt(0) || <FiUser />
+                        )}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flex: 1
+                      }}>
+                        <span style={{
+                          fontWeight: 500,
+                          color: 'rgba(0, 0, 0, 0.85)',
+                          fontSize: '14px'
+                        }}>
+                          {user.username}
+                        </span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <div
+                          className="role-indicator"
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: roleStyle.color,
+                            boxShadow: `0 0 8px ${roleStyle.color}`,
+                            animation: 'pulse 2s infinite'
+                          }}
+                        />
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          background: roleStyle.bg,
+                          color: roleStyle.color,
+                          border: `1px solid ${roleStyle.border}`,
+                          fontWeight: 500,
+                          textTransform: 'capitalize'
+                        }}>
+                          {userRole?.role_name || 'User'}
+                        </span>
+                      </div>
+                    </div>
+                  </Option>
+                );
+              })}
             </Select>
           </Form.Item>
+        </div>
 
+        {/* Basic Information */}
+        <div className="section-title" style={{ marginBottom: '16px' }}>
+          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
+        </div>
+        <div className="form-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '16px',
+          marginBottom: '32px'
+        }}>
           <Form.Item
-            name="status"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Status
-              </span>
-            }
-          >
-            <Select
-              placeholder="Select status"
-              size="large"
-              style={{ borderRadius: "10px" }}
-            >
-              <Option value="new">New</Option>
-              <Option value="in_progress">In Progress</Option>
-              <Option value="completed">Completed</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="company_name"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Company Name
-              </span>
-            }
+            name="firstName"
+            label={<span style={formItemStyle}>First Name</span>}
           >
             <Input
-              prefix={
-                <FiBriefcase style={{ color: "#1890ff", fontSize: "16px" }} />
-              }
-              placeholder="Enter company name"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
+              prefix={<FiUser style={prefixIconStyle} />}
+              placeholder="Enter first name"
+              style={inputStyle}
             />
           </Form.Item>
 
           <Form.Item
-            name="client_id"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Client ID
-              </span>
-            }
+            name="lastName"
+            label={<span style={formItemStyle}>Last Name</span>}
           >
             <Input
-              prefix={<FiHash style={{ color: "#1890ff", fontSize: "16px" }} />}
-              placeholder="Enter client ID"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                padding: "8px 16px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                transition: "all 0.3s ease",
-              }}
+              prefix={<FiUser style={prefixIconStyle} />}
+              placeholder="Enter last name"
+              style={inputStyle}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="email"
+            label={<span style={formItemStyle}>Email</span>}
+            rules={[
+              { type: "email", message: "Please enter a valid email" }
+            ]}
+          >
+            <Input
+              prefix={<FiMail style={prefixIconStyle} />}
+              placeholder="Enter email address"
+              style={inputStyle}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="phoneGroup"
+            label={<span style={formItemStyle}>Phone Number</span>}
+            className="combined-input-item"
+          >
+            <Input.Group compact className="phone-input-group">
+              <Form.Item
+                name="phoneCode"
+                noStyle
+                initialValue={defaultPhoneCode}
+                rules={[{ required: true, message: 'Please select country code' }]}
+              >
+                <Select
+                  style={{ width: '120px' }}
+                  className="phone-code-select"
+                  dropdownMatchSelectWidth={120}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  popupClassName="custom-select-dropdown"
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={(input, option) => {
+                    const countryCode = option?.children?.props?.children?.[0]?.props?.children;
+                    const phoneCode = option?.children?.props?.children?.[1]?.props?.children;
+                    return (
+                      countryCode?.toString().toLowerCase().includes(input.toLowerCase()) ||
+                      phoneCode?.toString().toLowerCase().includes(input.toLowerCase())
+                    );
+                  }}
+                >
+                  {countries?.map((country) => (
+                    <Option key={country.id} value={country.phoneCode.replace('+', '')}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
+                        <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="telephone"
+                noStyle
+                rules={[
+                  { required: true, message: 'Please enter phone number' },
+                  { pattern: /^\d+$/, message: 'Please enter valid phone number' }
+                ]}
+              >
+                <Input
+                  style={{ width: 'calc(100% - 120px)' }}
+                  placeholder="Enter phone number"
+                  maxLength={15}
+                />
+              </Form.Item>
+            </Input.Group>
+          </Form.Item>
+
+          <Form.Item
+            name="company_name"
+            label={<span style={formItemStyle}>Company Name</span>}
+          >
+            <Input
+              prefix={<FiBriefcase style={prefixIconStyle} />}
+              placeholder="Enter company name"
+              style={inputStyle}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="address"
+            label={<span style={formItemStyle}>Address</span>}
+          >
+            <Input
+              prefix={<FiMapPin style={prefixIconStyle} />}
+              placeholder="Enter address"
+              style={inputStyle}
             />
           </Form.Item>
         </div>
@@ -563,6 +917,7 @@ const EditLead = ({ open, onCancel, initialValues }) => {
             display: "flex",
             justifyContent: "flex-end",
             gap: "12px",
+            padding: "0 24px 24px"
           }}
         >
           <Button
@@ -602,6 +957,169 @@ const EditLead = ({ open, onCancel, initialValues }) => {
           </Button>
         </div>
       </Form>
+
+      <CreateUser
+        open={isCreateUserVisible}
+        onCancel={() => setIsCreateUserVisible(false)}
+        onSuccess={handleCreateUserSuccess}
+      />
+
+      <style jsx global>{`
+        .lead-form-modal {
+          .currency-select, .phone-code-select {
+            cursor: pointer;
+            .ant-select-selector {
+              padding: 8px 12px !important;
+              height: 48px !important;
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+              border-right: none !important;
+            }
+            
+            .ant-select-selection-search {
+              input {
+                height: 100% !important;
+              }
+            }
+
+            .ant-select-selection-item {
+              padding-right: 20px !important;
+              font-weight: 500 !important;
+            }
+
+            .ant-select-selection-placeholder {
+              color: #9CA3AF !important;
+            }
+          }
+
+          .value-input-group, .phone-input-group {
+            display: flex !important;
+            align-items: stretch !important;
+            width: 100% !important;
+
+            .ant-select {
+              .ant-select-selector {
+                height: 100% !important;
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+              }
+            }
+
+            .ant-input-number, .ant-input {
+              height: 48px !important;
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+              border-left: none !important;
+
+              &:focus, &-focused {
+                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+                border-color: #1890ff !important;
+
+                & + .ant-select .ant-select-selector {
+                  border-color: #1890ff !important;
+                }
+              }
+            }
+
+            .ant-input-number {
+              .ant-input-number-input {
+                height: 46px !important;
+                padding: 0 16px !important;
+              }
+            }
+
+            .ant-input {
+              padding: 8px 16px !important;
+            }
+          }
+
+          .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            background-color: #f8fafc !important;
+            border: 1px solid #e6e8eb !important;
+            border-radius: 10px !important;
+            min-height: 48px !important;
+            padding: 8px!important;
+            display: flex !important;
+            align-items: center !important;
+          }
+
+          .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            border-color: #1890ff !important;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+          }
+
+          .ant-select-single .ant-select-selector .ant-select-selection-item,
+          .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+            line-height: 32px !important;
+            height: 32px !important;
+            transition: all 0.3s !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+
+          .ant-select-multiple {
+            .ant-select-selector {
+              min-height: 48px !important;
+              height: auto !important;
+              padding: 4px 8px !important;
+              background-color: #f8fafc !important;
+              border: 1px solid #e6e8eb !important;
+              border-radius: 10px !important;
+              display: flex !important;
+              align-items: flex-start !important;
+              flex-wrap: wrap !important;
+            }
+
+            .ant-select-selection-item {
+              height: 32px !important;
+              line-height: 30px !important;
+              background: #f0f7ff !important;
+              border: 1px solid #91caff !important;
+              border-radius: 6px !important;
+              color: #0958d9 !important;
+              font-size: 13px !important;
+              margin: 4px !important;
+              padding: 0 8px !important;
+              display: flex !important;
+              align-items: center !important;
+            }
+
+            .ant-select-selection-search {
+              margin: 4px !important;
+            }
+
+            .ant-select-selection-placeholder {
+              padding: 8px !important;
+            }
+          }
+
+          .ant-select-dropdown {
+            .ant-select-item-option-content {
+              white-space: normal !important;
+              word-break: break-word !important;
+            }
+          }
+
+          @keyframes pulse {
+            0% {
+              transform: scale(1);
+              opacity: 1;
+            }
+            50% {
+              transform: scale(1.2);
+              opacity: 0.8;
+            }
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
+          }
+
+          .role-indicator {
+            animation: pulse 2s infinite;
+          }
+        }
+      `}</style>
     </Modal>
   );
 };

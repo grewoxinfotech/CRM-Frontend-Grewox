@@ -205,7 +205,7 @@ $spacing-unit: 8px;
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -217,7 +217,7 @@ $spacing-unit: 8px;
                     }
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -322,7 +322,7 @@ $spacing-unit: 8px;
     // Form Section
     .form-section {
         width: 100%;
-        
+
         .ant-form {
             .ant-form-item {
                 margin-bottom: $spacing-unit * 2;
@@ -511,7 +511,6 @@ $spacing-unit: 8px;
                     }
                 }
 
-                .ant-select-selector,
                 .ant-picker {
                     border-radius: 10px !important;
                     height: 48px !important;
@@ -547,4 +546,4 @@ $spacing-unit: 8px;
             }
         }
     }
-} 
+}

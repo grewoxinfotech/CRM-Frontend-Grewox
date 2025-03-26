@@ -969,7 +969,6 @@
                 }
 
                 span:last-child {
-                    color: rgba(255, 255, 255, 0.8);
                     font-size: 12px;
                 }
             }
@@ -1038,10 +1037,6 @@
                         span:first-child {
                             color: white !important;
                         }
-
-                        span:last-child {
-                            color: rgba(255, 255, 255, 0.8) !important;
-                        }
                     }
                 }
             }
@@ -1075,7 +1070,6 @@
                     }
 
                     span:last-child {
-                        color: #8c8c8c;
                         font-size: 12px;
                     }
                 }

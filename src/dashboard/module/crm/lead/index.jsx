@@ -127,12 +127,14 @@ const Lead = () => {
       <Card className="lead-content">
         {viewMode === "table" ? (
           <LeadList
+            lead={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
           />
         ) : (
           <LeadCard
+            lead={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}

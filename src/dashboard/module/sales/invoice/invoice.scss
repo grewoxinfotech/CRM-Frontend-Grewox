@@ -244,10 +244,9 @@ $bg-light: #f8fafc;
     transition: all 0.3s ease;
     padding: 8px 16px;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         background-color: #fff;
-        border-color: #1890ff;
-        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
     }
 
     &.ant-input-affix-wrapper {
@@ -276,7 +275,8 @@ $bg-light: #f8fafc;
         align-items: center;
         padding: 0 16px !important;
 
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
             background-color: #fff;
             border-color: #1890ff;
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
@@ -284,7 +284,7 @@ $bg-light: #f8fafc;
 
         .ant-select-selection-search {
             left: 16px;
-            
+
             .ant-select-selection-search-input {
                 height: 42px !important;
             }
@@ -312,14 +312,15 @@ $bg-light: #f8fafc;
     transition: all 0.3s ease;
     width: 100%;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         background-color: #fff;
         border-color: #1890ff;
         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
     }
 
     .ant-picker-input {
-        > input {
+        >input {
             font-size: 14px;
             color: $text-color;
         }
@@ -339,7 +340,8 @@ $bg-light: #f8fafc;
     width: 100%;
     padding: 4px 12px;
 
-    &:hover, &:focus {
+    &:hover,
+    &:focus {
         background-color: #fff;
         border-color: #1890ff;
         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
@@ -657,6 +659,7 @@ $bg-light: #f8fafc;
 
         .invoice-table-card {
             .ant-table {
+
                 .ant-table-thead>tr>th,
                 .ant-table-tbody>tr>td {
                     padding: 12px 8px;
@@ -695,4 +698,4 @@ $bg-light: #f8fafc;
             }
         }
     }
-} 
+}

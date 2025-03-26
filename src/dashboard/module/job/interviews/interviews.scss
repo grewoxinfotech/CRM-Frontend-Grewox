@@ -72,7 +72,7 @@
 
             .section-header {
                 margin-bottom: 16px;
-                
+
                 h4 {
                     display: flex;
                     align-items: center;
@@ -137,7 +137,7 @@
                         color: #ff4d4f;
                         background: transparent;
                         border: 1px solid #ff4d4f;
-                        
+
                         &:hover {
                             background: #ff4d4f;
                             color: white;
@@ -184,12 +184,13 @@
 
                 // Calendar date selection styling
                 .ant-picker-cell {
+
                     // Selected date styling
                     &-selected .ant-picker-calendar-date {
                         background: #f0f7ff !important;
                         color: #1890ff !important;
                         border-color: #e6f4ff !important;
-                        
+
                         &:hover {
                             background: #e6f4ff !important;
                         }
@@ -198,7 +199,7 @@
                     // Today's date styling
                     &-today .ant-picker-calendar-date {
                         border-color: #e6f4ff !important;
-                        
+
                         .ant-picker-calendar-date-value {
                             color: #1890ff !important;
                         }
@@ -404,12 +405,8 @@
                 height: 40px;
                 border: 1px solid #e6e8eb;
                 background-color: #f8fafc;
-                
-                &:hover,
-                &:focus {
-                    border-color: #1890ff;
-                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                }
+
+
             }
 
             .ant-input-prefix {
@@ -453,7 +450,7 @@
 .ant-popconfirm {
     .ant-popconfirm-message {
         padding: 16px;
-        
+
         .ant-popconfirm-title {
             font-weight: 500;
             color: #2c3e50;
@@ -466,15 +463,15 @@
 
     .ant-popconfirm-buttons {
         padding: 0 16px 16px;
-        
+
         .ant-btn {
             border-radius: 6px;
             height: 32px;
-            
+
             &-primary {
                 background: #ff4d4f;
                 border-color: #ff4d4f;
-                
+
                 &:hover {
                     background: #ff7875;
                     border-color: #ff7875;
@@ -482,4 +479,4 @@
             }
         }
     }
-} 
+}
