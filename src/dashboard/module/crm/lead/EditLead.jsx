@@ -29,6 +29,7 @@ import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
+import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -41,12 +42,16 @@ const EditLead = ({ open, onCancel, initialValues }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
 
   // Fetch users data with roles
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
+
+  // Filter sources to only show source type labels
+  const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];
 
   // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
@@ -71,16 +76,6 @@ const EditLead = ({ open, onCancel, initialValues }) => {
     { value: "proposal", label: "Proposal" },
     { value: "negotiation", label: "Negotiation" },
     { value: "closed", label: "Closed" },
-  ];
-
-  // Source options
-  const sources = [
-    { value: "website", label: "Website" },
-    { value: "referral", label: "Referral" },
-    { value: "social", label: "Social Media" },
-    { value: "email", label: "Email Campaign" },
-    { value: "cold_call", label: "Cold Call" },
-    { value: "event", label: "Event" },
   ];
 
   // Status options
@@ -559,8 +554,18 @@ const EditLead = ({ open, onCancel, initialValues }) => {
               popupClassName="custom-select-dropdown"
             >
               {sources.map((source) => (
-                <Option key={source.value} value={source.value}>
-                  {source.label}
+                <Option key={source.id} value={source.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: source.color || '#1890ff'
+                      }}
+                    />
+                    {source.name}
+                  </div>
                 </Option>
               ))}
             </Select>

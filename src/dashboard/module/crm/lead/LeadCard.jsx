@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Tag, Button, Tooltip, Avatar, Dropdown, Typography, Progress } from "antd";
+import { Card, Tag, Button, Tooltip, Avatar, Dropdown, Typography, Progress, Empty, message } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -11,15 +11,27 @@ import {
   FiZap
 } from "react-icons/fi";
 import CreateDeal from "../deal/CreateDeal";
-import { useGetLeadsQuery } from './services/LeadApi';
+import { useGetLeadsQuery, useUpdateLeadMutation } from './services/LeadApi';
+import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const { Text } = Typography;
 
 const LeadCard = ({ onEdit, onDelete, onView }) => {
   const { data: leadsData, isLoading, error } = useGetLeadsQuery();
-  const leadData = leadsData?.data || [];
+  const { data: stagesData } = useGetLeadStagesQuery();
   const [showCreateDeal, setShowCreateDeal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
+  const [updateLead] = useUpdateLeadMutation();
+
+  const stages = stagesData?.filter(stage => stage.stageType === 'lead') || [];
+  const leads = leadsData?.data || [];
+
+  // Group leads by stage
+  const leadsByStage = stages.reduce((acc, stage) => {
+    acc[stage.id] = leads.filter(lead => lead.leadStage === stage.id);
+    return acc;
+  }, {});
 
   const getDropdownItems = (lead) => ({
     items: [
@@ -117,98 +129,215 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
     }).format(value);
   };
 
+  const handleDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+
+    // If dropped outside a droppable area
+    if (!destination) return;
+
+    // If dropped in the same position
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) return;
+
+    try {
+      await updateLead({
+        id: draggableId,
+        data: { leadStage: destination.droppableId }
+      }).unwrap();
+      message.success('Lead stage updated successfully');
+    } catch (error) {
+      message.error('Failed to update lead stage');
+      console.error('Update stage error:', error);
+    }
+  };
+
   if (isLoading) return <div>Loading leads...</div>;
   if (error) return <div>Error loading leads: {error.message}</div>;
-  if (!leadData || leadData.length === 0) return <div>No leads found</div>;
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
-      {leadData.map(lead => (
-        <Card
-          key={lead.id}
-          className="lead-card"
-          bordered={false}
-          style={{
-            width: '320px',
-            borderRadius: '0',
-            background: '#ffffff',
-            boxShadow: '0 4px 24px -1px rgba(0, 0, 0, 0.06)',
-            transition: 'all 0.3s ease',
-            position: 'relative',
-            overflow: 'hidden',
-            borderTop: `4px solid ${getStageColor(lead?.leadStage)}`
-          }}
-          hoverable
-        >
-          <div className="card-content">
-            {/* Header Section */}
-            <div className="card-header">
-              <div className="title-section">
-                <Tooltip title={lead?.leadTitle}>
-                  <Text strong className="lead-title">
-                    {lead?.leadTitle}
-                  </Text>
-                </Tooltip>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="kanban-board">
+        {stages.map(stage => (
+          <div key={stage.id} className="kanban-column">
+            <div className="kanban-column-header">
+              <Text strong>{stage.stageName}</Text>
+              <Tag>{leadsByStage[stage.id]?.length || 0}</Tag>
+            </div>
+            <Droppable droppableId={stage.id}>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`kanban-column-content ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                >
+                  {leadsByStage[stage.id]?.length > 0 ? (
+                    leadsByStage[stage.id].map((lead, index) => (
+                      <Draggable
+                        key={lead.id}
+                        draggableId={lead.id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`draggable-card ${snapshot.isDragging ? 'is-dragging' : ''}`}
+                          >
+                            <Card
+                              className="lead-card"
+                              bordered={false}
+                              style={{
+                                width: '100%',
+                                marginBottom: '16px',
+                                borderRadius: '8px',
+                                background: '#ffffff',
+                                boxShadow: '0 4px 24px -1px rgba(0, 0, 0, 0.06)',
+                                transition: 'all 0.3s ease',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                borderTop: `4px solid ${getStageColor(lead?.leadStage)}`
+                              }}
+                              hoverable
+                            >
+                              <div className="card-content">
+                                {/* Header Section */}
+                                <div className="card-header">
+                                  <div className="title-section">
+                                    <Tooltip title={lead?.leadTitle}>
+                                      <Text strong className="lead-title">
+                                        {lead?.leadTitle}
+                                      </Text>
+                                    </Tooltip>
 
-                <div className="tags-wrapper">
-                  <Tag
-                    color={getStageColor(lead?.leadStage)}
-                    className="stage-tag"
-                  >
-                    {lead?.leadStage?.charAt(0).toUpperCase() + lead?.leadStage?.slice(1) || 'New'}
-                  </Tag>
+                                    <div className="tags-wrapper">
+                                      <Tag className="interest-tag" style={{
+                                        backgroundColor: getInterestLevel(lead.interest_level).bg,
+                                        color: getInterestLevel(lead.interest_level).color,
+                                      }}>
+                                        <div className="dot-indicator" />
+                                        {getInterestLevel(lead.interest_level).text}
+                                      </Tag>
+                                    </div>
+                                  </div>
 
-                  <Tag className="interest-tag" style={{
-                    backgroundColor: getInterestLevel(lead.interest_level).bg,
-                    color: getInterestLevel(lead.interest_level).color,
-                  }}>
-                    <div className="dot-indicator" />
-                    {getInterestLevel(lead.interest_level).text}
-                  </Tag>
+                                  <Dropdown menu={getDropdownItems(lead)} trigger={["click"]}>
+                                    <Button type="text" icon={<FiMoreVertical />} className="action-button" />
+                                  </Dropdown>
+                                </div>
+
+                                {/* Metrics Section */}
+                                <div className="metrics-grid">
+                                  <div className="metric-item">
+                                    <span className="metric-label">Company</span>
+                                    <span className="metric-value">{lead.company_name}</span>
+                                  </div>
+                                  <div className="divider" />
+                                  <div className="metric-item">
+                                    <span className="metric-label">Value</span>
+                                    <span className="metric-value value-text">
+                                      {formatCurrency(lead.leadValue, lead.currency)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          </div>
+                        )}
+                      </Draggable>
+                    ))
+                  ) : (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description="No leads"
+                    />
+                  )}
+                  {provided.placeholder}
                 </div>
-              </div>
-
-              <Dropdown
-                menu={getDropdownItems(lead)}
-                trigger={["click"]}
-                placement="bottomRight"
-              >
-                <Button
-                  type="text"
-                  icon={<FiMoreVertical />}
-                  className="action-button"
-                />
-              </Dropdown>
-            </div>
-
-            {/* Key Metrics Section */}
-            <div className="metrics-grid">
-              <div className="metric-item">
-                <Text className="metric-label">Lead Value</Text>
-                <Text strong className="metric-value value-text">
-                  {formatCurrency(lead?.leadValue, lead?.currency)}
-                </Text>
-              </div>
-              <div className="divider" />
-              <div className="metric-item">
-                <Text className="metric-label">Source</Text>
-                <Text strong className="metric-value">
-                  {lead?.source}
-                </Text>
-              </div>
-            </div>
+              )}
+            </Droppable>
           </div>
-        </Card>
-      ))}
+        ))}
+      </div>
 
-      <CreateDeal
-        open={showCreateDeal}
-        onCancel={() => setShowCreateDeal(false)}
-        leadData={selectedLead}
-      />
+      {showCreateDeal && (
+        <CreateDeal
+          open={showCreateDeal}
+          onCancel={() => {
+            setShowCreateDeal(false);
+            setSelectedLead(null);
+          }}
+          lead={selectedLead}
+        />
+      )}
 
       <style jsx global>{`
+        .kanban-board {
+          display: flex;
+          gap: 24px;
+          padding: 24px;
+          overflow-x: auto;
+          min-height: calc(100vh - 300px);
+          width: 100%;
+        }
+
+        .kanban-column {
+          min-width: 320px;
+          background: #f8fafc;
+          border-radius: 12px;
+          padding: 16px;
+          flex: 1;
+        }
+
+        .kanban-column-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+          padding: 0 8px;
+        }
+
+        .ant-tag {
+          background: #e6f4ff;
+          color: #1890ff;
+          border: none;
+          border-radius: 12px;
+          padding: 2px 12px;
+        }
+
+        .kanban-column-content {
+          min-height: 100px;
+          padding: 8px;
+          background: #f8fafc;
+          border-radius: 8px;
+          transition: background-color 0.2s ease;
+        }
+
+        .kanban-column-content.dragging-over {
+          background: #e6f7ff;
+        }
+
+        .draggable-card {
+          margin-bottom: 16px;
+          transition: transform 0.2s ease;
+        }
+
+        .draggable-card.is-dragging {
+          transform: rotate(3deg);
+        }
+
         .lead-card {
+          cursor: grab;
+        }
+
+        .lead-card:active {
+          cursor: grabbing;
+        }
+
+        .lead-card {
+          margin-bottom: 16px;
           --card-padding: 24px;
           --primary-color: #1890ff;
           --success-color: #52c41a;
@@ -217,12 +346,11 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           
           will-change: transform, box-shadow;
           transform: translateZ(0);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
 
           &:hover {
-            transform: translateY(-6px);
-            box-shadow: 
-              0 12px 24px rgba(0, 0, 0, 0.1),
-              0 4px 8px rgba(24, 144, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.1);
 
             .metric-card {
               transform: translateY(-2px);
@@ -414,7 +542,7 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           }
         }
       `}</style>
-    </div>
+    </DragDropContext>
   );
 };
 

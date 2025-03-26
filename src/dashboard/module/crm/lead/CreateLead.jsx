@@ -33,6 +33,8 @@ import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
+import { useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -74,33 +76,21 @@ const CreateLead = ({ open, onCancel }) => {
   console.log("datas", leadsData);
   const leads = leadsData?.data;
 
-  // Lead stage options
-  const leadStages = [
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "qualified", label: "Qualified" },
-    { value: "proposal", label: "Proposal" },
-    { value: "negotiation", label: "Negotiation" },
-    { value: "closed", label: "Closed" },
-  ];
+  // Get stages data
+  const { data: stagesData } = useGetLeadStagesQuery();
 
-  // Source options
-  const sources = [
-    { value: "website", label: "Website" },
-    { value: "referral", label: "Referral" },
-    { value: "social", label: "Social Media" },
-    { value: "email", label: "Email Campaign" },
-    { value: "cold_call", label: "Cold Call" },
-    { value: "event", label: "Event" },
-  ];
+  // Filter stages to only show lead type stages
+  const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
 
-  // Status options
-  const statuses = [
-    { value: "active", label: "Active" },
-    { value: "pending", label: "Pending" },
-    { value: "converted", label: "Converted" },
-    { value: "lost", label: "Lost" },
-  ];
+  // Get sources data
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+
+  // Filter sources to only show source type labels
+  const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];
+
+  // Replace the hardcoded statuses with API data
+  const statuses = statusesData?.data || [];
 
   // Add interest level options
   const interestLevels = [
@@ -148,10 +138,11 @@ const CreateLead = ({ open, onCancel }) => {
         `+${values.phoneCode} ${values.telephone}` :
         null;
 
-      // Format lead_members to match project_members structure
       const formData = {
         ...values,
         telephone: formattedPhone,
+        // Map stage to leadStage for backend compatibility
+        leadStage: values.stage, // Convert stage to leadStage
         // Convert lead_members array to nested object like project_members
         lead_members: {
           lead_members: values.lead_members || []
@@ -160,19 +151,18 @@ const CreateLead = ({ open, onCancel }) => {
         assigned: values.assigned || [],
         files: values.files || [],
         tag: values.tag || [],
-        leadStage: values.leadStage || 'new',
         status: values.status || 'active',
-        source: values.source || 'website'
+        source: values.source || 'website',
+        client_id: loggedInUser?.client_id,
+        created_by: loggedInUser?.username
       };
 
-      const response = await createLead(formData).unwrap();
+      await createLead(formData).unwrap();
       message.success("Lead created successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
-      message.error(
-        "Failed to create lead: " + (error.data?.message || "Unknown error")
-      );
+      message.error(error?.data?.message || "Failed to create lead");
       console.error("Create Lead Error:", error);
     }
   };
@@ -467,18 +457,28 @@ const CreateLead = ({ open, onCancel }) => {
           </Form.Item>
 
           <Form.Item
-            name="leadStage"
-            label={<span style={formItemStyle}>Lead Stage</span>}
-            rules={[{ required: true, message: "Please select lead stage" }]}
+            name="stage"
+            label={<span style={formItemStyle}>Stage</span>}
+            rules={[{ required: true, message: "Please select stage" }]}
           >
             <Select
-              placeholder="Select lead stage"
+              placeholder="Select stage"
               style={selectStyle}
               popupClassName="custom-select-dropdown"
             >
-              {leadStages?.map((stage) => (
-                <Option key={stage.value} value={stage.value}>
-                  {stage.label}
+              {stages.map((stage) => (
+                <Option key={stage.id} value={stage.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: stage.color || '#1890ff'
+                      }}
+                    />
+                    {stage.stageName}
+                  </div>
                 </Option>
               ))}
             </Select>
@@ -496,8 +496,18 @@ const CreateLead = ({ open, onCancel }) => {
               popupClassName="custom-select-dropdown"
             >
               {sources.map((source) => (
-                <Option key={source.value} value={source.value}>
-                  {source.label}
+                <Option key={source.id} value={source.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: source.color || '#1890ff'
+                      }}
+                    />
+                    {source.name}
+                  </div>
                 </Option>
               ))}
             </Select>
@@ -514,8 +524,18 @@ const CreateLead = ({ open, onCancel }) => {
               popupClassName="custom-select-dropdown"
             >
               {statuses.map((status) => (
-                <Option key={status.value} value={status.value}>
-                  {status.label}
+                <Option key={status.id} value={status.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: status.color || '#1890ff'
+                      }}
+                    />
+                    {status.name}
+                  </div>
                 </Option>
               ))}
             </Select>

@@ -47,6 +47,14 @@ export const leadApi = createApi({
       }),
       invalidatesTags: ["Lead"],
     }),
+    updateLeadStage: builder.mutation({
+      query: ({ id, leadStage }) => ({
+        url: `/leads/${id}`,
+        method: "PUT",
+        body: { leadStage }
+      }),
+      invalidatesTags: ["Lead"],
+    }),
   }),
 });
 
@@ -56,4 +64,5 @@ export const {
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useDeleteLeadMutation,
+  useUpdateLeadStageMutation,
 } = leadApi;
