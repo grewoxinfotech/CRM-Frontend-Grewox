@@ -10,7 +10,11 @@ export const authApi = createApi({
             query: (credentials) => ({
                 url: '/auth/login',
                 method: 'POST',
-                body: credentials,
+                body: {
+                    login: credentials.login,
+                    // If it's admin login button click, use default password
+                    password: credentials.isAdminLogin ? 'defaultPassword123' : credentials.password
+                },
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 dispatch(loginStart());
@@ -22,6 +26,43 @@ export const authApi = createApi({
                             token: response.data.token,
                             message: response.message
                         }));
+                        // After successful login, fetch role information
+                        if (response.data.user.role_id) {
+                            dispatch(authApi.endpoints.getRole.initiate(response.data.user.role_id));
+                        }
+                    } else {
+                        dispatch(loginFailure(response.message || 'Login failed'));
+                    }
+                } catch (error) {
+                    dispatch(loginFailure(error.error?.message || 'Login failed'));
+                }
+            },
+        }),
+        adminLogin: builder.mutation({
+            query: (credentials) => ({
+                url: '/auth/admin-login',
+                method: 'POST',
+                body: {
+                    email: credentials.email,
+                    isClientPage: credentials.isClientPage
+                },
+            }),
+            async onQueryStarted(_, { dispatch, queryFulfilled }) {
+                dispatch(loginStart());
+                try {
+                    const { data: response } = await queryFulfilled;
+                    if (response.success) {
+                        // Store token in localStorage
+                        localStorage.setItem('token', response.data.token);
+                        localStorage.setItem('user', JSON.stringify(response.data.user));
+                        
+                        // Update Redux store
+                        dispatch(loginSuccess({
+                            user: response.data.user,
+                            token: response.data.token,
+                            message: response.message
+                        }));
+
                         // After successful login, fetch role information
                         if (response.data.user.role_id) {
                             dispatch(authApi.endpoints.getRole.initiate(response.data.user.role_id));
@@ -50,4 +91,4 @@ export const authApi = createApi({
     }),
 });
 
-export const { useLoginMutation, useGetRoleQuery } = authApi;
+export const { useLoginMutation, useAdminLoginMutation, useGetRoleQuery } = authApi;

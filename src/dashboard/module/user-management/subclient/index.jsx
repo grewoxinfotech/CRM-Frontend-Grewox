@@ -315,8 +315,8 @@ const SubClient = () => {
 
             {isCreateFormVisible && (
                 <CreateSubclient
-                    visible={isCreateFormVisible}
-                    onClose={() => setIsCreateFormVisible(false)}
+                    open={isCreateFormVisible}
+                    onCancel={() => setIsCreateFormVisible(false)}
                     onSuccess={() => {
                         setIsCreateFormVisible(false);
                         refetch();

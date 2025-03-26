@@ -1,9 +1,14 @@
 import React from 'react';
-import { Card, Avatar, Tag, Button, Dropdown, Menu } from 'antd';
+import { Card, Avatar, Tag, Button, Dropdown, Menu, message } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiUsers, FiEye, FiMail, FiCalendar, FiLogIn } from 'react-icons/fi';
 import moment from 'moment';
+import { useAdminLoginMutation } from '../../../../auth/services/authApi';
+import { useNavigate } from 'react-router-dom';
 
 const UserCard = ({ user, onEdit, onDelete, onView }) => {
+    const navigate = useNavigate();
+    const [adminLogin] = useAdminLoginMutation();
+
     const getRoleColor = (role) => {
         const roleColors = {
             'super-admin': {
@@ -42,6 +47,23 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                 .join('')
                 .toUpperCase()
             : 'U';
+    };
+
+    const handleAdminLogin = async () => {
+        try {
+            const response = await adminLogin({
+                email: user.email,
+                isClientPage: true
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Logged in as user successfully');
+                // Force reload to update the app state with new user
+                window.location.href = '/dashboard';
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to login as user');
+        }
     };
 
     const getActionMenu = (record) => (
@@ -96,7 +118,7 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                     icon={<FiLogIn />}
                     className="login-as-button"
                     block
-                    onClick={() => console.log('Login as', user.username, 'with role', user.role_name)}
+                    onClick={handleAdminLogin}
                     style={{
                         background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                         border: 'none',
@@ -110,7 +132,7 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                         fontWeight: '500'
                     }}
                 >
-                    {getLoginButtonText(user.role_name)}
+                    Login as User
                 </Button>
             ]}
         >
