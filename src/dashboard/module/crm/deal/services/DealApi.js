@@ -7,6 +7,7 @@ export const dealApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Deal"],
   endpoints: (builder) => ({
+
     getDeals: builder.query({
       query: (params) => ({
         url: "/deals",
@@ -27,6 +28,7 @@ export const dealApi = createApi({
       },
       providesTags: ["Deal"],
     }),
+    
     getDeal: builder.query({
       query: (id) => ({
         url: `/deals/${id}`,
@@ -35,6 +37,7 @@ export const dealApi = createApi({
       transformResponse: (response) => response?.data || response,
       providesTags: (result, error, id) => [{ type: "Deal", id }],
     }),
+    
     createDeal: builder.mutation({
       query: (deal) => ({
         url: "/deals",
@@ -44,6 +47,8 @@ export const dealApi = createApi({
       transformResponse: (response) => response?.data || response,
       invalidatesTags: ["Deal"],
     }),
+    
+    
     updateDeal: builder.mutation({
       query: ({ id, ...deal }) => ({
         url: `/deals/${id}`,
@@ -53,12 +58,23 @@ export const dealApi = createApi({
       transformResponse: (response) => response?.data || response,
       invalidatesTags: (result, error, { id }) => [{ type: "Deal", id }],
     }),
+    
+    
     deleteDeal: builder.mutation({
       query: (id) => ({
         url: `/deals/${id}`,
         method: "DELETE",
       }),
       transformResponse: (response) => response?.data || response,
+      invalidatesTags: ["Deal"],
+    }),
+
+    updateDealStage: builder.mutation({
+      query: ({ id, stage }) => ({
+        url: `/deals/${id}`,
+        method: "PUT",
+        body: { stage }
+      }),
       invalidatesTags: ["Deal"],
     }),
   }),
@@ -70,4 +86,5 @@ export const {
   useCreateDealMutation,
   useUpdateDealMutation,
   useDeleteDealMutation,
+  useUpdateDealStageMutation,
 } = dealApi;

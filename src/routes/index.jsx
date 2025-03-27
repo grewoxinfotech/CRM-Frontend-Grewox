@@ -56,7 +56,10 @@ import CreditNotes from "../dashboard/module/sales/creditnotes/index.jsx";
 import Calendar from "../dashboard/module/communication/calendar/index.jsx";
 import TaskCalendar from "../dashboard/module/crm/taskcalendar/index.jsx";
 import Leave from "../dashboard/module/hrm/leave/index.jsx";
+import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
+
 const PermissionRoute = ({ children, permissionKey }) => {
+  
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -218,7 +221,16 @@ const routes = createBrowserRouter([
           },
           {
             path: "deals",
-            element: <Deal />,
+            children: [
+              {
+                path: "",
+                element: <Deal />,
+              },
+              {
+                path: ":dealId",
+                element: <DealDetail />,
+              }
+            ]
           },
           {
             path: "tasks",

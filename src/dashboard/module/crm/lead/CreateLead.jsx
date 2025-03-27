@@ -68,7 +68,7 @@ const CreateLead = ({ open, onCancel }) => {
   // Filter users to get team members (excluding subclients)
   const users = usersResponse?.data?.filter(user =>
     user?.created_by === loggedInUser?.username &&
-    user?.role_id !== subclientRoleId
+    user?.role_id !== subclientRoleId 
   ) || [];
 
 
@@ -302,7 +302,7 @@ const CreateLead = ({ open, onCancel }) => {
             right: "24px",
             top: "24px",
           }}
-        />
+        />  
         <div
           style={{
             display: "flex",
@@ -1079,6 +1079,6 @@ const CreateLead = ({ open, onCancel }) => {
       `}</style>
     </Modal>
   );
-};
+};  
 
 export default CreateLead;
