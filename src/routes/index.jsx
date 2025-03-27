@@ -55,6 +55,7 @@ import Revenue from "../dashboard/module/sales/revenue/index.jsx";
 import CreditNotes from "../dashboard/module/sales/creditnotes/index.jsx";
 import Calendar from "../dashboard/module/communication/calendar/index.jsx";
 import TaskCalendar from "../dashboard/module/crm/taskcalendar/index.jsx";
+import Leave from "../dashboard/module/hrm/leave/index.jsx";
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
@@ -127,6 +128,10 @@ const routes = createBrowserRouter([
           {
             path: "employee",
             element: <Employee />,
+          },
+          {
+            path: "leave",
+            element: <Leave />,
           },
           {
             path: "branch",

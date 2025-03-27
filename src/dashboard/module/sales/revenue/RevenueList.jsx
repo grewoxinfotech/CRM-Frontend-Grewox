@@ -36,22 +36,25 @@ const RevenueList = ({
   const [deleteRevenue] = useDeleteRevenueMutation();
   const revdata = revenueData?.data;
   const filteredRevenues = React.useMemo(() => {
-    return revdata?.filter((revenue) => {
+    if (!revdata) return [];
+    return revdata.filter((revenue) => {
       const searchLower = searchText.toLowerCase();
       const amount = revenue?.amount?.toString().toLowerCase() || "";
       const category = revenue?.category?.toLowerCase() || "";
       const description = revenue?.description?.toLowerCase() || "";
-      const status = revenue?.status?.toLowerCase() || "";
+      const account = revenue?.account?.toLowerCase() || "";
+      const currency = revenue?.currency?.toLowerCase() || "";
 
       return (
         !searchText ||
         amount.includes(searchLower) ||
         category.includes(searchLower) ||
         description.includes(searchLower) ||
-        status.includes(searchLower)
+        account.includes(searchLower) ||
+        currency.includes(searchLower)
       );
     });
-  }, [revenues, searchText]);
+  }, [revdata, searchText]);
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -146,8 +149,8 @@ const RevenueList = ({
       dataIndex: "date",
       key: "date",
       sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+      render: (text) => dayjs(text).format("YYYY-MM-DD"),
     },
-
     {
       title: "Action",
       key: "actions",
@@ -175,7 +178,7 @@ const RevenueList = ({
     <div className="revenue-list">
       <Table
         columns={columns}
-        dataSource={revdata}
+        dataSource={filteredRevenues}
         rowKey="id"
         pagination={{
           pageSize: 10,
