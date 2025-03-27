@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Modal, Form, Input, Button, message, Typography } from "antd";
-import { useUpdateContractTypeMutation } from "./services/ContractTypeApi";
+import { useUpdateContractTypeMutation } from "../souce/services/SourceApi";
 import { FiX, FiFileText } from "react-icons/fi";
 
 const { Text } = Typography;
@@ -23,7 +23,7 @@ const EditContractTypeModal = ({ isOpen, onClose, contractType }) => {
         id: contractType.id,
         data: {
           name: values.name,
-          lableType: "contractType",
+          lableType: "contract_type",
         },
       }).unwrap();
       message.success("Contract type updated successfully");

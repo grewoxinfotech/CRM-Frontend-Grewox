@@ -29,7 +29,8 @@ import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
-import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery, useGetStatusesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -42,16 +43,24 @@ const EditLead = ({ open, onCancel, initialValues }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const { data: stagesData } = useGetLeadStagesQuery();
+  // Get sources data
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
 
+  // Replace the hardcoded statuses with API data
+  const statuses = statusesData?.data || [];
+  const sources = sourcesData?.data || [];
+  const categories = categoriesData?.data || [];
   // Fetch users data with roles
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
 
-  // Filter sources to only show source type labels
-  const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];
+  // Filter stages to only show lead type stages
+  const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
 
   // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
@@ -67,24 +76,6 @@ const EditLead = ({ open, onCancel, initialValues }) => {
   const indiaCountry = countries?.find(c => c.countryCode === 'IN');
   const defaultCurrency = inrCurrency?.currencyCode || 'INR';
   const defaultPhoneCode = indiaCountry?.phoneCode?.replace('+', '') || '91';
-
-  // Lead stage options
-  const leadStages = [
-    { value: "new", label: "New" },
-    { value: "contacted", label: "Contacted" },
-    { value: "qualified", label: "Qualified" },
-    { value: "proposal", label: "Proposal" },
-    { value: "negotiation", label: "Negotiation" },
-    { value: "closed", label: "Closed" },
-  ];
-
-  // Status options
-  const statuses = [
-    { value: "active", label: "Active" },
-    { value: "pending", label: "Pending" },
-    { value: "converted", label: "Converted" },
-    { value: "lost", label: "Lost" },
-  ];
 
   // Interest level options
   const interestLevels = [
@@ -524,6 +515,7 @@ const EditLead = ({ open, onCancel, initialValues }) => {
             </Input.Group>
           </Form.Item>
 
+          {/* Lead Stage */}
           <Form.Item
             name="leadStage"
             label={<span style={formItemStyle}>Lead Stage</span>}
@@ -534,9 +526,19 @@ const EditLead = ({ open, onCancel, initialValues }) => {
               style={selectStyle}
               popupClassName="custom-select-dropdown"
             >
-              {leadStages?.map((stage) => (
-                <Option key={stage.value} value={stage.value}>
-                  {stage.label}
+              {stages?.map((stage) => (
+                <Option key={stage.id} value={stage.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: stage.color || '#1890ff'
+                      }}
+                    />
+                    {stage.stageName}
+                  </div>
                 </Option>
               ))}
             </Select>
@@ -582,8 +584,18 @@ const EditLead = ({ open, onCancel, initialValues }) => {
               popupClassName="custom-select-dropdown"
             >
               {statuses.map((status) => (
-                <Option key={status.value} value={status.value}>
-                  {status.label}
+                <Option key={status.id} value={status.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: status.color || '#1890ff'
+                      }}
+                    />
+                    {status.name}
+                  </div>
                 </Option>
               ))}
             </Select>
@@ -599,8 +611,21 @@ const EditLead = ({ open, onCancel, initialValues }) => {
               style={selectStyle}
               popupClassName="custom-select-dropdown"
             >
-              <Option value="cat1">Category 1</Option>
-              <Option value="cat2">Category 2</Option>
+              {categories.map((category) => (
+                <Option key={category.id} value={category.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: category.color || '#1890ff'
+                      }}
+                    />
+                    {category.name}
+                  </div>
+                </Option>
+              ))}
             </Select>
           </Form.Item>
         </div>

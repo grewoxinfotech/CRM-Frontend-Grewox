@@ -33,7 +33,7 @@ import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
-import { useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery, useGetStatusesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 
 const { Text } = Typography;
@@ -71,10 +71,7 @@ const CreateLead = ({ open, onCancel }) => {
     user?.role_id !== subclientRoleId
   ) || [];
 
-  const { data: leadsData = [], isLoading: isLoadingUsers } =
-    useGetLeadsQuery();
-  console.log("datas", leadsData);
-  const leads = leadsData?.data;
+
 
   // Get stages data
   const { data: stagesData } = useGetLeadStagesQuery();
@@ -85,12 +82,12 @@ const CreateLead = ({ open, onCancel }) => {
   // Get sources data
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-
-  // Filter sources to only show source type labels
-  const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
 
   // Replace the hardcoded statuses with API data
   const statuses = statusesData?.data || [];
+  const sources = sourcesData?.data || [];
+  const categories = categoriesData?.data || [];
 
   // Add interest level options
   const interestLevels = [
@@ -182,8 +179,7 @@ const CreateLead = ({ open, onCancel }) => {
     height: "48px",
     borderRadius: "10px",
     padding: "8px 16px",
-    backgroundColor: "#f8fafc",
-    border: "1px solid #e6e8eb",
+    backgroundColor: "#f8fafc", border: "1px solid #e6e8eb",
     transition: "all 0.3s ease",
     '&.ant-select-focused': {
       borderColor: '#1890ff',
@@ -551,8 +547,21 @@ const CreateLead = ({ open, onCancel }) => {
               style={selectStyle}
               popupClassName="custom-select-dropdown"
             >
-              <Option value="cat1">Category 1</Option>
-              <Option value="cat2">Category 2</Option>
+              {categories.map((category) => (
+                <Option key={category.id} value={category.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: category.color || '#1890ff'
+                      }}
+                    />
+                    {category.name}
+                  </div>
+                </Option>
+              ))}
             </Select>
           </Form.Item>
         </div>

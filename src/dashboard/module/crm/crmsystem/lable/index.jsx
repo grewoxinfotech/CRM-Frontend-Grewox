@@ -3,7 +3,7 @@ import { FiEdit2, FiTrash2, FiPlus, FiGrid, FiList, FiTag, FiMoreVertical } from
 import { Button, Table, Tag, message, Modal, Tooltip, Dropdown } from "antd";
 import AddLableModal from "./AddLableModal";
 import EditLableModal from "./EditLableModal";
-import { useGetLablesQuery, useDeleteLableMutation } from "./services/LableApi";
+import { useGetLabelsQuery, useDeleteLabelMutation } from "../souce/services/SourceApi";
 import "./lable.scss";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
@@ -17,19 +17,13 @@ const Lable = () => {
   const pageSize = 10;
   const userdata = useSelector(selectCurrentUser);
 
-  const { data, isLoading } = useGetLablesQuery(userdata?.id);
-  const [deleteLable] = useDeleteLableMutation();
+  const { data, isLoading } = useGetLabelsQuery(userdata?.id);
+  const [deleteLabel] = useDeleteLabelMutation();
 
-  const labels = Array.isArray(data?.data)
-    ? data.data.filter((item) => item.lableType === "lable")
-    : Array.isArray(data)
-      ? data.filter((item) => item.lableType === "lable")
-      : [];
+  const labels = data?.data || [];
 
-  const paginatedLabels = labels.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const paginatedLabels = labels?.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
 
   const handleEdit = (label) => {
     setSelectedLable(label);
@@ -48,7 +42,7 @@ const Lable = () => {
       },
       onOk: async () => {
         try {
-          await deleteLable(id).unwrap();
+          await deleteLabel(id).unwrap();
           message.success('Label deleted successfully');
         } catch (error) {
           message.error(error?.data?.message || 'Failed to delete label');
@@ -240,7 +234,7 @@ const Lable = () => {
                 </div>
               )}
             </div>
-            {labels.length > pageSize && (
+            {labels && labels.length > pageSize && (
               <div className="grid-pagination">
                 <Table
                   pagination={{
@@ -264,7 +258,7 @@ const Lable = () => {
             dataSource={labels}
             rowKey="id"
             pagination={{
-              total: labels.length,
+              total: labels?.length || 0,
               pageSize: pageSize,
               position: ['bottomRight'],
               showSizeChanger: false,

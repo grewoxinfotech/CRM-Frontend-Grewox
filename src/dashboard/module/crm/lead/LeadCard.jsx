@@ -13,25 +13,48 @@ import {
 import CreateDeal from "../deal/CreateDeal";
 import { useGetLeadsQuery, useUpdateLeadMutation } from './services/LeadApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates
+} from "@dnd-kit/sortable";
+import { restrictToHorizontalAxis, restrictToWindowEdges } from "@dnd-kit/modifiers";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const { Text } = Typography;
 
-const LeadCard = ({ onEdit, onDelete, onView }) => {
-  const { data: leadsData, isLoading, error } = useGetLeadsQuery();
-  const { data: stagesData } = useGetLeadStagesQuery();
+const DraggableCard = ({ lead, stage, onEdit, onDelete, onView }) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: lead.id,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0) rotate(${isDragging ? '2deg' : '0deg'})`,
+    zIndex: isDragging ? 999 : undefined,
+    transition: isDragging
+      ? 'box-shadow 200ms ease, transform 50ms ease'
+      : 'box-shadow 300ms ease, transform 500ms cubic-bezier(0.16, 1, 0.3, 1)',
+    opacity: 1,
+    scale: isDragging ? 1.02 : 1,
+    boxShadow: isDragging
+      ? '0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08)'
+      : '0 1px 3px rgba(0, 0, 0, 0.05)',
+  } : undefined;
+
   const [showCreateDeal, setShowCreateDeal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
-  const [updateLead] = useUpdateLeadMutation();
-
-  const stages = stagesData?.filter(stage => stage.stageType === 'lead') || [];
-  const leads = leadsData?.data || [];
-
-  // Group leads by stage
-  const leadsByStage = stages.reduce((acc, stage) => {
-    acc[stage.id] = leads.filter(lead => lead.leadStage === stage.id);
-    return acc;
-  }, {});
 
   const getDropdownItems = (lead) => ({
     items: [
@@ -66,33 +89,6 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
     ],
   });
 
-  // Get stage percentage for progress bar
-  const getStagePercentage = (stage) => {
-    const stages = {
-      "new": 16,
-      "contacted": 32,
-      "qualified": 48,
-      "proposal": 64,
-      "negotiation": 82,
-      "closed": 100
-    };
-    return stages[stage] || 0;
-  };
-
-  // Get stage color
-  const getStageColor = (stage) => {
-    const colors = {
-      "new": "#1890ff",
-      "contacted": "#52c41a",
-      "qualified": "#722ed1",
-      "proposal": "#faad14",
-      "negotiation": "#eb2f96",
-      "closed": "#52c41a"
-    };
-    return colors[stage] || "#1890ff";
-  };
-
-  // Get interest level color and icon
   const getInterestLevel = (level) => {
     const levels = {
       "high": {
@@ -120,7 +116,6 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
     return levels[level] || levels.medium;
   };
 
-  // Format currency
   const formatCurrency = (value, currency = "INR") => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -129,138 +124,68 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
     }).format(value);
   };
 
-  const handleDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-
-    // If dropped outside a droppable area
-    if (!destination) return;
-
-    // If dropped in the same position
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) return;
-
-    try {
-      await updateLead({
-        id: draggableId,
-        data: { leadStage: destination.droppableId }
-      }).unwrap();
-      message.success('Lead stage updated successfully');
-    } catch (error) {
-      message.error('Failed to update lead stage');
-      console.error('Update stage error:', error);
-    }
-  };
-
-  if (isLoading) return <div>Loading leads...</div>;
-  if (error) return <div>Error loading leads: {error.message}</div>;
-
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="kanban-board">
-        {stages.map(stage => (
-          <div key={stage.id} className="kanban-column">
-            <div className="kanban-column-header">
-              <Text strong>{stage.stageName}</Text>
-              <Tag>{leadsByStage[stage.id]?.length || 0}</Tag>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <Card
+        className="lead-card"
+        bordered={false}
+        style={{
+          width: '100%',
+          marginBottom: '16px',
+          borderRadius: '8px',
+          background: '#ffffff',
+          boxShadow: isDragging
+            ? '0 8px 24px rgba(0, 0, 0, 0.15)'
+            : '0 4px 24px -1px rgba(0, 0, 0, 0.06)',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          overflow: 'hidden',
+          borderTop: `4px solid ${stage.color || '#1890ff'}`
+        }}
+        hoverable
+      >
+        <div className="card-content">
+          <div className="card-header">
+            <div className="title-section">
+              <Tooltip title={lead?.leadTitle}>
+                <Text strong className="lead-title">
+                  {lead?.leadTitle}
+                </Text>
+              </Tooltip>
+
+              <div className="tags-wrapper">
+                <Tag className="interest-tag" style={{
+                  backgroundColor: getInterestLevel(lead.interest_level).bg,
+                  color: getInterestLevel(lead.interest_level).color,
+                }}>
+                  <div className="dot-indicator" />
+                  {getInterestLevel(lead.interest_level).text}
+                </Tag>
+              </div>
             </div>
-            <Droppable droppableId={stage.id}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`kanban-column-content ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
-                >
-                  {leadsByStage[stage.id]?.length > 0 ? (
-                    leadsByStage[stage.id].map((lead, index) => (
-                      <Draggable
-                        key={lead.id}
-                        draggableId={lead.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`draggable-card ${snapshot.isDragging ? 'is-dragging' : ''}`}
-                          >
-                            <Card
-                              className="lead-card"
-                              bordered={false}
-                              style={{
-                                width: '100%',
-                                marginBottom: '16px',
-                                borderRadius: '8px',
-                                background: '#ffffff',
-                                boxShadow: '0 4px 24px -1px rgba(0, 0, 0, 0.06)',
-                                transition: 'all 0.3s ease',
-                                position: 'relative',
-                                overflow: 'hidden',
-                                borderTop: `4px solid ${getStageColor(lead?.leadStage)}`
-                              }}
-                              hoverable
-                            >
-                              <div className="card-content">
-                                {/* Header Section */}
-                                <div className="card-header">
-                                  <div className="title-section">
-                                    <Tooltip title={lead?.leadTitle}>
-                                      <Text strong className="lead-title">
-                                        {lead?.leadTitle}
-                                      </Text>
-                                    </Tooltip>
 
-                                    <div className="tags-wrapper">
-                                      <Tag className="interest-tag" style={{
-                                        backgroundColor: getInterestLevel(lead.interest_level).bg,
-                                        color: getInterestLevel(lead.interest_level).color,
-                                      }}>
-                                        <div className="dot-indicator" />
-                                        {getInterestLevel(lead.interest_level).text}
-                                      </Tag>
-                                    </div>
-                                  </div>
-
-                                  <Dropdown menu={getDropdownItems(lead)} trigger={["click"]}>
-                                    <Button type="text" icon={<FiMoreVertical />} className="action-button" />
-                                  </Dropdown>
-                                </div>
-
-                                {/* Metrics Section */}
-                                <div className="metrics-grid">
-                                  <div className="metric-item">
-                                    <span className="metric-label">Company</span>
-                                    <span className="metric-value">{lead.company_name}</span>
-                                  </div>
-                                  <div className="divider" />
-                                  <div className="metric-item">
-                                    <span className="metric-label">Value</span>
-                                    <span className="metric-value value-text">
-                                      {formatCurrency(lead.leadValue, lead.currency)}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </Card>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))
-                  ) : (
-                    <Empty
-                      image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      description="No leads"
-                    />
-                  )}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
+            <Dropdown menu={getDropdownItems(lead)} trigger={["click"]}>
+              <Button type="text" icon={<FiMoreVertical />} className="action-button" />
+            </Dropdown>
           </div>
-        ))}
-      </div>
+
+          <div className="metrics-grid">
+            <div className="metric-item company-section">
+              <span className="metric-label">Company:</span>
+              <Tooltip title={lead.company_name}>
+                <span className="metric-value truncate">{lead.company_name}</span>
+              </Tooltip>
+            </div>
+            <div className="divider" />
+            <div className="metric-item value-section">
+              <span className="metric-label">Value:</span>
+              <span className="metric-value value-text">
+                {formatCurrency(lead.leadValue, lead.currency)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {showCreateDeal && (
         <CreateDeal
@@ -272,6 +197,128 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           lead={selectedLead}
         />
       )}
+    </div>
+  );
+};
+
+const DroppableColumn = ({ stage, leads, onEdit, onDelete, onView }) => {
+  const { setNodeRef } = useDroppable({
+    id: stage.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className="kanban-column-content"
+    >
+      <SortableContext items={leads.map(lead => lead.id)} strategy={verticalListSortingStrategy}>
+        {leads.length > 0 ? (
+          leads.map((lead) => (
+            <DraggableCard
+              key={lead.id}
+              lead={lead}
+              stage={stage}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onView={onView}
+            />
+          ))
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="No leads"
+          />
+        )}
+      </SortableContext>
+    </div>
+  );
+};
+
+const LeadCard = ({ onEdit, onDelete, onView }) => {
+  const { data: leadsData, isLoading, error } = useGetLeadsQuery();
+  const { data: stagesData } = useGetLeadStagesQuery();
+  const [updateLead] = useUpdateLeadMutation();
+  const loggedInUser = useSelector(selectCurrentUser);
+
+  const stages = stagesData?.filter(stage => stage.stageType === 'lead') || [];
+  const leads = leadsData?.data || [];
+
+  const leadsByStage = React.useMemo(() => {
+    return stages.reduce((acc, stage) => {
+      acc[stage.id] = leads.filter(lead => lead.leadStage === stage.id);
+      return acc;
+    }, {});
+  }, [stages, leads]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        delay: 0,
+        tolerance: 5,
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const draggedId = active.id;
+    const destinationId = over.id;
+
+    if (draggedId === destinationId) return;
+
+    try {
+      await updateLead({
+        id: draggedId,
+        data: {
+          leadStage: destinationId,
+          updated_by: loggedInUser?.username || ''
+        }
+      }).unwrap();
+
+      message.success('Lead stage updated successfully');
+    } catch (error) {
+      message.error('Failed to update lead stage');
+    }
+  };
+
+  if (isLoading) return <div>Loading leads...</div>;
+  if (error) return <div>Error loading leads: {error.message}</div>;
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+      modifiers={[
+        restrictToHorizontalAxis,
+        restrictToWindowEdges,
+      ]}
+    >
+      <div className="kanban-board">
+        {stages.map((stage) => (
+          <div key={stage.id} className="kanban-column">
+            <div className="kanban-column-header">
+              <Text strong>{stage.stageName}</Text>
+              <Tag>{leadsByStage[stage.id]?.length || 0}</Tag>
+            </div>
+
+            <DroppableColumn
+              stage={stage}
+              leads={leadsByStage[stage.id] || []}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onView={onView}
+            />
+          </div>
+        ))}
+      </div>
 
       <style jsx global>{`
         .kanban-board {
@@ -281,6 +328,8 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           overflow-x: auto;
           min-height: calc(100vh - 300px);
           width: 100%;
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
         }
 
         .kanban-column {
@@ -289,6 +338,7 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           border-radius: 12px;
           padding: 16px;
           flex: 1;
+          transition: transform 200ms ease, box-shadow 200ms ease;
         }
 
         .kanban-column-header {
@@ -312,28 +362,13 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           padding: 8px;
           background: #f8fafc;
           border-radius: 8px;
-          transition: background-color 0.2s ease;
-        }
-
-        .kanban-column-content.dragging-over {
-          background: #e6f7ff;
-        }
-
-        .draggable-card {
-          margin-bottom: 16px;
-          transition: transform 0.2s ease;
-        }
-
-        .draggable-card.is-dragging {
-          transform: rotate(3deg);
-        }
-
-        .lead-card {
-          cursor: grab;
-        }
-
-        .lead-card:active {
-          cursor: grabbing;
+          transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+          
+          &.dragging-over {
+            background: #e6f7ff;
+            transform: scale(1.02);
+            box-shadow: 0 0 0 2px #1890ff33;
+          }
         }
 
         .lead-card {
@@ -346,203 +381,212 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           
           will-change: transform, box-shadow;
           transform: translateZ(0);
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+          backface-visibility: hidden;
+          perspective: 1000px;
+          transform-style: preserve-3d;
+          transform-origin: center center;
 
           &:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.005);
             box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.1);
-
-            .metric-card {
-              transform: translateY(-2px);
-              background: #ffffff;
-              border-color: var(--primary-color);
-
-              &.value-card {
-                box-shadow: 0 4px 12px rgba(24, 144, 255, 0.08);
-              }
-
-              &.source-card {
-                box-shadow: 0 4px 12px rgba(17, 24, 39, 0.06);
-              }
-            }
-
-            .lead-title {
-              color: var(--primary-color);
-            }
-
-            .stage-tag, .interest-tag {
-              transform: translateY(-1px);
-              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-            }
+            transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
           }
+        }
 
-          .ant-card-body {
-            padding: 0;
+        .lead-title {
+          font-size: 18px;
+          color: var(--text-primary);
+          display: block;
+          margin-bottom: 12px;
+          line-height: 1.4;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          display: -webkit-box;
+          transition: color 0.3s ease;
+        }
+
+        .tags-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .stage-tag,
+        .interest-tag {
+          margin: 0;
+          border-radius: 0;
+          padding: 4px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          border: none;
+          transition: all 0.3s ease;
+
+          svg {
+            margin-right: 4px;
+            animation: pulse 2s infinite;
           }
+        }
 
-          .card-content {
-            padding: var(--card-padding);
-            position: relative;
-            z-index: 2;
-            background: #ffffff;
+        .action-button {
+          border: none;
+          box-shadow: none;
+          color: var(--text-secondary);
+          height: 32px;
+          width: 32px;
+          border-radius: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          transition: all 0.3s ease;
+          background: transparent;
+          position: absolute;
+          top: 12px;
+          right: 12px;
+
+          &:hover {
+            background: rgba(0, 0, 0, 0.04);
+            transform: rotate(90deg);
+            color: var(--primary-color);
           }
+        }
 
-          .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
-          }
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 20px;
+          position: relative;
+          padding-right: 40px;
+        }
 
-          .title-section {
+        .title-section {
+          flex: 1;
+          width: 100%;
+        }
+
+        .card-content {
+          padding: var(--card-padding);
+          position: relative;
+          z-index: 2;
+          background: #ffffff;
+        }
+
+        .metrics-grid {
+          display: flex;
+          align-items: center;
+          margin-top: 16px;
+          position: relative;
+          width: 100%;
+          padding: 8px 0;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .metric-item {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          min-width: 0;
+
+          &.company-section {
             flex: 1;
+            min-width: 0;
+            padding-right: 12px;
           }
 
-          .lead-title {
-            font-size: 18px;
-            color: var(--text-primary);
+          &.value-section {
+            flex: 0 0 auto;
+            padding-left: 12px;
+            white-space: nowrap;
+          }
+        }
+
+        .divider {
+          width: 1px;
+          height: 20px;
+          background: #f0f0f0;
+          flex: 0 0 auto;
+        }
+
+        .metric-label {
+          font-size: 13px;
+          color: var(--text-secondary);
+          font-weight: 500;
+          flex: 0 0 auto;
+        }
+
+        .metric-value {
+          font-size: 14px;
+          color: var(--text-primary);
+          font-weight: 500;
+          line-height: 1.4;
+
+          &.truncate {
             display: block;
-            margin-bottom: 12px;
-            line-height: 1.4;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            white-space: nowrap;
             overflow: hidden;
-            display: -webkit-box;
-            transition: color 0.3s ease;
-          }
-
-          .tags-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-          }
-
-          .stage-tag,
-          .interest-tag {
-            margin: 0;
-            border-radius: 0;
-            padding: 4px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-
-            svg {
-              margin-right: 4px;
-              animation: pulse 2s infinite;
-            }
-          }
-
-          .action-button {
-            border: none;
-            box-shadow: none;
-            color: var(--text-secondary);
-            height: 32px;
-            width: 32px;
-            border-radius: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            transition: all 0.3s ease;
-            background: transparent;
-
-            &:hover {
-              background: rgba(0, 0, 0, 0.04);
-              transform: rotate(90deg);
-              color: var(--primary-color);
-            }
-          }
-
-          .metrics-grid {
-            display: flex;
-            align-items: center;
-            margin-top: 20px;
-            position: relative;
-          }
-
-          .metric-item {
+            text-overflow: ellipsis;
+            min-width: 0;
             flex: 1;
-            padding: 0 16px;
-            position: relative;
-
-            &:first-child {
-              padding-left: 0;
-            }
-
-            &:last-child {
-              padding-right: 0;
-            }
           }
 
-          .divider {
-            width: 1px;
-            height: 32px;
-            background: linear-gradient(
-              to bottom,
-              transparent,
-              rgba(0, 0, 0, 0.12),
-              transparent
-            );
-            margin: 0 4px;
-          }
-
-          .metric-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-
-          .metric-value {
+          &.value-text {
             font-size: 15px;
-            color: var(--text-primary);
-            display: block;
-            font-weight: 500;
-
-            &.value-text {
-              font-size: 20px;
-              background: linear-gradient(45deg, var(--success-color), #36cfc9);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              font-weight: 600;
-            }
-          }
-
-          .interest-tag {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0;
-            border-radius: 0;
-            padding: 4px 12px;
-            font-size: 12px;
             font-weight: 600;
-            border: none;
-            transition: all 0.3s ease;
-
-            .dot-indicator {
-              width: 8px;
-              height: 8px;
-              border-radius: 50%;
-              background: currentColor;
-              box-shadow: 0 0 8px currentColor;
-              animation: pulse 2s infinite;
-            }
+            color: var(--success-color);
           }
+        }
 
-          @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
+        .interest-tag {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 0;
+          border-radius: 0;
+          padding: 4px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          border: none;
+          transition: all 0.3s ease;
+
+          .dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+            animation: pulse 2s infinite;
+          }
+        }
+
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.1); opacity: 0.8; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        .draggable-card {
+          transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+          transform-origin: center center;
+          
+          &.is-dragging {
+            cursor: grabbing;
+            transform: scale(1.02) rotate(2deg);
+            transition: all 50ms ease;
+            opacity: 1;
+            
+            .lead-card {
+              box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1), 
+                         0 2px 6px rgba(0, 0, 0, 0.08);
+            }
           }
         }
       `}</style>
-    </DragDropContext>
+    </DndContext>
   );
 };
 

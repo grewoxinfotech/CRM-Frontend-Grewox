@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { FiEdit2, FiTrash2, FiPlus, FiGrid, FiList, FiFileText, FiMoreVertical } from "react-icons/fi";
-import { Button, Table, Tag, Popconfirm, message, Modal, Tooltip, Dropdown } from "antd";
+import { Button, Table, message, Tooltip, Dropdown } from "antd";
 import AddContractTypeModal from "./AddContractTypeModal";
 import EditContractTypeModal from "./EditContractTypeModal";
 import {
   useGetContractTypesQuery,
   useDeleteContractTypeMutation,
-} from "./services/ContractTypeApi";
-
+} from "../souce/services/SourceApi";
 import "./contractType.scss";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
@@ -24,11 +23,7 @@ const ContractType = () => {
   const { data, isLoading, error } = useGetContractTypesQuery(userdata?.id);
   const [deleteContractType] = useDeleteContractTypeMutation();
 
-  const contractTypes = Array.isArray(data?.data)
-    ? data.data.filter((item) => item.lableType === "contractType")
-    : Array.isArray(data)
-      ? data.filter((item) => item.lableType === "contractType")
-      : [];
+  const contractTypes = data?.data || [];
 
   const handleEditClick = (contractType) => {
     setSelectedContractType(contractType);

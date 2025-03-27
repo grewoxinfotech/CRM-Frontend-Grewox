@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal, Form, Input, Button, message, Typography } from "antd";
-import { useAddContractTypeMutation } from "./services/ContractTypeApi";
+import { useCreateContractTypeMutation } from "../souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
 import { FiX, FiFileText } from "react-icons/fi";
@@ -9,18 +9,16 @@ const { Text } = Typography;
 
 const AddContractTypeModal = ({ isOpen, onClose }) => {
   const [form] = Form.useForm();
-  const [addContractType, { isLoading }] = useAddContractTypeMutation();
+  const [createContractType, { isLoading }] = useCreateContractTypeMutation();
   const userdata = useSelector(selectCurrentUser);
-  console.log("userdata", userdata);
 
   const handleSubmit = async (values) => {
-    console.log("values", values);
     try {
-      await addContractType({
+      await createContractType({
         id: userdata?.id,
         data: {
           name: values.name,
-          lableType: "contractType",
+          lableType: "contract_type",
         },
       }).unwrap();
       message.success("Contract type added successfully");

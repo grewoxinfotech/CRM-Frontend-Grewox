@@ -24,8 +24,6 @@ import { pipelineApi } from "../dashboard/module/crm/crmsystem/pipeline/services
 import { leadStageApi } from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageApi.js";
 import { dealStageApi } from "../dashboard/module/crm/crmsystem/dealstage/services/dealStageApi.js";
 import { sourceApi } from "../dashboard/module/crm/crmsystem/souce/services/SourceApi.js";
-import { lableApi } from "../dashboard/module/crm/crmsystem/lable/services/LableApi.js";
-import { contractTypeApi } from "../dashboard/module/crm/crmsystem/contractType/services/ContractTypeApi.js";
 import { taskApi } from "../dashboard/module/crm/task/services/taskApi.js";
 import { projectApi } from "../dashboard/module/crm/project/services/projectApi.js";
 import { jobApi } from "../dashboard/module/job/jobs/services/jobApi.js";
@@ -70,8 +68,6 @@ const rootReducer = combineReducers({
   [leadStageApi.reducerPath]: leadStageApi.reducer,
   [dealStageApi.reducerPath]: dealStageApi.reducer,
   [sourceApi.reducerPath]: sourceApi.reducer,
-  [lableApi.reducerPath]: lableApi.reducer,
-  [contractTypeApi.reducerPath]: contractTypeApi.reducer,
   [taskApi.reducerPath]: taskApi.reducer,
   [projectApi.reducerPath]: projectApi.reducer,
   [jobApi.reducerPath]: jobApi.reducer,
@@ -118,8 +114,6 @@ export const store = configureStore({
       .concat(leadStageApi.middleware)
       .concat(dealStageApi.middleware)
       .concat(sourceApi.middleware)
-      .concat(lableApi.middleware)
-      .concat(contractTypeApi.middleware)
       .concat(taskApi.middleware)
       .concat(projectApi.middleware)
       .concat(jobApi.middleware)

@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "../../../../../../store/baseQuery";
 export const sourceApi = createApi({
   reducerPath: "sourceApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Sources", "Statuses", "Tags"],
+  tagTypes: ["Sources", "Statuses", "Tags", "Labels", "ContractTypes", "Categories"],
   endpoints: (builder) => ({
     // Sources
     getSources: builder.query({
@@ -191,6 +191,192 @@ export const sourceApi = createApi({
       }),
       invalidatesTags: ["Tags"],
     }),
+
+    // Labels
+    getLabels: builder.query({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        if (Array.isArray(response)) {
+          return { data: response.filter(item => item.lableType === "label") };
+        }
+        if (response?.data && Array.isArray(response.data)) {
+          return { data: response.data.filter(item => item.lableType === "label") };
+        }
+        return { data: [] };
+      },
+      providesTags: ["Labels"],
+    }),
+    createLabel: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "POST",
+        body: {
+          ...data,
+          lableType: "label",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to create label",
+      }),
+      invalidatesTags: ["Labels"],
+    }),
+    updateLabel: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "PUT",
+        body: {
+          ...data,
+          lableType: "label",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to update label",
+      }),
+      invalidatesTags: ["Labels"],
+    }),
+    deleteLabel: builder.mutation({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to delete label",
+      }),
+      invalidatesTags: ["Labels"],
+    }),
+
+    // Categories
+    getCategories: builder.query({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        if (Array.isArray(response)) {
+          return { data: response.filter(item => item.lableType === "category") };
+        }
+        if (response?.data && Array.isArray(response.data)) {
+          return { data: response.data.filter(item => item.lableType === "category") };
+        }
+        return { data: [] };
+      },
+      providesTags: ["Categories"],
+    }),
+    createCategory: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "POST",
+        body: {
+          ...data,
+          lableType: "category",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to create category",
+      }),
+      invalidatesTags: ["Categories"],
+    }),
+    updateCategory: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "PUT",
+        body: {
+          ...data,
+          lableType: "category",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to update category",
+      }),
+      invalidatesTags: ["Categories"],
+    }),
+    deleteCategory: builder.mutation({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to delete category",
+      }),
+      invalidatesTags: ["Categories"],
+    }),
+
+    // Contract Types
+    getContractTypes: builder.query({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        if (Array.isArray(response)) {
+          return { data: response.filter(item => item.lableType === "contract_type") };
+        }
+        if (response?.data && Array.isArray(response.data)) {
+          return { data: response.data.filter(item => item.lableType === "contract_type") };
+        }
+        return { data: [] };
+      },
+      providesTags: ["ContractTypes"],
+    }),
+    createContractType: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "POST",
+        body: {
+          ...data,
+          lableType: "contract_type",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to create contract type",
+      }),
+      invalidatesTags: ["ContractTypes"],
+    }),
+    updateContractType: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "PUT",
+        body: {
+          ...data,
+          lableType: "contractType",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to update contract type",
+      }),
+      invalidatesTags: ["ContractTypes"],
+    }),
+    deleteContractType: builder.mutation({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to delete contract type",
+      }),
+      invalidatesTags: ["ContractTypes"],
+    }),
   }),
 });
 
@@ -210,4 +396,19 @@ export const {
   useCreateTagMutation,
   useUpdateTagMutation,
   useDeleteTagMutation,
+  // Labels
+  useGetLabelsQuery,
+  useCreateLabelMutation,
+  useUpdateLabelMutation,
+  useDeleteLabelMutation,
+  // Categories
+  useGetCategoriesQuery,
+  useCreateCategoryMutation,
+  useUpdateCategoryMutation,
+  useDeleteCategoryMutation,
+  // Contract Types
+  useGetContractTypesQuery,
+  useCreateContractTypeMutation,
+  useUpdateContractTypeMutation,
+  useDeleteContractTypeMutation,
 } = sourceApi;

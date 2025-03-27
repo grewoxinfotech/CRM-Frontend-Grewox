@@ -12,12 +12,29 @@ import {
   FiTrendingUp
 } from "react-icons/fi";
 import { useGetLeadsQuery, useDeleteLeadMutation } from "./services/LeadApi";
+import { useGetSourcesQuery, useGetStatusesQuery, useGetLabelsQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const { Text } = Typography;
 
 const LeadList = ({ leads, onEdit, onView }) => {
   const { data: leadsData, isLoading, error } = useGetLeadsQuery();
   const [deleteLead] = useDeleteLeadMutation();
+  const loggedInUser = useSelector(selectCurrentUser);
+
+  // Fetch all required data
+  const { data: stagesData } = useGetLeadStagesQuery();
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+  const { data: categoriesData } = useGetLabelsQuery(loggedInUser?.id);
+
+  // Filter and prepare data
+  const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
+  const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];
+  const statuses = statusesData?.data?.filter(item => item.lableType === "status") || [];
+  const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
   const handleDelete = async (record) => {
     try {
@@ -30,17 +47,40 @@ const LeadList = ({ leads, onEdit, onView }) => {
     }
   };
 
-  // Get stage color
-  const getStageColor = (stage) => {
-    const colors = {
-      "new": "#1890ff",
-      "contacted": "#52c41a",
-      "qualified": "#722ed1",
-      "proposal": "#faad14",
-      "negotiation": "#eb2f96",
-      "closed": "#52c41a"
+  // Get stage data
+  const getStageData = (stageId) => {
+    const stage = stages.find(s => s.id === stageId) || {};
+    return {
+      name: stage.stageName || "Unknown",
+      color: stage.color || "#1890ff"
     };
-    return colors[stage] || "#1890ff";
+  };
+
+  // Get source data
+  const getSourceData = (sourceId) => {
+    const source = sources.find(s => s.id === sourceId) || {};
+    return {
+      name: source.name || "Unknown",
+      color: source.color || "#1890ff"
+    };
+  };
+
+  // Get status data
+  const getStatusData = (statusId) => {
+    const status = statuses.find(s => s.id === statusId) || {};
+    return {
+      name: status.name || "Unknown",
+      color: status.color || "#1890ff"
+    };
+  };
+
+  // Get category data
+  const getCategoryData = (categoryId) => {
+    const category = categories.find(c => c.id === categoryId) || {};
+    return {
+      name: category.name || "Unknown",
+      color: category.color || "#1890ff"
+    };
   };
 
   // Get interest level style
@@ -138,7 +178,9 @@ const LeadList = ({ leads, onEdit, onView }) => {
           </div>
           <div>
             <Text strong style={{ display: 'block', fontSize: '14px' }}>{text}</Text>
-            <Text type="secondary" style={{ fontSize: '12px' }}>{record.source}</Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              {getSourceData(record.source).name}
+            </Text>
           </div>
         </div>
       ),
@@ -148,20 +190,23 @@ const LeadList = ({ leads, onEdit, onView }) => {
       title: "Lead Stage",
       dataIndex: "leadStage",
       key: "leadStage",
-      render: (stage) => (
-        <Tag
-          color={getStageColor(stage)}
-          style={{
-            textTransform: 'capitalize',
-            padding: '4px 12px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            fontWeight: '500'
-          }}
-        >
-          {stage}
-        </Tag>
-      ),
+      render: (stageId) => {
+        const stage = getStageData(stageId);
+        return (
+          <Tag
+            color={stage.color}
+            style={{
+              textTransform: 'capitalize',
+              padding: '4px 12px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: '500'
+            }}
+          >
+            {stage.name}
+          </Tag>
+        );
+      },
     },
     {
       title: "Interest Level",
