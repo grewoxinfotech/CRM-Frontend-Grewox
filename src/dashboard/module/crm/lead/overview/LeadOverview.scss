@@ -1,0 +1,128 @@
+.overview-card {
+    margin-bottom: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+    .ant-card-body {
+        padding: 24px;
+    }
+
+    .ant-descriptions {
+        .ant-descriptions-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .ant-descriptions-view {
+            border-radius: 8px;
+            overflow: hidden;
+
+            table {
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+        }
+
+        .ant-descriptions-item-label {
+            background-color: #f9fafb;
+            font-weight: 500;
+            color: #4b5563;
+            padding: 16px 24px;
+            width: 180px;
+        }
+
+        .ant-descriptions-item-content {
+            background-color: #ffffff;
+            padding: 16px 24px;
+            color: #1f2937;
+            font-size: 14px;
+
+            &:empty::after {
+                content: '-';
+                color: #9ca3af;
+            }
+        }
+
+        .ant-descriptions-row {
+            td {
+                border: 1px solid #e5e7eb;
+
+                &:first-child {
+                    border-left: 1px solid #e5e7eb;
+                }
+            }
+
+            &:first-child {
+                td {
+                    border-top: 1px solid #e5e7eb;
+                }
+            }
+        }
+
+        // Special styling for specific fields
+        .ant-tag {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        // Value formatting
+        .currency-value {
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .date-value {
+            color: #6b7280;
+        }
+
+        .description-value {
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+    }
+
+    .icon {
+        color: #6b7280;
+        font-size: 16px;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+
+    a {
+        color: #2563eb;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+// Status indicators
+.interest-level {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-weight: 500;
+    font-size: 14px;
+
+    &.high {
+        background-color: rgba(82, 196, 26, 0.1);
+        color: #52c41a;
+    }
+
+    &.medium {
+        background-color: rgba(250, 173, 20, 0.1);
+        color: #faad14;
+    }
+
+    &.low {
+        background-color: rgba(255, 77, 79, 0.1);
+        color: #ff4d4f;
+    }
+}

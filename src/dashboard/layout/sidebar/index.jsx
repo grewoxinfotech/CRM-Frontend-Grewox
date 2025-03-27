@@ -142,7 +142,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         {
           title: "Leads",
           icon: <FiTarget />,
-          path: "/dashboard/crm/leads",
+          path: "/dashboard/crm/lead",
           permission: "dashboards-lead"
         },
         {

@@ -23,19 +23,24 @@ import "./Lead.scss";
 import CreateLead from "./CreateLead";
 import LeadCard from "./LeadCard";
 import LeadList from "./LeadList";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import EditLead from "./EditLead";
 import { useGetLeadsQuery } from "./services/LeadApi";
 
 const { Title, Text } = Typography;
 
 const Lead = () => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
   const { data: leads, isLoading } = useGetLeadsQuery();
+
+  const handleLeadClick = (lead) => {
+    navigate(`/dashboard/crm/lead/${lead.id}`);
+  };
 
   const handleCreate = () => {
     setSelectedLead(null);
@@ -131,6 +136,7 @@ const Lead = () => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
+            onLeadClick={handleLeadClick}
           />
         ) : (
           <LeadCard
@@ -138,6 +144,7 @@ const Lead = () => {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
+            onLeadClick={handleLeadClick}
           />
         )}
       </Card>

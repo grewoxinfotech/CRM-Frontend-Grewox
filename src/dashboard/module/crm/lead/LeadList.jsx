@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -19,11 +19,10 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const { Text } = Typography;
 
-const LeadList = ({ leads, onEdit, onView }) => {
+const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   const { data: leadsData, isLoading, error } = useGetLeadsQuery();
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
-
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
@@ -46,6 +45,7 @@ const LeadList = ({ leads, onEdit, onView }) => {
       );
     }
   };
+
 
   // Get stage data
   const getStageData = (stageId) => {
@@ -126,18 +126,18 @@ const LeadList = ({ leads, onEdit, onView }) => {
         key: "view",
         icon: <FiEye />,
         label: "View Details",
-        onClick: () => onView(record),
+        onClick: () => onLeadClick(record),
       },
       {
         key: "edit",
         icon: <FiEdit2 />,
-        label: "Edit",
+        label: "Edit Lead",
         onClick: () => onEdit(record),
       },
       {
         key: "delete",
         icon: <FiTrash2 />,
-        label: "Delete",
+        label: "Delete Lead",
         onClick: () => handleDelete(record),
         danger: true,
       },
@@ -177,7 +177,7 @@ const LeadList = ({ leads, onEdit, onView }) => {
             )}
           </div>
           <div>
-            <Text strong style={{ display: 'block', fontSize: '14px' }}>{text}</Text>
+            <Text strong style={{ display: 'block', fontSize: '14px', cursor: 'default' }}>{text}</Text>
             <Text type="secondary" style={{ fontSize: '12px' }}>
               {getSourceData(record.source).name}
             </Text>
@@ -255,28 +255,15 @@ const LeadList = ({ leads, onEdit, onView }) => {
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
-          trigger={["click"]}
+          trigger={['click']}
           placement="bottomRight"
-          overlayClassName="lead-actions-dropdown"
+          arrow
         >
           <Button
             type="text"
             icon={<FiMoreVertical />}
             className="action-button"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              border: 'none',
-              boxShadow: 'none',
-              color: '#6b7280',
-              height: '32px',
-              width: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              transition: 'all 0.3s ease',
-              borderRadius: '6px',
-            }}
+            onClick={(e) => e.stopPropagation()}
           />
         </Dropdown>
       ),
@@ -305,6 +292,10 @@ const LeadList = ({ leads, onEdit, onView }) => {
         overflow: 'hidden',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)'
       }}
+      onRow={(record) => ({
+        onClick: () => onLeadClick(record),
+        style: { cursor: 'pointer' }
+      })}
     />
   );
 };

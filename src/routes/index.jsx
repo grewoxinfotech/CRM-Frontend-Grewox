@@ -62,7 +62,8 @@ import Proposal from "../dashboard/module/crm/proposal/index.jsx";
 import Tax from "../dashboard/module/settings/tax/index.jsx";
 import Attendance from "../dashboard/module/hrm/Attendance/index.jsx";
 import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
-  const PermissionRoute = ({ children, permissionKey }) => {
+import LeadOverview from "../dashboard/module/crm/lead/overview/index.jsx";
+const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -168,12 +169,12 @@ const routes = createBrowserRouter([
             element: <Role />,
           },
           {
-            path:"meeting",
-            element:<Meeting/>
+            path: "meeting",
+            element: <Meeting />
           },
           {
-            path:"attendance",
-            element:<Attendance />
+            path: "attendance",
+            element: <Attendance />
           }
         ],
       },
@@ -223,8 +224,17 @@ const routes = createBrowserRouter([
             ],
           },
           {
-            path: "leads",
-            element: <Lead />,
+            path: "lead",
+            children: [
+              {
+                path: "",
+                element: <Lead />,
+              },
+              {
+                path: ":leadId",
+                element: <LeadOverview />,
+              }
+            ]
           },
           {
             path: "deals",

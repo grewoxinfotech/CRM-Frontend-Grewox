@@ -32,16 +32,16 @@ import {
 import { restrictToHorizontalAxis, restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
-
+import { useNavigate } from "react-router-dom";
 const { Text } = Typography;
 
-const DraggableCard = ({ lead, stage, onEdit, onDelete, onView }) => {
+const DraggableCard = ({ lead, stage, onLeadClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
   });
 
   const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0) rotate(${isDragging ? '2deg' : '0deg'})`,
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     zIndex: isDragging ? 999 : undefined,
     transition: isDragging
       ? 'box-shadow 200ms ease, transform 50ms ease'
@@ -55,39 +55,13 @@ const DraggableCard = ({ lead, stage, onEdit, onDelete, onView }) => {
 
   const [showCreateDeal, setShowCreateDeal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
+  const navigate = useNavigate();
 
-  const getDropdownItems = (lead) => ({
-    items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onView(lead),
-      },
-      {
-        key: "convert",
-        icon: <FiDollarSign />,
-        label: "Convert to Deal",
-        onClick: () => {
-          setSelectedLead(lead);
-          setShowCreateDeal(true);
-        },
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => onEdit(lead),
-      },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => onDelete(lead),
-        danger: true,
-      },
-    ],
-  });
+  const handleCardClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/dashboard/crm/lead/${lead.id}`);
+  };
 
   const getInterestLevel = (level) => {
     const levels = {
@@ -124,27 +98,58 @@ const DraggableCard = ({ lead, stage, onEdit, onDelete, onView }) => {
     }).format(value);
   };
 
+  const getDropdownItems = (lead) => ({
+    items: [
+      {
+        key: "view",
+        icon: <FiEye />,
+        label: "View Details",
+        onClick: () => onLeadClick(lead),
+      },
+      {
+        key: "convert",
+        icon: <FiDollarSign />,
+        label: "Convert to Deal",
+        onClick: () => {
+          setSelectedLead(lead);
+          setShowCreateDeal(true);
+        },
+      },
+      {
+        key: "edit",
+        icon: <FiEdit2 />,
+        label: "Edit",
+        onClick: () => onLeadClick(lead),
+      },
+      {
+        key: "delete",
+        icon: <FiTrash2 />,
+        label: "Delete",
+        onClick: () => onLeadClick(lead),
+        danger: true,
+      },
+    ],
+  });
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card
         className="lead-card"
         bordered={false}
+        onClick={handleCardClick}
         style={{
           width: '100%',
           marginBottom: '16px',
-          borderRadius: '8px',
+          borderRadius: '0',
           background: '#ffffff',
-          boxShadow: isDragging
-            ? '0 8px 24px rgba(0, 0, 0, 0.15)'
-            : '0 4px 24px -1px rgba(0, 0, 0, 0.06)',
-          transition: 'all 0.3s ease',
+          cursor: 'pointer',
           position: 'relative',
           overflow: 'hidden',
           borderTop: `4px solid ${stage.color || '#1890ff'}`
         }}
         hoverable
       >
-        <div className="card-content">
+        <div className="card-content" onClick={handleCardClick}>
           <div className="card-header">
             <div className="title-section">
               <Tooltip title={lead?.leadTitle}>
@@ -163,22 +168,15 @@ const DraggableCard = ({ lead, stage, onEdit, onDelete, onView }) => {
                 </Tag>
               </div>
             </div>
-
-            <Dropdown menu={getDropdownItems(lead)} trigger={["click"]}>
-              <Button type="text" icon={<FiMoreVertical />} className="action-button" />
-            </Dropdown>
           </div>
 
           <div className="metrics-grid">
-            <div className="metric-item company-section">
-              <span className="metric-label">Company:</span>
-              <Tooltip title={lead.company_name}>
-                <span className="metric-value truncate">{lead.company_name}</span>
-              </Tooltip>
+            <div className="metric-item">
+              <span className="metric-label">Company</span>
+              <span className="metric-value">{lead.company_name}</span>
             </div>
-            <div className="divider" />
-            <div className="metric-item value-section">
-              <span className="metric-label">Value:</span>
+            <div className="metric-item">
+              <span className="metric-label">Value</span>
               <span className="metric-value value-text">
                 {formatCurrency(lead.leadValue, lead.currency)}
               </span>
@@ -201,16 +199,13 @@ const DraggableCard = ({ lead, stage, onEdit, onDelete, onView }) => {
   );
 };
 
-const DroppableColumn = ({ stage, leads, onEdit, onDelete, onView }) => {
+const DroppableColumn = ({ stage, leads }) => {
   const { setNodeRef } = useDroppable({
     id: stage.id,
   });
 
   return (
-    <div
-      ref={setNodeRef}
-      className="kanban-column-content"
-    >
+    <div ref={setNodeRef} className="kanban-column-content">
       <SortableContext items={leads.map(lead => lead.id)} strategy={verticalListSortingStrategy}>
         {leads.length > 0 ? (
           leads.map((lead) => (
@@ -218,9 +213,6 @@ const DroppableColumn = ({ stage, leads, onEdit, onDelete, onView }) => {
               key={lead.id}
               lead={lead}
               stage={stage}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onView={onView}
             />
           ))
         ) : (
@@ -234,7 +226,7 @@ const DroppableColumn = ({ stage, leads, onEdit, onDelete, onView }) => {
   );
 };
 
-const LeadCard = ({ onEdit, onDelete, onView }) => {
+const LeadCard = () => {
   const { data: leadsData, isLoading, error } = useGetLeadsQuery();
   const { data: stagesData } = useGetLeadStagesQuery();
   const [updateLead] = useUpdateLeadMutation();
@@ -312,9 +304,6 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
             <DroppableColumn
               stage={stage}
               leads={leadsByStage[stage.id] || []}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onView={onView}
             />
           </div>
         ))}
@@ -335,7 +324,7 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
         .kanban-column {
           min-width: 320px;
           background: #f8fafc;
-          border-radius: 12px;
+          borderRadius: 0;
           padding: 16px;
           flex: 1;
           transition: transform 200ms ease, box-shadow 200ms ease;
@@ -361,8 +350,8 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           min-height: 100px;
           padding: 8px;
           background: #f8fafc;
-          border-radius: 8px;
-          transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+          borderRadius: 0;
+          transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           
           &.dragging-over {
             background: #e6f7ff;
@@ -430,30 +419,6 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           }
         }
 
-        .action-button {
-          border: none;
-          box-shadow: none;
-          color: var(--text-secondary);
-          height: 32px;
-          width: 32px;
-          border-radius: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          transition: all 0.3s ease;
-          background: transparent;
-          position: absolute;
-          top: 12px;
-          right: 12px;
-
-          &:hover {
-            background: rgba(0, 0, 0, 0.04);
-            transform: rotate(90deg);
-            color: var(--primary-color);
-          }
-        }
-
         .card-header {
           display: flex;
           justify-content: space-between;
@@ -477,46 +442,25 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
 
         .metrics-grid {
           display: flex;
-          align-items: center;
+          flex-direction: column;
+          gap: 12px;
           margin-top: 16px;
           position: relative;
           width: 100%;
-          padding: 8px 0;
+          padding: 12px 0;
           border-top: 1px solid #f0f0f0;
         }
 
         .metric-item {
-          position: relative;
           display: flex;
-          align-items: center;
-          gap: 6px;
-          min-width: 0;
-
-          &.company-section {
-            flex: 1;
-            min-width: 0;
-            padding-right: 12px;
-          }
-
-          &.value-section {
-            flex: 0 0 auto;
-            padding-left: 12px;
-            white-space: nowrap;
-          }
-        }
-
-        .divider {
-          width: 1px;
-          height: 20px;
-          background: #f0f0f0;
-          flex: 0 0 auto;
+          flex-direction: column;
+          gap: 4px;
         }
 
         .metric-label {
           font-size: 13px;
           color: var(--text-secondary);
           font-weight: 500;
-          flex: 0 0 auto;
         }
 
         .metric-value {
@@ -524,21 +468,13 @@ const LeadCard = ({ onEdit, onDelete, onView }) => {
           color: var(--text-primary);
           font-weight: 500;
           line-height: 1.4;
+          width: 100%;
+        }
 
-          &.truncate {
-            display: block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-width: 0;
-            flex: 1;
-          }
-
-          &.value-text {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--success-color);
-          }
+        .value-text {
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--success-color);
         }
 
         .interest-tag {
