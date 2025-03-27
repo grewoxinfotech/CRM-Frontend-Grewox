@@ -44,10 +44,10 @@ import Task from "../dashboard/module/crm/task/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail";
 import Customer from "../dashboard/module/sales/customer/index.jsx";
-import { useSelector } from 'react-redux';
-import { parsePermissions, hasPermission } from '../utils/permissionUtils';
-import { Navigate } from 'react-router-dom';
-import { selectUserRole } from '../auth/services/authSlice';
+import { useSelector } from "react-redux";
+import { parsePermissions, hasPermission } from "../utils/permissionUtils";
+import { Navigate } from "react-router-dom";
+import { selectUserRole } from "../auth/services/authSlice";
 import Invoice from "../dashboard/module/sales/invoice/index.jsx";
 import ProductServices from "../dashboard/module/sales/product&services/index.jsx";
 import Meeting from "../dashboard/module/hrm/Meeting/index.jsx";
@@ -55,7 +55,7 @@ import Revenue from "../dashboard/module/sales/revenue/index.jsx";
 import CreditNotes from "../dashboard/module/sales/creditnotes/index.jsx";
 import Calendar from "../dashboard/module/communication/calendar/index.jsx";
 import TaskCalendar from "../dashboard/module/crm/taskcalendar/index.jsx";
-  const PermissionRoute = ({ children, permissionKey }) => {
+const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -98,7 +98,7 @@ const routes = createBrowserRouter([
         <RoleBasedRoute>
           <DashboardLayout />
         </RoleBasedRoute>
-      </ProtectedRoute >
+      </ProtectedRoute>
     ),
     children: [
       {
@@ -157,9 +157,9 @@ const routes = createBrowserRouter([
             element: <Role />,
           },
           {
-            path:"meeting",
-            element:<Meeting/>
-          }
+            path: "meeting",
+            element: <Meeting />,
+          },
         ],
       },
       {
@@ -204,8 +204,8 @@ const routes = createBrowserRouter([
               {
                 path: ":projectId",
                 element: <ProjectDetail />,
-              }
-            ]
+              },
+            ],
           },
           {
             path: "leads",
@@ -247,7 +247,7 @@ const routes = createBrowserRouter([
           {
             path: "credit-notes",
             element: <CreditNotes />,
-          }
+          },
         ],
       },
       {
@@ -255,9 +255,9 @@ const routes = createBrowserRouter([
         children: [
           {
             path: "calendar",
-            element: <Calendar/>,
-          }
-        ]
+            element: <Calendar />,
+          },
+        ],
       },
       {
         path: "user-management/users",

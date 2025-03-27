@@ -37,6 +37,8 @@ import { dealApi } from "../dashboard/module/crm/deal/services/dealApi.js";
 import { creditNoteApi } from "../dashboard/module/sales/creditnotes/services/creditNoteApi.js";
 import { customerApi } from "../dashboard/module/sales/customer/services/custApi.js";
 import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceApi.js";
+import { revenueApi } from "../dashboard/module/sales/revenue/services/revenueApi.js";
+import { productApi } from "../dashboard/module/sales/product&services/services/productApi.js";
 const persistConfig = {
   key: "root",
   storage,
@@ -80,6 +82,8 @@ const rootReducer = combineReducers({
   [customerApi.reducerPath]: customerApi.reducer,
   [creditNoteApi.reducerPath]: creditNoteApi.reducer,
   [invoiceApi.reducerPath]: invoiceApi.reducer,
+  [revenueApi.reducerPath]: revenueApi.reducer,
+  [productApi.reducerPath]: productApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -125,7 +129,9 @@ export const store = configureStore({
       .concat(dealApi.middleware)
       .concat(customerApi.middleware)
       .concat(creditNoteApi.middleware)
-      .concat(invoiceApi.middleware),
+      .concat(invoiceApi.middleware)
+      .concat(revenueApi.middleware)
+      .concat(productApi.middleware),
 });
 
 export const persistor = persistStore(store);

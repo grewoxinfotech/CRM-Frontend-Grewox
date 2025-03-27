@@ -8,80 +8,93 @@ import {
   Select,
   Row,
   Col,
-  Divider,
-  DatePicker,
   Upload,
   message,
+  InputNumber,
+  Divider,
 } from "antd";
 import {
+  FiBox,
+  FiTag,
+  FiUpload,
+  FiDollarSign,
+  FiHash,
   FiFileText,
   FiX,
-  FiCalendar,
-  FiUser,
-  FiHash,
-  FiUpload,
-  FiBriefcase,
-  FiCreditCard,
-  FiTag,
-  FiDollarSign,
 } from "react-icons/fi";
-import dayjs from "dayjs";
-import { useCreateCreditNoteMutation } from "./services/creditNoteApi";
-import "./creditnotes.scss";
-import { useGetCustomersQuery } from "../customer/services/custApi";
-import { useGetInvoicesQuery } from "../invoice/services/invoiceApi";
+import { useCreateProductMutation } from "./services/productApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateCreditNotes = ({ open, onCancel }) => {
+const CreateProduct = ({ open, onCancel }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const [createCreditNote, { isLoading }] = useCreateCreditNoteMutation();
-  const { data: custdata } = useGetCustomersQuery();
-  const customers = custdata?.data;
-
-  const { data: invdata } = useGetInvoicesQuery();
-  const invoices = invdata?.data;
+  const user = useSelector(selectCurrentUser);
+  const [createProduct, { isLoading }] = useCreateProductMutation(user?.id);
+  const currentUser = useSelector(selectCurrentUser);
 
   const handleSubmit = async (values) => {
     try {
       const formData = new FormData();
 
-      // Append each field explicitly
-      formData.append("invoice", values.invoice || "");
-      formData.append("customer", values.customer || "");
-      formData.append("currency", values.currency || "");
-      formData.append("amount", values.amount || "");
+      // Append form fields
+      formData.append("name", values.name);
+      formData.append("category", values.category);
+      formData.append("price", values.price);
+      formData.append("sku", values.sku || "");
+      formData.append("tax", values.tax || "");
+      formData.append("hsn_sac", values.hsn_sac || "");
       formData.append("description", values.description || "");
+      formData.append("created_by", currentUser?.id || "");
 
-      // Handle date if present
-      if (values.date) {
-        formData.append("date", values.date.format("YYYY-MM-DD"));
-      }
-
-      // Handle attachment if present
+      // Append image if exists
       if (fileList.length > 0 && fileList[0].originFileObj) {
-        formData.append("attachment", fileList[0].originFileObj);
+        formData.append("image", fileList[0].originFileObj);
       }
 
-      await createCreditNote(formData).unwrap();
-      message.success("Credit note created successfully");
+      await createProduct({ id: currentUser?.id, data: formData }).unwrap();
+      message.success("Product created successfully");
       form.resetFields();
       setFileList([]);
       onCancel();
     } catch (error) {
-      console.error("Submit Error:", error);
-      message.error(error?.data?.message || "Failed to create credit note");
+      message.error(error?.data?.message || "Failed to create product");
     }
+  };
+
+  const handleCancel = () => {
+    form.resetFields();
+    setFileList([]);
+    onCancel();
+  };
+
+  const uploadProps = {
+    beforeUpload: (file) => {
+      const isImage = file.type.startsWith("image/");
+      if (!isImage) {
+        message.error("You can only upload image files!");
+        return false;
+      }
+      const isLt2M = file.size / 1024 / 1024 < 2;
+      if (!isLt2M) {
+        message.error("Image must be smaller than 2MB!");
+        return false;
+      }
+      return false;
+    },
+    onChange: ({ fileList }) => setFileList(fileList),
+    fileList,
   };
 
   return (
     <Modal
       title={null}
       open={open}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       footer={null}
       width={800}
       destroyOnClose={true}
@@ -153,7 +166,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               justifyContent: "center",
             }}
           >
-            <FiFileText style={{ fontSize: "24px", color: "#ffffff" }} />
+            <FiBox style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
           <div>
             <h2
@@ -164,7 +177,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 color: "#ffffff",
               }}
             >
-              Create Credit Note
+              Create New Product
             </h2>
             <Text
               style={{
@@ -172,7 +185,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 color: "rgba(255, 255, 255, 0.85)",
               }}
             >
-              Fill in the information to create credit note
+              Fill in the information to create product
             </Text>
           </div>
         </div>
@@ -187,138 +200,22 @@ const CreateCreditNotes = ({ open, onCancel }) => {
           padding: "24px",
         }}
       >
-        <Row gutter={16}>
+        <Row gutter={24}>
           <Col span={12}>
             <Form.Item
-              name="invoice"
+              name="name"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Invoice <span style={{ color: "#ff4d4f" }}>*</span>
+                  Product Name
                 </span>
               }
-              rules={[{ required: true, message: "Please select invoice" }]}
-            >
-              <Select
-                placeholder="Select Invoice"
-                showSearch
-                optionFilterProp="children"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                {invoices?.map((invoice) => (
-                  <Option key={invoice.id} value={invoice.id}>
-                    {invoice.salesInvoiceNumber}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="customer"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Customer <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select customer" }]}
-            >
-              <Select
-                placeholder="Select Customer"
-                showSearch
-                optionFilterProp="children"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                {customers?.map((customer) => (
-                  <Option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="date"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCalendar
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Date <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select date" }]}
-            >
-              <DatePicker
-                size="large"
-                format="YYYY-MM-DD"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="currency"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select currency" }]}
-            >
-              <Select
-                size="large"
-                placeholder="Select currency"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-                suffixIcon={<FiCreditCard style={{ color: "#1890ff" }} />}
-              >
-                <Option value="INR">INR - Indian Rupee</Option>
-                <Option value="USD">USD - US Dollar</Option>
-                <Option value="EUR">EUR - Euro</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="amount"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Amount
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter amount" }]}
+              rules={[{ required: true, message: "Please enter product name" }]}
             >
               <Input
-                type="number"
                 prefix={
-                  <FiDollarSign
-                    style={{ color: "#1890ff", fontSize: "16px" }}
-                  />
+                  <FiBox style={{ color: "#1890ff", fontSize: "16px" }} />
                 }
-                placeholder="Enter amount"
+                placeholder="Enter product name"
                 size="large"
                 style={{
                   borderRadius: "10px",
@@ -326,14 +223,144 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                   height: "48px",
                   backgroundColor: "#f8fafc",
                   border: "1px solid #e6e8eb",
-                  transition: "all 0.3s ease",
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="category"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  Category
+                </span>
+              }
+              rules={[{ required: true, message: "Please select category" }]}
+            >
+              <Select
+                placeholder="Select category"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                }}
+              >
+                <Option value="electronics">Electronics</Option>
+                <Option value="clothing">Clothing</Option>
+                <Option value="furniture">Furniture</Option>
+                <Option value="books">Books</Option>
+                <Option value="others">Others</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={24}>
+          <Col span={12}>
+            <Form.Item
+              name="price"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  Price
+                </span>
+              }
+              rules={[{ required: true, message: "Please enter price" }]}
+            >
+              <InputNumber
+                prefix={
+                  <FiDollarSign
+                    style={{ color: "#1890ff", fontSize: "16px" }}
+                  />
+                }
+                placeholder="Enter price"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
+                }}
+                min={0}
+                step={0.01}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="sku"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>SKU</span>
+              }
+            >
+              <Input
+                prefix={
+                  <FiTag style={{ color: "#1890ff", fontSize: "16px" }} />
+                }
+                placeholder="Enter SKU"
+                size="large"
+                style={{
+                  borderRadius: "10px",
+                  padding: "8px 16px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
                 }}
               />
             </Form.Item>
           </Col>
         </Row>
 
-        <Row gutter={16}></Row>
+        <Row gutter={24}>
+          <Col span={12}>
+            <Form.Item
+              name="tax"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>Tax</span>
+              }
+            >
+              <Input
+                prefix={
+                  <FiHash style={{ color: "#1890ff", fontSize: "16px" }} />
+                }
+                placeholder="Enter tax"
+                size="large"
+                style={{
+                  borderRadius: "10px",
+                  padding: "8px 16px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
+                }}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="hsn_sac"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  HSN/SAC
+                </span>
+              }
+            >
+              <Input
+                prefix={
+                  <FiHash style={{ color: "#1890ff", fontSize: "16px" }} />
+                }
+                placeholder="Enter HSN/SAC code"
+                size="large"
+                style={{
+                  borderRadius: "10px",
+                  padding: "8px 16px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
+                }}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item
           name="description"
@@ -344,8 +371,8 @@ const CreateCreditNotes = ({ open, onCancel }) => {
           }
         >
           <TextArea
-            placeholder="Enter description"
-            rows={4}
+            placeholder="Enter product description"
+            autoSize={{ minRows: 3, maxRows: 6 }}
             style={{
               borderRadius: "10px",
               padding: "12px 16px",
@@ -356,35 +383,19 @@ const CreateCreditNotes = ({ open, onCancel }) => {
         </Form.Item>
 
         <Form.Item
-          name="attachment"
+          name="image"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Attachment
+              Product Image
             </span>
           }
         >
-          <Upload
-            maxCount={1}
-            fileList={fileList}
-            onChange={({ fileList }) => setFileList(fileList)}
-            beforeUpload={(file) => {
-              const isValidType = [
-                "image/jpeg",
-                "image/png",
-                "application/pdf",
-              ].includes(file.type);
-              if (!isValidType) {
-                message.error("You can only upload JPG/PNG/PDF files!");
-                return Upload.LIST_IGNORE;
-              }
-              return false;
-            }}
-          >
+          <Upload {...uploadProps} listType="picture-card" maxCount={1}>
             <Button
               icon={<FiUpload style={{ marginRight: "8px" }} />}
               style={{
                 width: "100%",
-                height: "48px",
+                height: "100%",
                 borderRadius: "10px",
                 backgroundColor: "#f8fafc",
                 border: "1px solid #e6e8eb",
@@ -393,7 +404,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 justifyContent: "center",
               }}
             >
-              Click to Upload Attachment
+              Click to Upload
             </Button>
           </Upload>
         </Form.Item>
@@ -402,40 +413,41 @@ const CreateCreditNotes = ({ open, onCancel }) => {
 
         <div
           style={{
+            marginTop: "24px",
             display: "flex",
             justifyContent: "flex-end",
             gap: "12px",
           }}
         >
           <Button
-            size="large"
-            onClick={onCancel}
+            onClick={handleCancel}
             style={{
               padding: "8px 24px",
-              height: "44px",
-              borderRadius: "10px",
-              border: "1px solid #e6e8eb",
+              height: "40px",
+              borderRadius: "8px",
+              border: "1px solid #d9d9d9",
+              background: "#ffffff",
+              color: "#262626",
               fontWeight: "500",
             }}
           >
             Cancel
           </Button>
           <Button
-            size="large"
             type="primary"
             htmlType="submit"
             loading={isLoading}
             style={{
-              padding: "8px 32px",
-              height: "44px",
-              borderRadius: "10px",
-              fontWeight: "500",
-              background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+              padding: "8px 24px",
+              height: "40px",
+              borderRadius: "8px",
+              background: "#1890ff",
               border: "none",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
+              color: "#ffffff",
+              fontWeight: "500",
             }}
           >
-            Create Credit Note
+            Create Product
           </Button>
         </div>
       </Form>
@@ -443,4 +455,4 @@ const CreateCreditNotes = ({ open, onCancel }) => {
   );
 };
 
-export default CreateCreditNotes;
+export default CreateProduct;
