@@ -125,7 +125,6 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
         <Table
             columns={columns}
             dataSource={onboardings}
-            loading={loading}
             rowKey="id"
             pagination={{
                 pageSize: 10,

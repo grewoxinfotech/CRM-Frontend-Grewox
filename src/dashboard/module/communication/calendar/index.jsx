@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import './calender.scss';
 import CreateEvent from './CreateCalender';
+import { useGetAllCalendarEventsQuery, useDeleteCalendarEventMutation } from './services/calendarApi';
 
 const { Title, Text } = Typography;
 
@@ -13,45 +14,32 @@ const defaultColor = '#1890ff';
 const CalendarPage = () => {
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [events, setEvents] = useState([
-        {
-            id: 1,
-            title: 'Team Meeting',
-            startDate: dayjs().format('YYYY-MM-DD'),
-            startTime: '10:00',
-            endTime: '11:30',
-            color: '#ff4d4f',
-            label: 'work',
-            event_type: 'meeting'
-        },
-        {
-            id: 2,
-            title: 'Doctor Appointmentasdsadsadasdasddfdsfsdfsf',
-            startDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
-            startTime: '14:00',
-            endTime: '15:00',
-            color: '#52c41a',
-            label: 'personal',
-            event_type: 'appointment'
-        },
-        {
-            id: 3,
-            title: 'Client Call',
-            startDate: dayjs().add(2, 'day').format('YYYY-MM-DD'),
-            startTime: '09:30',
-            endTime: '10:30',
-            color: '#1890ff',
-            label: 'important',
-            event_type: 'call'
-        }
-    ]);
+    const [events, setEvents] = useState([]);
     const [upcomingEvents, setUpcomingEvents] = useState([]);
+    
+    const { data: calendarEvents, isLoading, isError } = useGetAllCalendarEventsQuery();
+    const [deleteCalendarEvent, { isLoading: isDeleting }] = useDeleteCalendarEventMutation();
+
+    useEffect(() => {
+        if (calendarEvents) {
+            const eventsArray = Array.isArray(calendarEvents) 
+                ? calendarEvents 
+                : calendarEvents?.data || [];
+            
+            setEvents(eventsArray);
+        }
+    }, [calendarEvents]);
 
     useEffect(() => {
         updateUpcomingEvents();
     }, [events]);
 
     const updateUpcomingEvents = () => {
+        if (!Array.isArray(events)) {
+            setUpcomingEvents([]);
+            return;
+        }
+
         const today = dayjs();
         const upcoming = events
             .filter(event => dayjs(event.startDate).isSameOrAfter(today, 'day'))
@@ -68,24 +56,27 @@ const CalendarPage = () => {
     const handleCreateEvent = (values) => {
         const newEvent = {
             id: events.length ? events.length + 1 : 1,
-            title: values.title,
+            name: values.name,
             startDate: values.startDate,
-            startTime: values.start_time,
-            endTime: values.end_time,
+            endDate: values.endDate,
             color: values.color,
             label: values.label,
             event_type: values.event_type
         };
         
-      
         setEvents(prevEvents => [...prevEvents, newEvent]);
         message.success('Event created successfully');
         setIsModalVisible(false);
     };
 
-    const handleDeleteEvent = (eventId) => {
-        setEvents(events.filter(event => event.id !== eventId));
-        message.success('Event deleted successfully');
+    const handleDeleteEvent = async (eventId) => {
+        try {
+            await deleteCalendarEvent(eventId).unwrap();
+            message.success('Event deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete event:', error);
+            message.error('Failed to delete event');
+        }
     };
 
     const getEventLabelColor = (label) => {
@@ -119,6 +110,10 @@ const CalendarPage = () => {
     };
 
     const dateCellRender = (date) => {
+        if (!Array.isArray(events)) {
+            return null;
+        }
+
         const dayEvents = events.filter(
             event => dayjs(event.startDate).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
         );
@@ -158,13 +153,7 @@ const CalendarPage = () => {
                                 alignItems: 'start',
                                 gap: '2px'
                             }}>
-                                <span className="event-time" style={{ 
-                                    color: event.color || defaultColor,
-                                    fontSize: '15px',
-                                    fontWeight: '750'
-                                }}>
-                                    {event.startTime}
-                                </span>
+                               
                                 <span className="event-title" style={{
                                     fontSize: '14px',
                                     color: '#333',
@@ -175,7 +164,14 @@ const CalendarPage = () => {
                                     width: '100%',
                                     maxWidth: '120px'
                                 }}>
-                                    {event.title}
+                                    {event.name}
+                                </span>
+                                 <span className="event-time" style={{ 
+                                    color: event.color || defaultColor,
+                                    fontSize: '15px',
+                                    fontWeight: '750'
+                                }}>
+                                    {dayjs(event.startDate).format('HH:mm')}
                                 </span>
                             </div>
                         </div>
@@ -184,6 +180,36 @@ const CalendarPage = () => {
             </div>
         ) : null;
     };
+
+    if (isLoading) {
+        return (
+            <div className="calendar-page">
+                <div className="page-breadcrumb">
+                    <Breadcrumb>
+                        <Breadcrumb.Item>
+                            <Link to="/dashboard">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item>
+                            <Link to="/dashboard/communication">Communication</Link>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item>Calendar</Breadcrumb.Item>
+                    </Breadcrumb>
+                </div>
+                <div className="page-header">
+                    <div className="page-title">
+                        <Title level={2}>Calendar</Title>
+                        <Text type="secondary">Loading calendar data...</Text>
+                    </div>
+                </div>
+                <Card style={{ textAlign: 'center', padding: '50px' }}>
+                    Loading calendar...
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="calendar-page">
@@ -214,7 +240,6 @@ const CalendarPage = () => {
                     className="upcoming-events" 
                     style={{ 
                         width: '380px',
-                        
                         height: 'fit-content',
                         borderRadius: '12px',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -227,7 +252,11 @@ const CalendarPage = () => {
                         </Title>
                     </div>
                     <div className="event-cards" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                        {!upcomingEvents.length ? (
+                        {isLoading ? (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>Loading events...</div>
+                        ) : isError ? (
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Error loading events</div>
+                        ) : !upcomingEvents.length ? (
                             <Empty 
                                 description="No upcoming events" 
                                 image={Empty.PRESENTED_IMAGE_SIMPLE} 
@@ -272,7 +301,7 @@ const CalendarPage = () => {
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                         whiteSpace: 'nowrap'
-                                                    }}>{event.title}</span>
+                                                    }}>{event.name}</span>
                                                 </div>
                                                 {event.label && (
                                                     <Tag 
@@ -318,7 +347,7 @@ const CalendarPage = () => {
                                                     fontWeight: '500'
                                                 }}>
                                                     <FiClock style={{ marginRight: '8px' }} />
-                                                    {event.startTime} - {event.endTime}
+                                                    {dayjs(event.startDate).format('HH:mm')} - {dayjs(event.endDate).format('HH:mm')}
                                                 </div>
                                             </div>
                                             <div className="event-header" style={{
@@ -378,26 +407,6 @@ const CalendarPage = () => {
                     />
                 </Card>
             </div>
-
-            {/* <Button
-                type="primary"
-                icon={<FiPlus />}
-                onClick={() => setIsModalVisible(true)}
-                className="create-event-button"
-                style={{
-                    position: 'fixed',
-                    bottom: '24px',
-                    right: '24px',
-                    height: '48px',
-                    width: '48px',
-                    borderRadius: '24px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px'
-                }}
-            /> */}
 
             <CreateEvent
                 open={isModalVisible}

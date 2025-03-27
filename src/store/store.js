@@ -32,14 +32,21 @@ import { jobOnboardingApi } from "../dashboard/module/job/job onboarding/service
 import { offerLetterApi } from "../dashboard/module/job/offer letters/services/offerLetterApi.js";
 import { interviewApi } from "../dashboard/module/job/interviews/services/interviewApi.js";
 import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
-import { leadApi } from "../dashboard/module/crm/lead/services/leadApi.js";
-import { dealApi } from "../dashboard/module/crm/deal/services/dealApi.js";
+import { leadApi } from "../dashboard/module/crm/lead/services/LeadApi.js";
+import { dealApi } from "../dashboard/module/crm/deal/services/DealApi.js";
 import { creditNoteApi } from "../dashboard/module/sales/creditnotes/services/creditNoteApi.js";
 import { customerApi } from "../dashboard/module/sales/customer/services/custApi.js";
 import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceApi.js";
 import { revenueApi } from "../dashboard/module/sales/revenue/services/revenueApi.js";
 import { productApi } from "../dashboard/module/sales/product&services/services/productApi.js";
 import { leaveApi } from "../dashboard/module/hrm/leave/services/leaveApi.js";
+import { subscribedUserApi } from "../superadmin/module/SubscribedUser/services/SubscribedUserApi.js";
+import { ticketApi } from "../dashboard/module/support/ticket/services/ticketApi.js";
+import { calendarApi } from "../dashboard/module/communication/calendar/services/calendarApi.js";
+import { taskCalendarApi } from "../dashboard/module/crm/taskcalendar/services/taskCalender.js";
+import { proposalApi } from "../dashboard/module/crm/proposal/services/proposalApi.js";
+import { taxApi } from "../dashboard/module/settings/tax/services/taxApi.js";
+import { attendanceApi } from "../dashboard/module/hrm/Attendance/services/attendanceApi";
 const persistConfig = {
   key: "root",
   storage,
@@ -86,6 +93,13 @@ const rootReducer = combineReducers({
   [revenueApi.reducerPath]: revenueApi.reducer,
   [productApi.reducerPath]: productApi.reducer,
   [leaveApi.reducerPath]: leaveApi.reducer,
+  [subscribedUserApi.reducerPath]: subscribedUserApi.reducer,
+  [ticketApi.reducerPath]: ticketApi.reducer,
+  [calendarApi.reducerPath]: calendarApi.reducer,
+  [taskCalendarApi.reducerPath]: taskCalendarApi.reducer,
+  [proposalApi.reducerPath]: proposalApi.reducer,
+  [taxApi.reducerPath]: taxApi.reducer,
+  [attendanceApi.reducerPath]: attendanceApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -134,7 +148,14 @@ export const store = configureStore({
       .concat(invoiceApi.middleware)
       .concat(revenueApi.middleware)
       .concat(productApi.middleware)
-      .concat(leaveApi.middleware),
+      .concat(leaveApi.middleware)
+      .concat(subscribedUserApi.middleware)
+      .concat(ticketApi.middleware)
+      .concat(calendarApi.middleware)
+      .concat(taskCalendarApi.middleware)
+      .concat(proposalApi.middleware)
+      .concat(taxApi.middleware)
+      .concat(attendanceApi.middleware),
 });
 
 export const persistor = persistStore(store);

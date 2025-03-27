@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import './taskcalender.scss';
 import CreateTaskCalendar from './CreateTaskCalender';
+import { useGetAllTaskCalendarEventsQuery, useDeleteTaskCalendarEventMutation } from './services/taskCalender';
 
 const { Title, Text } = Typography;
 
@@ -13,45 +14,32 @@ const defaultColor = '#1890ff';
 const TaskCalendarPage = () => {
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [tasks, setTasks] = useState([
-        {
-            id: 1,
-            title: 'Complete Project Proposal',
-            startDate: dayjs().format('YYYY-MM-DD'),
-            startTime: '09:00',
-            endTime: '11:00',
-            color: '#ff4d4f',
-            priority: 'high',
-            task_type: 'task'
-        },
-        {
-            id: 2,
-            title: 'Review Client Requirements',
-            startDate: dayjs().add(1, 'day').format('YYYY-MM-DD'),
-            startTime: '13:00',
-            endTime: '14:30',
-            color: '#52c41a',
-            priority: 'low',
-            task_type: 'task'
-        },
-        {
-            id: 3,
-            title: 'Team Standup Meeting',
-            startDate: dayjs().add(2, 'day').format('YYYY-MM-DD'),
-            startTime: '10:00',
-            endTime: '10:30',
-            color: '#1890ff',
-            priority: 'normal',
-            task_type: 'task'
-        }
-    ]);
+    const [tasks, setTasks] = useState([]);
     const [upcomingTasks, setUpcomingTasks] = useState([]);
+    
+    const { data: calendarTasks, isLoading, isError } = useGetAllTaskCalendarEventsQuery();
+    const [deleteTaskCalendarEvent, { isLoading: isDeleting }] = useDeleteTaskCalendarEventMutation();
+
+    useEffect(() => {
+        if (calendarTasks) {
+            const tasksArray = Array.isArray(calendarTasks) 
+                ? calendarTasks 
+                : calendarTasks?.data || [];
+            
+            setTasks(tasksArray);
+        }
+    }, [calendarTasks]);
 
     useEffect(() => {
         updateUpcomingTasks();
     }, [tasks]);
 
     const updateUpcomingTasks = () => {
+        if (!Array.isArray(tasks)) {
+            setUpcomingTasks([]);
+            return;
+        }
+
         const today = dayjs();
         const upcoming = tasks
             .filter(task => dayjs(task.startDate).isSameOrAfter(today, 'day'))
@@ -83,9 +71,14 @@ const TaskCalendarPage = () => {
         setIsModalVisible(false);
     };
 
-    const handleDeleteTask = (taskId) => {
-        setTasks(tasks.filter(task => task.id !== taskId));
-        message.success('Task deleted successfully');
+    const handleDeleteTask = async (taskId) => {
+        try {
+            await deleteTaskCalendarEvent(taskId).unwrap();
+            message.success('Task deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete task:', error);
+            message.error('Failed to delete task');
+        }
     };
 
     const getPriorityColor = (priority) => {
@@ -119,6 +112,10 @@ const TaskCalendarPage = () => {
     };
 
     const dateCellRender = (date) => {
+        if (!Array.isArray(tasks)) {
+            return null;
+        }
+
         const dayTasks = tasks.filter(
             task => dayjs(task.startDate).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
         );
@@ -158,13 +155,7 @@ const TaskCalendarPage = () => {
                                 alignItems: 'start',
                                 gap: '2px'
                             }}>
-                                <span className="event-time" style={{ 
-                                    color: task.color || defaultColor,
-                                    fontSize: '15px',
-                                    fontWeight: '750'
-                                }}>
-                                    {task.startTime}
-                                </span>
+                               
                                 <span className="event-title" style={{
                                     fontSize: '14px',
                                     color: '#333',
@@ -175,7 +166,14 @@ const TaskCalendarPage = () => {
                                     width: '100%',
                                     maxWidth: '120px'
                                 }}>
-                                    {task.title}
+                                    {task.taskName}
+                                </span>
+                                <span className="event-time" style={{ 
+                                    color: task.color || defaultColor,
+                                    fontSize: '15px',
+                                    fontWeight: '750'
+                                }}>
+                                    {task.taskTime}
                                 </span>
                             </div>
                         </div>
@@ -184,6 +182,36 @@ const TaskCalendarPage = () => {
             </div>
         ) : null;
     };
+
+    if (isLoading) {
+        return (
+            <div className="calendar-page">
+                <div className="page-breadcrumb">
+                    <Breadcrumb>
+                        <Breadcrumb.Item>
+                            <Link to="/dashboard">
+                                <FiHome style={{ marginRight: '4px' }} />
+                                Home
+                            </Link>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item>
+                            <Link to="/dashboard/crm">CRM</Link>
+                        </Breadcrumb.Item>
+                        <Breadcrumb.Item>Task Calendar</Breadcrumb.Item>
+                    </Breadcrumb>
+                </div>
+                <div className="page-header">
+                    <div className="page-title">
+                        <Title level={2}>Task Calendar</Title>
+                        <Text type="secondary">Loading task calendar data...</Text>
+                    </div>
+                </div>
+                <Card style={{ textAlign: 'center', padding: '50px' }}>
+                    Loading task calendar...
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="calendar-page">
@@ -196,7 +224,7 @@ const TaskCalendarPage = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        <Link to="/dashboard/communication">Communication</Link>
+                        <Link to="/dashboard/crm">CRM</Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>Task Calendar</Breadcrumb.Item>
                 </Breadcrumb>
@@ -227,7 +255,11 @@ const TaskCalendarPage = () => {
                         </Title>
                     </div>
                     <div className="event-cards" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                        {!upcomingTasks.length ? (
+                        {isLoading ? (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>Loading tasks...</div>
+                        ) : isError ? (
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Error loading tasks</div>
+                        ) : !upcomingTasks.length ? (
                             <Empty 
                                 description="No upcoming tasks" 
                                 image={Empty.PRESENTED_IMAGE_SIMPLE} 
@@ -272,7 +304,7 @@ const TaskCalendarPage = () => {
                                                         overflow: 'hidden',
                                                         textOverflow: 'ellipsis',
                                                         whiteSpace: 'nowrap'
-                                                    }}>{task.title}</span>
+                                                    }}>{task.taskName}</span>
                                                 </div>
                                                 {task.priority && (
                                                     <Tag 
@@ -310,6 +342,7 @@ const TaskCalendarPage = () => {
                                                     <FiCalendar style={{ marginRight: '8px' }} />
                                                     {dayjs(task.startDate).format('MMM DD, YYYY')}
                                                 </div>
+                                               
                                                 <div className="event-time" style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -318,7 +351,7 @@ const TaskCalendarPage = () => {
                                                     fontWeight: '500'
                                                 }}>
                                                     <FiClock style={{ marginRight: '8px' }} />
-                                                    {task.startTime} - {task.endTime}
+                                                     {task.taskTime}
                                                 </div>
                                             </div>
                                             <div className="event-header" style={{
@@ -379,7 +412,7 @@ const TaskCalendarPage = () => {
                 </Card>
             </div>
 
-            {/* <Button
+            <Button
                 type="primary"
                 icon={<FiPlus />}
                 onClick={() => setIsModalVisible(true)}
@@ -397,7 +430,7 @@ const TaskCalendarPage = () => {
                     justifyContent: 'center',
                     fontSize: '20px'
                 }}
-            /> */}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              `888888889`
+            />
 
             <CreateTaskCalendar
                 open={isModalVisible}

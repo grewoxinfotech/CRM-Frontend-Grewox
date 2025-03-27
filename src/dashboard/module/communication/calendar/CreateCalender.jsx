@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Modal,
     Form,
@@ -9,7 +9,9 @@ import {
     DatePicker,
     Badge,
     Select,
-    message
+    message,
+    Row,
+    Col
 } from 'antd';
 import {
     FiCalendar,
@@ -18,6 +20,7 @@ import {
     FiTag
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import { useCreateCalendarEventMutation } from './services/calendarApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -30,41 +33,57 @@ const labelOptions = [
     { value: 'other', label: 'Other', color: '#faad14' }
 ];
 
-const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
+const CreateEvent = ({ open, onCancel, selectedDate }) => {
     const [form] = Form.useForm();
+    const [createCalendarEvent, { isLoading }] = useCreateCalendarEventMutation();
 
     useEffect(() => {
         if (open) {
+            form.resetFields();
             form.setFieldsValue({
                 date: selectedDate ? dayjs(selectedDate) : dayjs(),
                 label: 'other',
-                color: '#faad14'
+                color: '#faad14',
+                eventType: 'meeting'
             });
         }
     }, [open, selectedDate, form]);
+
+    const handleStartTimeChange = (time) => {
+        form.setFieldsValue({ endDate: null }); // Reset end time when start time changes
+        form.validateFields(['endDate']); // Revalidate end time
+    };
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
             
+            const formattedDate = selectedDate ? 
+                dayjs(selectedDate).format('YYYY-MM-DD') : 
+                dayjs().format('YYYY-MM-DD');
+            
             // Create event data
             const eventData = {
-                title: values.title.trim(),
-                startDate: selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-                start_time: values.start_time.format('HH:mm'),
-                end_time: values.end_time.format('HH:mm'),
+                name: values.name.trim(),
+                startDate: dayjs(`${formattedDate} ${values.startDate.format('HH:mm')}`).toISOString(),
+                endDate: dayjs(`${formattedDate} ${values.endDate.format('HH:mm')}`).toISOString(),
                 label: values.label || 'other',
                 color: values.color || '#faad14',
                 event_type: 'meeting' // Default event type
             };
 
-        
-            
-            // Submit event
-            await onSubmit(eventData);
-            message.success('Event created successfully');
-            form.resetFields();
-            onCancel();
+            console.log('Submitting event:', eventData);
+
+            // Submit event using the mutation
+            try {
+                await createCalendarEvent(eventData).unwrap();
+                message.success('Event created successfully');
+                form.resetFields();
+                onCancel();
+            } catch (apiError) {
+                console.error('API Error:', apiError);
+                message.error(apiError?.data?.message || 'Failed to create event');
+            }
 
         } catch (error) {
             console.error('Form validation error:', error);
@@ -197,7 +216,7 @@ const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     {/* Event Title Field */}
                     <Form.Item
-                        name="title"
+                        name="name"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Event Title</span>}
                         rules={[{ required: true, message: 'Please enter event title' }]}
                         style={{ gridColumn: 'span 2' }}
@@ -213,8 +232,6 @@ const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
                             }}
                         />
                     </Form.Item>
-
-                    
 
                     {/* Label Field */}
                     <Form.Item
@@ -249,45 +266,84 @@ const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
                         </Select>
                     </Form.Item>
 
-                    {/* Start Time Field */}
-                    <Form.Item
-                        name="start_time"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
-                        rules={[{ required: true, message: 'Please select start time' }]}
-                    >
-                        <TimePicker
-                            size="large"
-                            style={{
-                                width: '100%',
-                                height: '48px',
-                                borderRadius: '10px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            format="HH:mm"
-                            minuteStep={15}
-                        />
-                    </Form.Item>
+                    {/* Time Fields with Validation */}
+                    <Row gutter={16} style={{ gridColumn: 'span 2' }}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="startDate"
+                                label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
+                                rules={[{ required: true, message: 'Please select start time' }]}
+                            >
+                                <TimePicker
+                                    size="large"
+                                    style={{
+                                        width: '100%',
+                                        height: '48px',
+                                        borderRadius: '10px',
+                                        backgroundColor: '#f8fafc',
+                                        border: '1px solid #e6e8eb',
+                                    }}
+                                    format="HH:mm"
+                                    minuteStep={15}
+                                    onChange={handleStartTimeChange}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="endDate"
+                                label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time</span>}
+                                rules={[
+                                    { required: true, message: 'Please select end time' },
+                                    ({ getFieldValue }) => ({
+                                        validator(_, value) {
+                                            const startTime = getFieldValue('startDate');
+                                            if (!value || !startTime || value.isAfter(startTime)) {
+                                                return Promise.resolve();
+                                            }
+                                            return Promise.reject(new Error('End time must be after start time'));
+                                        },
+                                    }),
+                                ]}
+                            >
+                                <TimePicker
+                                    size="large"
+                                    style={{
+                                        width: '100%',
+                                        height: '48px',
+                                        borderRadius: '10px',
+                                        backgroundColor: '#f8fafc',
+                                        border: '1px solid #e6e8eb',
+                                    }}
+                                    format="HH:mm"
+                                    minuteStep={15}
+                                    disabledTime={() => {
+                                        const startTime = form.getFieldValue('startDate');
+                                        if (!startTime) return {};
 
-                    {/* End Time Field */}
-                    <Form.Item
-                        name="end_time"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time</span>}
-                        rules={[{ required: true, message: 'Please select end time' }]}
-                    >
-                        <TimePicker
-                            size="large"
-                            style={{
-                                width: '100%',
-                                height: '48px',
-                                borderRadius: '10px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            format="HH:mm"
-                            minuteStep={15}
-                        />
-                    </Form.Item>
+                                        return {
+                                            disabledHours: () => {
+                                                const hours = [];
+                                                for (let i = 0; i < startTime.hour(); i++) {
+                                                    hours.push(i);
+                                                }
+                                                return hours;
+                                            },
+                                            disabledMinutes: (selectedHour) => {
+                                                const minutes = [];
+                                                if (selectedHour === startTime.hour()) {
+                                                    for (let i = 0; i < startTime.minute(); i++) {
+                                                        minutes.push(i);
+                                                    }
+                                                }
+                                                return minutes;
+                                            }
+                                        };
+                                    }}
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
                     
                     {/* Hidden color field */}
                     <Form.Item
@@ -316,6 +372,7 @@ const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
                             height: '48px',
                             border: '1px solid #e6e8eb',
                         }}
+                        disabled={isLoading}
                     >
                         Cancel
                     </Button>
@@ -323,6 +380,7 @@ const CreateEvent = ({ open, onCancel, onSubmit, selectedDate }) => {
                         type="primary"
                         htmlType="submit"
                         size="large"
+                        loading={isLoading}
                         style={{
                             borderRadius: '8px',
                             padding: '8px 24px',

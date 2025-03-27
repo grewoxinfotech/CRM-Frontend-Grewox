@@ -127,7 +127,6 @@ const JobList = ({ onEdit, onDelete, onView }) => {
         <Table
             columns={columns}
             dataSource={tableData}
-            loading={isLoading}
             pagination={{
                 pageSize: 10,
                 showSizeChanger: false,

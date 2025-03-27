@@ -54,7 +54,6 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
         issueDate: values.issueDate?.format("YYYY-MM-DD") || "",
         dueDate: values.dueDate?.format("YYYY-MM-DD") || "",
         category: values.category || "",
-        reference_number: values.reference_number || "",
         currency: values.currency || "",
         items: itemsObject,
         sub_total: values.sub_total || 0,
@@ -251,32 +250,6 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
             >
               <Input
                 placeholder="Enter category"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="reference_number"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Reference Number <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[
-                { required: true, message: "Please enter reference number" },
-              ]}
-            >
-              <Input
-                prefix={<FiHash style={{ color: "#1890ff" }} />}
-                placeholder="Enter reference number"
                 size="large"
                 style={{
                   width: "100%",

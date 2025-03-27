@@ -1,0 +1,195 @@
+import React from 'react';
+import { Table, Tag, Tooltip, Button, Space } from 'antd';
+import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
+import { useGetAllAttendancesQuery } from './services/attendanceApi';
+import { useGetEmployeesQuery } from '../Employee/services/employeeApi';
+import dayjs from 'dayjs';
+import './attendance.scss';
+
+const AttendanceList = () => {
+    const { data: attendanceData, isLoading: isLoadingAttendance } = useGetAllAttendancesQuery();
+    const { data: employeeData, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+
+    // Transform employee data
+    const employees = React.useMemo(() => {
+        if (!employeeData) return [];
+        const data = Array.isArray(employeeData) ? employeeData : employeeData.data || [];
+        
+        return data.map(emp => ({
+            id: emp.id,
+            name: emp.firstName && emp.lastName 
+                ? `${emp.firstName} ${emp.lastName}`
+                : emp.username,
+            code: emp.employee_code || '-',
+            avatar: emp.avatar
+        }));
+    }, [employeeData]);
+
+    // Generate dates for the current month
+    const getDaysInMonth = () => {
+        const days = [];
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayDate = new Date(year, month, i);
+            days.push({
+                date: i,
+                day: dayDate.toLocaleDateString('en-US', { weekday: 'short' }),
+                fullDate: dayjs(dayDate).format('YYYY-MM-DD'),
+            });
+        }
+        return days;
+    };
+
+    const days = getDaysInMonth();
+
+    // Status tags configuration
+    const statusConfig = {
+        'P': { color: '#52c41a', text: 'Present', background: '#f6ffed' },
+        'A': { color: '#ff4d4f', text: 'Absent', background: '#fff2f0' },
+        'L': { color: '#faad14', text: 'Leave', background: '#fffbe6' },
+        'H': { color: '#722ed1', text: 'Paid Holiday', background: '#f9f0ff' },
+        'WK': { color: '#13c2c2', text: 'Weekend', background: '#e6fffb' }
+    };
+
+    // Generate columns
+    const columns = [
+        {
+            title: 'Employee Name',
+            dataIndex: 'name',
+            key: 'name',
+            fixed: 'left',
+            width: 200,
+            render: (text, record) => (
+                <div className="employee-info">
+                    <div className="employee-avatar">
+                        {record.avatar ? (
+                            <img src={record.avatar} alt={text} />
+                        ) : (
+                            <FiUser />
+                        )}
+                    </div>
+                    <div className="employee-details">
+                        <span className="employee-name">{text}</span>
+                        <span className="employee-code">{record.code}</span>
+                    </div>
+                </div>
+            ),
+        },
+        ...days.map(day => ({
+            title: (
+                <div className="date-header">
+                    <div className="date">{day.date}</div>
+                    <div className="day">{day.day}</div>
+                </div>
+            ),
+            dataIndex: `day${day.date}`,
+            key: `day${day.date}`,
+            width: 60,
+            align: 'center',
+            render: (status = 'A') => {
+                const config = statusConfig[status] || statusConfig['A'];
+                return (
+                    <Tooltip title={config.text}>
+                        <Tag 
+                            className="attendance-status"
+                            style={{
+                                color: config.color,
+                                backgroundColor: config.background,
+                                border: `1px solid ${config.color}`,
+                                margin: 0,
+                                minWidth: '32px',
+                                textAlign: 'center'
+                            }}
+                        >
+                            {status}
+                        </Tag>
+                    </Tooltip>
+                );
+            }
+        }))
+    ];
+
+    // Generate attendance data
+    const data = React.useMemo(() => {
+        const attendances = Array.isArray(attendanceData) 
+            ? attendanceData 
+            : (attendanceData?.data || []);
+
+        return employees.map(emp => {
+            const rowData = { 
+                key: emp.id, 
+                name: emp.name, 
+                code: emp.code,
+                avatar: emp.avatar 
+            };
+
+            days.forEach(day => {
+                // Find attendance for this employee on this specific day
+                const attendance = attendances.find(att => {
+                    // Check if the attendance record matches the employee and date
+                    return att.employee === emp.id && 
+                           dayjs(att.date).format('YYYY-MM-DD') === day.fullDate;
+                });
+
+                // Check if it's a weekend
+                const isWeekend = ['Sun'].includes(day.day);
+
+                if (isWeekend) {
+                    rowData[`day${day.date}`] = 'WK';
+                } else if (attendance) {
+                    // If attendance record exists
+                    if (attendance.halfDay) {
+                        rowData[`day${day.date}`] = 'H'; // Half day
+                    } else if (attendance.late) {
+                        rowData[`day${day.date}`] = 'L'; // Late
+                    } else {
+                        rowData[`day${day.date}`] = 'P'; // Present
+                    }
+                } else {
+                    rowData[`day${day.date}`] = 'A'; // Absent
+                }
+            });
+
+            return rowData;
+        });
+    }, [employees, attendanceData, days]);
+
+    return (
+        <div className="attendance-list-container">
+            <div className="attendance-header">
+                <div className="status-legend">
+                    {Object.entries(statusConfig).map(([key, value]) => (
+                        <div key={key} className="legend-item">
+                            <Tag
+                                style={{
+                                    color: value.color,
+                                    backgroundColor: value.background,
+                                    border: `1px solid ${value.color}`
+                                }}
+                            >
+                                {key}
+                            </Tag>
+                            <span>{value.text}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <Table
+                columns={columns}
+                dataSource={data}
+                loading={isLoadingAttendance || isLoadingEmployees}
+                scroll={{ x: 'max-content' }}
+                pagination={false}
+                className="attendance-table"
+                bordered
+            />
+        </div>
+    );
+};
+
+export default AttendanceList;

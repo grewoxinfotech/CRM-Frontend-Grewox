@@ -56,7 +56,12 @@ import CreditNotes from "../dashboard/module/sales/creditnotes/index.jsx";
 import Calendar from "../dashboard/module/communication/calendar/index.jsx";
 import TaskCalendar from "../dashboard/module/crm/taskcalendar/index.jsx";
 import Leave from "../dashboard/module/hrm/leave/index.jsx";
-const PermissionRoute = ({ children, permissionKey }) => {
+import SubscribedUser from "../superadmin/module/SubscribedUser/index.jsx";
+import Tickets from "../dashboard/module/support/ticket/index.jsx";
+import Proposal from "../dashboard/module/crm/proposal/index.jsx";
+import Tax from "../dashboard/module/settings/tax/index.jsx";
+import Attendance from "../dashboard/module/hrm/Attendance/index.jsx";
+  const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -162,9 +167,13 @@ const routes = createBrowserRouter([
             element: <Role />,
           },
           {
-            path: "meeting",
-            element: <Meeting />,
+            path:"meeting",
+            element:<Meeting/>
           },
+          {
+            path:"attendance",
+            element:<Attendance />
+          }
         ],
       },
       {
@@ -221,6 +230,10 @@ const routes = createBrowserRouter([
             element: <Deal />,
           },
           {
+            path: "proposal",
+            element: <Proposal />,
+          },
+          {
             path: "tasks",
             element: <Task />,
           },
@@ -269,6 +282,15 @@ const routes = createBrowserRouter([
         element: <Users />,
       },
       {
+        path: "support",
+        children: [
+          {
+            path: "ticket",
+            element: <Tickets />,
+          }
+        ]
+      },
+      {
         path: "settings/currencies",
         element: <Currencies />,
       },
@@ -279,6 +301,10 @@ const routes = createBrowserRouter([
       {
         path: "settings/esignature",
         element: <ESignature />,
+      },
+      {
+        path: "settings/tax",
+        element: <Tax />,
       },
       {
         path: "inquiry",
@@ -331,6 +357,10 @@ const routes = createBrowserRouter([
       {
         path: "plans",
         element: <Plans />,
+      },
+      {
+        path: "subscribed-user",
+        element: <SubscribedUser />,
       },
       {
         path: "settings/currencies",

@@ -157,7 +157,6 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
         <Table
             columns={columns}
             dataSource={applications}
-            loading={loading || jobsLoading}
             rowKey="id"
             scroll={{ x: 1500 }}
             pagination={{

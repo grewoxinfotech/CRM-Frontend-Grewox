@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Modal,
     Form,
@@ -9,7 +9,9 @@ import {
     DatePicker,
     Badge,
     Select,
-    message
+    message,
+    Row,
+    Col
 } from 'antd';
 import {
     FiCalendar,
@@ -18,26 +20,29 @@ import {
     FiTag
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import { useCreateTaskCalendarEventMutation } from './services/taskCalender';
 
 const { Text } = Typography;
 const { Option } = Select;
+const { TextArea } = Input;
 
-// Task priority options with colors
-const priorityOptions = [
-    { value: 'high', label: 'High Priority', color: '#ff4d4f' },
-    { value: 'medium', label: 'Medium Priority', color: '#faad14' },
-    { value: 'low', label: 'Low Priority', color: '#52c41a' },
-    { value: 'normal', label: 'Normal', color: '#1890ff' }
+// Task type options with colors
+const taskTypeOptions = [
+    { value: 'task', label: 'Task', color: '#1890ff' },
+    { value: 'meeting', label: 'Meeting', color: '#52c41a' },
+    { value: 'reminder', label: 'Reminder', color: '#faad14' }
 ];
 
-const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
+const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
     const [form] = Form.useForm();
+    const [createTaskCalendarEvent, { isLoading }] = useCreateTaskCalendarEventMutation();
 
     useEffect(() => {
         if (open) {
+            form.resetFields();
             form.setFieldsValue({
                 date: selectedDate ? dayjs(selectedDate) : dayjs(),
-                priority: 'normal',
+                taskType: 'task',
                 color: '#1890ff'
             });
         }
@@ -47,22 +52,32 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
         try {
             const values = await form.validateFields();
             
+            const formattedDate = selectedDate ? 
+                dayjs(selectedDate).format('YYYY-MM-DD') : 
+                dayjs().format('YYYY-MM-DD');
+                
             // Create task data
             const taskData = {
-                title: values.title.trim(),
-                startDate: selectedDate ? dayjs(selectedDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-                start_time: values.start_time.format('HH:mm'),
-                end_time: values.end_time.format('HH:mm'),
-                priority: values.priority || 'normal',
-                color: values.color || '#1890ff',
-                task_type: 'task' // Default task type
+                taskName: values.taskName.trim(),
+                taskDate: formattedDate,
+                taskTime: values.start_time.format('HH:mm'),
+                taskDescription: values.taskDescription?.trim() || '',
+                taskType: values.taskType || 'task',
+                color: values.color || '#1890ff'
             };
 
-            // Submit task
-            await onSubmit(taskData);
-            message.success('Task created successfully');
-            form.resetFields();
-            onCancel();
+            console.log('Submitting task:', taskData);
+
+            // Submit task using API mutation
+            try {
+                await createTaskCalendarEvent(taskData).unwrap();
+                message.success('Task created successfully');
+                form.resetFields();
+                onCancel();
+            } catch (apiError) {
+                console.error('API Error:', apiError);
+                message.error(apiError?.data?.message || 'Failed to create task');
+            }
 
         } catch (error) {
             console.error('Form validation error:', error);
@@ -195,7 +210,7 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     {/* Task Title Field */}
                     <Form.Item
-                        name="title"
+                        name="taskName"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Task Title</span>}
                         rules={[{ required: true, message: 'Please enter task title' }]}
                         style={{ gridColumn: 'span 2' }}
@@ -212,16 +227,14 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                         />
                     </Form.Item>
 
-                    
-
-                    {/* Priority Field */}
+                    {/* Task Type Field */}
                     <Form.Item
-                        name="priority"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Priority</span>}
-                        rules={[{ required: true, message: 'Please select a priority' }]}
+                        name="taskType"
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Task Type</span>}
+                        rules={[{ required: true, message: 'Please select a task type' }]}
                     >
                         <Select
-                            placeholder="Select priority"
+                            placeholder="Select task type"
                             size="large"
                             style={{
                                 width: '100%',
@@ -230,13 +243,13 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                                 backgroundColor: '#f8fafc',
                             }}
                             onChange={(value) => {
-                                const selectedOption = priorityOptions.find(option => option.value === value);
+                                const selectedOption = taskTypeOptions.find(option => option.value === value);
                                 if (selectedOption) {
                                     form.setFieldsValue({ color: selectedOption.color });
                                 }
                             }}
                         >
-                            {priorityOptions.map(option => (
+                            {taskTypeOptions.map(option => (
                                 <Option key={option.value} value={option.value}>
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
                                         <Badge color={option.color} />
@@ -250,8 +263,8 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                     {/* Start Time Field */}
                     <Form.Item
                         name="start_time"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
-                        rules={[{ required: true, message: 'Please select start time' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Task Time</span>}
+                        rules={[{ required: true, message: 'Please select task time' }]}
                     >
                         <TimePicker
                             size="large"
@@ -267,23 +280,21 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                         />
                     </Form.Item>
 
-                    {/* End Time Field */}
                     <Form.Item
-                        name="end_time"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time</span>}
-                        rules={[{ required: true, message: 'Please select end time' }]}
+                        name="taskDescription"
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Task Description</span>}
+                        rules={[{ required: true, message: 'Please enter task description' }]}
+                        style={{ gridColumn: 'span 2' }}
                     >
-                        <TimePicker
+                        <TextArea
+                            placeholder="Enter task description"
                             size="large"
+                            rows={4}
                             style={{
                                 width: '100%',
-                                height: '48px',
                                 borderRadius: '10px',
                                 backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
                             }}
-                            format="HH:mm"
-                            minuteStep={15}
                         />
                     </Form.Item>
                     
@@ -314,6 +325,7 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                             height: '48px',
                             border: '1px solid #e6e8eb',
                         }}
+                        disabled={isLoading}
                     >
                         Cancel
                     </Button>
@@ -321,6 +333,7 @@ const CreateTaskCalendar = ({ open, onCancel, onSubmit, selectedDate }) => {
                         type="primary"
                         htmlType="submit"
                         size="large"
+                        loading={isLoading}
                         style={{
                             borderRadius: '8px',
                             padding: '8px 24px',

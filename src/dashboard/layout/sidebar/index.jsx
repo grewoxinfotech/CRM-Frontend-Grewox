@@ -39,6 +39,7 @@ import {
   FiBookOpen,
   FiPackage,
   FiGlobe,
+  FiPercent,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
@@ -420,6 +421,11 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
           title: 'Currencies',
           icon: <FiCreditCard />,
           path: '/superadmin/settings/currencies'
+        },
+        {
+          title: 'Tax',
+          icon: <FiPercent />,
+          path: '/dashboard/settings/tax'
         },
         {
           title: 'ESignature',
