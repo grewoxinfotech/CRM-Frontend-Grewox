@@ -14,15 +14,14 @@
         margin-bottom: 24px;
         background: #fff;
         padding: 24px;
-        border-radius: 8px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
         .header-left {
             h2 {
                 margin-bottom: 4px;
                 font-size: 24px;
                 font-weight: 600;
-                color: #1f2937;
             }
 
             .subtitle {
@@ -34,128 +33,36 @@
 
         .header-right {
             display: flex;
-            align-items: center;
             gap: 12px;
 
-            .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
-
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
-
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
-                    }
-
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
-
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
-                        }
-                    }
-
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                    }
-                }
-            }
-
-            .view-buttons {
-                display: flex;
-                align-items: center;
-                flex-shrink: 0;
-
-                .view-toggle {
-                    display: flex;
-                    align-items: center;
-
-                    .ant-btn {
-                        height: 36px;
-                        width: 36px;
-                        padding: 0;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        transition: all 0.2s ease;
-                        border: 1px solid #d9d9d9;
-                        background: #fff;
-
-                        &:first-child {
-                            border-radius: 8px 0 0 8px;
-                        }
-
-                        &:last-child {
-                            border-radius: 0 8px 8px 0;
-                        }
-
-                        svg {
-                            font-size: 14px;
-                            color: #595959;
-                        }
-
-                        &.ant-btn-primary {
-                            background: #1890ff;
-                            border-color: #1890ff;
-
-                            svg {
-                                color: #fff;
-                            }
-
-                            &:hover {
-                                background: #40a9ff;
-                                border-color: #40a9ff;
-                            }
-                        }
-
-                        &:hover {
-                            border-color: #40a9ff;
-                            color: #40a9ff;
-                        }
-
-                        &:hover {
-                            transform: translateY(-2px);
-                        }
-                    }
-                }
-
-            }
-
             .ant-btn {
-                height: 36px;
-                padding: 0 16px;
+                height: 40px;
+                padding: 0 20px;
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                border-radius: 8px;
 
-                &.ant-btn-primary {
-                    background: #1890ff;
+                &[type="primary"] {
+                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                    border: none;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                    }
                 }
             }
         }
     }
 
     .lead-content {
-        background: #ffffff;
-        border-radius: 8px;
-        border: none;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        .kanban-board {
+            min-height: calc(100vh - 300px);
+        }
     }
 
     .lead-table-card {
@@ -171,7 +78,8 @@
         padding: 24px;
 
         .lead-card {
-            border-radius: 12px;
+            background: #fff;
+            border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
 
@@ -182,49 +90,26 @@
 
             .lead-card-header {
                 display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 20px;
-
-                .lead-main-info {
-                    display: flex;
-                    gap: 16px;
-                    align-items: center;
-                }
-
-                .lead-avatar {
-                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-                }
+                gap: 12px;
+                margin-bottom: 16px;
 
                 .lead-info {
-                    h3 {
-                        margin: 0 0 8px;
-                        font-size: 16px;
-                        font-weight: 600;
+                    flex: 1;
+
+                    .ant-typography {
+                        display: block;
+
+                        &:last-child {
+                            font-size: 13px;
+                        }
                     }
                 }
             }
 
-            .lead-details {
-                .detail-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    margin-bottom: 12px;
-
-                    &:last-child {
-                        margin-bottom: 0;
-                    }
-
-                    .detail-icon {
-                        color: #1890ff;
-                    }
-
-                    .detail-text {
-                        color: #595959;
-                        font-size: 14px;
-                    }
-                }
+            .lead-card-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
             }
         }
     }
@@ -247,11 +132,6 @@
                 flex-direction: column;
                 width: 100%;
 
-                .search-input {
-                    width: 100%;
-                }
-
-                .view-buttons,
                 .ant-btn {
                     width: 100%;
                 }
@@ -348,8 +228,6 @@
             box-shadow: none;
         }
     }
-
-
 
     &:focus-within {
         border-color: #1890ff;
@@ -624,7 +502,6 @@
     .value-input-group,
     .phone-input-group {
         .ant-select {
-
             .ant-select-selector {
                 padding: 0 28px 0 12px !important;
                 justify-content: center !important;
@@ -689,8 +566,6 @@
                 height: 36px;
                 border-radius: 6px;
                 border: 1px solid #e5e7eb;
-
-
             }
         }
     }
