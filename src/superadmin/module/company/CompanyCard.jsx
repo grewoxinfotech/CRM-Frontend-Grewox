@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Dropdown, Avatar, Typography, Modal, Descriptions } from 'antd';
+import { Card, Button, Dropdown, Avatar, Typography, Modal, Descriptions, message } from 'antd';
 import {
     FiEye,
     FiEdit2,
@@ -12,16 +12,21 @@ import {
     FiXCircle,
     FiMapPin,
     FiBriefcase,
-    FiX
+    FiX,
+    FiLogIn
 } from 'react-icons/fi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
+import { useAdminLoginMutation } from '../../../auth/services/authApi';
+import { useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 
 const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [detailsModalVisible, setDetailsModalVisible] = useState(false);
+    const [adminLogin] = useAdminLoginMutation();
+    const navigate = useNavigate();
 
     const handleEdit = () => {
         setEditModalVisible(true);
@@ -29,6 +34,23 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
 
     const handleEditCancel = () => {
         setEditModalVisible(false);
+    };
+
+    const handleAdminLogin = async () => {
+        try {
+            const response = await adminLogin({
+                email: company.email,
+                isClientPage: true
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Logged in as company successfully');
+                // Force reload to update the app state with new user
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to login as company');
+        }
     };
 
     // Menu items for the dropdown
@@ -44,6 +66,12 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
             icon: <FiEdit2 />,
             label: 'Edit Company',
             onClick: handleEdit
+        },
+        {
+            key: 'login',
+            icon: <FiLogIn />,
+            label: 'Login as Company',
+            onClick: handleAdminLogin
         },
         {
             type: 'divider'
@@ -99,7 +127,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                 }}
             >
                 <div style={{
-                    background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                    background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
                     padding: '20px',
                     position: 'relative',
                     overflow: 'hidden',
@@ -270,15 +298,15 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <Button
                             type="primary"
-                            icon={<FiEye style={{ fontSize: '16px' }} />}
-                            onClick={() => setDetailsModalVisible(true)}
+                            icon={<FiLogIn style={{ fontSize: '16px' }} />}
+                            onClick={handleAdminLogin}
                             style={{
                                 flex: 1,
                                 height: '38px',
                                 borderRadius: '10px',
-                                background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                                background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
                                 border: 'none',
-                                boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
+                                boxShadow: '0 4px 6px -1px rgba(24, 144, 255, 0.3)',
                                 fontSize: '14px',
                                 fontWeight: '500',
                                 display: 'flex',
@@ -289,41 +317,41 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                             }}
                             onMouseEnter={(e) => {
                                 e.currentTarget.style.transform = 'translateY(-1px)';
-                                e.currentTarget.style.boxShadow = '0 4px 12px -1px rgba(59, 130, 246, 0.4)';
+                                e.currentTarget.style.boxShadow = '0 4px 12px -1px rgba(24, 144, 255, 0.4)';
                             }}
                             onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
+                                e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(24, 144, 255, 0.3)';
                             }}
                         >
-                            View Details
+                            Login as Company
                         </Button>
                         <Button
-                            onClick={() => onEdit(company)}
-                            icon={<FiEdit2 style={{ fontSize: '16px' }} />}
+                            icon={<FiEye style={{ fontSize: '16px' }} />}
+                            onClick={() => setDetailsModalVisible(true)}
                             style={{
                                 height: '38px',
-                                width: '38px',
                                 borderRadius: '10px',
                                 border: '1px solid #E5E7EB',
-                                background: '#FFFFFF',
+                                fontSize: '14px',
+                                fontWeight: '500',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: 0,
+                                gap: '6px',
                                 transition: 'all 0.2s ease'
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.borderColor = '#3B82F6';
-                                e.currentTarget.style.color = '#3B82F6';
                                 e.currentTarget.style.transform = 'translateY(-1px)';
+                                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.borderColor = '#E5E7EB';
-                                e.currentTarget.style.color = 'rgba(0, 0, 0, 0.88)';
                                 e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = 'none';
                             }}
-                        />
+                        >
+                            Details
+                        </Button>
                     </div>
                 </div>
             </Card>

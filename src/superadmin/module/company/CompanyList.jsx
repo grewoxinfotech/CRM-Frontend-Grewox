@@ -1,14 +1,34 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Modal, Avatar } from 'antd';
-import { FiEye, FiEdit2, FiTrash2, FiMoreVertical, FiUser } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Modal, Avatar, message } from 'antd';
+import { FiEye, FiEdit2, FiTrash2, FiMoreVertical, FiUser, FiLogIn } from 'react-icons/fi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
+import { useAdminLoginMutation } from '../../../auth/services/authApi';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [adminLogin] = useAdminLoginMutation();
+
+    const handleAdminLogin = async (company) => {
+        try {
+            const response = await adminLogin({
+                email: company.email,
+                isClientPage: true
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Logged in as company successfully');
+                // Force reload to update the app state with new user
+                window.location.href = '/dashboard';
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to login as company');
+        }
+    };
+
     const getInitials = (username) => {
         return username
             ? username.split(' ')
@@ -31,6 +51,12 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
                 icon: <FiEdit2 />,
                 label: 'Edit Company',
                 onClick: () => onEdit(record),
+            },
+            {
+                key: 'login',
+                icon: <FiLogIn />,
+                label: 'Login as Company',
+                onClick: () => handleAdminLogin(record),
             },
             {
                 key: 'delete',
@@ -118,25 +144,48 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         {
             title: 'Actions',
             key: 'actions',
-            align: 'center',
+            width: 200,
             render: (_, record) => (
-                <Dropdown
-                    menu={getDropdownItems(record)}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayClassName="plan-actions-dropdown"
-                >
+                <div style={{ display: 'flex', gap: '8px' }}>
                     <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                        onClick={(e) => e.preventDefault()}
-                    />
-                </Dropdown>
+                        type="primary"
+                        icon={<FiLogIn />}
+                        onClick={() => handleAdminLogin(record)}
+                        style={{
+                            background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
+                            border: 'none',
+                            height: '32px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '0 12px',
+                            borderRadius: '6px',
+                            fontSize: '13px'
+                        }}
+                    >
+                        Login
+                    </Button>
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button
+                            icon={<FiMoreVertical />}
+                            style={{
+                                border: '1px solid #E5E7EB',
+                                width: '32px',
+                                height: '32px',
+                                padding: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        />
+                    </Dropdown>
+                </div>
             ),
-            width: '80px',
-            fixed: 'right'
-        },
+        }
     ];
 
     return (
