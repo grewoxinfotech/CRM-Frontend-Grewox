@@ -47,7 +47,7 @@
                     height: 40px;
                     padding: 4px 16px;
                     transition: all 0.3s ease;
-                    border: 1px solid #e5e7eb;
+
                     width: 100%;
 
                     .anticon {
@@ -133,6 +133,7 @@
     }
 
     .deal-content {
+        background: #ffffff;
         border-radius: 8px;
         border: none;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
@@ -173,94 +174,418 @@
         border-radius: 12px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
+        overflow: hidden;
 
         &:hover {
             transform: translateY(-4px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .deal-card-header {
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 16px;
 
-            .deal-main-info {
-                display: flex;
-                gap: 16px;
-                align-items: center;
-
-                .deal-avatar {
-                    flex-shrink: 0;
-                }
-
-                .deal-info {
-                    h3 {
-                        margin: 0 0 8px;
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #1f2937;
-                    }
-                }
+            h3 {
+                margin: 0 0 4px;
+                font-size: 16px;
+                font-weight: 600;
+                color: #1f2937;
             }
         }
 
-        .deal-details {
-            margin-top: 16px;
+        .card-content {
+            padding: 4px;
+        }
 
-            .detail-item {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 8px;
+        .ant-tag {
+            margin-right: 0;
+            border-radius: 4px;
+            font-size: 12px;
+            padding: 0 8px;
+            line-height: 20px;
+            height: 22px;
+        }
 
-                &:last-child {
-                    margin-bottom: 0;
-                }
+        .ant-progress-bg {
+            height: 4px !important;
+        }
+    }
+}
 
-                .detail-icon {
-                    color: #1890ff;
-                }
+// Add these new styles
+.combined-input-item {
+  .value-input-group,
+  .phone-input-group {
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+    border: 1px solid #e6e8eb;
+    background-color: #f8fafc;
+    height: 48px;
+    overflow: hidden;
 
-                .detail-text {
-                    color: #595959;
-                    font-size: 14px;
-                }
+    .ant-select {
+      .ant-select-selector {
+        height: 48px !important;
+        padding: 0 16px !important;
+        border: none !important;
+        border-right: 1px solid #e6e8eb !important;
+        border-radius: 10px 0 0 10px !important;
+        display: flex;
+        align-items: center;
+
+        .ant-select-selection-item {
+          line-height: normal;
+          display: flex;
+          align-items: center;
+        }
+      }
+    }
+
+    .ant-input {
+      height: 48px !important;
+      border: none !important;
+      background-color: transparent !important;
+      padding: 0 16px !important;
+
+      &:focus {
+        box-shadow: none;
+      }
+    }
+
+    &:hover {
+      border-color: #1890ff;
+    }
+
+    &:focus-within {
+      border-color: #1890ff;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+  }
+}
+
+// Currency select specific styles
+.currency-select {
+  .ant-select-selector {
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+    color: white !important;
+
+    .ant-select-selection-item {
+      color: white;
+      font-weight: 500;
+    }
+  }
+}
+
+// Dropdown styles
+.ant-select-dropdown {
+  padding: 4px;
+
+  .currency-option,
+  .phone-code-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 8px;
+
+    .currency-icon,
+    .phone-code {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .currency-details,
+    .phone-code-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .currency-name,
+    .country-name {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .country-code {
+      font-size: 12px;
+      padding: 2px 4px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      color: #6b7280;
+    }
+  }
+
+  .ant-select-item {
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin: 2px 0;
+
+    &-option-selected {
+      background-color: #e6f4ff !important;
+      font-weight: 500;
+    }
+
+    &-option-active {
+      background-color: #f0f7ff !important;
+    }
+  }
+}
+
+// Add these new styles for team members
+.team-member-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+
+  .member-name {
+    font-weight: 500;
+    color: #1f2937;
+  }
+
+  .member-role {
+    font-size: 12px;
+    color: #6b7280;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: capitalize;
+  }
+}
+
+// Update select styles for team members
+.ant-select-multiple {
+  .ant-select-selector {
+    min-height: 48px !important;
+    padding: 4px 8px !important;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+
+    .ant-select-selection-item {
+      background: #e6f4ff;
+      border: 1px solid #91caff;
+      border-radius: 6px;
+      color: #1890ff;
+      margin: 0;
+      height: 28px;
+      line-height: 26px;
+      padding: 0 8px;
+
+      .ant-select-selection-item-remove {
+        color: #1890ff;
+        margin-left: 6px;
+
+        &:hover {
+          color: #40a9ff;
+        }
+      }
+    }
+
+    .ant-select-selection-search {
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  &.ant-select-focused {
+    .ant-select-selector {
+      border-color: #1890ff !important;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
+  }
+}
+
+// Update dropdown styles for team members
+.ant-select-dropdown {
+  .ant-select-item-option {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px 0;
+
+    &-selected {
+      background-color: #e6f4ff !important;
+      font-weight: 500;
+    }
+
+    &-active {
+      background-color: #f0f7ff !important;
+    }
+  }
+}
+
+// Add styles for pipeline dropdown
+.custom-select-dropdown {
+  padding: 4px;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px rgba(0, 0, 0, 0.05);
+  
+  .ant-select-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 2px 0;
+    transition: all 0.2s ease;
+    
+    &-option-selected {
+      background-color: #e6f4ff !important;
+      font-weight: 500;
+    }
+    
+    &-option-active {
+      background-color: #f0f7ff !important;
+    }
+  }
+  
+  .ant-btn {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+    }
+  }
+}
+
+// Kanban board styles
+.kanban-board {
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    overflow-x: auto;
+    min-height: calc(100vh - 300px);
+
+    .kanban-column {
+        min-width: 320px;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 16px;
+
+        .kanban-column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 0 8px;
+
+            .ant-tag {
+                background: #e6f4ff;
+                color: #1890ff;
+                border: none;
+                border-radius: 12px;
+                padding: 2px 12px;
             }
         }
 
-        .deal-footer {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #f0f0f0;
+        .kanban-column-content {
+            min-height: 100px;
 
-            .probability {
-                margin-bottom: 8px;
+            .deal-card {
+                margin-bottom: 12px;
+                border-radius: 8px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                cursor: grab;
 
-                span {
-                    display: block;
-                    font-size: 12px;
-                    color: #6b7280;
-                    margin-bottom: 4px;
+                &:hover {
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                 }
 
-                .progress-bar {
-                    height: 4px;
-                    background: #f0f0f0;
-                    border-radius: 2px;
-                    overflow: hidden;
+                .card-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 12px;
 
-                    .progress {
-                        height: 100%;
-                        background: #1890ff;
-                        transition: width 0.3s ease;
+                    .title-section {
+                        flex: 1;
+                        
+                        .deal-title {
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: #1f2937;
+                            margin-bottom: 8px;
+                            display: block;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            max-width: 200px;
+                        }
+
+                        .tags-wrapper {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 8px;
+                            margin-top: 8px;
+
+                            .value-tag {
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                font-weight: 500;
+                                border-radius: 4px;
+                                
+                                .dot-indicator {
+                                    width: 6px;
+                                    height: 6px;
+                                    border-radius: 50%;
+                                    background-color: #1890ff;
+                                }
+                            }
+                        }
+                    }
+
+                    .action-button {
+                        padding: 4px;
+                        height: 28px;
+                        width: 28px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: none;
+                        background: transparent;
+                        
+                        &:hover {
+                            background-color: #f0f7ff;
+                        }
                     }
                 }
-            }
 
-            .created-at {
-                font-size: 12px;
-                color: #6b7280;
+                .metrics-grid {
+                    display: grid;
+                    grid-template-columns: 1fr auto 1fr;
+                    gap: 8px;
+                    margin-top: 12px;
+                    
+                    .metric-item {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+                        
+                        .metric-label {
+                            font-size: 12px;
+                            color: #6b7280;
+                        }
+                        
+                        .metric-value {
+                            font-size: 14px;
+                            font-weight: 500;
+                            color: #1f2937;
+                            
+                            &.truncate {
+                                white-space: nowrap;
+                                overflow: hidden;
+                                text-overflow: ellipsis;
+                                max-width: 120px;
+                            }
+                        }
+                    }
+                    
+                    .divider {
+                        width: 1px;
+                        background-color: #e5e7eb;
+                    }
+                }
             }
         }
     }

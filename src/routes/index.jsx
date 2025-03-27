@@ -61,6 +61,7 @@ import Tickets from "../dashboard/module/support/ticket/index.jsx";
 import Proposal from "../dashboard/module/crm/proposal/index.jsx";
 import Tax from "../dashboard/module/settings/tax/index.jsx";
 import Attendance from "../dashboard/module/hrm/Attendance/index.jsx";
+import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
   const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
@@ -227,7 +228,16 @@ const routes = createBrowserRouter([
           },
           {
             path: "deals",
-            element: <Deal />,
+            children: [
+              {
+                path: "",
+                element: <Deal />,
+              },
+              {
+                path: ":dealId",
+                element: <DealDetail />,
+              }
+            ]
           },
           {
             path: "proposal",

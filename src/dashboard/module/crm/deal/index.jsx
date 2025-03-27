@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Input,
-    Dropdown, Menu, Space, Breadcrumb
+    Dropdown, Menu, Space, Breadcrumb, Modal
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -14,6 +14,8 @@ import CreateDeal from './CreateDeal';
 import DealCard from './DealCard';
 import DealList from './DealList';
 import EditDeal from './EditDeal';
+import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
+import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 
 const { Title, Text } = Typography;
 
@@ -21,8 +23,12 @@ const Deal = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedDeal, setSelectedDeal] = useState(null);
-    const [viewMode, setViewMode] = useState('table');
+    const [viewMode, setViewMode] = useState('card');
     const [searchText, setSearchText] = useState('');
+
+    // Fetch pipelines and deal stages
+    const { data: pipelines = [] } = useGetPipelinesQuery();
+    const { data: dealStages = [] } = useGetLeadStagesQuery();
 
     const handleCreate = () => {
         setSelectedDeal(null);
@@ -140,6 +146,8 @@ const Deal = () => {
             <CreateDeal
                 open={isModalOpen}
                 onCancel={() => setIsModalOpen(false)}
+                pipelines={pipelines}
+                dealStages={dealStages}
             />
 
             <EditDeal
@@ -149,6 +157,8 @@ const Deal = () => {
                     setSelectedDeal(null);
                 }}
                 initialValues={selectedDeal}
+                pipelines={pipelines}
+                dealStages={dealStages}
             />
         </div>
     );
