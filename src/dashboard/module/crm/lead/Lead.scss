@@ -31,25 +31,181 @@
             }
         }
 
-        .header-right {
+        .header-actions-wrapper {
             display: flex;
-            gap: 12px;
+            justify-content: flex-end;
+            flex: 1;
+            margin: 0;
 
-            .ant-btn {
-                height: 40px;
-                padding: 0 20px;
+            .header-actions {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                border-radius: 8px;
+                justify-content: flex-end;
+                gap: 16px;
+                width: 100%;
+                max-width: 800px;
 
-                &[type="primary"] {
-                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-                    border: none;
+                .search-input {
+                    flex: 1;
+                    max-width: 360px;
+                    min-width: 200px;
 
-                    &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                    .ant-input-affix-wrapper {
+                        border-radius: 40px;
+                        height: 40px;
+                        padding: 4px 16px;
+                        transition: all 0.3s ease;
+                        border: 1px solid $border-color;
+                        width: 100%;
+
+                        .anticon {
+                            color: $text-color-light;
+                            margin-right: 8px;
+                            font-size: 16px;
+                        }
+
+                        .ant-input {
+                            font-size: 14px;
+                            background: transparent;
+                            border: none;
+                            padding: 0;
+                            margin: 0 4px;
+
+                            &::placeholder {
+                                color: rgba($text-color, 0.45);
+                            }
+                        }
+
+                        &:hover,
+                        &:focus,
+                        &-focused {
+                            border-color: #1677ff;
+                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                        }
                     }
+                }
+
+                .action-buttons {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex-shrink: 0;
+
+                    .export-button,
+                    .add-button {
+                        height: 40px;
+                        padding: 0 20px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+
+                        svg {
+                            font-size: 16px;
+                        }
+                    }
+
+                    .export-button {
+                        border: 1px solid $border-color;
+                        background: white;
+
+                        &:hover {
+                            color: #1677ff;
+                            border-color: #1677ff;
+                            transform: translateY(-2px);
+                        }
+                    }
+
+                    .add-button {
+                        background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                        border: none;
+                        color: white;
+
+                        &:hover {
+                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                            transform: translateY(-2px);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: none;
+            border-radius: 50%;
+            color: $text-color;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+
+            &:hover,
+            &.active {
+                background: rgba($primary-color, 0.05);
+                color: $primary-color;
+            }
+
+            svg {
+                font-size: 1.25rem;
+            }
+        }
+
+        // Badge styles
+        .ant-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .ant-badge-count {
+                position: absolute;
+                top: 0;
+                right: 0;
+                transform: translate(25%, -25%);
+                background: $error-color;
+                box-shadow: 0 0 0 2px white;
+                font-size: 0.75rem;
+                padding: 0 4px;
+                min-width: 18px;
+                height: 18px;
+                line-height: 18px;
+                border-radius: 9px;
+            }
+        }
+
+        // User avatar styles
+        .user-avatar {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .ant-avatar {
+                background: $primary-color;
+                color: white;
+                font-weight: 500;
+                border: 2px solid transparent;
+                transition: all 0.2s ease;
+                width: 40px;
+                height: 40px;
+                line-height: 36px;
+                font-size: 1rem;
+
+                &:hover {
+                    border-color: rgba($primary-color, 0.2);
                 }
             }
         }

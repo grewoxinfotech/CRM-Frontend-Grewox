@@ -17,6 +17,10 @@ import {
     FiClock,
     FiPaperclip,
     FiInfo,
+    FiFolder,
+    FiTrendingUp,
+    FiTrendingDown,
+    FiMinusCircle,
 } from 'react-icons/fi';
 import { useGetLeadQuery } from '../services/LeadApi';
 import LeadActivity from './activity';
@@ -27,97 +31,252 @@ import './LeadOverview.scss';
 import {
     useGetSourcesQuery,
     useGetStatusesQuery,
-} from '../../../crm/crmsystem/souce/services/SourceApi';
-import { useGetLeadStagesQuery } from '../../../crm/crmsystem/leadstage/services/leadStageApi';
+    useGetCategoriesQuery,
+} from '../../crmsystem/souce/services/SourceApi';
+import { useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadStageApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 
 const { Title, Text } = Typography;
 
 const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => {
+    const loggedInUser = useSelector(selectCurrentUser);
+
+    // Fetch data from APIs
+    const { data: stagesData } = useGetLeadStagesQuery();
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+    const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+
+    // Filter stages to only show lead type stages
+    const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
+    const sources = sourcesData?.data || [];
+    const statuses = statusesData?.data || [];
+    const categories = categoriesData?.data || [];
+
+    // Helper functions to get names and colors
+    const getStageInfo = (stageId) => {
+        const stage = stages.find(s => s.id === stageId);
+        return {
+            name: stage?.stageName || '-',
+            color: stage?.color || '#1890ff'
+        };
+    };
+
+    const getSourceInfo = (sourceId) => {
+        const source = sources.find(s => s.id === sourceId);
+        return {
+            name: source?.name || '-',
+            color: source?.color || '#1890ff'
+        };
+    };
+
+    const getStatusInfo = (statusId) => {
+        const status = statuses.find(s => s.id === statusId);
+        return {
+            name: status?.name || '-',
+            color: status?.color || '#1890ff'
+        };
+    };
+
+    const getCategoryInfo = (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return {
+            name: category?.name || '-',
+            color: category?.color || '#1890ff'
+        };
+    };
+
     const interestLevel = getInterestLevel(leadData?.interest_level);
 
     return (
-        <Card className="overview-card">
-            <Descriptions title="Lead Information" bordered column={2}>
-                <Descriptions.Item label="Contact Person">
-                    <Space>
-                        <FiUser className="icon" />
-                        {leadData?.contact_person || '-'}
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Email">
-                    <Space>
-                        <FiMail className="icon" />
-                        <a href={`mailto:${leadData?.email}`}>{leadData?.email || '-'}</a>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Phone">
-                    <Space>
-                        <FiPhone className="icon" />
-                        <a href={`tel:${leadData?.phone}`}>{leadData?.phone || '-'}</a>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Company">
-                    <Space>
-                        <FiMapPin className="icon" />
-                        {leadData?.company_name || '-'}
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Lead Value">
-                    <Space>
-                        <FiDollarSign className="icon" />
-                        <span className="currency-value">
-                            {leadData?.leadValue ? formatCurrency(leadData.leadValue, leadData.currency) : '-'}
-                        </span>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Source">
-                    <Space>
-                        <FiTarget className="icon" />
-                        <Tag color="blue">{leadData?.source || '-'}</Tag>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Stage">
-                    <Space>
-                        <FiTarget className="icon" />
-                        <Tag color="purple">{leadData?.stage || '-'}</Tag>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Interest Level">
-                    <Space>
-                        <div
-                            className={`interest-level ${leadData?.interest_level || 'medium'}`}
-                            style={{
-                                backgroundColor: interestLevel.bg,
-                                color: interestLevel.color
-                            }}
-                        >
-                            {interestLevel.text}
+        <div className="overview-content">
+            <Card className="info-card contact-card">
+                <div className="profile-header">
+                    <div className="profile-main">
+                        <div className="company-avatar">
+                            {leadData?.company_name ? leadData.company_name[0].toUpperCase() : 'C'}
                         </div>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Created Date" span={2}>
-                    <Space>
-                        <FiCalendar className="icon" />
-                        <span className="date-value">
-                            {leadData?.created_at ? new Date(leadData.created_at).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            }) : '-'}
-                        </span>
-                    </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Description" span={2}>
-                    <div className="description-value">
-                        {leadData?.description || '-'}
+                        <div className="profile-info">
+                            <h2 className="company-name">{leadData?.company_name || 'Company Name'}</h2>
+                            <div className="contact-name">
+                                <FiUser className="icon" />
+                                {leadData?.firstName} {leadData?.lastName}
+                            </div>
+                        </div>
                     </div>
-                </Descriptions.Item>
-            </Descriptions>
-        </Card>
+                </div>
+                <div className="profile-stats">
+                    <div className="stat-item">
+                        <div className="stat-icon">
+                            <FiMail />
+                        </div>
+                        <div className="stat-content">
+                            <div className="stat-label">Email Address</div>
+                            <a href={`mailto:${leadData?.email}`} className="stat-value">
+                                {leadData?.email || '-'}
+                            </a>
+                        </div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-icon">
+                            <FiPhone />
+                        </div>
+                        <div className="stat-content">
+                            <div className="stat-label">Phone Number</div>
+                            <a href={`tel:${leadData?.telephone}`} className="stat-value">
+                                {leadData?.telephone || '-'}
+                            </a>
+                        </div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-icon">
+                            <FiMapPin />
+                        </div>
+                        <div className="stat-content">
+                            <div className="stat-label">Location</div>
+                            <div className="stat-value">{leadData?.address || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+            {/* Key Metrics Cards */}
+            <Row gutter={[16, 16]} className="metrics-row">
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card lead-value-card">
+                        <div className="metric-icon">
+                            <FiDollarSign />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Lead Value</div>
+                            <div className="metric-value">
+                                {leadData?.leadValue ? formatCurrency(leadData.leadValue, leadData.currency) : '-'}
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                    <Card className={`metric-card interest-level-card ${leadData?.interest_level || 'medium'}`}>
+                        <div className={`metric-icon ${leadData?.interest_level || 'medium'}`}>
+                            <FiTarget />
+                        </div>
+                        <div className="metric-content">
+                            <div className={`metric-label ${leadData?.interest_level || 'medium'}`}>Interest Level</div>
+                            <div className="metric-value">
+                                {leadData?.interest_level === 'high' ? (
+                                    <span className="interest-text high">
+                                        <FiTrendingUp className="icon" /> High Interest
+                                    </span>
+                                ) : leadData?.interest_level === 'low' ? (
+                                    <span className="interest-text low">
+                                        <FiTrendingDown className="icon" /> Low Interest
+                                    </span>
+                                ) : (
+                                    <span className="interest-text medium">
+                                        <FiMinusCircle className="icon" /> Medium Interest
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card created-date-card">
+                        <div className="metric-icon">
+                            <FiCalendar className='icon' />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Created</div>
+                            <div className="metric-value">
+                                {leadData?.createdAt ? new Date(leadData.createdAt).toLocaleDateString() : '-'}
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card members-card">
+                        <div className="metric-icon">
+                            <FiUsers />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Lead Members</div>
+                            <div className="metric-value">
+                                {leadData?.lead_members ? JSON.parse(leadData.lead_members).lead_members.length : '0'}
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+            </Row>
+
+            {/* Lead Details Section */}
+            <div className="lead-details-section">
+                <Row gutter={[24, 24]}>
+                    {/* Source Card */}
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card source-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiPhone />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Source</div>
+                                    <div className="detail-value">Phone</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+
+                    {/* Stage Card */}
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card stage-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiActivity />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Stage</div>
+                                    <div className="detail-value">Qualified</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+
+                    {/* Category Card */}
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card category-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiFolder />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Category</div>
+                                    <div className="detail-value">Manufacturing</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+
+                    {/* Status Card */}
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card status-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiClock />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Status</div>
+                                    <div className="detail-value">Cancelled</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
+            </div>
+        </div>
     );
 };
 
@@ -177,6 +336,15 @@ const LeadOverview = () => {
             />,
         },
         {
+            key: 'members',
+            label: (
+                <span>
+                    <FiUsers /> Lead Members
+                </span>
+            ),
+            children: <LeadMembers leadId={leadId} />,
+        },
+        {
             key: 'activity',
             label: (
                 <span>
@@ -202,15 +370,6 @@ const LeadOverview = () => {
                 </span>
             ),
             children: <LeadFiles leadId={leadId} />,
-        },
-        {
-            key: 'members',
-            label: (
-                <span>
-                    <FiUsers /> Lead Members
-                </span>
-            ),
-            children: <LeadMembers leadId={leadId} />,
         }
     ];
 
@@ -273,7 +432,7 @@ const LeadOverview = () => {
                 <div className="content-main">
                     <Card loading={isLoading}>
                         <Tabs
-                            defaultActiveKey="activity"
+                            defaultActiveKey="overview"
                             items={items}
                             className="project-tabs"
                             type="card"

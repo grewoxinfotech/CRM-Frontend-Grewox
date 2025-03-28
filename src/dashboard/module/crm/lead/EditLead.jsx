@@ -92,16 +92,6 @@ const EditLead = ({ open, onCancel, initialValues }) => {
         bg: '#FFF7E6',
         border: '#FFD591'
       },
-      'admin': {
-        color: '#096DD9',
-        bg: '#E6F7FF',
-        border: '#91D5FF'
-      },
-      'manager': {
-        color: '#08979C',
-        bg: '#E6FFFB',
-        border: '#87E8DE'
-      },
       'default': {
         color: '#531CAD',
         bg: '#F9F0FF',

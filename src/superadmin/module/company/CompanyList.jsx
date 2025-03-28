@@ -6,14 +6,16 @@ import moment from 'moment';
 import EditCompany from './EditCompany';
 import CreateUpgradePlan from './CreateUpgradePlan';
 import { useAdminLoginMutation } from '../../../auth/services/authApi';
+import { useNavigate } from 'react-router-dom';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
-    
+
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLogin] = useAdminLoginMutation();
+    const navigate = useNavigate();
 
     const handleAdminLogin = async (company) => {
         try {
@@ -24,8 +26,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
 
             if (response.success) {
                 message.success('Logged in as company successfully');
-                // Force reload to update the app state with new user
-                window.location.href = '/dashboard';
+                navigate('/dashboard');
             }
         } catch (error) {
             message.error(error?.data?.message || 'Failed to login as company');
@@ -45,7 +46,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
                 .toUpperCase()
             : 'U';
     };
-    
+
     const getDropdownItems = (record) => ({
         items: [
             {

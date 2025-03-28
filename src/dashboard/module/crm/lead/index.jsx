@@ -9,6 +9,9 @@ import {
   Menu,
   Space,
   Breadcrumb,
+  Tooltip,
+  Row,
+  Col,
 } from "antd";
 import {
   FiPlus,
@@ -96,37 +99,49 @@ const Lead = () => {
           <Title level={2}>Leads</Title>
           <p className="subtitle">Manage all leads in the system</p>
         </div>
-        <div className="header-right">
-          <Input
-            prefix={<FiSearch />}
-            placeholder="Search leads by name, email..."
-            allowClear
-            className="search-input"
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <div className="view-buttons">
-            <div className="view-toggle">
-              <Button
-                type={viewMode === "table" ? "primary" : "default"}
-                icon={<FiList />}
-                onClick={() => setViewMode("table")}
+        <Row justify="center" className="header-actions-wrapper">
+          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
+            <div className="header-actions">
+              <Input
+                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                placeholder="Search leads"
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
               />
-              <Button
-                type={viewMode === "card" ? "primary" : "default"}
-                icon={<FiGrid />}
-                onClick={() => setViewMode("card")}
-              />
+              <div className="action-buttons">
+                <Button.Group className="view-toggle">
+                  <Button
+                    type={viewMode === 'table' ? 'primary' : 'default'}
+                    icon={<FiList size={16} />}
+                    onClick={() => setViewMode('table')}
+                  />
+                  <Button
+                    type={viewMode === 'card' ? 'primary' : 'default'}
+                    icon={<FiGrid size={16} />}
+                    onClick={() => setViewMode('card')}
+                  />
+                </Button.Group>
+                <Dropdown overlay={exportMenu} trigger={["click"]}>
+                  <Button className="export-button">
+                    <FiDownload size={16} />
+                    <span>Export</span>
+                    <FiChevronDown size={14} />
+                  </Button>
+                </Dropdown>
+                <Button
+                  type="primary"
+                  icon={<FiPlus size={16} />}
+                  onClick={handleCreate}
+                  className="add-button"
+                >
+                  Add Lead
+                </Button>
+              </div>
             </div>
-          </div>
-          <Dropdown overlay={exportMenu} trigger={["click"]}>
-            <Button>
-              <FiDownload /> Export <FiChevronDown />
-            </Button>
-          </Dropdown>
-          <Button type="primary" icon={<FiPlus />} onClick={handleCreate}>
-            Add Lead
-          </Button>
-        </div>
+          </Col>
+        </Row>
       </div>
 
       <Card className="lead-content">
