@@ -28,11 +28,20 @@ export const companyApi = createApi({
                 body: data,
             }),
             invalidatesTags: ['Companies'],
+            
         }),
         deleteCompany: builder.mutation({
             query: (id) => ({
                 url: `/clients/${id}`,
                 method: 'DELETE',
+            }),
+            invalidatesTags: ['Companies'],
+        }),
+        assignPlan: builder.mutation({
+            query: (data) => ({
+                url: `/subscriptions/assign`,
+                method: 'POST',
+                body: data,
             }),
             invalidatesTags: ['Companies'],
         }),
@@ -65,6 +74,7 @@ export const {
     useCreateCompanyMutation,
     useUpdateCompanyMutation,
     useDeleteCompanyMutation,
+    useAssignPlanMutation,
     useVerifySignupMutation,
     useResendSignupOtpMutation, 
 } = companyApi;

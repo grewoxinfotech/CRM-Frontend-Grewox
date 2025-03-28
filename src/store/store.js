@@ -47,6 +47,7 @@ import { taskCalendarApi } from "../dashboard/module/crm/taskcalendar/services/t
 import { proposalApi } from "../dashboard/module/crm/proposal/services/proposalApi.js";
 import { taxApi } from "../dashboard/module/settings/tax/services/taxApi.js";
 import { attendanceApi } from "../dashboard/module/hrm/Attendance/services/attendanceApi";
+import { holidayApi } from "../dashboard/module/hrm/Holiday/services/holidayApi";
 const persistConfig = {
   key: "root",
   storage,
@@ -100,6 +101,7 @@ const rootReducer = combineReducers({
   [proposalApi.reducerPath]: proposalApi.reducer,
   [taxApi.reducerPath]: taxApi.reducer,
   [attendanceApi.reducerPath]: attendanceApi.reducer,
+  [holidayApi.reducerPath]: holidayApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -155,7 +157,8 @@ export const store = configureStore({
       .concat(taskCalendarApi.middleware)
       .concat(proposalApi.middleware)
       .concat(taxApi.middleware)
-      .concat(attendanceApi.middleware),
+      .concat(attendanceApi.middleware)
+      .concat(holidayApi.middleware),
 });
 
 export const persistor = persistStore(store);

@@ -699,3 +699,309 @@ $bg-light: #f8fafc;
         }
     }
 }
+
+// Add these styles to your existing invoice.scss
+.invoice-view-modal {
+    .ant-modal-content {
+        padding: 0;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .invoice-card {
+        background: #fff;
+
+        .ant-card-body {
+            padding: 0;
+        }
+    }
+
+    .invoice-header {
+        background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        padding: 40px;
+        position: relative;
+        color: white;
+
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            
+            &:hover {
+                background: rgba(255, 255, 255, 0.3);
+                transform: rotate(90deg);
+            }
+        }
+
+        .company-info {
+            .company-logo {
+                margin-bottom: 20px;
+                background: rgba(255, 255, 255, 0.1);
+                padding: 12px;
+                border-radius: 12px;
+                display: inline-block;
+            }
+
+            .company-name {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                display: block;
+            }
+
+            .company-website,
+            .company-phone {
+                display: block;
+                color: rgba(255, 255, 255, 0.9);
+                margin-bottom: 4px;
+            }
+        }
+
+        .invoice-title {
+            text-align: right;
+            
+            .invoice-status {
+                display: inline-flex;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.2);
+                padding: 8px 16px;
+                border-radius: 20px;
+                margin-bottom: 20px;
+
+                .status-icon {
+                    margin-right: 8px;
+                }
+            }
+
+            .title-text {
+                font-size: 48px;
+                font-weight: 700;
+                display: block;
+                letter-spacing: 2px;
+                margin-bottom: 8px;
+            }
+
+            .invoice-number {
+                font-size: 20px;
+                opacity: 0.9;
+            }
+        }
+    }
+
+    .invoice-body {
+        padding: 40px;
+
+        .invoice-info {
+            margin-bottom: 40px;
+
+            .info-section {
+                background: #f8fafc;
+                padding: 24px;
+                border-radius: 12px;
+                height: 100%;
+
+                .ant-typography {
+                    display: block;
+                    margin-bottom: 4px;
+                }
+
+                &.bill-to {
+                    .client-name {
+                        font-size: 18px;
+                        font-weight: 600;
+                        margin-bottom: 8px;
+                    }
+                }
+
+                &.invoice-details {
+                    .ant-row {
+                        .ant-col {
+                            margin-bottom: 16px;
+
+                            .ant-typography {
+                                &:first-child {
+                                    color: #64748b;
+                                    margin-bottom: 4px;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        .invoice-items {
+            .ant-table {
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+                .ant-table-thead > tr > th {
+                    background: #f1f5f9;
+                    font-weight: 600;
+                    padding: 16px;
+                }
+
+                .ant-table-tbody > tr > td {
+                    padding: 16px;
+                }
+
+                .ant-table-summary {
+                    .subtotal-row,
+                    .tax-row {
+                        background: #f8fafc;
+                        
+                        .ant-table-cell {
+                            padding: 12px 16px;
+                        }
+                    }
+
+                    .total-row {
+                        // background: #1e293b;
+                        
+                        .ant-table-cell {
+                            padding: 16px;
+                            color: white !important;
+
+                            .total-amount {
+                                font-size: 18px;
+                                color: white;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .invoice-footer {
+        background: #f8fafc;
+        padding: 32px 40px;
+        border-radius: 0 0 16px 16px;
+
+        .terms-section {
+            .ant-typography {
+                display: block;
+                margin-bottom: 8px;
+
+                &.ant-typography-secondary {
+                    color: #64748b;
+                }
+            }
+        }
+
+        .payment-section {
+            .payment-options {
+                display: flex;
+                gap: 12px;
+                margin-top: 16px;
+
+                .payment-method {
+                    flex: 1;
+                    height: 40px;
+                    border-radius: 8px;
+                    border: 1px solid #e2e8f0;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        border-color: #2193b0;
+                        color: #2193b0;
+                    }
+                }
+            }
+        }
+    }
+
+    .invoice-actions {
+        padding: 24px 40px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+
+        .ant-btn {
+            height: 40px;
+            padding: 0 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+
+            &-primary {
+                background: #2193b0;
+                border-color: #2193b0;
+
+                &:hover {
+                    background: #1a7b93;
+                    border-color: #1a7b93;
+                    transform: translateY(-2px);
+                }
+            }
+
+            &:not(.ant-btn-primary) {
+                &:hover {
+                    border-color: #2193b0;
+                    color: #2193b0;
+                    transform: translateY(-2px);
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .invoice-view-modal {
+        .invoice-header {
+            padding: 24px;
+
+            .invoice-title {
+                text-align: left;
+                margin-top: 24px;
+
+                .title-text {
+                    font-size: 36px;
+                }
+            }
+        }
+
+        .invoice-body {
+            padding: 24px;
+        }
+
+        .invoice-footer {
+            padding: 24px;
+
+            .payment-section {
+                margin-top: 24px;
+
+                .payment-options {
+                    flex-direction: column;
+
+                    .payment-method {
+                        width: 100%;
+                    }
+                }
+            }
+        }
+
+        .invoice-actions {
+            padding: 16px 24px;
+            flex-direction: column;
+
+            .ant-btn {
+                width: 100%;
+            }
+        }
+    }
+}

@@ -24,11 +24,14 @@ import {
   FiPlus,
   FiTrash2,
   FiPackage,
+  FiPhone,
+  FiMail,
+  FiLock,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./invoice.scss";
 import { useCreateInvoiceMutation } from "./services/invoiceApi";
-import { useGetCustomersQuery } from "../customer/services/custApi";
+import { useGetCustomersQuery, useCreateCustomerMutation } from "../customer/services/custApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -39,6 +42,10 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
   const [createInvoice, { isLoading }] = useCreateInvoiceMutation();
   const { data: custdata } = useGetCustomersQuery();
   const customers = custdata?.data;
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [customerForm] = Form.useForm();
+  const [createCustomer] = useCreateCustomerMutation();
+
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
@@ -93,6 +100,258 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
       total: totalAmount.toFixed(2),
     });
   };
+
+  const handleCreateCustomer = async (values) => {
+    try {
+      const result = await createCustomer({
+        name: values.name,
+        contact: values.contact,
+      }).unwrap();
+      
+      message.success('Customer created successfully');
+      setIsCustomerModalOpen(false);
+      customerForm.resetFields();
+      
+      // Automatically select the newly created customer
+      form.setFieldValue('customer', result.data.id);
+    } catch (error) {
+      message.error('Failed to create customer: ' + error.message);
+    }
+  };
+
+  const customerSelect = (
+    <Form.Item
+      name="customer"
+      label={
+        <span style={{ fontSize: "14px", fontWeight: "500" }}>
+          <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+          Customer <span style={{ color: "#ff4d4f" }}>*</span>
+        </span>
+      }
+      rules={[{ required: true, message: "Please select customer" }]}
+    >
+      <Select
+        placeholder="Select Customer"
+        showSearch
+        optionFilterProp="children"
+        size="large"
+        style={{
+          width: "100%",
+          borderRadius: "10px",
+        }}
+        dropdownRender={(menu) => (
+          <>
+            {menu}
+            <Divider style={{ margin: '8px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button
+                type="link"
+                icon={<FiPlus />}
+                onClick={() => setIsCustomerModalOpen(true)}
+                style={{ padding: '8px 12px' }}
+              >
+                Add New Customer
+              </Button>
+            </div>
+          </>
+        )}
+      >
+        {customers?.map((customer) => (
+          <Option key={customer.id} value={customer.id}>
+            {customer.name}
+          </Option>
+        ))}
+      </Select>
+    </Form.Item>
+  );
+
+  const customerModal = (
+    <Modal
+      title={null}
+      open={isCustomerModalOpen}
+      onCancel={() => {
+        setIsCustomerModalOpen(false);
+        customerForm.resetFields();
+      }}
+      footer={null}
+      width={500}
+      destroyOnClose={true}
+      centered
+      closeIcon={null}
+      className="pro-modal custom-modal"
+      styles={{
+        body: {
+          padding: 0,
+          borderRadius: "8px",
+          overflow: "hidden",
+        },
+      }}
+    >
+      {/* Modal Header */}
+      <div
+        style={{
+          background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
+          padding: "24px",
+          color: "#ffffff",
+          position: "relative",
+        }}
+      >
+        <Button
+          type="text"
+          onClick={() => {
+            setIsCustomerModalOpen(false);
+            customerForm.resetFields();
+          }}
+          style={{
+            position: "absolute",
+            top: "16px",
+            right: "16px",
+            color: "#ffffff",
+            width: "32px",
+            height: "32px",
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.2)",
+            borderRadius: "8px",
+            border: "none",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+          }}
+        >
+          <FiX style={{ fontSize: "20px" }} />
+        </Button>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <FiUser style={{ fontSize: "24px", color: "#ffffff" }} />
+          </div>
+          <div>
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#ffffff",
+              }}
+            >
+              Create New Customer
+            </h2>
+            <Text
+              style={{
+                fontSize: "14px",
+                color: "rgba(255, 255, 255, 0.85)",
+              }}
+            >
+              Add a new customer to the system
+            </Text>
+          </div>
+        </div>
+      </div>
+
+      {/* Form Content */}
+      <Form
+        form={customerForm}
+        layout="vertical"
+        onFinish={handleCreateCustomer}
+        requiredMark={false}
+        style={{
+          padding: "24px",
+        }}
+      >
+            <Form.Item
+          name="name"
+          label="Customer Name"
+          rules={[{ required: true, message: 'Please enter customer name' }]}
+        >
+          <Input
+            prefix={<FiUser style={{ color: '#1890ff' }} />}
+            placeholder="Enter customer name"
+            size="large"
+            style={{ borderRadius: '8px' }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="contact"
+          label="Phone Number"
+          rules={[
+            { required: true, message: 'Please enter phone number' },
+            { pattern: /^\d{10}$/, message: 'Please enter a valid 10-digit phone number' }
+          ]}
+        >
+          <Input
+            prefix={<FiPhone style={{ color: '#1890ff' }} />}
+            placeholder="Enter phone number"
+            size="large"
+            style={{ borderRadius: '8px' }}
+          />
+        </Form.Item>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "24px",
+          }}
+        >
+          <Button
+            size="large"
+            onClick={() => {
+              setIsCustomerModalOpen(false);
+              customerForm.resetFields();
+            }}
+            style={{
+              padding: "8px 24px",
+              height: "44px",
+              borderRadius: "8px",
+              border: "1px solid #e6e8eb",
+              fontWeight: "500",
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="primary"
+            size="large"
+            htmlType="submit"
+            style={{
+              padding: '8px 24px',
+              height: '44px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+            }}
+          >
+            Create Customer
+          </Button>
+        </div>
+      </Form>
+    </Modal>
+  );
 
   return (
     <Modal
@@ -209,33 +468,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
       >
         <Row gutter={16}>
           <Col span={8}>
-            <Form.Item
-              name="customer"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Customer <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select customer" }]}
-            >
-              <Select
-                placeholder="Select Customer"
-                showSearch
-                optionFilterProp="children"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                {customers?.map((customer) => (
-                  <Option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+            {customerSelect}
           </Col>
           <Col span={8}>
             <Form.Item
@@ -732,6 +965,8 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
           </Button>
         </div>
       </Form>
+
+      {customerModal}
     </Modal>
   );
 };

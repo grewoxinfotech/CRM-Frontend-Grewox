@@ -187,13 +187,10 @@ const Attendance = () => {
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={() => {
-                                setSelectedProposal(null);
-                                setIsCreateModalVisible(true);
-                            }}
+                            onClick={handleCreate}
                             className="add-button"
                         >
-                            Create Proposal
+                            Create Attendance
                         </Button>
                     </div>
                 </div>

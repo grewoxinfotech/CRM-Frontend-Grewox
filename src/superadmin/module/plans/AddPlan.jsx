@@ -35,11 +35,22 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
 
     const handleSubmit = async (values) => {
         try {
-            await createPlan({
+            // Convert trial_period to string and format other values
+            const formattedValues = {
                 ...values,
+                trial_period: values.trial_period.toString(), // Convert to string
                 features: {},
-                status: values.status ? 'active' : 'inactive'
-            }).unwrap();
+                status: values.status ? 'active' : 'inactive',
+                // Convert other numeric values to strings if needed
+                max_users: values.max_users.toString(),
+                max_clients: values.max_clients.toString(),
+                max_customers: values.max_customers.toString(),
+                max_vendors: values.max_vendors.toString(),
+                storage_limit: values.storage_limit.toString(),
+                price: values.price.toString()
+            };
+
+            await createPlan(formattedValues).unwrap();
 
             message.success('Plan created successfully');
             form.resetFields();

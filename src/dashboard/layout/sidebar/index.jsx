@@ -316,6 +316,12 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
           permission: "extra-hrm-attendance-attendancelist"
         },
         {
+          title: "Holiday",
+          icon: <FiCalendar />,
+          path: "/dashboard/hrm/holiday",
+          permission: "extra-hrm-holiday"
+        },
+        {
           title: "Leave Management",
           icon: <FiCalendar />,
           path: "/dashboard/hrm/leave",

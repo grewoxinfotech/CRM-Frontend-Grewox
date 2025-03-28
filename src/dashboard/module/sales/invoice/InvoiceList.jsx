@@ -14,6 +14,7 @@ import {
   useUpdateInvoiceMutation,
 } from "./services/invoiceApi";
 import EditInvoice from "./EditInvoice";
+import ViewInvoice from './ViewInvoice';
 
 const { Text } = Typography;
 
@@ -23,6 +24,7 @@ const InvoiceList = () => {
   const [updateInvoice] = useUpdateInvoiceMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const invoices = invoicesdata?.data || [];
   console.log("invoices", invoices);
   // Sample invoice data
@@ -172,17 +174,28 @@ const InvoiceList = () => {
     }
   };
 
+  const handleView = (record) => {
+    // Ensure we have valid data
+    if (record) {
+        setSelectedInvoice({
+            ...record,
+            items: Array.isArray(record.items) ? record.items : []
+        });
+        setIsViewModalOpen(true);
+    }
+  };
+
   const getDropdownItems = (record) => ({
     items: [
       {
         key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => console.log("View invoice:", record.invoice_number),
+        icon: <FiEye style={{ fontSize: '14px' }} />,
+        label: "View",
+        onClick: () => handleView(record),
       },
       {
         key: "edit",
-        icon: <FiEdit2 />,
+        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
         label: "Edit",
         onClick: () => handleEdit(record),
       },
@@ -311,6 +324,14 @@ const InvoiceList = () => {
         }}
         onSubmit={handleEditSubmit}
         initialValues={selectedInvoice}
+      />
+      <ViewInvoice
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setSelectedInvoice(null);
+        }}
+        invoice={selectedInvoice}
       />
     </div>
   );

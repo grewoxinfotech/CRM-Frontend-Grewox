@@ -3,12 +3,16 @@ import { Table, Tag, Tooltip, Button, Space } from 'antd';
 import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
 import { useGetAllAttendancesQuery } from './services/attendanceApi';
 import { useGetEmployeesQuery } from '../Employee/services/employeeApi';
+import { useGetAllHolidaysQuery } from '../Holiday/services/holidayApi';
+import { useGetLeaveQuery } from '../Leave/services/leaveApi'; // Added leave API import
 import dayjs from 'dayjs';
 import './attendance.scss';
 
-const AttendanceList = () => {
+const AttendanceList = ({ searchText, filters, selectedMonth }) => {
     const { data: attendanceData, isLoading: isLoadingAttendance } = useGetAllAttendancesQuery();
     const { data: employeeData, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
+    const { data: holidayData, isLoading: isLoadingHolidays } = useGetAllHolidaysQuery();
+    const { data: leaveData, isLoading: isLoadingLeaves } = useGetLeaveQuery(); // Added leave data query
 
     // Transform employee data
     const employees = React.useMemo(() => {
@@ -25,10 +29,61 @@ const AttendanceList = () => {
         }));
     }, [employeeData]);
 
+    // Transform holiday data
+    const holidays = React.useMemo(() => {
+        if (!holidayData) return new Map();
+        const data = Array.isArray(holidayData) ? holidayData : holidayData.data || [];
+        
+        // Create a map of dates that are holidays
+        const holidayMap = new Map();
+        
+        data.forEach(holiday => {
+            const startDate = dayjs(holiday.start_date);
+            const endDate = dayjs(holiday.end_date);
+            let currentDate = startDate;
+            
+            // Add all dates between start and end date to the map
+            while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+                holidayMap.set(currentDate.format('YYYY-MM-DD'), holiday);
+                currentDate = currentDate.add(1, 'day');
+            }
+        });
+        
+        return holidayMap;
+    }, [holidayData]);
+
+    // Transform leave data
+    const leaves = React.useMemo(() => {
+        if (!leaveData) return new Map();
+        const data = Array.isArray(leaveData) ? leaveData : leaveData.data || [];
+        
+        // Create a map of dates that are leaves
+        const leaveMap = new Map();
+        
+        data.forEach(leave => {
+            if (leave.status === 'approved' || leave.status === 'pending') {
+                const startDate = dayjs(leave.startDate);
+                const endDate = dayjs(leave.endDate);
+                let currentDate = startDate;
+                
+                // Add all dates between start and end date to the map
+                while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+                    leaveMap.set(`${leave.employeeId}_${currentDate.format('YYYY-MM-DD')}`, {
+                        ...leave,
+                        isHalfDay: leave.isHalfDay
+                    });
+                    currentDate = currentDate.add(1, 'day');
+                }
+            }
+        });
+        
+        return leaveMap;
+    }, [leaveData]);
+
     // Generate dates for the current month
     const getDaysInMonth = () => {
         const days = [];
-        const date = new Date();
+        const date = selectedMonth ? selectedMonth.toDate() : new Date();
         const year = date.getFullYear();
         const month = date.getMonth();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -51,7 +106,9 @@ const AttendanceList = () => {
         'P': { color: '#52c41a', text: 'Present', background: '#f6ffed' },
         'A': { color: '#ff4d4f', text: 'Absent', background: '#fff2f0' },
         'L': { color: '#faad14', text: 'Leave', background: '#fffbe6' },
-        'H': { color: '#722ed1', text: 'Paid Holiday', background: '#f9f0ff' },
+        'H': { color: '#1890ff', text: 'Half Day', background: '#e6f7ff' },
+        'PH': { color: '#722ed1', text: 'Paid Holiday', background: '#f9f0ff' },
+        'UNP': { color: '#722ed1', text: 'Unpaid Holiday', background: '#f9f0ff' },
         'WK': { color: '#13c2c2', text: 'Weekend', background: '#e6fffb' }
     };
 
@@ -135,10 +192,30 @@ const AttendanceList = () => {
                            dayjs(att.date).format('YYYY-MM-DD') === day.fullDate;
                 });
 
+                // Check if it's a holiday
+                const holiday = holidays instanceof Map ? holidays.get(day.fullDate) : null;
+                
+                // Check if it's a leave day
+                const leaveKey = `${emp.id}_${day.fullDate}`;
+                const leave = leaves instanceof Map ? leaves.get(leaveKey) : null;
+                
                 // Check if it's a weekend
                 const isWeekend = ['Sun'].includes(day.day);
 
-                if (isWeekend) {
+                if (leave) {
+                    // If it's a leave day
+                    if (leave.isHalfDay) {
+                        rowData[`day${day.date}`] = 'H'; // Half day
+                    } else {
+                        rowData[`day${day.date}`] = 'L'; // Full day leave
+                    }
+                } else if (holiday) {
+                    if (holiday.leave_type === 'paid') {
+                        rowData[`day${day.date}`] = 'PH'; // Paid Holiday
+                    } else {
+                        rowData[`day${day.date}`] = 'UNP'; // Unpaid Holiday
+                    }
+                } else if (isWeekend) {
                     rowData[`day${day.date}`] = 'WK';
                 } else if (attendance) {
                     // If attendance record exists
@@ -156,7 +233,7 @@ const AttendanceList = () => {
 
             return rowData;
         });
-    }, [employees, attendanceData, days]);
+    }, [employees, attendanceData, days, holidays, leaves]);
 
     return (
         <div className="attendance-list-container">
@@ -182,7 +259,7 @@ const AttendanceList = () => {
             <Table
                 columns={columns}
                 dataSource={data}
-                loading={isLoadingAttendance || isLoadingEmployees}
+                loading={isLoadingAttendance || isLoadingEmployees || isLoadingHolidays || isLoadingLeaves}
                 scroll={{ x: 'max-content' }}
                 pagination={false}
                 className="attendance-table"

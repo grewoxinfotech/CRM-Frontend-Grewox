@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Table, Button, Tag, Dropdown, Modal, Avatar, message } from 'antd';
 import { FiEye, FiEdit2, FiTrash2, FiMoreVertical, FiUser, FiLogIn } from 'react-icons/fi';
+import { PiRocketBold } from 'react-icons/pi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
+import CreateUpgradePlan from './CreateUpgradePlan';
 import { useAdminLoginMutation } from '../../../auth/services/authApi';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     
     const [editModalVisible, setEditModalVisible] = useState(false);
+    const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLogin] = useAdminLoginMutation();
@@ -29,6 +32,11 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         }
     };
 
+    const handleUpgradePlan = (record) => {
+        setSelectedCompany(record);
+        setUpgradeModalVisible(true);
+    };
+
     const getInitials = (username) => {
         return username
             ? username.split(' ')
@@ -40,6 +48,12 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     
     const getDropdownItems = (record) => ({
         items: [
+            {
+                key: 'upgrade',
+                icon: <PiRocketBold />,
+                label: 'Upgrade Plan',
+                onClick: () => handleUpgradePlan(record),
+            },
             {
                 key: 'view',
                 icon: <FiEye />,
@@ -144,7 +158,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         {
             title: 'Actions',
             key: 'actions',
-            width: 200,
+            width: 280,
             render: (_, record) => (
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <Button
@@ -194,7 +208,6 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
                 dataSource={companies}
                 columns={columns}
                 rowKey={record => record.id}
-                loading={loading}
                 scroll={{ x: 1100 }}
                 pagination={{
                     current: currentPage,
@@ -224,6 +237,17 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
                     loading={loading}
                 />
             )}
+
+            <CreateUpgradePlan
+                open={upgradeModalVisible}
+                onCancel={() => {
+                    setUpgradeModalVisible(false);
+                    setSelectedCompany(null);
+                }}
+                companyId={selectedCompany?.id}
+                isEditing={false}
+                initialValues={null}
+            />
         </>
     );
 };

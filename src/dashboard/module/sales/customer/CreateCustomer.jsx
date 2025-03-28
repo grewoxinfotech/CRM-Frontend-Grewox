@@ -233,7 +233,6 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                   Tax Number
                 </span>
               }
-              rules={[{ required: true, message: "Please enter tax number" }]}
             >
               <Input
                 prefix={
@@ -262,10 +261,6 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                   Email Address
                 </span>
               }
-              rules={[
-                { required: true, message: "Please enter email address" },
-                { type: "email", message: "Please enter a valid email" },
-              ]}
             >
               <Input
                 prefix={

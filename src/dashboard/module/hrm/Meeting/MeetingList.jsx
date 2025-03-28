@@ -161,6 +161,9 @@ const MeetingList = ({ meetings, loading, onEdit, onDelete }) => {
             }))}
             loading={loading}
             rowKey="id"
+            scroll={{
+                x: 1000,
+            }}
             pagination={{
                 total: meetings?.length || 0,
                 pageSize: 10,

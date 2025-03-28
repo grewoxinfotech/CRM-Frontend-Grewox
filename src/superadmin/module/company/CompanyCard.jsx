@@ -13,18 +13,21 @@ import {
     FiMapPin,
     FiBriefcase,
     FiX,
-    FiLogIn
+    FiLogIn,
 } from 'react-icons/fi';
 import moment from 'moment';
 import EditCompany from './EditCompany';
 import { useAdminLoginMutation } from '../../../auth/services/authApi';
 import { useNavigate } from 'react-router-dom';
+import { PiRocketBold } from 'react-icons/pi';
+import CreateUpgradePlan from './CreateUpgradePlan';
 
 const { Text } = Typography;
 
 const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [detailsModalVisible, setDetailsModalVisible] = useState(false);
+    const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
     const [adminLogin] = useAdminLoginMutation();
     const navigate = useNavigate();
 
@@ -53,6 +56,10 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
         }
     };
 
+    const handleUpgradeModalClose = () => {
+        setUpgradeModalVisible(false);
+    };
+
     // Menu items for the dropdown
     const actionItems = [
         {
@@ -72,6 +79,12 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
             icon: <FiLogIn />,
             label: 'Login as Company',
             onClick: handleAdminLogin
+        },
+        {
+            key: 'upgrade',
+            icon: <PiRocketBold />,
+            label: 'Upgrade Plan',
+            onClick: () => setUpgradeModalVisible(true)
         },
         {
             type: 'divider'
@@ -295,13 +308,12 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                         ))}
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
                         <Button
                             type="primary"
                             icon={<FiLogIn style={{ fontSize: '16px' }} />}
                             onClick={handleAdminLogin}
                             style={{
-                                flex: 1,
                                 height: '38px',
                                 borderRadius: '10px',
                                 background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
@@ -326,32 +338,63 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                         >
                             Login as Company
                         </Button>
-                        <Button
-                            icon={<FiEye style={{ fontSize: '16px' }} />}
-                            onClick={() => setDetailsModalVisible(true)}
-                            style={{
-                                height: '38px',
-                                borderRadius: '10px',
-                                border: '1px solid #E5E7EB',
-                                fontSize: '14px',
-                                fontWeight: '500',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-1px)';
-                                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }}
-                        >
-                            Details
-                        </Button>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <Button
+                                icon={<PiRocketBold style={{ fontSize: '16px' }} />}
+                                onClick={() => setUpgradeModalVisible(true)}
+                                style={{
+                                    flex: 1,
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    border: '1px solid #E5E7EB',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }}
+                            >
+                                Upgrade to Premium
+                            </Button>
+
+                            <Button
+                                icon={<FiEye style={{ fontSize: '16px' }} />}
+                                onClick={() => setDetailsModalVisible(true)}
+                                style={{
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    border: '1px solid #E5E7EB',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }}
+                            >
+                                Details
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </Card>
@@ -597,6 +640,14 @@ const CompanyCard = ({ company, onView, onEdit, onDelete }) => {
                 onCancel={handleEditCancel}
                 initialValues={company}
                 loading={false}
+            />
+
+            <CreateUpgradePlan 
+                open={upgradeModalVisible}
+                onCancel={handleUpgradeModalClose}
+                companyId={company.id}
+                isEditing={false}
+                initialValues={null}
             />
         </>
     );
