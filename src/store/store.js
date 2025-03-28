@@ -46,6 +46,7 @@ import { calendarApi } from "../dashboard/module/communication/calendar/services
 import { taskCalendarApi } from "../dashboard/module/crm/taskcalendar/services/taskCalender.js";
 import { proposalApi } from "../dashboard/module/crm/proposal/services/proposalApi.js";
 import { taxApi } from "../dashboard/module/settings/tax/services/taxApi.js";
+import { salaryApi } from "../dashboard/module/hrm/payRoll/services/salaryApi.js";
 import { attendanceApi } from "../dashboard/module/hrm/Attendance/services/attendanceApi";
 import { holidayApi } from "../dashboard/module/hrm/Holiday/services/holidayApi";
 const persistConfig = {
@@ -102,6 +103,7 @@ const rootReducer = combineReducers({
   [taxApi.reducerPath]: taxApi.reducer,
   [attendanceApi.reducerPath]: attendanceApi.reducer,
   [holidayApi.reducerPath]: holidayApi.reducer,
+  [salaryApi.reducerPath]: salaryApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -158,7 +160,8 @@ export const store = configureStore({
       .concat(proposalApi.middleware)
       .concat(taxApi.middleware)
       .concat(attendanceApi.middleware)
-      .concat(holidayApi.middleware),
+      .concat(holidayApi.middleware)
+      .concat(salaryApi.middleware),
 });
 
 export const persistor = persistStore(store);

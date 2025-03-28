@@ -65,6 +65,8 @@ import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
 import LeadOverview from "../dashboard/module/crm/lead/overview/index.jsx";
 import Holiday from "../dashboard/module/hrm/Holiday/index.jsx";
   const PermissionRoute = ({ children, permissionKey }) => {
+import Salary from "../dashboard/module/hrm/payRoll/index.jsx";
+const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -138,6 +140,10 @@ const routes = createBrowserRouter([
             element: <Employee />,
           },
           {
+            path: "payroll",
+            element: <Salary />,
+          },
+          {
             path: "leave",
             element: <Leave />,
           },
@@ -171,7 +177,7 @@ const routes = createBrowserRouter([
           },
           {
             path: "meeting",
-            element: <Meeting />
+            element: <Meeting />,
           },
           {
             path: "attendance",
@@ -238,8 +244,8 @@ const routes = createBrowserRouter([
               {
                 path: ":leadId",
                 element: <LeadOverview />,
-              }
-            ]
+              },
+            ],
           },
           {
             path: "deals",
@@ -251,8 +257,8 @@ const routes = createBrowserRouter([
               {
                 path: ":dealId",
                 element: <DealDetail />,
-              }
-            ]
+              },
+            ],
           },
           {
             path: "proposal",
@@ -316,8 +322,8 @@ const routes = createBrowserRouter([
           {
             path: "ticket",
             element: <Tickets />,
-          }
-        ]
+          },
+        ],
       },
       {
         path: "settings/currencies",
