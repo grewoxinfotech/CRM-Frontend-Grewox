@@ -25,9 +25,9 @@ const { TextArea } = Input;
 const CreateLeave = ({ open, onCancel }) => {
   const [form] = Form.useForm();
   const [createLeave, { isLoading }] = useCreateLeaveMutation();
-  const { data: employeesss, isLoading: isLoadingEmployees } =
+  const { data: employeesData, isLoading: isLoadingEmployees } =
     useGetEmployeesQuery();
-  const employees = employeesss?.data;
+  const employees = employeesData?.data || [];
 
   const handleSubmit = async (values) => {
     try {
@@ -170,22 +170,34 @@ const CreateLeave = ({ open, onCancel }) => {
                   Employee <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select an employee" }]}
             >
               <Select
                 placeholder="Select Employee"
                 size="large"
                 loading={isLoadingEmployees}
+                showSearch
+                allowClear
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                }}
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option?.children?.toLowerCase().includes(input.toLowerCase())
+                }
+                onChange={(value) => {
+                  console.log("Selected value:", value);
+                  form.validateFields(["employeeId"]);
                 }}
               >
-                {employees?.map((employee) => (
-                  <Option key={employee._id} value={employee._id}>
-                    {employee.firstName} {employee.lastName}
-                  </Option>
-                ))}
+                {Array.isArray(employees) &&
+                  employees.map((employee) => (
+                    <Option key={employee.id} value={employee.id}>
+                      {`${employee.firstName} ${employee.lastName}`}
+                    </Option>
+                  ))}
               </Select>
             </Form.Item>
           </Col>
@@ -211,11 +223,8 @@ const CreateLeave = ({ open, onCancel }) => {
               >
                 <Option value="annual">Annual Leave</Option>
                 <Option value="sick">Sick Leave</Option>
-                <Option value="personal">Personal Leave</Option>
-                <Option value="maternity">Maternity Leave</Option>
-                <Option value="paternity">Paternity Leave</Option>
-                <Option value="bereavement">Bereavement Leave</Option>
-                <Option value="unpaid">Unpaid Leave</Option>
+                <Option value="casual">Casual Leave</Option>
+                <Option value="other">Other Leave</Option>
               </Select>
             </Form.Item>
           </Col>

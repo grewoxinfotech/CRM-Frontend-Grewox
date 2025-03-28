@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Table, Button, Tag, Dropdown, Typography, Modal, message } from "antd";
 import {
   FiEdit2,
@@ -9,21 +9,32 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useGetLeaveQuery, useDeleteLeaveMutation } from "./services/leaveApi";
+import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 import EditLeave from "./Editleave";
 
 const { Text } = Typography;
 
 const LeaveList = ({ onEdit, onView, searchText = "" }) => {
   const { data: leavedata = [], isLoading } = useGetLeaveQuery();
+  const { data: employeesData } = useGetEmployeesQuery();
   const leaves = leavedata.data || [];
+  const employees = employeesData?.data || [];
   const [deleteLeave] = useDeleteLeaveMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
 
+  // Create a map of employee IDs to employee names
+  const employeeMap = useMemo(() => {
+    return employees.reduce((acc, employee) => {
+      acc[employee.id] = `${employee.firstName} ${employee.lastName}`;
+      return acc;
+    }, {});
+  }, [employees]);
+
   const filteredLeaves = React.useMemo(() => {
     return leaves?.filter((leave) => {
       const searchLower = searchText.toLowerCase();
-      const employeeName = leave?.employeeName?.toLowerCase() || "";
+      const employeeName = employeeMap[leave.employeeId]?.toLowerCase() || "";
       const leaveType = leave?.leaveType?.toLowerCase() || "";
       const status = leave?.status?.toLowerCase() || "";
       const reason = leave?.reason?.toLowerCase() || "";
@@ -36,7 +47,7 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
         reason.includes(searchLower)
       );
     });
-  }, [leaves, searchText]);
+  }, [leaves, searchText, employeeMap]);
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -111,12 +122,16 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
   const columns = [
     {
       title: "Employee Name",
-      dataIndex: "employeeName",
-      key: "employeeName",
+      dataIndex: "employeeId",
+      key: "employeeId",
       sorter: (a, b) =>
-        (a?.employeeName || "").localeCompare(b?.employeeName || ""),
-      render: (employeeName) => (
-        <Text style={{ color: "#262626" }}>{employeeName}</Text>
+        (employeeMap[a.employeeId] || "").localeCompare(
+          employeeMap[b.employeeId] || ""
+        ),
+      render: (employeeId) => (
+        <Text style={{ color: "#262626" }}>
+          {employeeMap[employeeId] || "Unknown Employee"}
+        </Text>
       ),
     },
     {

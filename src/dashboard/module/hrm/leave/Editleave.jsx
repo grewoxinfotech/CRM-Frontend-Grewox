@@ -15,6 +15,7 @@ import {
 import { FiFileText, FiX, FiCalendar, FiUser, FiTag } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useUpdateLeaveMutation } from "./services/leaveApi";
+import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 import "./leave.scss";
 
 const { Text } = Typography;
@@ -24,12 +25,15 @@ const { TextArea } = Input;
 const EditLeave = ({ open, onCancel, initialValues }) => {
   const [form] = Form.useForm();
   const [updateLeave, { isLoading }] = useUpdateLeaveMutation();
+  const { data: employeesData, isLoading: isLoadingEmployees } =
+    useGetEmployeesQuery();
+  const employees = employeesData?.data || [];
 
   useEffect(() => {
     if (initialValues) {
       form.setFieldsValue({
         ...initialValues,
-        employeeId: initialValues.employeeId?.replace("EMP", ""),
+        employeeId: initialValues.employeeId,
         startDate: initialValues.startDate
           ? dayjs(initialValues.startDate)
           : null,
@@ -41,7 +45,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
   const handleSubmit = async (values) => {
     try {
       const payload = {
-        employeeId: `EMP${values.employeeId}`,
+        employeeId: values.employeeId,
         startDate: values.startDate.format("YYYY-MM-DD"),
         endDate: values.endDate.format("YYYY-MM-DD"),
         leaveType: values.leaveType,
@@ -176,22 +180,35 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Employee ID <span style={{ color: "#ff4d4f" }}>*</span>
+                  Employee <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[
-                { required: true, message: "Please enter employee ID" },
-                { pattern: /^\d+$/, message: "Please enter only numbers" },
-              ]}
+              rules={[{ required: true, message: "Please select employee" }]}
             >
-              <Input
-                placeholder="Enter employee ID (numbers only)"
+              <Select
+                placeholder="Select Employee"
                 size="large"
+                loading={isLoadingEmployees}
+                showSearch
+                allowClear
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
                 }}
-              />
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option?.children?.toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {Array.isArray(employees) &&
+                  employees.map((employee) => (
+                    <Option key={employee.id} value={employee.id}>
+                      {`${employee.firstName} ${employee.lastName}`}
+                    </Option>
+                  ))}
+              </Select>
             </Form.Item>
           </Col>
 
