@@ -11,7 +11,8 @@ import { planApi } from "../superadmin/module/plans/services/planApi.js";
 import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
 import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
 import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
-import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
+import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
+import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";  
 import { roleApi } from "../dashboard/module/hrm/role/services/roleApi.js";
 import { userApi } from "../dashboard/module/user-management/users/services/userApi.js";
 import { employeeApi } from "../dashboard/module/hrm/Employee/services/employeeApi.js";
@@ -65,6 +66,7 @@ const rootReducer = combineReducers({
   [settingsApi.reducerPath]: settingsApi.reducer,
   [planApi.reducerPath]: planApi.reducer,
   [policyApi.reducerPath]: policyApi.reducer,
+  [dealInvoiceApi.reducerPath]: dealInvoiceApi.reducer,
   [notesApi.reducerPath]: notesApi.reducer,
   [inquiryApi.reducerPath]: inquiryApi.reducer,
   [subclientApi.reducerPath]: subclientApi.reducer,
@@ -161,7 +163,8 @@ export const store = configureStore({
       .concat(taxApi.middleware)
       .concat(attendanceApi.middleware)
       .concat(holidayApi.middleware)
-      .concat(salaryApi.middleware),
+      .concat(salaryApi.middleware)
+      .concat(dealInvoiceApi.middleware)
 });
 
 export const persistor = persistStore(store);

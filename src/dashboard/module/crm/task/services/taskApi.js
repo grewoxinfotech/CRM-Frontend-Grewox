@@ -21,12 +21,17 @@ export const taskApi = createApi({
       }),
       invalidatesTags: ["Tasks"],
     }),
+
+    
     updateTask: builder.mutation({
-      query: ({ id, data }) => ({
-        url: `/tasks/${id}`,
-        method: "PUT",
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        console.log("Update Task Data:", data);
+        return {
+          url: `/tasks/${id}`,
+          method: "PUT", 
+          body: data,
+        };
+      },
       invalidatesTags: ["Tasks"],
     }),
     deleteTask: builder.mutation({

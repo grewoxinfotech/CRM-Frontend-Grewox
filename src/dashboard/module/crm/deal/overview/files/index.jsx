@@ -1,42 +1,19 @@
 import React, { useState } from 'react';
-import { Card, Table, Button, Tag, Upload, Modal, Form, Input, Select } from 'antd';
+import { Card, Table, Button, Tag, Upload, Modal, Form, Input, message } from 'antd';
 import { FiUpload, FiDownload, FiTrash2, FiFile, FiImage, FiFileText } from 'react-icons/fi';
+import { useUpdateDealMutation, useGetDealsQuery } from '../../services/DealApi';
 import './files.scss';
 
 const DealFiles = ({ deal }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [form] = Form.useForm();
+    const [updateDeal] = useUpdateDealMutation();
+    const { refetch } = useGetDealsQuery();
 
-    // Dummy data for demonstration
-    const files = [
-        {
-            id: 1,
-            name: 'Project Requirements.pdf',
-            type: 'document',
-            size: '2.5 MB',
-            uploadedBy: 'John Doe',
-            uploadDate: '2024-03-15',
-            status: 'active'
-        },
-        {
-            id: 2,
-            name: 'Design Mockups.fig',
-            type: 'design',
-            size: '15 MB',
-            uploadedBy: 'Jane Smith',
-            uploadDate: '2024-03-16',
-            status: 'active'
-        },
-        {
-            id: 3,
-            name: 'Project Timeline.xlsx',
-            type: 'spreadsheet',
-            size: '1.2 MB',
-            uploadedBy: 'Mike Johnson',
-            uploadDate: '2024-03-17',
-            status: 'archived'
-        }
-    ];
+    // Parse deal_files from deal
+    const dealFiles = deal?.files ? 
+        JSON.parse(deal.files) || [] 
+        : [];
 
     const columns = [
         {
@@ -83,11 +60,13 @@ const DealFiles = ({ deal }) => {
                         type="text"
                         icon={<FiDownload />}
                         className="download-button"
+                        onClick={() => handleDownload(record)}
                     />
                     <Button
                         type="text"
                         icon={<FiTrash2 />}
                         className="delete-button"
+                        onClick={() => handleDeleteFile(record)}
                     />
                 </div>
             ),
@@ -98,36 +77,76 @@ const DealFiles = ({ deal }) => {
         switch (type) {
             case 'document':
                 return <FiFileText className="file-icon document" />;
-            case 'design':
+            case 'image':
                 return <FiImage className="file-icon design" />;
-            case 'spreadsheet':
-                return <FiFile className="file-icon spreadsheet" />;
             default:
                 return <FiFile className="file-icon" />;
         }
     };
 
-    const handleUpload = () => {
+    const showUploadModal = () => {
         setIsModalVisible(true);
     };
 
-    const handleModalOk = () => {
-        form.validateFields().then(values => {
-            console.log('Upload values:', values);
+    const handleCancel = () => {
+        setIsModalVisible(false);
+    };
+
+    const handleUpload = async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await updateDeal({
+                id: deal.id,
+                data: formData
+            }).unwrap();
+
+            message.success('File uploaded successfully');
             setIsModalVisible(false);
-            form.resetFields();
-        });
+            await refetch();
+        } catch (error) {
+            console.error('Upload Error:', error);
+            message.error(error?.data?.message || 'Failed to upload file');
+        }
+        return false;
+    };
+
+    const handleDeleteFile = async (fileToDelete) => {
+        try {
+            const updatedFiles = dealFiles.filter(file => file.name !== fileToDelete.name);
+            
+            await updateDeal({
+                id: deal.id,
+                files: JSON.stringify(updatedFiles)
+            }).unwrap();
+
+            await refetch();
+            message.success('File deleted successfully');
+        } catch (error) {
+            message.error('Failed to delete file');
+        }
+    };
+
+    const handleDownload = (file) => {
+        // Create a link element and trigger download
+        const link = document.createElement('a');
+        link.href = file.base64;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     return (
-        <div className="project-files">
+        <div className="deal-files">
             <Card
-                title="Project Files"
+                title="Deal Files"
                 extra={
                     <Button
                         type="primary"
                         icon={<FiUpload />}
-                        onClick={handleUpload}
+                        onClick={showUploadModal}
                     >
                         Upload File
                     </Button>
@@ -135,8 +154,8 @@ const DealFiles = ({ deal }) => {
             >
                 <Table
                     columns={columns}
-                    dataSource={files}
-                    rowKey="id"
+                    dataSource={dealFiles}
+                    rowKey="name"
                     pagination={false}
                 />
             </Card>
@@ -144,45 +163,26 @@ const DealFiles = ({ deal }) => {
             <Modal
                 title="Upload File"
                 open={isModalVisible}
-                onOk={handleModalOk}
-                onCancel={() => setIsModalVisible(false)}
-                okText="Upload"
+                onCancel={handleCancel}
+                footer={null}
             >
-                <Form
-                    form={form}
-                    layout="vertical"
+                <Upload.Dragger
+                    name="file"
+                    multiple={false}
+                    showUploadList={false}
+                    beforeUpload={handleUpload}
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    maxCount={1}
+                    className="upload-dragger"
                 >
-                    <Form.Item
-                        name="file"
-                        label="File"
-                    >
-                        <Upload.Dragger
-                            name="file"
-                            multiple={false}
-                            action="/upload.do"
-                            onChange={info => {
-                                console.log(info);
-                            }}
-                        >
-                            <p className="ant-upload-drag-icon">
-                                <FiUpload />
-                            </p>
-                            <p className="ant-upload-text">
-                                Click or drag file to this area to upload
-                            </p>
-                        </Upload.Dragger>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="description"
-                        label="Description"
-                    >
-                        <Input.TextArea
-                            placeholder="Enter file description"
-                            rows={4}
-                        />
-                    </Form.Item>
-                </Form>
+                    <p className="ant-upload-drag-icon">
+                        <FiUpload />
+                    </p>
+                    <p className="ant-upload-text">Click or drag file to this area to upload</p>
+                    <p className="ant-upload-hint">
+                        Support for JPG/PNG/PDF files. File must be smaller than 5MB.
+                    </p>
+                </Upload.Dragger>
             </Modal>
         </div>
     );

@@ -3,6 +3,7 @@ import { Card, Avatar, Button, Table, Tag, Modal, Form, Select, message } from '
 import { FiUserPlus, FiTrash2 } from 'react-icons/fi';
 import { useUpdateDealMutation } from '../../services/DealApi';
 import { useGetUsersQuery } from "../../../../user-management/users/services/userApi";
+import { useGetDealsQuery } from '../../services/DealApi';
 import './projectMember.scss';
 
 const DealMember = ({ deal }) => {
@@ -10,7 +11,9 @@ const DealMember = ({ deal }) => {
     const [form] = Form.useForm();
     const [updateDeal] = useUpdateDealMutation();
     const { data: usersResponse = { data: [] } } = useGetUsersQuery();
+    const { refetch } = useGetDealsQuery();
 
+    
     // Get users array from response
     const users = usersResponse.data || [];
 
@@ -70,10 +73,15 @@ const DealMember = ({ deal }) => {
     const handleRemoveMember = async (userId) => {
         try {
             const newAssignedTo = assignedMembers.filter(id => id !== userId);
+            
             await updateDeal({
                 id: deal.id,
-                assigned_to: JSON.stringify({ assigned_to: newAssignedTo })
+                assigned_to: {
+                    assigned_to: newAssignedTo
+                }
             }).unwrap();
+            
+            await refetch();
             message.success('Member removed successfully');
         } catch (error) {
             message.error('Failed to remove member');
@@ -87,9 +95,12 @@ const DealMember = ({ deal }) => {
             
             await updateDeal({
                 id: deal.id,
-                assigned_to: JSON.stringify({ assigned_to: newAssignedTo })
+                assigned_to: {
+                    assigned_to: newAssignedTo
+                }
             }).unwrap();
 
+            await refetch();
             message.success('Members added successfully');
             setIsModalVisible(false);
             form.resetFields();

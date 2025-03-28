@@ -33,8 +33,10 @@ import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import './Deal.scss';
 import { useGetSourcesQuery,useGetLabelsQuery } from '../crmsystem/souce/services/SourceApi';
 
+
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDispatch, useSelector } from "react-redux";
+import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -62,16 +64,13 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
   
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
  const { data:labelsData } = useGetLabelsQuery(loggedInUser?.id);
-
-
+ const { data: productsData } = useGetProductsQuery();
 
  const sources = sourcesData?.data || [];
  const labels = labelsData?.data || [];
+ const products = productsData?.data || [];
 
-
-
-
-  const { data: currencies = [] } = useGetAllCurrenciesQuery({
+ const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
     limit: 100
   });
@@ -140,6 +139,7 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
         closedDate: values.closedDate ? new Date(values.closedDate).toISOString() : null,
         company_name: values.company_name,
         source: values.source,
+        products: { products: values.products || [] },
       };
 
       await createDeal(dealData).unwrap();
@@ -551,7 +551,45 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
               ))}
             </Select>
           </Form.Item>
+
+          <Form.Item
+            name="products"
+            label={<Text style={formItemStyle}>Products</Text>}
+            rules={[{ required: false, message: 'Please select products' }]}
+          >
+            <Select
+              mode="multiple"
+              placeholder="Select products"
+              style={selectStyle}
+              optionFilterProp="children"
+              showSearch
+            >
+              {products?.map((product) => (
+                <Option key={product.id} value={product.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ 
+                      width: '32px', 
+                      height: '32px', 
+                      borderRadius: '4px',
+                      overflow: 'hidden'
+                    }}>
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => e.target.style.display = 'none'}
+                      />
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: '500' }}>{product.name}</span>
+                      <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.price}</span>
+                    </div>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          </div>
 
           {/* Contact Information Section */}
           <div className="section-title" style={{ marginBottom: '16px' }}>

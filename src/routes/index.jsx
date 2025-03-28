@@ -64,7 +64,6 @@ import Leave from "../dashboard/module/hrm/leave/index.jsx";
 import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
 import LeadOverview from "../dashboard/module/crm/lead/overview/index.jsx";
 import Holiday from "../dashboard/module/hrm/Holiday/index.jsx";
-  const PermissionRoute = ({ children, permissionKey }) => {
 import Salary from "../dashboard/module/hrm/payRoll/index.jsx";
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);

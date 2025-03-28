@@ -42,6 +42,7 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import CreateUser from '../../user-management/users/CreateUser';
 import { useGetLabelsQuery, useGetSourcesQuery } from "../crmsystem/souce/services/SourceApi";
+import { useGetProductsQuery } from '../../sales/product&services/services/productApi';
 
 
 // import { useGetAllUsersQuery } from "../../../module/user/services/userApi";
@@ -78,11 +79,12 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data:labelsData } = useGetLabelsQuery(loggedInUser?.id);
- 
- 
+  const { data: productsData } = useGetProductsQuery();
+
  
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
+  const products = productsData?.data || [];
  
  
 
@@ -145,6 +147,17 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         }
       }
 
+      // Parse products if it's a string
+      let selectedProducts = [];
+      if (typeof initialValues.products === 'string') {
+        try {
+          const parsedProducts = JSON.parse(initialValues.products);
+          selectedProducts = parsedProducts.products || [];
+        } catch (e) {
+          selectedProducts = [];
+        }
+      }
+
       const formValues = {
         ...initialValues,
         closedDate: initialValues.closedDate ? 
@@ -160,7 +173,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         pipelineName: getPipelineName(initialValues.pipeline),
         stageName: getStageName(initialValues.stage),
         source: initialValues.source,
-        label: initialValues.label
+        label: initialValues.label,
+        products: selectedProducts,
       };
       
       form.setFieldsValue(formValues);
@@ -206,7 +220,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         deal_members: values.deal_members || [],
         assigned_to: {
           assigned_to: values.assigned_to || []
-        }
+        },
+        products: { products: values.products || [] },
       };
 
       await updateDeal({
@@ -642,8 +657,43 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Select>
             </Form.Item>
 
-
-
+            <Form.Item
+              name="products"
+              label={<Text style={formItemStyle}>Products</Text>}
+              rules={[{ required: false, message: 'Please select products' }]}
+            >
+              <Select
+                mode="multiple"
+                placeholder="Select products"
+                style={selectStyle}
+                optionFilterProp="children"
+                showSearch
+              >
+                {products?.map((product) => (
+                  <Option key={product.id} value={product.id}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: '500' }}>{product.name}</span>
+                        <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.price}</span>
+                      </div>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
             {/* Closed Date */}
             <Form.Item
