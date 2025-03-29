@@ -9,7 +9,7 @@ import {
     useDeleteNotesMutation,
     useGetAllNotesQuery
 } from '../../../../../../superadmin/module/notes/services/notesApi';
-import './notes.scss';
+import './notess.scss';
 
 const { TextArea } = Input;
 const { Text } = Typography;
