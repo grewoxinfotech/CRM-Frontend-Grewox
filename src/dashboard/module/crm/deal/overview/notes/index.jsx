@@ -1,210 +1,254 @@
-import React, { useState } from 'react';
-import { Card, List, Button, Modal, Form, Input, Tag, Tooltip, Avatar } from 'antd';
-import { FiPlus, FiEdit2, FiTrash2, FiClock, FiUser } from 'react-icons/fi';
-import './notes.scss';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Card,
+  Typography,
+  Button,
+  Modal,
+  message,
+  Input,
+  Dropdown,
+  Menu,
+  Row,
+  Col,
+  Breadcrumb,
+  Table,
+  List,
+  Empty,
+  Spin,
+} from "antd";
+import {
+  FiPlus,
+  FiSearch,
+  FiChevronDown,
+  FiDownload,
+  FiGrid,
+  FiList,
+  FiHome,
+  FiMoreVertical,
+  FiEdit2,
+  FiTrash2,
+  FiMessageSquare,
+} from "react-icons/fi";
+import "./notes.scss";
+import moment from "moment";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import CreateCompany from "./createNotes";
 
-const DealNotes = ({ deal }) => {
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [form] = Form.useForm();
+import CompanyList from "./NotesList";
+import {
+  useGetAllNotesQuery,
+  useDeleteNotesMutation,
+} from "../../../../../../superadmin/module/notes/services/notesApi";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import CreateNotes from "./createNotes";
+import EditNotes from "./EditNotes";
 
-    // Dummy data for demonstration
-    const notes = [
-        {
-            id: 1,
-            title: 'Client Meeting Notes',
-            content: 'Discussed project requirements and timeline. Client emphasized the importance of mobile responsiveness.',
-            category: 'meeting',
-            createdBy: {
-                name: 'John Doe',
-                avatar: 'https://randomuser.me/api/portraits/men/1.jpg'
-            },
-            createdAt: '2024-03-15T10:30:00'
-        },
-        {
-            id: 2,
-            title: 'Design Review Feedback',
-            content: 'UI color scheme needs adjustment. Navigation structure approved. Need to improve mobile menu.',
-            category: 'design',
-            createdBy: {
-                name: 'Jane Smith',
-                avatar: 'https://randomuser.me/api/portraits/women/1.jpg'
-            },
-            createdAt: '2024-03-16T14:20:00'
-        },
-        {
-            id: 3,
-            title: 'Technical Implementation Notes',
-            content: 'API integration plan outlined. Need to implement caching for better performance.',
-            category: 'technical',
-            createdBy: {
-                name: 'Mike Johnson',
-                avatar: 'https://randomuser.me/api/portraits/men/2.jpg'
-            },
-            createdAt: '2024-03-17T09:15:00'
+dayjs.extend(relativeTime);
+
+const { Title, Text } = Typography;
+
+const DealNotes = (deal) => {
+  const id = deal.deal?.id;
+  const [deleteNotes, { isLoading: isDeleting }] = useDeleteNotesMutation();
+  const user = useSelector(selectCurrentUser);
+
+  const {
+    data: notesData = [],
+    isLoading: isLoadingNotes,
+    refetch,
+  } = useGetAllNotesQuery(id || "");
+
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [filteredNotes, setFilteredNotes] = useState([]);
+
+  // Transform and filter notes data
+  useEffect(() => {
+    if (notesData) {
+      let notes = notesData.map((note) => ({
+        id: note.id,
+        note_title: note.note_title || "N/A",
+        description: note.description || "N/A",
+        created_by: note.created_by || "N/A",
+        created_at: note.createdAt || "-",
+      }));
+
+      if (searchText) {
+        notes = notes.filter(
+          (note) =>
+            note.note_title.toLowerCase().includes(searchText.toLowerCase()) ||
+            note.description.toLowerCase().includes(searchText.toLowerCase()) ||
+            note.created_by.toLowerCase().includes(searchText.toLowerCase())
+        );
+      }
+
+      setFilteredNotes(notes);
+    }
+  }, [notesData, searchText]);
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  const handleDeleteNote = (id) => {
+    Modal.confirm({
+      title: "Delete Note",
+      content: "Are you sure you want to delete this note?",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      onOk: async () => {
+        try {
+          await deleteNotes(id).unwrap();
+          message.success("Note deleted successfully");
+          refetch();
+        } catch (error) {
+          message.error(error?.data?.message || "Failed to delete note");
         }
-    ];
+      },
+    });
+  };
 
-    const categories = [
-        { value: 'meeting', color: '#1890ff', label: 'Meeting' },
-        { value: 'design', color: '#722ed1', label: 'Design' },
-        { value: 'technical', color: '#52c41a', label: 'Technical' },
-        { value: 'general', color: '#faad14', label: 'General' }
-    ];
+  const handleEditNote = (note) => {
+    setSelectedNote(note);
+    setEditModalVisible(true);
+  };
 
-    const getCategoryColor = (category) => {
-        const found = categories.find(c => c.value === category);
-        return found ? found.color : '#d9d9d9';
-    };
+  const columns = [
+    {
+      title: "Title",
+      dataIndex: "note_title",
+      key: "note_title",
+      render: (text) => <Text strong>{text}</Text>,
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      render: (text) => (
+        <Text ellipsis={{ tooltip: text }}>
+          {text.length > 100 ? `${text.substring(0, 100)}...` : text}
+        </Text>
+      ),
+    },
+    {
+      title: "Created By",
+      dataIndex: "created_by",
+      key: "created_by",
+    },
+    {
+      title: "Created At",
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (date) => moment(date).format("DD/MM/YYYY HH:mm"),
+    },
+    {
+      title: "Action",
+      key: "action",
+      width: 100,
+      render: (_, record) => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: "edit",
+                icon: <FiEdit2 />,
+                label: "Edit",
+                onClick: () => handleEditNote(record),
+              },
+              {
+                key: "delete",
+                icon: <FiTrash2 />,
+                label: "Delete",
+                onClick: () => handleDeleteNote(record.id),
+                danger: true,
+              },
+            ],
+          }}
+          trigger={["click"]}
+          placement="bottomRight"
+        >
+          <Button
+            type="text"
+            icon={<FiMoreVertical />}
+            className="action-button"
+          />
+        </Dropdown>
+      ),
+    },
+  ];
 
-    const handleAddNote = () => {
-        setIsModalVisible(true);
-    };
-
-    const handleModalOk = () => {
-        form.validateFields().then(values => {
-            console.log('New note values:', values);
-            setIsModalVisible(false);
-            form.resetFields();
-        });
-    };
-
-    const handleEdit = (record) => {
-        console.log('Edit note:', record);
-    };
-
-    const handleDelete = (record) => {
-        console.log('Delete note:', record);
-    };
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    return (
-        <div className="project-notes">
-            <Card
-                title="Project Notes"
-                extra={
-                    <Button
-                        type="primary"
-                        icon={<FiPlus />}
-                        onClick={handleAddNote}
-                    >
-                        Add Note
-                    </Button>
-                }
-            >
-                <List
-                    itemLayout="vertical"
-                    dataSource={notes}
-                    renderItem={note => (
-                        <List.Item
-                            key={note.id}
-                            actions={[
-                                <div className="note-meta" key="meta">
-                                    <span className="created-by">
-                                        <FiUser />
-                                        <Avatar src={note.createdBy.avatar} size="small" />
-                                        {note.createdBy.name}
-                                    </span>
-                                    <span className="created-at">
-                                        <FiClock />
-                                        {formatDate(note.createdAt)}
-                                    </span>
-                                </div>,
-                                <div className="note-actions" key="actions">
-                                    <Button
-                                        type="text"
-                                        icon={<FiEdit2 />}
-                                        className="edit-button"
-                                        onClick={() => handleEdit(note)}
-                                    />
-                                    <Button
-                                        type="text"
-                                        icon={<FiTrash2 />}
-                                        className="delete-button"
-                                        onClick={() => handleDelete(note)}
-                                    />
-                                </div>
-                            ]}
-                        >
-                            <List.Item.Meta
-                                title={
-                                    <div className="note-header">
-                                        <h4>{note.title}</h4>
-                                        <Tag color={getCategoryColor(note.category)}>
-                                            {note.category.charAt(0).toUpperCase() + note.category.slice(1)}
-                                        </Tag>
-                                    </div>
-                                }
-                                description={note.content}
-                            />
-                        </List.Item>
-                    )}
-                />
-            </Card>
-
-            <Modal
-                title="Add New Note"
-                open={isModalVisible}
-                onOk={handleModalOk}
-                onCancel={() => setIsModalVisible(false)}
-                okText="Add Note"
-                width={600}
-            >
-                <Form
-                    form={form}
-                    layout="vertical"
-                >
-                    <Form.Item
-                        name="title"
-                        label="Title"
-                        rules={[{ required: true, message: 'Please enter title' }]}
-                    >
-                        <Input placeholder="Enter note title" />
-                    </Form.Item>
-
-                    <Form.Item
-                        name="category"
-                        label="Category"
-                        rules={[{ required: true, message: 'Please select category' }]}
-                    >
-                        <Input.Group>
-                            {categories.map(category => (
-                                <Tooltip title={category.label} key={category.value}>
-                                    <Tag
-                                        className={`category-tag ${form.getFieldValue('category') === category.value ? 'selected' : ''}`}
-                                        color={category.color}
-                                        onClick={() => form.setFieldsValue({ category: category.value })}
-                                    >
-                                        {category.label}
-                                    </Tag>
-                                </Tooltip>
-                            ))}
-                        </Input.Group>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="content"
-                        label="Content"
-                        rules={[{ required: true, message: 'Please enter content' }]}
-                    >
-                        <Input.TextArea
-                            placeholder="Enter note content"
-                            rows={6}
-                        />
-                    </Form.Item>
-                </Form>
-            </Modal>
+  return (
+    <div className="notes-page">
+      <div className="page-header">
+        <div className="page-title">
+          <Title level={2}>Notes</Title>
+          <Text type="secondary">Manage all notes</Text>
         </div>
-    );
+        <Row justify="center" className="header-actions-wrapper">
+          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
+            <div className="header-actions">
+              <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                placeholder="Search notes..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
+              />
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={() => setCreateModalVisible(true)}
+                className="add-button"
+              >
+                Add Note
+              </Button>
+            </div>
+          </Col>
+        </Row>
+      </div>
+
+      <Card className="notes-table-card">
+        <Table
+          columns={columns}
+          dataSource={filteredNotes}
+          rowKey="id"
+          loading={isLoadingNotes}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} notes`,
+          }}
+        />
+      </Card>
+
+      <CreateNotes
+        open={createModalVisible}
+        onCancel={() => setCreateModalVisible(false)}
+        dealId={id}
+        currentUser={user}
+      />
+
+      <EditNotes
+        open={editModalVisible}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setSelectedNote(null);
+        }}
+        note={selectedNote}
+        dealId={id}
+      />
+    </div>
+  );
 };
 
-export default DealNotes; 
+export default DealNotes;

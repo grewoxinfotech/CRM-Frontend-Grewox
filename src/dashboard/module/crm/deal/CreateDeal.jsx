@@ -59,6 +59,8 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dispatch = useDispatch();
+  const [manualValue, setManualValue] = useState(0);
+  const [selectedProductPrices, setSelectedProductPrices] = useState({});
 
   const [createDeal, { isLoading }] = useCreateDealMutation();
   
@@ -93,6 +95,40 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
     setSelectedPipeline(value);
     // Clear stage selection when pipeline changes
     form.setFieldValue('stage', undefined);
+  };
+
+  // Handle manual value change
+  const handleValueChange = (value) => {
+    const numValue = parseFloat(value) || 0;
+    setManualValue(numValue);
+    
+    // Calculate total product prices
+    const productPricesTotal = Object.values(selectedProductPrices).reduce((sum, price) => sum + price, 0);
+    
+    // Set form value to manual value plus product prices
+    form.setFieldsValue({ value: numValue + productPricesTotal });
+  };
+
+  // Handle products selection change
+  const handleProductsChange = (selectedProductIds) => {
+    const newSelectedPrices = {};
+    
+    // Calculate prices for selected products
+    selectedProductIds.forEach(productId => {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        newSelectedPrices[productId] = product.price || 0;
+      }
+    });
+
+    // Update selected product prices
+    setSelectedProductPrices(newSelectedPrices);
+
+    // Calculate total of selected product prices
+    const productPricesTotal = Object.values(newSelectedPrices).reduce((sum, price) => sum + price, 0);
+
+    // Update form value with manual value plus product prices
+    form.setFieldsValue({ value: manualValue + productPricesTotal });
   };
 
   // Pre-fill form with lead data when available
@@ -388,8 +424,8 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
                   <Input
                     style={{ width: 'calc(100% - 120px)' }}
                     placeholder="Enter amount"
-                    // prefix={<FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />}
                     type="number"
+                    onChange={(e) => handleValueChange(e.target.value)}
                   />
                 </Form.Item>
               </Input.Group>
@@ -563,6 +599,7 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
               style={selectStyle}
               optionFilterProp="children"
               showSearch
+              onChange={handleProductsChange}
             >
               {products?.map((product) => (
                 <Option key={product.id} value={product.id}>

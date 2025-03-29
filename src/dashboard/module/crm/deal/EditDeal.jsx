@@ -53,12 +53,12 @@ const { Option } = Select;
 
 const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const [form] = Form.useForm();
-;
   const [updateDeal, { isLoading }] = useUpdateDealMutation();
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
   const { refetch } = useGetDealsQuery();
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
-
+  const [manualValue, setManualValue] = useState(0);
+  const [selectedProductPrices, setSelectedProductPrices] = useState({});
 
   const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
@@ -147,16 +147,32 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         }
       }
 
-      // Parse products if it's a string
+      // Parse products if it's a string and set initial product prices
       let selectedProducts = [];
+      const initialProductPrices = {};
       if (typeof initialValues.products === 'string') {
         try {
           const parsedProducts = JSON.parse(initialValues.products);
           selectedProducts = parsedProducts.products || [];
+          
+          // Calculate initial product prices
+          selectedProducts.forEach(productId => {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+              initialProductPrices[productId] = product.price || 0;
+            }
+          });
         } catch (e) {
           selectedProducts = [];
         }
       }
+
+      // Set the initial manual value (total value minus product prices)
+      const totalProductPrices = Object.values(initialProductPrices).reduce((sum, price) => sum + price, 0);
+      const initialManualValue = (initialValues.value || 0) - totalProductPrices;
+      
+      setManualValue(initialManualValue);
+      setSelectedProductPrices(initialProductPrices);
 
       const formValues = {
         ...initialValues,
@@ -180,7 +196,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
       form.setFieldsValue(formValues);
       setSelectedPipeline(initialValues.pipeline);
     }
-  }, [initialValues, form, pipelines, dealStages]);
+  }, [initialValues, form, pipelines, dealStages, products]);
 
   const getRoleColor = (role) => {
     const roleColors = {
@@ -256,6 +272,40 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
     e.stopPropagation();
     setDropdownOpen(false);
     setIsAddPipelineVisible(true);
+  };
+
+  // Add handler for value input change
+  const handleValueChange = (value) => {
+    const numValue = parseFloat(value) || 0;
+    setManualValue(numValue);
+    
+    // Calculate total product prices
+    const productPricesTotal = Object.values(selectedProductPrices).reduce((sum, price) => sum + price, 0);
+    
+    // Set form value to manual value plus product prices
+    form.setFieldsValue({ value: numValue + productPricesTotal });
+  };
+
+  // Handle products selection change
+  const handleProductsChange = (selectedProductIds) => {
+    const newSelectedPrices = {};
+    
+    // Calculate prices for selected products
+    selectedProductIds.forEach(productId => {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        newSelectedPrices[productId] = product.price || 0;
+      }
+    });
+
+    // Update selected product prices
+    setSelectedProductPrices(newSelectedPrices);
+
+    // Calculate total of selected product prices
+    const productPricesTotal = Object.values(newSelectedPrices).reduce((sum, price) => sum + price, 0);
+
+    // Update form value with manual value plus product prices
+    form.setFieldsValue({ value: manualValue + productPricesTotal });
   };
 
   return (
@@ -487,6 +537,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                     style={{ width: '70%' }}
                     placeholder="Enter value"
                     type="number"
+                    onChange={(e) => handleValueChange(e.target.value)}
                   />
                 </Form.Item>
               </Input.Group>
@@ -668,6 +719,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 style={selectStyle}
                 optionFilterProp="children"
                 showSearch
+                onChange={handleProductsChange}
               >
                 {products?.map((product) => (
                   <Option key={product.id} value={product.id}>

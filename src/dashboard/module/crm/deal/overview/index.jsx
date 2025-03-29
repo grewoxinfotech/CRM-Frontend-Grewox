@@ -1,16 +1,29 @@
 import React from 'react';
-import { Card, Row, Col, Statistic, Progress, Timeline, Typography, Descriptions } from 'antd';
-import { FiDollarSign, FiUsers, FiClock, FiBriefcase, FiMail, FiPhone, FiGlobe } from 'react-icons/fi';
+import { Card, Row, Col, Typography, Tag, Space } from 'antd';
+import {
+    FiUser,
+    FiMail,
+    FiPhone,
+    FiMapPin,
+    FiDollarSign,
+    FiTarget,
+    FiCalendar,
+    FiUsers,
+    FiActivity,
+    FiFolder,
+    FiClock,
+    FiTrendingUp,
+    FiTrendingDown,
+    FiMinusCircle,
+} from 'react-icons/fi';
 import './overview.scss';
-import { useParams } from 'react-router-dom';
-import { useGetDealsQuery } from '../services/DealApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
 const DealOverview = ({ deal }) => {
-
-
     if (!deal) return <div>Deal not found</div>;
 
     const formatCurrency = (value, currency = "INR") => {
@@ -22,98 +35,179 @@ const DealOverview = ({ deal }) => {
     };
 
     return (
-        <div className="deal-overview">
-            <Row gutter={[24, 24]}>
-                {/* Deal Info Card */}
-                <Col xs={24}>
-                    <Card bordered={false} className="info-card">
-                        <Title level={4}>{deal.dealName}</Title>
-                        <Descriptions column={{ xs: 1, sm: 2, md: 3 }}>
-                            <Descriptions.Item label="Company">
-                                <Text><FiBriefcase className="icon" /> {deal.company_name || '-'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Contact">
-                                <Text>{`${deal.firstName || ''} ${deal.lastName || ''}`}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Email">
-                                <Text><FiMail className="icon" /> {deal.email || '-'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Phone">
-                                <Text><FiPhone className="icon" /> {deal.phone || '-'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Website">
-                                <Text><FiGlobe className="icon" /> {deal.website || '-'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Status">
-                                <Text className={`status-tag ${deal.status?.toLowerCase()}`}>
-                                    {deal.status || 'Unknown'}
-                                </Text>
-                            </Descriptions.Item>
-                        </Descriptions>
+        <div className="overview-content">
+            <Card className="info-card contact-card">
+                <div className="profile-header">
+                    <div className="profile-main">
+                        <div className="company-avatar">
+                            {deal?.company_name ? deal.company_name[0].toUpperCase() : 'C'}
+                        </div>
+                        <div className="profile-info">
+                            <h2 className="company-name">{deal?.company_name || 'Company Name'}</h2>
+                            <div className="contact-name">
+                                <FiUser className="icon" />
+                                {deal?.firstName} {deal?.lastName}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="profile-stats">
+                    <div className="stat-item">
+                        <div className="stat-icon">
+                            <FiMail />
+                        </div>
+                        <div className="stat-content">
+                            <div className="stat-label">Email Address</div>
+                            <a href={`mailto:${deal?.email}`} className="stat-value">
+                                {deal?.email || '-'}
+                            </a>
+                        </div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-icon">
+                            <FiPhone />
+                        </div>
+                        <div className="stat-content">
+                            <div className="stat-label">Phone Number</div>
+                            <a href={`tel:${deal?.phone}`} className="stat-value">
+                                {deal?.phone || '-'}
+                            </a>
+                        </div>
+                    </div>
+                    <div className="stat-item">
+                        <div className="stat-icon">
+                            <FiMapPin />
+                        </div>
+                        <div className="stat-content">
+                            <div className="stat-label">Location</div>
+                            <div className="stat-value">{deal?.address || '-'}</div>
+                        </div>
+                    </div>
+                </div>
                     </Card>
-                </Col>
 
-                {/* Statistics Cards */}
-                <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="stat-card">
-                        <Statistic
-                            title="Deal Value"
-                            value={deal.value}
-                            prefix={<FiDollarSign className="stat-icon" />}
-                            formatter={(value) => formatCurrency(value, deal.currency)}
-                        />
+            {/* Key Metrics Cards */}
+            <Row gutter={[16, 16]} className="metrics-row">
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card lead-value-card">
+                        <div className="metric-icon">
+                            <FiDollarSign />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Deal Value</div>
+                            <div className="metric-value">
+                                {deal?.value ? formatCurrency(deal.value, deal.currency) : '-'}
+                            </div>
+                        </div>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="stat-card">
-                        <Statistic
-                            title="Created Date"
-                            value={dayjs(deal.createdAt).format('MMM DD, YYYY')}
-                            prefix={<FiClock className="stat-icon" />}
-                        />
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card status-card">
+                        <div className="metric-icon">
+                            <FiTarget />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Status</div>
+                            <div className="metric-value">
+                                {deal?.status || '-'}
+                            </div>
+                        </div>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="stat-card">
-                        <Statistic
-                            title="Label"
-                            value={deal.label || 'No Label'}
-                            prefix={<FiUsers className="stat-icon" />}
-                        />
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card created-date-card">
+                        <div className="metric-icon">
+                            <FiCalendar />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Created</div>
+                            <div className="metric-value">
+                                {deal?.createdAt ? dayjs(deal.createdAt).format('MMM DD, YYYY') : '-'}
+                            </div>
+                        </div>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card bordered={false} className="stat-card">
-                        <Statistic
-                            title="Closed Date"
-                            value={deal.closedDate ? dayjs(deal.closedDate).format('MMM DD, YYYY') : 'Not Closed'}
-                            prefix={<FiClock className="stat-icon" />}
-                        />
-                    </Card>
-                </Col>
-
-                {/* Timeline Section */}
-                <Col xs={24}>
-                    <Card title="Deal Timeline" bordered={false}>
-                        <Timeline
-                            items={[
-                                {
-                                    color: 'blue',
-                                    children: `Deal Created on ${dayjs(deal.createdAt).format('MMM DD, YYYY')}`,
-                                },
-                                {
-                                    color: 'green',
-                                    children: `Last Updated on ${dayjs(deal.updatedAt).format('MMM DD, YYYY')}`,
-                                },
-                                deal.closedDate && {
-                                    color: 'red',
-                                    children: `Deal Closed on ${dayjs(deal.closedDate).format('MMM DD, YYYY')}`,
-                                },
-                            ].filter(Boolean)}
-                        />
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card members-card">
+                        <div className="metric-icon">
+                            <FiUsers />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">Deal Members</div>
+                            <div className="metric-value">
+                                {deal?.deal_members ? JSON.parse(deal.deal_members).deal_members.length : '0'}
+                            </div>
+                        </div>
                     </Card>
                 </Col>
             </Row>
+
+            {/* Deal Details Section */}
+            <div className="lead-details-section">
+                <Row gutter={[24, 24]}>
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card source-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiActivity />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Stage</div>
+                                    <div className="detail-value">{deal?.stage || '-'}</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card stage-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiFolder />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Category</div>
+                                    <div className="detail-value">{deal?.category || '-'}</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card category-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiClock />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Expected Close Date</div>
+                                    <div className="detail-value">
+                                        {deal?.expectedCloseDate ? dayjs(deal.expectedCloseDate).format('MMM DD, YYYY') : '-'}
+                                    </div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+
+                    <Col xs={24} sm={12} md={6}>
+                        <div className="detail-card status-card">
+                            <div className="detail-content">
+                                <div className="detail-icon">
+                                    <FiTarget />
+                                </div>
+                                <div className="detail-info">
+                                    <div className="detail-label">Priority</div>
+                                    <div className="detail-value">{deal?.priority || '-'}</div>
+                                </div>
+                                <div className="detail-indicator" />
+                            </div>
+                        </div>
+                    </Col>
+                </Row>
+            </div>
         </div>
     );
 };

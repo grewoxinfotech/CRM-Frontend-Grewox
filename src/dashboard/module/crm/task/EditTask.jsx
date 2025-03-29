@@ -58,7 +58,6 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
   useEffect(() => {
     if (initialValues) {
-      console.log("Initial Values:", initialValues);
 
       const formattedValues = {
         taskName: initialValues.taskName || "",

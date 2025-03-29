@@ -5,53 +5,59 @@ import {
   FiTrash2,
   FiEye,
   FiMoreVertical,
-  FiFileText,
+  FiDollarSign,
 } from "react-icons/fi";
-import { useDeleteInvoiceMutation, useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
+import { useDeleteDealPaymentMutation, useGetDealPaymentsQuery } from "./services/dealpaymentApi";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 
 const { Text } = Typography;
 
-const InvoiceList = ({ deal, onEdit, onView }) => {
+const PaymentsList = ({ deal, onEdit, onView }) => {
   const loggedInUser = useSelector(selectCurrentUser);
-  const { data, isLoading, error } = useGetInvoicesQuery(deal?.deal?.id);
-  const [deleteInvoice, { isLoading: isDeleting }] = useDeleteInvoiceMutation();
+  const { data, isLoading, error } = useGetDealPaymentsQuery(deal?.deal?.id);
+  const [deletePayment, { isLoading: isDeleting }] = useDeleteDealPaymentMutation();
 
   // Ensure data is always an array
-  const invoices = Array.isArray(data) ? data : [];
+  const payments = Array.isArray(data) ? data : [];
 
   const handleDelete = async (record) => {
     try {
-      await deleteInvoice(record.id).unwrap();
-      message.success("Invoice deleted successfully");
+      await deletePayment(record.id).unwrap();
+      message.success("Payment deleted successfully");
     } catch (error) {
       message.error(
-        "Failed to delete invoice: " + (error.data?.message || "Unknown error")
+        "Failed to delete payment: " + (error.data?.message || "Unknown error")
       );
     }
   };
 
-  const getStatusTag = (status) => {
+  const getMethodTag = (method) => {
     let className = "";
-    switch (status?.toLowerCase()) {
-      case "paid":
-        className = "paid";
+    switch (method?.toLowerCase()) {
+      case "cash":
+        className = "cash";
         break;
-      case "pending":
-        className = "pending";
+      case "bank_transfer":
+        className = "bank_transfer";
         break;
-      case "overdue":
-        className = "overdue";
+      case "credit_card":
+        className = "credit_card";
         break;
-      case "draft":
-        className = "draft";
+      case "debit_card":
+        className = "debit_card";
+        break;
+      case "upi":
+        className = "upi";
+        break;
+      case "cheque":
+        className = "cheque";
         break;
       default:
         className = "";
     }
-    return <Tag className={`status-tag ${className}`}>{status || "Unknown"}</Tag>;
+    return <Tag className={`method-tag ${className}`}>{method || "Unknown"}</Tag>;
   };
 
   const getDropdownItems = (record) => ({
@@ -81,14 +87,14 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
 
   const columns = [
     {
-      title: "Invoice Number",
-      dataIndex: "invoiceNumber",
-      key: "invoiceNumber",
-      sorter: (a, b) => (a.invoiceNumber || "").localeCompare(b.invoiceNumber || ""),
+      title: "Invoice",
+      dataIndex: "invoice",
+      key: "invoice",
+      sorter: (a, b) => (a.invoice || "").localeCompare(b.invoice || ""),
       render: (text, record) => (
         <div style={{ display: "flex", alignItems: "center" }}>
           <Avatar 
-            icon={<FiFileText />} 
+            icon={<FiDollarSign />} 
             style={{ 
               backgroundColor: "#e6f7ff", 
               color: "#1890ff",
@@ -113,12 +119,12 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
       render: (text) => text || "-",
     },
     {
-      title: "Due Date",
-      dataIndex: "dueDate",
-      key: "dueDate",
+      title: "Paid On",
+      dataIndex: "paidOn",
+      key: "paidOn",
       sorter: (a, b) => {
-        const dateA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-        const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+        const dateA = a.paidOn ? new Date(a.paidOn).getTime() : 0;
+        const dateB = b.paidOn ? new Date(b.paidOn).getTime() : 0;
         return dateA - dateB;
       },
       render: (date) => (date ? dayjs(date).format("YYYY-MM-DD") : "-"),
@@ -135,10 +141,16 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
       ),
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => getStatusTag(status),
+      title: "Payment Method",
+      dataIndex: "paymentMethod",
+      key: "paymentMethod",
+      render: (method) => getMethodTag(method),
+    },
+    {
+      title: "Transaction ID",
+      dataIndex: "transactionId",
+      key: "transactionId",
+      render: (text) => text || "-",
     },
     {
       title: "Actions",
@@ -161,25 +173,25 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
   ];
 
   if (error) {
-    return <div>Error loading invoices: {error.message}</div>;
+    return <div>Error loading payments: {error.message}</div>;
   }
 
   return (
-    <div className="invoice-content">
+    <div className="payment-content">
       <Table
         columns={columns}
-        dataSource={invoices}
+        dataSource={payments}
         rowKey="id"
         loading={isLoading}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} invoices`,
+          showTotal: (total) => `Total ${total} payments`,
         }}
-        className="invoice-table"
+        className="payment-table"
       />
     </div>
   );
 };
 
-export default InvoiceList;
+export default PaymentsList;

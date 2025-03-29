@@ -11,7 +11,7 @@ import DealOverview from './overview';
 import DealMember from './overview/dealMember';
 import DealFiles from './overview/files';
 
-import DealTasks from './overview/tasks';
+// import DealTasks from './overview/tasks';
 import DealInvoices from './overview/invoices';
 
 import DealPayments from './overview/payments';
@@ -62,15 +62,15 @@ const DealDetail = () => {
             ),
             children: <DealFiles deal={deal} />,
         },
-        {
-            key: 'tasks',
-            label: (
-                <span>
-                    <FiCheckSquare /> Tasks
-                </span>
-            ),
-            children: <DealTasks deal={deal} />,
-        },
+        // {
+        //     key: 'tasks',
+        //     label: (
+        //         <span>
+        //             <FiCheckSquare /> Tasks
+        //         </span>
+        //     ),
+        //     children: <DealTasks deal={deal} />,
+        // },
         {
             key: 'invoices',
             label: (

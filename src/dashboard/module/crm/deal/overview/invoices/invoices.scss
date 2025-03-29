@@ -127,6 +127,38 @@
             font-size: 12px;
         }
     }
+
+    .status-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        
+        &.draft {
+            background-color: #fef3c7 !important;
+            color: #d97706 !important;
+        }
+        
+        &.pending {
+            background-color: #dbeafe !important;
+            color: #2563eb !important;
+        }
+        
+        &.paid {
+            background-color: #d1fae5 !important;
+            color: #059669 !important;
+        }
+        
+        &.overdue {
+            background-color: #fee2e2 !important;
+            color: #dc2626 !important;
+        }
+
+        &:hover {
+            transform: translateY(-1px);
+        }
+    }
 }
 
 // Modal styles

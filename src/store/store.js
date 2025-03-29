@@ -40,7 +40,8 @@ import { customerApi } from "../dashboard/module/sales/customer/services/custApi
 import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceApi.js";
 import { revenueApi } from "../dashboard/module/sales/revenue/services/revenueApi.js";
 import { productApi } from "../dashboard/module/sales/product&services/services/productApi.js";
-import { leaveApi } from "../dashboard/module/hrm/leave/services/leaveApi.js";
+import { leaveApi } from "../dashboard/module/hrm/Leave/services/leaveApi.js";
+import { dealPaymentApi } from "../dashboard/module/crm/deal/overview/payments/services/dealpaymentApi.js";   
 import { subscribedUserApi } from "../superadmin/module/SubscribedUser/services/SubscribedUserApi.js";
 import { ticketApi } from "../dashboard/module/support/ticket/services/ticketApi.js";
 import { calendarApi } from "../dashboard/module/communication/calendar/services/calendarApi.js";
@@ -79,6 +80,7 @@ const rootReducer = combineReducers({
   [esignatureApi.reducerPath]: esignatureApi.reducer,
   [trainingApi.reducerPath]: trainingApi.reducer,
   [pipelineApi.reducerPath]: pipelineApi.reducer,
+  [dealPaymentApi.reducerPath]: dealPaymentApi.reducer,
   [leadStageApi.reducerPath]: leadStageApi.reducer,
   [dealStageApi.reducerPath]: dealStageApi.reducer,
   [sourceApi.reducerPath]: sourceApi.reducer,
@@ -137,6 +139,7 @@ export const store = configureStore({
       .concat(departmentApi.middleware)
       .concat(trainingApi.middleware)
       .concat(pipelineApi.middleware)
+      .concat(dealPaymentApi.middleware)
       .concat(leadStageApi.middleware)
       .concat(dealStageApi.middleware)
       .concat(sourceApi.middleware)
