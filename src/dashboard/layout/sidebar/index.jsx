@@ -241,7 +241,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         {
           title: "Chat",
           icon: <FiMessageSquare />,
-          path: "/dashboard/chat",
+          path: "/dashboard/communication/chat",
           permission: "dashboards-chat"
         },
         {

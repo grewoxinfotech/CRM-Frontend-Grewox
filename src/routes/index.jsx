@@ -61,7 +61,7 @@ import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
 import LeadOverview from "../dashboard/module/crm/lead/overview/index.jsx";
 import Holiday from "../dashboard/module/hrm/Holiday/index.jsx";
 import Salary from "../dashboard/module/hrm/payRoll/index.jsx";
-
+import Chat from "../dashboard/module/communication/chat/index.jsx";
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -291,6 +291,10 @@ const routes = createBrowserRouter([
       {
         path: "communication",
         children: [
+          {
+            path: "chat",
+            element: <Chat />,
+          },
           {
             path: "calendar",
             element: <Calendar />,
