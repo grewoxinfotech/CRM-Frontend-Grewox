@@ -4,7 +4,7 @@ import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
 import { useGetAllAttendancesQuery } from './services/attendanceApi';
 import { useGetEmployeesQuery } from '../Employee/services/employeeApi';
 import { useGetAllHolidaysQuery } from '../Holiday/services/holidayApi';
-import { useGetLeaveQuery } from '../Leave/services/leaveApi'; // Added leave API import
+import { useGetLeaveQuery } from '../leave/services/LeaveApi'; // Added leave API import
 import dayjs from 'dayjs';
 import './attendance.scss';
 
@@ -18,10 +18,10 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
     const employees = React.useMemo(() => {
         if (!employeeData) return [];
         const data = Array.isArray(employeeData) ? employeeData : employeeData.data || [];
-        
+
         return data.map(emp => ({
             id: emp.id,
-            name: emp.firstName && emp.lastName 
+            name: emp.firstName && emp.lastName
                 ? `${emp.firstName} ${emp.lastName}`
                 : emp.username,
             code: emp.employee_code || '-',
@@ -33,22 +33,22 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
     const holidays = React.useMemo(() => {
         if (!holidayData) return new Map();
         const data = Array.isArray(holidayData) ? holidayData : holidayData.data || [];
-        
+
         // Create a map of dates that are holidays
         const holidayMap = new Map();
-        
+
         data.forEach(holiday => {
             const startDate = dayjs(holiday.start_date);
             const endDate = dayjs(holiday.end_date);
             let currentDate = startDate;
-            
+
             // Add all dates between start and end date to the map
             while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
                 holidayMap.set(currentDate.format('YYYY-MM-DD'), holiday);
                 currentDate = currentDate.add(1, 'day');
             }
         });
-        
+
         return holidayMap;
     }, [holidayData]);
 
@@ -56,16 +56,16 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
     const leaves = React.useMemo(() => {
         if (!leaveData) return new Map();
         const data = Array.isArray(leaveData) ? leaveData : leaveData.data || [];
-        
+
         // Create a map of dates that are leaves
         const leaveMap = new Map();
-        
+
         data.forEach(leave => {
             if (leave.status === 'approved' || leave.status === 'pending') {
                 const startDate = dayjs(leave.startDate);
                 const endDate = dayjs(leave.endDate);
                 let currentDate = startDate;
-                
+
                 // Add all dates between start and end date to the map
                 while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
                     leaveMap.set(`${leave.employeeId}_${currentDate.format('YYYY-MM-DD')}`, {
@@ -76,7 +76,7 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
                 }
             }
         });
-        
+
         return leaveMap;
     }, [leaveData]);
 
@@ -151,7 +151,7 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
                 const config = statusConfig[status] || statusConfig['A'];
                 return (
                     <Tooltip title={config.text}>
-                        <Tag 
+                        <Tag
                             className="attendance-status"
                             style={{
                                 color: config.color,
@@ -172,33 +172,33 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
 
     // Generate attendance data
     const data = React.useMemo(() => {
-        const attendances = Array.isArray(attendanceData) 
-            ? attendanceData 
+        const attendances = Array.isArray(attendanceData)
+            ? attendanceData
             : (attendanceData?.data || []);
 
         return employees.map(emp => {
-            const rowData = { 
-                key: emp.id, 
-                name: emp.name, 
+            const rowData = {
+                key: emp.id,
+                name: emp.name,
                 code: emp.code,
-                avatar: emp.avatar 
+                avatar: emp.avatar
             };
 
             days.forEach(day => {
                 // Find attendance for this employee on this specific day
                 const attendance = attendances.find(att => {
                     // Check if the attendance record matches the employee and date
-                    return att.employee === emp.id && 
-                           dayjs(att.date).format('YYYY-MM-DD') === day.fullDate;
+                    return att.employee === emp.id &&
+                        dayjs(att.date).format('YYYY-MM-DD') === day.fullDate;
                 });
 
                 // Check if it's a holiday
                 const holiday = holidays instanceof Map ? holidays.get(day.fullDate) : null;
-                
+
                 // Check if it's a leave day
                 const leaveKey = `${emp.id}_${day.fullDate}`;
                 const leave = leaves instanceof Map ? leaves.get(leaveKey) : null;
-                
+
                 // Check if it's a weekend
                 const isWeekend = ['Sun'].includes(day.day);
 

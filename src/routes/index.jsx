@@ -44,10 +44,6 @@ import Task from "../dashboard/module/crm/task/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
 import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail";
 import Customer from "../dashboard/module/sales/customer/index.jsx";
-import { useSelector } from "react-redux";
-import { parsePermissions, hasPermission } from "../utils/permissionUtils";
-import { Navigate } from "react-router-dom";
-import { selectUserRole } from "../auth/services/authSlice";
 import Invoice from "../dashboard/module/sales/invoice/index.jsx";
 import ProductServices from "../dashboard/module/sales/product&services/index.jsx";
 import Meeting from "../dashboard/module/hrm/Meeting/index.jsx";
@@ -65,16 +61,6 @@ import DealDetail from "../dashboard/module/crm/deal/DealDetail.jsx";
 import LeadOverview from "../dashboard/module/crm/lead/overview/index.jsx";
 import Holiday from "../dashboard/module/hrm/Holiday/index.jsx";
 import Salary from "../dashboard/module/hrm/payRoll/index.jsx";
-const PermissionRoute = ({ children, permissionKey }) => {
-  const userRole = useSelector(selectUserRole);
-  const permissions = parsePermissions(userRole?.permissions);
-
-  if (!hasPermission(permissions, permissionKey)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  return children;
-};
 
 const routes = createBrowserRouter([
   {

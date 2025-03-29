@@ -25,7 +25,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
-import { useGetLeaveQuery } from "./services/leaveApi";
+import { useGetLeaveQuery } from "./services/LeaveApi";
 
 const { Title, Text } = Typography;
 

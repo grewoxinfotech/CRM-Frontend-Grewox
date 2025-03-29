@@ -79,7 +79,7 @@ const ProfileHeader = ({ user, userRole, onEditClick }) => {
                     <Text className="username">@{user?.username || 'superadmin'}</Text>
                     <div className="role-badge">
                         <FiShield />
-                        {formatRole(userRole?.role_name) || 'Super Admin'}
+                        {formatRole(userRole)}
                     </div>
                 </div>
             </div>
@@ -135,7 +135,7 @@ const AdditionalInfo = ({ user, userRole }) => {
         {
             icon: FiShield,
             label: 'Role',
-            value: formatRole(userRole?.role_name)
+            value: formatRole(userRole)
         }
     ];
 

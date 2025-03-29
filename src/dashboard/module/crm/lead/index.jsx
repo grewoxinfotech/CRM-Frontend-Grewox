@@ -51,8 +51,15 @@ const Lead = () => {
   };
 
   const handleEdit = (lead) => {
+    console.log('Opening edit modal with lead:', lead);
     setSelectedLead(lead);
     setIsEditModalOpen(true);
+  };
+
+  const handleEditCancel = () => {
+    console.log('Closing edit modal');
+    setIsEditModalOpen(false);
+    setSelectedLead(null);
   };
 
   const handleDelete = (lead) => {
@@ -147,7 +154,7 @@ const Lead = () => {
       <Card className="lead-content">
         {viewMode === "table" ? (
           <LeadList
-            lead={leads}
+            leads={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
@@ -155,7 +162,7 @@ const Lead = () => {
           />
         ) : (
           <LeadCard
-            lead={leads}
+            leads={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
@@ -165,14 +172,11 @@ const Lead = () => {
       </Card>
 
       <CreateLead open={isModalOpen} onCancel={() => setIsModalOpen(false)} />
-
       <EditLead
         open={isEditModalOpen}
-        onCancel={() => {
-          setIsEditModalOpen(false);
-          setSelectedLead(null);
-        }}
+        onCancel={handleEditCancel}
         initialValues={selectedLead}
+        key={selectedLead?.id}
       />
     </div>
   );

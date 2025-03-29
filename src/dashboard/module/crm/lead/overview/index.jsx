@@ -21,12 +21,14 @@ import {
     FiTrendingUp,
     FiTrendingDown,
     FiMinusCircle,
+    FiPhoneCall
 } from 'react-icons/fi';
 import { useGetLeadQuery } from '../services/LeadApi';
 import LeadActivity from './activity';
 import LeadNotes from './notes';
 import LeadFiles from './files';
 import LeadMembers from './members';
+import LeadFollowup from './followup/index.jsx';
 import './LeadOverview.scss';
 import {
     useGetSourcesQuery,
@@ -370,6 +372,15 @@ const LeadOverview = () => {
                 </span>
             ),
             children: <LeadFiles leadId={leadId} />,
+        },
+        {
+            key: 'followup',
+            label: (
+                <span>
+                    <FiPhoneCall /> Follow-up
+                </span>
+            ),
+            children: <LeadFollowup leadId={leadId} />,
         }
     ];
 

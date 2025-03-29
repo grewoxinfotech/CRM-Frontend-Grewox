@@ -20,7 +20,6 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 const { Text } = Typography;
 
 const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
-  const { data: leadsData, isLoading, error } = useGetLeadsQuery();
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   // Fetch all required data
@@ -253,33 +252,31 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
       width: 80,
       align: "center",
       render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={['click']}
-          placement="bottomRight"
-          arrow
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-button"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </Dropdown>
+        <div onClick={e => e.stopPropagation()}>
+          <Dropdown
+            menu={getDropdownItems(record)}
+            trigger={['click']}
+            placement="bottomRight"
+            arrow
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical />}
+              className="action-button"
+              onClick={e => e.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];
 
-  if (error) {
-    return <div>Error loading leads: {error.message}</div>;
-  }
-
   return (
     <Table
       columns={columns}
-      dataSource={leadsData?.data || []}
+      dataSource={leads?.data || []}
       rowKey="id"
-      loading={isLoading}
+      loading={!leads}
       pagination={{
         pageSize: 10,
         showSizeChanger: true,

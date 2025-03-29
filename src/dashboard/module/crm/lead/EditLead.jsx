@@ -304,7 +304,7 @@ const EditLead = ({ open, onCancel, initialValues }) => {
     <Modal
       title={null}
       open={open}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       footer={null}
       width={800}
       destroyOnClose={true}
@@ -322,9 +322,13 @@ const EditLead = ({ open, onCancel, initialValues }) => {
         },
         mask: {
           backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          zIndex: 1000
         },
         content: {
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+        },
+        wrapper: {
+          zIndex: 1001
         }
       }}
     >

@@ -3,7 +3,7 @@ import { Form, Input, Button, Checkbox, notification } from 'antd';
 import { motion } from 'framer-motion';
 import { FiLock, FiMail, FiBox } from 'react-icons/fi';
 import * as yup from 'yup';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectIsLogin } from '../services/authSlice';
 import form_graphic from '../../assets/auth/form_grapihc.png';
@@ -28,7 +28,6 @@ const validationSchema = yup.object().shape({
 
 export default function Login() {
     const navigate = useNavigate();
-    const location = useLocation();
     const isAuthenticated = useSelector(selectIsLogin);
     const [form] = Form.useForm();
     const [login, { isLoading }] = useLoginMutation();
@@ -40,6 +39,12 @@ export default function Login() {
             navigate('/auth-redirect', { replace: true });
         }
     }, [isAuthenticated, navigate]);
+
+    // Clear any persisted state when login component mounts
+    useEffect(() => {
+        localStorage.removeItem('persist:root');
+        sessionStorage.clear();
+    }, []);
 
     const showNotification = (type, message, description = '') => {
         api[type]({
@@ -79,8 +84,7 @@ export default function Login() {
             const result = await login(values).unwrap();
             if (result.success) {
                 showNotification('success', 'Login Successful', result.message);
-                const from = location.state?.from?.pathname || '/auth-redirect';
-                navigate(from, { replace: true });
+                navigate('/auth-redirect', { replace: true });
             } else {
                 showNotification('error', 'Login Failed', result.message || 'Invalid credentials');
             }

@@ -1,5 +1,5 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { loginSuccess, loginFailure, loginStart, setUserRole } from './authSlice';
+import { loginSuccess, loginFailure, loginStart } from './authSlice';
 import { baseQueryWithReauth } from '../../store/baseQuery';
 
 export const authApi = createApi({
@@ -21,15 +21,15 @@ export const authApi = createApi({
                 try {
                     const { data: response } = await queryFulfilled;
                     if (response.success) {
+                        // Store token in localStorage
+                        localStorage.setItem('token', response.data.token);
+                        localStorage.setItem('user', JSON.stringify(response.data.user));
+
                         dispatch(loginSuccess({
                             user: response.data.user,
                             token: response.data.token,
                             message: response.message
                         }));
-                        // After successful login, fetch role information
-                        if (response.data.user.role_id) {
-                            dispatch(authApi.endpoints.getRole.initiate(response.data.user.role_id));
-                        }
                     } else {
                         dispatch(loginFailure(response.message || 'Login failed'));
                     }
@@ -55,18 +55,13 @@ export const authApi = createApi({
                         // Store token in localStorage
                         localStorage.setItem('token', response.data.token);
                         localStorage.setItem('user', JSON.stringify(response.data.user));
-                        
+
                         // Update Redux store
                         dispatch(loginSuccess({
                             user: response.data.user,
                             token: response.data.token,
                             message: response.message
                         }));
-
-                        // After successful login, fetch role information
-                        if (response.data.user.role_id) {
-                            dispatch(authApi.endpoints.getRole.initiate(response.data.user.role_id));
-                        }
                     } else {
                         dispatch(loginFailure(response.message || 'Login failed'));
                     }
@@ -77,16 +72,6 @@ export const authApi = createApi({
         }),
         getRole: builder.query({
             query: (roleId) => `/roles/${roleId}`,
-            async onQueryStarted(_, { dispatch, queryFulfilled }) {
-                try {
-                    const { data: response } = await queryFulfilled;
-                    if (response.success) {
-                        dispatch(setUserRole(response.data));
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch role:', error);
-                }
-            },
         }),
     }),
 });

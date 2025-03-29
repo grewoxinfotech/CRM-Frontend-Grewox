@@ -12,7 +12,7 @@ import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
 import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
 import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
 import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
-import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";  
+import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
 import { roleApi } from "../dashboard/module/hrm/role/services/roleApi.js";
 import { userApi } from "../dashboard/module/user-management/users/services/userApi.js";
 import { employeeApi } from "../dashboard/module/hrm/Employee/services/employeeApi.js";
@@ -41,7 +41,7 @@ import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceAp
 import { revenueApi } from "../dashboard/module/sales/revenue/services/revenueApi.js";
 import { productApi } from "../dashboard/module/sales/product&services/services/productApi.js";
 import { leaveApi } from "../dashboard/module/hrm/Leave/services/leaveApi.js";
-import { dealPaymentApi } from "../dashboard/module/crm/deal/overview/payments/services/dealpaymentApi.js";   
+import { dealPaymentApi } from "../dashboard/module/crm/deal/overview/payments/services/dealpaymentApi.js";
 import { subscribedUserApi } from "../superadmin/module/SubscribedUser/services/SubscribedUserApi.js";
 import { ticketApi } from "../dashboard/module/support/ticket/services/ticketApi.js";
 import { calendarApi } from "../dashboard/module/communication/calendar/services/calendarApi.js";

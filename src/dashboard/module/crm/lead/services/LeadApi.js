@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "../../../../../../src/store/baseQuery";
 export const leadApi = createApi({
   reducerPath: "leadApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Lead"],
+  tagTypes: ["Lead", "Followup"],
   endpoints: (builder) => ({
     getLeads: builder.query({
       query: (params) => ({
@@ -55,6 +55,48 @@ export const leadApi = createApi({
       }),
       invalidatesTags: ["Lead"],
     }),
+    uploadLeadFiles: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/leads/files/${id}`,
+        method: "POST",
+        body: data,
+        formData: true, // This tells RTK Query that we're sending FormData
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Lead", id },
+        "Lead",
+      ],
+    }),
+    getFollowups: builder.query({
+      query: (id) => ({
+        url: `/followups/${id}`,
+        method: "GET"
+      }),
+      providesTags: ["Followup"]
+    }),
+    createFollowup: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/followups/${id}`,
+        method: "POST",
+        body: data
+      }),
+      invalidatesTags: ["Followup"]
+    }),
+    updateFollowup: builder.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/followups/${id}`,
+        method: "PUT",
+        body: data
+      }),
+      invalidatesTags: ["Followup"]
+    }),
+    deleteFollowup: builder.mutation({
+      query: (id) => ({
+        url: `/followups/${id}`,
+        method: "DELETE"
+      }),
+      invalidatesTags: ["Followup"]
+    })
   }),
 });
 
@@ -65,4 +107,9 @@ export const {
   useUpdateLeadMutation,
   useDeleteLeadMutation,
   useUpdateLeadStageMutation,
+  useUploadLeadFilesMutation,
+  useGetFollowupsQuery,
+  useCreateFollowupMutation,
+  useUpdateFollowupMutation,
+  useDeleteFollowupMutation
 } = leadApi;

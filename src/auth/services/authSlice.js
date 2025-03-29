@@ -18,8 +18,6 @@ const authSlice = createSlice({
         loginStart: (state) => {
             state.isLoading = true;
             state.error = null;
-            state.success = false;
-            state.message = null;
         },
         loginSuccess: (state, action) => {
             const { user, token, message } = action.payload;
@@ -30,42 +28,42 @@ const authSlice = createSlice({
             state.error = null;
             state.success = true;
             state.message = message;
+            state.userRole = user?.roleName || null;
         },
         loginFailure: (state, action) => {
-            state.isLoading = false;
-            state.error = action.payload;
-            state.success = false;
-            state.message = action.payload;
-            state.userRole = null;
-            state.user = null;
-            state.token = null;
-            state.isLogin = false;
+            return {
+                ...initialState,
+                error: action.payload,
+                message: action.payload
+            };
         },
-        logout: (state) => {
-            return initialState;
-        },
-        setUserRole: (state, action) => {
-            state.userRole = action.payload;
-        },
+        logout: () => initialState,
         clearError: (state) => {
             state.error = null;
             state.message = null;
         },
         updateUser: (state, action) => {
-            state.user = { ...state.user, ...action.payload };
+            if (action.payload) {
+                state.user = { ...state.user, ...action.payload };
+                if (action.payload.roleName) {
+                    state.userRole = action.payload.roleName;
+                }
+            }
         },
         setLoading: (state, action) => {
-            state.isLoading = action.payload;
+            state.isLoading = Boolean(action.payload);
         }
     },
     extraReducers: (builder) => {
-        // Add matchers for superadminProfileApi
         builder.addMatcher(
             (action) => action.type === 'superadminProfileApi/executeMutation/fulfilled' &&
                 action.meta.arg.endpointName === 'updateSuperAdminProfile',
             (state, action) => {
                 if (action.payload?.data) {
                     state.user = { ...state.user, ...action.payload.data };
+                    if (action.payload.data.roleName) {
+                        state.userRole = action.payload.data.roleName;
+                    }
                 }
             }
         );
@@ -80,18 +78,17 @@ export const {
     logout,
     clearError,
     updateUser,
-    setLoading,
-    setUserRole
+    setLoading
 } = authSlice.actions;
 
-// Export selectors
-export const selectCurrentUser = (state) => state.auth.user;
-export const selectCurrentToken = (state) => state.auth.token;
-export const selectAuthLoading = (state) => state.auth.isLoading;
-export const selectAuthError = (state) => state.auth.error;
-export const selectIsLogin = (state) => state.auth.isLogin;
-export const selectAuthMessage = (state) => state.auth.message;
-export const selectAuthSuccess = (state) => state.auth.success;
-export const selectUserRole = (state) => state.auth.userRole;
+// Export selectors with null checks
+export const selectCurrentUser = (state) => state.auth?.user || null;
+export const selectCurrentToken = (state) => state.auth?.token || null;
+export const selectAuthLoading = (state) => Boolean(state.auth?.isLoading);
+export const selectAuthError = (state) => state.auth?.error || null;
+export const selectIsLogin = (state) => Boolean(state.auth?.isLogin);
+export const selectAuthMessage = (state) => state.auth?.message || null;
+export const selectAuthSuccess = (state) => Boolean(state.auth?.success);
+export const selectUserRole = (state) => state.auth?.userRole || null;
 
 export default authSlice.reducer;

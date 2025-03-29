@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../auth/services/authSlice';
-import { parsePermissions, hasPermission } from '../../../utils/permissionUtils';
 import {
   FiHome,
   FiSettings,
@@ -68,7 +67,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   }, [userRole]);
 
   const checkPermission = (moduleKey) => {
-    if (userRole?.role_name?.toLowerCase() === 'client') {
+    if (userRole?.toLowerCase() === 'client') {
       return true;
     }
 
@@ -76,14 +75,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
       // Parse permissions if it's a string
       const parsedPermissions = typeof userRole?.permissions === 'string' ?
         JSON.parse(userRole.permissions) : userRole?.permissions;
-
-      // Log for debugging
-      console.log('Checking permission:', {
-        moduleKey,
-        role: userRole?.role_name,
-        hasPermission: !!parsedPermissions?.[moduleKey],
-        permissionData: parsedPermissions?.[moduleKey]
-      });
 
       // Check if the permission exists
       return !!parsedPermissions?.[moduleKey];
