@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Select } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -7,20 +7,30 @@ import {
   FiMoreVertical,
   FiFileText,
 } from "react-icons/fi";
-import { useDeleteInvoiceMutation, useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
+import { useDeleteDealInvoiceMutation, useGetInvoiceByIdQuery, useUpdateDealInvoiceMutation } from "./services/dealinvoiceApi";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 
 const { Text } = Typography;
+const { Option } = Select;
 
-const InvoiceList = ({ deal, onEdit, onView }) => {
+const InvoiceList = ({ deal, onEdit, onView, currencies }) => {
+
+  const dealId = deal?.deal?.id;
   const loggedInUser = useSelector(selectCurrentUser);
-  const { data, isLoading, error } = useGetInvoicesQuery(deal?.deal?.id);
-  const [deleteInvoice, { isLoading: isDeleting }] = useDeleteInvoiceMutation();
+  const { data: invoice, isLoading, error } = useGetInvoiceByIdQuery(dealId);
+  const [deleteInvoice, { isLoading: isDeleting }] = useDeleteDealInvoiceMutation();
+  const [updateInvoice] = useUpdateDealInvoiceMutation();
 
-  // Ensure data is always an array
-  const invoices = Array.isArray(data) ? data : [];
+  // Ensure invoices is always an array
+  const invoices = React.useMemo(() => {
+    if (!invoice?.data) return [];
+    if (Array.isArray(invoice.data)) return invoice.data;
+    if (invoice.data && typeof invoice.data === 'object') return [invoice.data];
+    return [];
+  }, [invoice]);
+
 
   const handleDelete = async (record) => {
     try {
@@ -33,25 +43,63 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
     }
   };
 
+  const handleStatusChange = async (record, newStatus) => {
+    try {
+      // Parse items if it's a string
+      let items = record.items;
+      try {
+        if (typeof record.items === 'string') {
+          items = JSON.parse(record.items);
+        }
+      } catch (e) {
+        console.error('Error parsing items:', e);
+        items = {};
+      }
+
+      // Prepare the data for update
+      const updateData = {
+        ...record,
+        status: newStatus,
+        items: items // Send parsed items object
+      };
+
+      // Remove fields that might cause issues
+      delete updateData.createdAt;
+      delete updateData.updatedAt;
+      delete updateData.created_by;
+      delete updateData.updated_by;
+
+      await updateInvoice({
+        id: record.id,
+        data: updateData
+      }).unwrap();
+      
+      message.success("Invoice status updated successfully");
+    } catch (error) {
+      console.error('Update error:', error);
+      message.error("Failed to update invoice status: " + (error.data?.message || "Unknown error"));
+    }
+  };
+
   const getStatusTag = (status) => {
-    let className = "";
+    let color = "";
     switch (status?.toLowerCase()) {
       case "paid":
-        className = "paid";
+        color = "success";
         break;
       case "pending":
-        className = "pending";
+        color = "warning";
         break;
       case "overdue":
-        className = "overdue";
+        color = "error";
         break;
       case "draft":
-        className = "draft";
+        color = "default";
         break;
       default:
-        className = "";
+        color = "default";
     }
-    return <Tag className={`status-tag ${className}`}>{status || "Unknown"}</Tag>;
+    return <Tag color={color}>{status || "Unknown"}</Tag>;
   };
 
   const getDropdownItems = (record) => ({
@@ -107,10 +155,32 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
       ),
     },
     {
-      title: "Created By",
-      dataIndex: "createdBy",
-      key: "createdBy",
-      render: (text) => text || "-",
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      width: 150,
+      render: (status, record) => (
+        <Select
+          value={status || "draft"}
+          style={{ width: "100%" }}
+          onChange={(value) => handleStatusChange(record, value)}
+          bordered={false}
+          dropdownMatchSelectWidth={false}
+        >
+          <Option value="draft">
+            <Tag color="default">Draft</Tag>
+          </Option>
+          <Option value="pending">
+            <Tag color="warning">Pending</Tag>
+          </Option>
+          <Option value="paid">
+            <Tag color="success">Paid</Tag>
+          </Option>
+          <Option value="overdue">
+            <Tag color="error">Overdue</Tag>
+          </Option>
+        </Select>
+      ),
     },
     {
       title: "Due Date",
@@ -126,19 +196,17 @@ const InvoiceList = ({ deal, onEdit, onView }) => {
     {
       title: "Amount",
       key: "amount",
-      render: (_, record) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Text strong>
-            {record.currency} {record.amount ? `${record.amount}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "-"}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => getStatusTag(status),
+      render: (_, record) => {
+        const currencyDetails = currencies?.find(c => c.id === record.currency);
+        
+        return (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Text strong>
+              {currencyDetails?.currencyIcon || '₹'} {record.total ? `${record.total}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "-"}
+            </Text>
+          </div>
+        );
+      },
     },
     {
       title: "Actions",

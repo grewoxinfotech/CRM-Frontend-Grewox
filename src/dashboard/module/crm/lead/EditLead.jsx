@@ -198,7 +198,6 @@ const EditLead = ({ open, onCancel, initialValues }) => {
         }
       });
 
-      console.log('Submitting lead data:', formData);
       await updateLead({ id: initialValues.id, data: formData }).unwrap();
       message.success("Lead updated successfully");
       onCancel();

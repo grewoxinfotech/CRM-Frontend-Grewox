@@ -67,14 +67,17 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   }, [userRole]);
 
   const checkPermission = (moduleKey) => {
-    if (userRole?.toLowerCase() === 'client') {
+    if (!userRole) return false;
+
+    // Check if user is a client
+    if (userRole.role_name?.toLowerCase() === 'client') {
       return true;
     }
 
     try {
       // Parse permissions if it's a string
-      const parsedPermissions = typeof userRole?.permissions === 'string' ?
-        JSON.parse(userRole.permissions) : userRole?.permissions;
+      const parsedPermissions = typeof userRole.permissions === 'string' ?
+        JSON.parse(userRole.permissions) : userRole.permissions;
 
       // Check if the permission exists
       return !!parsedPermissions?.[moduleKey];

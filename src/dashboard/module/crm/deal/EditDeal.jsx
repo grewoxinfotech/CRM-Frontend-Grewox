@@ -753,17 +753,22 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               label={<span style={formItemStyle}>Closed Date</span>}
             >
               <DatePicker
+                size="large"
+                format="YYYY-MM-DD"
                 style={{
                   width: '100%',
-                  height: '48px',
-                  borderRadius: '10px',
-                  padding: '8px 16px',
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e6e8eb',
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
                 }}
-                format="YYYY-MM-DD"
-                placeholder="Select closed date"
+                disabledDate={(current) => {
+                  return current && current < dayjs().startOf('day');
+                }}
+                placeholder="Select date"
                 suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+                superNextIcon={null}
+                superPrevIcon={null}
               />
             </Form.Item>
 

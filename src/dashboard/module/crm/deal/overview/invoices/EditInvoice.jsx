@@ -31,19 +31,16 @@ import dayjs from "dayjs";
 import "./invoices.scss";
 import { useGetAllTaxesQuery } from "../../../../settings/tax/services/taxApi";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
-
+import { useUpdateDealInvoiceMutation } from "./services/dealinvoiceApi";
 const { Text } = Typography;
 const { Option } = Select;
 
-const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
+const EditInvoice = ({ open, deal,currencies, onCancel, onSubmit, initialValues }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [updateDealInvoice, { isLoading: isUpdating }] = useUpdateDealInvoiceMutation();
   const [selectedCurrency, setSelectedCurrency] = useState(null);
   const { data: taxesData = [] } = useGetAllTaxesQuery();
-  const { data: currencies = [] } = useGetAllCurrenciesQuery({
-    page: 1,
-    limit: 100
-  });
   
   const taxes = taxesData?.data || [];
   
@@ -67,7 +64,8 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
             tax: value.tax || 0,
             tax_name: value.tax_name || "",
             tax_amount: value.tax_amount || 0,
-            amount: value.amount || 0
+            amount: value.amount || 0,
+            discount_amount: value.discount_amount || 0
           }));
         } else if (typeof initialValues.items === 'string') {
           const parsedItems = JSON.parse(initialValues.items);
@@ -79,10 +77,12 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
               quantity: value.quantity || 1,
               unit_price: value.unit_price || 0,
               hsn_sac: value.hsn_sac || "",
+              discount: value.discount || 0,
               tax: value.tax || 0,
               tax_name: value.tax_name || "",
               tax_amount: value.tax_amount || 0,
-              amount: value.amount || 0
+              amount: value.amount || 0,
+              discount_amount: value.discount_amount || 0
             }));
           }
         }
@@ -91,7 +91,6 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
         items = [];
       }
 
-      console.log("Processed items:", items);
 
       // Format the initial values
       const formattedValues = {
@@ -105,14 +104,17 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
           quantity: 1,
           unit_price: 0,
           hsn_sac: "",
+          discount: 0,
           tax: 0,
           tax_name: "",
           tax_amount: 0,
-          amount: 0
+          amount: 0,
+          discount_amount: 0
         }],
-        sub_total: initialValues.sub_total || 0,
-        item_discount: initialValues.item_discount || 0,
-        total_tax: initialValues.total_tax || 0,
+        subtotal: initialValues.subtotal || 0,
+        discount: initialValues.discount || 0,
+        tax: initialValues.tax || 0,
+        total_discount: initialValues.total_discount || 0,
         total: initialValues.total || 0,
       };
 
@@ -121,6 +123,10 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
 
       // Calculate initial totals
       calculateTotals(items);
+
+      // Set tax enabled if any item has tax
+      const hasTax = items.some(item => item.tax > 0);
+      setEnableTax(hasTax);
     }
   }, [initialValues, form]);
 
@@ -158,14 +164,14 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
       totalDiscount += discount_amount;
     });
 
-    const itemDiscount = Number(form.getFieldValue("item_discount")) || 0;
+    const itemDiscount = Number(form.getFieldValue("discount")) || 0;
     const additionalDiscountAmount = (subTotal * itemDiscount) / 100;
     const totalAmount = subTotal - additionalDiscountAmount + totalTax;
 
     // Update form values
     form.setFieldsValue({
-      sub_total: subTotal.toFixed(2),
-      total_tax: totalTax.toFixed(2),
+      subtotal: subTotal.toFixed(2),
+      tax: totalTax.toFixed(2),
       total_discount: (totalDiscount + additionalDiscountAmount).toFixed(2),
       total: totalAmount.toFixed(2),
     });
@@ -227,16 +233,22 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
         currency: values.currency,
         status: values.status,
         items: itemsObject,
-        sub_total: values.sub_total,
-        item_discount: values.item_discount,
-        total_tax: values.total_tax,
+        subtotal: values.subtotal,
+        discount: values.discount,
+        tax: values.tax,
+        total_discount: values.total_discount,
         total: values.total,
       };
 
-      await onSubmit(formData);
+      const data = {
+       ...formData
+      }
+      await updateDealInvoice({id: initialValues.id, data}).unwrap();
       message.success("Invoice updated successfully");
+      form.resetFields();
+      onCancel();
     } catch (error) {
-      message.error("Failed to update invoice");
+      message.error("Failed to update invoice: " + (error.data?.message || "Unknown error")); 
       console.error("Submit Error:", error);
     } finally {
       setLoading(false);
@@ -769,7 +781,7 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
                 }}
               >
                 <Text>Sub Total</Text>
-                <Form.Item name="sub_total" style={{ margin: 0 }}>
+                <Form.Item name="subtotal" style={{ margin: 0 }}>
                   <InputNumber
                     disabled
                     size="large"
@@ -791,9 +803,9 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
                   marginBottom: "12px",
                 }}
               >
-                <Text>Item Discount</Text>
+                <Text>Discount</Text>
                 <Space>
-                  <Form.Item name="item_discount" style={{ margin: 0 }}>
+                  <Form.Item name="discount" style={{ margin: 0 }}>
                     <InputNumber
                       placeholder="%"
                       size="large"
@@ -804,7 +816,9 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
                       }}
                       formatter={(value) => `${value}`}
                       parser={(value) => value.replace("%", "")}
-                      onChange={(value) => handleItemChange(value, "item_discount", "item0")}
+                      onChange={() =>
+                        calculateTotals(form.getFieldValue("items"))
+                      }
                     />
                   </Form.Item>
                   <Text>%</Text>
@@ -817,8 +831,8 @@ const EditInvoice = ({ open, deal, onCancel, onSubmit, initialValues }) => {
                   marginBottom: "12px",
                 }}
               >
-                <Text>Total Tax</Text>
-                <Form.Item name="total_tax" style={{ margin: 0 }}>
+                <Text>Tax</Text>
+                <Form.Item name="tax" style={{ margin: 0 }}>
                   <InputNumber
                     disabled
                     size="large"

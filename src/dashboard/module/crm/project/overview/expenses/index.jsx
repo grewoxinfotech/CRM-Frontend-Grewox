@@ -149,22 +149,18 @@ const ProjectExpenses = ({ project }) => {
 
     const handleModalOk = () => {
         form.validateFields().then(values => {
-            console.log('New expense values:', values);
             setIsModalVisible(false);
             form.resetFields();
         });
     };
 
     const handleEdit = (record) => {
-        console.log('Edit expense:', record);
     };
 
     const handleDelete = (record) => {
-        console.log('Delete expense:', record);
     };
 
     const handleViewReceipt = (receipt) => {
-        console.log('View receipt:', receipt);
     };
 
     return (
@@ -275,7 +271,6 @@ const ProjectExpenses = ({ project }) => {
                             multiple={false}
                             action="/upload.do"
                             onChange={info => {
-                                console.log(info);
                             }}
                         >
                             <p className="ant-upload-drag-icon">

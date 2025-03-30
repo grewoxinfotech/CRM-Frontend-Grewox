@@ -23,6 +23,7 @@ import "./invoices.scss";
 import CreateInvoice from "./CreateInvoice";
 import InvoiceList from "./InvoiceList";
 import EditInvoice from "./EditInvoice";
+import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
 
 const { Title, Text } = Typography;
 
@@ -31,6 +32,11 @@ const DealInvoice = (deal) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const { data: currencies = [] } = useGetAllCurrenciesQuery({
+    page: 1,
+    limit: 100
+  });
+
 
   const handleCreate = () => {
     setSelectedInvoice(null);
@@ -121,6 +127,7 @@ const DealInvoice = (deal) => {
       <Card className="invoice-content">
         <InvoiceList
           deal={deal}
+          currencies={currencies}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
@@ -129,6 +136,8 @@ const DealInvoice = (deal) => {
 
       <CreateInvoice
         open={createModalVisible}
+        deal={deal}
+        currencies={currencies}
         onCancel={() => setCreateModalVisible(false)}
         dealId={deal?.deal?.id}
       />
@@ -139,6 +148,7 @@ const DealInvoice = (deal) => {
           setEditModalVisible(false);
           setSelectedInvoice(null);
         }}
+        currencies={currencies}
         initialValues={selectedInvoice}
         dealId={deal?.deal?.id}
       />

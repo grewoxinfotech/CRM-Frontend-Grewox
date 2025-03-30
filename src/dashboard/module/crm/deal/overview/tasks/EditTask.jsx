@@ -10,7 +10,6 @@ const { TextArea } = Input;
 
 const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
-    console.log("initialValues", initialValues)
     const [form] = Form.useForm();
     const [updateTask, { isLoading }] = useUpdateTaskMutation();
     const [fileList, setFileList] = useState([]);
@@ -37,7 +36,6 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
     useEffect(() => {
         if (initialValues) {
-            console.log('Initial Values:', initialValues);
 
             const formattedValues = {
                 taskName: initialValues.taskName || '',

@@ -51,13 +51,11 @@ const Lead = () => {
   };
 
   const handleEdit = (lead) => {
-    console.log('Opening edit modal with lead:', lead);
     setSelectedLead(lead);
     setIsEditModalOpen(true);
   };
 
   const handleEditCancel = () => {
-    console.log('Closing edit modal');
     setIsEditModalOpen(false);
     setSelectedLead(null);
   };

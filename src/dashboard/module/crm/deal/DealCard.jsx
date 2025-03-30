@@ -13,7 +13,7 @@ import {
   FiPhone
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation, useUpdateDealStageMutation } from "./services/DealApi";
+import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation, useUpdateDealStageMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLabelsQuery, useGetSourcesQuery } from "../crmsystem/souce/services/SourceApi";

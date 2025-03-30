@@ -9,6 +9,7 @@ import {
   DatePicker,
   InputNumber,
   message,
+  Tag,
 } from "antd";
 import {
   FiDollarSign,
@@ -18,6 +19,7 @@ import {
   FiHash,
   FiFileText,
   FiMessageSquare,
+  FiTarget,
 } from "react-icons/fi";
 import { useUpdateDealPaymentMutation } from "./services/dealpaymentApi";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
@@ -36,7 +38,8 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
     limit: 100
   });
   const { data: invoicesResponse = { data: [] } } = useGetDealInvoicesQuery(dealId);
-  const invoicesData = invoicesResponse.data || [];
+  const invoicessData = invoicesResponse.data
+  const invoicesData = invoicessData.filter(invoice => invoice.related_id === dealId);
 
   const handleInvoiceChange = (value) => {
     const selectedInvoice = invoicesData.find(invoice => invoice.id === value);
@@ -49,30 +52,44 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
   };
 
   useEffect(() => {
-    if (initialValues) {
+    if (initialValues && invoicesData.length > 0) {
+      const selectedInvoice = invoicesData.find(inv => inv.id === initialValues.invoice);
+      
       form.setFieldsValue({
         invoice: initialValues.invoice,
         paidOn: initialValues.paidOn ? dayjs(initialValues.paidOn) : null,
         amount: initialValues.amount,
-        currency: initialValues.currency,
+        currency: selectedInvoice?.currency || initialValues.currency,
         transactionId: initialValues.transactionId,
         paymentMethod: initialValues.paymentMethod,
+        status: initialValues.status || 'pending',
         remark: initialValues.remark,
       });
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, invoicesData]);
 
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
-      await onSubmit({
+      const selectedInvoice = invoicesData.find(inv => inv.id === values.invoice);
+      
+      const formattedValues = {
         ...values,
         paidOn: values.paidOn?.format("YYYY-MM-DD"),
         amount: values.amount?.toString(),
         transactionId: values.transactionId?.toString(),
         invoice: values.invoice?.toString(),
-        currency: values.currency?.toString(),
-      });
+        currency: selectedInvoice?.currency || values.currency?.toString(),
+        status: values.status || 'pending',
+      };
+
+      
+      await updatePayment({
+        id: initialValues.id, 
+        data: formattedValues
+      }).unwrap();
+      
+      message.success("Payment updated successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
@@ -209,7 +226,7 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
           >
             {invoicesData.map((invoice) => (
               <Option key={invoice.id} value={invoice.id}>
-                {invoice.invoiceNumber} - {invoice.customer} ({invoice.total})
+                {invoice.salesInvoiceNumber} - {invoice.customer} ({invoice.total})
               </Option>
             ))}
           </Select>
@@ -247,8 +264,8 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
             formatter={(value) => {
               const selectedInvoice = form.getFieldValue('invoice');
               const invoice = invoicesData.find(inv => inv.id === selectedInvoice);
-              const currencySymbol = invoice?.currency ? currencies.find(c => c.id === invoice.currency)?.currencyIcon || '₹' : '₹';
-              return `${currencySymbol} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+              const currencyDetails = currencies.find(c => c.id === invoice?.currency);
+              return `${currencyDetails?.currencyIcon || '₹'} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
             }}
             parser={(value) => value.replace(/[^\d.]/g, "")}
           />
@@ -317,6 +334,35 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
             <Option value="debit_card">Debit Card</Option>
             <Option value="upi">UPI</Option>
             <Option value="cheque">Cheque</Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="status"
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              <FiTarget style={{ marginRight: "8px", color: "#1890ff" }} />
+              Status <span style={{ color: "#ff4d4f" }}>*</span>
+            </span>
+          }
+          rules={[{ required: true, message: "Please select status" }]}
+        >
+          <Select
+            placeholder="Select status"
+            style={{ width: "100%" }}
+          >
+            <Option value="pending">
+              <Tag color="warning">Pending</Tag>
+            </Option>
+            <Option value="completed">
+              <Tag color="success">Completed</Tag>
+            </Option>
+            <Option value="failed">
+              <Tag color="error">Failed</Tag>
+            </Option>
+            <Option value="cancelled">
+              <Tag color="default">Cancelled</Tag>
+            </Option>
           </Select>
         </Form.Item>
 

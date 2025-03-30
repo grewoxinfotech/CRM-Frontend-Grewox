@@ -28,7 +28,6 @@ const DealTasks = (deal) => {
     
     const dealdata = deal.deal;
 
-    // console.log("dealdata", dealdata)
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -444,7 +443,6 @@ export default DealTasks;
 
 //     const handleModalOk = () => {
 //         form.validateFields().then(values => {
-//             console.log('New task values:', values);
 //             setIsModalVisible(false);
 //             form.resetFields();
 //         });

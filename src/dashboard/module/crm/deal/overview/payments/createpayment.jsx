@@ -36,7 +36,10 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
     limit: 100
   });
   const { data: invoicesResponse = { data: [] } } = useGetDealInvoicesQuery(dealId);
-  const invoicesData = invoicesResponse.data || [];
+  const invoicessData = invoicesResponse.data
+  const invoicesData = invoicessData.filter(invoice => invoice.related_id === dealId);
+
+
 
   const handleInvoiceChange = (value) => {
     const selectedInvoice = invoicesData.find(invoice => invoice.id === value);

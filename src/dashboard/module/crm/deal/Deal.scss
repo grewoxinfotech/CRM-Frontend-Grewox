@@ -591,3 +591,102 @@
     }
   }
 }
+
+// Add DatePicker styles
+.ant-picker {
+  &.ant-picker-large {
+    .ant-picker-input {
+      input {
+        font-size: 14px;
+        
+        &::placeholder {
+          color: #9CA3AF;
+        }
+      }
+    }
+  }
+
+  &:hover, &:focus, &-focused {
+    border-color: #1890ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+  }
+
+  .ant-picker-suffix {
+    color: #1890ff;
+    font-size: 16px;
+  }
+}
+
+.ant-picker-dropdown {
+  .ant-picker-panel-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  .ant-picker-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 12px;
+
+    button {
+      &:hover {
+        color: #1890ff;
+      }
+    }
+
+    .ant-picker-header-view {
+      button:hover {
+        color: #1890ff;
+      }
+    }
+  }
+
+  .ant-picker-body {
+    padding: 8px;
+
+    th {
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    td {
+      &.ant-picker-cell {
+        &-in-view {
+          color: #1f2937;
+        }
+
+        &-today .ant-picker-cell-inner {
+          border-color: #1890ff;
+          color: #1890ff;
+        }
+
+        &-selected .ant-picker-cell-inner {
+          background: #1890ff;
+          color: #ffffff;
+        }
+
+        &-disabled {
+          color: rgba(0, 0, 0, 0.25);
+          
+          .ant-picker-cell-inner {
+            background: #f5f5f5;
+          }
+        }
+
+        .ant-picker-cell-inner {
+          min-width: 28px;
+          height: 28px;
+          line-height: 28px;
+          border-radius: 6px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: #e6f7ff;
+            color: #1890ff;
+          }
+        }
+      }
+    }
+  }
+}

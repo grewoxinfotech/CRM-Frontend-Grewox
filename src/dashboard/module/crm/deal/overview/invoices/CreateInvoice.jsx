@@ -36,20 +36,17 @@ import { useGetAllCurrenciesQuery } from "../../../../settings/services/settings
 
 const { Text } = Typography;
 const { Option } = Select;
-const CreateInvoice = ({ open, deal, onCancel, onSubmit, setCreateModalVisible }) => {
+const CreateInvoice = ({ open,currencies, dealId, deal, onCancel, onSubmit, setCreateModalVisible }) => {
 
-  const dealId = deal.deal.id;
+  
 
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(null);
-  const [createDealInvoice, { isLoading }] = useCreateDealInvoiceMutation();
+  const [createDealInvoice, { isLoading }] = useCreateDealInvoiceMutation(dealId);
   const { data: productsData } = useGetProductsQuery();
   const { data: taxesData = [] } = useGetAllTaxesQuery();
-  const { data: currencies = [] } = useGetAllCurrenciesQuery({
-    page: 1,
-    limit: 100
-  });
+ 
 
   
   const taxes = taxesData?.data || [];
@@ -89,14 +86,14 @@ const CreateInvoice = ({ open, deal, onCancel, onSubmit, setCreateModalVisible }
       totalDiscount += discount_amount;
     });
 
-    const itemDiscount = Number(form.getFieldValue("item_discount")) || 0;
+    const itemDiscount = Number(form.getFieldValue("discount")) || 0;
     const additionalDiscountAmount = (subTotal * itemDiscount) / 100;
     const totalAmount = subTotal - additionalDiscountAmount + totalTax;
 
     // Update form values
     form.setFieldsValue({
       subtotal: subTotal.toFixed(2),
-      total_tax: totalTax.toFixed(2),
+      tax: totalTax.toFixed(2),
       total_discount: (totalDiscount + additionalDiscountAmount).toFixed(2),
       total: totalAmount.toFixed(2),
     });
@@ -227,23 +224,21 @@ const CreateInvoice = ({ open, deal, onCancel, onSubmit, setCreateModalVisible }
         status: values.status || "draft",
         items: itemsObject,
         subtotal: values.subtotal || 0,
-        item_discount: values.item_discount || 0,
-        total_tax: values.total_tax || 0,
+        discount: values.discount || 0,
+        tax: values.tax || 0,
         total_discount: values.total_discount || 0,
         total: values.total || 0,
       };
 
       const data = payload;
 
-      const result = await createDealInvoice({id: dealId, data}).unwrap();
-      
+      await createDealInvoice({id: dealId, data}).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
-      setCreateModalVisible(false);
       onCancel();
     } catch (error) {
-      console.error("Submit Error:", error);
-      message.error("Failed to create invoice");
+      message.error("Failed to create invoice: " + (error.data?.message || "Unknown error")); 
+      console.error("Create Invoice Error:", error);
     } finally {
       setLoading(false);
     }
@@ -530,6 +525,85 @@ const CreateInvoice = ({ open, deal, onCancel, onSubmit, setCreateModalVisible }
           </div>
         </Divider>
 
+        <Form.Item label={<Text strong>Select Product</Text>}>
+          <Select
+            showSearch
+            placeholder="Search and select product"
+            optionFilterProp="children"
+            onChange={(productId) => {
+              const product = productsData?.data?.find(p => p.id === productId);
+              if (product) {
+                const items = form.getFieldValue('items') || [];
+                const newItem = {
+                  item_name: product.name,
+                  quantity: 1,
+                  unit_price: product.price,
+                  hsn_sac: product.hsn_sac || '',
+                  tax: 0,
+                  tax_name: "",
+                  tax_amount: 0,
+                  amount: product.price,
+                  discount: 0
+                };
+                form.setFieldsValue({
+                  items: [...items, newItem]
+                });
+                calculateTotals([...items, newItem]);
+              }
+            }}
+            style={{ width: '100%' }}
+            dropdownStyle={{ maxHeight: 400 }}
+            optionLabelProp="label"
+          >
+            {productsData?.data?.map(product => (
+              <Option 
+                key={product.id} 
+                value={product.id}
+                label={product.name}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0' }}>
+                  <div style={{ 
+                    width: '40px', 
+                    height: '40px', 
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    marginRight: '12px',
+                    flexShrink: 0
+                  }}>
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover' 
+                      }}
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/40';
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ 
+                      fontWeight: 500,
+                      color: '#1f2937',
+                      marginBottom: '4px'
+                    }}>
+                      {product.name}
+                    </div>
+                    <div style={{ 
+                      fontSize: '12px',
+                      color: '#6b7280'
+                    }}>
+                      Price: {selectedCurrency || '₹'}{product.price}
+                    </div>
+                  </div>
+                </div>
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
         <Form.List name="items">
           {(fields, { add, remove }) => (
             <>
@@ -793,9 +867,9 @@ const CreateInvoice = ({ open, deal, onCancel, onSubmit, setCreateModalVisible }
                   marginBottom: "12px",
                 }}
               >
-                <Text>Item Discount</Text>
+                <Text>Discount</Text>
                 <Space>
-                  <Form.Item name="item_discount" style={{ margin: 0 }}>
+                  <Form.Item name="discount" style={{ margin: 0 }}>
                     <InputNumber
                       placeholder="%"
                       size="large"
@@ -821,8 +895,8 @@ const CreateInvoice = ({ open, deal, onCancel, onSubmit, setCreateModalVisible }
                   marginBottom: "12px",
                 }}
               >
-                <Text>Total Tax</Text>
-                <Form.Item name="total_tax" style={{ margin: 0 }}>
+                <Text>Tax</Text>
+                <Form.Item name="tax" style={{ margin: 0 }}>
                   <InputNumber
                     disabled
                     size="large"

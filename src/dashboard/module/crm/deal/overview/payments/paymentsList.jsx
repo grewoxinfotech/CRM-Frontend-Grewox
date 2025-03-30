@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Select } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -7,20 +7,89 @@ import {
   FiMoreVertical,
   FiDollarSign,
 } from "react-icons/fi";
-import { useDeleteDealPaymentMutation, useGetDealPaymentsQuery } from "./services/dealpaymentApi";
+import { useDeleteDealPaymentMutation, useGetDealPaymentsQuery, useUpdateDealPaymentMutation } from "./services/dealpaymentApi";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
+import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
 
 const { Text } = Typography;
+const { Option } = Select;
 
 const PaymentsList = ({ deal, onEdit, onView }) => {
-  const loggedInUser = useSelector(selectCurrentUser);
-  const { data, isLoading, error } = useGetDealPaymentsQuery(deal?.deal?.id);
-  const [deletePayment, { isLoading: isDeleting }] = useDeleteDealPaymentMutation();
 
-  // Ensure data is always an array
-  const payments = Array.isArray(data) ? data : [];
+  const dealId = deal?.deal?.id;
+  const loggedInUser = useSelector(selectCurrentUser);
+  const { data: paymentsResponse, isLoading, error } = useGetDealPaymentsQuery(dealId);
+  const [deletePayment, { isLoading: isDeleting }] = useDeleteDealPaymentMutation();
+  const [updatePayment] = useUpdateDealPaymentMutation();
+  const { data: currencies = [] } = useGetAllCurrenciesQuery({
+    page: 1,
+    limit: 100
+  });
+  const { data: dealinvoicedata } = useGetDealInvoicesQuery(dealId);
+
+  // Ensure payments is always an array and filter by related_id
+  const payments = React.useMemo(() => {
+    const paymentData = Array.isArray(paymentsResponse?.data) 
+      ? paymentsResponse.data 
+      : paymentsResponse?.data 
+        ? [paymentsResponse.data] 
+        : [];
+    
+    // Filter payments where related_id matches dealId
+    return paymentData.filter(payment => payment.related_id === dealId);
+  }, [paymentsResponse, dealId]);
+
+
+
+  // Function to get currency details by ID or code
+  const getCurrencyDetails = (currencyIdOrCode) => {
+    const currency = currencies.find(c => c.id === currencyIdOrCode || c.currencyCode === currencyIdOrCode);
+    return currency || { currencyIcon: currencyIdOrCode, currencyCode: currencyIdOrCode };
+  };
+
+  // Function to get invoice details by ID
+  const getInvoiceDetails = (invoiceId) => {
+    return dealinvoicedata?.data?.find(inv => inv.id === invoiceId);
+  };
+
+  const handleStatusChange = async (record, newStatus) => {
+    try {
+      await updatePayment({
+        id: record.id,
+        data: {
+          ...record,
+          status: newStatus
+        }
+      }).unwrap();
+      message.success("Payment status updated successfully");
+    } catch (error) {
+      message.error("Failed to update payment status: " + (error.data?.message || "Unknown error"));
+    }
+  };
+
+  const getStatusTag = (status) => {
+    let color = "";
+    switch (status?.toLowerCase()) {
+      case "completed":
+        color = "success";
+        break;
+      case "pending":
+        color = "warning";
+        break;
+      case "failed":
+        color = "error";
+        break;
+      case "cancelled":
+        color = "default";
+        break;
+      default:
+        color = "default";
+    }
+    return <Tag color={color}>{status || "Unknown"}</Tag>;
+  };
 
   const handleDelete = async (record) => {
     try {
@@ -91,32 +160,57 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
       dataIndex: "invoice",
       key: "invoice",
       sorter: (a, b) => (a.invoice || "").localeCompare(b.invoice || ""),
-      render: (text, record) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Avatar 
-            icon={<FiDollarSign />} 
-            style={{ 
-              backgroundColor: "#e6f7ff", 
-              color: "#1890ff",
-              marginRight: "12px" 
-            }} 
-          />
-          <div>
-            <Text strong>{text || "-"}</Text>
+      render: (text, record) => {
+        const invoiceDetails = getInvoiceDetails(text);
+        return (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Avatar 
+              icon={<FiDollarSign />} 
+              style={{ 
+                backgroundColor: "#e6f7ff", 
+                color: "#1890ff",
+                marginRight: "12px" 
+              }} 
+            />
             <div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                {record.description || "-"}
-              </Text>
+              <Text strong>{invoiceDetails?.invoiceNumber || text || "-"}</Text>
+              <div>
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  {record.remark || "-"}
+                </Text>
+              </div>
             </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
-      title: "Created By",
-      dataIndex: "createdBy",
-      key: "createdBy",
-      render: (text) => text || "-",
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      width: 150,
+      render: (status, record) => (
+        <Select
+          value={status || "pending"}
+          style={{ width: "100%" }}
+          onChange={(value) => handleStatusChange(record, value)}
+          bordered={false}
+          dropdownMatchSelectWidth={false}
+        >
+          <Option value="pending">
+            <Tag color="warning">Pending</Tag>
+          </Option>
+          <Option value="completed">
+            <Tag color="success">Completed</Tag>
+          </Option>
+          <Option value="failed">
+            <Tag color="error">Failed</Tag>
+          </Option>
+          <Option value="cancelled">
+            <Tag color="default">Cancelled</Tag>
+          </Option>
+        </Select>
+      ),
     },
     {
       title: "Paid On",
@@ -132,13 +226,16 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
     {
       title: "Amount",
       key: "amount",
-      render: (_, record) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Text strong>
-            {record.currency} {record.amount ? `${record.amount}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "-"}
-          </Text>
-        </div>
-      ),
+      render: (_, record) => {
+        const currencyDetails = getCurrencyDetails(record.currency);
+        return (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Text strong>
+              {currencyDetails.currencyIcon} {record.amount ? `${record.amount}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "-"}
+            </Text>
+          </div>
+        );
+      },
     },
     {
       title: "Payment Method",

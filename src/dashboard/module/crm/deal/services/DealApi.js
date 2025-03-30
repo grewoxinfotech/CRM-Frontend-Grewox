@@ -54,6 +54,7 @@ export const dealApi = createApi({
         url: `/deals/${id}`,
         method: "PUT",
         body: deal,
+        formData: true,
       }),
       transformResponse: (response) => response?.data || response,
       invalidatesTags: (result, error, { id }) => [{ type: "Deal", id }],
@@ -69,6 +70,18 @@ export const dealApi = createApi({
       invalidatesTags: ["Deal"],
     }),
 
+    uploadDealFiles: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/deals/files/${id}`,
+        method: "POST",
+        body: data,
+        formData: true, // This tells RTK Query that we're sending FormData
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Deal", id },
+        "Deal",
+      ],
+    }),
     updateDealStage: builder.mutation({
       query: ({ id, stage }) => ({
         url: `/deals/${id}`,
@@ -80,6 +93,7 @@ export const dealApi = createApi({
   }),
 });
 
+
 export const {
   useGetDealsQuery,
   useGetDealQuery,
@@ -87,4 +101,5 @@ export const {
   useUpdateDealMutation,
   useDeleteDealMutation,
   useUpdateDealStageMutation,
+  useUploadDealFilesMutation,
 } = dealApi;

@@ -113,7 +113,6 @@ const ProjectFiles = ({ project }) => {
 
     const handleModalOk = () => {
         form.validateFields().then(values => {
-            console.log('Upload values:', values);
             setIsModalVisible(false);
             form.resetFields();
         });

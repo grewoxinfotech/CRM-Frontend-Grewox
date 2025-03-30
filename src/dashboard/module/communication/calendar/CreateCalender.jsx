@@ -72,7 +72,6 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
                 event_type: 'meeting' // Default event type
             };
 
-            console.log('Submitting event:', eventData);
 
             // Submit event using the mutation
             try {

@@ -18,14 +18,14 @@ import DealPayments from './overview/payments';
 import DealNotes from './overview/notes';
 import DealActivity from './overview/activity';
 import './deal.scss';
-import { useGetDealsQuery } from './services/DealApi';
+import { useGetDealsQuery } from './services/dealApi';
+import DealFollowup from './overview/followup';
 
 const { Title, Text } = Typography;
 
 const DealDetail = () => {
     const { dealId } = useParams();
 
-    // console.log("dealId",dealId);
     const navigate = useNavigate();
     const { data, isLoading, error } = useGetDealsQuery();
 
@@ -107,6 +107,15 @@ const DealDetail = () => {
                 </span>
             ),
             children: <DealActivity deal={deal} />,
+        },
+        {
+            key: 'followup',
+            label: (
+                <span>
+                    <FiActivity /> Followup
+                </span>
+            ),
+            children: <DealFollowup deal={deal} />,
         },
     ];
 

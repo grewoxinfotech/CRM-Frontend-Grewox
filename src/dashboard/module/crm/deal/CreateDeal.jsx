@@ -10,6 +10,7 @@ import {
   Upload,
   message,
   Spin,
+  DatePicker,
 } from "antd";
 import {
   FiUser,
@@ -23,9 +24,10 @@ import {
   FiChevronDown,
   FiUsers,
   FiUserPlus,
+  FiCalendar,
 } from "react-icons/fi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
-import { useCreateDealMutation } from "./services/DealApi";
+import { useCreateDealMutation } from "./services/dealApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import { PlusOutlined } from '@ant-design/icons';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
@@ -37,6 +39,7 @@ import { useGetSourcesQuery,useGetLabelsQuery } from '../crmsystem/souce/service
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
+import dayjs from "dayjs";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -528,9 +531,23 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
               name="closedDate"
               label={<span style={formItemStyle}>Expected Close Date</span>}
             >
-              <Input
-                type="date"
-                style={inputStyle}
+              <DatePicker
+                size="large"
+                format="YYYY-MM-DD"
+                style={{
+                  width: '100%',
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
+                }}
+                disabledDate={(current) => {
+                  return current && current < dayjs().startOf('day');
+                }}
+                placeholder="Select date"
+                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+                superNextIcon={null}
+                superPrevIcon={null}
               />
             </Form.Item>
 

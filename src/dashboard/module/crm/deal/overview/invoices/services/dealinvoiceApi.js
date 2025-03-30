@@ -10,6 +10,10 @@ export const dealInvoiceApi = createApi({
         query: (id) => `/invoices/${id}`,
       providesTags: ["DealInvoices"],
     }),
+    getInvoiceById: builder.query({
+      query: (id) => `/invoices/single/${id}`,
+      providesTags: ["DealInvoices"],
+    }),
     createDealInvoice: builder.mutation({
       query: ({id, data}) => ({
         url: `invoices/${id}`,
@@ -42,4 +46,5 @@ export const {
   useCreateDealInvoiceMutation,
   useUpdateDealInvoiceMutation,
   useDeleteDealInvoiceMutation,
+  useGetInvoiceByIdQuery,
 } = dealInvoiceApi;

@@ -40,7 +40,7 @@ import { customerApi } from "../dashboard/module/sales/customer/services/custApi
 import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceApi.js";
 import { revenueApi } from "../dashboard/module/sales/revenue/services/revenueApi.js";
 import { productApi } from "../dashboard/module/sales/product&services/services/productApi.js";
-import { leaveApi } from "../dashboard/module/hrm/Leave/services/leaveApi.js";
+import { leaveApi } from "../dashboard/module/hrm/leave/services/LeaveApi.js";
 import { dealPaymentApi } from "../dashboard/module/crm/deal/overview/payments/services/dealpaymentApi.js";
 import { subscribedUserApi } from "../superadmin/module/SubscribedUser/services/SubscribedUserApi.js";
 import { ticketApi } from "../dashboard/module/support/ticket/services/ticketApi.js";

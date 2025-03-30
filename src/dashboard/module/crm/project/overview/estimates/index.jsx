@@ -154,26 +154,21 @@ const ProjectEstimates = ({ project }) => {
 
     const handleModalOk = () => {
         form.validateFields().then(values => {
-            console.log('New estimate values:', values);
             setIsModalVisible(false);
             form.resetFields();
         });
     };
 
     const handleDownload = (record) => {
-        console.log('Download estimate:', record);
     };
 
     const handleSend = (record) => {
-        console.log('Send estimate:', record);
     };
 
     const handleEdit = (record) => {
-        console.log('Edit estimate:', record);
     };
 
     const handleDelete = (record) => {
-        console.log('Delete estimate:', record);
     };
 
     return (
