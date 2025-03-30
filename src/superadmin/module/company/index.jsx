@@ -1,12 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Typography,
+    Button,
+    Modal,
+    message,
+    Input,
+    Dropdown,
+    Menu,
+    Row,
+    Col,
+    Breadcrumb,
+    Card,
 } from 'antd';
 import {
-    FiPlus, FiSearch,
-    FiChevronDown, FiDownload,
-    FiGrid, FiList, FiHome
+    FiPlus,
+    FiSearch,
+    FiChevronDown,
+    FiDownload,
+    FiGrid,
+    FiList,
+    FiHome
 } from 'react-icons/fi';
 import './company.scss';
 import moment from 'moment';
@@ -23,20 +36,21 @@ import EditCompany from './EditCompany';
 const { Title, Text } = Typography;
 
 const Company = () => {
+    // States
+    const [searchText, setSearchText] = useState('');
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [selectedCompany, setSelectedCompany] = useState(null);
+    const [companies, setCompanies] = useState([]);
+    const [filteredCompanies, setFilteredCompanies] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [viewMode, setViewMode] = useState('table');
+    const [currentPage, setCurrentPage] = useState(1);
+
     const { data: companiesData, isLoading: isLoadingCompanies, refetch } = useGetAllCompaniesQuery();
     const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
 
-    const [companies, setCompanies] = useState([]);
-    const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    const [selectedCompany, setSelectedCompany] = useState(null);
-    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [searchText, setSearchText] = useState('');
-    const [filteredCompanies, setFilteredCompanies] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const searchInputRef = useRef(null);
-    const [viewMode, setViewMode] = useState('table');
+    console.log(companiesData);
 
     useEffect(() => {
         if (companiesData?.data) {
@@ -66,25 +80,28 @@ const Company = () => {
                 profilePic: company.profilePic || null
             }));
             setCompanies(transformedData);
+            setFilteredCompanies(transformedData);
         }
     }, [companiesData]);
 
     useEffect(() => {
-        let result = [...companies];
-        if (searchText) {
-            result = result.filter(company =>
-                company.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                company.email.toLowerCase().includes(searchText.toLowerCase()) ||
-                company.phone.includes(searchText) ||
-                (company.firstName && company.firstName.toLowerCase().includes(searchText.toLowerCase())) ||
-                (company.lastName && company.lastName.toLowerCase().includes(searchText.toLowerCase())) ||
-                (company.city && company.city.toLowerCase().includes(searchText.toLowerCase())) ||
-                (company.state && company.state.toLowerCase().includes(searchText.toLowerCase())) ||
-                (company.gstIn && company.gstIn.toLowerCase().includes(searchText.toLowerCase()))
-            );
-        }
-        setFilteredCompanies(result);
+        const filtered = companies.filter(company =>
+            company.name.toLowerCase().includes(searchText.toLowerCase()) ||
+            company.email.toLowerCase().includes(searchText.toLowerCase()) ||
+            company.phone.includes(searchText) ||
+            (company.firstName && company.firstName.toLowerCase().includes(searchText.toLowerCase())) ||
+            (company.lastName && company.lastName.toLowerCase().includes(searchText.toLowerCase())) ||
+            (company.city && company.city.toLowerCase().includes(searchText.toLowerCase())) ||
+            (company.state && company.state.toLowerCase().includes(searchText.toLowerCase())) ||
+            (company.gstIn && company.gstIn.toLowerCase().includes(searchText.toLowerCase()))
+        );
+        setFilteredCompanies(filtered);
     }, [companies, searchText]);
+
+    // Handlers
+    const handleSearch = (value) => {
+        setSearchText(value);
+    };
 
     const handleAddCompany = () => {
         setSelectedCompany(null);
@@ -95,15 +112,6 @@ const Company = () => {
     const handleEditCompany = (company) => {
         setSelectedCompany(company);
         setIsEditModalVisible(true);
-    };
-
-    const handleViewCompany = (company) => {
-        setSelectedCompany(company);
-    };
-
-    const handleDeleteConfirm = (company) => {
-        setSelectedCompany(company);
-        setIsDeleteModalVisible(true);
     };
 
     const handleDelete = (record) => {
@@ -120,6 +128,7 @@ const Company = () => {
                 try {
                     await deleteCompany(record.id).unwrap();
                     message.success('Company deleted successfully');
+                    refetch();
                 } catch (error) {
                     message.error(error?.data?.message || 'Failed to delete company');
                 }
@@ -143,36 +152,7 @@ const Company = () => {
         }
     };
 
-    const handleSearch = (value) => {
-        setSearchText(value);
-    };
-
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
-
+    // Export functions
     const handleExport = async (type) => {
         try {
             setLoading(true);
@@ -185,17 +165,10 @@ const Company = () => {
             }));
 
             switch (type) {
-                case 'csv':
-                    exportToCSV(data, 'companies_export');
-                    break;
-                case 'excel':
-                    exportToExcel(data, 'companies_export');
-                    break;
-                case 'pdf':
-                    exportToPDF(data, 'companies_export');
-                    break;
-                default:
-                    break;
+                case 'csv': exportToCSV(data, 'companies_export'); break;
+                case 'excel': exportToExcel(data, 'companies_export'); break;
+                case 'pdf': exportToPDF(data, 'companies_export'); break;
+                default: break;
             }
             message.success(`Successfully exported as ${type.toUpperCase()}`);
         } catch (error) {
@@ -243,6 +216,20 @@ const Company = () => {
         doc.save(`${filename}.pdf`);
     };
 
+    const exportMenu = (
+        <Menu>
+            <Menu.Item key="csv" icon={<FiDownload />} onClick={() => handleExport('csv')}>
+                Export as CSV
+            </Menu.Item>
+            <Menu.Item key="excel" icon={<FiDownload />} onClick={() => handleExport('excel')}>
+                Export as Excel
+            </Menu.Item>
+            <Menu.Item key="pdf" icon={<FiDownload />} onClick={() => handleExport('pdf')}>
+                Export as PDF
+            </Menu.Item>
+        </Menu>
+    );
+
     return (
         <div className="company-page">
             <div className="page-breadcrumb">
@@ -271,7 +258,6 @@ const Company = () => {
                                 allowClear
                                 onChange={(e) => handleSearch(e.target.value)}
                                 value={searchText}
-                                ref={searchInputRef}
                                 className="search-input"
                             />
                             <div className="action-buttons">
@@ -315,7 +301,6 @@ const Company = () => {
                         loading={isLoadingCompanies || isDeleting}
                         onEdit={handleEditCompany}
                         onDelete={handleDelete}
-                        onView={handleViewCompany}
                     />
                 ) : (
                     <Row gutter={[16, 16]} className="company-cards-grid">
@@ -327,7 +312,6 @@ const Company = () => {
                                         company={company}
                                         onEdit={handleEditCompany}
                                         onDelete={handleDelete}
-                                        onView={handleViewCompany}
                                     />
                                 </Col>
                             ))}
@@ -369,4 +353,3 @@ const Company = () => {
 };
 
 export default Company;
-

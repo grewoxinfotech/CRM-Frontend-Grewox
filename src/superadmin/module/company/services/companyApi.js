@@ -28,7 +28,7 @@ export const companyApi = createApi({
                 body: data,
             }),
             invalidatesTags: ['Companies'],
-            
+
         }),
         deleteCompany: builder.mutation({
             query: (id) => ({
@@ -54,7 +54,7 @@ export const companyApi = createApi({
                     Authorization: `Bearer ${token}`
                 }
             }),
-            invalidatesTags: ['Subclient']
+            invalidatesTags: ['Companies']
         }),
 
         resendSignupOtp: builder.mutation({
@@ -76,5 +76,5 @@ export const {
     useDeleteCompanyMutation,
     useAssignPlanMutation,
     useVerifySignupMutation,
-    useResendSignupOtpMutation, 
+    useResendSignupOtpMutation,
 } = companyApi;

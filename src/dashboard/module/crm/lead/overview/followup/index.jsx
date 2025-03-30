@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider } from 'antd';
-import { FiPlus, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase } from 'react-icons/fi';
+import { FiPlus, FiPhone, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiBell, FiMapPin, FiMonitor, FiDollarSign, FiMessageSquare, FiSend, FiVideo } from 'react-icons/fi';
 import { useGetLeadQuery, useGetFollowupsQuery, useCreateFollowupMutation, useUpdateFollowupMutation, useDeleteFollowupMutation } from '../../services/LeadApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
@@ -66,9 +66,9 @@ const LeadFollowup = ({ leadId }) => {
     const getMemberDisplay = (member) => {
         if (!member) return { name: 'Unknown', color: '#1890ff', initial: '?' };
         return {
-            name: member.label || 'Unknown',
+            name: member.username || member.name || member.label || 'Unknown',
             color: member.color || '#1890ff',
-            initial: member.label?.charAt(0)?.toUpperCase() || '?',
+            initial: (member.username?.[0] || member.name?.[0] || member.label?.[0] || '?').toUpperCase(),
             email: member.email
         };
     };
@@ -107,17 +107,51 @@ const LeadFollowup = ({ leadId }) => {
     // Get subclient role ID to filter it out
     const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
-    // Filter users to get team members (excluding subclients)
+    // Update the users filter to exclude the current user and client
     const users = usersResponse?.data?.filter(user =>
         user?.created_by === currentUser?.username &&
-        user?.role_id !== subclientRoleId
+        user?.role_id !== subclientRoleId &&
+        user?.id !== currentUser?.id && // Exclude current user
+        user?.client_id !== user?.id    // Exclude if user is their own client
     ) || [];
 
     const followupTypes = [
-        { label: 'Call', value: 'call', icon: <FiPhoneCall className="type-icon" /> },
-        { label: 'Meeting', value: 'meeting', icon: <FiUsers className="type-icon" /> },
-        { label: 'Email', value: 'email', icon: <FiMail className="type-icon" /> },
-        { label: 'Task', value: 'task', icon: <FiCheckSquare className="type-icon" /> }
+        {
+            value: 'call',
+            label: 'Phone Call',
+            icon: <FiPhone style={{ color: '#1890ff' }} />,
+            color: '#1890ff'
+        },
+        {
+            value: 'meeting',
+            label: 'Client Meeting',
+            icon: <FiUsers style={{ color: '#52c41a' }} />,
+            color: '#52c41a'
+        },
+        {
+            value: 'whatsapp',
+            label: 'WhatsApp',
+            icon: <FiMessageSquare style={{ color: '#25D366' }} />,
+            color: '#25D366'
+        },
+        {
+            value: 'email',
+            label: 'Email',
+            icon: <FiMail style={{ color: '#EA4335' }} />,
+            color: '#EA4335'
+        },
+        {
+            value: 'telegram',
+            label: 'Telegram',
+            icon: <FiSend style={{ color: '#0088cc' }} />,
+            color: '#0088cc'
+        },
+        {
+            value: 'video_call',
+            label: 'Video Call',
+            icon: <FiVideo style={{ color: '#7c3aed' }} />,
+            color: '#7c3aed'
+        }
     ];
 
     const getStatusColor = (status) => {
@@ -130,9 +164,54 @@ const LeadFollowup = ({ leadId }) => {
         return colors[status] || '#1890ff';
     };
 
-    const getTypeIcon = (type) => {
-        const foundType = followupTypes.find(t => t.value === type);
-        return foundType?.icon || <FiClock />;
+    const getTypeTag = (type) => {
+        const typeConfig = {
+            call: {
+                icon: <FiPhone className="type-icon" />,
+                color: '#1890ff',
+                background: '#e6f7ff'
+            },
+            meeting: {
+                icon: <FiUsers className="type-icon" />,
+                color: '#52c41a',
+                background: '#f6ffed'
+            },
+            whatsapp: {
+                icon: <FiMessageSquare className="type-icon" />,
+                color: '#25D366',
+                background: '#ebfaef'
+            },
+            email: {
+                icon: <FiMail className="type-icon" />,
+                color: '#EA4335',
+                background: '#fff1f0'
+            },
+            telegram: {
+                icon: <FiSend className="type-icon" />,
+                color: '#0088cc',
+                background: '#e6f7ff'
+            },
+            video_call: {
+                icon: <FiVideo className="type-icon" />,
+                color: '#7c3aed',
+                background: '#f3f0ff'
+            }
+        };
+
+        const config = typeConfig[type] || typeConfig.call;
+
+        return (
+            <Tag
+                className="type-tag"
+                style={{
+                    color: config.color,
+                    background: config.background
+                }}
+            >
+                {config.icon}
+                {type?.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+            </Tag>
+        );
     };
 
     const handleSubmit = async (values) => {
@@ -152,6 +231,7 @@ const LeadFollowup = ({ leadId }) => {
             }
 
             setIsModalVisible(false);
+            form.resetFields(['followup_by']);
             form.resetFields();
             setEditingFollowup(null);
         } catch (error) {
@@ -168,6 +248,32 @@ const LeadFollowup = ({ leadId }) => {
         }
     };
 
+    const handleEdit = (followup) => {
+        setEditingFollowup(followup);
+        form.setFieldsValue({
+            name: followup.name,
+            type: followup.type,
+            date: dayjs(followup.date),
+            time: dayjs(followup.time, 'HH:mm:ss'),
+            description: followup.description,
+            status: followup.status
+        });
+        setIsModalVisible(true);
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
+        setEditingFollowup(null);
+        form.setFieldsValue({ followup_by: undefined });
+        form.resetFields();
+    };
+
+    useEffect(() => {
+        if (isModalVisible && !editingFollowup) {
+            form.setFieldsValue({ followup_by: undefined });
+        }
+    }, [isModalVisible, editingFollowup]);
+
     const columns = [
         {
             title: 'Name',
@@ -175,9 +281,7 @@ const LeadFollowup = ({ leadId }) => {
             key: 'name',
             render: (text, record) => (
                 <Space>
-                    <Tag className="type-tag" color="blue" icon={getTypeIcon(record.type)}>
-                        {record.type.charAt(0).toUpperCase() + record.type.slice(1)}
-                    </Tag>
+                    {getTypeTag(record.type)}
                     <Text strong>{text}</Text>
                 </Space>
             )
@@ -240,15 +344,7 @@ const LeadFollowup = ({ leadId }) => {
                             type="text"
                             className="action-btn"
                             icon={<FiEdit2 />}
-                            onClick={() => {
-                                setEditingFollowup(record);
-                                form.setFieldsValue({
-                                    ...record,
-                                    date: dayjs(record.date),
-                                    time: dayjs(record.time, 'HH:mm:ss')
-                                });
-                                setIsModalVisible(true);
-                            }}
+                            onClick={() => handleEdit(record)}
                         />
                     </Tooltip>
                     <Tooltip title="Delete">
@@ -305,10 +401,7 @@ const LeadFollowup = ({ leadId }) => {
             <Modal
                 title={null}
                 open={isModalVisible}
-                onCancel={() => {
-                    setIsModalVisible(false);
-                    form.resetFields();
-                }}
+                onCancel={handleCancel}
                 footer={null}
                 width={520}
                 destroyOnClose={true}
@@ -337,10 +430,7 @@ const LeadFollowup = ({ leadId }) => {
                 >
                     <Button
                         type="text"
-                        onClick={() => {
-                            setIsModalVisible(false);
-                            form.resetFields();
-                        }}
+                        onClick={handleCancel}
                         style={{
                             position: "absolute",
                             top: "16px",
@@ -494,39 +584,23 @@ const LeadFollowup = ({ leadId }) => {
                     >
                         <Select
                             showSearch
-                            placeholder="Select assignee"
                             size="large"
-                            loading={usersLoading || rolesLoading}
+                            placeholder="Select team member"
                             optionFilterProp="children"
-                            filterOption={(input, option) =>
-                                option?.label?.toLowerCase().includes(input.toLowerCase()) ||
-                                option?.email?.toLowerCase().includes(input.toLowerCase())
-                            }
-                            notFoundContent={
-                                users.length === 0 ? (
-                                    <div style={{ padding: "12px", textAlign: "center" }}>
-                                        <FiUsers style={{ fontSize: "24px", color: "#bfbfbf", marginBottom: "8px" }} />
-                                        <div>No team members available</div>
-                                    </div>
-                                ) : (
-                                    <div style={{ padding: "12px", textAlign: "center" }}>
-                                        <FiSearch style={{ fontSize: "24px", color: "#bfbfbf", marginBottom: "8px" }} />
-                                        <div>No matches found</div>
-                                    </div>
-                                )
-                            }
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",
+                                height: "48px"
                             }}
-                            dropdownStyle={{
-                                padding: "8px",
-                                borderRadius: "12px",
-                                border: "1px solid #e5e7eb",
-                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                            filterOption={(input, option) => {
+                                const username = option?.username?.toLowerCase() || '';
+                                const searchTerm = input.toLowerCase();
+                                return username.includes(searchTerm);
                             }}
+                            defaultOpen={false}
+                            value={form.getFieldValue('followup_by') || undefined}
                         >
-                            {users.map(user => {
+                            {users.map((user) => {
                                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
                                 const roleStyle = getRoleStyle(userRole?.role_name);
 
@@ -534,66 +608,29 @@ const LeadFollowup = ({ leadId }) => {
                                     <Option
                                         key={user.id}
                                         value={user.id}
-                                        label={user.username}
+                                        username={user.username}
                                     >
                                         <div style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
-                                            padding: '8px 4px',
                                             width: '100%'
                                         }}>
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '12px'
+                                                gap: '8px'
                                             }}>
-                                                <div style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%',
-                                                    background: '#E6F4FF',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: '#1890FF',
-                                                    fontSize: '14px',
-                                                    fontWeight: '500',
-                                                    textTransform: 'uppercase',
-                                                    flexShrink: 0
-                                                }}>
-                                                    {user.profilePic ? (
-                                                        <img
-                                                            src={user.profilePic}
-                                                            alt={user.username}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                borderRadius: '50%',
-                                                                objectFit: 'cover'
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        user.username?.charAt(0)
-                                                    )}
-                                                </div>
-                                                <div style={{
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '2px'
-                                                }}>
-                                                    <Text strong style={{
-                                                        color: '#1f2937',
-                                                        fontSize: '14px'
-                                                    }}>
-                                                        {user.username}
-                                                    </Text>
-                                                    <Text type="secondary" style={{
+                                                <Avatar
+                                                    size="small"
+                                                    style={{
+                                                        backgroundColor: user.color || '#1890ff',
                                                         fontSize: '12px'
-                                                    }}>
-                                                        {user.email}
-                                                    </Text>
-                                                </div>
+                                                    }}
+                                                >
+                                                    {user.username?.[0]?.toUpperCase() || '?'}
+                                                </Avatar>
+                                                <Text strong>{user.username}</Text>
                                             </div>
                                             <Tag style={{
                                                 margin: 0,
@@ -603,10 +640,9 @@ const LeadFollowup = ({ leadId }) => {
                                                 fontSize: '12px',
                                                 borderRadius: '16px',
                                                 padding: '2px 10px',
-                                                display: 'inline-flex',
+                                                display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '4px',
-                                                height: '24px'
+                                                gap: '4px'
                                             }}>
                                                 {roleStyle.icon}
                                                 {userRole?.role_name || 'User'}
@@ -614,7 +650,7 @@ const LeadFollowup = ({ leadId }) => {
                                         </div>
                                     </Option>
                                 );
-                            })}
+                            }).filter(Boolean)} {/* Filter out null values */}
                         </Select>
                     </Form.Item>
 
@@ -774,10 +810,7 @@ const LeadFollowup = ({ leadId }) => {
                     >
                         <Button
                             size="large"
-                            onClick={() => {
-                                setIsModalVisible(false);
-                                form.resetFields();
-                            }}
+                            onClick={handleCancel}
                             style={{
                                 padding: "8px 24px",
                                 height: "44px",

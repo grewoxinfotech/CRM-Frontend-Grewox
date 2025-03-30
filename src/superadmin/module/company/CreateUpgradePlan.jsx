@@ -64,9 +64,6 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
         { value: 'unpaid', label: 'Unpaid' },
     ];
 
-    // Add this console.log to check if companyId is received
-    console.log('CompanyId received:', companyId);
-
     const handleSubmit = async (values) => {
         try {
             if (!companyId) {
@@ -75,7 +72,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
             }
 
             setLoading(true);
-            
+
             const formattedValues = {
                 client_id: companyId,
                 plan_id: values.plan,
@@ -86,7 +83,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
             };
 
             const response = await assignUpgradePlan(formattedValues).unwrap();
-            
+
             if (response.success) {
                 message.success('Upgrade plan assigned successfully');
                 form.resetFields();
@@ -114,7 +111,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
     // Add these functions back
     const calculateEndDate = (startDate, duration) => {
         if (!startDate || !duration) return null;
-        
+
         if (duration.toLowerCase() === 'lifetime') {
             return moment(startDate).add(100, 'years');
         }
@@ -317,7 +314,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                     }
                     rules={[{ required: true, message: 'Please select start date' }]}
                 >
-                    <DatePicker 
+                    <DatePicker
                         style={{
                             width: '100%',
                             height: '48px',
@@ -345,7 +342,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                     }
                     rules={[{ required: true, message: 'Please select end date' }]}
                 >
-                    <DatePicker 
+                    <DatePicker
                         style={{
                             width: '100%',
                             height: '48px',
@@ -380,7 +377,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                             width: '100%',
                             height: '48px',
                         }}
-                        // prefix={<FiToggleRight style={{ color: '#1890ff', fontSize: '16px' }} />}
+                    // prefix={<FiToggleRight style={{ color: '#1890ff', fontSize: '16px' }} />}
                     >
                         {statusOptions.map(option => (
                             <Option key={option.value} value={option.value}>
