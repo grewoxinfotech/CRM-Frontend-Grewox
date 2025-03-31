@@ -17,7 +17,7 @@ import moment from 'moment';
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues }) => {
+const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
 
@@ -241,13 +241,13 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                             fontWeight: '600',
                             color: '#ffffff',
                         }}>
-                            {isEditing ? 'Edit Upgrade Plan' : 'Create Upgrade Plan'}
+                            Create Upgrade Plan
                         </h2>
                         <Text style={{
                             fontSize: '14px',
                             color: 'rgba(255, 255, 255, 0.85)'
                         }}>
-                            {isEditing ? 'Update plan details' : 'Fill in the plan information'}
+                            Fill in the plan information
                         </Text>
                     </div>
                 </div>
@@ -257,11 +257,6 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                initialValues={{
-                    ...initialValues,
-                    startDate: initialValues?.startDate ? moment(initialValues.startDate) : null,
-                    endDate: initialValues?.endDate ? moment(initialValues.endDate) : null,
-                }}
                 requiredMark={false}
                 style={{ padding: '24px' }}
             >
@@ -377,7 +372,6 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                             width: '100%',
                             height: '48px',
                         }}
-                    // prefix={<FiToggleRight style={{ color: '#1890ff', fontSize: '16px' }} />}
                     >
                         {statusOptions.map(option => (
                             <Option key={option.value} value={option.value}>
@@ -457,7 +451,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId, isEditing, initialValues
                             justifyContent: 'center',
                         }}
                     >
-                        {isEditing ? 'Update Plan' : 'Create Plan'}
+                        Create Upgrade Plan
                     </Button>
                 </div>
             </Form>

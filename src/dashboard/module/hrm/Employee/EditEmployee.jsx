@@ -23,6 +23,9 @@ const { Text } = Typography;
 const { Option } = Select;
 
 const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
+
+    console.log("initialValues",initialValues);
+
     const [form] = Form.useForm();
     const [updateEmployee, { isLoading }] = useUpdateEmployeeMutation();
     const [isCreateBranchModalOpen, setIsCreateBranchModalOpen] = useState(false);
@@ -346,8 +349,26 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
             centered
             closeIcon={null}
             className="pro-modal custom-modal"
+            styles={{
+                body: {
+                    padding: 0,
+                    overflow: "hidden",
+                    borderRadius: "8px",
+                },
+            }}
         >
-            <div className="modal-header">
+            <div
+                className="modal-header"
+                style={{
+                    background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                    padding: "24px",
+                    color: "#ffffff",
+                    position: "relative",
+                    borderTopLeftRadius: "8px",
+                    borderTopRightRadius: "8px",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+                }}
+            >
                 <Button
                     type="text"
                     onClick={onCancel}
@@ -395,7 +416,26 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <FiUserPlus style={{ fontSize: "24px", color: "#ffffff" }} />
                     </div>
                     <div>
-                        <h2>Edit Employee</h2>
+                        <h2
+                            style={{
+                                margin: "0",
+                                fontSize: "24px",
+                                fontWeight: "600",
+                                color: "#ffffff",
+                                textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+                            }}
+                        >
+                            Edit Employee
+                        </h2>
+                        <p
+                            style={{
+                                margin: "4px 0 0",
+                                fontSize: "14px",
+                                color: "rgba(255, 255, 255, 0.85)",
+                            }}
+                        >
+                            Update employee information
+                        </p>
                     </div>
                 </div>
             </div>
@@ -555,10 +595,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="username"
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Username</span>}
-                            rules={[
-                                { required: true, message: 'Please enter username' },
-                                { min: 3, message: 'Username must be at least 3 characters' }
-                            ]}
                         >
                             <Input
                                 prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -577,10 +613,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="email"
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Email</span>}
-                            rules={[
-                                { required: true, message: 'Please enter email' },
-                                { type: 'email', message: 'Please enter a valid email' }
-                            ]}
                         >
                             <Input
                                 prefix={<FiMail style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -644,7 +676,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                 <Form.Item
                                     name="phoneCode"
                                     noStyle
-                                    rules={[{ required: true, message: 'Required' }]}
                                     initialValue="91"
                                 >
                                     <Select
@@ -690,11 +721,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     name="phone"
                                     noStyle
                                     rules={[
-                                        { required: true, message: 'Please enter phone number' },
-                                        {
-                                            pattern: /^\d{10}$/,
-                                            message: 'Phone number must be exactly 10 digits (e.g., 9876543210)'
-                                        },
                                         {
                                             validator: (_, value) => {
                                                 if (value && !/^\d+$/.test(value)) {
@@ -717,8 +743,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                             display: 'flex',
                                             alignItems: 'center',
                                         }}
-                                        placeholder="Enter 10-digit phone number"
-                                        maxLength={10}
+                                        placeholder="Enter phone number"
                                     />
                                 </Form.Item>
                             </Input.Group>
@@ -766,7 +791,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="joiningDate"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Joining Date</span>}
-                            rules={[{ required: true, message: 'Please select joining date' }]}
                         >
                             <DatePicker
                                 size="large"
@@ -789,7 +813,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Leave Date</span>}
                             dependencies={['joiningDate']}
                             rules={[
-                                { required: true, message: 'Please select leave date' },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
                                         const joiningDate = getFieldValue('joiningDate');
@@ -827,7 +850,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     Branch
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please select a branch' }]}
                         >
                             <Select
                                 showSearch
@@ -854,7 +876,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="department"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Department</span>}
-                            rules={[{ required: true, message: 'Please select a department' }]}
                         >
                             <Select
                                 showSearch
@@ -881,7 +902,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="designation"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Designation</span>}
-                            rules={[{ required: true, message: 'Please select a designation' }]}
                         >
                             <Select
                                 showSearch
@@ -929,7 +949,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             <Form.Item
                                 name="currency"
                                 noStyle
-                                rules={[{ required: true }]}
                                 initialValue="INR"
                             >
                                 <Select
@@ -965,7 +984,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             <Form.Item
                                 name="salary"
                                 noStyle
-                                rules={[{ required: true, message: 'Please enter salary' }]}
                             >
                                 <Input
                                     placeholder="Enter salary"

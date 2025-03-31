@@ -72,7 +72,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     if (!userRole) return false;
 
     // Check if user is a client
-    if (userRole.role_name?.toLowerCase() === 'client') {
+    if (userRole?.toLowerCase() === 'client') {
       return true;
     }
 

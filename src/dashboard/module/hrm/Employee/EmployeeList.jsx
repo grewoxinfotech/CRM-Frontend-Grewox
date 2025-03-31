@@ -13,18 +13,12 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     const { data: rolesData } = useGetRolesQuery();
    
 
-    console.log("employees",employees);
+
     // Add branch data fetch
     const { data: branchesData } = useGetAllBranchesQuery();
     const { data: departmentsData } = useGetAllDepartmentsQuery();
     const { data: designationsData } = useGetAllDesignationsQuery();
 
-
-
-    console.log("rolesData",rolesData?.data);
-    console.log("branchesData",branchesData?.data);
-    console.log("departmentsData",departmentsData);
-    console.log("designationsData",designationsData);
 
  
 

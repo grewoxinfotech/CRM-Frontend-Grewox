@@ -56,6 +56,7 @@ const Employee = () => {
 
     const [viewMode, setViewMode] = useState('table');
 
+   
     useEffect(() => {
         if (employeesData?.data) {
             const filteredData = employeesData.data.filter(employee => 
@@ -64,9 +65,28 @@ const Employee = () => {
             );
             const transformedData = filteredData.map(employee => ({
                 id: employee.id,
-                name: `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A',
+                firstName: employee.firstName || 'N/A',
+                lastName: employee.lastName || 'N/A',
+                username: employee.username || 'N/A',
+                phoneCode: employee.phoneCode || 'N/A',
+                address: employee.address || 'N/A',
+                state: employee.state || 'N/A',
+                city: employee.city || 'N/A',
+                country: employee.country || 'N/A',
+                zipcode: employee.zipcode || 'N/A',
+                website: employee.website || 'N/A',
+                gstIn: employee.gstIn || 'N/A',
+                gender: employee.gender || 'N/A',
+                joiningDate: employee.joiningDate || 'N/A',
+                leaveDate: employee.leaveDate || 'N/A',
+                salary: employee.salary || 'N/A',
+                currency: employee.currency || 'N/A',
+                accountholder: employee.accountholder || 'N/A',
+                accountnumber: employee.accountnumber || 'N/A',
+                bankname: employee.bankname || 'N/A',
                 email: employee.email || 'N/A',
                 phone: employee.phone || 'N/A',
+                branch: employee.branch || 'N/A',
                 department: employee.department || 'N/A',
                 designation: employee.designation || 'N/A',
                 status: employee.status || 'inactive',
@@ -75,11 +95,18 @@ const Employee = () => {
                 created_by: employee.created_by,
                 updated_by: employee.updated_by,
                 profilePic: employee.profilePic || null,
+                salary: employee.salary || null,
+                ifsc: employee.ifsc || null,
+                banklocation: employee.banklocation || null,
+
+
             }));
             setEmployees(transformedData);
             setFilteredEmployees(transformedData);
+
         }
     }, [employeesData]);
+
 
     useEffect(() => {
         const filtered = employees.filter(employee =>
@@ -89,6 +116,8 @@ const Employee = () => {
             employee.designation?.toLowerCase().includes(searchText.toLowerCase())
         );
         setFilteredEmployees(filtered);
+  
+ 
     }, [employees, searchText]);
 
     // Handlers
@@ -124,6 +153,9 @@ const Employee = () => {
     };
 
     const handleEditEmployee = (employee) => {
+
+        console.log("employee",employee);
+
         // Format the employee data for the edit form
         const formattedEmployee = {
             id: employee.id,
@@ -140,8 +172,8 @@ const Employee = () => {
             leaveDate: employee.leaveDate,
             // IDs for dropdowns
             branch: employee.branch?.id || employee.branch,
-            department_name: employee.department_name?.id || employee.department_name,
-            designation_name: employee.designation_name?.id || employee.designation_name,
+            department: employee.department?.id || employee.departmentName,
+            designation: employee.designation?.id || employee.designationName,
             // Salary information
             salary: employee.salary,
             currency: employee.currency,
@@ -153,9 +185,13 @@ const Employee = () => {
             banklocation: employee.banklocation,
         };
 
+        console.log("formattedEmployee",formattedEmployee);
+
         setSelectedEmployee(formattedEmployee);
-        setIsEditFormVisible(true);
+        setIsEditFormVisible(true);   
+
     };
+
 
     const handleEditSuccess = () => {
         setIsEditFormVisible(false);
@@ -392,6 +428,7 @@ const Employee = () => {
                 onSuccess={handleCreateSuccess}
             />
             <EditEmployee
+                onEdit={handleEditEmployee}
                 visible={isEditFormVisible}
                 onCancel={() => setIsEditFormVisible(false)}
                 initialValues={selectedEmployee}

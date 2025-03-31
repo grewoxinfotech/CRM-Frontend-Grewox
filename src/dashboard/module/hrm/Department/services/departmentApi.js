@@ -150,5 +150,5 @@ export const {
     useUpdateDepartmentTypeMutation,
     useDeleteDepartmentTypeMutation,
 } = departmentApi;
-
 export default departmentApi;
+

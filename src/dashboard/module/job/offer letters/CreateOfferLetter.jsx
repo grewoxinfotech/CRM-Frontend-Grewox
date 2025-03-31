@@ -69,28 +69,26 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
             
             // Create FormData instance
             const formData = new FormData();
-            
-            // Extract file and other values
-            const { file, ...otherValues } = values;
 
-            // Add the file if it exists
+            // Format dates and prepare payload
+            const payload = {
+                job: values.job,
+                job_applicant: values.job_applicant,
+                offer_expiry: dayjs(values.offer_expiry).format('YYYY-MM-DD'),
+                expected_joining_date: dayjs(values.expected_joining_date).format('YYYY-MM-DD'),
+                salary: parseFloat(values.salary),
+                currency: values.currency,
+                description: values.description,
+                client_id: localStorage.getItem('client_id'),
+                created_by: localStorage.getItem('user_id')
+            };
+
+            // Add file to formData if exists
             if (fileList?.[0]?.originFileObj) {
                 formData.append('file', fileList[0].originFileObj);
             }
 
             // Add all other fields to formData
-            const payload = {
-                ...otherValues,
-                offer_expiry: dayjs(values.offer_expiry).format('YYYY-MM-DD'),
-                expected_joining_date: dayjs(values.expected_joining_date).format('YYYY-MM-DD'),
-                salary: values.salary.toString(),
-                rate: values.rate.toString(),
-                description: values.description || '',
-                client_id: localStorage.getItem('client_id'),
-                created_by: localStorage.getItem('user_id')
-            };
-
-            // Append all other fields to formData
             Object.entries(payload).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
                     formData.append(key, value);
@@ -101,15 +99,15 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
 
             if (response.success) {
                 message.success('Offer letter created successfully');
-                onCancel();
                 form.resetFields();
                 setFileList([]);
+                onCancel();
             } else {
                 message.error(response.message || 'Failed to create offer letter');
             }
         } catch (error) {
-            console.error('Failed to create offer letter:', error);
-            message.error(error.data?.message || 'Failed to create offer letter');
+            console.error('Error creating offer letter:', error);
+            message.error(error?.data?.message || 'Failed to create offer letter');
         }
     };
 

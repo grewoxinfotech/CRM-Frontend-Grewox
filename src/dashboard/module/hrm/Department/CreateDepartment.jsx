@@ -58,7 +58,7 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                 message.success('Department created successfully');
             }
             form.resetFields();
-            onSubmit();
+            onCancel();
         } catch (error) {
             message.error(error?.data?.message || 'Operation failed');
         }

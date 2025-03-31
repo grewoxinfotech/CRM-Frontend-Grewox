@@ -781,12 +781,21 @@
     }
 
     .ant-card-extra {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         position: absolute;
         top: 12px;
         right: 12px;
         z-index: 2;
         padding: 0;
         margin: 0;
+
+        .status-tag {
+            &:hover {
+                transform: translateY(-1px);
+            }
+        }
 
         .more-actions-button {
             width: 28px;
@@ -797,6 +806,7 @@
             border: none;
             padding: 0;
             background: transparent;
+            border-radius: 6px;
 
             &:hover {
                 background-color: rgba(0, 0, 0, 0.04);

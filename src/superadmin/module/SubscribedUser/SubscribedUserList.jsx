@@ -1,16 +1,18 @@
 import React, { useCallback, useState } from 'react';
-import { Table, Button, Tag, Dropdown } from 'antd';
+import { Table, Button, Tag, Dropdown, message, Switch, Popconfirm } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import { useGetAllSubscribedUsersQuery } from './services/SubscribedUserApi';
 import moment from 'moment'; // Import moment for date formatting
 import { useGetAllPlansQuery } from '../plans/services/planApi';
-import { useGetAllCompaniesQuery } from '../company/services/companyApi';
+import { useGetAllCompaniesQuery, useRemovePlanMutation } from '../company/services/companyApi';
 
 const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
     const { data: subscribedUsersData, isLoading } = useGetAllSubscribedUsersQuery();
     const { data: companiesData } = useGetAllCompaniesQuery();
     const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
     const { data: plansData } = useGetAllPlansQuery(filters);
+    const [removePlan] = useRemovePlanMutation();
+
     // Ensure we have an array of users, even if empty
     const users = React.useMemo(() => {
         if (!subscribedUsersData) return [];
@@ -28,6 +30,15 @@ const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
         const company = companiesData.data.find(company => company.id === companyId);
         return company ? (company.company_name || company.username || 'N/A') : 'N/A';
     }, [companiesData]);
+
+    const handleStatusChange = async (record) => {
+        try {
+            await removePlan(record.id).unwrap();
+            message.success('Subscription status updated successfully');
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to update subscription status');
+        }
+    };
 
     const columns = [
         {
@@ -103,27 +114,26 @@ const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            render: (status) => {
-                let color = 'blue';
-                switch (status?.toLowerCase()) {
-                    case 'active':
-                        color = 'green';
-                        break;
-                    case 'inactive':
-                        color = 'red';
-                        break;
-                    case 'pending':
-                        color = 'orange';
-                        break;
-                    default:
-                        color = 'blue';
-                }
-                return (
-                    <Tag color={color} style={{ textTransform: 'capitalize' }}>
-                        {status?.replace(/_/g, ' ') || 'N/A'}
-                    </Tag>
-                );
-            }
+            render: (_, record) => (
+                <Popconfirm
+                    title={record.status !== 'cancelled' ? 
+                        "Deactivate Subscription?" : 
+                        "Subscription is inactive"}
+                    description={record.status !== 'cancelled' ? 
+                        "This will prevent the company from accessing their account." : 
+                        "This subscription is no longer active."}
+                    onConfirm={() => handleStatusChange(record)}
+                    okText="Yes"
+                    cancelText="No"
+                    disabled={record.status === 'cancelled'}
+                >
+                    <Switch
+                        checked={record.status !== 'cancelled'}
+                        className={`status-switch ${record.status !== 'cancelled' ? 'active' : 'inactive'}`}
+                        disabled={record.status === 'cancelled'}
+                    />
+                </Popconfirm>
+            )
         },
         {
             title: 'Start Date',
@@ -139,6 +149,7 @@ const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
             sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
             render: (date) => moment(date).format('DD MMM YYYY')
         },
+       
     ];
 
     // Transform the users data to ensure each row has a unique key

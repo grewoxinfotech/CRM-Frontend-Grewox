@@ -7,6 +7,8 @@ import EditCompany from './EditCompany';
 import CreateUpgradePlan from './CreateUpgradePlan';
 import { useAdminLoginMutation } from '../../../auth/services/authApi';
 import { useNavigate } from 'react-router-dom';
+import { useGetAllAssignedPlansQuery } from './services/companyApi';
+import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
 
@@ -16,6 +18,17 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLogin] = useAdminLoginMutation();
     const navigate = useNavigate();
+
+    // Fetch all assigned plans
+    const { data: assignedPlans } = useGetAllAssignedPlansQuery();
+
+    // Function to check if company has active subscription
+    const hasActiveSubscription = (companyId) => {
+        if (!assignedPlans?.data) return false;
+        return assignedPlans.data.some(
+            sub => sub.client_id === companyId && sub.status !== 'cancelled'
+        );
+    };
 
     const handleAdminLogin = async (company) => {
         try {
@@ -138,15 +151,42 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             width: '15%',
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status) => {
-                const currentStatus = status || 'inactive';
-                const color = currentStatus === 'active' ? 'success' : 'error';
-                return <Tag color={color}>{currentStatus.toUpperCase()}</Tag>;
+            title: 'Plan Status',
+            key: 'planStatus',
+            width: '140px',
+            render: (_, record) => {
+                const isActive = hasActiveSubscription(record.id);
+                return (
+                    <Tag
+                        style={{
+                            background: isActive 
+                                ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
+                                : 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+                            color: isActive ? '#15803d' : '#b91c1c',
+                            border: `1px solid ${isActive ? '#86efac' : '#fca5a5'}`,
+                            padding: '4px 12px',
+                            borderRadius: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                        }}
+                    >
+                        {isActive ? (
+                            <>
+                                <CheckCircleOutlined style={{ fontSize: '12px' }} />
+                                ACTIVE
+                            </>
+                        ) : (
+                            <>
+                                <CloseCircleOutlined style={{ fontSize: '12px' }} />
+                                INACTIVE
+                            </>
+                        )}
+                    </Tag>
+                );
             },
-            width: '10%',
         },
         {
             title: 'Created',

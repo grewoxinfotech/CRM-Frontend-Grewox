@@ -50,6 +50,9 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
     const { data: departmentsData } = useGetAllDepartmentsQuery();
     const { data: designationsData } = useGetAllDesignationsQuery();
 
+
+
+
     // Add this useEffect to set default currency when form is initialized
     React.useEffect(() => {
         form.setFieldsValue({
@@ -65,6 +68,8 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         return [];
     }, [branchesData]);
 
+
+
     // Transform department data
     const departments = React.useMemo(() => {
         if (!departmentsData) return [];
@@ -73,6 +78,8 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         return [];
     }, [departmentsData]);
 
+  
+
     // Transform designation data
     const designations = React.useMemo(() => {
         if (!designationsData) return [];
@@ -80,6 +87,8 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         if (Array.isArray(designationsData.data)) return designationsData.data;
         return [];
     }, [designationsData]);
+
+
 
     const handleCreateBranchSuccess = async (newBranch) => {
         setIsCreateBranchModalOpen(false);
@@ -734,39 +743,34 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                             </Form.Item>
                     <Form.Item
                         name="phone"
-                                noStyle
-                                rules={[
-                                    { required: true, message: 'Please enter phone number' },
-                                    {
-                                        pattern: /^\d{10}$/,
-                                        message: 'Phone number must be exactly 10 digits (e.g., 9876543210)'
-                                    },
-                                    {
-                                        validator: (_, value) => {
-                                            if (value && !/^\d+$/.test(value)) {
-                                                return Promise.reject('Please enter only numbers');
-                                            }
-                                            return Promise.resolve();
-                                        }
+                        noStyle
+                        rules={[
+                            { required: true, message: 'Please enter phone number' },
+                            {
+                                validator: (_, value) => {
+                                    if (value && !/^\d+$/.test(value)) {
+                                        return Promise.reject('Please enter only numbers');
                                     }
-                                ]}
+                                    return Promise.resolve();
+                                }
+                            }
+                        ]}
                     >
                         <Input
                             size="large"
-                                    style={{
-                                        flex: 1,
-                                        border: 'none',
-                                        borderLeft: '1px solid #e6e8eb',
-                                        borderRadius: 0,
-                                        height: '46px',
-                                        backgroundColor: 'transparent',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                    }}
-                                    placeholder="Enter 10-digit phone number"
-                                    maxLength={10}
-                                />
-                            </Form.Item>
+                            style={{
+                                flex: 1,
+                                border: 'none',
+                                borderLeft: '1px solid #e6e8eb',
+                                borderRadius: 0,
+                                height: '46px',
+                                backgroundColor: 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                            }}
+                            placeholder="Enter phone number"
+                        />
+                    </Form.Item>
                         </Input.Group>
                     </Form.Item>
 
@@ -830,41 +834,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         />
                     </Form.Item>
 
-                    <Form.Item
-                        name="leaveDate"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Leave Date</span>}
-                        dependencies={['joiningDate']}
-                        rules={[
-                            { required: true, message: 'Please select leave date' },
-                            ({ getFieldValue }) => ({
-                                validator(_, value) {
-                                    const joiningDate = getFieldValue('joiningDate');
-                                    if (!joiningDate || !value) {
-                                        return Promise.resolve();
-                                    }
-                                    if (value.isAfter(joiningDate)) {
-                                        return Promise.resolve();
-                                    }
-                                    return Promise.reject(new Error('Leave date must be after joining date'));
-                                }
-                            })
-                        ]}
-                    >
-                        <DatePicker
-                            size="large"
-                            format="YYYY-MM-DD"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                padding: '8px 16px',
-                                height: '48px',
-                                backgroundColor: '#F8FAFC',
-                                border: '1px solid #E6E8EB',
-                                transition: 'all 0.3s ease',
-                            }}
-                            placeholder="Select leave date"
-                        />
-                    </Form.Item>
 
                     <Form.Item
                         name="branch"

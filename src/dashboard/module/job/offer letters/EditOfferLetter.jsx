@@ -272,7 +272,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                     <Form.Item
                         name="job"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Position</span>}
-                        rules={[{ required: true, message: 'Please select a job position' }]}
                         initialValue={initialValues.job}
                     >
                         <Select
@@ -304,7 +303,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                 Job Applicant
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select an applicant' }]}
                     >
                         <Select
                             loading={applicationsLoading}
@@ -342,10 +340,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                 Offer Expire On
                             </span>
                         }
-                        rules={[
-                            { required: true, message: 'Please select expiry date' },
-                            { validator: validateDate }
-                        ]}
                     >
                         <DatePicker
                             size="large"
@@ -368,10 +362,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                 Expected Joining Date
                             </span>
                         }
-                        rules={[
-                            { required: true, message: 'Please select joining date' },
-                            { validator: validateDate }
-                        ]}
                     >
                         <DatePicker
                             size="large"
@@ -412,7 +402,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                 <Form.Item
                                     name="currency"
                                     noStyle
-                                    rules={[{ required: true }]}
                                 >
                                     <Select
                                         size="large"
@@ -445,7 +434,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                 <Form.Item
                                     name="salary"
                                     noStyle
-                                    rules={[{ required: true, message: 'Please enter price' }]}
                                 >
                                     <Input
                                         placeholder="Enter price"
@@ -475,7 +463,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                             Description
                         </span>
                     }
-                    rules={[{ required: true, message: 'Please enter description' }]}
                 >
                     <TextArea
                         placeholder="Enter detailed description"
@@ -493,7 +480,6 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                 <Form.Item
                         name="file"
                         label="Offer Letter Document"
-                        rules={[{ required: true, message: 'Please upload offer letter document' }]}
                         className="full-width"
                     >
                         <Upload.Dragger
