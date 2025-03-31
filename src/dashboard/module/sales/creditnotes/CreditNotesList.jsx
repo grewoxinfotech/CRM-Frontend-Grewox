@@ -22,16 +22,28 @@ import {
   useGetCreditNotesQuery,
   useDeleteCreditNoteMutation,
 } from "./services/creditNoteApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import EditCreditNotes from "./EditCreditNotes";
+import { useGetInvoicesQuery } from "../invoice/services/invoiceApi";
 
 const { Text } = Typography;
 
-const CreditNotesList = ({ onEdit, onView, searchText = "" }) => {
+const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
   const { data: credtdata = [], isLoading } = useGetCreditNotesQuery();
   const creditNotes = credtdata.data;
   const [deleteCreditNote] = useDeleteCreditNoteMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedCreditNote, setSelectedCreditNote] = useState(null);
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
+
+  const { data: invdata } = useGetInvoicesQuery();
+  const invoices = invdata?.data;
+
+
+  const getCurrencyIcon = (currencyId) => {
+    const currency = currenciesData?.find(curr => curr.id === currencyId);
+    return currency?.currencyIcon || '₹';
+  };
 
   const filteredCreditNotes = React.useMemo(() => {
     return creditNotes?.filter((creditNote) => {
@@ -108,77 +120,49 @@ const CreditNotesList = ({ onEdit, onView, searchText = "" }) => {
 
   const columns = [
     {
+      title: "Invoice",
+      dataIndex: "invoice",
+      key: "invoice",
+      sorter: (a, b) => a.invoice - b.invoice,
+      render: (invoice) => {
+        const invoiceData = invoices?.find(inv => inv.id === invoice);
+        return (
+          <Text style={{  fontWeight: 500 }}>
+            {invoiceData?.salesInvoiceNumber || "N/A"}
+          </Text>
+        );
+      },
+    },
+    {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
       sorter: (a, b) => a.amount - b.amount,
-      render: (amount) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            color: "#1890ff",
-            fontWeight: 500,
-          }}
-        >
-          <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text strong>
-            $
-            {typeof amount === "number"
-              ? amount.toFixed(2)
-              : Number(amount).toFixed(2) || "0.00"}
-          </Text>
-        </div>
-      ),
+      render: (amount, record) => {
+        const currencyIcon = getCurrencyIcon(record.currency);
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#1890ff",
+              // fontWeight: 500,
+            }}
+          >
+            <Text strong>
+              {currencyIcon}
+              {typeof amount === "number"
+                ? amount.toFixed(2)
+                : Number(amount).toFixed(2) || "0.00"}
+            </Text>
+          </div>
+        );
+      },
     },
-    {
-      title: "currency",
-      dataIndex: "currency",
-      key: "currency",
-      sorter: (a, b) => (a?.currency || "").localeCompare(b?.currency || ""),
-      render: (currency) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            color: "#595959",
-          }}
-        >
-          <FiCalendar style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{currency}</Text>
-        </div>
-      ),
-    },
-    {
-      title: "Created By",
-      dataIndex: "created_by",
-      key: "created_by",
-      sorter: (a, b) =>
-        (a?.created_by || "").localeCompare(b?.created_by || ""),
-      render: (created_by) => (
-        <Text style={{ color: "#262626" }}>{created_by}</Text>
-      ),
-    },
-    // {
-    //   title: "Category",
-    //   dataIndex: "category",
-    //   key: "category",
-    //   sorter: (a, b) => (a?.category || "").localeCompare(b?.category || ""),
-    //   render: (category) => (
-    //     <Tag
-    //       color="blue"
-    //       style={{
-    //         borderRadius: "4px",
-    //         padding: "2px 8px",
-    //         fontSize: "13px",
-    //       }}
-    //     >
-    //       {category}
-    //     </Tag>
-    //   ),
-    // },
+    
+   
+    
     {
       title: "Description",
       dataIndex: "description",
@@ -199,19 +183,10 @@ const CreditNotesList = ({ onEdit, onView, searchText = "" }) => {
     },
     {
       title: "Date",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
-      render: (createdAt) => (
-        <Text
-          style={{
-            color: "#8c8c8c",
-            fontSize: "13px",
-          }}
-        >
-          {dayjs(createdAt).format("MMM DD, YYYY")}
-        </Text>
-      ),
+      dataIndex: "date",
+      key: "date",
+      render: (date) => dayjs(date).format("DD-MM-YYYY"),
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
     },
     {
       title: "Action",

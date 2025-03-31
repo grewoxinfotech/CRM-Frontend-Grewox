@@ -9,129 +9,80 @@
     }
 }
 
-.revenue-page {
+.invoice-page {
     padding: 24px;
-    background: $background-color;
+    background-color: #f5f7fa;
+    min-height: 100vh;
 
     .page-breadcrumb {
         margin-bottom: 16px;
-
-        .ant-breadcrumb {
-            font-size: 14px;
-
-            .ant-breadcrumb-link {
-                color: $text-color-light;
-                transition: all 0.3s ease;
-
-                a {
-                    color: $text-color-light;
-                    display: inline-flex;
-                    align-items: center;
-
-                    &:hover {
-                        color: #1677ff;
-                    }
-                }
-
-                &:last-child {
-                    color: $text-color-dark;
-                    font-weight: 500;
-                }
-            }
-
-            .ant-breadcrumb-separator {
-                margin: 0 8px;
-                color: $text-color-light;
-            }
-        }
     }
 
     .page-header {
-        @include hover-shadow;
-        margin-bottom: 24px;
         display: flex;
-        flex-direction: row;
         justify-content: space-between;
-        align-items: center;
-        gap: 24px;
-        background: white;
-        padding: 24px 32px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+        align-items: flex-start;
+        margin-bottom: 24px;
 
         .page-title {
-            text-align: left;
-            margin-bottom: 0;
-            flex-shrink: 0;
-
             h2 {
-                color: $text-color-dark;
-                margin-bottom: 4px;
-                font-size: 28px;
+                margin: 0;
+                color: #1f1f1f;
                 font-weight: 600;
-                line-height: 1.2;
             }
 
             .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
-                display: block;
+                font-size: 14px;
+                margin-top: 4px;
             }
         }
 
         .header-actions {
             display: flex;
+            gap: 12px;
             align-items: center;
-            justify-content: flex-end;
-            gap: 16px;
-            width: 100%;
-            max-width: 800px;
 
-            .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
+            .search-filter-group {
+                .search-input {
+                    .ant-input-affix-wrapper {
+                        border-radius: 40px;
+                        height: 40px;
+                        padding: 4px 16px;
+                        transition: all 0.3s ease;
+                        border: 1px solid #d9d9d9;
+                        width: 100%;
 
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
-
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
-                    }
-
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
-
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
+                        .anticon {
+                            color: #8c8c8c;
+                            margin-right: 8px;
+                            font-size: 16px;
                         }
-                    }
 
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                        .ant-input {
+                            font-size: 14px;
+                            background: transparent;
+                            border: none;
+                            padding: 0;
+                            margin: 0 4px;
+
+                            &::placeholder {
+                                color: rgba(0, 0, 0, 0.45);
+                            }
+                        }
+
+                        &:hover,
+                        &:focus,
+                        &-focused {
+                            border-color: #40a9ff;
+                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                        }
                     }
                 }
             }
 
             .action-buttons {
                 display: flex;
-                align-items: center;
                 gap: 12px;
-                flex-shrink: 0;
 
                 .export-button,
                 .add-button {
@@ -151,12 +102,13 @@
                 }
 
                 .export-button {
-                    border: 1px solid $border-color;
+                    border: 1px solid #d9d9d9;
                     background: white;
+                    color: #595959;
 
                     &:hover {
-                        color: #1677ff;
-                        border-color: #1677ff;
+                        color: #40a9ff;
+                        border-color: #40a9ff;
                         transform: translateY(-2px);
                     }
                 }
@@ -175,206 +127,101 @@
         }
     }
 
-    .revenue-table-card {
-        @include hover-shadow;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        .ant-card-body {
-            padding: 0;
-        }
+    .content-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        background: #ffffff;
 
         .ant-table-wrapper {
             .ant-table {
-                background: transparent;
-
-                .ant-table-thead>tr>th {
+                .ant-table-thead > tr > th {
                     background: #fafafa;
                     font-weight: 600;
-                    color: $text-color-dark;
-                    padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
-
-                    &::before {
-                        display: none;
-                    }
+                    color: #262626;
                 }
 
-                .ant-table-tbody>tr>td {
-                    padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
-
-                    &:last-child {
-                        padding-right: 24px;
-                    }
+                .ant-table-tbody > tr > td {
+                    padding: 12px 16px;
                 }
 
-                .ant-table-row {
-                    transition: all 0.3s ease;
-
-                    &:hover {
-                        background: #fafafa;
-                    }
-                }
-            }
-
-            .ant-table-pagination {
-                margin: 16px 24px;
-            }
-        }
-    }
-}
-
-// Revenue Modal Styles
-.revenue-form-modal {
-    .ant-modal-content {
-        border-radius: 12px;
-        overflow: hidden;
-
-        .ant-modal-header {
-            background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-            padding: 16px 24px;
-            border-bottom: none;
-
-            .ant-modal-title {
-                color: white;
-                font-size: 18px;
-                font-weight: 600;
-            }
-        }
-
-        .ant-modal-body {
-            padding: 24px;
-        }
-
-        .ant-modal-footer {
-            padding: 16px 24px;
-            border-top: 1px solid $border-color;
-        }
-    }
-
-    .ant-form {
-        .ant-form-item {
-            margin-bottom: 24px;
-
-            .ant-form-item-label {
-                padding-bottom: 8px;
-
-                label {
-                    font-weight: 500;
-                    color: $text-color-dark;
-                }
-            }
-
-            .ant-input,
-            .ant-select-selector,
-            .ant-picker {
-                border-radius: 8px;
-                border: 1px solid $border-color;
-                transition: all 0.3s ease;
-
-                &:hover,
-                &:focus {
-                    border-color: #1677ff;
-                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                .ant-table-tbody > tr:hover > td {
+                    background: #f5f5f5;
                 }
             }
         }
     }
 }
 
-// Status Tag Styles
-.revenue-status-tag {
+.credit-notes-actions-dropdown {
+    .ant-dropdown-menu {
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        padding: 4px 0;
+
+        .ant-dropdown-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            color: #595959;
+            transition: all 0.3s;
+
+            &:hover {
+                background: #f5f5f5;
+                color: #1890ff;
+            }
+
+            &.ant-dropdown-menu-item-danger {
+                color: #ff4d4f;
+
+                &:hover {
+                    background: #fff1f0;
+                    color: #ff7875;
+                }
+            }
+        }
+    }
+}
+
+.action-dropdown-button {
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
+    transition: all 0.3s;
 
-    &.completed {
-        color: #52c41a;
-        background: #f6ffed;
-        border: 1px solid #b7eb8f;
-    }
-
-    &.failed {
-        color: #ff4d4f;
-        background: #fff1f0;
-        border: 1px solid #ffa39e;
-    }
-
-    &.pending {
-        color: #faad14;
-        background: #fffbe6;
-        border: 1px solid #ffe58f;
-    }
-}
-
-// Custom Delete Modal Styles
-.custom-delete-modal {
-    .ant-modal-content {
-        border-radius: 12px;
-        overflow: hidden;
-        padding: 0;
-
-        .ant-modal-body {
-            padding: 24px;
-        }
-
-        .ant-modal-confirm-btns {
-            margin-top: 24px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-
-            .ant-btn {
-                height: 40px;
-                padding: 0 24px;
-                border-radius: 8px;
-                font-weight: 500;
-
-                &-primary {
-                    background: #ff4d4f;
-                    border-color: #ff4d4f;
-
-                    &:hover {
-                        background: #ff7875;
-                        border-color: #ff7875;
-                    }
-                }
-            }
-        }
+    &:hover {
+        background: #f5f5f5;
+        color: #1890ff;
     }
 }
 
 // Responsive styles
-@media (max-width: 768px) {
-    .revenue-page {
+@media screen and (max-width: 768px) {
+    .invoice-page {
+        padding: 16px;
+
         .page-header {
             flex-direction: column;
-            padding: 16px;
+            gap: 16px;
 
             .header-actions {
-                flex-direction: column;
                 width: 100%;
+                flex-direction: column;
+                align-items: stretch;
 
-                .search-input {
-                    max-width: 100%;
+                .search-filter-group {
+                    .ant-input-affix-wrapper {
+                        width: 100%;
+                    }
                 }
 
                 .action-buttons {
-                    width: 100%;
-                    justify-content: space-between;
-                }
-            }
-        }
+                    flex-wrap: wrap;
+                    justify-content: flex-start;
 
-        .revenue-table-card {
-            .ant-table {
-                .ant-table-thead>tr>th,
-                .ant-table-tbody>tr>td {
-                    padding: 12px 8px;
+                    .ant-btn {
+                        flex: 1;
+                        min-width: 120px;
+                    }
                 }
             }
         }

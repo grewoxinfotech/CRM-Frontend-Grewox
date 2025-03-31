@@ -29,6 +29,7 @@ import dayjs from "dayjs";
 import { useUpdateCreditNoteMutation } from "./services/creditNoteApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetInvoicesQuery } from "../invoice/services/invoiceApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import "./creditnotes.scss";
 
 const { Text } = Typography;
@@ -45,14 +46,55 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
   const { data: invdata } = useGetInvoicesQuery();
   const invoices = invdata?.data;
 
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const [selectedCurrency, setSelectedCurrency] = useState('₹');
+
   useEffect(() => {
     if (initialValues) {
-      form.setFieldsValue({
+      // Find the selected invoice
+      const selectedInvoice = invoices?.find(inv => inv.id === initialValues.invoice);
+      
+      const formValues = {
         ...initialValues,
         date: initialValues.date ? dayjs(initialValues.date) : null,
-      });
+        // Set customer from invoice if available
+        customer: selectedInvoice?.customer || initialValues.customer,
+      };
+
+      form.setFieldsValue(formValues);
+
+      // Set initial currency icon
+      const currencyDetails = currenciesData?.find(curr => curr.id === initialValues.currency);
+      if (currencyDetails) {
+        setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+      }
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, currenciesData, invoices]);
+
+  const handleCurrencyChange = (value) => {
+    const currencyDetails = currenciesData?.find(curr => curr.id === value);
+    if (currencyDetails) {
+      setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+    }
+  };
+
+  const handleInvoiceChange = (value) => {
+    const selectedInvoice = invoices?.find(inv => inv.id === value);
+    if (selectedInvoice) {
+      // Set amount from invoice total
+      form.setFieldsValue({
+        amount: selectedInvoice.total,
+        currency: selectedInvoice.currency,
+        customer: selectedInvoice.customer
+      });
+      
+      // Update selected currency icon
+      const currencyDetails = currenciesData?.find(curr => curr.id === selectedInvoice.currency);
+      if (currencyDetails) {
+        setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+      }
+    }
+  };
 
   const handleSubmit = async (values) => {
     try {
@@ -210,6 +252,7 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
                 showSearch
                 optionFilterProp="children"
                 size="large"
+                onChange={handleInvoiceChange}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -217,7 +260,7 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
               >
                 {invoices?.map((invoice) => (
                   <Option key={invoice.id} value={invoice.id}>
-                    {invoice.salesInvoiceNumber}
+                    {invoice.salesInvoiceNumber} - {invoice.total}
                   </Option>
                 ))}
               </Select>
@@ -240,6 +283,7 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
                 showSearch
                 optionFilterProp="children"
                 size="large"
+                disabled={form.getFieldValue('invoice')}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -261,7 +305,8 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
               name="currency"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Currency
+                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
@@ -269,15 +314,19 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
               <Select
                 size="large"
                 placeholder="Select currency"
+                onChange={handleCurrencyChange}
+                disabled={form.getFieldValue('invoice')}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
                 }}
                 suffixIcon={<FiCreditCard style={{ color: "#1890ff" }} />}
               >
-                <Option value="INR">INR - Indian Rupee</Option>
-                <Option value="USD">USD - US Dollar</Option>
-                <Option value="EUR">EUR - Euro</Option>
+                {currenciesData?.map((currency) => (
+                  <Option key={currency.id} value={currency.id}>
+                    {currency.currencyName} ({currency.currencyIcon})
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
           </Col>
@@ -286,7 +335,8 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
               name="amount"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Amount
+                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Amount <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please enter amount" }]}
@@ -294,12 +344,13 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
               <Input
                 type="number"
                 prefix={
-                  <FiDollarSign
-                    style={{ color: "#1890ff", fontSize: "16px" }}
-                  />
+                  <span style={{ color: "#1890ff", fontSize: "16px" }}>
+                    {selectedCurrency}
+                  </span>
                 }
                 placeholder="Enter amount"
                 size="large"
+                disabled={form.getFieldValue('invoice')}
                 style={{
                   borderRadius: "10px",
                   padding: "8px 16px",
@@ -333,48 +384,7 @@ const EditCreditNotes = ({ open, onCancel, initialValues }) => {
           />
         </Form.Item>
 
-        <Form.Item
-          name="attachment"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Attachment
-            </span>
-          }
-        >
-          <Upload
-            maxCount={1}
-            fileList={fileList}
-            onChange={({ fileList }) => setFileList(fileList)}
-            beforeUpload={(file) => {
-              const isValidType = [
-                "image/jpeg",
-                "image/png",
-                "application/pdf",
-              ].includes(file.type);
-              if (!isValidType) {
-                message.error("You can only upload JPG/PNG/PDF files!");
-                return Upload.LIST_IGNORE;
-              }
-              return false;
-            }}
-          >
-            <Button
-              icon={<FiUpload style={{ marginRight: "8px" }} />}
-              style={{
-                width: "100%",
-                height: "48px",
-                borderRadius: "10px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              Click to Upload Attachment
-            </Button>
-          </Upload>
-        </Form.Item>
+       
 
         <Divider style={{ margin: "24px 0" }} />
 

@@ -109,7 +109,7 @@ const RevenueList = ({
       sorter: (a, b) => a.amount - b.amount,
       render: (amount) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiDollarSign style={{ color: "#1890ff" }} />
+          {/* <FiDollarSign style={{ color: "#1890ff" }} /> */}
           <Text strong>${amount?.toFixed(2)}</Text>
         </div>
       ),

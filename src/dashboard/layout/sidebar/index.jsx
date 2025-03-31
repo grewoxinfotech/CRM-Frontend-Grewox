@@ -34,11 +34,12 @@ import {
   FiBell,
   FiFile,
   FiEdit3,
-  FiCreditCard,
   FiBookOpen,
   FiPackage,
   FiGlobe,
   FiPercent,
+  FiCreditCard,
+  FiTruck,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
@@ -54,6 +55,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   const [isSupportOpen, setSupportOpen] = useState(false);
   const [isJobOpen, setJobOpen] = useState(false);
   const [isSalesOpen, setSalesOpen] = useState(false);
+  const [isPurchaseOpen, setPurchaseOpen] = useState(false);
   const handleLogout = useLogout();
 
   const userRole = useSelector(selectUserRole);
@@ -177,7 +179,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
       isDropdown: true,
       permission: 'dashboards-sales',
       subItems: [
-
         {
           title: "Product & Services",
           icon: <FiPackage />,
@@ -207,6 +208,32 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
           icon: <FiFile />,
           path: "/dashboard/sales/credit-notes",
           permission: "dashboards-sales-credit-notes"
+        }
+      ].filter(item => shouldShowMenuItem(item)),
+    },
+    {
+      title: "Purchase",
+      icon: <FiShoppingBag />,
+      isDropdown: true,
+      permission: 'dashboards-purchase',
+      subItems: [
+        {
+          title: "Vendor",
+          icon: <FiTruck />,
+          path: "/dashboard/purchase/vendor",
+          permission: "dashboards-purchase-vendor"
+        },
+        {
+          title: "Billing",
+          icon: <FiCreditCard />,
+          path: "/dashboard/purchase/billing",
+          permission: "dashboards-purchase-billing"
+        },
+        {
+          title: "Debit Note",
+          icon: <FiFileText />,
+          path: "/dashboard/purchase/debit-note",
+          permission: "dashboards-purchase-debit-note"
         }
       ].filter(item => shouldShowMenuItem(item)),
     },
@@ -543,23 +570,25 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 ? renderDropdown(item, isCrmOpen, setCrmOpen)
                 : item.title === "Sales"
                   ? renderDropdown(item, isSalesOpen, setSalesOpen)
-                  : item.title === "User Management"
-                    ? renderDropdown(
-                      item,
-                      isUserManagementOpen,
-                      setUserManagementOpen
-                    )
-                    : item.title === "Communication"
-                      ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
-                      : item.title === "HRM"
-                        ? renderDropdown(item, isHrmOpen, setHrmOpen)
-                        : item.title === "Setting"
-                          ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
-                          : item.title === "Support"
-                            ? renderDropdown(item, isSupportOpen, setSupportOpen)
-                            : item.title === "Job"
-                              ? renderDropdown(item, isJobOpen, setJobOpen)
-                              : renderDropdown(item, false, () => { })}
+                  : item.title === "Purchase"
+                    ? renderDropdown(item, isPurchaseOpen, setPurchaseOpen)
+                    : item.title === "User Management"
+                      ? renderDropdown(
+                        item,
+                        isUserManagementOpen,
+                        setUserManagementOpen
+                      )
+                      : item.title === "Communication"
+                        ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
+                        : item.title === "HRM"
+                          ? renderDropdown(item, isHrmOpen, setHrmOpen)
+                          : item.title === "Settings"
+                            ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
+                            : item.title === "Support"
+                              ? renderDropdown(item, isSupportOpen, setSupportOpen)
+                              : item.title === "Job"
+                                ? renderDropdown(item, isJobOpen, setJobOpen)
+                                : renderDropdown(item, false, () => { })}
           </motion.div>
         ))}
       </nav>

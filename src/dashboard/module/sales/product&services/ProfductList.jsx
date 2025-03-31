@@ -55,12 +55,24 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
   }, [products, searchText]);
 
   const handleDelete = async (id) => {
-    try {
-      await deleteProduct(id).unwrap();
-      message.success("Product deleted successfully");
-    } catch (error) {
-      message.error(error?.data?.message || "Failed to delete product");
-    }
+    Modal.confirm({
+      title: 'Delete Product',
+      content: 'Are you sure you want to delete this product?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      bodyStyle: {
+        padding: '20px',
+      },
+      onOk: async () => {
+        try {
+          await deleteProduct(id).unwrap();
+          message.success('Product deleted successfully');
+        } catch (error) {
+          message.error(error?.data?.message || 'Failed to delete product');
+        }
+      },
+    });
   };
 
   const handleEdit = (record) => {
@@ -72,6 +84,30 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
     setEditModalVisible(false);
     setSelectedProduct(null);
   };
+
+  const getDropdownItems = (record) => ({
+    items: [
+      {
+        key: 'view',
+        icon: <FiEye />,
+        label: 'View Details',
+        onClick: () => onView(record),
+      },
+      {
+        key: 'edit',
+        icon: <FiEdit2 />,
+        label: 'Edit',
+        onClick: () => handleEdit(record),
+      },
+      {
+        key: 'delete',
+        icon: <FiTrash2 />,
+        label: 'Delete',
+        onClick: () => handleDelete(record.id),
+        danger: true,
+      },
+    ],
+  });
 
   const columns = [
     {
@@ -127,7 +163,7 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
             fontWeight: 500,
           }}
         >
-          <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
+          {/* <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} /> */}
           <Text strong>
             $
             {typeof price === "number"
@@ -166,63 +202,45 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
       ),
     },
     {
-      title: "Actions",
+      title: "Action",
       key: "actions",
-      width: 120,
+      width: 80,
+      align: "center",
       render: (_, record) => (
-        <div style={{ display: "flex", gap: "8px" }}>
-          <Tooltip title="View">
-            <Button
-              type="text"
-              icon={<FiEye />}
-              onClick={() => onView(record)}
-              style={{ color: "#1890ff" }}
-            />
-          </Tooltip>
-          <Tooltip title="Edit">
-            <Button
-              type="text"
-              icon={<FiEdit2 />}
-              onClick={() => onEdit(record)}
-              style={{ color: "#52c41a" }}
-            />
-          </Tooltip>
-          <Tooltip title="Delete">
-            <Button
-              type="text"
-              icon={<FiTrash2 />}
-              onClick={() => {
-                Modal.confirm({
-                  title: "Delete Product",
-                  content: "Are you sure you want to delete this product?",
-                  okText: "Yes",
-                  okType: "danger",
-                  cancelText: "No",
-                  onOk: () => handleDelete(record.id),
-                });
-              }}
-              style={{ color: "#ff4d4f" }}
-            />
-          </Tooltip>
-        </div>
+        <Dropdown
+          menu={getDropdownItems(record)}
+          trigger={["click"]}
+          placement="bottomRight"
+          overlayClassName="product-actions-dropdown"
+        >
+          <Button
+            type="text"
+            icon={<FiMoreVertical />}
+            className="action-dropdown-button"
+            onClick={(e) => e.preventDefault()}
+          />
+        </Dropdown>
       ),
     },
   ];
 
   return (
     <>
-      <Table
-        columns={columns}
-        dataSource={filteredProducts}
-        loading={isLoading}
-        rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} products`,
-        }}
-        scroll={{ x: true }}
-      />
+      <div className="product-list">
+        <Table
+          columns={columns}
+          dataSource={filteredProducts}
+          loading={isLoading}
+          rowKey="id"
+          pagination={{
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} products`,
+          }}
+          className="product-table"
+          scroll={{ x: true }}
+        />
+      </div>
 
       <EditProduct
         open={editModalVisible}

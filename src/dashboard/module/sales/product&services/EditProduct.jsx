@@ -331,29 +331,6 @@ const EditProduct = ({ open, onCancel, initialValues }) => {
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item
-              name="tax"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>Tax</span>
-              }
-            >
-              <Input
-                prefix={
-                  <FiHash style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter tax"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
               name="hsn_sac"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
@@ -407,21 +384,19 @@ const EditProduct = ({ open, onCancel, initialValues }) => {
             </span>
           }
         >
-          <Upload {...uploadProps} listType="picture-card" maxCount={1}>
+          <Upload {...uploadProps}>
             <Button
-              icon={<FiUpload style={{ marginRight: "8px" }} />}
+              icon={<FiUpload />}
+              size="large"
               style={{
-                width: "100%",
-                height: "100%",
                 borderRadius: "10px",
+                height: "48px",
                 backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                border: "1px dashed #e6e8eb",
+                width: "100%",
               }}
             >
-              Click to Upload
+              Click to upload
             </Button>
           </Upload>
         </Form.Item>

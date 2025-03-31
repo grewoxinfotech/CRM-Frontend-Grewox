@@ -10,7 +10,6 @@ import {
   Col,
   Divider,
   DatePicker,
-  Upload,
   message,
 } from "antd";
 import {
@@ -19,7 +18,6 @@ import {
   FiCalendar,
   FiUser,
   FiHash,
-  FiUpload,
   FiBriefcase,
   FiCreditCard,
   FiTag,
@@ -30,6 +28,7 @@ import { useCreateCreditNoteMutation } from "./services/creditNoteApi";
 import "./creditnotes.scss";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetInvoicesQuery } from "../invoice/services/invoiceApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -37,7 +36,6 @@ const { TextArea } = Input;
 
 const CreateCreditNotes = ({ open, onCancel }) => {
   const [form] = Form.useForm();
-  const [fileList, setFileList] = useState([]);
   const [createCreditNote, { isLoading }] = useCreateCreditNoteMutation();
   const { data: custdata } = useGetCustomersQuery();
   const customers = custdata?.data;
@@ -45,31 +43,50 @@ const CreateCreditNotes = ({ open, onCancel }) => {
   const { data: invdata } = useGetInvoicesQuery();
   const invoices = invdata?.data;
 
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const [selectedCurrency, setSelectedCurrency] = useState('₹');
+
+  const handleCurrencyChange = (value) => {
+    const currencyDetails = currenciesData?.find(curr => curr.id === value);
+    if (currencyDetails) {
+      setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+    }
+  };
+
+  const handleInvoiceChange = (value) => {
+    const selectedInvoice = invoices?.find(inv => inv.id === value);
+    if (selectedInvoice) {
+      // Set amount from invoice total
+      form.setFieldValue('amount', selectedInvoice.total);
+      
+      // Set currency from invoice
+      form.setFieldValue('currency', selectedInvoice.currency);
+      
+      // Set customer from invoice
+      form.setFieldValue('customer', selectedInvoice.customer);
+      
+      // Update selected currency icon
+      const currencyDetails = currenciesData?.find(curr => curr.id === selectedInvoice.currency);
+      if (currencyDetails) {
+        setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+      }
+    }
+  };
+
   const handleSubmit = async (values) => {
     try {
-      const formData = new FormData();
+      const creditNoteData = {
+        invoice: values.invoice || "",
+        customer: values.customer || "",
+        currency: values.currency || "",
+        amount: values.amount || "",
+        description: values.description || "",
+        date: values.date ? values.date.format("YYYY-MM-DD") : "",
+      };
 
-      // Append each field explicitly
-      formData.append("invoice", values.invoice || "");
-      formData.append("customer", values.customer || "");
-      formData.append("currency", values.currency || "");
-      formData.append("amount", values.amount || "");
-      formData.append("description", values.description || "");
-
-      // Handle date if present
-      if (values.date) {
-        formData.append("date", values.date.format("YYYY-MM-DD"));
-      }
-
-      // Handle attachment if present
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        formData.append("attachment", fileList[0].originFileObj);
-      }
-
-      await createCreditNote(formData).unwrap();
+      await createCreditNote(creditNoteData).unwrap();
       message.success("Credit note created successfully");
       form.resetFields();
-      setFileList([]);
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
@@ -194,7 +211,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Invoice <span style={{ color: "#ff4d4f" }}>*</span>
+                  Invoice <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select invoice" }]}
@@ -204,6 +221,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 showSearch
                 optionFilterProp="children"
                 size="large"
+                onChange={handleInvoiceChange}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -211,7 +229,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               >
                 {invoices?.map((invoice) => (
                   <Option key={invoice.id} value={invoice.id}>
-                    {invoice.salesInvoiceNumber}
+                    {invoice.salesInvoiceNumber} - {invoice.total}
                   </Option>
                 ))}
               </Select>
@@ -224,7 +242,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Customer <span style={{ color: "#ff4d4f" }}>*</span>
+                  Customer <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select customer" }]}
@@ -234,6 +252,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 showSearch
                 optionFilterProp="children"
                 size="large"
+                disabled={form.getFieldValue('invoice')}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -258,14 +277,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                   <FiCalendar
                     style={{ marginRight: "8px", color: "#1890ff" }}
                   />
-                  Date <span style={{ color: "#ff4d4f" }}>*</span>
+                  Date
                 </span>
               }
               rules={[{ required: true, message: "Please select date" }]}
             >
               <DatePicker
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -281,7 +300,8 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               name="currency"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
+                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Currency <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
@@ -289,15 +309,19 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               <Select
                 size="large"
                 placeholder="Select currency"
+                onChange={handleCurrencyChange}
+                disabled={form.getFieldValue('invoice')}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
                 }}
                 suffixIcon={<FiCreditCard style={{ color: "#1890ff" }} />}
               >
-                <Option value="INR">INR - Indian Rupee</Option>
-                <Option value="USD">USD - US Dollar</Option>
-                <Option value="EUR">EUR - Euro</Option>
+                {currenciesData?.map((currency) => (
+                  <Option key={currency.id} value={currency.id}>
+                    {currency.currencyName} ({currency.currencyIcon})
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
           </Col>
@@ -306,7 +330,8 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               name="amount"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Amount
+                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Amount <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please enter amount" }]}
@@ -314,9 +339,9 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               <Input
                 type="number"
                 prefix={
-                  <FiDollarSign
-                    style={{ color: "#1890ff", fontSize: "16px" }}
-                  />
+                  <span style={{ color: "#1890ff", fontSize: "16px" }}>
+                    {selectedCurrency}
+                  </span>
                 }
                 placeholder="Enter amount"
                 size="large"
@@ -355,49 +380,6 @@ const CreateCreditNotes = ({ open, onCancel }) => {
           />
         </Form.Item>
 
-        <Form.Item
-          name="attachment"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Attachment
-            </span>
-          }
-        >
-          <Upload
-            maxCount={1}
-            fileList={fileList}
-            onChange={({ fileList }) => setFileList(fileList)}
-            beforeUpload={(file) => {
-              const isValidType = [
-                "image/jpeg",
-                "image/png",
-                "application/pdf",
-              ].includes(file.type);
-              if (!isValidType) {
-                message.error("You can only upload JPG/PNG/PDF files!");
-                return Upload.LIST_IGNORE;
-              }
-              return false;
-            }}
-          >
-            <Button
-              icon={<FiUpload style={{ marginRight: "8px" }} />}
-              style={{
-                width: "100%",
-                height: "48px",
-                borderRadius: "10px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              Click to Upload Attachment
-            </Button>
-          </Upload>
-        </Form.Item>
-
         <Divider style={{ margin: "24px 0" }} />
 
         <div
@@ -424,7 +406,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
             size="large"
             type="primary"
             htmlType="submit"
-            loading={isLoading}
+           
             style={{
               padding: "8px 32px",
               height: "44px",

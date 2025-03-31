@@ -34,7 +34,7 @@ import { offerLetterApi } from "../dashboard/module/job/offer letters/services/o
 import { interviewApi } from "../dashboard/module/job/interviews/services/interviewApi.js";
 import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
 import { leadApi } from "../dashboard/module/crm/lead/services/LeadApi.js";
-import { dealApi } from "../dashboard/module/crm/deal/services/DealApi.js";
+import { dealApi } from "../dashboard/module/crm/deal/services/dealApi.js";
 import { creditNoteApi } from "../dashboard/module/sales/creditnotes/services/creditNoteApi.js";
 import { customerApi } from "../dashboard/module/sales/customer/services/custApi.js";
 import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceApi.js";
@@ -51,6 +51,10 @@ import { taxApi } from "../dashboard/module/settings/tax/services/taxApi.js";
 import { salaryApi } from "../dashboard/module/hrm/payRoll/services/salaryApi.js";
 import { attendanceApi } from "../dashboard/module/hrm/Attendance/services/attendanceApi";
 import { holidayApi } from "../dashboard/module/hrm/Holiday/services/holidayApi";
+import {vendorApi} from "../dashboard/module/purchase/vendor/services/vendorApi.js";
+import { billingApi } from "../dashboard/module/purchase/billing/services/billingApi";
+import { debitNoteApi } from "../dashboard/module/purchase/debitnote/services/debitnoteApi";
+
 const persistConfig = {
   key: "root",
   storage,
@@ -108,6 +112,9 @@ const rootReducer = combineReducers({
   [attendanceApi.reducerPath]: attendanceApi.reducer,
   [holidayApi.reducerPath]: holidayApi.reducer,
   [salaryApi.reducerPath]: salaryApi.reducer,
+  [vendorApi.reducerPath]:vendorApi.reducer,
+  [billingApi.reducerPath]: billingApi.reducer,
+  [debitNoteApi.reducerPath]: debitNoteApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -168,6 +175,9 @@ export const store = configureStore({
       .concat(holidayApi.middleware)
       .concat(salaryApi.middleware)
       .concat(dealInvoiceApi.middleware)
+      .concat(vendorApi.middleware)
+      .concat(billingApi.middleware)
+      .concat(debitNoteApi.middleware),
 });
 
 export const persistor = persistStore(store);

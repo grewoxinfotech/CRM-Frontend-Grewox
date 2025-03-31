@@ -15,11 +15,13 @@ import {
 } from "./services/invoiceApi";
 import EditInvoice from "./EditInvoice";
 import ViewInvoice from './ViewInvoice';
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
 
 const InvoiceList = () => {
   const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [deleteInvoice] = useDeleteInvoiceMutation();
   const [updateInvoice] = useUpdateInvoiceMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -235,50 +237,44 @@ const InvoiceList = () => {
       ),
     },
     {
-      title: "Created By",
-      dataIndex: "created_by",
-      key: "created_by",
-      sorter: (a, b) => a.created_by.localeCompare(b.created_by),
-    },
-    {
       title: "Date",
-      dataIndex: "date",
-      key: "date",
+      dataIndex: "issueDate",
+      key: "issueDate",
       render: (date) => dayjs(date).format("DD/MM/YYYY"),
-      sorter: (a, b) => new Date(a.date) - new Date(b.date),
+      sorter: (a, b) => new Date(a.issueDate) - new Date(b.issueDate),
     },
     {
       title: "Due Date",
-      dataIndex: "due_date",
-      key: "due_date",
+      dataIndex: "dueDate",
+      key: "dueDate",
       render: (date) => dayjs(date).format("DD/MM/YYYY"),
-      sorter: (a, b) => new Date(a.due_date) - new Date(b.due_date),
+      sorter: (a, b) => new Date(a.dueDate) - new Date(b.dueDate),
     },
     {
       title: "Amount",
       dataIndex: "total",
       key: "total",
-      align: "right",
-      render: (amount) => (
-        <Text strong>
-          ₹
-          {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-        </Text>
-      ),
+      render: (amount, record) => {
+        // Get currency details from the record
+        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
+        const currencyIcon = currencyDetails?.currencyIcon || '₹';
+        
+        return (
+          <Text strong>
+            {currencyIcon}
+            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </Text>
+        );
+      },
       sorter: (a, b) => a.total - b.total,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status) => getStatusTag(status),
-      filters: [
-        { text: "Draft", value: "draft" },
-        { text: "Pending", value: "pending" },
-        { text: "Paid", value: "paid" },
-        { text: "Overdue", value: "overdue" },
-      ],
-      onFilter: (value, record) => record.status === value,
+    
     },
     {
       title: "Action",

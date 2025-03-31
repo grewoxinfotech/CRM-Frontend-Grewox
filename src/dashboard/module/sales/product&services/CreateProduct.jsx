@@ -30,11 +30,10 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateProduct = ({ open, onCancel }) => {
+const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const user = useSelector(selectCurrentUser);
-  const [createProduct, { isLoading }] = useCreateProductMutation(user?.id);
   const currentUser = useSelector(selectCurrentUser);
 
   const handleSubmit = async (values) => {
@@ -56,11 +55,9 @@ const CreateProduct = ({ open, onCancel }) => {
         formData.append("image", fileList[0].originFileObj);
       }
 
-      await createProduct({ id: currentUser?.id, data: formData }).unwrap();
-      message.success("Product created successfully");
+      await onSubmit(formData);
       form.resetFields();
       setFileList([]);
-      onCancel();
     } catch (error) {
       message.error(error?.data?.message || "Failed to create product");
     }
@@ -69,7 +66,7 @@ const CreateProduct = ({ open, onCancel }) => {
   const handleCancel = () => {
     form.resetFields();
     setFileList([]);
-    onCancel();
+    onClose();
   };
 
   const uploadProps = {
@@ -93,7 +90,7 @@ const CreateProduct = ({ open, onCancel }) => {
   return (
     <Modal
       title={null}
-      open={open}
+      open={visible}
       onCancel={handleCancel}
       footer={null}
       width={800}
@@ -120,7 +117,7 @@ const CreateProduct = ({ open, onCancel }) => {
       >
         <Button
           type="text"
-          onClick={onCancel}
+          onClick={handleCancel}
           style={{
             position: "absolute",
             top: "16px",
@@ -248,9 +245,9 @@ const CreateProduct = ({ open, onCancel }) => {
               >
                 <Option value="electronics">Electronics</Option>
                 <Option value="clothing">Clothing</Option>
-                <Option value="furniture">Furniture</Option>
-                <Option value="books">Books</Option>
-                <Option value="others">Others</Option>
+                <Option value="food">Food</Option>
+                <Option value="beverages">Beverages</Option>
+                <Option value="other">Other</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -269,11 +266,10 @@ const CreateProduct = ({ open, onCancel }) => {
             >
               <InputNumber
                 prefix={
-                  <FiDollarSign
-                    style={{ color: "#1890ff", fontSize: "16px" }}
-                  />
+                  <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
                 }
                 placeholder="Enter price"
+                size="large"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -282,7 +278,7 @@ const CreateProduct = ({ open, onCancel }) => {
                   border: "1px solid #e6e8eb",
                 }}
                 min={0}
-                step={0.01}
+                precision={2}
               />
             </Form.Item>
           </Col>
@@ -290,12 +286,14 @@ const CreateProduct = ({ open, onCancel }) => {
             <Form.Item
               name="sku"
               label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>SKU</span>
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  SKU
+                </span>
               }
             >
               <Input
                 prefix={
-                  <FiTag style={{ color: "#1890ff", fontSize: "16px" }} />
+                  <FiHash style={{ color: "#1890ff", fontSize: "16px" }} />
                 }
                 placeholder="Enter SKU"
                 size="large"
@@ -312,42 +310,17 @@ const CreateProduct = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={24}>
-          <Col span={12}>
-            <Form.Item
-              name="tax"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>Tax</span>
-              }
-            >
-              <Input
-                prefix={
-                  <FiHash style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter tax"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-              />
-            </Form.Item>
-          </Col>
+         
           <Col span={12}>
             <Form.Item
               name="hsn_sac"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  HSN/SAC
+                  HSN/SAC Code
                 </span>
               }
             >
               <Input
-                prefix={
-                  <FiHash style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
                 placeholder="Enter HSN/SAC code"
                 size="large"
                 style={{
@@ -371,14 +344,18 @@ const CreateProduct = ({ open, onCancel }) => {
           }
         >
           <TextArea
+            prefix={
+              <FiFileText style={{ color: "#1890ff", fontSize: "16px" }} />
+            }
             placeholder="Enter product description"
-            autoSize={{ minRows: 3, maxRows: 6 }}
+            size="large"
             style={{
               borderRadius: "10px",
-              padding: "12px 16px",
+              padding: "8px 16px",
               backgroundColor: "#f8fafc",
               border: "1px solid #e6e8eb",
             }}
+            rows={4}
           />
         </Form.Item>
 
@@ -390,21 +367,19 @@ const CreateProduct = ({ open, onCancel }) => {
             </span>
           }
         >
-          <Upload {...uploadProps} listType="picture-card" maxCount={1}>
+          <Upload {...uploadProps}>
             <Button
-              icon={<FiUpload style={{ marginRight: "8px" }} />}
+              icon={<FiUpload />}
+              size="large"
               style={{
-                width: "100%",
-                height: "100%",
                 borderRadius: "10px",
+                height: "48px",
                 backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                border: "1px dashed #e6e8eb",
+                width: "100%",
               }}
             >
-              Click to Upload
+              Click to upload
             </Button>
           </Upload>
         </Form.Item>
@@ -413,7 +388,6 @@ const CreateProduct = ({ open, onCancel }) => {
 
         <div
           style={{
-            marginTop: "24px",
             display: "flex",
             justifyContent: "flex-end",
             gap: "12px",
@@ -421,14 +395,12 @@ const CreateProduct = ({ open, onCancel }) => {
         >
           <Button
             onClick={handleCancel}
+            size="large"
             style={{
-              padding: "8px 24px",
-              height: "40px",
-              borderRadius: "8px",
-              border: "1px solid #d9d9d9",
-              background: "#ffffff",
-              color: "#262626",
-              fontWeight: "500",
+              borderRadius: "10px",
+              height: "48px",
+              padding: "0 24px",
+              border: "1px solid #e6e8eb",
             }}
           >
             Cancel
@@ -436,15 +408,14 @@ const CreateProduct = ({ open, onCancel }) => {
           <Button
             type="primary"
             htmlType="submit"
-            loading={isLoading}
+            size="large"
+            loading={loading}
             style={{
-              padding: "8px 24px",
-              height: "40px",
-              borderRadius: "8px",
-              background: "#1890ff",
+              borderRadius: "10px",
+              height: "48px",
+              padding: "0 24px",
+              background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
               border: "none",
-              color: "#ffffff",
-              fontWeight: "500",
             }}
           >
             Create Product

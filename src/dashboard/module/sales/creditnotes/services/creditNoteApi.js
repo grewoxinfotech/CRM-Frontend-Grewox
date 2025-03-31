@@ -17,6 +17,7 @@ export const creditNoteApi = createApi({
         body: data,
         formData: true,
       }),
+      
       invalidatesTags: ["CreditNotes"],
     }),
     updateCreditNote: builder.mutation({

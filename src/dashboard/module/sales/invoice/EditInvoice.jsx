@@ -13,6 +13,7 @@ import {
   DatePicker,
   Space,
   message,
+  Switch,
 } from "antd";
 import {
   FiFileText,
@@ -24,11 +25,15 @@ import {
   FiPlus,
   FiTrash2,
   FiPackage,
+  FiCreditCard,
   FiPhone,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./invoice.scss";
 import { useGetCustomersQuery, useCreateCustomerMutation } from "../customer/services/custApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
+import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
+import { useGetProductsQuery } from "../product&services/services/productApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -37,24 +42,33 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const { data: custdata } = useGetCustomersQuery();
-  const customers = custdata?.data;
+  const customers = custdata?.data || [];
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [customerForm] = Form.useForm();
   const [createCustomer] = useCreateCustomerMutation();
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const [selectedCurrency, setSelectedCurrency] = useState('₹');
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
+  const [isTaxEnabled, setIsTaxEnabled] = useState(false);
+  const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
 
   useEffect(() => {
     if (initialValues) {
       let items = [];
       try {
-        if (Array.isArray(initialValues.items)) {
-          items = initialValues.items;
-        } else if (typeof initialValues.items === "string") {
-          items = JSON.parse(initialValues.items);
-        }
+        // Parse the items string into an object
+        const itemsObject = JSON.parse(initialValues.items);
+        // Convert the object with numbered keys into an array
+        items = Object.values(itemsObject);
       } catch (error) {
         console.error("Error parsing items:", error);
         items = [];
       }
+
+      // Check if any item has tax to enable tax switch
+      const hasTax = items?.some(item => item.taxAmount > 0 || item.taxId);
+      setIsTaxEnabled(hasTax);
 
       // Format the initial values
       const formattedValues = {
@@ -63,16 +77,22 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           ? dayjs(initialValues.issueDate)
           : null,
         dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : null,
-        category: initialValues.category || "",
-        reference_number: initialValues.reference_number || "",
+        reference_number: initialValues.salesInvoiceNumber || "",
         currency: initialValues.currency || "",
-        items:
-          items.length > 0
-            ? items
-            : [{ description: "", quantity: 1, unit_price: 0, discount: 0 }],
-        sub_total: initialValues.sub_total || 0,
-        item_discount: initialValues.item_discount || 0,
-        total_tax: initialValues.total_tax || 0,
+        status: initialValues.status || "pending",
+        items: items.length > 0
+          ? items.map(item => ({
+              ...item,
+              discount: item.discount || 0,
+              discount_type: 'percentage',
+              tax: item.taxAmount || 0,
+              taxId: item.taxId || null,
+              taxAmount: item.taxAmount || 0
+            }))
+          : [{ description: "", quantity: 1, unit_price: 0, discount: 0 }],
+        subTotal: initialValues.subTotal || 0,
+        item_discount: initialValues.discount || 0,
+        total_tax: initialValues.tax || 0,
         total: initialValues.total || 0,
       };
 
@@ -81,35 +101,97 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
       // Calculate initial totals
       calculateTotals(items);
+
+      // Auto-select product if items exist and products data is available
+      if (items.length > 0 && productsData?.data) {
+        const firstItem = items[0];
+        const matchingProduct = productsData.data.find(
+          product => product.name === firstItem.item_name
+        );
+        if (matchingProduct) {
+          form.setFieldValue('product_id', matchingProduct.id);
+        }
+      }
     }
-  }, [initialValues, form]);
+
+    if (initialValues?.currency && currenciesData) {
+      const currencyDetails = currenciesData.find(curr => curr.id === initialValues.currency);
+      if (currencyDetails) {
+        setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+        setSelectedCurrencyId(currencyDetails.id);
+      }
+    }
+  }, [initialValues, form, currenciesData, productsData]);
 
   const calculateTotals = (items = []) => {
     if (!Array.isArray(items)) {
       items = [];
     }
 
-    const subTotal = items.reduce((sum, item) => {
+    let subTotal = 0;
+    let totalTaxAmount = 0;
+    let totalDiscountAmount = 0;
+
+    items.forEach(item => {
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.unit_price) || 0;
-      const discount = Number(item.discount) || 0;
-      const amount = quantity * price - discount;
-      return sum + amount;
-    }, 0);
+      const itemAmount = quantity * price;
 
-    const itemDiscount = form.getFieldValue("item_discount") || 0;
-    const totalTax = form.getFieldValue("total_tax") || 0;
-    const totalAmount = subTotal - itemDiscount + totalTax;
+      // Calculate item discount based on type
+      const itemDiscount = Number(item.discount || 0);
+      const itemDiscountType = item.discount_type || 'percentage';
+      let itemDiscountAmount = 0;
+
+      if (itemDiscountType === 'percentage') {
+        itemDiscountAmount = (itemAmount * itemDiscount) / 100;
+      } else {
+        itemDiscountAmount = itemDiscount;
+      }
+
+      totalDiscountAmount += itemDiscountAmount;
+
+      // Calculate tax on amount after discount
+      const taxRate = Number(item.tax || 0);
+      const amountAfterDiscount = itemAmount - itemDiscountAmount;
+      const itemTaxAmount = (amountAfterDiscount * taxRate) / 100;
+      totalTaxAmount += itemTaxAmount;
+
+      // Add to subtotal (amount after discount)
+      subTotal += amountAfterDiscount;
+    });
+
+    // Calculate global discount
+    const discountType = form.getFieldValue('discount_type') || 'percentage';
+    const discountValue = Number(form.getFieldValue('item_discount')) || 0;
+    let globalDiscountAmount = 0;
+
+    if (discountType === 'percentage') {
+      globalDiscountAmount = (subTotal * discountValue) / 100;
+    } else {
+      globalDiscountAmount = discountValue;
+    }
+
+    // Final total = subtotal - global discount + tax
+    const totalAmount = subTotal - globalDiscountAmount + totalTaxAmount;
 
     form.setFieldsValue({
-      sub_total: subTotal.toFixed(2),
-      total: totalAmount.toFixed(2),
+      subTotal: subTotal.toFixed(2),
+      total_tax: totalTaxAmount.toFixed(2),
+      total: totalAmount.toFixed(2)
     });
   };
 
   const handleItemChange = () => {
     const items = form.getFieldValue("items");
     calculateTotals(items);
+  };
+
+  const handleCurrencyChange = (value) => {
+    const currencyDetails = currenciesData?.find(curr => curr.id === value);
+    if (currencyDetails) {
+      setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+      setSelectedCurrencyId(value);
+    }
   };
 
   const handleSubmit = async (values) => {
@@ -126,11 +208,11 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         customer: values.customer,
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
-        category: values.category,
         reference_number: values.reference_number,
         currency: values.currency,
+        status: values.status,
         items: itemsObject,
-        sub_total: values.sub_total,
+        subTotal: values.subTotal,
         item_discount: values.item_discount,
         total_tax: values.total_tax,
         total: values.total,
@@ -152,11 +234,11 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         name: values.name,
         contact: values.contact,
       }).unwrap();
-      
+
       message.success('Customer created successfully');
       setIsCustomerModalOpen(false);
       customerForm.resetFields();
-      
+
       // Automatically select the newly created customer
       form.setFieldValue('customer', result.data.id);
     } catch (error) {
@@ -168,6 +250,33 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const handleCancel = () => {
     form.resetFields();
     onCancel();
+  };
+
+  const calculateItemTotal = (item) => {
+    if (!item) return 0;
+
+    const quantity = Number(item.quantity) || 0;
+    const price = Number(item.unit_price) || 0;
+    const itemAmount = quantity * price;
+
+    // Calculate item discount
+    const itemDiscount = Number(item.discount || 0);
+    const itemDiscountType = item.discount_type || 'percentage';
+    let itemDiscountAmount = 0;
+
+    if (itemDiscountType === 'percentage') {
+      itemDiscountAmount = (itemAmount * itemDiscount) / 100;
+    } else {
+      itemDiscountAmount = itemDiscount;
+    }
+
+    // Calculate tax
+    const taxRate = Number(item.tax || 0);
+    const amountAfterDiscount = itemAmount - itemDiscountAmount;
+    const itemTaxAmount = (amountAfterDiscount * taxRate) / 100;
+
+    // Final amount = amount after discount + tax
+    return amountAfterDiscount + itemTaxAmount;
   };
 
   const customerSelect = (
@@ -195,14 +304,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             {menu}
             <Divider style={{ margin: '8px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Button
-              type="link"
-              icon={<FiPlus />}
-              onClick={() => setIsCustomerModalOpen(true)}
-              style={{ padding: '8px 12px' }}
-            >
-              Add New Customer
-            </Button>
+              <Button
+                type="link"
+                icon={<FiPlus />}
+                onClick={() => setIsCustomerModalOpen(true)}
+                style={{ padding: '8px 12px' }}
+              >
+                Add New Customer
+              </Button>
             </div>
           </>
         )}
@@ -340,7 +449,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             prefix={<FiUser style={{ color: '#1890ff' }} />}
             placeholder="Enter customer name"
             size="large"
-            style={{ 
+            style={{
               borderRadius: '8px',
               height: "40px",
               backgroundColor: "#f8fafc",
@@ -360,7 +469,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             prefix={<FiPhone style={{ color: '#1890ff' }} />}
             placeholder="Enter phone number"
             size="large"
-            style={{ 
+            style={{
               borderRadius: '8px',
               height: "40px",
               backgroundColor: "#f8fafc",
@@ -516,97 +625,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           padding: "24px",
         }}
       >
-        <Row gutter={16}>
-          <Col span={8}>
-            {customerSelect}
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="category"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiPackage style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Category <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter category" }]}
-            >
-              <Input
-                placeholder="Enter category"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              name="issueDate"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCalendar
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Issue Date <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select issue date" }]}
-            >
-              <DatePicker
-                format="YYYY-MM-DD"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="dueDate"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCalendar
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Due Date <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select due date" }]}
-            >
-              <DatePicker
-                format="YYYY-MM-DD"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          {customerSelect}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <Form.Item
               name="currency"
               label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiDollarSign
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
+                <span className="form-label">
+                  Currency <span className="required"></span>
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
@@ -614,391 +640,467 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               <Select
                 placeholder="Select Currency"
                 size="large"
+                onChange={handleCurrencyChange}
                 style={{
-                  width: "100%",
+                  width: "450px",
                   borderRadius: "10px",
                 }}
               >
-                <Option value="INR">INR - Indian Rupee</Option>
-                <Option value="USD">USD - US Dollar</Option>
-                <Option value="EUR">EUR - Euro</Option>
+                {currenciesData?.map((currency) => (
+                  <Option
+                    key={currency.id}
+                    value={currency.id}
+                    symbol={currency.currencyIcon}
+                  >
+                    {currency.currencyName} ({currency.currencyIcon})
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
-          </Col>
-        </Row>
+          </div>
+        </div>
 
-        <Divider orientation="left" style={{ margin: "24px 0" }}>
-          <span
-            style={{ fontSize: "16px", fontWeight: "500", color: "#1f2937" }}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+          <Form.Item
+            name="issueDate"
+            label={
+              <span className="form-label">
+                Issue Date <span className="required"></span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please select issue date" }]}
           >
-            <FiPackage style={{ marginRight: "8px", color: "#1890ff" }} />
-            Products & Services
-          </span>
-        </Divider>
-
-        <Form.List name="items">
-          {(fields, { add, remove }) => (
-            <>
-              <div style={{ marginBottom: "16px" }}>
-                <Row
-                  gutter={16}
-                  style={{
-                    padding: "12px 0",
-                    borderBottom: "1px solid #e6e8eb",
-                  }}
-                >
-                  <Col span={6}>
-                    <Text strong>Item*</Text>
-                  </Col>
-                  <Col span={3}>
-                    <Text strong>Quantity*</Text>
-                  </Col>
-                  <Col span={4}>
-                    <Text strong>Unit Price*</Text>
-                  </Col>
-                  <Col span={4}>
-                    <Text strong>HSN/SAC</Text>
-                  </Col>
-                  <Col span={3}>
-                    <Text strong>Discount</Text>
-                  </Col>
-                  <Col span={2}>
-                    <Text strong>TAX (%)</Text>
-                  </Col>
-                  <Col span={2}>
-                    <Text strong>Amount</Text>
-                  </Col>
-                </Row>
-              </div>
-
-              {fields.map(({ key, name, ...restField }, index) => (
-                <div
-                  key={key}
-                  style={{
-                    marginBottom: "16px",
-                    padding: "16px",
-                    backgroundColor: "#f8fafc",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <Row gutter={16}>
-                    <Col span={6}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "item_name"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <Input
-                          placeholder="Item Name"
-                          size="large"
-                          style={{
-                            borderRadius: "8px",
-                            height: "40px",
-                          }}
-                          onChange={handleItemChange}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={3}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "quantity"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <InputNumber
-                          min={1}
-                          size="large"
-                          style={{
-                            width: "100%",
-                            borderRadius: "8px",
-                            height: "40px",
-                            textAlign: "center",
-                          }}
-                          onChange={handleItemChange}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "unit_price"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <InputNumber
-                          placeholder="₹0"
-                          min={0}
-                          size="large"
-                          style={{
-                            width: "100%",
-                            borderRadius: "8px",
-                            height: "40px",
-                          }}
-                          formatter={(value) =>
-                            `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                          }
-                          parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
-                          onChange={handleItemChange}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={4}>
-                      <Form.Item {...restField} name={[name, "hsn_sac"]}>
-                        <Input
-                          placeholder="HSN/SAC"
-                          size="large"
-                          style={{
-                            borderRadius: "8px",
-                            height: "40px",
-                          }}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={3}>
-                      <Form.Item {...restField} name={[name, "discount"]}>
-                        <InputNumber
-                          placeholder="%"
-                          min={0}
-                          max={100}
-                          size="large"
-                          style={{
-                            width: "100%",
-                            borderRadius: "8px",
-                            height: "40px",
-                          }}
-                          formatter={(value) => `${value}%`}
-                          parser={(value) => value.replace("%", "")}
-                          onChange={handleItemChange}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={2}>
-                      <Form.Item {...restField} name={[name, "tax"]}>
-                        <InputNumber
-                          placeholder="%"
-                          min={0}
-                          max={100}
-                          size="large"
-                          style={{
-                            width: "100%",
-                            borderRadius: "8px",
-                            height: "40px",
-                          }}
-                          onChange={handleItemChange}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={2}>
-                      <Form.Item {...restField} name={[name, "amount"]}>
-                        <InputNumber
-                          disabled
-                          size="large"
-                          style={{
-                            width: "100%",
-                            borderRadius: "8px",
-                            height: "40px",
-                          }}
-                          formatter={(value) =>
-                            `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                          }
-                        />
-                      </Form.Item>
-                    </Col>
-                  </Row>
-                  <Row gutter={16}>
-                    <Col span={23}>
-                      <Form.Item {...restField} name={[name, "description"]}>
-                        <Input.TextArea
-                          placeholder="Description"
-                          rows={2}
-                          style={{
-                            borderRadius: "8px",
-                            backgroundColor: "#ffffff",
-                          }}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={1}>
-                      {fields.length > 1 && (
-                        <Button
-                          type="text"
-                          icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                          onClick={() => {
-                            remove(name);
-                            handleItemChange();
-                          }}
-                        />
-                      )}
-                    </Col>
-                  </Row>
-                </div>
-              ))}
-
-              <Button
-                onClick={() => add()}
-                icon={<FiPlus />}
-                style={{
-                  width: "150px",
-                  height: "48px",
-                  borderRadius: "8px",
-                  marginTop: "16px",
-                  borderColor: "#1890ff",
-                  color: "#1890ff",
-                }}
-              >
-                Add Item
-              </Button>
-            </>
-          )}
-        </Form.List>
-
-        <Divider orientation="left" style={{ margin: "24px 0" }}>
-          <span
-            style={{ fontSize: "16px", fontWeight: "500", color: "#1f2937" }}
-          >
-            <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
-            Total Amount
-          </span>
-        </Divider>
-
-        <Row justify="end">
-          <Col span={8}>
-            <div
+            <DatePicker
+              format="DD-MM-YYYY"
+              size="large"
               style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
                 backgroundColor: "#f8fafc",
-                padding: "16px",
-                borderRadius: "8px",
+              }}
+              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+            />
+          </Form.Item>
+          <Form.Item
+            name="dueDate"
+            label={
+              <span className="form-label">
+                Due Date <span className="required"></span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please select due date" }]}
+          >
+            <DatePicker
+              format="DD-MM-YYYY"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+              }}
+              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+            />
+          </Form.Item>
+          <Form.Item
+            name="status"
+            label={
+              <span className="form-label">
+                Status <span className="required"></span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please select status" }]}
+          >
+            <Select
+              placeholder="Select Status"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "12px",
+              <Option value="pending">Pending</Option>
+              <Option value="paid">Paid</Option>
+              <Option value="overdue">Overdue</Option>
+              <Option value="cancelled">Cancelled</Option>
+            </Select>
+          </Form.Item>
+        </div>
+
+        <div className="table-style-container">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '16px', marginLeft: '16px', marginRight: '16px' }}>
+            <span style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937' }}>
+              <FiPackage style={{ marginRight: '8px', color: '#1890ff' }} />
+              Items & Services
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Text style={{ marginRight: '8px' }}>Enable Tax</Text>
+              <Switch
+                checked={isTaxEnabled}
+                onChange={(checked) => {
+                  setIsTaxEnabled(checked);
+                  if (!checked) {
+                    const items = form.getFieldValue('items') || [];
+                    const updatedItems = items.map(item => ({
+                      ...item,
+                      tax: 0,
+                      taxId: null,
+                      taxAmount: 0
+                    }));
+                    form.setFieldsValue({ items: updatedItems });
+                    calculateTotals(updatedItems);
+                  }
                 }}
-              >
-                <Text>Sub Total</Text>
-                <Form.Item name="sub_total" style={{ margin: 0 }}>
-                  <InputNumber
-                    disabled
-                    size="large"
-                    style={{
-                      width: "120px",
-                      borderRadius: "8px",
-                      height: "40px",
-                    }}
-                    formatter={(value) =>
-                      `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
-                  />
-                </Form.Item>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "12px",
-                }}
-              >
-                <Text>Item Discount</Text>
-                <Space>
-                  <Form.Item name="item_discount" style={{ margin: 0 }}>
-                    <InputNumber
-                      placeholder="%"
-                      size="large"
-                      style={{
-                        width: "100px",
-                        borderRadius: "8px",
-                        height: "40px",
-                      }}
-                      formatter={(value) => `${value}`}
-                      parser={(value) => value.replace("%", "")}
-                      onChange={handleItemChange}
-                    />
-                  </Form.Item>
-                  <Text>%</Text>
-                </Space>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "12px",
-                }}
-              >
-                <Text>Total Tax</Text>
-                <Form.Item name="total_tax" style={{ margin: 0 }}>
-                  <InputNumber
-                    disabled
-                    size="large"
-                    style={{
-                      width: "120px",
-                      borderRadius: "8px",
-                      height: "40px",
-                    }}
-                    formatter={(value) =>
-                      `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
-                  />
-                </Form.Item>
-              </div>
-              <Divider style={{ margin: "12px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <Text strong>Total Amount</Text>
-                <Form.Item name="total" style={{ margin: 0 }}>
-                  <InputNumber
-                    disabled
-                    size="large"
-                    style={{
-                      width: "120px",
-                      borderRadius: "8px",
-                      height: "40px",
-                    }}
-                    formatter={(value) =>
-                      `₹${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    }
-                  />
-                </Form.Item>
-              </div>
+                size="small"
+              />
             </div>
-          </Col>
-        </Row>
+          </div>
 
-        <Divider style={{ margin: "24px 0" }} />
+          <Form.Item
+            name="product_id"
+            rules={[{ required: true, message: 'Please select product' }]}
+          >
+            <Select
+              placeholder="Select Product"
+              size="large"
+              loading={productsLoading}
+              style={{
+                width: '30%',
+                marginLeft: '16px',
+                marginRight: '16px',
+                marginTop: '16px',
+                marginBottom: '16px',
+                borderRadius: '10px',
+              }}
+              value={form.getFieldValue('items')?.[0]?.item_name}
+              onChange={(value, option) => {
+                const items = form.getFieldValue('items') || [];
+                const newItems = [...items];
+                const lastIndex = newItems.length - 1;
+                newItems[lastIndex] = {
+                  ...newItems[lastIndex],
+                  item_name: option.label,
+                  unit_price: option.price,
+                  hsn_sac: option.hsn_sac,
+                  profilePic: option.image
+                };
+                form.setFieldsValue({ items: newItems });
+                calculateTotals(newItems);
+              }}
+            >
+              {(productsData?.data || []).map(product => (
+                <Option
+                  key={product.id}
+                  value={product.id}
+                  label={product.name}
+                  price={product.price}
+                  hsn_sac={product.hsn_sac}
+                  profilePic={product.image}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex' }}>
+                      <div>
+                        <span style={{ fontWeight: 400 }}>{product.name}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "12px",
-          }}
-        >
+          <Form.List name="items">
+            {(fields, { add, remove }) => (
+              <>
+                <table className="proposal-items-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                      <th>Unit Price</th>
+                      <th>HSN/SAC</th>
+                      <th>Discount</th>
+                      <th>Tax</th>
+                      <th>Amount</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fields.map(({ key, name, ...restField }, index) => (
+                      <tr key={key} className="item-data-row">
+                        <td>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "item_name"]}
+                            rules={[{ required: true, message: "Required" }]}
+                          >
+                            <Input
+                              placeholder="Item Name"
+                              className="item-input"
+                              onChange={handleItemChange}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "quantity"]}
+                            rules={[{ required: true, message: "Required" }]}
+                            initialValue={1}
+                          >
+                            <InputNumber
+                              min={1}
+                              className="quantity-input"
+                              onChange={handleItemChange}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "unit_price"]}
+                            rules={[{ required: true, message: "Required" }]}
+                          >
+                            <InputNumber
+                              className="price-input"
+                              formatter={value => `${selectedCurrency} ${value}`}
+                              parser={value => value.replace(selectedCurrency, '').trim()}
+                              onChange={handleItemChange}
+                              defaultValue={0}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item {...restField} name={[name, "hsn_sac"]}>
+                            <Input placeholder="HSN/SAC" className="item-input" />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item {...restField} name={[name, "discount"]} style={{ margin: 0 }}>
+                            <Space>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "discount_type"]}
+                                style={{ margin: 0 }}
+                              >
+                                <Select
+                                  size="large"
+                                  style={{
+                                    width: '120px',
+                                    borderRadius: '8px',
+                                    height: '40px',
+                                  }}
+                                  defaultValue="percentage"
+                                  onChange={handleItemChange}
+                                >
+                                  <Option value="percentage">Percentage</Option>
+                                  <Option value="fixed">Fixed Amount</Option>
+                                </Select>
+                              </Form.Item>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "discount"]}
+                                style={{ margin: 0 }}
+                              >
+                                <InputNumber
+                                  className="item-discount-input"
+                                  placeholder={form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? 'Amount' : '%'}
+                                  formatter={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
+                                  parser={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
+                                  onChange={handleItemChange}
+                                  style={{
+                                    width: '100px',
+                                    borderRadius: '8px',
+                                    height: '40px',
+                                  }}
+                                />
+                              </Form.Item>
+                              {form.getFieldValue('items')?.[index]?.discount_type === 'percentage' && <Text style={{ marginTop: '10px' }}>%</Text>}
+                            </Space>
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item {...restField} name={[name, "taxId"]}>
+                            <Select
+                              placeholder="Select Tax"
+                              loading={taxesLoading}
+                              disabled={!isTaxEnabled}
+                              onChange={(value, option) => {
+                                const items = form.getFieldValue('items') || [];
+                                items[index].tax = option?.taxRate;
+                                form.setFieldsValue({ items });
+                                calculateTotals(items);
+                              }}
+                            >
+                              {taxesData?.data?.map(tax => (
+                                <Option
+                                  key={tax.id}
+                                  value={tax.id}
+                                  taxRate={tax.gstPercentage}
+                                >
+                                  {tax.gstName} ({tax.gstPercentage}%)
+                                </Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <div className="amount-field">
+                            <span className="currency-symbol">{selectedCurrency}</span>
+                            <span className="amount-value">
+                              {calculateItemTotal(form.getFieldValue("items")?.[index])?.toFixed(2) || '0.00'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                          {fields.length > 1 && (
+                            <Button
+                              type="text"
+                              className="delete-btn"
+                              icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
+                              onClick={() => {
+                                remove(name);
+                                handleItemChange();
+                              }}
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div className="add-item-container">
+                  <Button
+                    type="primary"
+                    icon={<FiPlus />}
+                    onClick={() => add()}
+                    className="add-item-btn"
+                  >
+                    Add Items
+                  </Button>
+                </div>
+              </>
+            )}
+          </Form.List>
+        </div>
+
+        <div className="summary-card">
+          <div className="summary-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <Text style={{ marginTop: '10px' }}>Sub Total</Text>
+              <Form.Item name="subTotal" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
+                    width: '120px',
+                    borderRadius: '8px',
+                    height: '40px',
+                  }}
+                  formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                />
+              </Form.Item>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <Text style={{ marginTop: '10px' }}>Item Discount</Text>
+              <Space>
+                <Form.Item
+                  name="discount_type"
+                  style={{ margin: 0 }}
+                >
+                  <Select
+                    size="large"
+                    style={{
+                      width: '120px',
+                      borderRadius: '8px',
+                      height: '40px',
+                    }}
+                    defaultValue="percentage"
+                    onChange={handleItemChange}
+                  >
+                    <Option value="percentage">Percentage</Option>
+                    <Option value="fixed">Fixed Amount</Option>
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  name="item_discount"
+                  style={{ margin: 0 }}
+                >
+                  <InputNumber
+                    placeholder={form.getFieldValue('discount_type') === 'fixed' ? 'Amount' : '%'}
+                    size="large"
+                    style={{
+                      width: '100px',
+                      borderRadius: '8px',
+                      height: '40px',
+                    }}
+                    formatter={value => form.getFieldValue('discount_type') === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
+                    parser={value => form.getFieldValue('discount_type') === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
+                    onChange={handleItemChange}
+                  />
+                </Form.Item>
+                {form.getFieldValue('discount_type') === 'percentage' && <Text style={{ marginTop: '10px' }}>%</Text>}
+              </Space>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <Text style={{ marginTop: '10px' }}>Total Tax</Text>
+              <Form.Item name="total_tax" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
+                    width: '120px',
+                    borderRadius: '8px',
+                    height: '40px',
+                  }}
+                  formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                />
+              </Form.Item>
+            </div>
+            <Divider style={{ margin: '12px 0' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Text style={{ marginTop: '10px' }}>Total Amount</Text>
+              <Form.Item name="total" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
+                    width: '120px',
+                    borderRadius: '8px',
+                    height: '40px',
+                  }}
+                  formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                />
+              </Form.Item>
+            </div>
+          </div>
+        </div>
+
+        <div className="form-footer">
           <Button
-            size="large"
             onClick={handleCancel}
-            style={{
-              padding: "8px 24px",
-              height: "44px",
-              borderRadius: "10px",
-              border: "1px solid #e6e8eb",
-              fontWeight: "500",
-            }}
+            className="cancel-btn"
           >
             Cancel
           </Button>
           <Button
-            size="large"
             type="primary"
             htmlType="submit"
             loading={loading}
-            style={{
-              padding: "8px 32px",
-              height: "44px",
-              borderRadius: "10px",
-              fontWeight: "500",
-              background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
-            }}
+            className="create-btn"
           >
             Update Invoice
           </Button>

@@ -62,6 +62,22 @@ import LeadOverview from "../dashboard/module/crm/lead/overview/index.jsx";
 import Holiday from "../dashboard/module/hrm/Holiday/index.jsx";
 import Salary from "../dashboard/module/hrm/payRoll/index.jsx";
 import Chat from "../dashboard/module/communication/chat/index.jsx";
+import Vendor from "../dashboard/module/purchase/vendor/index.jsx";
+import Billing from "../dashboard/module/purchase/billing/index.jsx";
+import DebitNote from "../dashboard/module/purchase/debitnote/index.jsx";
+
+
+  const PermissionRoute = ({ children, permissionKey }) => {
+  const userRole = useSelector(selectUserRole);
+  const permissions = parsePermissions(userRole?.permissions);
+
+  if (!hasPermission(permissions, permissionKey)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -264,6 +280,23 @@ const routes = createBrowserRouter([
         ],
       },
       {
+        path: "purchase",
+        children: [
+          {
+            path: "vendor",
+            element: <Vendor/>,
+          },
+          {
+            path: "billing",
+            element: <Billing/>,
+          },
+          {
+            path:"debit-note",
+            element:<DebitNote/>
+          }
+        ]
+      },
+      {
         path: "sales",
         children: [
           {
@@ -354,14 +387,14 @@ const routes = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        path: "",
-        element: <SuperAdminDashboard />,
-      },
-      {
-        path: "dashboard",
-        element: <SuperAdminDashboard />,
-      },
+      // {
+      //   path: "",
+      //   element: <SuperAdminDashboard />,
+      // },
+      // {
+      //   path: "dashboard",
+      //   element: <SuperAdminDashboard />,
+      // },
       {
         path: "company",
         element: <Company />,
@@ -402,6 +435,38 @@ const routes = createBrowserRouter([
         path: "inquiry",
         element: <Inquiry />,
       },
+      // {
+      //   path: "notes",
+      //   element: <Notes />,
+      // },
+      // {
+      //   path: "policy",
+      //   element: <Policy />,
+      // },
+      // {
+      //   path: "profile",
+      //   element: <Profile />,
+      // },
+      // {
+      //   path: "plans",
+      //   element: <Plans />,
+      // },
+      // {
+      //   path: "settings/currencies",
+      //   element: <Currencies />,
+      // },
+      // {
+      //   path: "settings/countries",
+      //   element: <Countries />,
+      // },
+      // {
+      //   path: "settings/esignature",
+      //   element: <ESignature />,
+      // },
+      // {
+      //   path: "inquiry",
+      //   element: <Inquiry />,
+      // },
     ],
   },
 ]);
