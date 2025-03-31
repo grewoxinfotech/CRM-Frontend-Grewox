@@ -36,8 +36,6 @@ import { useGetAllSubclientsQuery, useDeleteSubclientMutation } from './services
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import EditSubclient from './EditSubclient';
 import './Subclient.scss';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const { Title, Text } = Typography;
 
@@ -51,8 +49,6 @@ const SubClient = () => {
     const [filteredSubclients, setFilteredSubclients] = useState([]);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState('table');
-
-    const loggedInUser = useSelector(selectCurrentUser);
     const { data: subclientsData, isLoading: isLoadingSubclients, refetch } = useGetAllSubclientsQuery();
     const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
     const [deleteSubclient, { isLoading: isDeleting }] = useDeleteSubclientMutation();

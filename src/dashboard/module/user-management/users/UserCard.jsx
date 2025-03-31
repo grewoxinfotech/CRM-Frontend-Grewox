@@ -58,8 +58,7 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
 
             if (response.success) {
                 message.success('Logged in as user successfully');
-                // Force reload to update the app state with new user
-                window.location.href = '/dashboard';
+                navigate('/dashboard');
             }
         } catch (error) {
             message.error(error?.data?.message || 'Failed to login as user');
@@ -132,7 +131,7 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                         fontWeight: '500'
                     }}
                 >
-                    Login as User
+                    {getLoginButtonText(user.role_name)}
                 </Button>
             ]}
         >

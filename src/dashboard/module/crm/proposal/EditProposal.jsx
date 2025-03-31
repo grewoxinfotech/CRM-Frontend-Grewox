@@ -15,9 +15,9 @@ import {
   Upload,
   Divider
 } from "antd";
-import { 
-  CloseOutlined, 
-  PlusOutlined, 
+import {
+  CloseOutlined,
+  PlusOutlined,
   DeleteOutlined,
   FileTextOutlined,
   UploadOutlined
@@ -75,7 +75,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
   // Format tax options for the select component
   const taxOptions = React.useMemo(() => {
     if (!taxesData?.data || !Array.isArray(taxesData.data)) return [];
-    
+
     return taxesData.data.map(tax => ({
       value: `${tax.gstName}|${tax.gstPercentage}`,
       label: `${tax.gstName} (${tax.gstPercentage}%)`,
@@ -99,7 +99,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
 
       // Set items with validation
       let formattedItems = [];
-      
+
       // Handle items that might be a JSON string
       if (typeof initialValues.items === 'string') {
         try {
@@ -138,7 +138,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
       } else {
         formattedItems = [{ id: 1, item: "", quantity: 1, unit_price: 0, tax: null, amount: 0, description: "" }];
       }
-      
+
       setItems(formattedItems);
 
       // Set discount based on initialValues
@@ -150,11 +150,11 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
         // For backward compatibility, if only discount amount is available
         // Try to determine if it's percentage or fixed
         const subTotal = parseFloat(initialValues.subtotal) || 0;
-        
+
         if (subTotal > 0) {
           const discountAmount = parseFloat(initialValues.discount) || 0;
           const discountPercentage = (discountAmount / subTotal) * 100;
-          
+
           // If the percentage is a clean number (like 10%, 15%, etc.), assume it's percentage
           if (Math.abs(Math.round(discountPercentage) - discountPercentage) < 0.01) {
             setDiscountType("percentage");
@@ -192,6 +192,42 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
 
   // Calculate totals whenever items change
   useEffect(() => {
+    const calculateTotals = () => {
+      let subTotal = 0;
+      let totalTax = 0;
+
+      // Calculate subtotal and tax
+      items.forEach(item => {
+        const quantity = parseFloat(item.quantity) || 0;
+        const unitPrice = parseFloat(item.unit_price) || 0;
+        const itemTotal = quantity * unitPrice;
+        subTotal += itemTotal;
+
+        if (item.tax) {
+          const taxRate = parseFloat(item.tax.gstPercentage) || 0;
+          totalTax += (itemTotal * taxRate) / 100;
+        }
+      });
+
+      // Calculate discount
+      let discountAmount = 0;
+      if (discountType === "percentage") {
+        discountAmount = (subTotal * parseFloat(discountValue || 0)) / 100;
+      } else {
+        discountAmount = parseFloat(discountValue || 0);
+      }
+
+      // Calculate total
+      const totalAmount = subTotal - discountAmount + totalTax;
+
+      setTotals({
+        subTotal,
+        discount: discountAmount,
+        totalTax,
+        totalAmount
+      });
+    };
+
     calculateTotals();
   }, [items, discountValue, discountType]);
 
@@ -238,13 +274,13 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
         id: initialValues.id,
         data: payload
       }).unwrap();
-      
+
       message.success("Proposal updated successfully");
-      
+
       if (onSuccess) {
         onSuccess();
       }
-      
+
       onCancel();
 
     } catch (error) {
@@ -253,56 +289,6 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Calculate totals
-  const calculateTotals = () => {
-    // Calculate base amount and tax for each item
-    const updatedItems = items.map(item => {
-      const quantity = parseFloat(item.quantity) || 0;
-      const unitPrice = parseFloat(item.unit_price) || 0;
-      const baseAmount = quantity * unitPrice;
-      const taxPercentage = item.tax ? parseFloat(item.tax.gstPercentage) : 0;
-      const taxAmount = (baseAmount * taxPercentage) / 100;
-      
-      return {
-        ...item,
-        amount: baseAmount + taxAmount
-      };
-    });
-    
-    // Set updated items with calculated amounts
-    setItems(updatedItems);
-    
-    // Calculate subtotal (sum of all item amounts)
-    const subTotal = updatedItems.reduce((sum, item) => sum + item.amount, 0);
-    
-    // Calculate total tax
-    const totalTax = updatedItems.reduce((sum, item) => {
-      const quantity = parseFloat(item.quantity) || 0;
-      const unitPrice = parseFloat(item.unit_price) || 0;
-      const baseAmount = quantity * unitPrice;
-      const taxPercentage = item.tax ? parseFloat(item.tax.gstPercentage) : 0;
-      return sum + (baseAmount * taxPercentage) / 100;
-    }, 0);
-    
-    // Calculate discount
-    let discountAmount = 0;
-    if (discountType === "percentage") {
-      discountAmount = (subTotal * parseFloat(discountValue)) / 100;
-    } else {
-      discountAmount = parseFloat(discountValue) || 0;
-    }
-    
-    // Calculate total amount (subtotal - discount)
-    const totalAmount = subTotal - discountAmount;
-    
-    setTotals({
-      subTotal,
-      discount: discountAmount,
-      totalTax,
-      totalAmount
-    });
   };
 
   // Add handler for currency change
@@ -319,7 +305,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
     if (selectedLead && selectedLead.currency) {
       // Update currency when lead is selected
       form.setFieldsValue({ currency: selectedLead.currency });
-      
+
       // Find and update currency symbol
       const selectedCurrency = currencies.find(c => c.currencyCode === selectedLead.currency);
       if (selectedCurrency) {
@@ -328,36 +314,27 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
     }
   };
 
-  // Handle item changes
-  const handleItemChange = (id, field, value) => {
-    const updatedItems = items.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        
-        // Calculate amount whenever quantity or unit price changes
-        if (field === 'quantity' || field === 'unit_price') {
-          const quantity = field === 'quantity' ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
-          const unitPrice = field === 'unit_price' ? parseFloat(value) || 0 : parseFloat(item.unit_price) || 0;
-          const baseAmount = quantity * unitPrice;
-          const taxPercentage = item.tax ? parseFloat(item.tax.gstPercentage) : 0;
-          const taxAmount = (baseAmount * taxPercentage) / 100;
-          updatedItem.amount = baseAmount + taxAmount;
-        } else if (field === 'tax') {
-          const quantity = parseFloat(item.quantity) || 0;
-          const unitPrice = parseFloat(item.unit_price) || 0;
-          const baseAmount = quantity * unitPrice;
-          const taxPercentage = value ? parseFloat(value.gstPercentage) : 0;
-          const taxAmount = (baseAmount * taxPercentage) / 100;
-          updatedItem.amount = baseAmount + taxAmount;
+  // Handle item change with memoized calculation
+  const handleItemChange = React.useCallback((id, field, value) => {
+    setItems(prevItems => {
+      const newItems = prevItems.map(item => {
+        if (item.id === id) {
+          const updatedItem = { ...item, [field]: value };
+
+          // Calculate amount for this item
+          if (field === 'quantity' || field === 'unit_price') {
+            const quantity = field === 'quantity' ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
+            const unitPrice = field === 'unit_price' ? parseFloat(value) || 0 : parseFloat(item.unit_price) || 0;
+            updatedItem.amount = quantity * unitPrice;
+          }
+
+          return updatedItem;
         }
-        
-        return updatedItem;
-      }
-      return item;
+        return item;
+      });
+      return newItems;
     });
-    
-    setItems(updatedItems);
-  };
+  }, []);
 
   // Add new item
   const handleAddItem = () => {
@@ -509,8 +486,8 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Lead Title</span>}
             rules={[{ required: true, message: 'Please select lead title' }]}
           >
-            <Select 
-              placeholder="Select Lead Title" 
+            <Select
+              placeholder="Select Lead Title"
               size="large"
               loading={leadsLoading}
               onChange={handleLeadChange}
@@ -533,11 +510,11 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Date</span>}
             rules={[{ required: true, message: 'Please select date' }]}
           >
-            <DatePicker 
-              format="DD-MM-YYYY" 
+            <DatePicker
+              format="DD-MM-YYYY"
               size="large"
-              style={{ 
-                width: "100%", 
+              style={{
+                width: "100%",
                 borderRadius: '10px',
                 height: '48px',
                 backgroundColor: '#f8fafc',
@@ -553,8 +530,8 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
           label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Currency</span>}
           rules={[{ required: true, message: 'Please select currency' }]}
         >
-          <Select 
-            placeholder="Select Currency" 
+          <Select
+            placeholder="Select Currency"
             size="large"
             loading={currenciesLoading}
             onChange={handleCurrencyChange}
@@ -608,15 +585,15 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
                 <React.Fragment key={item.id}>
                   <tr className="item-data-row">
                     <td>
-                      <Input 
+                      <Input
                         placeholder="Item Name"
                         value={item.item}
                         onChange={(e) => handleItemChange(item.id, "item", e.target.value)}
                         className="item-input"
                         size="middle"
                         style={{
-                            padding: '0 16px',
-                            marginBottom: '5px',
+                          padding: '0 16px',
+                          marginBottom: '5px',
                         }}
                       />
                     </td>
@@ -629,7 +606,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
                         controls={false}
                         size="middle"
                         style={{
-                            marginBottom: '5px',
+                          marginBottom: '5px',
                         }}
                       />
                     </td>
@@ -644,8 +621,8 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
                         controls={false}
                         size="middle"
                         style={{
-                            padding: '0 16px',
-                            marginBottom: '5px',
+                          padding: '0 16px',
+                          marginBottom: '5px',
                         }}
                       />
                     </td>
@@ -668,7 +645,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
                         size="middle"
                         allowClear
                         style={{
-                            marginBottom: '5px',
+                          marginBottom: '5px',
                         }}
                       >
                         {taxOptions.map(option => (
@@ -711,7 +688,7 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
               ))}
             </tbody>
           </table>
-          
+
           <div className="add-item-container">
             <Button
               type="primary"
@@ -725,17 +702,17 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
         </div>
 
         <div className="summary-card">
-          
+
           <div className="summary-content">
             <div className="summary-row sub-total">
               <span className="label">Sub Total</span>
               <span className="value">{selectedCurrencySymbol} {totals.subTotal.toFixed(2)}</span>
             </div>
-            
+
             <div className="summary-row discount">
               <span className="label">Discount</span>
               <div className="discount-controls">
-                <Select 
+                <Select
                   value={discountType}
                   onChange={handleDiscountTypeChange}
                   size="middle"
@@ -762,12 +739,12 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
                 </div>
               </div>
             </div>
-            
+
             <div className="summary-row tax">
               <span className="label">Total Tax</span>
               <span className="value">{selectedCurrencySymbol} {totals.totalTax.toFixed(2)}</span>
             </div>
-            
+
             <div className="summary-row total">
               <span className="label">Total Amount</span>
               <span className="value total-value">{selectedCurrencySymbol} {totals.totalAmount.toFixed(2)}</span>
@@ -779,8 +756,8 @@ const EditProposal = ({ open, onCancel, initialValues, onSuccess }) => {
         </div>
 
         <div className="form-footer">
-          <Button 
-            onClick={onCancel} 
+          <Button
+            onClick={onCancel}
             size="large"
             disabled={loading}
             style={{

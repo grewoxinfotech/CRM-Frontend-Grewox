@@ -1,15 +1,30 @@
 import React from 'react';
 import { Table, Button, Tag, Dropdown, Menu, Avatar } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiUsers, FiEye } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiShield, FiUser, FiBriefcase, FiUsers, FiEye } from 'react-icons/fi';
 import moment from 'moment';
 
 const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
     const getRoleColor = (role) => {
         const roleColors = {
+            'super-admin': {
+                color: '#531CAD',
+                bg: '#F9F0FF',
+                border: '#D3ADF7'
+            },
+            'client': {
+                color: '#08979C',
+                bg: '#E6FFFB',
+                border: '#87E8DE'
+            },
             'sub-client': {
                 color: '#389E0D',
                 bg: '#F6FFED',
                 border: '#B7EB8F'
+            },
+            'employee': {
+                color: '#D46B08',
+                bg: '#FFF7E6',
+                border: '#FFD591'
             },
             'default': {
                 color: '#595959',
@@ -137,7 +152,22 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
                                 height: '8px',
                                 borderRadius: '50%',
                                 background: roleStyle.color,
-                                boxShadow: `0 0 8px ${roleStyle.color}`
+                                boxShadow: `0 0 8px ${roleStyle.color}`,
+                                animation: 'pulse 2s infinite',
+                                '@keyframes pulse': {
+                                    '0%': {
+                                        transform: 'scale(1)',
+                                        opacity: 1
+                                    },
+                                    '50%': {
+                                        transform: 'scale(1.2)',
+                                        opacity: 0.8
+                                    },
+                                    '100%': {
+                                        transform: 'scale(1)',
+                                        opacity: 1
+                                    }
+                                }
                             }}
                         />
                         <Tag
@@ -156,12 +186,16 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
                                 gap: '6px'
                             }}
                         >
-                            <FiUsers size={12} />
+                            {role?.toLowerCase() === 'super-admin' && <FiShield size={12} />}
+                            {role?.toLowerCase() === 'admin' && <FiUser size={12} />}
+                            {role?.toLowerCase() === 'client' && <FiBriefcase size={12} />}
+                            {role?.toLowerCase() === 'employee' && <FiUsers size={12} />}
                             {role || 'N/A'}
                         </Tag>
                     </div>
                 );
-            }
+            },
+            sorter: (a, b) => (a.role_name || '').localeCompare(b.role_name || ''),
         },
         {
             title: 'Created At',

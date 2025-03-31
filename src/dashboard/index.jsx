@@ -151,7 +151,7 @@ export default function Dashboard() {
                       <Text className="company-tagline">Transforming Business Through Technology</Text>
                     </div>
                   </div>
-                  <Title level={2}>{getGreeting()}, {user?.firstName}!</Title>
+                  <Title level={2}>{getGreeting()}, {user?.firstName || user?.username}!</Title>
                   <Text className="welcome-subtitle">
                     Welcome back to your enterprise dashboard.
                   </Text>
