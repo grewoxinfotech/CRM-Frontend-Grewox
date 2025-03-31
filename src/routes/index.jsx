@@ -387,14 +387,14 @@ const routes = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      // {
-      //   path: "",
-      //   element: <SuperAdminDashboard />,
-      // },
-      // {
-      //   path: "dashboard",
-      //   element: <SuperAdminDashboard />,
-      // },
+      {
+        path: "",
+        element: <SuperAdminDashboard />,
+      },
+      {
+        path: "dashboard",
+        element: <SuperAdminDashboard />,
+      },
       {
         path: "company",
         element: <Company />,
