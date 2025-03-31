@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Row, Col, Button, Typography, Space, Badge, Breadcrumb, Dropdown, Menu } from 'antd';
+import { Card, Row, Col, Button, Typography, Space, Badge, Breadcrumb, Dropdown, Menu, Statistic } from 'antd';
 import { motion } from 'framer-motion';
 import {
     FiEdit2,
@@ -7,15 +7,24 @@ import {
     FiUsers,
     FiActivity,
     FiCheckCircle,
-    FiServer,
+    FiDollarSign,
     FiHome,
     FiLogOut,
-    FiMoreVertical
+    FiMoreVertical,
+    FiUserPlus,
+    FiCreditCard,
+    FiMail,
+    FiUser,
+    FiCalendar
 } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
 import { Link } from 'react-router-dom';
 import { useLogout } from '../../../hooks/useLogout';
+import { useGetAllCompaniesQuery } from '../company/services/companyApi';
+import { useGetAllPlansQuery } from '../plans/services/planApi';
+import { useGetAllSubscribedUsersQuery } from '../SubscribedUser/services/SubscribedUserApi';
+import CountUp from 'react-countup';
 import './dashboard.scss';
 
 const { Title, Text } = Typography;
@@ -37,6 +46,9 @@ const staggerContainer = {
 const SuperAdminDashboard = () => {
     const user = useSelector(selectCurrentUser);
     const handleLogout = useLogout();
+    const { data: companiesData } = useGetAllCompaniesQuery();
+    const { data: plansData } = useGetAllPlansQuery({ page: 1, limit: 100 });
+    const { data: subscribedUsersData } = useGetAllSubscribedUsersQuery();
 
     const getInitials = (name) => {
         if (!name) return 'U';
@@ -56,56 +68,67 @@ const SuperAdminDashboard = () => {
         ).join(' ') || 'User Role';
     };
 
+    // Calculate statistics
+    const totalClients = companiesData?.data?.length || 0;
+
+    // Count active subscriptions from subscribedUsersData
+    const activeSubscriptions = subscribedUsersData?.data?.filter(sub =>
+        sub.status === 'active'
+    ).length || 0;
+
+    // Calculate total revenue from active subscriptions
+    const totalRevenue = subscribedUsersData?.data?.reduce((total, sub) => {
+        if (sub.status === 'active' && sub.payment_status === 'paid') {
+            const plan = plansData?.data?.find(p => p.id === sub.plan_id);
+            return total + Number(plan?.price || 0);
+        }
+        return total;
+    }, 0) || 0;
+
     const statsCards = [
         {
-            title: 'Total Users',
-            value: '1,234',
-            description: 'Active users in the system',
+            title: 'Total Companies',
+            value: totalClients,
+            description: 'Total registered clients',
             icon: <FiUsers className="stats-icon" />,
-            color: '#2563eb'
+            gradient: 'linear-gradient(145deg, #ffffff, #f0f7ff)',
+            iconGradient: 'linear-gradient(135deg, #1890ff, #69c0ff)',
+            color: '#1890ff',
+            tag: `Paid Users: ${activeSubscriptions}`
         },
         {
-            title: 'Active Sessions',
-            value: '856',
-            description: 'Current active sessions',
-            icon: <FiActivity className="stats-icon" />,
-            color: '#3b82f6'
+            title: 'Total Plans',
+            value: plansData?.data?.length || 0,
+            description: 'Available subscription plans',
+            icon: <FiCreditCard className="stats-icon" />,
+            gradient: 'linear-gradient(145deg, #ffffff, #f6f3ff)',
+            iconGradient: 'linear-gradient(135deg, #722ed1, #b37feb)',
+            color: '#722ed1',
+            tag: `Most Purchase Plan: ${plansData?.data?.[0]?.name || 'Basic'}`
         },
         {
-            title: 'System Status',
-            value: 'Healthy',
-            description: 'All systems operational',
-            icon: <FiServer className="stats-icon" />,
-            color: '#22c55e'
-        }
+            title: 'Total Revenue',
+            value: totalRevenue,
+            description: 'Revenue from active subscriptions',
+            icon: <FiDollarSign className="stats-icon" />,
+            gradient: 'linear-gradient(145deg, #ffffff, #f0fff4)',
+            iconGradient: 'linear-gradient(135deg, #52c41a, #95de64)',
+            color: '#52c41a',
+            tag: `Total Order Amount: ₹${totalRevenue.toLocaleString()}`
+        },
     ];
 
-    const recentActivities = [
-        {
-            id: 1,
-            text: 'System backup completed',
-            icon: <FiCheckCircle />,
-            time: '2 hours ago'
-        },
-        {
-            id: 2,
-            text: 'New user registration',
-            icon: <FiUsers />,
-            time: '4 hours ago'
-        },
-        {
-            id: 3,
-            text: 'Security update installed',
-            icon: <FiServer />,
-            time: '6 hours ago'
-        },
-        {
-            id: 4,
-            text: 'Database optimization complete',
-            icon: <FiActivity />,
-            time: '8 hours ago'
-        }
-    ];
+    // Show recent subscription activities
+    const recentActivities = subscribedUsersData?.data?.slice(0, 5).map(sub => {
+        const company = companiesData?.data?.find(c => c.id === sub.client_id);
+        const plan = plansData?.data?.find(p => p.id === sub.plan_id);
+        return {
+            id: sub.id,
+            text: `${company?.username || 'Client'} subscribed to ${plan?.name || 'plan'}`,
+            icon: <FiUserPlus />,
+            time: new Date(sub.start_date).toLocaleString()
+        };
+    }) || [];
 
     return (
         <motion.div
@@ -128,8 +151,8 @@ const SuperAdminDashboard = () => {
 
             <motion.div className="page-header" variants={fadeInUp}>
                 <div className="page-title">
-                    <Title level={2}>Dashboard</Title>
-                    <Text type="secondary">Welcome back to your dashboard</Text>
+                    <Title level={2}>Revenue Overview</Title>
+                    <Text type="secondary">Track your business growth</Text>
                 </div>
             </motion.div>
 
@@ -139,106 +162,49 @@ const SuperAdminDashboard = () => {
                         <motion.div variants={fadeInUp}>
                             <Card
                                 className="stats-card"
-                                variant={false}
+                                style={{
+                                    background: card.gradient,
+                                    border: '1px solid rgba(255, 255, 255, 0.8)'
+                                }}
                             >
-                                <div className="stats-header">
-                                    <div className="icon-wrapper" style={{ backgroundColor: card.color }}>
-                                        {card.icon}
+                                <div className="stats-content">
+                                    <div className="stats-header">
+                                        <div
+                                            className="icon-wrapper"
+                                            style={{ background: card.iconGradient }}
+                                        >
+                                            {card.icon}
+                                        </div>
+                                        <div
+                                            className="tag-wrapper"
+                                            style={{
+                                                color: card.color,
+                                                background: 'rgba(255, 255, 255, 0.9)'
+                                            }}
+                                        >
+                                            {card.tag}
+                                        </div>
                                     </div>
-                                    <h3>{card.title}</h3>
+                                    <div className="stats-info">
+                                        <h3 style={{ color: '#1f2937' }}>{card.title}</h3>
+                                        <div className="stats-value" style={{ color: card.color }}>
+                                            {card.title === 'Total Revenue' && '₹'}
+                                            <CountUp
+                                                start={0}
+                                                end={card.value}
+                                                duration={2}
+                                                separator=","
+                                                decimal="."
+                                                decimals={card.title === 'Total Revenue' ? 2 : 0}
+                                            />
+                                        </div>
+                                        <p style={{ color: '#6b7280' }}>{card.description}</p>
+                                    </div>
                                 </div>
-                                <h2>{card.value}</h2>
-                                <p>{card.description}</p>
                             </Card>
                         </motion.div>
                     </Col>
                 ))}
-            </Row>
-
-            <Row className="profile-section" gutter={[24, 24]} style={{ marginTop: '2rem' }}>
-                <Col xs={24} md={12}>
-                    <motion.div variants={fadeInUp}>
-                        <Card className="profile-card" variant={false}>
-                            <div className="profile-content">
-                                <Badge dot status="success" offset={[-5, 85]}>
-                                    <motion.div
-                                        className="profile-avatar"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        {user?.profilePic ? (
-                                            <img src={user.profilePic} alt={getUserFullName()} />
-                                        ) : (
-                                            <div className="avatar-initials">
-                                                {getInitials(getUserFullName())}
-                                            </div>
-                                        )}
-                                    </motion.div>
-                                </Badge>
-
-                                <div className="profile-info">
-                                    <Title level={3}>{getUserFullName()}</Title>
-                                    <Text type="secondary" className="role-text">{getRoleName()}</Text>
-
-                                    <div className="user-details">
-                                        <div className="detail-item">
-                                            <Text type="secondary">Email</Text>
-                                            <Text strong>{user?.email}</Text>
-                                        </div>
-                                        <div className="detail-item">
-                                            <Text type="secondary">Username</Text>
-                                            <Text strong>{user?.username}</Text>
-                                        </div>
-                                        <div className="detail-item">
-                                            <Text type="secondary">Member Since</Text>
-                                            <Text strong>{new Date(user?.createdAt).toLocaleDateString()}</Text>
-                                        </div>
-                                    </div>
-
-                                    <div className="action-buttons">
-                                        <Space direction="horizontal" size="middle" className="desktop-buttons">
-                                            <Link to="/superadmin/profile">
-                                                <Button type="primary" icon={<FiEdit2 />}>
-                                                    Edit Profile
-                                                </Button>
-                                            </Link>
-                                            <Button icon={<FiSettings />}>
-                                                Settings
-                                            </Button>
-                                            <Button
-                                                danger
-                                                icon={<FiLogOut />}
-                                                onClick={handleLogout}
-                                            >
-                                                Logout
-                                            </Button>
-                                        </Space>
-                                        
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                    </motion.div>
-                </Col>
-                <Col xs={24} md={12}>
-                    <motion.div variants={fadeInUp}>
-                        <Card className="activity-card" title="Recent Activity" variant="default">
-                            <ul className="activity-list">
-                                {recentActivities.map((activity) => (
-                                    <motion.li
-                                        key={activity.id}
-                                        whileHover={{ x: 5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <span className="activity-icon">{activity.icon}</span>
-                                        <span className="activity-text">{activity.text}</span>
-                                        <span className="activity-time">{activity.time}</span>
-                                    </motion.li>
-                                ))}
-                            </ul>
-                        </Card>
-                    </motion.div>
-                </Col>
             </Row>
         </motion.div>
     );
