@@ -45,9 +45,6 @@ import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 
 const { Title, Text } = Typography;
 
-<<<<<<< Updated upstream
-const LeadOverviewContent = ({ leadData, formatCurrency }) => {
-=======
 const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => {
     const loggedInUser = useSelector(selectCurrentUser);
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -109,7 +106,6 @@ const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => 
     };
 
     const interestLevel = getInterestLevel(leadData?.interest_level);
->>>>>>> Stashed changes
 
     return (
         <div className="overview-content">
