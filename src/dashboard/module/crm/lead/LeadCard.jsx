@@ -103,18 +103,10 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
     if (!currencyDetails) return `${value}`;
     
     return new Intl.NumberFormat('en-US', {
-<<<<<<< Updated upstream
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-=======
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
->>>>>>> Stashed changes
   };
 
   const getDropdownItems = (lead) => ({
@@ -358,7 +350,6 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
   );
 };
 
-<<<<<<< Updated upstream
 const SortableColumn = ({ stage, leads, children }) => {
   const {
     attributes,
@@ -416,10 +407,7 @@ const SortableColumn = ({ stage, leads, children }) => {
   );
 };
 
-const LeadCard = () => {
-=======
 const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}) => {
->>>>>>> Stashed changes
   const { data: leadsData, isLoading, error } = useGetLeadsQuery();
   const { data: stageQueryData } = useGetLeadStagesQuery();
   const [updateLead] = useUpdateLeadMutation();
@@ -460,12 +448,6 @@ const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}
     }
   }, [stages, dispatch, savedStageOrder.length]);
 
-<<<<<<< Updated upstream
-=======
-
-
-  const stages = stagesData?.filter(stage => stage.stageType === 'lead') || [];
->>>>>>> Stashed changes
   const leads = leadsData?.data || [];
 
   const leadsByStage = React.useMemo(() => {

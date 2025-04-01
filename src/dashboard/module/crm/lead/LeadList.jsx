@@ -27,12 +27,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-<<<<<<< Updated upstream
-=======
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetLabelsQuery(loggedInUser?.id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
->>>>>>> Stashed changes
 
   // Filter and prepare data
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
