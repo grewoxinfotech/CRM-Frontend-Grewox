@@ -30,11 +30,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { useCreateLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
+
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
 import { useGetSourcesQuery, useGetStatusesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
+import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
+import { PlusOutlined } from '@ant-design/icons';
+import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -44,12 +48,12 @@ const findIndianDefaults = (currencies, countries) => {
   const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
   const indiaCountry = countries?.find(c => c.countryCode === 'IN');
   return {
-    defaultCurrency: inrCurrency?.currencyCode || 'INR',
-    defaultPhoneCode: indiaCountry?.phoneCode?.replace('+', '') || '91'
+    defaultCurrency: inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK',
+    defaultPhoneCode: indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL'
   };
 };
 
-const CreateLead = ({ open, onCancel }) => {
+const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categoriesData, sourcesData, statusesData }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);
   const dispatch = useDispatch();
@@ -57,6 +61,12 @@ const CreateLead = ({ open, onCancel }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const selectRef = React.useRef(null);
+
+  // Add state to track selected pipeline
+  const [selectedPipeline, setSelectedPipeline] = useState(null);
 
   // Fetch users data with roles
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
@@ -71,8 +81,6 @@ const CreateLead = ({ open, onCancel }) => {
     user?.role_id !== subclientRoleId
   ) || [];
 
-
-
   // Get stages data
   const { data: stagesData } = useGetLeadStagesQuery();
 
@@ -80,9 +88,8 @@ const CreateLead = ({ open, onCancel }) => {
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
 
   // Get sources data
-  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+  
+ console.log(sourcesData,"sourcesData")
 
   // Replace the hardcoded statuses with API data
   const statuses = statusesData?.data || [];
@@ -96,8 +103,7 @@ const CreateLead = ({ open, onCancel }) => {
     { value: "low", label: "Low Interest", color: "#ff4d4f" },
   ];
 
-  const { data: currencies = [] } = useGetAllCurrenciesQuery();
-  const { data: countries = [] } = useGetAllCountriesQuery();
+ 
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
@@ -128,11 +134,32 @@ const CreateLead = ({ open, onCancel }) => {
     return roleColors[role?.toLowerCase()] || roleColors.default;
   };
 
+  // Filter stages based on selected pipeline
+  const filteredStages = stagesData?.filter(
+    stage => stage.stageType === "lead" && stage.pipeline === selectedPipeline
+  ) || [];
+
+  // Handle pipeline selection change
+  const handlePipelineChange = (value) => {
+    setSelectedPipeline(value);
+    // Clear stage selection when pipeline changes
+    form.setFieldValue('stage', undefined);
+  };
+
+  // Handle add pipeline click
+  const handleAddPipelineClick = (e) => {
+    e.stopPropagation();
+    setIsAddPipelineVisible(true);
+  };
+
   const handleSubmit = async (values) => {
     try {
+      // Get the selected country's phone code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+      
       // Format phone number with country code
       const formattedPhone = values.telephone ?
-        `+${values.phoneCode} ${values.telephone}` :
+        `+${selectedCountry?.phoneCode?.replace('+', '')} ${values.telephone}` :
         null;
 
       const formData = {
@@ -150,6 +177,7 @@ const CreateLead = ({ open, onCancel }) => {
         tag: values.tag || [],
         status: values.status || 'active',
         source: values.source || 'website',
+        pipeline: values.pipeline, // Add pipeline field
         client_id: loggedInUser?.client_id,
         created_by: loggedInUser?.username
       };
@@ -430,7 +458,7 @@ const CreateLead = ({ open, onCancel }) => {
                   }
                 >
                   {currencies?.map((currency) => (
-                    <Option key={currency.id} value={currency.currencyCode}>
+                    <Option key={currency.id} value={currency.id}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
                         <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
@@ -452,29 +480,80 @@ const CreateLead = ({ open, onCancel }) => {
             </Input.Group>
           </Form.Item>
 
+          
+          <Form.Item
+            name="pipeline"
+            label={<span style={formItemStyle}>Pipeline</span>}
+            rules={[{ required: true, message: "Please select a pipeline" }]}
+          >
+            <Select
+              ref={selectRef}
+              open={dropdownOpen}
+              onDropdownVisibleChange={setDropdownOpen}
+              placeholder="Select pipeline"
+              onChange={handlePipelineChange}
+              style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
+              dropdownRender={(menu) => (
+                <div onClick={(e) => e.stopPropagation()}>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddPipelineClick}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Add Pipeline
+                    </Button>
+                  </div>
+                </div>
+              )}
+              popupClassName="custom-select-dropdown"
+            >
+              {pipelines.map((pipeline) => (
+                <Option key={pipeline.id} value={pipeline.id}>
+                  {pipeline.pipeline_name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+
           <Form.Item
             name="stage"
             label={<span style={formItemStyle}>Stage</span>}
-            rules={[{ required: true, message: "Please select stage" }]}
+            rules={[{ required: true, message: "Please select a stage" }]}
           >
             <Select
-              placeholder="Select stage"
+              placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
+              disabled={!selectedPipeline}
               style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
               popupClassName="custom-select-dropdown"
             >
-              {stages.map((stage) => (
+              {filteredStages.map((stage) => (
                 <Option key={stage.id} value={stage.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: stage.color || '#1890ff'
-                      }}
-                    />
-                    {stage.stageName}
-                  </div>
+                  {stage.stageName}
                 </Option>
               ))}
             </Select>
@@ -813,7 +892,7 @@ const CreateLead = ({ open, onCancel }) => {
                   }
                 >
                   {countries?.map((country) => (
-                    <Option key={country.id} value={country.phoneCode.replace('+', '')}>
+                    <Option key={country.id} value={country.id}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
                         <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
@@ -910,6 +989,11 @@ const CreateLead = ({ open, onCancel }) => {
         visible={isCreateUserVisible}
         onCancel={() => setIsCreateUserVisible(false)}
         onSubmit={handleCreateUserSuccess}
+      />
+
+      <AddPipelineModal
+        isOpen={isAddPipelineVisible}
+        onClose={() => setIsAddPipelineVisible(false)}
       />
 
       <style jsx global>{`

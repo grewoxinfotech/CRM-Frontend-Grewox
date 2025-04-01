@@ -244,25 +244,27 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
       render: (method) => getMethodTag(method),
     },
     {
-      title: "Transaction ID",
-      dataIndex: "transactionId",
-      key: "transactionId",
-      render: (text) => text || "-",
-    },
-    {
       title: "Actions",
       key: "actions",
       width: 80,
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
-          trigger={["click"]}
           placement="bottomRight"
+          trigger={["click"]}
         >
           <Button
             type="text"
             icon={<FiMoreVertical />}
-            className="action-button"
+            style={{
+              width: "32px",
+              height: "32px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "6px",
+              border: "none",
+            }}
           />
         </Dropdown>
       ),

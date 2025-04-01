@@ -11,6 +11,7 @@ import {
   message,
   Spin,
   DatePicker,
+  Tag,
 } from "antd";
 import {
   FiUser,
@@ -25,6 +26,7 @@ import {
   FiUsers,
   FiUserPlus,
   FiCalendar,
+  FiInfo,
 } from "react-icons/fi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useCreateDealMutation } from "./services/dealApi";
@@ -33,7 +35,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import './Deal.scss';
-import { useGetSourcesQuery,useGetLabelsQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery,useGetLabelsQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
 
 
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
@@ -53,7 +55,7 @@ const findIndianDefaults = (currencies, countries) => {
   };
 };
 
-const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
+const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   
   const [form] = Form.useForm();
@@ -70,10 +72,15 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
  const { data:labelsData } = useGetLabelsQuery(loggedInUser?.id);
  const { data: productsData } = useGetProductsQuery();
+ const { data: dealStages } = useGetLeadStagesQuery();
+ const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
 
  const sources = sourcesData?.data || [];
+ const statuses = statusesData?.data || [];
  const labels = labelsData?.data || [];
  const products = productsData?.data || [];
+
+
 
  const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
@@ -83,15 +90,18 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
     page: 1,
     limit: 100
   });
+
+
+
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
   // Add state to track selected pipeline
   const [selectedPipeline, setSelectedPipeline] = useState(null);
 
   // Filter stages based on selected pipeline
-  const filteredStages = dealStages.filter(
+  const filteredStages = dealStages?.filter(
     stage => stage.stageType === "deal" && stage.pipeline === selectedPipeline
-  );
+  ) || [];
 
   // Handle pipeline selection change
   const handlePipelineChange = (value) => {
@@ -137,17 +147,42 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
   // Pre-fill form with lead data when available
   useEffect(() => {
     if (leadData && open) {
+      // Find the currency details
+      const currencyDetails = currencies.find(c => c.id === leadData.currency);
+      
+      // Find the country details
+      const countryDetails = countries.find(c => c.id === leadData.phoneCode);
+      
+      // Find the status details
+      const statusDetails = statuses.find(s => s.id === leadData.status);
+
+      const stageDetails = filteredStages.find(s => s.id === leadData.stage);
+      // Set form values with found details
       form.setFieldsValue({
-        leadTitle: `Deal from ${leadData.name}`,
-        dealName: `${leadData.name}'s Deal`,
+
+        dealName: leadData.leadTitle,
+        currency: currencyDetails?.currencyCode, // Use currency ID
+        phoneCode: countryDetails?.phoneCode, // Use country ID
+        value: leadData.value,
+        pipeline: leadData.pipeline,
+        status: statusDetails?.id, // Use status ID
+        stage: stageDetails?.stageName, // Use stage ID
+        firstName: leadData.firstName,
+        lastName: leadData.lastName,
         email: leadData.email,
         phone: leadData.phone,
-        company: leadData.company,
-        source: leadData.source,
-        leadId: leadData.id,
+        address: leadData.address,
+        interest_level: leadData.interest_level,
+        lead_members: leadData.lead_members,
+        leadId: leadData.id
       });
+
+      // Set manual value for value field
+      setManualValue(leadData.value || 0);
     }
-  }, [leadData, form, open]);
+  }, [leadData, form, open, currencies, countries, statuses]);
+
+  console.log(leadData, "leadData");
 
   // Reset form when modal closes
   useEffect(() => {
@@ -520,10 +555,11 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines, dealStages }) => {
                 style={selectStyle}
                 popupClassName="custom-select-dropdown"
               >
-                <Option value="active">Active</Option>
-                <Option value="pending">Pending</Option>
-                <Option value="won">Won</Option>
-                <Option value="lost">Lost</Option>
+                {statuses.map((status) => (
+                  <Option key={status.id} value={status.id}>
+                    <Tag color={status.color}>{status.name}</Tag>
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
 

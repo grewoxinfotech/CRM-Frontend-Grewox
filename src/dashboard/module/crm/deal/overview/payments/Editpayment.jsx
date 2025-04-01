@@ -16,7 +16,6 @@ import {
   FiX,
   FiCalendar,
   FiCreditCard,
-  FiHash,
   FiFileText,
   FiMessageSquare,
   FiTarget,
@@ -60,7 +59,6 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
         paidOn: initialValues.paidOn ? dayjs(initialValues.paidOn) : null,
         amount: initialValues.amount,
         currency: selectedInvoice?.currency || initialValues.currency,
-        transactionId: initialValues.transactionId,
         paymentMethod: initialValues.paymentMethod,
         status: initialValues.status || 'pending',
         remark: initialValues.remark,
@@ -77,13 +75,11 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
         ...values,
         paidOn: values.paidOn?.format("YYYY-MM-DD"),
         amount: values.amount?.toString(),
-        transactionId: values.transactionId?.toString(),
         invoice: values.invoice?.toString(),
         currency: selectedInvoice?.currency || values.currency?.toString(),
         status: values.status || 'pending',
       };
 
-      
       await updatePayment({
         id: initialValues.id, 
         data: formattedValues
@@ -292,26 +288,6 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
               </Option>
             ))}
           </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="transactionId"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-              Transaction ID <span style={{ color: "#ff4d4f" }}>*</span>
-            </span>
-          }
-          rules={[{ required: true, message: "Please enter transaction ID" }]}
-        >
-          <Input
-            placeholder="Enter transaction ID"
-            style={{
-              borderRadius: "8px",
-              height: "40px",
-              backgroundColor: "#f8fafc",
-            }}
-          />
         </Form.Item>
 
         <Form.Item

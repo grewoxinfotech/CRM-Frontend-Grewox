@@ -10,7 +10,7 @@ import {
   FiTarget,
   FiBriefcase
 } from "react-icons/fi";
-import { useGetDealsQuery, useDeleteDealMutation } from "./services/DealApi";
+import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
 import dayjs from "dayjs";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";

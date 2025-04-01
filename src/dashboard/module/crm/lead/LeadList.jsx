@@ -14,6 +14,8 @@ import {
 import { useDeleteLeadMutation } from "./services/LeadApi";
 import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
+import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
+
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
@@ -25,6 +27,12 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+<<<<<<< Updated upstream
+=======
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+  const { data: categoriesData } = useGetLabelsQuery(loggedInUser?.id);
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+>>>>>>> Stashed changes
 
   // Filter and prepare data
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
@@ -89,12 +97,15 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   };
 
   // Format currency
-  const formatCurrency = (value, currency = "INR") => {
+  const formatCurrency = (value, currencyId) => {
+    const currencyDetails = currencies?.find(c => c.id === currencyId);
+    if (!currencyDetails) return `${value}`;
+    
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0
-    }).format(value);
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
   };
 
   const getDropdownItems = (record) => ({
@@ -231,7 +242,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
       columns={columns}
       dataSource={leads?.data || []}
       rowKey="id"
-      loading={!leads}
+
       pagination={{
         pageSize: 10,
         showSizeChanger: true,

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Card, Avatar, Button, Table, Tag, Modal, Form, Select, message } from 'antd';
 import { FiUserPlus, FiTrash2 } from 'react-icons/fi';
-import { useUpdateDealMutation } from '../../services/DealApi';
+import { useUpdateDealMutation,useGetDealsQuery } from '../../services/dealApi';
 import { useGetUsersQuery } from "../../../../user-management/users/services/userApi";
-import { useGetDealsQuery } from '../../services/DealApi';
+import { useGetRolesQuery } from "../../../../hrm/role/services/roleApi";
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
 import './projectMember.scss';
 
 const DealMember = ({ deal }) => {
@@ -12,10 +14,18 @@ const DealMember = ({ deal }) => {
     const [updateDeal] = useUpdateDealMutation();
     const { data: usersResponse = { data: [] } } = useGetUsersQuery();
     const { refetch } = useGetDealsQuery();
-
+    const { data: rolesData } = useGetRolesQuery();
+    const loggedInUser = useSelector(selectCurrentUser);
     
     // Get users array from response
-    const users = usersResponse.data || [];
+     // Get subclient role ID to filter it out
+     const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+
+     // Filter users to get team members (excluding subclients)
+     const users = usersResponse?.data?.filter(user =>
+         user?.created_by === loggedInUser?.username &&
+         user?.role_id !== subclientRoleId
+     ) || [];
 
     // Parse assigned_to from deal
     const assignedMembers = deal?.assigned_to ? 

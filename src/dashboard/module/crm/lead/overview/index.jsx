@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, Tabs, Breadcrumb, Button, Typography, Tag, Space, Row, Col, Descriptions } from 'antd';
 import {
@@ -25,6 +25,10 @@ import {
     FiBox,
 } from 'react-icons/fi';
 import { useGetLeadQuery } from '../services/LeadApi';
+import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../../module/settings/services/settingsApi';
+import CreateDeal from '../../deal/CreateDeal';
+import { useGetPipelinesQuery } from '../../crmsystem/pipeline/services/pipelineApi';
+
 import LeadActivity from './activity';
 import LeadNotes from './notes';
 import LeadFiles from './files';
@@ -41,7 +45,71 @@ import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 
 const { Title, Text } = Typography;
 
+<<<<<<< Updated upstream
 const LeadOverviewContent = ({ leadData, formatCurrency }) => {
+=======
+const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => {
+    const loggedInUser = useSelector(selectCurrentUser);
+    const { data: currencies = [] } = useGetAllCurrenciesQuery();
+
+    // Fetch data from APIs
+    const { data: stagesData } = useGetLeadStagesQuery();
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+    const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+
+    // Filter stages to only show lead type stages
+    const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
+    const sources = sourcesData?.data || [];
+    const statuses = statusesData?.data || [];
+    const categories = categoriesData?.data || [];
+
+    // Helper functions to get names and colors
+    const getStageInfo = (stageId) => {
+        const stage = stages.find(s => s.id === stageId);
+        return {
+            name: stage?.stageName || '-',
+            color: stage?.color || '#1890ff'
+        };
+    };
+
+    const getSourceInfo = (sourceId) => {
+        const source = sources.find(s => s.id === sourceId);
+        return {
+            name: source?.name || '-',
+            color: source?.color || '#1890ff'
+        };
+    };
+
+    const getStatusInfo = (statusId) => {
+        const status = statuses.find(s => s.id === statusId);
+        return {
+            name: status?.name || '-',
+            color: status?.color || '#1890ff'
+        };
+    };
+
+    const getCategoryInfo = (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return {
+            name: category?.name || '-',
+            color: category?.color || '#1890ff'
+        };
+    };
+
+    const formatCurrencyValue = (value, currencyId) => {
+        const currencyDetails = currencies?.find(c => c.id === currencyId);
+        if (!currencyDetails) return `${value}`;
+        
+        return new Intl.NumberFormat('en-US', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
+    };
+
+    const interestLevel = getInterestLevel(leadData?.interest_level);
+>>>>>>> Stashed changes
 
     return (
         <div className="overview-content">
@@ -104,7 +172,7 @@ const LeadOverviewContent = ({ leadData, formatCurrency }) => {
                         <div className="metric-content">
                             <div className="metric-label">Lead Value</div>
                             <div className="metric-value">
-                                {leadData?.leadValue ? formatCurrency(leadData.leadValue, leadData.currency) : '-'}
+                                {leadData?.leadValue ? formatCurrencyValue(leadData.leadValue, leadData.currency) : '-'}
                             </div>
                         </div>
                     </Card>
@@ -242,9 +310,41 @@ const LeadOverview = () => {
     const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
     const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
     const { data: stagesData } = useGetLeadStagesQuery(loggedInUser?.id);
+    const { data: pipelines = [] } = useGetPipelinesQuery();
+    const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
     const leadData = lead?.data;
     const stages = stagesData?.find(stage => stage.id === leadData?.leadStage) || [];
     const sources = sourcesData?.data || [];
+
+    // Format lead data for CreateDeal
+    const formattedLeadData = useMemo(() => {
+        if (!leadData) return null;
+
+        return {
+            id: leadData.id,
+            leadTitle: leadData.leadTitle,
+            firstName: leadData.firstName,
+            lastName: leadData.lastName,
+            email: leadData.email,
+            phone: leadData.telephone?.split(' ')[1] || '',
+            phoneCode: leadData.phoneCode,
+            company: leadData.company_name,
+            source: leadData.source,
+            pipeline: leadData.pipeline,
+            stage: leadData.leadStage,
+            currency: leadData.currency,
+            value: leadData.leadValue,
+            category: leadData.category,
+            address: leadData.address,
+            status: leadData.status,
+            interest_level: leadData.interest_level,
+            lead_members: leadData.lead_members ? JSON.parse(leadData.lead_members).lead_members : []
+        };
+    }, [leadData]);
+
+    const handleConvertToDeal = () => {
+        setIsCreateDealModalOpen(true);
+    };
 
     const getInterestLevel = (level) => {
         const levels = {
@@ -383,7 +483,21 @@ const LeadOverview = () => {
                         >
                             Back to Leads
                         </Button>
-                        <Button type="primary">
+                        <Button 
+                            type="primary"
+                            onClick={handleConvertToDeal}
+                            style={{
+                                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                                border: 'none',
+                                height: '44px',
+                                padding: '0 24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                borderRadius: '10px',
+                                fontWeight: '500'
+                            }}
+                        >
                             Convert to Deal
                         </Button>
                     </Space>
@@ -404,6 +518,13 @@ const LeadOverview = () => {
                     </Card>
                 </div>
             </div>
+
+            <CreateDeal 
+                open={isCreateDealModalOpen}
+                onCancel={() => setIsCreateDealModalOpen(false)}
+                leadData={formattedLeadData}
+                pipelines={pipelines}
+            />
         </div>
     );
 };

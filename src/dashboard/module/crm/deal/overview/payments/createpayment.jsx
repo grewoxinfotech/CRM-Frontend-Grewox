@@ -15,9 +15,8 @@ import {
   FiX,
   FiCalendar,
   FiCreditCard,
-  FiHash,
-  FiFileText,
   FiMessageSquare,
+  FiFileText,
 } from "react-icons/fi";
 import { useCreateDealPaymentMutation } from "./services/dealpaymentApi";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
@@ -61,7 +60,6 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
           paidOn: values.paidOn?.format("YYYY-MM-DD"),
           amount: values.amount?.toString(),
           currency: values.currency,
-          transactionId: values.transactionId,
           paymentMethod: values.paymentMethod,
           remark: values.remark,
           created_by: currentUser?.name || "Unknown User",
@@ -267,25 +265,6 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               </Option>
             ))}
           </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="transactionId"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-              Transaction ID
-            </span>
-          }
-        >
-          <Input
-            placeholder="Enter transaction ID"
-            style={{
-              borderRadius: "8px",
-              height: "40px",
-              backgroundColor: "#f8fafc",
-            }}
-          />
         </Form.Item>
 
         <Form.Item

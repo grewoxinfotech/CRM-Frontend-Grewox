@@ -29,6 +29,11 @@ import LeadList from "./LeadList";
 import { Link, useNavigate } from "react-router-dom";
 import EditLead from "./EditLead";
 import { useGetLeadsQuery } from "./services/LeadApi";
+import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
+import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
+import { useGetCategoriesQuery, useGetSourcesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
 
 const { Title, Text } = Typography;
 
@@ -39,7 +44,16 @@ const Lead = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
+  const loggedInUser = useSelector(selectCurrentUser);
   const { data: leads, isLoading } = useGetLeadsQuery();
+  const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+
+ 
 
   const handleLeadClick = (lead) => {
     navigate(`/dashboard/crm/lead/${lead.id}`);
@@ -163,15 +177,34 @@ const Lead = () => {
             leads={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            categoriesData={categoriesData}
+            sourcesData={sourcesData}
+            statusesData={statusesData}
+            currencies={currencies}
+            countries={countries}
+            pipelines={pipelines}
+
             onView={handleView}
             onLeadClick={handleLeadClick}
           />
         )}
       </Card>
 
-      <CreateLead open={isModalOpen} onCancel={() => setIsModalOpen(false)} />
+      <CreateLead open={isModalOpen} pipelines={pipelines} 
+      currencies={currencies}
+      countries={countries}
+      sourcesData={sourcesData}
+      statusesData={statusesData}
+      categoriesData={categoriesData}
+      onCancel={() => setIsModalOpen(false)} />
       <EditLead
         open={isEditModalOpen}
+        pipelines={pipelines}
+        currencies={currencies}
+        countries={countries}
+        sourcesData={sourcesData}
+        statusesData={statusesData}
+        categoriesData={categoriesData}
         onCancel={handleEditCancel}
         initialValues={selectedLead}
         key={selectedLead?.id}
