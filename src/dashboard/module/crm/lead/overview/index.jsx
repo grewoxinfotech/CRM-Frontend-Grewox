@@ -21,7 +21,8 @@ import {
     FiTrendingUp,
     FiTrendingDown,
     FiMinusCircle,
-    FiPhoneCall
+    FiPhoneCall,
+    FiBox,
 } from 'react-icons/fi';
 import { useGetLeadQuery } from '../services/LeadApi';
 import LeadActivity from './activity';
@@ -33,7 +34,6 @@ import './LeadOverview.scss';
 import {
     useGetSourcesQuery,
     useGetStatusesQuery,
-    useGetCategoriesQuery,
 } from '../../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadStageApi';
 import { useSelector } from 'react-redux';
@@ -41,55 +41,7 @@ import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 
 const { Title, Text } = Typography;
 
-const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => {
-    const loggedInUser = useSelector(selectCurrentUser);
-
-    // Fetch data from APIs
-    const { data: stagesData } = useGetLeadStagesQuery();
-    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-    const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
-
-    // Filter stages to only show lead type stages
-    const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
-    const sources = sourcesData?.data || [];
-    const statuses = statusesData?.data || [];
-    const categories = categoriesData?.data || [];
-
-    // Helper functions to get names and colors
-    const getStageInfo = (stageId) => {
-        const stage = stages.find(s => s.id === stageId);
-        return {
-            name: stage?.stageName || '-',
-            color: stage?.color || '#1890ff'
-        };
-    };
-
-    const getSourceInfo = (sourceId) => {
-        const source = sources.find(s => s.id === sourceId);
-        return {
-            name: source?.name || '-',
-            color: source?.color || '#1890ff'
-        };
-    };
-
-    const getStatusInfo = (statusId) => {
-        const status = statuses.find(s => s.id === statusId);
-        return {
-            name: status?.name || '-',
-            color: status?.color || '#1890ff'
-        };
-    };
-
-    const getCategoryInfo = (categoryId) => {
-        const category = categories.find(c => c.id === categoryId);
-        return {
-            name: category?.name || '-',
-            color: category?.color || '#1890ff'
-        };
-    };
-
-    const interestLevel = getInterestLevel(leadData?.interest_level);
+const LeadOverviewContent = ({ leadData, formatCurrency }) => {
 
     return (
         <div className="overview-content">
@@ -97,7 +49,7 @@ const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => 
                 <div className="profile-header">
                     <div className="profile-main">
                         <div className="company-avatar">
-                            {leadData?.company_name ? leadData.company_name[0].toUpperCase() : 'C'}
+                            <FiBox size={24} />
                         </div>
                         <div className="profile-info">
                             <h2 className="company-name">{leadData?.company_name || 'Company Name'}</h2>
@@ -401,7 +353,6 @@ const LeadOverview = () => {
                     <Breadcrumb.Item>
                         {leadData?.leadTitle || 'Lead Details'}
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>{leadData?.leadTitle}</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 

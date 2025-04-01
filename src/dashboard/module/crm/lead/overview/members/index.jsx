@@ -120,20 +120,7 @@ const LeadMembers = ({ leadId }) => {
                         fontSize: '16px',
                         fontWeight: '500'
                     }}>
-                        {user.profilePic ? (
-                            <img
-                                src={user.profilePic}
-                                alt={user.username}
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    borderRadius: '50%',
-                                    objectFit: 'cover'
-                                }}
-                            />
-                        ) : (
-                            user.username?.charAt(0)
-                        )}
+                        <FiUser style={{ fontSize: '20px' }} />
                     </div>
                 );
             }
@@ -440,7 +427,7 @@ const LeadMembers = ({ leadId }) => {
                                                 textTransform: 'uppercase',
                                                 flexShrink: 0
                                             }}>
-                                                {user?.username?.charAt(0)}
+                                                <FiUser style={{ fontSize: '12px' }} />
                                             </div>
                                             <span style={{
                                                 color: '#0958D9',
@@ -525,20 +512,7 @@ const LeadMembers = ({ leadId }) => {
                                                         textTransform: 'uppercase',
                                                         flexShrink: 0
                                                     }}>
-                                                        {user.profilePic ? (
-                                                            <img
-                                                                src={user.profilePic}
-                                                                alt={user.username}
-                                                                style={{
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                    borderRadius: '50%',
-                                                                    objectFit: 'cover'
-                                                                }}
-                                                            />
-                                                        ) : (
-                                                            user.username?.charAt(0)
-                                                        )}
+                                                        <FiUser style={{ fontSize: '16px' }} />
                                                     </div>
                                                     <span style={{
                                                         fontWeight: 500,

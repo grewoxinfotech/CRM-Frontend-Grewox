@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider } from 'antd';
-import { FiPlus, FiPhone, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiBell, FiMapPin, FiMonitor, FiDollarSign, FiMessageSquare, FiSend, FiVideo } from 'react-icons/fi';
+import { FiPlus, FiPhone, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiBell, FiMapPin, FiMonitor, FiDollarSign, FiMessageSquare, FiSend, FiVideo, FiAlertCircle, FiPause, FiInfo } from 'react-icons/fi';
 import { useGetLeadQuery, useGetFollowupsQuery, useCreateFollowupMutation, useUpdateFollowupMutation, useDeleteFollowupMutation } from '../../services/LeadApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import './followup.scss';
 import { useGetUsersQuery } from '../../../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../../../hrm/role/services/roleApi';
+import { useGetStatusesQuery, useGetFollowupTypesQuery } from '../../../crmsystem/souce/services/SourceApi';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -27,6 +28,11 @@ const LeadFollowup = ({ leadId }) => {
     const [deleteFollowup] = useDeleteFollowupMutation();
     const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
     const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+
+    const { data: statuses } = useGetStatusesQuery(currentUser?.id);
+    const { data: followupTypes } = useGetFollowupTypesQuery(currentUser?.id);
+
+    const followupTypesData = followupTypes?.data || [];
 
     // Get lead members from leadData and ensure it's an array
     const leadMembers = React.useMemo(() => {
@@ -82,18 +88,6 @@ const LeadFollowup = ({ leadId }) => {
                 border: '#FFD591',
                 icon: <FiUser style={{ fontSize: '14px' }} />
             },
-            'admin': {
-                color: '#096DD9',
-                bg: '#E6F7FF',
-                border: '#91D5FF',
-                icon: <FiShield style={{ fontSize: '14px' }} />
-            },
-            'manager': {
-                color: '#08979C',
-                bg: '#E6FFFB',
-                border: '#87E8DE',
-                icon: <FiBriefcase style={{ fontSize: '14px' }} />
-            },
             'default': {
                 color: '#531CAD',
                 bg: '#F9F0FF',
@@ -115,44 +109,59 @@ const LeadFollowup = ({ leadId }) => {
         user?.client_id !== user?.id    // Exclude if user is their own client
     ) || [];
 
-    const followupTypes = [
-        {
-            value: 'call',
-            label: 'Phone Call',
-            icon: <FiPhone style={{ color: '#1890ff' }} />,
-            color: '#1890ff'
-        },
-        {
-            value: 'meeting',
-            label: 'Client Meeting',
-            icon: <FiUsers style={{ color: '#52c41a' }} />,
-            color: '#52c41a'
-        },
-        {
-            value: 'whatsapp',
-            label: 'WhatsApp',
-            icon: <FiMessageSquare style={{ color: '#25D366' }} />,
-            color: '#25D366'
-        },
-        {
-            value: 'email',
-            label: 'Email',
-            icon: <FiMail style={{ color: '#EA4335' }} />,
-            color: '#EA4335'
-        },
-        {
-            value: 'telegram',
-            label: 'Telegram',
-            icon: <FiSend style={{ color: '#0088cc' }} />,
-            color: '#0088cc'
-        },
-        {
-            value: 'video_call',
-            label: 'Video Call',
-            icon: <FiVideo style={{ color: '#7c3aed' }} />,
-            color: '#7c3aed'
-        }
-    ];
+    // Filter status options
+    const statusOptions = React.useMemo(() => {
+        if (!statuses?.data) return [];
+        return statuses.data
+            .filter(item => item.lableType === 'status')
+            .map(status => ({
+                value: status.id,
+                label: status.name,
+                color: status.color
+            }));
+    }, [statuses]);
+
+    // Filter followup type options
+    const typeOptions = React.useMemo(() => {
+        if (!followupTypes?.data) return [];
+        return followupTypes.data
+            .filter(item => item.lableType === 'followup')
+            .map(type => ({
+                value: type.id,
+                label: type.name,
+                color: type.color
+            }));
+    }, [followupTypes]);
+
+    // Get type icon based on name
+    const getTypeIcon = (name) => {
+        const icons = {
+            'Phone Call': <FiPhone />,
+            'Video Call': <FiVideo />,
+            'Client Meeting': <FiUsers />,
+            'WhatsApp': <FiMessageSquare />,
+            'Email': <FiMail />,
+            'Telegram': <FiSend />
+        };
+        return icons[name] || <FiCheckSquare />;
+    };
+
+    // Get status icon based on name
+    const getStatusIcon = (name) => {
+        const icons = {
+            'Pending': <FiClock />,
+            'In Progress': <FiBell />,
+            'Completed': <FiCheck />,
+            'Cancelled': <FiX />,
+            'Review': <FiShield />,
+            'On Hold': <FiPause />,
+            'Delayed': <FiAlertCircle />,
+            'New': <FiPlus />,
+            'Approved': <FiCheck />,
+            'Rejected': <FiX />
+        };
+        return icons[name] || <FiCheckSquare />;
+    };
 
     const getStatusColor = (status) => {
         const colors = {
@@ -559,15 +568,30 @@ const LeadFollowup = ({ leadId }) => {
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",
-                                height: "48px",
+                                height: "48px"
                             }}
                         >
-                            {followupTypes.map(type => (
+                            {typeOptions.map(type => (
                                 <Option key={type.value} value={type.value}>
-                                    <Space>
-                                        {type.icon}
-                                        {type.label}
-                                    </Space>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <span style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '13px',
+                                            color: type.color,
+                                            backgroundColor: `${type.color}15`,
+                                            gap: '4px'
+                                        }}>
+                                            {getTypeIcon(type.label)}
+                                            {type.label}
+                                        </span>
+                                    </div>
                                 </Option>
                             ))}
                         </Select>
@@ -769,33 +793,32 @@ const LeadFollowup = ({ leadId }) => {
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",
-                                height: "48px",
+                                height: "48px"
                             }}
                         >
-                            <Option value="pending">
-                                <Space>
-                                    <FiClock className="status-icon pending" />
-                                    Pending
-                                </Space>
-                            </Option>
-                            <Option value="in_progress">
-                                <Space>
-                                    <FiClock className="status-icon in-progress" />
-                                    In Progress
-                                </Space>
-                            </Option>
-                            <Option value="completed">
-                                <Space>
-                                    <FiCheck className="status-icon completed" />
-                                    Completed
-                                </Space>
-                            </Option>
-                            <Option value="cancelled">
-                                <Space>
-                                    <FiX className="status-icon cancelled" />
-                                    Cancelled
-                                </Space>
-                            </Option>
+                            {statusOptions.map(status => (
+                                <Option key={status.value} value={status.value}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <span style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '13px',
+                                            color: status.color,
+                                            backgroundColor: `${status.color}15`,
+                                            gap: '4px'
+                                        }}>
+                                            {getStatusIcon(status.label)}
+                                            {status.label}
+                                        </span>
+                                    </div>
+                                </Option>
+                            ))}
                         </Select>
                     </Form.Item>
 

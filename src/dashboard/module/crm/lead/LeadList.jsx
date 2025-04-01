@@ -11,8 +11,8 @@ import {
   FiTarget,
   FiTrendingUp
 } from "react-icons/fi";
-import { useGetLeadsQuery, useDeleteLeadMutation } from "./services/LeadApi";
-import { useGetSourcesQuery, useGetStatusesQuery, useGetLabelsQuery } from '../crmsystem/souce/services/SourceApi';
+import { useDeleteLeadMutation } from "./services/LeadApi";
+import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
@@ -25,14 +25,10 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-  const { data: categoriesData } = useGetLabelsQuery(loggedInUser?.id);
 
   // Filter and prepare data
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
   const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];
-  const statuses = statusesData?.data?.filter(item => item.lableType === "status") || [];
-  const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
   const handleDelete = async (record) => {
     try {
@@ -61,24 +57,6 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
     return {
       name: source.name || "Unknown",
       color: source.color || "#1890ff"
-    };
-  };
-
-  // Get status data
-  const getStatusData = (statusId) => {
-    const status = statuses.find(s => s.id === statusId) || {};
-    return {
-      name: status.name || "Unknown",
-      color: status.color || "#1890ff"
-    };
-  };
-
-  // Get category data
-  const getCategoryData = (categoryId) => {
-    const category = categories.find(c => c.id === categoryId) || {};
-    return {
-      name: category.name || "Unknown",
-      color: category.color || "#1890ff"
     };
   };
 
@@ -150,31 +128,6 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
       key: "leadTitle",
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            borderRadius: '50%',
-            background: '#e6f4ff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#1890ff'
-          }}>
-            {record.profilePic ? (
-              <img
-                src={record.profilePic}
-                alt={text}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }}
-              />
-            ) : (
-              <FiUser size={20} />
-            )}
-          </div>
           <div>
             <Text strong style={{ display: 'block', fontSize: '14px', cursor: 'default' }}>{text}</Text>
             <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -198,8 +151,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
               textTransform: 'capitalize',
               padding: '4px 12px',
               borderRadius: '4px',
-              fontSize: '12px',
-              fontWeight: '500'
+              fontSize: '14px',
+              fontWeight: '500',
+              background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)'
             }}
           >
             {stage.name}
@@ -222,8 +176,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
             padding: '4px 12px',
             display: 'flex',
             alignItems: 'center',
-            fontSize: '12px',
-            fontWeight: '500'
+            fontSize: '14px',
+            fontWeight: '600',
+            width: 'fit-content'
           }}>
             {interestStyle.icon}
             {interestStyle.text}

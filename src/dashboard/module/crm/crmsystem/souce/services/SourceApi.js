@@ -4,7 +4,7 @@ import { baseQueryWithReauth } from "../../../../../../store/baseQuery";
 export const sourceApi = createApi({
   reducerPath: "sourceApi",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ["Sources", "Statuses", "Tags", "Labels", "ContractTypes", "Categories"],
+  tagTypes: ["Sources", "Statuses", "Tags", "Labels", "ContractTypes", "Categories", "FollowupTypes "],
   endpoints: (builder) => ({
     // Sources
     getSources: builder.query({
@@ -377,6 +377,68 @@ export const sourceApi = createApi({
       }),
       invalidatesTags: ["ContractTypes"],
     }),
+
+    // Followup Types
+    getFollowupTypes: builder.query({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response) => {
+        if (Array.isArray(response)) {
+          return { data: response.filter(item => item.lableType === "followup") };
+        }
+        if (response?.data && Array.isArray(response.data)) {
+          return { data: response.data.filter(item => item.lableType === "followup") };
+        }
+        return { data: [] };
+      },
+      providesTags: ["FollowupTypes"],
+    }),
+    createFollowupType: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "POST",
+        body: {
+          ...data,
+          lableType: "followup",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to create followup type",
+      }),
+      invalidatesTags: ["FollowupTypes"],
+    }),
+    updateFollowupType: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/labels/${id}`,
+        method: "PUT",
+        body: {
+          ...data,
+          lableType: "followup",
+        },
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to update followup type",
+      }),
+      invalidatesTags: ["FollowupTypes"],
+    }),
+    deleteFollowupType: builder.mutation({
+      query: (id) => ({
+        url: `/labels/${id}`,
+        method: "DELETE",
+      }),
+      transformResponse: (response) => response?.data || response,
+      transformErrorResponse: (response) => ({
+        status: response.status,
+        message: response.data?.message || "Failed to delete followup type",
+      }),
+      invalidatesTags: ["FollowupTypes"],
+    }),
   }),
 });
 
@@ -411,4 +473,9 @@ export const {
   useCreateContractTypeMutation,
   useUpdateContractTypeMutation,
   useDeleteContractTypeMutation,
+  // Followup Types
+  useGetFollowupTypesQuery,
+  useCreateFollowupTypeMutation,
+  useUpdateFollowupTypeMutation,
+  useDeleteFollowupTypeMutation,
 } = sourceApi;

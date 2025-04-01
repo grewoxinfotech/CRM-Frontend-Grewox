@@ -51,19 +51,21 @@ import { taxApi } from "../dashboard/module/settings/tax/services/taxApi.js";
 import { salaryApi } from "../dashboard/module/hrm/payRoll/services/salaryApi.js";
 import { attendanceApi } from "../dashboard/module/hrm/Attendance/services/attendanceApi";
 import { holidayApi } from "../dashboard/module/hrm/Holiday/services/holidayApi";
-import {vendorApi} from "../dashboard/module/purchase/vendor/services/vendorApi.js";
+import { vendorApi } from "../dashboard/module/purchase/vendor/services/vendorApi.js";
 import { billingApi } from "../dashboard/module/purchase/billing/services/billingApi";
 import { debitNoteApi } from "../dashboard/module/purchase/debitnote/services/debitnoteApi";
+import leadStageReducer from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageSlice";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"],
+  whitelist: ["auth", "leadStage"],
 };
 
 const rootReducer = combineReducers({
   auth: authReducer,
   superadminProfile: superadminProfileReducer,
+  leadStage: leadStageReducer,
   [authApi.reducerPath]: authApi.reducer,
   [documentApi.reducerPath]: documentApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,
@@ -112,7 +114,7 @@ const rootReducer = combineReducers({
   [attendanceApi.reducerPath]: attendanceApi.reducer,
   [holidayApi.reducerPath]: holidayApi.reducer,
   [salaryApi.reducerPath]: salaryApi.reducer,
-  [vendorApi.reducerPath]:vendorApi.reducer,
+  [vendorApi.reducerPath]: vendorApi.reducer,
   [billingApi.reducerPath]: billingApi.reducer,
   [debitNoteApi.reducerPath]: debitNoteApi.reducer,
 });
