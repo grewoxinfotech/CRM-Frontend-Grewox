@@ -12,7 +12,7 @@ import {
   FiTrendingUp
 } from "react-icons/fi";
 import { useDeleteLeadMutation } from "./services/LeadApi";
-import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetLabelsQuery, useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
 

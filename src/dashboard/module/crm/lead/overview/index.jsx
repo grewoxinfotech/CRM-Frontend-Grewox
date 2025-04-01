@@ -36,10 +36,11 @@ import LeadMembers from './members';
 import LeadFollowup from './followup/index.jsx';
 import './LeadOverview.scss';
 import {
+    useGetCategoriesQuery,
     useGetSourcesQuery,
     useGetStatusesQuery,
 } from '../../crmsystem/souce/services/SourceApi';
-import { useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadStageApi';
+import { useGetLeadStagesByPipelineQuery, useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadStageApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 
@@ -50,7 +51,7 @@ const LeadOverviewContent = ({ leadData, formatCurrency, getInterestLevel }) => 
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
 
     // Fetch data from APIs
-    const { data: stagesData } = useGetLeadStagesQuery();
+    const { data: stagesData } = useGetLeadStagesByPipelineQuery();
     const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
     const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
     const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);

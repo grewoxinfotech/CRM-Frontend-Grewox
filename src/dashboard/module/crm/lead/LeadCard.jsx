@@ -38,6 +38,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { CSS } from '@dnd-kit/utilities';
 import { useGetSourcesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 const { Text } = Typography;
 
 const DraggableCard = ({ lead, stage, onLeadClick }) => {
@@ -51,6 +52,8 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
 
   const { data: sourceData } = useGetSourcesQuery(lead.client_id);
   const { data: categoryData } = useGetCategoriesQuery(lead.client_id);
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+
 
   const source = sourceData?.data?.find(s => s.id === lead.source);
   const category = categoryData?.data?.find(c => c.id === lead.category);

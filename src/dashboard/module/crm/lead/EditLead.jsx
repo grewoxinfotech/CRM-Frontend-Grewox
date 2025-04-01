@@ -112,7 +112,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
     // Clear stage selection when pipeline changes
-    form.setFieldValue('stage', undefined);
+    form.setFieldValue('leadStage', undefined);
   };
 
   // Handle add pipeline click
@@ -163,7 +163,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         leadValue: initialValues.leadValue,
         lead_members: leadMembers,
         pipeline: initialValues.pipeline,
-        stage: initialValues.leadStage
+        leadStage: initialValues.leadStage
       });
 
       if (initialValues.profilePic) {
@@ -214,7 +214,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         currency: selectedCurrency?.currencyCode || defaultCurrency,
         lead_members: leadMembers,
         pipeline: values.pipeline,
-        stage: values.stage,
+        leadStage: values.leadStage,
         status: values.status || 'active',
         source: values.source || 'website',
         category: values.category || '',
@@ -520,7 +520,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           </Form.Item>
 
           <Form.Item
-            name="stage"
+            name="leadStage"
             label={<span style={formItemStyle}>Stage</span>}
             rules={[{ required: true, message: "Please select a stage" }]}
           >
@@ -619,35 +619,6 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 />
               </Form.Item>
             </Input.Group>
-          </Form.Item>
-
-          {/* Lead Stage */}
-          <Form.Item
-            name="leadStage"
-            label={<span style={formItemStyle}>Lead Stage</span>}
-            rules={[{ required: true, message: "Please select lead stage" }]}
-          >
-            <Select
-              placeholder="Select lead stage"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
-            >
-              {filteredStages?.map((stage) => (
-                <Option key={stage.id} value={stage.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: stage.color || '#1890ff'
-                      }}
-                    />
-                    {stage.stageName}
-                  </div>
-                </Option>
-              ))}
-            </Select>
           </Form.Item>
 
           {/* Source Select */}
