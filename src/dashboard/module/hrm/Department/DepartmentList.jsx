@@ -5,7 +5,7 @@ import { useGetAllDepartmentsQuery, useDeleteDepartmentMutation } from './servic
 import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
 import dayjs from 'dayjs';
 
-const DepartmentList = ({ onEdit, searchText, filters }) => {
+const DepartmentList = ({ onEdit, onView, searchText, filters }) => {
     // RTK Query hooks
     const { data: departmentsData = [], isLoading: isLoadingDepartments } = useGetAllDepartmentsQuery();
     const { data: branchesData = [], isLoading: isLoadingBranches } = useGetAllBranchesQuery();
@@ -93,7 +93,7 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
                 key: 'view',
                 icon: <FiEye />,
                 label: 'View Details',
-                onClick: () => onEdit(record),
+                onClick: () => onView(record),
             },
             {
                 key: 'edit',

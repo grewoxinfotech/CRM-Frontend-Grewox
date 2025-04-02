@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 
 const { Option } = Select;
 
-const DesignationList = ({ onEdit, searchText, filters }) => {
+const DesignationList = ({ onEdit, onView, searchText, filters }) => {
     const [editingRecord, setEditingRecord] = useState(null);
 
     // RTK Query hooks
@@ -104,7 +104,7 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
                 key: 'view',
                 icon: <FiEye />,
                 label: 'View Details',
-                onClick: () => onEdit(record),
+                onClick: () => onView(record),
             },
             {
                 key: 'edit',

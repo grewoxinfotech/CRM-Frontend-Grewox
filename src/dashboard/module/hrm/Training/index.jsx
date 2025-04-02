@@ -15,6 +15,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import CreateTraining from './CreateTraining';
 import TrainingList from './TrainingList';
+import ViewTraining from './ViewTraining';
 import { Link } from 'react-router-dom';
 import { useDeleteTrainingMutation } from './services/trainingApi';
 
@@ -26,6 +27,7 @@ const Training = () => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedTraining, setSelectedTraining] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isViewTrainingVisible, setIsViewTrainingVisible] = useState(false);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filteredTrainings, setFilteredTrainings] = useState([]);
@@ -60,6 +62,11 @@ const Training = () => {
     const handleDeleteConfirm = (training) => {
         setSelectedTraining(training);
         setIsDeleteModalVisible(true);
+    };
+
+    const handleViewTraining = (training) => {
+        setSelectedTraining(training);
+        setIsViewTrainingVisible(true);
     };
 
     const handleDeleteTraining = async () => {
@@ -259,6 +266,7 @@ const Training = () => {
                     loading={loading}
                     onEdit={handleEditTraining}
                     onDelete={handleDeleteConfirm}
+                    onView={handleViewTraining}
                 />
             </Card>
 
@@ -269,6 +277,12 @@ const Training = () => {
                 isEditing={isEditing}
                 initialValues={selectedTraining}
                 loading={loading}
+            />
+
+            <ViewTraining
+                open={isViewTrainingVisible}
+                onCancel={() => setIsViewTrainingVisible(false)}
+                training={selectedTraining}
             />
 
             <Modal

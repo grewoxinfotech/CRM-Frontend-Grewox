@@ -9,7 +9,7 @@
     }
 }
 
-.revenue-page {
+.salary-page {
     padding: 24px;
     background: $background-color;
 
@@ -175,7 +175,7 @@
         }
     }
 
-    .revenue-table-card {
+    .salary-table-card {
         @include hover-shadow;
         background: white;
         border-radius: 12px;
@@ -189,7 +189,7 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead>tr>th {
+                .ant-table-thead > tr > th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -201,7 +201,7 @@
                     }
                 }
 
-                .ant-table-tbody>tr>td {
+                .ant-table-tbody > tr > td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -224,10 +224,44 @@
             }
         }
     }
+
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        
+        &.pending {
+            background-color: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        &.approved {
+            background-color: #f6ffed;
+            color: #52c41a;
+        }
+        
+        &.rejected {
+            background-color: #fff1f0;
+            color: #f5222d;
+        }
+    }
+
+    .action-column {
+        .ant-btn {
+            padding: 0;
+            height: auto;
+            line-height: 1;
+            
+            &:not(:last-child) {
+                margin-right: 16px;
+            }
+        }
+    }
 }
 
-// Revenue Modal Styles
-.revenue-form-modal {
+// Modal Styles
+.salary-form-modal {
     .ant-modal-content {
         border-radius: 12px;
         overflow: hidden;
@@ -271,86 +305,31 @@
             .ant-select-selector,
             .ant-picker {
                 border-radius: 8px;
-                border: 1px solid $border-color;
-                transition: all 0.3s ease;
-
-                &:hover,
-                &:focus {
-                    border-color: #1677ff;
-                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                }
             }
         }
     }
 }
 
-// Status Tag Styles
-.revenue-status-tag {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-
-    &.completed {
-        color: #52c41a;
-        background: #f6ffed;
-        border: 1px solid #b7eb8f;
-    }
-
-    &.failed {
-        color: #ff4d4f;
-        background: #fff1f0;
-        border: 1px solid #ffa39e;
-    }
-
-    &.pending {
-        color: #faad14;
-        background: #fffbe6;
-        border: 1px solid #ffe58f;
-    }
-}
-
-// Custom Delete Modal Styles
+// Custom delete modal
 .custom-delete-modal {
     .ant-modal-content {
         border-radius: 12px;
         overflow: hidden;
-        padding: 0;
+    }
 
-        .ant-modal-body {
-            padding: 24px;
-        }
+    .ant-modal-body {
+        padding: 24px;
+    }
 
-        .ant-modal-confirm-btns {
-            margin-top: 24px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-
-            .ant-btn {
-                height: 40px;
-                padding: 0 24px;
-                border-radius: 8px;
-                font-weight: 500;
-
-                &-primary {
-                    background: #ff4d4f;
-                    border-color: #ff4d4f;
-
-                    &:hover {
-                        background: #ff7875;
-                        border-color: #ff7875;
-                    }
-                }
-            }
-        }
+    .ant-modal-confirm-btns {
+        margin-top: 24px;
+        padding: 0 24px 24px;
     }
 }
 
 // Responsive styles
 @media (max-width: 768px) {
-    .revenue-page {
+    .salary-page {
         .page-header {
             flex-direction: column;
             padding: 16px;
@@ -370,7 +349,7 @@
             }
         }
 
-        .revenue-table-card {
+        .salary-table-card {
             .ant-table {
                 .ant-table-thead>tr>th,
                 .ant-table-tbody>tr>td {

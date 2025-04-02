@@ -14,6 +14,7 @@ import {
   useUpdateSalaryMutation,
 } from "./services/salaryApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
+import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import EditSalary from "./EditSalary";
 
 const { Text } = Typography;
@@ -21,8 +22,10 @@ const { Text } = Typography;
 const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const { data: salarydata = [], isLoading } = useGetSalaryQuery();
   const { data: employeesData } = useGetEmployeesQuery();
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
   const salary = salarydata.data || [];
   const employees = employeesData?.data || [];
+  const currencies = currenciesData?.data || [];
   const [deleteSalary] = useDeleteSalaryMutation();
   const [updateSalary] = useUpdateSalaryMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -37,6 +40,23 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       return acc;
     }, {});
   }, [employees]);
+
+
+  const getCurrencyIcon = (currencyId) => {
+    const currency = currenciesData?.find(curr => curr.id === currencyId);
+    return currency?.currencyIcon || '₹';
+  };
+  // Create a map of currency IDs to currency details
+  const currencyMap = useMemo(() => {
+    return currencies.reduce((acc, currency) => {
+      acc[currency.id] = {
+        name: currency.currencyName,
+        code: currency.currencyCode,
+        icon: currency.currencyIcon
+      };
+      return acc;
+    }, {});
+  }, [currencies]);
 
   const filteredSalary = React.useMemo(() => {
     return salary?.filter((salary) => {
@@ -170,7 +190,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         dayjs(a.paymentDate).unix() - dayjs(b.paymentDate).unix(),
       render: (paymentDate) => (
         <Text style={{ color: "#262626" }}>
-          {dayjs(paymentDate).format("MMM DD, YYYY")}
+          {dayjs(paymentDate).format("DD-MM-YYYY")}
         </Text>
       ),
     },
@@ -189,43 +209,61 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         </Tag>
       ),
     },
-    {
-      title: "Currency",
-      dataIndex: "currency",
-      key: "currency",
-      sorter: (a, b) => (a?.currency || "").localeCompare(b?.currency || ""),
-      render: (currency) => (
-        <Tag
-          color="green"
-          style={{ borderRadius: "4px", padding: "2px 8px", fontSize: "13px" }}
-        >
-          {currency}
-        </Tag>
-      ),
-    },
+   
+  
     {
       title: "Salary",
       dataIndex: "salary",
       key: "salary",
       sorter: (a, b) => a.salary - b.salary,
-      render: (salary, record) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{salary.toLocaleString()}</Text>
-        </div>
-      ),
+      render: (salary, record) => {
+        const currencyIcon = getCurrencyIcon(record.currency);
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#1890ff",
+              // fontWeight: 500,
+            }}
+          >
+            <Text strong>
+              {currencyIcon}
+              {typeof salary === "number"
+                ? salary.toFixed(2)
+                : Number(salary).toFixed(2) || "0.00"}
+            </Text>
+          </div>
+        );
+      },
     },
-    {
+   {
       title: "Net Salary",
       dataIndex: "netSalary",
       key: "netSalary",
       sorter: (a, b) => a.netSalary - b.netSalary,
-      render: (netSalary, record) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{netSalary.toLocaleString()}</Text>
-        </div>
-      ),
+      render: (netSalary, record) => {
+        const currencyIcon = getCurrencyIcon(record.currency);
+        return (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#1890ff",
+              // fontWeight: 500,
+            }}
+          >
+            <Text strong>
+              {currencyIcon}
+              {typeof netSalary === "number"
+                ? netSalary.toFixed(2)
+                : Number(netSalary).toFixed(2) || "0.00"}
+            </Text>
+          </div>
+        );
+      },
     },
     {
       title: "Bank Account",

@@ -1,314 +1,311 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Card,
-  Typography,
-  Button,
-  Modal,
-  message,
-  Input,
-  Dropdown,
-  Menu,
-  Breadcrumb,
-} from "antd";
+    Typography,
+    Button,
+    Modal,
+    message,
+    Input,
+    Dropdown,
+    Menu,
+    Breadcrumb,
+} from 'antd';
 import {
-  FiPlus,
-  FiSearch,
-  FiDownload,
-  FiHome,
-  FiChevronDown,
-} from "react-icons/fi";
-import { Link } from "react-router-dom";
-import CreateSalary from "./CreateSalary";
-import SalaryList from "./SalaryList";
-import EditSalary from "./EditSalary";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-import moment from "moment";
-import { useGetSalaryQuery } from "./services/salaryApi";
+    FiPlus,
+    FiSearch,
+    FiChevronDown,
+    FiDownload,
+    FiHome,
+} from 'react-icons/fi';
+import './salary.scss';
+import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import CreateSalary from './CreateSalary';
+import SalaryList from './SalaryList';
+import { Link } from 'react-router-dom';
+import { useGetSalaryQuery } from './services/salaryApi';
 
 const { Title, Text } = Typography;
 
 const Salary = () => {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedSalary, setSelectedSalary] = useState(null);
-  const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { data: salaryData = [], isLoading } = useGetSalaryQuery();
+    const [salaries, setSalaries] = useState([]);
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [selectedSalary, setSelectedSalary] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [filteredSalaries, setFilteredSalaries] = useState([]);
+    const searchInputRef = useRef(null);
+    const { data: salaryData, isLoading: isSalaryLoading } = useGetSalaryQuery();
 
-  const handleCreate = () => {
-    setSelectedSalary(null);
-    setIsCreateModalOpen(true);
-  };
+    useEffect(() => {
+        if (salaryData?.data) {
+            setSalaries(salaryData.data);
+        }
+    }, [salaryData]);
 
-  const handleEdit = (record) => {
-    setSelectedSalary(record);
-    setIsEditModalOpen(true);
-  };
+    useEffect(() => {
+        handleSearch(searchText);
+    }, [salaries, searchText]);
 
-  const handleView = (record) => {
-    console.log("View salary:", record);
-  };
+    const handleSearch = (value) => {
+        setSearchText(value);
+        let result = [...salaries];
+        if (value) {
+            result = result.filter(salary =>
+                salary.employeeName?.toLowerCase().includes(value.toLowerCase()) ||
+                salary.payslipType?.toLowerCase().includes(value.toLowerCase())
+            );
+        }
+        setFilteredSalaries(result);
+    };
 
-  const handleDelete = (record) => {
-    Modal.confirm({
-      title: (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ color: "#faad14", fontSize: "22px" }}>⚠</span>
-          Delete Salary
-        </div>
-      ),
-      content: "Are you sure you want to delete this salary?",
-      okText: "Yes",
-      cancelText: "No",
-      centered: true,
-      className: "custom-delete-modal",
-      icon: null,
-      maskClosable: true,
-      okButtonProps: {
-        danger: true,
-        size: "middle",
-      },
-      cancelButtonProps: {
-        size: "middle",
-      },
-      onOk: () => {
-        message.success("Salary deleted successfully");
-      },
-    });
-  };
+    const handleAddSalary = () => {
+        setSelectedSalary(null);
+        setIsEditing(false);
+        setIsFormVisible(true);
+    };
 
-  const handleExport = async (type) => {
-    try {
-      setLoading(true);
-      const data = salaryData.map((salary) => ({
-        "Employee Name": salary.employeeName,
-        Salary: salary.salary,
-        "Start Date": moment(salary.startDate).format("MMM DD, YYYY"),
-        "End Date": moment(salary.endDate).format("MMM DD, YYYY"),
-        Status: salary.status,
-        Reason: salary.reason,
-      }));
+    const handleEditSalary = (salary) => {
+        const formattedSalary = {
+            ...salary,
+            paymentDate: dayjs(salary.paymentDate),
+        };
+        setSelectedSalary(formattedSalary);
+        setIsEditing(true);
+        setIsFormVisible(true);
+    };
 
-      switch (type) {
-        case "csv":
-          exportToCSV(data, "salary.csv");
-          break;
-        case "excel":
-          exportToExcel(data, "salary.xlsx");
-          break;
-        case "pdf":
-          exportToPDF(data, "salary.pdf");
-          break;
-        default:
-          break;
-      }
-    } catch (error) {
-      message.error("Failed to export data");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleDeleteConfirm = (salary) => {
+        setSelectedSalary(salary);
+        setIsDeleteModalVisible(true);
+    };
 
-  const exportToCSV = (data, filename) => {
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      data.map((row) => Object.values(row).join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+    const handleDeleteSalary = async () => {
+        try {
+            setLoading(true);
+            // TODO: Implement delete API call
+            const updatedSalaries = salaries.filter(s => s.id !== selectedSalary.id);
+            setSalaries(updatedSalaries);
+            message.success('Salary deleted successfully');
+            setIsDeleteModalVisible(false);
+        } catch (error) {
+            message.error('Failed to delete salary');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const exportToExcel = (data, filename) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Salary");
-    XLSX.writeFile(wb, filename);
-  };
+    const handleFormSubmit = async (formData) => {
+        try {
+            setLoading(true);
+            const processedData = {
+                ...formData,
+                paymentDate: formData.paymentDate ? dayjs(formData.paymentDate).format('YYYY-MM-DD') : null,
+            };
 
-  const exportToPDF = (data, filename) => {
-    const doc = new jsPDF();
-    doc.autoTable({
-      head: [Object.keys(data[0])],
-      body: data.map((row) => Object.values(row)),
-      theme: "grid",
-    });
-    doc.save(filename);
-  };
+            if (isEditing) {
+                // TODO: Implement update API call
+                const updatedSalaries = salaries.map(s =>
+                    s.id === selectedSalary.id ? { ...s, ...processedData } : s
+                );
+                setSalaries(updatedSalaries);
+                message.success('Salary updated successfully');
+            } else {
+                // TODO: Implement create API call
+                const newSalary = {
+                    id: Date.now(),
+                    ...processedData,
+                    created_at: dayjs(),
+                    created_by: 'Admin',
+                    status: 'pending'
+                };
+                setSalaries([...salaries, newSalary]);
+                message.success('Salary created successfully');
+            }
+            setIsFormVisible(false);
+        } catch (error) {
+            message.error('Operation failed');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div
-      className="salary-container"
-      style={{ padding: "24px", backgroundColor: "#f5f7fa" }}
-    >
-      <div className="page-header" style={{ marginBottom: "24px" }}>
-        <Breadcrumb
-          items={[
-            {
-              title: (
-                <Link
-                  to="/dashboard"
-                  style={{
-                    color: "#1890ff",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <FiHome />
-                </Link>
-              ),
-              key: "home",
-            },
-            {
-              title: "HRM",
-              key: "hrm",
-            },
-            {
-              title: "Payroll Management",
-              key: "payroll",
-            },
-          ]}
-        />
-        <Title
-          level={2}
-          style={{ margin: "16px 0", color: "#1f1f1f", fontWeight: 600 }}
-        >
-          Payroll Management
-        </Title>
-      </div>
+    const exportToCSV = (data, filename) => {
+        const csvContent = [
+            Object.keys(data[0]).join(','),
+            ...data.map(item => Object.values(item).map(value =>
+                `"${value?.toString().replace(/"/g, '""')}"`
+            ).join(','))
+        ].join('\n');
 
-      <Card
-        className="salary-card"
-        style={{
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          background: "#ffffff",
-        }}
-      >
-        <div
-          className="card-header"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "24px",
-            padding: "0 8px",
-          }}
-        >
-          <div className="search-section">
-            <Input
-              placeholder="Search leave requests..."
-              prefix={<FiSearch style={{ color: "#bfbfbf" }} />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{
-                width: 300,
-                borderRadius: "6px",
-                border: "1px solid #d9d9d9",
-                transition: "all 0.3s",
-                "&:hover": {
-                  borderColor: "#40a9ff",
-                },
-              }}
-            />
-          </div>
-          <div
-            className="actions-section"
-            style={{ display: "flex", gap: "12px" }}
-          >
-            <Dropdown
-              overlay={
-                <Menu
-                  style={{
-                    borderRadius: "6px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  }}
-                >
-                  <Menu.Item
-                    key="csv"
-                    onClick={() => handleExport("csv")}
-                    style={{ padding: "8px 16px" }}
-                  >
-                    Export as CSV
-                  </Menu.Item>
-                  <Menu.Item
-                    key="excel"
-                    onClick={() => handleExport("excel")}
-                    style={{ padding: "8px 16px" }}
-                  >
-                    Export as Excel
-                  </Menu.Item>
-                  <Menu.Item
-                    key="pdf"
-                    onClick={() => handleExport("pdf")}
-                    style={{ padding: "8px 16px" }}
-                  >
-                    Export as PDF
-                  </Menu.Item>
-                </Menu>
-              }
-              trigger={["click"]}
-              placement="bottomRight"
-            >
-              <Button
-                icon={<FiDownload />}
-                style={{
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${filename}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    const exportToExcel = (data, filename) => {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Salaries');
+        XLSX.writeFile(wb, `${filename}.xlsx`);
+    };
+
+    const exportToPDF = (data, filename) => {
+        const doc = new jsPDF('l', 'pt', 'a4');
+        doc.autoTable({
+            head: [Object.keys(data[0])],
+            body: data.map(item => Object.values(item)),
+            margin: { top: 20 },
+            styles: { fontSize: 8 }
+        });
+        doc.save(`${filename}.pdf`);
+    };
+
+    const handleExport = async (type) => {
+        try {
+            setLoading(true);
+            const data = salaries.map(salary => ({
+                'Employee Name': salary.employeeName,
+                'Payslip Type': salary.payslipType,
+                'Currency': salary.currency,
+                'Salary': salary.salary,
+                'Net Salary': salary.netSalary,
+                'Payment Date': salary.paymentDate ? dayjs(salary.paymentDate).format('YYYY-MM-DD') : '',
+                'Status': salary.status,
+                'Bank Account': salary.bankAccount,
+            }));
+
+            switch (type) {
+                case 'csv':
+                    exportToCSV(data, 'salaries_export');
+                    break;
+                case 'excel':
+                    exportToExcel(data, 'salaries_export');
+                    break;
+                case 'pdf':
+                    exportToPDF(data, 'salaries_export');
+                    break;
+                default:
+                    break;
+            }
+            message.success(`Successfully exported as ${type.toUpperCase()}`);
+        } catch (error) {
+            message.error(`Failed to export: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const exportMenu = (
+        <Menu>
+            <Menu.Item key="csv" icon={<FiDownload />} onClick={() => handleExport('csv')}>
+                Export as CSV
+            </Menu.Item>
+            <Menu.Item key="excel" icon={<FiDownload />} onClick={() => handleExport('excel')}>
+                Export as Excel
+            </Menu.Item>
+            <Menu.Item key="pdf" icon={<FiDownload />} onClick={() => handleExport('pdf')}>
+                Export as PDF
+            </Menu.Item>
+        </Menu>
+    );
+
+    return (
+        <div className="salary-page">
+            <div className="page-breadcrumb">
+                <Breadcrumb>
+                    <Breadcrumb.Item>
+                        <Link to="/dashboard">
+                            <FiHome style={{ marginRight: '4px' }} />
+                            Home
+                        </Link>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item>
+                        <Link to="/dashboard/hrm">HRM</Link>
+                    </Breadcrumb.Item>
+                    <Breadcrumb.Item>Payroll</Breadcrumb.Item>
+                </Breadcrumb>
+            </div>
+
+            <div className="page-header">
+                <div className="page-title">
+                    <Title level={2}>Payroll Management</Title>
+                    <Text type="secondary">Manage all salary records in the organization</Text>
+                </div>
+                <div className="header-actions">
+                    <Input
+                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                        placeholder="Search salaries..."
+                        allowClear
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchText}
+                        ref={searchInputRef}
+                        className="search-input"
+                    />
+                    <div className="action-buttons">
+                        <Dropdown overlay={exportMenu} trigger={['click']}>
+                            <Button className="export-button">
+                                <FiDownload size={16} />
+                                <span>Export</span>
+                                <FiChevronDown size={14} />
+                            </Button>
+                        </Dropdown>
+                        <Button
+                            type="primary"
+                            icon={<FiPlus size={16} />}
+                            onClick={handleAddSalary}
+                            className="add-button"
+                        >
+                            Add Salary
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="salary-table-card">
+                <SalaryList
+                    salaries={filteredSalaries}
+                    loading={isSalaryLoading}
+                    onEdit={handleEditSalary}
+                    onDelete={handleDeleteConfirm}
+                />
+            </div>
+
+            <CreateSalary
+                open={isFormVisible}
+                onCancel={() => setIsFormVisible(false)}
+                onSubmit={handleFormSubmit}
+                isEditing={isEditing}
+                initialValues={selectedSalary}
                 loading={loading}
-              >
-                Export
-                <FiChevronDown />
-              </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus />}
-              onClick={handleCreate}
-              style={{
-                borderRadius: "6px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
+            />
+
+            <Modal
+                title="Delete Salary"
+                open={isDeleteModalVisible}
+                onOk={handleDeleteSalary}
+                onCancel={() => setIsDeleteModalVisible(false)}
+                okText="Delete"
+                okButtonProps={{
+                    danger: true,
+                    loading: loading
+                }}
             >
-              New Leave Request
-            </Button>
-          </div>
+                <p>Are you sure you want to delete this salary record?</p>
+                <p>This action cannot be undone.</p>
+            </Modal>
         </div>
-
-        <SalaryList
-          onEdit={handleEdit}
-          onView={handleView}
-          searchText={searchText}
-        />
-      </Card>
-
-      {isCreateModalOpen && (
-        <CreateSalary
-          open={isCreateModalOpen}
-          onCancel={() => setIsCreateModalOpen(false)}
-        />
-      )}
-
-      {isEditModalOpen && selectedSalary && (
-        <EditSalary
-          open={isEditModalOpen}
-          onCancel={() => setIsEditModalOpen(false)}
-          initialValues={selectedSalary}
-        />
-      )}
-    </div>
-  );
+    );
 };
 
 export default Salary;

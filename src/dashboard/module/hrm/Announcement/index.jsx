@@ -8,6 +8,8 @@ import {
     Dropdown,
     Menu,
     Breadcrumb,
+    Card,
+    Popconfirm,
 } from 'antd';
 import {
     FiPlus,
@@ -24,63 +26,69 @@ import 'jspdf-autotable';
 import CreateAnnouncement from './CreateAnnouncement';
 import AnnouncementList from './AnnouncementList';
 import { Link } from 'react-router-dom';
+import { useGetAllAnnouncementsQuery, useDeleteAnnouncementMutation } from './services/announcementApi';
 
 const { Title, Text } = Typography;
 
 const Announcement = () => {
-    const [announcements, setAnnouncements] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+    const [messageApi] = message.useMessage();
+
+    // Get all announcements
+    const { data: announcements = [], isLoading, error } = useGetAllAnnouncementsQuery();
+    
+    // Delete mutation
+    const [deleteAnnouncement] = useDeleteAnnouncementMutation();
+
     const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
     const searchInputRef = useRef(null);
 
+    // Update filtered announcements when announcements or search text changes
     useEffect(() => {
-        fetchAnnouncements();
-    }, []);
-
-    useEffect(() => {
-        handleSearch(searchText);
-    }, [announcements, searchText]);
-
-    const fetchAnnouncements = async () => {
-        try {
-            setLoading(true);
-            // TODO: Replace with actual API call
-            const mockData = [
-                {
-                    id: 1,
-                    title: 'Company Holiday',
-                    branch: 'Head Office',
-                    date: '2025-01-01',
-                    time: '10:00 AM',
-                    description: 'Office will be closed for New Year celebration',
-                    created_at: new Date().toISOString(),
-                    created_by: 'Admin',
-                    status: 'active'
-                }
-            ];
-            setAnnouncements(mockData);
-        } catch (error) {
-            message.error('Failed to fetch announcements');
-        } finally {
-            setLoading(false);
+        const announcementsArray = Array.isArray(announcements) ? announcements : [];
+        if (searchText) {
+            const filtered = announcementsArray.filter(announcement =>
+                announcement.title?.toLowerCase().includes(searchText.toLowerCase()) ||
+                announcement.description?.toLowerCase().includes(searchText.toLowerCase())
+            );
+            setFilteredAnnouncements(filtered);
+        } else {
+            setFilteredAnnouncements(announcementsArray);
         }
-    };
+    }, [announcements, searchText]);
 
     const handleSearch = (value) => {
         setSearchText(value);
-        let result = [...announcements];
-        if (value) {
-            result = result.filter(announcement =>
-                announcement.title?.toLowerCase().includes(value.toLowerCase()) ||
-                announcement.description?.toLowerCase().includes(value.toLowerCase())
-            );
+    };
+
+    const handleOpenModal = () => {
+        setEditingAnnouncement(null);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setEditingAnnouncement(null);
+        setIsModalOpen(false);
+    };
+
+    const handleEdit = (record) => {
+        setEditingAnnouncement(record);
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = async (record) => {
+        try {
+            await deleteAnnouncement(record.id).unwrap();
+            messageApi.success('Announcement deleted successfully');
+        } catch (error) {
+            console.error('Delete Error:', error);
+            messageApi.error(error.data?.message || 'Failed to delete announcement');
         }
-        setFilteredAnnouncements(result);
     };
 
     const handleAddAnnouncement = () => {
@@ -89,40 +97,14 @@ const Announcement = () => {
         setIsFormVisible(true);
     };
 
-    const handleEditAnnouncement = (announcement) => {
-        setSelectedAnnouncement(announcement);
-        setIsEditing(true);
-        setIsFormVisible(true);
-    };
-
-    const handleDeleteConfirm = (announcement) => {
-        setSelectedAnnouncement(announcement);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteAnnouncement = async () => {
-        try {
-            setLoading(true);
-            // TODO: Implement delete API call
-            const updatedAnnouncements = announcements.filter(a => a.id !== selectedAnnouncement.id);
-            setAnnouncements(updatedAnnouncements);
-            message.success('Announcement deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete announcement');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     const handleFormSubmit = async (formData) => {
         try {
-            setLoading(true);
             if (isEditing) {
                 // TODO: Implement update API call
                 const updatedAnnouncements = announcements.map(a =>
                     a.id === selectedAnnouncement.id ? { ...a, ...formData } : a
                 );
+                // TODO: Implement update API call
                 setAnnouncements(updatedAnnouncements);
                 message.success('Announcement updated successfully');
             } else {
@@ -140,8 +122,6 @@ const Announcement = () => {
             setIsFormVisible(false);
         } catch (error) {
             message.error('Operation failed');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -185,7 +165,6 @@ const Announcement = () => {
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
             const data = announcements.map(announcement => ({
                 'Title': announcement.title,
                 'Description': announcement.description,
@@ -210,8 +189,6 @@ const Announcement = () => {
             message.success(`Successfully exported as ${type.toUpperCase()}`);
         } catch (error) {
             message.error(`Failed to export: ${error.message}`);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -229,7 +206,11 @@ const Announcement = () => {
         </Menu>
     );
 
-  return (
+    if (error) {
+        return <div>Error loading announcements: {error.message}</div>;
+    }
+
+    return (
         <div className="announcement-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -272,10 +253,10 @@ const Announcement = () => {
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={handleAddAnnouncement}
+                            onClick={handleOpenModal}
                             className="add-button"
                         >
-                            Add Announcement
+                            Create Announcement
                         </Button>
                     </div>
                 </div>
@@ -284,35 +265,28 @@ const Announcement = () => {
             <div className="announcement-table-card">
                 <AnnouncementList
                     announcements={filteredAnnouncements}
-                    loading={loading}
-                    onEdit={handleEditAnnouncement}
-                    onDelete={handleDeleteConfirm}
+                    loading={isLoading}
+                    onEdit={handleEdit}
+                    onDelete={(record) => {
+                        Modal.confirm({
+                            title: 'Delete Announcement',
+                            content: 'Are you sure you want to delete this announcement?',
+                            okText: 'Yes',
+                            cancelText: 'No',
+                            onOk: () => handleDelete(record),
+                        });
+                    }}
                 />
             </div>
 
             <CreateAnnouncement
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
+                open={isModalOpen}
+                onCancel={handleCloseModal}
+                isEditing={!!editingAnnouncement}
+                initialValues={editingAnnouncement}
                 onSubmit={handleFormSubmit}
-                isEditing={isEditing}
-                initialValues={selectedAnnouncement}
-                loading={loading}
+                loading={isLoading}
             />
-
-            <Modal
-                title="Delete Announcement"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteAnnouncement}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete this announcement?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
         </div>
     );
 };

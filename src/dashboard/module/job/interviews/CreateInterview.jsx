@@ -322,18 +322,25 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
                     <Form.Item
                         name="round"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interview Round</span>}
-                        rules={[{ required: true, message: 'Please enter round number' }]}
+                        rules={[{ required: true, message: 'Please select interview rounds' }]}
                     >
-                        <Input
-                            placeholder="Enter round number" 
+                        <Select
+                            mode="multiple"
+                            placeholder="Select interview rounds"
                             size="large"
+                            maxTagCount={3}
+                            maxTagTextLength={10}
                             style={{
                                 width: '100%',
-                                height: '48px',
                                 borderRadius: '10px',
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                             }}
-                        />
+                        >
+                            {interviewTypes.map(type => (
+                                <Option key={type.value} value={type.value}>{type.label}</Option>
+                            ))}
+                        </Select>
                     </Form.Item>
 
                     <Form.Item

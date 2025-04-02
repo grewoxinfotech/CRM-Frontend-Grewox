@@ -11,6 +11,7 @@ import {
     Col,
     DatePicker,
     TimePicker,
+    message,
 } from 'antd';
 import {
     FiX,
@@ -21,6 +22,11 @@ import {
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { useGetEmployeesQuery } from '../Employee/services/employeeApi';
+import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
+import { useGetAllSubclientsQuery } from '../../user-management/subclient/services/subClientApi';
+import { useCreateMeetingMutation } from './services/meetingApi';
+import { useSelector } from 'react-redux';
 
 dayjs.extend(customParseFormat);
 
@@ -36,6 +42,33 @@ const CreateMeeting = ({
     loading
 }) => {
     const [form] = Form.useForm();
+    
+    const [createMeeting, { isLoading: isCreating }] = useCreateMeetingMutation();
+    
+    const { data: subClientsData, isLoading: subClientsLoading } = useGetAllSubclientsQuery();
+    const { data: departmentsData, isLoading: departmentsLoading } = useGetAllDepartmentsQuery();
+    const { data: employeesData, isLoading: employeesLoading } = useGetEmployeesQuery();
+
+    // Add this to get client_id from Redux state
+    const auth = useSelector((state) => state.auth);
+    // const clientId = localStorage.getItem('client_id') || auth?.user?.client_id;
+
+    // Transform subclients data
+    const subclients = React.useMemo(() => {
+        if (!subClientsData) return [];
+        if (Array.isArray(subClientsData)) return subClientsData;
+        if (Array.isArray(subClientsData.data)) return subClientsData.data;
+        return [];
+    }, [subClientsData]);
+
+    // Transform employees data for better logging
+    const employeeOptions = React.useMemo(() => {
+        if (!employeesData?.data) return [];
+        return employeesData.data.map(emp => ({
+            value: emp.id,
+            label: `${emp.firstName} ${emp.lastName || ''}`
+        }));
+    }, [employeesData]);
 
     // Define meeting types
     const meetingTypes = [
@@ -55,11 +88,30 @@ const CreateMeeting = ({
 
     useEffect(() => {
         if (initialValues) {
+            
+
+            // Convert employee data to array if it's not already
+            let employeeIds = [];
+            if (initialValues.employee) {
+                if (Array.isArray(initialValues.employee)) {
+                    employeeIds = initialValues.employee;
+                } else if (typeof initialValues.employee === 'string') {
+                    // If it's a comma-separated string
+                    employeeIds = initialValues.employee.split(',').map(id => id.trim());
+                } else {
+                    employeeIds = [initialValues.employee];
+                }
+            }
+
             const formattedValues = {
                 ...initialValues,
                 date: initialValues.date ? dayjs(initialValues.date) : null,
-                time: initialValues.time ? dayjs(initialValues.time, 'HH:mm') : null,
+                startTime: initialValues.startTime ? dayjs(initialValues.startTime, 'HH:mm') : null,
+                endTime: initialValues.endTime ? dayjs(initialValues.endTime, 'HH:mm') : null,
+                employees: employeeIds, // Set the formatted employee IDs
             };
+
+          
             form.setFieldsValue(formattedValues);
         } else {
             form.resetFields();
@@ -69,14 +121,36 @@ const CreateMeeting = ({
     const handleSubmit = async (values) => {
         try {
             const formattedValues = {
-                ...values,
-                date: values.date ? values.date.format('YYYY-MM-DD') : null,
-                time: values.time ? values.time.format('HH:mm') : null,
+                title: values.title,
+                department: values.department,
+                employee: values.employees || [],
+                description: values.notes,
+                date: values.date && dayjs(values.date).format('YYYY-MM-DD'),
+                startTime: values.startTime && dayjs(values.startTime).format('HH:mm'),
+                endTime: values.endTime && dayjs(values.endTime).format('HH:mm'),
+                meetingLink: values.meetingLink || null,
+                status: values.status || 'scheduled',
+                client: values.client,
+               
             };
-            await onSubmit(formattedValues);
-            form.resetFields();
+
+            console.log('Submitting meeting with data:', formattedValues); // For debugging
+
+            if (isEditing) {
+                await onSubmit(formattedValues);
+            } else {
+                const response = await createMeeting(formattedValues).unwrap();
+                if (response.success) {
+                    message.success('Meeting scheduled successfully');
+                    form.resetFields();
+                    onCancel();
+                } else {
+                    throw new Error(response.message || 'Failed to create meeting');
+                }
+            }
         } catch (error) {
-            console.error('Validation failed:', error);
+            console.error('Meeting creation error:', error);
+            message.error(error?.data?.message || 'Failed to schedule meeting');
         }
     };
 
@@ -235,19 +309,16 @@ const CreateMeeting = ({
                             <Select
                                 placeholder="Select department"
                                 size="large"
+                                loading={departmentsLoading}
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',
                                     backgroundColor: '#f8fafc',
                                 }}
-                                options={[
-                                    { value: 'hr', label: 'Human Resources' },
-                                    { value: 'it', label: 'Information Technology' },
-                                    { value: 'finance', label: 'Finance' },
-                                    { value: 'marketing', label: 'Marketing' },
-                                    { value: 'sales', label: 'Sales' },
-                                    { value: 'operations', label: 'Operations' }
-                                ]}
+                                options={departmentsData?.map(dept => ({
+                                    value: dept.id,
+                                    label: dept.department_name
+                                })) || []}
                                 showSearch
                                 filterOption={(input, option) =>
                                     option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
@@ -269,21 +340,20 @@ const CreateMeeting = ({
                                 mode="multiple"
                                 placeholder="Select employees"
                                 size="large"
+                                loading={employeesLoading}
                                 style={{
+                                    width: '100%',
                                     borderRadius: '10px',
                                     height: '48px',
                                     backgroundColor: '#f8fafc',
                                 }}
-                                options={[
-                                    { value: 'john', label: 'John Smith' },
-                                    { value: 'jane', label: 'Jane Doe' },
-                                    { value: 'bob', label: 'Bob Wilson' },
-                                    { value: 'alice', label: 'Alice Brown' }
-                                ]}
+                                options={employeeOptions}
                                 showSearch
                                 filterOption={(input, option) =>
-                                    option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    option?.label?.toLowerCase().includes(input.toLowerCase())
                                 }
+                                maxTagCount={3}
+                                maxTagTextLength={10}
                             />
                         </Form.Item>
                     </Col>
@@ -295,87 +365,61 @@ const CreateMeeting = ({
                                     Client
                                 </span>
                             }
+                            rules={[{ required: true, message: 'Please select client' }]}
                         >
-                            <Input
-                                placeholder="Enter client name"
+                            <Select
+                                placeholder="Select client"
                                 size="large"
+                                loading={subClientsLoading}
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',
                                     backgroundColor: '#f8fafc',
                                 }}
+                                options={subclients.map(client => ({
+                                    value: client.id,
+                                    label: client.username
+                                })) || []}
+                                   
+                                filterOption={(input, option) =>
+                                    option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                }
                             />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
                         <Form.Item
                             name="date"
-                            label={
-                                <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Meeting Date
-                                </span>
-                            }
+                            label="Meeting Date"
                             rules={[{ required: true, message: 'Please select date' }]}
                         >
-                            <DatePicker
-                                placeholder="Select date"
-                                size="large"
-                                style={{
-                                    width: '100%',
-                                    borderRadius: '10px',
-                                    height: '48px',
-                                    backgroundColor: '#f8fafc',
-                                }}
-                                suffixIcon={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            <DatePicker 
                                 format="DD-MM-YYYY"
+                                style={{ width: '100%' , height: '48px'}}
                             />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
                         <Form.Item
                             name="startTime"
-                            label={
-                                <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Start Time
-                                </span>
-                            }
+                            label="Start Time"
                             rules={[{ required: true, message: 'Please select start time' }]}
                         >
-                            <TimePicker
-                                placeholder="Select start time"
-                                size="large"
-                                style={{
-                                    width: '100%',
-                                    borderRadius: '10px',
-                                    height: '48px',
-                                    backgroundColor: '#f8fafc',
-                                }}
-                                suffixIcon={<FiClock style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            <TimePicker 
                                 format="HH:mm"
+                                style={{ width: '100%' , height: '48px'}}
                             />
                         </Form.Item>
                     </Col>
                     <Col span={12}>
                         <Form.Item
                             name="endTime"
-                            label={
-                                <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    End Time
-                                </span>
-                            }
+                            label="End Time"
                             rules={[{ required: true, message: 'Please select end time' }]}
                         >
-                            <TimePicker
-                                placeholder="Select end time"
-                                size="large"
-                                style={{
-                                    width: '100%',
-                                    borderRadius: '10px',
-                                    height: '48px',
-                                    backgroundColor: '#f8fafc',
-                                }}
-                                suffixIcon={<FiClock style={{ color: '#1890ff', fontSize: '16px' }} />}
+                            <TimePicker 
                                 format="HH:mm"
+                                style={{ width: '100%' , height: '48px'}}
                             />
                         </Form.Item>
                     </Col>
@@ -431,12 +475,13 @@ const CreateMeeting = ({
                     name="notes"
                     label={
                         <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                            Meeting Notes
+                            Meeting Description
                         </span>
                     }
+                    rules={[{ required: true, message: 'Please enter meeting description' }]}
                 >
                     <TextArea
-                        placeholder="Enter meeting notes"
+                        placeholder="Enter meeting description"
                         rows={4}
                         style={{
                             borderRadius: '10px',
@@ -478,6 +523,7 @@ const CreateMeeting = ({
                         size="large"
                         type="primary"
                         htmlType="submit"
+                        loading={isCreating}
                         style={{
                             padding: '8px 32px',
                             height: '44px',

@@ -19,10 +19,12 @@ import {
   FiUser,
   FiDollarSign,
   FiTag,
+  FiCreditCard,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useCreateSalaryMutation } from "./services/salaryApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
+import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import "./salary.scss";
 
 const { Text } = Typography;
@@ -33,7 +35,10 @@ const CreateSalary = ({ open, onCancel }) => {
   const [createSalary, { isLoading }] = useCreateSalaryMutation();
   const { data: employeesData, isLoading: isLoadingEmployees } =
     useGetEmployeesQuery();
+  const { data: currenciesData, isLoading: isLoadingCurrencies } = useGetAllCurrenciesQuery();
   const employees = employeesData?.data || [];
+  const currencies = currenciesData || [];
+  const [selectedCurrency, setSelectedCurrency] = useState('$');
 
   const handleSubmit = async (values) => {
     try {
@@ -45,7 +50,7 @@ const CreateSalary = ({ open, onCancel }) => {
         netSalary: values.netSalary.toString(),
         bankAccount: values.bankAccount,
         paymentDate: values.paymentDate.format("YYYY-MM-DD"),
-        status: "pending",
+        status: values.status,
       };
 
       await createSalary(payload).unwrap();
@@ -55,6 +60,13 @@ const CreateSalary = ({ open, onCancel }) => {
     } catch (error) {
       console.error("Submit Error:", error);
       message.error(error?.data?.message || "Failed to create salary record");
+    }
+  };
+
+  const handleCurrencyChange = (value) => {
+    const currencyDetails = currencies.find(curr => curr.id === value);
+    if (currencyDetails) {
+      setSelectedCurrency(currencyDetails.currencyIcon || '$');
     }
   };
 
@@ -196,10 +208,6 @@ const CreateSalary = ({ open, onCancel }) => {
                 filterOption={(input, option) =>
                   option?.children?.toLowerCase().includes(input.toLowerCase())
                 }
-                onChange={(value) => {
-                  console.log("Selected value:", value);
-                  form.validateFields(["employeeId"]);
-                }}
               >
                 {Array.isArray(employees) &&
                   employees.map((employee) => (
@@ -242,40 +250,38 @@ const CreateSalary = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+
+
+          <Col span={24}>
             <Form.Item
-              name="currency"
+              name="status"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiDollarSign
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
+                  Status <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select currency" }]}
+              rules={[{ required: true, message: "Please select status" }]}
             >
               <Select
-                placeholder="Select Currency"
+                placeholder="Select Status"
                 size="large"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
                 }}
               >
-                <Option value="USD">USD</Option>
-                <Option value="EUR">EUR</Option>
-                <Option value="GBP">GBP</Option>
-                <Option value="INR">INR</Option>
+                <Option value="paid">Paid</Option>
+                <Option value="unpaid">Unpaid</Option>
               </Select>
             </Form.Item>
           </Col>
+
         </Row>
 
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              name="salary"
+              name="salary_group"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiDollarSign
@@ -285,51 +291,157 @@ const CreateSalary = ({ open, onCancel }) => {
                 </span>
               }
               rules={[{ required: true, message: "Please enter salary" }]}
-            >
-              <InputNumber
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-                formatter={(value) =>
-                  `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                }
-                parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                placeholder="Enter salary"
-                size="large"
-              />
-            </Form.Item>
-          </Col>
+            style={{ flex: 1 }}
+          >
+            <Input.Group compact className="price-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden',
+              marginBottom: 0
+            }}>
+              <Form.Item
+                name="currency"
+                noStyle
+                rules={[{ required: true }]}
+                initialValue="INR"
+              >
+                <Select
+                  size="large"
+                  style={{
+                    width: '100px',
+                    height: '48px'
+                  }}
+                  // loading={isLoadingCurrencies}
+                  className="currency-select"
+                  dropdownStyle={{
+                    padding: '8px',
+                    borderRadius: '10px',
+                  }}
+                  showSearch
+                  optionFilterProp="children"
+                  defaultValue="INR"
+                >
+                  {currencies?.map(currency => (
+                    <Option
+                      key={currency.currencyCode}
+                      value={currency.currencyCode}
+                      selected={currency.currencyCode === 'INR'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{currency.currencyIcon}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="salary"
+                noStyle
+                rules={[{ required: true, message: 'Please enter salary' }]}
+              >
+                <Input
+                  placeholder="Enter salary"
+                  size="large"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    border: 'none',
+                    borderLeft: '1px solid #e6e8eb',
+                    borderRadius: 0,
+                    height: '48px',
+                  }}
+                  min={0}
+                  precision={2}
+                  className="price-input"
+                />
+              </Form.Item>
+            </Input.Group>
+                  </Form.Item>
+            </Col>
 
-          <Col span={12}>
-            <Form.Item
-              name="netSalary"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiDollarSign
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Net Salary <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter net salary" }]}
-            >
-              <InputNumber
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-                formatter={(value) =>
-                  `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                }
-                parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
-                placeholder="Enter net salary"
-                size="large"
-              />
-            </Form.Item>
-          </Col>
+          <Form.Item
+            name="salary_group"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiDollarSign
+                  style={{ marginRight: "8px", color: "#1890ff" }}
+                />
+                Net Salary <span style={{ color: "#ff4d4f" }}>*</span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please enter net salary" }]}
+            style={{ flex: 1 }}
+          >
+            <Input.Group compact className="price-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden',
+              marginBottom: 0
+            }}>
+              <Form.Item
+                name="currency"
+                noStyle
+                rules={[{ required: true }]}
+                initialValue="INR"
+              >
+                <Select
+                  size="large"
+                  style={{
+                    width: '100px',
+                    height: '48px'
+                  }}
+                  // loading={currenciesLoading}
+                  className="currency-select"
+                  dropdownStyle={{
+                    padding: '8px',
+                    borderRadius: '10px',
+                  }}
+                  showSearch
+                  optionFilterProp="children"
+                  defaultValue="INR"
+                >
+                  {currencies?.map(currency => (
+                    <Option
+                      key={currency.currencyCode}
+                      value={currency.currencyCode}
+                      selected={currency.currencyCode === 'INR'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{currency.currencyIcon}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="salary"
+                noStyle
+                rules={[{ required: true, message: 'Please enter salary' }]}
+              >
+                <Input
+                  placeholder="Enter salary"
+                  size="large"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    border: 'none',
+                    borderLeft: '1px solid #e6e8eb',
+                    borderRadius: 0,
+                    height: '48px',
+                  }}
+                  min={0}
+                  precision={2}
+                  className="price-input"
+                />
+              </Form.Item>
+            </Input.Group>
+          </Form.Item>
         </Row>
 
         <Row gutter={16}>
@@ -377,14 +489,18 @@ const CreateSalary = ({ open, onCancel }) => {
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+
                   height: "48px",
                 }}
                 size="large"
+                format="DD-MM-YYYY"
                 placeholder="Select payment date"
               />
             </Form.Item>
           </Col>
         </Row>
+
+
 
         <Row>
           <Col span={24}>

@@ -9,7 +9,7 @@ import superadminProfileReducer from "../superadmin/module/profile/services/supe
 import { settingsApi } from "../superadmin/module/settings/services/settingsApi.js";
 import { planApi } from "../superadmin/module/plans/services/planApi.js";
 import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
-import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
+import { notesApi } from "../superadmin/module/notes/services/NotesApi.js";
 import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
 import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
 import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
@@ -55,6 +55,8 @@ import { vendorApi } from "../dashboard/module/purchase/vendor/services/vendorAp
 import { billingApi } from "../dashboard/module/purchase/billing/services/billingApi";
 import { debitNoteApi } from "../dashboard/module/purchase/debitnote/services/debitnoteApi";
 import leadStageReducer from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageSlice";
+import { meetingApi } from "../dashboard/module/hrm/Meeting/services/meetingApi";
+import { announcementApi } from "../dashboard/module/hrm/Announcement/services/announcementApi";
 
 const persistConfig = {
   key: "root",
@@ -117,6 +119,8 @@ const rootReducer = combineReducers({
   [vendorApi.reducerPath]: vendorApi.reducer,
   [billingApi.reducerPath]: billingApi.reducer,
   [debitNoteApi.reducerPath]: debitNoteApi.reducer,
+  [meetingApi.reducerPath]: meetingApi.reducer,
+  [announcementApi.reducerPath]: announcementApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -179,7 +183,9 @@ export const store = configureStore({
       .concat(dealInvoiceApi.middleware)
       .concat(vendorApi.middleware)
       .concat(billingApi.middleware)
-      .concat(debitNoteApi.middleware),
+      .concat(debitNoteApi.middleware)
+      .concat(meetingApi.middleware)
+      .concat(announcementApi.middleware),
 });
 
 export const persistor = persistStore(store);

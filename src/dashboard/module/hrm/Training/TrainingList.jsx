@@ -4,7 +4,7 @@ import { FiEdit2, FiTrash2, FiLink, FiEye, FiMoreVertical } from 'react-icons/fi
 import { useGetAllTrainingsQuery, useDeleteTrainingMutation } from './services/trainingApi';
 import dayjs from 'dayjs';
 
-const TrainingList = ({ onEdit, searchText = '', filters = {} }) => {
+const TrainingList = ({ onView, onEdit, searchText = '', filters = {} }) => {
     const { data: trainingsData, isLoading } = useGetAllTrainingsQuery();
     const [deleteTraining] = useDeleteTrainingMutation();
 
@@ -66,7 +66,7 @@ const TrainingList = ({ onEdit, searchText = '', filters = {} }) => {
                 key: 'view',
                 icon: <FiEye />,
                 label: 'View Details',
-                onClick: () => onEdit(record),
+                onClick: () => onView(record),
             },
             {
                 key: 'edit',
@@ -148,7 +148,6 @@ const TrainingList = ({ onEdit, searchText = '', filters = {} }) => {
             <Table
                 columns={columns}
                 dataSource={trainings}
-                loading={isLoading}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,

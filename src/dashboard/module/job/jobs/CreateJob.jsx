@@ -420,10 +420,12 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             mode="multiple"
                             placeholder="Select required skills"
                             size="large"
+                            maxTagCount={3}
+                            maxTagTextLength={10}
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
-                                minHeight: '48px',
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                             }}
                         >
@@ -446,10 +448,12 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             mode="multiple"
                             placeholder="Select interview rounds"
                             size="large"
+                            maxTagCount={3}
+                            maxTagTextLength={10}
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
-                                minHeight: '48px',
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                             }}
                         >

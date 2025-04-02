@@ -11,6 +11,7 @@ import {
     Col,
     DatePicker,
     TimePicker,
+    message,
 } from 'antd';
 import {
     FiX,
@@ -22,6 +23,8 @@ import {
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
+import { useCreateAnnouncementMutation, useUpdateAnnouncementMutation } from './services/announcementApi';
 
 dayjs.extend(customParseFormat);
 
@@ -31,29 +34,72 @@ const { TextArea } = Input;
 const CreateAnnouncement = ({
     open,
     onCancel,
-    onSubmit,
     isEditing,
     initialValues,
-    loading
 }) => {
     const [form] = Form.useForm();
+    const [messageApi] = message.useMessage();
 
-    // Define branches array
-    const branches = [
-        { value: 'head_office', label: 'Head Office' },
-        { value: 'branch_1', label: 'Branch 1' },
-        { value: 'branch_2', label: 'Branch 2' },
-        { value: 'branch_3', label: 'Branch 3' },
-    ];
+    // API Mutations
+    const [createAnnouncement, { isLoading: isCreating }] = useCreateAnnouncementMutation();
+    const [updateAnnouncement, { isLoading: isUpdating }] = useUpdateAnnouncementMutation();
+
+    // Get branches data from API
+    const { data: branchesData, isLoading: branchesLoading } = useGetAllBranchesQuery();
+
+    // Transform branches data
+    const branches = React.useMemo(() => {
+        if (!branchesData) return [];
+        
+        // If branchesData is array directly
+        if (Array.isArray(branchesData)) {
+            return branchesData.map(branch => ({
+                value: branch.id,
+                label: branch.branchName || branch.name || `Branch ${branch.id}`
+            }));
+        }
+        
+        // If branchesData has data property
+        if (branchesData.data && Array.isArray(branchesData.data)) {
+            return branchesData.data.map(branch => ({
+                value: branch.id,
+                label: branch.branchName || branch.name || `Branch ${branch.id}`
+            }));
+        }
+
+        return [];
+    }, [branchesData]);
 
     useEffect(() => {
         if (initialValues) {
-            const formattedValues = {
-                ...initialValues,
-                date: initialValues.date ? dayjs(initialValues.date) : null,
-                time: initialValues.time ? dayjs(initialValues.time, 'HH:mm') : null,
-            };
-            form.setFieldsValue(formattedValues);
+            try {
+                // Convert date strings to dayjs objects
+                const date = initialValues.date ? dayjs(initialValues.date, 'YYYY-MM-DD') : null;
+                const time = initialValues.time ? dayjs(initialValues.time, 'HH:mm') : null;
+
+                const formattedValues = {
+                    ...initialValues,
+                    date: date,
+                    time: time,
+                    branch: initialValues.branch ? JSON.parse(initialValues.branch).branch : []
+                };
+
+                // Validate date and time before setting
+                if (date && !date.isValid()) {
+                    console.error('Invalid date:', initialValues.date);
+                    formattedValues.date = null;
+                }
+                if (time && !time.isValid()) {
+                    console.error('Invalid time:', initialValues.time);
+                    formattedValues.time = null;
+                }
+
+                console.log('Setting form values:', formattedValues);
+                form.setFieldsValue(formattedValues);
+            } catch (error) {
+                console.error('Error formatting form values:', error);
+                form.resetFields();
+            }
         } else {
             form.resetFields();
         }
@@ -61,19 +107,57 @@ const CreateAnnouncement = ({
 
     const handleSubmit = async (values) => {
         try {
+            // Validate date and time
+            if (values.date && !dayjs(values.date).isValid()) {
+                messageApi.error('Please select a valid date');
+                return;
+            }
+            if (values.time && !dayjs(values.time).isValid()) {
+                messageApi.error('Please select a valid time');
+                return;
+            }
+
+            // Get all selected branches
+            const selectedBranches = values.branch.map(branchId => {
+                const branch = branches.find(b => b.value === branchId);
+                if (!branch) {
+                    throw new Error(`Branch with ID ${branchId} not found`);
+                }
+                return branch.value.toString();
+            });
+
             const formattedValues = {
-                ...values,
-                date: values.date ? values.date.format('YYYY-MM-DD') : null,
-                time: values.time ? values.time.format('HH:mm') : null,
+                title: values.title,
+                description: values.description,
+                date: values.date ? dayjs(values.date).format('YYYY-MM-DD') : null,
+                time: values.time ? dayjs(values.time).format('HH:mm') : null,
+                branch: {
+                    branch: selectedBranches
+                },
             };
-            await onSubmit(formattedValues);
+
+            console.log('Submitting announcement with values:', formattedValues);
+
+            if (isEditing && initialValues?.id) {
+                const response = await updateAnnouncement({
+                    id: initialValues.id,
+                    data: formattedValues
+                }).unwrap();
+                console.log('Update Response:', response);
+                messageApi.success('Announcement updated successfully!');
+            } else {
+                const response = await createAnnouncement(formattedValues).unwrap();
+                console.log('Create Response:', response);
+                messageApi.success('Announcement created successfully!');
+            }
+
             form.resetFields();
+            onCancel();
         } catch (error) {
-            console.error('Validation failed:', error);
+            console.error('API Error:', error);
+            messageApi.error(error.data?.message || 'Failed to save announcement');
         }
     };
-
-  
 
     return (
         <Modal
@@ -224,21 +308,27 @@ const CreateAnnouncement = ({
                             name="branch"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Branch
+                                    Branches
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please select branch' }]}
+                            rules={[{ required: true, message: 'Please select at least one branch' }]}
                         >
                             <Select
-                                placeholder="Select branch"
-                                options={branches}
+                                mode="multiple"
+                                placeholder="Select branches"
                                 size="large"
-                                suffixIcon={<FiAlertCircle style={{ color: '#1890ff', fontSize: '16px' }} />}
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',
                                     backgroundColor: '#f8fafc',
                                 }}
+                                options={branches}
+                                showSearch
+                                filterOption={(input, option) =>
+                                    option?.label?.toLowerCase().includes(input.toLowerCase())
+                                }
+                                maxTagCount={2}
+                                maxTagTextLength={10}
                             />
                         </Form.Item>
                     </Col>
@@ -333,10 +423,8 @@ const CreateAnnouncement = ({
                             borderRadius: '10px',
                             border: '1px solid #e6e8eb',
                             fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
                         }}
+                        disabled={isCreating || isUpdating}
                     >
                         Cancel
                     </Button>
@@ -344,6 +432,7 @@ const CreateAnnouncement = ({
                         size="large"
                         type="primary"
                         htmlType="submit"
+                        loading={isCreating || isUpdating}
                         style={{
                             padding: '8px 32px',
                             height: '44px',
@@ -352,9 +441,6 @@ const CreateAnnouncement = ({
                             background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
                             border: 'none',
                             boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
                         }}
                     >
                         {isEditing ? 'Update Announcement' : 'Create Announcement'}

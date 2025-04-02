@@ -37,13 +37,21 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
                     ? JSON.parse(initialValues.links) 
                     : initialValues.links;
 
+                // Create training items array from links
+                const trainingItems = Array.isArray(links?.url) 
+                    ? links.url.map((url, index) => ({
+                        title: initialValues.title,
+                        links: url
+                    }))
+                    : [{
+                        title: initialValues.title,
+                        links: links?.url || ''
+                    }];
+
                 // Set form values for editing
                 form.setFieldsValue({
                     category: initialValues.category,
-                    trainingItems: [{
-                        title: initialValues.title,
-                        links: links?.url || ''
-                    }]
+                    trainingItems: trainingItems
                 });
             } catch (error) {
                 console.error('Error setting form values:', error);
@@ -62,14 +70,20 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
         try {
             setLoading(true);
             
-            // Create the final formatted values with links as an object (not stringified)
+            // Create arrays for titles and links
+            const titles = values.trainingItems.map(item => item.title.trim());
+            const urls = values.trainingItems.map(item => item.links.trim());
+
+            // Create the final formatted values
             const formData = {
                 category: values.category.trim(),
-                title: values.trainingItems[0].title.trim(),
-                links: {  // Send as object, not as JSON string
-                    url: values.trainingItems[0].links.trim()
+                title: titles[0], // Keep first title as main title
+                links: {
+                    url: urls // Store all URLs as an array
                 }
             };
+
+            console.log('Submitting form data:', formData); // Debug log
 
             if (isEditing && initialValues?.id) {
                 // Update existing training

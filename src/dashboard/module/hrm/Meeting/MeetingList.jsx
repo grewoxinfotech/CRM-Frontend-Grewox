@@ -1,10 +1,49 @@
-import React from 'react';
-import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
+import React, { useState, useMemo } from 'react';
+import { Table, Space, Button, Tag, message, Modal, Dropdown } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
+import { useGetMeetingsQuery, useUpdateMeetingMutation, useDeleteMeetingMutation } from './services/meetingApi';
+import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import dayjs from 'dayjs';
+import CreateMeeting from './CreateMeeting';
 
-const MeetingList = ({ meetings, loading, onEdit, onDelete }) => {
+const MeetingList = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingMeeting, setEditingMeeting] = useState(null);
 
+    // API call for getting all meetings
+    const { data: meetings, isLoading } = useGetMeetingsQuery();
+    const { data: departmentsData } = useGetAllDepartmentsQuery();
+    const [updateMeeting] = useUpdateMeetingMutation();
+    const [deleteMeeting] = useDeleteMeetingMutation();
+
+    
+    // Create a map of department IDs to names
+    const departmentMap = useMemo(() => {
+        const map = {};
+        if (departmentsData) {
+            departmentsData.forEach(dept => {
+                if (dept && dept.id) {
+                    map[dept.id] = dept.department_name;
+                }
+            });
+        }
+        return map;
+    }, [departmentsData]);
+
+    // Handle edit
+    const handleEdit = (record) => {
+        // Format the dates before setting them in the form
+        const formattedRecord = {
+            ...record,
+            date: record.date && dayjs(record.date),
+            startTime: record.startTime && dayjs(record.startTime, 'HH:mm'),
+            endTime: record.endTime && dayjs(record.endTime, 'HH:mm'),
+        };
+        setEditingMeeting(formattedRecord);
+        setIsModalOpen(true);
+    };
+
+    // Handle delete
     const handleDelete = (id) => {
         Modal.confirm({
             title: 'Delete Meeting',
@@ -12,12 +51,11 @@ const MeetingList = ({ meetings, loading, onEdit, onDelete }) => {
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
-            bodyStyle: {
-                padding: '20px',
-            },
+            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
-                    await onDelete(id);
+                    await deleteMeeting(id).unwrap();
+                    message.success('Meeting deleted successfully');
                 } catch (error) {
                     message.error(error?.data?.message || 'Failed to delete meeting');
                 }
@@ -25,155 +63,163 @@ const MeetingList = ({ meetings, loading, onEdit, onDelete }) => {
         });
     };
 
-    const getDropdownItems = (record) => ({
-        items: [
-            {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => onEdit(record),
-            },
-            {
-                key: 'edit',
-                icon: <FiEdit2 />,
-                label: 'Edit',
-                onClick: () => onEdit(record),
-            },
-            {
-                key: 'delete',
-                icon: <FiTrash2 />,
-                label: 'Delete',
-                onClick: () => handleDelete(record.id),
-                danger: true,
-            },
-        ],
-    });
+    // Handle update
+    const handleUpdate = async (values) => {
+        try {
+            const formattedValues = {
+                ...values,
+                // Use proper dayjs validation and formatting
+                date: values.date && dayjs(values.date).format('YYYY-MM-DD'),
+                startTime: values.startTime && dayjs(values.startTime).format('HH:mm'),
+                endTime: values.endTime && dayjs(values.endTime).format('HH:mm'),
+                client_id: localStorage.getItem('client_id'),
+            };
+
+            await updateMeeting({
+                id: editingMeeting.id,
+                data: formattedValues
+            }).unwrap();
+
+            message.success('Meeting updated successfully');
+            setIsModalOpen(false);
+            setEditingMeeting(null);
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to update meeting');
+        }
+    };
 
     const columns = [
         {
-            title: 'Meeting Title',
+            title: 'Title',
             dataIndex: 'title',
             key: 'title',
             sorter: (a, b) => a.title.localeCompare(b.title),
-        
-        },
-        {
-            title: 'Meeting Date',
-            dataIndex: 'date', 
-            key: 'date',
-            sorter: (a, b) => {
-                if (!a.date || !b.date) return 0;
-                return dayjs(a.date).unix() - dayjs(b.date).unix();
-            },
-            render: (date) => date ? dayjs(date).format('DD-MM-YYYY') : '-'
-        },
-        {
-            title: 'Start Time',
-            dataIndex: 'startTime',
-            key: 'startTime',
-            sorter: (a, b) => {
-                if (!a.startTime || !b.startTime) return 0;
-                return dayjs(a.startTime, 'HH:mm').unix() - dayjs(b.startTime, 'HH:mm').unix();
-            },
-           
-        },
-        {
-            title: 'End Time',
-            dataIndex: 'endTime',
-            key: 'endTime',
-            sorter: (a, b) => {
-                if (!a.endTime || !b.endTime) return 0;
-                return dayjs(a.endTime, 'HH:mm').unix() - dayjs(b.endTime, 'HH:mm').unix();
-            },
-           
-        },
-        {
-            title: 'Meeting Link',
-            dataIndex: 'meetingLink',
-            key: 'meetingLink',
-            sorter: (a, b) => {
-                if (!a.meetingLink || !b.meetingLink) return 0;
-                return a.meetingLink.localeCompare(b.meetingLink);
-            },
-          
-        },
-        {
-            title: 'Description',
-            dataIndex: 'description',
-            key: 'description',
-            sorter: (a, b) => {
-                if (!a.description || !b.description) return 0;
-                return a.description.localeCompare(b.description);
-            },
-          
         },
         {
             title: 'Department',
             dataIndex: 'department',
             key: 'department',
+            render: (departmentId) => (
+                <span style={{ color: '#4b5563' }}>
+                    {departmentMap[departmentId] || 'N/A'}
+                </span>
+            ),
             sorter: (a, b) => {
-                if (!a.department || !b.department) return 0;
-                return a.department.localeCompare(b.department);
+                const deptA = departmentMap[a.department] || '';
+                const deptB = departmentMap[b.department] || '';
+                return deptA.localeCompare(deptB);
             },
-          
+        },
+        {
+            title: 'Date',
+            dataIndex: 'date',
+            key: 'date',
+            render: (date) => dayjs(date).format('DD/MM/YYYY'),
+            sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+        },
+        {
+            title: 'Start Time',
+            dataIndex: 'startTime',
+            key: 'startTime',
+            sorter: (a, b) => a.startTime.localeCompare(b.startTime),
+        },
+        {
+            title: 'End Time',
+            dataIndex: 'endTime',
+            key: 'endTime',
+            sorter: (a, b) => a.endTime.localeCompare(b.endTime),
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
             sorter: (a, b) => a.status.localeCompare(b.status),
-            render: (status) => {
-                const color = status === 'scheduled' ? 'blue' : 
-                             status === 'completed' ? 'green' : 
-                             status === 'cancelled' ? 'red' : 'gold';
-                return <Tag color={color}>{status.toUpperCase()}</Tag>;
-            },
+            render: (status) => (
+                <Tag color={
+                    status === 'scheduled' ? 'blue' :
+                    status === 'completed' ? 'green' : 'red'
+                }>
+                    {status?.toUpperCase()}
+                </Tag>
+            ),
         },
         {
             title: 'Actions',
             key: 'actions',
-            align: 'center',
-            render: (_, record) => (
-                <Dropdown
-                    menu={getDropdownItems(record)}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayClassName="department-actions-dropdown"
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                        onClick={(e) => e.preventDefault()}
-                    />
-                </Dropdown>
-            ),
+            render: (_, record) => {
+                const items = [
+                    {
+                        key: 'view',
+                        icon: <FiEye style={{ fontSize: '14px' }} />,
+                        label: 'View',
+                        onClick: () => handleEdit(record),
+                    },
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
+                        label: 'Edit',
+                        onClick: () => handleEdit(record),
+                    },
+                    {
+                        key: 'delete',
+                        icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => handleDelete(record.id),
+                    },
+                ];
+
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="meeting-actions-dropdown"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical />}
+                            className="action-dropdown-button"
+                            onClick={(e) => e.preventDefault()}
+                        />
+                    </Dropdown>
+                );
+            },
         },
     ];
 
     return (
-        <Table
-            columns={columns}
-            dataSource={meetings?.map(meeting => ({
-                ...meeting,
-                key: meeting.id,
-                date: dayjs.isDayjs(meeting.date) ? meeting.date : dayjs(meeting.date)
-            }))}
-            loading={loading}
-            rowKey="id"
-            scroll={{
-                x: 1000,
-            }}
-            pagination={{
-                total: meetings?.length || 0,
-                pageSize: 10,
-                showTotal: (total) => `Total ${total} meetings`,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                size: 'default',
-                position: ['bottomRight']
-            }}
-        />
+        <div style={{ padding: '24px' }}>
+            
+
+            <Table 
+                columns={columns}
+                dataSource={meetings?.data || []}
+                loading={isLoading}
+                rowKey="id"
+                pagination={{
+                    pageSize: 10,
+                    total: meetings?.total,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} meetings`,
+                    showQuickJumper: true,
+                    size: "default",
+                    position: ["bottomRight"],
+                }}
+            />
+
+            {/* Edit Modal */}
+            <CreateMeeting
+                open={isModalOpen}
+                onCancel={() => {
+                    setIsModalOpen(false);
+                    setEditingMeeting(null);
+                }}
+                onSubmit={handleUpdate}
+                initialValues={editingMeeting}
+                isEditing={true}
+            />
+        </div>
     );
 };
 
