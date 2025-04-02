@@ -12,13 +12,7 @@ import {
     FiActivity,
     FiFolder,
     FiClock,
-    FiTrendingUp,
-    FiTrendingDown,
-    FiMinusCircle,
 } from 'react-icons/fi';
-import './overview.scss';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../../auth/services/authSlice';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -84,7 +78,7 @@ const DealOverview = ({ deal }) => {
                         </div>
                     </div>
                 </div>
-                    </Card>
+            </Card>
 
             {/* Key Metrics Cards */}
             <Row gutter={[16, 16]} className="metrics-row">

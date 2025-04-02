@@ -54,7 +54,6 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
   const { data: categoryData } = useGetCategoriesQuery(lead.client_id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
 
-
   const source = sourceData?.data?.find(s => s.id === lead.source);
   const category = categoryData?.data?.find(c => c.id === lead.category);
 
@@ -65,9 +64,11 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
     touchAction: 'none',
     transformOrigin: '50% 50%',
     zIndex: isDragging ? 999999 : 'auto',
-    pointerEvents: isDragging ? 'none' : undefined,
+    pointerEvents: lead.is_converted ? 'none' : isDragging ? 'none' : undefined,
     isolation: isDragging ? 'isolate' : 'auto',
-    transformStyle: 'preserve-3d'
+    transformStyle: 'preserve-3d',
+    opacity: lead.is_converted ? 0.7 : 1,
+    cursor: lead.is_converted ? 'default' : isDragging ? 'grabbing' : 'grab'
   };
 
   const [showCreateDeal, setShowCreateDeal] = useState(false);
@@ -102,61 +103,27 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
   };
 
   const formatCurrency = (value, currencyId) => {
-    const currencyDetails = currencies.find(c => c.id === currencyId);
+    const currencyDetails = currencies.find(c => c.id === currencyId || c.currencyCode === currencyId);
     if (!currencyDetails) return `${value}`;
-    
+
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
   };
-
-  const getDropdownItems = (lead) => ({
-    items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onLeadClick(lead),
-      },
-      {
-        key: "convert",
-        icon: <FiDollarSign />,
-        label: "Convert to Deal",
-        onClick: () => {
-          setSelectedLead(lead);
-          setShowCreateDeal(true);
-        },
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => onLeadClick(lead),
-      },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => onLeadClick(lead),
-        danger: true,
-      },
-    ],
-  });
-
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...(lead.is_converted ? {} : { ...attributes, ...listeners })}>
       <Card
-        className="lead-card"
+        className={`lead-card ${lead.is_converted ? 'converted' : ''}`}
         bordered={false}
         onClick={handleCardClick}
         style={{
           width: '100%',
           marginBottom: '8px',
           borderRadius: '4px',
-          background: '#ffffff',
-          cursor: isDragging ? 'grabbing' : 'grab',
+          background: lead.is_converted ? '#f5f5f5' : '#ffffff',
+          cursor: lead.is_converted ? 'default' : isDragging ? 'grabbing' : 'grab',
           position: 'relative',
           overflow: 'hidden',
           borderLeft: `3px solid ${stage.color || '#1890ff'}`,
@@ -178,34 +145,44 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
             width: '100%',
             borderBottom: '1px solid #f0f0f0',
             paddingBottom: '8px',
-            marginBottom: '4px'
+            marginBottom: '4px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start'
           }}>
-            <Tooltip title={lead?.leadTitle}>
-              <Text strong className="lead-title" style={{
-                fontSize: '14px',
-                lineHeight: '1.4',
-                margin: 0,
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                color: '#1f2937'
-              }}>
-                {lead?.leadTitle}
-              </Text>
-            </Tooltip>
-            {lead?.company_name && (
-              <Text className="company-name" style={{
-                fontSize: '12px',
-                color: '#6b7280',
-                display: 'block',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                marginTop: '2px'
-              }}>
-                {lead.company_name}
-              </Text>
+            <div>
+              <Tooltip title={lead?.leadTitle}>
+                <Text strong className="lead-title" style={{
+                  fontSize: '14px',
+                  lineHeight: '1.4',
+                  margin: 0,
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  color: '#1f2937'
+                }}>
+                  {lead?.leadTitle}
+                </Text>
+              </Tooltip>
+              {lead?.company_name && (
+                <Text className="company-name" style={{
+                  fontSize: '12px',
+                  color: '#6b7280',
+                  display: 'block',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  marginTop: '2px'
+                }}>
+                  {lead.company_name}
+                </Text>
+              )}
+            </div>
+            {lead.is_converted && (
+              <Tag color="success" style={{ marginLeft: '8px' }}>
+                Converted
+              </Tag>
             )}
           </div>
 
@@ -410,7 +387,7 @@ const SortableColumn = ({ stage, leads, children }) => {
   );
 };
 
-const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}) => {
+const LeadCard = ({ currencies, countries, sourcesData, statusesData, categoriesData }) => {
   const { data: leadsData, isLoading, error } = useGetLeadsQuery();
   const { data: stageQueryData } = useGetLeadStagesQuery();
   const [updateLead] = useUpdateLeadMutation();
@@ -419,11 +396,15 @@ const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}
   const savedStageOrder = useSelector(selectStageOrder);
   const [activeId, setActiveId] = useState(null);
   const [orderedStages, setOrderedStages] = useState([]);
+  const [selectedPipeline, setSelectedPipeline] = useState("95QsEzSA7EGnxrlRqnDShFw"); // Set default pipeline
 
   // Filter and order lead stages
   const stages = React.useMemo(() => {
     if (!stageQueryData) return [];
-    const leadStages = stageQueryData.filter(stage => stage.stageType === 'lead');
+    const leadStages = stageQueryData.filter(stage =>
+      stage.stageType === 'lead' &&
+      stage.pipeline === selectedPipeline // Only show stages for selected pipeline
+    );
 
     if (savedStageOrder.length > 0) {
       // Sort stages based on saved order
@@ -438,7 +419,7 @@ const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}
     }
 
     return leadStages;
-  }, [stageQueryData, savedStageOrder]);
+  }, [stageQueryData, savedStageOrder, selectedPipeline]);
 
   // Initialize ordered stages when stagesData changes
   useEffect(() => {
@@ -459,6 +440,12 @@ const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}
       return acc;
     }, {});
   }, [orderedStages, leads]);
+
+  // Pipeline selection buttons
+  const pipelines = [
+    { id: "95QsEzSA7EGnxrlRqnDShFw", name: "Marketing" },
+    { id: "cFaSfTBNfdMnnvSNxQmql0w", name: "Sales" }
+  ];
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -504,6 +491,15 @@ const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}
       const draggedId = active.id;
       const destinationId = over.id.toString().replace('column-', '');
 
+      // Find the lead that's being dragged
+      const draggedLead = leads.find(lead => lead.id === draggedId);
+
+      // Check if the lead is converted
+      if (draggedLead?.is_converted) {
+        message.error("Cannot move a converted lead");
+        return;
+      }
+
       try {
         await updateLead({
           id: draggedId,
@@ -524,341 +520,80 @@ const LeadCard = ({currencies,countries,sourcesData,statusesData,categoriesData}
   if (error) return <div>Error loading leads: {error.message}</div>;
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="kanban-board" style={{
+    <div className="kanban-board-container">
+      {/* Pipeline Selection */}
+      <div style={{
+        marginBottom: '20px',
         display: 'flex',
-        gap: '24px',
-        padding: '24px',
-        overflowX: 'auto',
-        minHeight: 'calc(100vh - 300px)',
-        width: '100%',
-        position: 'relative',
-        isolation: 'isolate',
-        perspective: '1000px',
-        transformStyle: 'preserve-3d'
+        gap: '12px',
+        alignItems: 'center',
+        padding: '0 24px'
       }}>
-        <SortableContext
-          items={orderedStages.map(stage => `column-${stage.id}`)}
-          strategy={horizontalListSortingStrategy}
-        >
-          {orderedStages.map((stage) => (
-            <SortableColumn
-              key={stage.id}
-              stage={stage}
-              leads={leadsByStage[stage.id] || []}
+        <Text strong style={{ fontSize: '14px', color: '#374151' }}>Pipeline:</Text>
+        <div style={{
+          display: 'flex',
+          gap: '8px'
+        }}>
+          {pipelines.map(pipeline => (
+            <Button
+              key={pipeline.id}
+              type={selectedPipeline === pipeline.id ? "primary" : "default"}
+              onClick={() => setSelectedPipeline(pipeline.id)}
+              style={{
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 12px',
+                height: '32px'
+              }}
             >
-              <DroppableColumn
-                stage={stage}
-                leads={leadsByStage[stage.id] || []}
-                isColumnDragging={activeId === `column-${stage.id}`}
-              />
-            </SortableColumn>
+              <FiTarget style={{ fontSize: '14px' }} />
+              {pipeline.name}
+            </Button>
           ))}
-        </SortableContext>
+        </div>
       </div>
 
-      <style jsx global>{`
-        .kanban-board {
-          display: flex;
-          gap: 24px;
-          padding: 24px;
-          overflow-x: auto;
-          min-height: calc(100vh - 300px);
-          width: 100%;
-          scroll-behavior: smooth;
-          -webkit-overflow-scrolling: touch;
-          position: relative;
-          isolation: isolate;
-          perspective: 1000px;
-          transform-style: preserve-3d;
-        }
-
-        .kanban-column {
-          min-width: 320px;
-          background: #f8fafc;
-          border-radius: 8px;
-          padding: 16px;
-          flex: 1;
-          transition: all 200ms ease;
-          touch-action: none;
-          position: relative;
-          z-index: 1;
-          transform-style: preserve-3d;
-          
-          &.is-dragging {
-            background: #ffffff;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
-            border: 2px dashed #1890ff40;
-            cursor: grabbing;
-            z-index: 2;
-          }
-        }
-
-        .kanban-column-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
-          padding: 8px;
-          cursor: grab;
-          user-select: none;
-          border-radius: 8px;
-          transition: background-color 0.2s ease;
-          touch-action: none;
-
-          &:hover {
-            background-color: rgba(0, 0, 0, 0.02);
-          }
-
-          &:active {
-            cursor: grabbing;
-          }
-
-          .drag-handle {
-            color: #8c8c8c;
-            display: flex;
-            align-items: center;
-            padding: 4px;
-            
-            &:hover {
-              color: #1890ff;
-            }
-          }
-        }
-
-        .ant-tag {
-          background: #e6f4ff;
-          color: #1890ff;
-          border: none;
-          border-radius: 12px;
-          padding: 2px 12px;
-          margin-left: auto;
-        }
-
-        .kanban-column-content {
-          min-height: 100px;
-          padding: 8px;
-          background: #f8fafc;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-          
-          &.column-dragging {
-            background: #e6f7ff;
-            border: 2px dashed #1890ff40;
-          }
-          
-          &.dragging-over {
-            background: #e6f7ff;
-            transform: scale(1.02);
-            box-shadow: 0 0 0 2px #1890ff33;
-          }
-        }
-
-        .lead-card {
-          margin-bottom: 16px;
-          position: relative;
-          z-index: auto;
-          transform: translateZ(0);
-          transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
-          transform-style: preserve-3d;
-          
-          &:hover {
-            transform: translateY(-2px);
-            z-index: 2;
-          }
-          
-          &.is-dragging {
-            z-index: 999999 !important;
-          }
-        }
-
-        .lead-title {
-          font-size: 18px;
-          color: var(--text-primary);
-          display: block;
-          margin-bottom: 12px;
-          line-height: 1.4;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          display: -webkit-box;
-          transition: color 0.3s ease;
-        }
-
-        .tags-wrapper {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-wrap: wrap;
-        }
-
-        .stage-tag,
-        .interest-tag {
-          margin: 0;
-          border-radius: 0;
-          padding: 4px 12px;
-          font-size: 12px;
-          font-weight: 600;
-          border: none;
-          transition: all 0.3s ease;
-
-          svg {
-            margin-right: 4px;
-            animation: pulse 2s infinite;
-          }
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 20px;
-          position: relative;
-          padding-right: 40px;
-        }
-
-        .title-section {
-          flex: 1;
-          width: 100%;
-        }
-
-        .card-content {
-          padding: var(--card-padding);
-          position: relative;
-          z-index: 2;
-          background: #ffffff;
-        }
-
-        .metrics-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          margin-top: 16px;
-          position: relative;
-          width: 100%;
-          padding: 12px 0;
-          border-top: 1px solid #f0f0f0;
-        }
-
-        .metric-item {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .metric-label {
-          font-size: 13px;
-          color: var(--text-secondary);
-          font-weight: 500;
-        }
-
-        .metric-value {
-          font-size: 14px;
-          color: var(--text-primary);
-          font-weight: 500;
-          line-height: 1.4;
-          width: 100%;
-        }
-
-        .value-text {
-          font-size: 16px;
-          font-weight: 600;
-          color: var(--success-color);
-        }
-
-        .interest-tag {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin: 0;
-          border-radius: 0;
-          padding: 4px 12px;
-          font-size: 12px;
-          font-weight: 600;
-          border: none;
-          transition: all 0.3s ease;
-
-          .dot-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-            box-shadow: 0 0 8px currentColor;
-            animation: pulse 2s infinite;
-          }
-        }
-
-        @keyframes pulse {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.1); opacity: 0.8; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-
-        .draggable-card {
-          position: relative;
-          z-index: 1;
-          transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
-          transform-origin: center center;
-          
-          &.is-dragging {
-            cursor: grabbing;
-            transform: scale(1.02);
-            transition: none;
-            opacity: 1;
-            z-index: 999999 !important;
-            position: relative;
-            pointer-events: none;
-            
-            .lead-card {
-              box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1), 
-                         0 2px 6px rgba(0, 0, 0, 0.08);
-            }
-          }
-        }
-
-        .meta-info {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          font-size: 12px;
-          margin-top: 4px;
-        }
-
-        .source, .category {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .label {
-          color: #6b7280;
-          font-weight: 500;
-        }
-
-        .lead-title {
-          font-size: 14px;
-          font-weight: 500;
-          color: #111827;
-          margin-bottom: 4px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .company-name {
-          font-size: 13px;
-          color: #6b7280;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      `}</style>
-    </DndContext>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="kanban-board" style={{
+          display: 'flex',
+          gap: '24px',
+          padding: '24px',
+          overflowX: 'auto',
+          minHeight: 'calc(100vh - 300px)',
+          width: '100%',
+          position: 'relative',
+          isolation: 'isolate',
+          perspective: '1000px',
+          transformStyle: 'preserve-3d'
+        }}>
+          <SortableContext
+            items={orderedStages.map(stage => `column-${stage.id}`)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {orderedStages.map((stage) => (
+              <SortableColumn
+                key={stage.id}
+                stage={stage}
+                leads={leadsByStage[stage.id] || []}
+              >
+                <DroppableColumn
+                  stage={stage}
+                  leads={leadsByStage[stage.id] || []}
+                  isColumnDragging={activeId === `column-${stage.id}`}
+                />
+              </SortableColumn>
+            ))}
+          </SortableContext>
+        </div>
+      </DndContext>
+    </div>
   );
 };
 

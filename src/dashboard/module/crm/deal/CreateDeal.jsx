@@ -11,7 +11,6 @@ import {
   message,
   Spin,
   DatePicker,
-  Tag,
 } from "antd";
 import {
   FiUser,
@@ -28,21 +27,19 @@ import {
   FiCalendar,
   FiInfo,
 } from "react-icons/fi";
-import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useCreateDealMutation } from "./services/dealApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import { PlusOutlined } from '@ant-design/icons';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import './Deal.scss';
-import { useGetSourcesQuery,useGetLabelsQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
-
-
+import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDispatch, useSelector } from "react-redux";
 import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
 import dayjs from "dayjs";
-
+import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
+import { useUpdateLeadMutation } from '../lead/services/LeadApi';
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -55,9 +52,9 @@ const findIndianDefaults = (currencies, countries) => {
   };
 };
 
-const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
+const CreateDeal = ({ open, onCancel, leadData }) => {
   const loggedInUser = useSelector(selectCurrentUser);
-  
+
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);
   const selectRef = useRef(null);
@@ -67,22 +64,19 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
   const [manualValue, setManualValue] = useState(0);
   const [selectedProductPrices, setSelectedProductPrices] = useState({});
 
-  const [createDeal, { isLoading }] = useCreateDealMutation();
-  
+  const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
+  const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
+
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
- const { data:labelsData } = useGetLabelsQuery(loggedInUser?.id);
- const { data: productsData } = useGetProductsQuery();
- const { data: dealStages } = useGetLeadStagesQuery();
- const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+  const { data: productsData } = useGetProductsQuery();
+  const { data: dealStages } = useGetLeadStagesQuery();
+  const { data: pipelinesData } = useGetPipelinesQuery();
 
- const sources = sourcesData?.data || [];
- const statuses = statusesData?.data || [];
- const labels = labelsData?.data || [];
- const products = productsData?.data || [];
+  const pipelines = pipelinesData || [];
+  const sources = sourcesData?.data || [];
+  const products = productsData?.data || [];
 
-
-
- const { data: currencies = [] } = useGetAllCurrenciesQuery({
+  const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
     limit: 100
   });
@@ -91,8 +85,6 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
     limit: 100
   });
 
-
-
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
   // Add state to track selected pipeline
@@ -100,13 +92,13 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
 
   // Filter stages based on selected pipeline
   const filteredStages = dealStages?.filter(
-    stage => stage.stageType === "deal" && stage.pipeline === selectedPipeline
+    stage => stage.stageType === "deal" && (!selectedPipeline || stage.pipeline === selectedPipeline)
   ) || [];
 
   // Handle pipeline selection change
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
-    // Clear stage selection when pipeline changes
+
     form.setFieldValue('stage', undefined);
   };
 
@@ -114,10 +106,10 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
   const handleValueChange = (value) => {
     const numValue = parseFloat(value) || 0;
     setManualValue(numValue);
-    
+
     // Calculate total product prices
     const productPricesTotal = Object.values(selectedProductPrices).reduce((sum, price) => sum + price, 0);
-    
+
     // Set form value to manual value plus product prices
     form.setFieldsValue({ value: numValue + productPricesTotal });
   };
@@ -125,7 +117,7 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
   // Handle products selection change
   const handleProductsChange = (selectedProductIds) => {
     const newSelectedPrices = {};
-    
+
     // Calculate prices for selected products
     selectedProductIds.forEach(productId => {
       const product = products.find(p => p.id === productId);
@@ -147,42 +139,38 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
   // Pre-fill form with lead data when available
   useEffect(() => {
     if (leadData && open) {
-      // Find the currency details
-      const currencyDetails = currencies.find(c => c.id === leadData.currency);
-      
       // Find the country details
       const countryDetails = countries.find(c => c.id === leadData.phoneCode);
-      
-      // Find the status details
-      const statusDetails = statuses.find(s => s.id === leadData.status);
 
-      const stageDetails = filteredStages.find(s => s.id === leadData.stage);
-      // Set form values with found details
+      //find the stage details
+      const stageDetails = dealStages.find(s => s.id === leadData.stage);
+
       form.setFieldsValue({
-
-        dealName: leadData.leadTitle,
-        currency: currencyDetails?.currencyCode, // Use currency ID
-        phoneCode: countryDetails?.phoneCode, // Use country ID
+        dealTitle: leadData.leadTitle,
+        currency: leadData.currency,
+        phoneCode: countryDetails?.phoneCode,
         value: leadData.value,
-        pipeline: leadData.pipeline,
-        status: statusDetails?.id, // Use status ID
-        stage: stageDetails?.stageName, // Use stage ID
+        // pipeline: leadData.pipeline,
+        source: leadData.source,
+        // stage: stageDetails?.stageName,
         firstName: leadData.firstName,
         lastName: leadData.lastName,
         email: leadData.email,
         phone: leadData.phone,
         address: leadData.address,
-        interest_level: leadData.interest_level,
-        lead_members: leadData.lead_members,
+        company_name: leadData.company,
         leadId: leadData.id
       });
 
       // Set manual value for value field
       setManualValue(leadData.value || 0);
-    }
-  }, [leadData, form, open, currencies, countries, statuses]);
 
-  console.log(leadData, "leadData");
+      // Set selected pipeline if lead data has pipeline
+      if (leadData.pipeline) {
+        setSelectedPipeline(leadData.pipeline);
+      }
+    }
+  }, [leadData, form, open, currencies, countries]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -198,31 +186,56 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
       const formattedPhone = values.phone ?
         `+${values.phoneCode} ${values.phone}` :
         null;
-        
+
       const dealData = {
-        firstName: values.firstName,
+        dealTitle: values.dealTitle,
         email: values.email,
         phone: formattedPhone,
-        dealName: values.dealName,
         pipeline: values.pipeline,
-        status: values.status,
         stage: values.stage,
-        label: values.label,
         value: parseFloat(values.value) || 0,
         currency: values.currency,
         closedDate: values.closedDate ? new Date(values.closedDate).toISOString() : null,
         company_name: values.company_name,
         source: values.source,
         products: { products: values.products || [] },
+        firstName: values.firstName,
+        lastName: values.lastName,
+        address: values.address,
+        leadId: leadData?.id
       };
 
-      await createDeal(dealData).unwrap();
+      // Create the deal
+      const dealResponse = await createDeal(dealData).unwrap();
+
+      // If this deal was created from a lead, update the lead's is_converted status
+      if (leadData?.id) {
+        try {
+          await updateLead({
+            id: leadData.id,
+            data: {
+              is_converted: true,
+              dealId: dealResponse.id
+            }
+          }).unwrap();
+        } catch (updateError) {
+          console.error("Error updating lead:", updateError);
+          message.warning("Deal created but failed to update lead status. Please refresh the page.");
+        }
+      }
+
       message.success("Deal created successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
-      message.error("Failed to create deal: " + (error.data?.message || "Unknown error"));
       console.error("Create Deal Error:", error);
+
+      if (error?.data?.message?.includes("already exists")) {
+        message.error("A deal with this title already exists");
+        return;
+      }
+
+      message.error(error?.data?.message || "Failed to create deal. Please try again.");
     }
   };
 
@@ -287,555 +300,561 @@ const CreateDeal = ({ open, onCancel, leadData, pipelines }) => {
 
   return (
     <>
-    <Modal
-      title={null}
-      open={open}
-      onCancel={handleCancel}
-      footer={null}
-      width={800}
-      destroyOnClose={true}
-      centered
-      closeIcon={null}
-      className="pro-modal custom-modal deal-form-modal"
-      maskClosable={false}
-      style={{
-        "--antd-arrow-background-color": "#ffffff",
-      }}
-      styles={{
-        body: {
-          padding: 0,
-          borderRadius: "8px",
-          overflow: "hidden",
-        },
-        mask: {
-          backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        },
-        content: {
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-        }
-      }}
-    >
-      <div
-        className="modal-header"
+      <Modal
+        title={null}
+        open={open}
+        onCancel={handleCancel}
+        footer={null}
+        width={800}
+        destroyOnClose={true}
+        centered
+        closeIcon={null}
+        className="pro-modal custom-modal deal-form-modal"
+        maskClosable={false}
         style={{
-          background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-          padding: "24px",
-          color: "#ffffff",
-          position: "relative",
+          "--antd-arrow-background-color": "#ffffff",
+        }}
+        styles={{
+          body: {
+            padding: 0,
+            borderRadius: "8px",
+            overflow: "hidden",
+          },
+          mask: {
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          },
+          content: {
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          }
         }}
       >
-        <Button
-          type="text"
-          icon={<FiX />}
-          onClick={handleCancel}
-          style={{
-            color: "#ffffff",
-            position: "absolute",
-            right: "24px",
-            top: "24px",
-          }}
-        />
         <div
+          className="modal-header"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
+            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+            padding: "24px",
+            color: "#ffffff",
+            position: "relative",
           }}
         >
+          <Button
+            type="text"
+            icon={<FiX />}
+            onClick={handleCancel}
+            style={{
+              color: "#ffffff",
+              position: "absolute",
+              right: "24px",
+              top: "24px",
+            }}
+          />
           <div
             style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "12px",
-              background: "rgba(255, 255, 255, 0.2)",
-              backdropFilter: "blur(8px)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
+              gap: "16px",
             }}
           >
-            <FiDollarSign style={{ fontSize: "24px", color: "#ffffff" }} />
-          </div>
-          <div>
-            <h2
+            <div
               style={{
-                margin: "0",
-                fontSize: "24px",
-                fontWeight: "600",
-                color: "#ffffff",
+                width: "48px",
+                height: "48px",
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.2)",
+                backdropFilter: "blur(8px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              Create New Deal
-            </h2>
-            <Text
-              style={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.85)",
-              }}
-            >
-              Fill in the information to create deal
-            </Text>
+              <FiDollarSign style={{ fontSize: "24px", color: "#ffffff" }} />
+            </div>
+            <div>
+              <h2
+                style={{
+                  margin: "0",
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  color: "#ffffff",
+                }}
+              >
+                Create New Deal
+              </h2>
+              <Text
+                style={{
+                  fontSize: "14px",
+                  color: "rgba(255, 255, 255, 0.85)",
+                }}
+              >
+                Fill in the information to create deal
+              </Text>
+            </div>
           </div>
         </div>
-      </div>
 
-      <Spin spinning={isLoading}>
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          requiredMark={false}
-          className="deal-form custom-form"
-          style={{ padding: "24px" }}
-        >
-          {/* Deal Details Section */}
-          <div className="section-title" style={{ marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Deal Details</Text>
-          </div>
-          
-          <div className="form-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-            marginBottom: '32px'
-          }}>
-            <Form.Item
-              name="dealName"
-              label={<span style={formItemStyle}>Deal Name</span>}
-              rules={[
-                { required: true, message: "Please enter deal name" },
-                { min: 3, message: "Deal name must be at least 3 characters" },
-              ]}
-            >
-              <Input
-                prefix={<FiUser style={prefixIconStyle} />}
-                placeholder="Enter deal name"
-                style={inputStyle}
-              />
-            </Form.Item>
+        <Spin spinning={isCreatingDeal || isUpdatingLead}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            requiredMark={false}
+            className="deal-form custom-form"
+            style={{ padding: "24px" }}
+          >
+            {/* Deal Details Section */}
+            <div className="section-title" style={{ marginBottom: '16px' }}>
+              <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Deal Details</Text>
+            </div>
 
-            <Form.Item
-              name="valueGroup"
-              label={<span style={formItemStyle}>Deal Value</span>}
-              className="combined-input-item"
-            >
-              <Input.Group compact className="value-input-group">
-                <Form.Item
-                  name="currency"
-                  noStyle
-                  initialValue={defaultCurrency}
-                >
-                  <Select
-                    style={{ width: '120px' }}
-                    className="currency-select"
-                    dropdownMatchSelectWidth={false}
-                    suffixIcon={<FiChevronDown size={14} />}
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) => {
-                      const currencyData = currencies.find(c => c.currencyCode === option.value);
-                      return (
-                        currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
-                        currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
-                      );
-                    }}
-                    dropdownStyle={{ minWidth: '180px' }}
-                    popupClassName="custom-select-dropdown"
+            <div className="form-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '16px',
+              marginBottom: '32px'
+            }}>
+              <Form.Item
+                name="dealTitle"
+                label={<span style={formItemStyle}>Deal Title</span>}
+                rules={[
+                  { required: true, message: "Please enter deal title" },
+                  { min: 3, message: "Deal title must be at least 3 characters" },
+                ]}
+              >
+                <Input
+                  prefix={<FiUser style={prefixIconStyle} />}
+                  placeholder="Enter deal title"
+                  style={inputStyle}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="valueGroup"
+                label={<span style={formItemStyle}>Deal Value</span>}
+                className="combined-input-item"
+              >
+                <Input.Group compact className="value-input-group">
+                  <Form.Item
+                    name="currency"
+                    noStyle
+                    initialValue={defaultCurrency}
+                    rules={[{ required: true, message: "Please select currency" }]}
                   >
-                    {currencies?.map((currency) => (
-                      <Option key={currency.id} value={currency.currencyCode}>
-                        <div className="currency-option">
-                          <span className="currency-icon">{currency.currencyIcon}</span>
-                          <div className="currency-details">
-                            <span className="currency-code">{currency.currencyCode}</span>
-                            <span className="currency-name">{currency.currencyName}</span>
-                          </div>
-                        </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="value"
-                  noStyle
-                >
-                  <Input
-                    style={{ width: 'calc(100% - 120px)' }}
-                    placeholder="Enter amount"
-                    type="number"
-                    onChange={(e) => handleValueChange(e.target.value)}
-                  />
-                </Form.Item>
-              </Input.Group>
-            </Form.Item>
-
-            <Form.Item
-              name="pipeline"
-              label={<span style={formItemStyle}>Pipeline</span>}
-              rules={[{ required: true, message: "Please select a pipeline" }]}
-            >
-              <Select
-                ref={selectRef}
-                open={dropdownOpen}
-                onDropdownVisibleChange={setDropdownOpen}
-                placeholder="Select pipeline"
-                onChange={handlePipelineChange}
-                style={selectStyle}
-                suffixIcon={<FiChevronDown size={14} />}
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div
-                      style={{
-                        padding: '8px 12px',
-                        display: 'flex',
-                        justifyContent: 'center'
+                    <Select
+                      style={{ width: '120px' }}
+                      className="currency-select"
+                      dropdownMatchSelectWidth={false}
+                      suffixIcon={<FiChevronDown size={14} />}
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) => {
+                        const currencyData = currencies.find(c => c.currencyCode === option.value);
+                        return (
+                          currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
+                          currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
+                        );
                       }}
+                      dropdownStyle={{ minWidth: '180px' }}
+                      popupClassName="custom-select-dropdown"
                     >
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddPipelineClick}
+                      {currencies?.map((currency) => (
+                        <Option key={currency.id} value={currency.currencyCode}>
+                          <div className="currency-option">
+                            <span className="currency-icon">{currency.currencyIcon}</span>
+                            <div className="currency-details">
+                              <span className="currency-code">{currency.currencyCode}</span>
+                              <span className="currency-name">{currency.currencyName}</span>
+                            </div>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="value"
+                    noStyle
+                    rules={[{ required: true, message: "Please enter deal value" }]}
+                  >
+                    <Input
+                      style={{ width: 'calc(100% - 120px)' }}
+                      placeholder="Enter amount"
+                      type="number"
+                      onChange={(e) => handleValueChange(e.target.value)}
+                    />
+                  </Form.Item>
+                </Input.Group>
+              </Form.Item>
+
+              <Form.Item
+                name="pipeline"
+                label={<span style={formItemStyle}>Pipeline</span>}
+                rules={[{ required: true, message: "Please select a pipeline" }]}
+              >
+                <Select
+                  ref={selectRef}
+                  open={dropdownOpen}
+                  onDropdownVisibleChange={setDropdownOpen}
+                  placeholder="Select pipeline"
+                  onChange={handlePipelineChange}
+                  style={selectStyle}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div
                         style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
+                          padding: '8px 12px',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
+                          justifyContent: 'center'
                         }}
                       >
-                        Add Pipeline
-                      </Button>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddPipelineClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Pipeline
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-                popupClassName="custom-select-dropdown"
-              >
-                {pipelines.map((pipeline) => (
-                  <Option key={pipeline.id} value={pipeline.id}>
-                    {pipeline.pipeline_name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="stage"
-              label={<span style={formItemStyle}>Stage</span>}
-              rules={[{ required: true, message: "Please select a stage" }]}
-            >
-              <Select
-                placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
-                disabled={!selectedPipeline}
-                style={selectStyle}
-                suffixIcon={<FiChevronDown size={14} />}
-                popupClassName="custom-select-dropdown"
-              >
-                {filteredStages.map((stage) => (
-                  <Option key={stage.id} value={stage.id}>
-                    {stage.stageName}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="status"
-              label={<span style={formItemStyle}>Status</span>}
-            >
-              <Select
-                placeholder="Select status"
-                style={selectStyle}
-                popupClassName="custom-select-dropdown"
-              >
-                {statuses.map((status) => (
-                  <Option key={status.id} value={status.id}>
-                    <Tag color={status.color}>{status.name}</Tag>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="closedDate"
-              label={<span style={formItemStyle}>Expected Close Date</span>}
-            >
-              <DatePicker
-                size="large"
-                format="YYYY-MM-DD"
-                style={{
-                  width: '100%',
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-                disabledDate={(current) => {
-                  return current && current < dayjs().startOf('day');
-                }}
-                placeholder="Select date"
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-                superNextIcon={null}
-                superPrevIcon={null}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="label"
-              label={<span style={formItemStyle}>Label</span>}
-            >
-              <Select
-                placeholder="Select label"
-                style={selectStyle}
-                suffixIcon={<FiChevronDown size={14} />}
-                popupClassName="custom-select-dropdown"
-              >
-                {labels.map(label => (
-                  <Option key={label.id} value={label.name}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div  style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: label.color || '#1890ff'
-                      }}></div>
-                      {label.name}
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-            name="source"
-            label={<span style={formItemStyle}>Source</span>}
-            rules={[{ required: true, message: "Please select source" }]}
-          >
-            <Select
-              placeholder="Select source"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
-            >
-              {sources.map((source) => (
-                <Option key={source.id} value={source.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: source.color || '#1890ff'
-                      }}
-                    />
-                    {source.name}
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="products"
-            label={<Text style={formItemStyle}>Products</Text>}
-            rules={[{ required: false, message: 'Please select products' }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select products"
-              style={selectStyle}
-              optionFilterProp="children"
-              showSearch
-              onChange={handleProductsChange}
-            >
-              {products?.map((product) => (
-                <Option key={product.id} value={product.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ 
-                      width: '32px', 
-                      height: '32px', 
-                      borderRadius: '4px',
-                      overflow: 'hidden'
-                    }}>
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => e.target.style.display = 'none'}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: '500' }}>{product.name}</span>
-                      <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.price}</span>
-                    </div>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-          </div>
-
-          {/* Contact Information Section */}
-          <div className="section-title" style={{ marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Contact Information</Text>
-          </div>
-          
-          <div className="form-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-            marginBottom: '32px'
-          }}>
-            <Form.Item
-              name="firstName"
-              label={<span style={formItemStyle}>First Name</span>}
-            >
-              <Input
-                prefix={<FiUser style={prefixIconStyle} />}
-                placeholder="Enter first name"
-                style={inputStyle}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="company_name"
-              label={<span style={formItemStyle}>Company Name</span>}
-            >
-              <Input
-                prefix={<FiBriefcase style={prefixIconStyle} />}
-                placeholder="Enter company name"
-                style={inputStyle}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label={<span style={formItemStyle}>Email</span>}
-            >
-              <Input
-                prefix={<FiMail style={prefixIconStyle} />}
-                placeholder="Enter email"
-                style={inputStyle}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="phoneGroup"
-              label={<span style={formItemStyle}>Phone Number</span>}
-              className="combined-input-item"
-            >
-              <Input.Group compact className="phone-input-group">
-                <Form.Item
-                  name="phoneCode"
-                  noStyle
-                  initialValue={defaultPhoneCode}
+                  )}
+                  popupClassName="custom-select-dropdown"
                 >
-                  <Select
-                    style={{ width: '120px' }}
-                    dropdownMatchSelectWidth={false}
-                    showSearch
-                    optionFilterProp="children"
-                    className="phone-code-select"
-                    suffixIcon={<FiChevronDown size={14} />}
-                    filterOption={(input, option) => {
-                      const countryData = countries.find(c => c.phoneCode.replace('+', '') === option.value);
-                      return (
-                        countryData?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
-                        countryData?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
-                        countryData?.phoneCode?.includes(input)
-                      );
-                    }}
-                    dropdownStyle={{ minWidth: '200px' }}
-                    popupClassName="custom-select-dropdown"
-                  >
-                    {countries?.map((country) => (
-                      <Option key={country.id} value={country.phoneCode.replace('+', '')}>
-                        <div className="phone-code-option">
-                          <div className="phone-code-main">
-                            <span className="phone-code">+{country.phoneCode.replace('+', '')}</span>
-                            <span className="country-code">{country.countryCode}</span>
-                          </div>
-                          <span className="country-name">{country.countryName}</span>
+                  {pipelines.map((pipeline) => (
+                    <Option key={pipeline.id} value={pipeline.id}>
+                      {pipeline.pipeline_name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="stage"
+                label={<span style={formItemStyle}>Stage</span>}
+                rules={[{ required: true, message: "Please select a stage" }]}
+              >
+                <Select
+                  placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
+                  disabled={!selectedPipeline}
+                  style={selectStyle}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  popupClassName="custom-select-dropdown"
+                >
+                  {filteredStages.map((stage) => (
+                    <Option key={stage.id} value={stage.id}>
+                      {stage.stageName}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="closedDate"
+                label={<span style={formItemStyle}>Expected Close Date</span>}
+                rules={[{ required: true, message: "Please select expected close date" }]}
+              >
+                <DatePicker
+                  size="large"
+                  format="YYYY-MM-DD"
+                  style={{
+                    width: '100%',
+                    borderRadius: "10px",
+                    height: "48px",
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e6e8eb",
+                  }}
+                  disabledDate={(current) => {
+                    return current && current < dayjs().startOf('day');
+                  }}
+                  placeholder="Select date"
+                  suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+                  superNextIcon={null}
+                  superPrevIcon={null}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="source"
+                label={<span style={formItemStyle}>Source</span>}
+                rules={[{ required: true, message: "Please select source" }]}
+              >
+                <Select
+                  placeholder="Select source"
+                  style={selectStyle}
+                  popupClassName="custom-select-dropdown"
+                >
+                  {sources.map((source) => (
+                    <Option key={source.id} value={source.id}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: source.color || '#1890ff'
+                          }}
+                        />
+                        {source.name}
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="products"
+                label={<Text style={formItemStyle}>Products</Text>}
+                rules={[{ required: false, message: 'Please select products' }]}
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Select products"
+                  style={selectStyle}
+                  optionFilterProp="children"
+                  showSearch
+                  onChange={handleProductsChange}
+                >
+                  {products?.map((product) => (
+                    <Option key={product.id} value={product.id}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '4px',
+                          overflow: 'hidden'
+                        }}>
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => e.target.style.display = 'none'}
+                          />
                         </div>
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="phone"
-                  noStyle
-                >
-                  <Input
-                    style={{ width: 'calc(100% - 120px)' }}
-                    placeholder="Enter phone number"
-                    prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
-                  />
-                </Form.Item>
-              </Input.Group>
-            </Form.Item>
-          </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: '500' }}>{product.name}</span>
+                          <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.price}</span>
+                        </div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </div>
 
-          <Divider style={{ margin: "24px 0" }} />
+            {/* Contact Information Section */}
+            <div className="section-title" style={{ marginBottom: '16px' }}>
+              <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
+            </div>
 
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "12px",
-            }}
-          >
-            <Button
-              onClick={handleCancel}
-              size="large"
+            <div className="form-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '16px',
+              marginBottom: '32px'
+            }}>
+              <Form.Item
+                name="firstName"
+                label={<span style={formItemStyle}>First Name</span>}
+              >
+                <Input
+                  prefix={<FiUser style={prefixIconStyle} />}
+                  placeholder="Enter first name"
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: '#f8fafc'
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="lastName"
+                label={<span style={formItemStyle}>Last Name</span>}
+              >
+                <Input
+                  prefix={<FiUser style={prefixIconStyle} />}
+                  placeholder="Enter last name"
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: '#f8fafc'
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="email"
+                label={<span style={formItemStyle}>Email</span>}
+                rules={[
+                  {
+                    type: 'email',
+                    message: 'Please enter a valid email address',
+                  },
+                ]}
+              >
+                <Input
+                  prefix={<FiMail style={prefixIconStyle} />}
+                  placeholder="Enter email address"
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: '#f8fafc'
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="phoneGroup"
+                label={<span style={formItemStyle}>Phone Number</span>}
+                className="combined-input-item"
+              >
+                <Input.Group compact className="phone-input-group">
+                  <Form.Item
+                    name="phoneCode"
+                    noStyle
+                    initialValue={defaultPhoneCode}
+                  >
+                    <Select
+                      style={{ width: '120px' }}
+                      dropdownMatchSelectWidth={false}
+                      showSearch
+                      optionFilterProp="children"
+                      className="phone-code-select"
+                      suffixIcon={<FiChevronDown size={14} />}
+                      filterOption={(input, option) => {
+                        const countryData = countries.find(c => c.phoneCode.replace('+', '') === option.value);
+                        return (
+                          countryData?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
+                          countryData?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
+                          countryData?.phoneCode?.includes(input)
+                        );
+                      }}
+                      dropdownStyle={{ minWidth: '200px' }}
+                      popupClassName="custom-select-dropdown"
+                    >
+                      {countries?.map((country) => (
+                        <Option key={country.id} value={country.phoneCode.replace('+', '')}>
+                          <div className="phone-code-option">
+                            <div className="phone-code-main">
+                              <span className="phone-code">+{country.phoneCode.replace('+', '')}</span>
+                              <span className="country-code">{country.countryCode}</span>
+                            </div>
+                            <span className="country-name">{country.countryName}</span>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="phone"
+                    noStyle
+                  >
+                    <Input
+                      style={{
+                        width: 'calc(100% - 120px)',
+                        backgroundColor: '#f8fafc'
+                      }}
+                      placeholder="Enter phone number"
+                      prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
+                    />
+                  </Form.Item>
+                </Input.Group>
+              </Form.Item>
+
+              <Form.Item
+                name="company_name"
+                label={<span style={formItemStyle}>Company Name</span>}
+              >
+                <Input
+                  prefix={<FiBriefcase style={prefixIconStyle} />}
+                  placeholder="Enter company name"
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: '#f8fafc'
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="address"
+                label={<span style={formItemStyle}>Address</span>}
+              >
+                <Input
+                  prefix={<FiMapPin style={prefixIconStyle} />}
+                  placeholder="Enter address"
+                  style={{
+                    ...inputStyle,
+                    backgroundColor: '#f8fafc'
+                  }}
+                />
+              </Form.Item>
+            </div>
+
+            <Divider style={{ margin: "24px 0" }} />
+
+            <div
               style={{
-                padding: "8px 24px",
-                height: "44px",
-                borderRadius: "10px",
-                border: "1px solid #e6e8eb",
-                fontWeight: "500",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "flex-end",
+                gap: "12px",
               }}
             >
-              Cancel
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isLoading}
-              size="large"
-              style={{
-                padding: "8px 24px",
-                height: "44px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                border: "none",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              Create Deal
-            </Button>
-          </div>
-        </Form>
-      </Spin>
-    </Modal>
-    
-    <AddPipelineModal
-      isOpen={isAddPipelineVisible}
-      onClose={() => setIsAddPipelineVisible(false)}
-    />
+              <Button
+                onClick={handleCancel}
+                size="large"
+                style={{
+                  padding: "8px 24px",
+                  height: "44px",
+                  borderRadius: "10px",
+                  border: "1px solid #e6e8eb",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isCreatingDeal || isUpdatingLead}
+                size="large"
+                style={{
+                  padding: "8px 24px",
+                  height: "44px",
+                  borderRadius: "10px",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  border: "none",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                Create Deal
+              </Button>
+            </div>
+          </Form>
+        </Spin>
+      </Modal>
 
-    <style jsx global>{`
+      <AddPipelineModal
+        isOpen={isAddPipelineVisible}
+        onClose={() => setIsAddPipelineVisible(false)}
+      />
+
+      <style jsx global>{`
       .deal-form-modal {
         .currency-select, .phone-code-select {
           cursor: pointer;

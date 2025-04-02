@@ -30,10 +30,10 @@ const DealList = ({ onEdit, onView }) => {
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
   const navigate = useNavigate();
- 
+
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
-  
+
   // Ensure data is always an array
   const deals = Array.isArray(data) ? data : [];
 
@@ -113,7 +113,7 @@ const DealList = ({ onEdit, onView }) => {
       case "pending":
         color = "orange";
         break;
-      
+
       default:
         color = "default";
     }
@@ -128,17 +128,17 @@ const DealList = ({ onEdit, onView }) => {
       sorter: (a, b) => (a.dealName || "").localeCompare(b.dealName || ""),
       render: (text, record) => (
         <div style={{ display: "flex", alignItems: "center" }}>
-          <Avatar 
-            icon={<FiBriefcase />} 
-            style={{ 
-              backgroundColor: "#e6f7ff", 
+          <Avatar
+            icon={<FiBriefcase />}
+            style={{
+              backgroundColor: "#e6f7ff",
               color: "#1890ff",
-              marginRight: "12px" 
-            }} 
+              marginRight: "12px"
+            }}
           />
           <div>
-            <Text 
-              strong 
+            <Text
+              strong
               style={{ cursor: 'pointer' }}
               onClick={() => handleDealClick(record.id)}
             >

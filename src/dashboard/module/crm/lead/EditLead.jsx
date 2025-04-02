@@ -51,7 +51,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const [selectedPipeline, setSelectedPipeline] = useState(null);
   const { data: stagesData } = useGetLeadStagesQuery();
   // Get sources data
- 
+
 
   // Replace the hardcoded statuses with API data
   const statuses = statusesData?.data || [];
@@ -128,7 +128,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       // Parse phone number to extract country code and number
       const phoneMatch = initialValues.telephone?.match(/^\+(\d+)\s(.*)$/);
       const phoneNumber = phoneMatch ? phoneMatch[2] : initialValues.telephone || '';
-      
+
       // Find country by phone code
       const phoneCode = phoneMatch ? phoneMatch[1] : '';
       const country = countries?.find(c => c.phoneCode.replace('+', '') === phoneCode);
@@ -154,7 +154,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         console.error('Error parsing lead_members:', error);
       }
 
-      console.log(initialValues,"initialValues")
+      console.log(initialValues, "initialValues")
       form.setFieldsValue({
         ...initialValues,
         phoneCode: countryId,
@@ -183,7 +183,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     try {
       // Get the selected country's phone code
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
-      
+
       // Format phone number with country code
       const formattedPhone = values.telephone ?
         `+${selectedCountry?.phoneCode?.replace('+', '')} ${values.telephone}` :

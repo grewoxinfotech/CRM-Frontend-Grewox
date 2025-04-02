@@ -53,8 +53,6 @@ const Lead = () => {
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
 
- 
-
   const handleLeadClick = (lead) => {
     navigate(`/dashboard/crm/lead/${lead.id}`);
   };
@@ -190,13 +188,13 @@ const Lead = () => {
         )}
       </Card>
 
-      <CreateLead open={isModalOpen} pipelines={pipelines} 
-      currencies={currencies}
-      countries={countries}
-      sourcesData={sourcesData}
-      statusesData={statusesData}
-      categoriesData={categoriesData}
-      onCancel={() => setIsModalOpen(false)} />
+      <CreateLead open={isModalOpen} pipelines={pipelines}
+        currencies={currencies}
+        countries={countries}
+        sourcesData={sourcesData}
+        statusesData={statusesData}
+        categoriesData={categoriesData}
+        onCancel={() => setIsModalOpen(false)} />
       <EditLead
         open={isEditModalOpen}
         pipelines={pipelines}

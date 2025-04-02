@@ -4,31 +4,28 @@ import {
   FiEdit2,
   FiTrash2,
   FiEye,
-  FiUser,
   FiMoreVertical,
-  FiDollarSign,
   FiZap,
   FiTarget,
   FiTrendingUp
 } from "react-icons/fi";
 import { useDeleteLeadMutation } from "./services/LeadApi";
-import { useGetLabelsQuery, useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
-
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
 
 const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
+  const navigate = useNavigate();
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-  const { data: categoriesData } = useGetLabelsQuery(loggedInUser?.id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
 
   // Filter and prepare data
@@ -95,9 +92,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
 
   // Format currency
   const formatCurrency = (value, currencyId) => {
-    const currencyDetails = currencies?.find(c => c.id === currencyId);
+    const currencyDetails = currencies?.find(c => c.id === currencyId || c.currencyCode === currencyId);
     if (!currencyDetails) return `${value}`;
-    
+
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 0,
@@ -210,6 +207,16 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
       sorter: (a, b) => a.leadValue - b.leadValue,
     },
     {
+      title: "Status",
+      dataIndex: "is_converted",
+      key: "is_converted",
+      render: (is_converted) => (
+        <Tag color={is_converted ? "success" : "processing"}>
+          {is_converted ? "Converted" : "Active"}
+        </Tag>
+      ),
+    },
+    {
       title: "Actions",
       key: "actions",
       width: 80,
@@ -217,7 +224,31 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
       render: (_, record) => (
         <div onClick={e => e.stopPropagation()}>
           <Dropdown
-            menu={getDropdownItems(record)}
+            menu={{
+              items: [
+                {
+                  key: 'view',
+                  label: 'View Details',
+                  icon: <FiEye />,
+                  onClick: () => navigate(`/dashboard/crm/lead/${record.id}`)
+                },
+                ...(record.is_converted ? [] : [
+                  {
+                    key: 'edit',
+                    label: 'Edit Lead',
+                    icon: <FiEdit2 />,
+                    onClick: () => onEdit(record)
+                  },
+                  {
+                    key: 'delete',
+                    label: 'Delete Lead',
+                    icon: <FiTrash2 />,
+                    onClick: () => handleDelete(record.id),
+                    danger: true
+                  }
+                ])
+              ]
+            }}
             trigger={['click']}
             placement="bottomRight"
             arrow
@@ -235,28 +266,70 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={leads?.data || []}
-      rowKey="id"
+    <>
+      <Table
+        columns={columns}
+        dataSource={leads?.data || []}
+        rowKey="id"
 
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-        showTotal: (total) => `Total ${total} leads`,
-      }}
-      className="lead-table"
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)'
-      }}
-      onRow={(record) => ({
-        onClick: () => onLeadClick(record),
-        style: { cursor: 'pointer' }
-      })}
-    />
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} leads`,
+        }}
+        className="lead-table"
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)'
+        }}
+        onRow={(record) => ({
+          onClick: () => onLeadClick(record),
+          style: { cursor: 'pointer' }
+        })}
+      />
+      <style jsx global>{`
+        .action-button {
+          padding: 4px 8px;
+          border-radius: 6px;
+          color: #6B7280;
+          transition: all 0.3s;
+          
+          &:hover {
+            background: #F3F4F6;
+            color: #1890ff;
+          }
+        }
+        
+        .ant-dropdown-menu {
+          padding: 4px !important;
+          border-radius: 8px !important;
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+          
+          .ant-dropdown-menu-item {
+            padding: 8px 12px !important;
+            border-radius: 6px !important;
+            
+            .anticon {
+              margin-right: 8px !important;
+            }
+            
+            &:hover {
+              background: #F3F4F6 !important;
+            }
+            
+            &-danger {
+              color: #ff4d4f !important;
+              
+              &:hover {
+                background: #fff1f0 !important;
+              }
+            }
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

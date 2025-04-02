@@ -87,10 +87,6 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
   // Filter stages to only show lead type stages
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
 
-  // Get sources data
-  
- console.log(sourcesData,"sourcesData")
-
   // Replace the hardcoded statuses with API data
   const statuses = statusesData?.data || [];
   const sources = sourcesData?.data || [];
@@ -103,7 +99,7 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
     { value: "low", label: "Low Interest", color: "#ff4d4f" },
   ];
 
- 
+
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
@@ -156,7 +152,7 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
     try {
       // Get the selected country's phone code
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
-      
+
       // Format phone number with country code
       const formattedPhone = values.telephone ?
         `+${selectedCountry?.phoneCode?.replace('+', '')} ${values.telephone}` :
@@ -473,14 +469,14 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
                 rules={[{ required: true, message: 'Please enter lead value' }]}
               >
                 <InputNumber
-                  style={{ width: 'calc(100% - 100px)' }}
+                  style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
                   placeholder="Enter amount"
                 />
               </Form.Item>
             </Input.Group>
           </Form.Item>
 
-          
+
           <Form.Item
             name="pipeline"
             label={<span style={formItemStyle}>Pipeline</span>}
@@ -906,7 +902,7 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
                 noStyle
               >
                 <InputNumber
-                  style={{ width: 'calc(100% - 100px)' }}
+                  style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
                   placeholder="Enter phone number"
                 />
               </Form.Item>
