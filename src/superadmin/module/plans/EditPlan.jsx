@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, Form, Input, Button, Typography, Select, InputNumber, Row, Col, Divider, Switch } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Form, Input, Button, Typography, Select, InputNumber, Row, Col, Divider, Switch, Dropdown, Menu } from 'antd';
 import { FiPackage, FiX, FiDollarSign, FiUsers, FiCalendar, FiList, FiClock, FiHardDrive } from 'react-icons/fi';
 import { useUpdatePlanMutation } from './services/planApi';
 import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
@@ -11,6 +11,9 @@ const { Option } = Select;
 const EditPlan = ({ open, onCancel, initialValues, idd }) => {
     const [form] = Form.useForm();
     const [updatePlan, { isLoading }] = useUpdatePlanMutation();
+    const [durationType, setDurationType] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(null);
+    const [selectedYear, setSelectedYear] = useState(null);
     const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
@@ -20,7 +23,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
         if (initialValues) {
             form.setFieldsValue({
                 name: initialValues.name,
-                price: initialValues.price?.toString(),
+                price: initialValues.price,
                 currency: initialValues.currency || 'INR',
                 duration: initialValues.duration?.toString(),
                 trial_period: initialValues.trial_period?.toString(),
@@ -31,16 +34,39 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 max_customers: initialValues.max_customers?.toString(),
                 status: initialValues.status === 'active'
             });
+
+            const durationStr = initialValues.duration?.toString() || '';
+            if (durationStr.includes('Month')) {
+                const months = parseInt(durationStr);
+                setDurationType('Monthly');
+                setSelectedMonth(months);
+                form.setFieldValue('duration', `${months} Month${months > 1 ? 's' : ''}`);
+            } else if (durationStr.includes('Year')) {
+                const years = parseInt(durationStr);
+                setDurationType('Yearly');
+                setSelectedYear(years);
+                form.setFieldValue('duration', `${years} Year${years > 1 ? 's' : ''}`);
+            } else if (durationStr === 'Lifetime') {
+                setDurationType('Lifetime');
+                form.setFieldValue('duration', 'Lifetime');
+            }
         }
     }, [initialValues, form]);
 
     const handleSubmit = async (values) => {
         try {
+            let formattedDuration = 'Lifetime';
+            if (durationType === 'Monthly' && selectedMonth) {
+                formattedDuration = `${selectedMonth} Month${selectedMonth > 1 ? 's' : ''}`;
+            } else if (durationType === 'Yearly' && selectedYear) {
+                formattedDuration = `${selectedYear} Year${selectedYear > 1 ? 's' : ''}`;
+            }
+
             const updateData = {
                 name: values.name,
                 price: values.price_group?.toString(),
                 currency: values.currency,
-                duration: values.duration?.toString(),
+                duration: formattedDuration,
                 trial_period: values.trial_period?.toString(),
                 storage_limit: values.storage_limit?.toString(),
                 max_users: values.max_users?.toString(),
@@ -58,6 +84,98 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
             message.error('Failed to update plan: ' + (error.message || 'Unknown error'));
         }
     };
+
+    const monthlyMenu = (
+        <Menu className="duration-submenu">
+            <div className="duration-input-container">
+                <InputNumber
+                    min={1}
+                    max={12}
+                    value={selectedMonth}
+                    placeholder="Enter number of months"
+                    onChange={(value) => {
+                        if (value && value > 0 && value <= 12) {
+                            setDurationType('Monthly');
+                            setSelectedMonth(value);
+                            setSelectedYear(null);
+                            form.setFieldValue('duration', `${value} Month${value > 1 ? 's' : ''}`);
+                        }
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    className="duration-input"
+                />
+                <div className="duration-hint">For durations longer than 11 months, please use yearly option</div>
+            </div>
+        </Menu>
+    );
+
+    const yearlyMenu = (
+        <Menu className="duration-submenu">
+            <div className="duration-input-container">
+                <InputNumber
+                    min={1}
+                    max={10}
+                    value={selectedYear}
+                    placeholder="Enter number of years"
+                    onChange={(value) => {
+                        if (value && value > 0 && value <= 10) {
+                            setDurationType('Yearly');
+                            setSelectedYear(value);
+                            setSelectedMonth(null);
+                            form.setFieldValue('duration', `${value} Year${value > 1 ? 's' : ''}`);
+                        }
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    className="duration-input"
+                />
+                <div className="duration-type-label">Years</div>
+            </div>
+        </Menu>
+    );
+
+    const mainMenu = (
+        <Menu className="duration-menu">
+            <Menu.Item
+                key="Lifetime"
+                className="duration-option lifetime"
+                onClick={() => {
+                    setDurationType('Lifetime');
+                    setSelectedMonth(null);
+                    setSelectedYear(null);
+                    form.setFieldValue('duration', 'Lifetime');
+                }}
+            >
+                <div className="duration-option-content">
+                    <span className="option-label">Lifetime</span>
+                    <span className="option-description">Never expires</span>
+                </div>
+            </Menu.Item>
+            <Menu.SubMenu 
+                key="Monthly" 
+                title={
+                    <div className="duration-option-content">
+                        <span className="option-label">Monthly</span>
+                        <span className="option-description">1-12 months duration</span>
+                    </div>
+                }
+                popupClassName="duration-popup"
+            >
+                {monthlyMenu}
+            </Menu.SubMenu>
+            <Menu.SubMenu 
+                key="Yearly" 
+                title={
+                    <div className="duration-option-content">
+                        <span className="option-label">Yearly</span>
+                        <span className="option-description">1-12 years duration</span>
+                    </div>
+                }
+                popupClassName="duration-popup"
+            >
+                {yearlyMenu}
+            </Menu.SubMenu>
+        </Menu>
+    );
 
     return (
         <Modal
@@ -241,6 +359,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                     name='price'
                                     className="price-input"
                                     placeholder="Enter price"
+                                    value={initialValues?.price}
                                     min={0}
                                     style={{ flex: 1, border: 'none', borderRadius: 0, padding: '0 16px' }}
                                     onChange={(value) => form.setFieldsValue({ price_group: value?.toString() })}
@@ -251,17 +370,44 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     <Col span={12}>
                         <Form.Item
                             name="duration"
-                            label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Duration (months)</span>}
-                            rules={[{ required: true, message: 'Please enter duration' }]}
+                            label={
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                }}>
+                                    Duration
+                                </span>
+                            }
+                            rules={[{ required: true }]}
+                            style={{ flex: 1 }}
                         >
-                            <InputNumber
-                                prefix={<FiCalendar style={{ color: '#1890ff' }} />}
-                                placeholder="Enter duration"
-                                size="large"
-                                style={{ width: '100%', borderRadius: '10px', height: '48px' }}
-                                min={1}
-                                onChange={(value) => form.setFieldsValue({ duration: value?.toString() })}
-                            />
+                            <Dropdown
+                                overlay={mainMenu}
+                                trigger={['click']}
+                                overlayClassName="duration-dropdown"
+                            >
+                                <Button className="duration-select-button" style={{
+                                    width: '100%',
+                                    height: '48px',
+                                    padding: '0 16px',
+                                    borderRadius: '10px',
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #e6e8eb',
+                                }}>
+                                    <div className="duration-display">
+                                        <span className="selected-duration">
+                                            {durationType === 'Monthly' && selectedMonth
+                                                ? `${selectedMonth} Month${selectedMonth > 1 ? 's' : ''}`
+                                                : durationType === 'Yearly' && selectedYear
+                                                    ? `${selectedYear} Year${selectedYear > 1 ? 's' : ''}`
+                                                    : durationType === 'Lifetime'
+                                                        ? 'Lifetime'
+                                                        : 'Select Duration'}
+                                        </span>
+                                        <span className="duration-arrow">▼</span>
+                                    </div>
+                                </Button>
+                            </Dropdown>
                         </Form.Item>
                     </Col>
                 </Row>
@@ -456,8 +602,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     />
                 </Form.Item>
 
-
-
                 <Divider style={{ margin: '24px 0' }} />
 
                 <div
@@ -602,6 +746,96 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     &:focus-within {
                         border-color: #1890ff;
                         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+                }
+
+                .duration-select-button {
+                    width: 100%;
+                    height: 48px;
+                    padding: 0 16px;
+                    border-radius: 10px;
+                    background: #f8fafc;
+                    border: 1px solid #e6e8eb;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        border-color: #40a9ff;
+                    }
+
+                    &:active, &:focus {
+                        border-color: #1890ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+
+                    .duration-display {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        width: 100%;
+
+                        .selected-duration {
+                            color: rgba(0, 0, 0, 0.85);
+                            font-size: 14px;
+                        }
+
+                        .duration-arrow {
+                            color: rgba(0, 0, 0, 0.25);
+                            font-size: 12px;
+                        }
+                    }
+                }
+
+                .duration-dropdown {
+                    .ant-dropdown-menu {
+                        padding: 8px;
+                        min-width: 280px;
+                        border-radius: 12px;
+                        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+                        
+                        .duration-option {
+                            border-radius: 8px;
+                            margin: 4px 0;
+                            padding: 12px 16px;
+                            transition: all 0.3s ease;
+
+                            &:hover {
+                                background: rgba(24, 144, 255, 0.06);
+                            }
+
+                            &.lifetime {
+                                border-bottom: 1px solid #f0f0f0;
+                                margin-bottom: 8px;
+                                padding-bottom: 16px;
+                            }
+                        }
+                    }
+                }
+
+                .duration-submenu {
+                    padding: 16px;
+                    min-width: 240px;
+
+                    .duration-input-container {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    }
+
+                    .duration-input {
+                        margin-bottom: 12px;
+                        width: 100%;
+                    }
+
+                    .duration-type-label {
+                        font-size: 14px;
+                        font-weight: 500;
+                        color: rgba(0, 0, 0, 0.85);
+                        margin-bottom: 8px;
+                    }
+
+                    .duration-hint {
+                        font-size: 12px;
+                        color: rgba(0, 0, 0, 0.65);
                     }
                 }
             `}</style>

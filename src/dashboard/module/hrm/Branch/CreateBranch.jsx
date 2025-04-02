@@ -14,6 +14,7 @@ import { FiUser, FiFileText, FiMapPin, FiPhone, FiMail, FiX, FiPlus } from 'reac
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useCreateBranchMutation, useUpdateBranchMutation } from './services/branchApi';
 import CreateUser from '../../user-management/users/CreateUser';
+import { useGetRolesQuery } from '../role/services/roleApi';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -27,6 +28,29 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
     const [createBranch, { isLoading: isCreating }] = useCreateBranchMutation();
     const [updateBranch, { isLoading: isUpdating }] = useUpdateBranchMutation();
+    const { data: rolesData} = useGetRolesQuery();
+
+    // Add array of excluded role names
+    const excludedRoleNames = ['employee', 'client', 'sub-client', 'super-admin'];
+
+    // Modify the users memo to filter out users with excluded roles
+    const filteredUsers = React.useMemo(() => {
+        if (!userData?.data || !rolesData?.data) return [];
+        
+        const usersList = Array.isArray(userData.data) ? userData.data : [];
+        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+
+        return usersList.filter(user => {
+            // Find the role object for this user
+            const userRole = rolesList.find(role => role.id === user.role_id);
+            
+            // If role not found or role_name is in excluded list, filter out this user
+            if (!userRole || excludedRoleNames.includes(userRole.role_name.toLowerCase())) {
+                return false;
+            }
+            return true;
+        });
+    }, [userData, rolesData]);
 
     // Effect to set initial values when editing
     useEffect(() => {
@@ -36,15 +60,6 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
             form.resetFields();
         }
     }, [form, isEditing, initialValues]);
-
-    // Safely extract users array from the response
-    const users = React.useMemo(() => {
-        if (!userData) return [];
-        if (Array.isArray(userData)) return userData;
-        if (Array.isArray(userData.data)) return userData.data;
-        if (Array.isArray(userData.users)) return userData.users;
-        return [];
-    }, [userData]);
 
     const handleSubmit = async (values) => {
         try {
@@ -290,7 +305,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                                 const label = option?.label?.toString() || '';
                                 return label.toLowerCase().includes(input.toLowerCase());
                             }}
-                            options={Array.isArray(users) ? users.map(user => ({
+                            options={Array.isArray(filteredUsers) ? filteredUsers.map(user => ({
                                 label: user.name || user.username,
                                 value: user.id,
                                 icon: (

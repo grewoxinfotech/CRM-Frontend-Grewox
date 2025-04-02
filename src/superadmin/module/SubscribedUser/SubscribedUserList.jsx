@@ -19,14 +19,16 @@ const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
         return Array.isArray(subscribedUsersData) ? subscribedUsersData : subscribedUsersData.data || [];
     }, [subscribedUsersData]);
 
-    // Memoized function to get plan name
+    // Memoized function to get plan name with null check
     const getPlanName = useCallback((planId) => {
+        if (!plansData?.data) return 'N/A';
         const plan = plansData.data.find(plan => plan.id === planId);
         return plan ? plan.name : 'N/A';
     }, [plansData]);
 
-    // Memoized function to get company name
+    // Memoized function to get company name with null check
     const getCompanyName = useCallback((companyId) => {
+        if (!companiesData?.data) return 'N/A';
         const company = companiesData.data.find(company => company.id === companyId);
         return company ? (company.company_name || company.username || 'N/A') : 'N/A';
     }, [companiesData]);
@@ -160,6 +162,7 @@ const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
         }));
     }, [users]);
 
+    // Add loading state to table
     return (
         <Table
             columns={columns}

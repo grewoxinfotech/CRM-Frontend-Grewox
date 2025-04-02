@@ -172,7 +172,6 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
             <Table
                 columns={columns}
                 dataSource={branches}
-                loading={isLoading || isLoadingUsers}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,

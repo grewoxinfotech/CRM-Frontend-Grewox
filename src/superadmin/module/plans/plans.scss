@@ -1228,3 +1228,164 @@
         }
     }
 }
+
+// Duration dropdown styles
+.duration-dropdown {
+    .ant-dropdown-menu {
+        padding: 8px;
+        min-width: 280px;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        
+        .duration-option {
+            border-radius: 8px;
+            margin: 4px 0;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: rgba(24, 144, 255, 0.06);
+            }
+
+            &.lifetime {
+                border-bottom: 1px solid #f0f0f0;
+                margin-bottom: 8px;
+                padding-bottom: 16px;
+            }
+        }
+
+        .duration-option-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+            .option-label {
+                font-weight: 500;
+                color: rgba(0, 0, 0, 0.85);
+                font-size: 14px;
+            }
+
+            .option-description {
+                color: rgba(0, 0, 0, 0.45);
+                font-size: 12px;
+            }
+        }
+    }
+
+    .duration-submenu {
+        padding: 16px;
+        min-width: 300px;
+        
+        .duration-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .duration-input {
+                width: 100%;
+                height: 40px;
+                border: 1px solid #e6e8eb;
+                border-radius: 8px;
+                background-color: #f8fafc;
+                font-size: 14px;
+                padding: 8px 12px;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    border-color: #40a9ff;
+                }
+
+                &:focus, &-focused {
+                    border-color: #1890ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+
+                .ant-input-number-input-wrap {
+                    height: 100%;
+                    
+                    input {
+                        height: 100%;
+                        font-size: 14px;
+                        &::placeholder {
+                            color: rgba(0, 0, 0, 0.45);
+                        }
+                    }
+                }
+
+                // Hide arrows
+                .ant-input-number-handler-wrap {
+                    display: none;
+                }
+            }
+
+            .duration-type-label {
+                position: absolute;
+                right: 24px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: rgba(0, 0, 0, 0.45);
+                font-size: 14px;
+                pointer-events: none;
+            }
+
+            .duration-hint {
+                font-size: 12px;
+                color: rgba(0, 0, 0, 0.45);
+                margin-top: 4px;
+                padding: 0 4px;
+            }
+        }
+    }
+}
+
+// Duration select button styles
+.duration-select-button {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e6e8eb;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: #40a9ff;
+    }
+
+    &:active, &:focus {
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+    }
+
+    .duration-display {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+
+        .selected-duration {
+            color: rgba(0, 0, 0, 0.85);
+            font-size: 14px;
+        }
+
+        .duration-arrow {
+            color: rgba(0, 0, 0, 0.25);
+            font-size: 12px;
+        }
+    }
+}
+
+// Popup submenu styles
+.duration-popup {
+    .ant-dropdown-menu {
+        padding: 0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+}
+
+// Style for the input when it's active/focused
+.ant-input-number-focused, .ant-input-number:focus {
+    border-color: #1890ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+}

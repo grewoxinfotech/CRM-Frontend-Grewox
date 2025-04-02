@@ -8,10 +8,11 @@ import {
   FiCalendar,
 } from "react-icons/fi";
 import dayjs from "dayjs";
-import {
+import { 
   useGetLeaveQuery,
   useDeleteLeaveMutation,
   useUpdateLeaveMutation,
+  useApproveLeaveMutation,
 } from "./services/LeaveApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 import EditLeave from "./Editleave";
@@ -25,6 +26,7 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
   const employees = employeesData?.data || [];
   const [deleteLeave] = useDeleteLeaveMutation();
   const [updateLeave] = useUpdateLeaveMutation();
+  const [approveLeave] = useApproveLeaveMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [processingLeaveId, setProcessingLeaveId] = useState(null);
@@ -92,15 +94,15 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
   const handleLeaveAction = async (id, status, employeeId) => {
     setProcessingLeaveId(id);
     try {
-      await updateLeave({
+      await approveLeave({
         id,
         data: {
           status,
           employeeId,
-          remarks:
-            status === "approved" ? "Leave approved." : "Leave rejected.",
+          remarks: status === "approved" ? "Leave approved." : "Leave rejected.",
         },
       }).unwrap();
+      
       setProcessedLeaves((prev) => new Set([...prev, id]));
       message.success(
         `Leave ${status === "approved" ? "approved" : "rejected"} successfully`
@@ -210,7 +212,13 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       render: (status) => (
         <Tag
           color={getStatusColor(status)}
-          style={{ borderRadius: "4px", padding: "2px 8px", fontSize: "13px" }}
+          style={{ 
+            textTransform: "uppercase",
+            fontWeight: 500,
+            padding: "4px 12px",
+            borderRadius: "16px",
+            fontSize: "12px"
+          }}
         >
           {status}
         </Tag>
@@ -232,9 +240,7 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       width: 200,
       render: (_, record) => {
         const isProcessing = processingLeaveId === record.id;
-        const isStatusFinal = ["approved", "rejected"].includes(
-          record.status?.toLowerCase()
-        );
+        const isStatusFinal = record.status?.toLowerCase() === "approved" || record.status?.toLowerCase() === "rejected";
         const isProcessed = processedLeaves.has(record.id);
         const isDisabled = isProcessing || isStatusFinal || isProcessed;
 
@@ -248,7 +254,12 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
               }
               disabled={isDisabled}
               loading={isProcessing}
-              style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+              style={{ 
+                backgroundColor: "#4096ff", 
+                borderColor: "#4096ff",
+                borderRadius: "6px",
+                fontWeight: 500
+              }}
             >
               Accept
             </Button>
@@ -260,6 +271,10 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
               }
               disabled={isDisabled}
               loading={isProcessing}
+              style={{
+                borderRadius: "6px",
+                fontWeight: 500
+              }}
             >
               Reject
             </Button>
@@ -300,41 +315,23 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
   ];
 
   return (
-    <div
-      className="leave-list"
-      style={{
-        background: "#ffffff",
-        borderRadius: "8px",
-        overflow: "hidden",
-      }}
-    >
+      <div className="leave-list">
       <Table
         columns={columns}
         dataSource={filteredLeaves}
         rowKey="id"
         loading={isLoading}
+        scroll={{ x: 1000 }}
         pagination={{
+          total: filteredLeaves?.length || 0,
           pageSize: 10,
+          showTotal: (total) => `Total ${total} leaves`,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
-          style: {
-            margin: "16px 24px",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-          },
+          showQuickJumper: true,
+          size: 'default',
+          position: ['bottomRight']
         }}
         className="leave-table"
-        style={{
-          "& .ant-table-thead > tr > th": {
-            background: "#fafafa",
-            fontWeight: 600,
-            color: "#262626",
-          },
-          "& .ant-table-tbody > tr:hover > td": {
-            background: "#f5f5f5",
-          },
-        }}
       />
       {selectedLeave && (
         <EditLeave

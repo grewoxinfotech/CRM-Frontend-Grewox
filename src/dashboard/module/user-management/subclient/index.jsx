@@ -49,6 +49,8 @@ const SubClient = () => {
     const [filteredSubclients, setFilteredSubclients] = useState([]);
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState('table');
+    
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const { data: subclientsData, isLoading: isLoadingSubclients, refetch } = useGetAllSubclientsQuery();
     const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
     const [deleteSubclient, { isLoading: isDeleting }] = useDeleteSubclientMutation();
@@ -58,7 +60,25 @@ const SubClient = () => {
             const transformedData = subclientsData.data.map(subclient => ({
                 id: subclient.id,
                 username: subclient.username || 'N/A',
-                email: subclient.email || 'N/A',
+                firstName: subclient.firstName || '',
+                lastName: subclient.lastName || '',
+                email: subclient.email || '',
+                phone: subclient.phone || '',
+                phoneCode: subclient.phoneCode || '',
+                website: subclient.website || '',
+                address: subclient.address || '',
+                city: subclient.city || '',
+                state: subclient.state || '',
+                country: subclient.country || '',
+                zipcode: subclient.zipcode || '',
+                bankname: subclient.bankname || '',
+                bankaccount: subclient.bankaccount || '',
+                gstin: subclient.gstin || '',
+                ifsc: subclient.ifsc || '',
+                accountholder: subclient.accountholder || '',
+                accountnumber: subclient.accountnumber || '',
+                gstIn: subclient.gstIn || '',
+                banklocation: subclient.banklocation || '',
                 role_name: rolesData?.data?.find(role => role?.id === subclient?.role_id)?.role_name || 'N/A',
                 created_at: subclient.createdAt || '-',
                 updated_at: subclient.updatedAt || null,
@@ -94,8 +114,10 @@ const SubClient = () => {
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
-            bodyStyle: {
-                padding: '20px',
+            styles: {
+                body: {
+                    padding: '20px',
+                },
             },
             onOk: async () => {
                 try {
@@ -121,7 +143,13 @@ const SubClient = () => {
         }
         setSelectedSubclient(subclient);
         setIsEditFormVisible(true);
+        setIsEditModalOpen(true);
     };
+
+    // const handleEdit = (subclient) => {
+    //     setSelectedSubclient(subclient);
+    //     setIsEditModalOpen(true);
+    // };
 
     const handleView = (subclient) => {
         setSelectedSubclient(subclient);
@@ -320,21 +348,34 @@ const SubClient = () => {
                 />
             )}
 
-            {isEditFormVisible && selectedSubclient && (
+            <EditSubclient
+                open={isEditModalOpen}
+                bodyStyle={{ marginTop: '20px' }}
+                onCancel={() => {
+                    setIsEditModalOpen(false);
+                    setIsEditFormVisible(false);
+                    setSelectedSubclient(null);
+                }}
+                initialValues={selectedSubclient}
+            />
+
+            {/* {isEditFormVisible && selectedSubclient && (
                 <EditSubclient
                     visible={isEditFormVisible}
                     subclient={selectedSubclient}
                     onClose={() => {
                         setIsEditFormVisible(false);
+                        setIsEditModalOpen(false);
                         setSelectedSubclient(null);
                     }}
                     onSuccess={() => {
                         setIsEditFormVisible(false);
+                        setIsEditModalOpen(false);
                         setSelectedSubclient(null);
                         refetch();
                     }}
                 />
-            )}
+            )} */}
         </div>
     );
 };

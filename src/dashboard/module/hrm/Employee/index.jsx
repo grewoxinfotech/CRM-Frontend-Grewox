@@ -56,14 +56,20 @@ const Employee = () => {
 
     const [viewMode, setViewMode] = useState('table');
 
-   
+  
+
     useEffect(() => {
         if (employeesData?.data) {
             const filteredData = employeesData.data.filter(employee => 
                 employee?.created_by === loggedInUser?.username || 
                 employee?.client_id === loggedInUser?.id
             );
+
+      
             const transformedData = filteredData.map(employee => ({
+
+                
+
                 id: employee.id,
                 firstName: employee.firstName || 'N/A',
                 lastName: employee.lastName || 'N/A',
@@ -103,7 +109,6 @@ const Employee = () => {
             }));
             setEmployees(transformedData);
             setFilteredEmployees(transformedData);
-
         }
     }, [employeesData]);
 
@@ -154,8 +159,6 @@ const Employee = () => {
 
     const handleEditEmployee = (employee) => {
 
-        console.log("employee",employee);
-
         // Format the employee data for the edit form
         const formattedEmployee = {
             id: employee.id,
@@ -169,11 +172,10 @@ const Employee = () => {
             address: employee.address,
             gender: employee.gender,
             joiningDate: employee.joiningDate,
-            leaveDate: employee.leaveDate,
             // IDs for dropdowns
-            branch: employee.branch?.id || employee.branch,
-            department: employee.department?.id || employee.departmentName,
-            designation: employee.designation?.id || employee.designationName,
+            branch:employee.branch,
+            department: employee.department,
+            designation: employee.designation,
             // Salary information
             salary: employee.salary,
             currency: employee.currency,
@@ -185,10 +187,10 @@ const Employee = () => {
             banklocation: employee.banklocation,
         };
 
-        console.log("formattedEmployee",formattedEmployee);
 
         setSelectedEmployee(formattedEmployee);
         setIsEditFormVisible(true);   
+
 
     };
 

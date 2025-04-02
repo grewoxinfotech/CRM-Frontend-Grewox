@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Modal,
     Form,
@@ -10,6 +10,8 @@ import {
     Typography,
     Divider,
     message,
+    Dropdown,
+    Menu
 } from 'antd';
 import {
     FiUsers,
@@ -28,6 +30,10 @@ const { Option } = Select;
 const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
     const [form] = Form.useForm();
     const [createPlan, { isLoading }] = useCreatePlanMutation();
+    const [durationType, setDurationType] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(null);
+    const [selectedYear, setSelectedYear] = useState(null);
+    
     const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
@@ -35,13 +41,19 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
 
     const handleSubmit = async (values) => {
         try {
-            // Convert trial_period to string and format other values
+            let formattedDuration = 'Lifetime';
+            if (durationType === 'Monthly' && selectedMonth) {
+                formattedDuration = `${selectedMonth} Month${selectedMonth > 1 ? 's' : ''}`;
+            } else if (durationType === 'Yearly' && selectedYear) {
+                formattedDuration = `${selectedYear} Year${selectedYear > 1 ? 's' : ''}`;
+            }
+
             const formattedValues = {
                 ...values,
-                trial_period: values.trial_period.toString(), // Convert to string
+                duration: formattedDuration,
+                trial_period: values.trial_period.toString(),
                 features: {},
                 status: values.status ? 'active' : 'inactive',
-                // Convert other numeric values to strings if needed
                 max_users: values.max_users.toString(),
                 max_clients: values.max_clients.toString(),
                 max_customers: values.max_customers.toString(),
@@ -51,7 +63,6 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
             };
 
             await createPlan(formattedValues).unwrap();
-
             message.success('Plan created successfully');
             form.resetFields();
             onCancel();
@@ -60,6 +71,104 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
         }
     };
 
+    const handleMenuClick = (e) => {
+        if (e.key === 'Lifetime') {
+            setDurationType('Lifetime');
+            setSelectedMonth(null);
+            setSelectedYear(null);
+            form.setFieldValue('duration', 'Lifetime');
+        }
+    };
+
+    const monthlyMenu = (
+        <Menu className="duration-submenu">
+            <div className="duration-input-container">
+                <InputNumber
+                    min={1}
+                    max={12}
+                    placeholder="Enter number of months"
+                    onChange={(value) => {
+                        if (value && value > 0 && value <= 12) {
+                            setDurationType('Monthly');
+                            setSelectedMonth(value);
+                            setSelectedYear(null);
+                            form.setFieldValue('duration', `${value} Month${value > 1 ? 's' : ''}`);
+                        }
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    className="duration-input"
+                />
+                <div className="duration-hint">For durations longer than 11 months, please use yearly option</div>
+            </div>
+        </Menu>
+    );
+
+    const yearlyMenu = (
+        <Menu className="duration-submenu">
+            <div className="duration-input-container">
+                <InputNumber
+                    min={1}
+                    max={10}
+                    placeholder="Enter number of years"
+                    onChange={(value) => {
+                        if (value && value > 0 && value <= 12) {
+                            setDurationType('Yearly');
+                            setSelectedYear(value);
+                            setSelectedMonth(null);
+                            form.setFieldValue('duration', `${value} Year${value > 1 ? 's' : ''}`);
+                        }
+                    }}
+                    onClick={e => e.stopPropagation()}
+                    className="duration-input"
+                />
+                <div className="duration-type-label">Years</div>
+            </div>
+        </Menu>
+    );
+
+    const mainMenu = (
+        <Menu className="duration-menu">
+            <Menu.Item
+                key="Lifetime"
+                className="duration-option lifetime"
+                onClick={() => {
+                    setDurationType('Lifetime');
+                    setSelectedMonth(null);
+                    setSelectedYear(null);
+                    form.setFieldValue('duration', 'Lifetime');
+                }}
+            >
+                <div className="duration-option-content">
+                    <span className="option-label">Lifetime</span>
+                    <span className="option-description">Never expires</span>
+                </div>
+            </Menu.Item>
+            <Menu.SubMenu 
+                key="Monthly" 
+                title={
+                    <div className="duration-option-content">
+                        <span className="option-label">Monthly</span>
+                        <span className="option-description">1-12 months duration</span>
+                    </div>
+                }
+                popupClassName="duration-popup"
+            >
+                {monthlyMenu}
+            </Menu.SubMenu>
+            <Menu.SubMenu 
+                key="Yearly" 
+                title={
+                    <div className="duration-option-content">
+                        <span className="option-label">Yearly</span>
+                        <span className="option-description">1-12 years duration</span>
+                    </div>
+                }
+                popupClassName="duration-popup"
+            >
+                {yearlyMenu}
+            </Menu.SubMenu>
+        </Menu>
+    );
 
     return (
         <Modal
@@ -296,22 +405,26 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                         rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
-                        <Select
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                height: '48px',
-                            }}
-                            className="duration-select"
-                            dropdownStyle={{
-                                padding: '8px',
-                                borderRadius: '10px',
-                            }}
+                        <Dropdown
+                            overlay={mainMenu}
+                            trigger={['click']}
+                            overlayClassName="duration-dropdown"
                         >
-                            <Option value="Per Month">Monthly</Option>
-                            <Option value="Per Year">Yearly</Option>
-                        </Select>
+                            <Button className="duration-select-button">
+                                <div className="duration-display">
+                                    <span className="selected-duration">
+                                        {durationType === 'Monthly' && selectedMonth
+                                            ? `${selectedMonth} Month${selectedMonth > 1 ? 's' : ''}`
+                                            : durationType === 'Yearly' && selectedYear
+                                                ? `${selectedYear} Year${selectedYear > 1 ? 's' : ''}`
+                                                : durationType === 'Lifetime'
+                                                    ? 'Lifetime'
+                                                    : 'Select Duration'}
+                                    </span>
+                                    <span className="duration-arrow">▼</span>
+                                </div>
+                            </Button>
+                        </Dropdown>
                     </Form.Item>
                 </div>
 
@@ -717,6 +830,34 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 .duration-select.ant-select-focused .ant-select-selector {
                     border-color: #1890ff !important;
                     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                }
+
+                .duration-submenu {
+                    padding: 16px;
+                    min-width: 240px;
+
+                    .duration-input-container {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    }
+
+                    .duration-input {
+                        margin-bottom: 12px;
+                        width: 100%;
+                    }
+
+                    .duration-type-label {
+                        font-size: 14px;
+                        font-weight: 500;
+                        color: rgba(0, 0, 0, 0.85);
+                        margin-bottom: 8px;
+                    }
+
+                    .duration-hint {
+                        font-size: 12px;
+                        color: rgba(0, 0, 0, 0.65);
+                    }
                 }
             `}</style>
         </Modal>

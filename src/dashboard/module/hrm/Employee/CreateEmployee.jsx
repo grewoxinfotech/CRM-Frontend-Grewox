@@ -50,9 +50,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
     const { data: departmentsData } = useGetAllDepartmentsQuery();
     const { data: designationsData } = useGetAllDesignationsQuery();
 
-
-
-
     // Add this useEffect to set default currency when form is initialized
     React.useEffect(() => {
         form.setFieldsValue({
@@ -68,27 +65,23 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         return [];
     }, [branchesData]);
 
-
-
     // Transform department data
     const departments = React.useMemo(() => {
         if (!departmentsData) return [];
         if (Array.isArray(departmentsData)) return departmentsData;
-        if (Array.isArray(departmentsData.data)) return departmentsData.data;
+        if (Array.isArray(departmentsData)) return departmentsData;
         return [];
     }, [departmentsData]);
 
-  
 
     // Transform designation data
     const designations = React.useMemo(() => {
         if (!designationsData) return [];
         if (Array.isArray(designationsData)) return designationsData;
-        if (Array.isArray(designationsData.data)) return designationsData.data;
+        if (Array.isArray(designationsData)) return designationsData;
         return [];
+        
     }, [designationsData]);
-
-
 
     const handleCreateBranchSuccess = async (newBranch) => {
         setIsCreateBranchModalOpen(false);
@@ -99,18 +92,50 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
     };
 
     const handleCreateDepartmentSuccess = async (newDepartment) => {
-        setIsCreateDepartmentModalOpen(false);
-        message.success('Department created successfully');
-        if (newDepartment?.id) {
-            form.setFieldValue('department', newDepartment.id);
+        try {
+            setIsCreateDepartmentModalOpen(false);
+            message.success('Department created successfully');
+            
+            // Add new department to filtered departments if it matches current branch
+            const currentBranchId = form.getFieldValue('branch');
+            if (currentBranchId === newDepartment.branch) {
+                setFilteredDepartments(prev => [...prev, {
+                    id: newDepartment.id,
+                    department_name: newDepartment.department_name,
+                    branch: newDepartment.branch
+                }]);
+            }
+
+            // Set the newly created department as selected
+            if (newDepartment?.id) {
+                form.setFieldValue('department', newDepartment.id);
+            }
+        } catch (error) {
+            console.error('Error handling new department:', error);
         }
     };
 
     const handleCreateDesignationSuccess = async (newDesignation) => {
-        setIsCreateDesignationModalOpen(false);
-        message.success('Designation created successfully');
-        if (newDesignation?.id) {
-            form.setFieldValue('designation', newDesignation.id);
+        try {
+            setIsCreateDesignationModalOpen(false);
+            message.success('Designation created successfully');
+            
+            // Add new department to filtered departments if it matches current branch
+            const currentBranchId = form.getFieldValue('branch');
+            if (currentBranchId === newDesignation.branch) {
+                setFilteredDesignations(prev => [...prev, {
+                    id: newDesignation.id,
+                    designation_name: newDesignation.designation_name,
+                    branch: newDesignation.branch
+                }]);
+            }
+
+            // Set the newly created department as selected
+            if (newDesignation?.id) {
+                form.setFieldValue('designation', newDesignation.id);
+            }
+        } catch (error) {
+            tujconsole.error('Error handling new designation:', error);
         }
     };
 
@@ -222,7 +247,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                 message.success('Employee verified successfully');
                 setIsOtpModalVisible(false);
                 otpForm.resetFields();
-            form.resetFields();
+                form.resetFields();
                 onCancel();
                 if (onSuccess) {
                     onSuccess();
@@ -236,8 +261,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
             setOtpLoading(false);
         }
     };
-
-  
 
     const handleResendOtp = async () => {
         try {
@@ -410,7 +433,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         </Button>
                     </Form.Item>
 
-        <div style={{ 
+                    <div style={{ 
                         textAlign: 'center',
                         marginTop: '16px',
                         fontSize: '14px',
@@ -425,24 +448,49 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         </Button>
                     </div>
                 </Form>
-        </div>
+            </div>
         </Modal>
     );
 
     const handleBranchChange = (branchId) => {
+        // Reset department and designation selections
         form.setFieldsValue({
             department: undefined,
             designation: undefined
         });
 
-        const depts = departments.filter(dept => dept.branch === branchId);
-        setFilteredDepartments(depts);
+        // Filter departments for selected branch
+        if (departments && departments.length > 0) {
+            const depts = departments.filter(dept => dept.branch === branchId);
+            setFilteredDepartments(depts);
+        } else {
+            setFilteredDepartments([]);
+        }
 
+        // Filter designations for selected branch
         const desigs = Array.isArray(designations) 
             ? designations.filter(desig => desig.branch === branchId)
             : [];
         setFilteredDesignations(desigs);
     };
+
+    // Add useEffect to handle initial data loading and updates
+    React.useEffect(() => {
+        const currentBranchId = form.getFieldValue('branch');
+        if (currentBranchId && departments) {
+            const depts = departments.filter(dept => dept.branch === currentBranchId);
+            setFilteredDepartments(depts);
+        }
+    }, [departments, form]);
+
+    // Add useEffect to handle initial data loading and updates
+    React.useEffect(() => {
+        const currentBranchId = form.getFieldValue('branch');
+        if (currentBranchId && designations) {
+            const desigs = designations.filter(desig => desig.branch === currentBranchId);
+            setFilteredDesignations(desigs);
+        }
+    }, [designations, form]);
 
     return (
         <>
@@ -886,7 +934,10 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                             }
                         >
                             {filteredDepartments.map(dept => (
-                                <Option key={dept.id} value={dept.id}>
+                                <Option 
+                                    key={dept.id} 
+                                    value={dept.id}
+                                >
                                     {dept.department_name}
                                 </Option>
                             ))}

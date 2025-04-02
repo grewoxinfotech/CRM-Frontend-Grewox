@@ -9,6 +9,9 @@ import {
   Dropdown,
   Menu,
   Breadcrumb,
+  Row,
+  Col,
+  Tabs,
 } from "antd";
 import {
   FiPlus,
@@ -16,6 +19,8 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
+  FiGrid,
+  FiList,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import CreateLeave from "./CreateLeave";
@@ -26,8 +31,10 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
 import { useGetLeaveQuery } from "./services/LeaveApi";
+import "./leave.scss";
 
 const { Title, Text } = Typography;
+const { TabPane } = Tabs;
 
 const Leave = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -35,6 +42,7 @@ const Leave = () => {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [viewType, setViewType] = useState("list"); // 'list' or 'grid'
   const { data: leaveData = [], isLoading } = useGetLeaveQuery();
 
   const handleCreate = () => {
@@ -142,156 +150,75 @@ const Leave = () => {
   };
 
   return (
-    <div
-      className="leave-container"
-      style={{ padding: "24px", backgroundColor: "#f5f7fa" }}
-    >
-      <div className="page-header" style={{ marginBottom: "24px" }}>
+    <div className="revenue-page">
+      <div className="page-breadcrumb">
         <Breadcrumb
           items={[
             {
               title: (
-                <Link
-                  to="/dashboard"
-                  style={{
-                    color: "#1890ff",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                  }}
-                >
-                  <FiHome />
+                <Link to="/dashboard">
+                  <FiHome /> Home
                 </Link>
               ),
-              key: "home",
             },
             {
               title: "HRM",
-              key: "hrm",
             },
             {
               title: "Leave Management",
-              key: "leave",
             },
           ]}
         />
-        <Title
-          level={2}
-          style={{ margin: "16px 0", color: "#1f1f1f", fontWeight: 600 }}
-        >
-          Leave Management
-        </Title>
       </div>
 
-      <Card
-        className="leave-card"
-        style={{
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-          background: "#ffffff",
-        }}
-      >
-        <div
-          className="card-header"
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "24px",
-            padding: "0 8px",
-          }}
-        >
-          <div className="search-section">
+      <div className="page-header">
+        <div className="page-title">
+          <h2>Leave Management</h2>
+          <Text type="secondary">Manage employee leave requests</Text>
+        </div>
+        <div className="header-actions">
+          <div className="search-input">
             <Input
               placeholder="Search leave requests..."
-              prefix={<FiSearch style={{ color: "#bfbfbf" }} />}
+              prefix={<FiSearch />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{
-                width: 300,
-                borderRadius: "6px",
-                border: "1px solid #d9d9d9",
-                transition: "all 0.3s",
-                "&:hover": {
-                  borderColor: "#40a9ff",
-                },
-              }}
             />
           </div>
-          <div
-            className="actions-section"
-            style={{ display: "flex", gap: "12px" }}
-          >
+          <div className="action-buttons">
             <Dropdown
               overlay={
-                <Menu
-                  style={{
-                    borderRadius: "6px",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  }}
-                >
-                  <Menu.Item
-                    key="csv"
-                    onClick={() => handleExport("csv")}
-                    style={{ padding: "8px 16px" }}
-                  >
+                <Menu>
+                  <Menu.Item key="csv" onClick={() => handleExport("csv")}>
                     Export as CSV
                   </Menu.Item>
-                  <Menu.Item
-                    key="excel"
-                    onClick={() => handleExport("excel")}
-                    style={{ padding: "8px 16px" }}
-                  >
+                  <Menu.Item key="excel" onClick={() => handleExport("excel")}>
                     Export as Excel
                   </Menu.Item>
-                  <Menu.Item
-                    key="pdf"
-                    onClick={() => handleExport("pdf")}
-                    style={{ padding: "8px 16px" }}
-                  >
+                  <Menu.Item key="pdf" onClick={() => handleExport("pdf")}>
                     Export as PDF
                   </Menu.Item>
                 </Menu>
               }
               trigger={["click"]}
-              placement="bottomRight"
             >
-              <Button
-                icon={<FiDownload />}
-                style={{
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-                loading={loading}
-              >
-                Export
-                <FiChevronDown />
+              <Button className="export-button" loading={loading}>
+                <FiDownload /> Export <FiChevronDown />
               </Button>
             </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus />}
-              onClick={handleCreate}
-              style={{
-                borderRadius: "6px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              New Leave Request
+            <Button type="primary" className="add-button" onClick={handleCreate}>
+              <FiPlus /> New Leave Request
             </Button>
           </div>
         </div>
+      </div>
 
-        <LeaveList
-          onEdit={handleEdit}
-          onView={handleView}
-          searchText={searchText}
-        />
-      </Card>
+     
+            <LeaveList
+              onEdit={handleEdit}
+              onView={handleView}
+              searchText={searchText}
+            />
 
       {isCreateModalOpen && (
         <CreateLeave

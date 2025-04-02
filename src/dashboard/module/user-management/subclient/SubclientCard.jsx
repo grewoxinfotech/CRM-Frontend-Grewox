@@ -53,17 +53,8 @@ const SubclientCard = ({ subclient, onEdit, onDelete, onView }) => {
 
     const getActionMenu = (record) => (
         <Menu className="action-menu">
-            <Menu.Item key="view" icon={<FiEye />} onClick={() => onView(record)}>
-                View Details
-            </Menu.Item>
             <Menu.Item key="edit" icon={<FiEdit2 />} onClick={() => onEdit(record)}>
                 Edit Subclient
-            </Menu.Item>
-            <Menu.Item key="resetPassword" icon={<FiLock />}>
-                Reset Password
-            </Menu.Item>
-            <Menu.Item key="status" icon={<FiUserCheck />}>
-                Change Status
             </Menu.Item>
             <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record)}>
                 Delete Subclient

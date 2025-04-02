@@ -24,8 +24,20 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
 
     // Function to get role name from role_id
     const getRoleName = (role_id) => {
-        const role = rolesData?.data?.find(r => r.id === role_id);
-        return role ? role.role_name : 'N/A';
+
+        // Check if rolesData exists and has data property
+        if (!rolesData?.data) {
+            return 'N/A';
+        }
+
+        // Find the role that matches the role_id
+        const foundRole = rolesData.data.find(role => {
+            return role.id === role.id;
+        });
+
+        // Return the role name if found, otherwise return N/A
+        const roleName = foundRole ? foundRole.role_name : 'N/A';
+        return roleName;
     };
 
     // Helper functions to find names using find method
@@ -161,24 +173,26 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             title: 'Role',
             dataIndex: 'role_id',
             key: 'role_id',
-            render: (role_id) => (
-                <span style={{ 
-                    color: '#595959', 
-                    fontSize: '14px',
-                    padding: '4px 8px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    display: 'inline-block'
-                }}>
-                    {getRoleName(role_id)}
-                </span>
-            ),
+            render: (role_id) => {
+                const roleName = getRoleName(role_id);
+                return (
+                    <span style={{ 
+                        color: '#595959', 
+                        fontSize: '14px',
+                        padding: '4px 8px',
+                        background: '#f5f5f5',
+                        borderRadius: '4px',
+                        display: 'inline-block'
+                    }}>
+                        {roleName}
+                    </span>
+                );
+            },
             sorter: (a, b) => {
                 const roleNameA = getRoleName(a.role_id);
                 const roleNameB = getRoleName(b.role_id);
                 return roleNameA.localeCompare(roleNameB);
             },
-          
         },
         {
             title: 'Branch',
@@ -310,7 +324,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         },
     ];
 
-    // Transform the employees data
+    // Transform the employees data with role names
     const transformedEmployees = useMemo(() => {
         if (!employees) return [];
         return employees.map(emp => ({
@@ -319,9 +333,10 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             name: emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim(),
             branchName: getBranchName(emp.branch),
             departmentName: getDepartmentName(emp.department),
-            designationName: getDesignationName(emp.designation)
+            designationName: getDesignationName(emp.designation),
+            roleName: getRoleName(emp.role_id) // Add role name to transformed data
         }));
-    }, [employees, branchesData, departmentsData, designationsData]);
+    }, [employees, branchesData, departmentsData, designationsData, rolesData]); // Add rolesData to dependencies
 
     return (
         <Table

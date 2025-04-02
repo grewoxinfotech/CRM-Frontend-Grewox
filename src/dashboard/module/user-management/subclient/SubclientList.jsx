@@ -47,32 +47,11 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
     const getActionMenu = (record) => (
         <Menu className="action-menu">
             <Menu.Item
-                key="view"
-                icon={<FiEye />}
-                onClick={() => onView(record)}
-            >
-                View Details
-            </Menu.Item>
-            <Menu.Item
                 key="edit"
                 icon={<FiEdit2 />}
                 onClick={() => onEdit(record)}
             >
                 Edit Subclient
-            </Menu.Item>
-            <Menu.Item
-                key="resetPassword"
-                icon={<FiLock />}
-                onClick={() => console.log('Reset password')}
-            >
-                Reset Password
-            </Menu.Item>
-            <Menu.Item
-                key="status"
-                icon={<FiUserCheck />}
-                onClick={() => console.log('Change status')}
-            >
-                Change Status
             </Menu.Item>
             <Menu.Item
                 key="delete"

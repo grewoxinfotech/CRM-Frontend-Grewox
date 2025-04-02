@@ -193,47 +193,49 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         alignItems: 'center', 
                         gap: '12px' 
                     }}>
-                        <Tag
-                            className="status-tag"
+                       
+                        
+                       <Dropdown
+                        menu={{
+                            items: actionItems,
+                            style: {
+                                borderRadius: '12px',
+                                padding: '8px',
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            }
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
                             style={{
-                                background: statusStyle.background,
-                                color: statusStyle.color,
-                                border: statusStyle.border,
-                                boxShadow: statusStyle.boxShadow,
-                                padding: '4px 12px',
-                                borderRadius: '20px',
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                letterSpacing: '0.02em',
+                                position: 'absolute',
+                                right: '12px',
+                                top: '12px',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '10px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                backdropFilter: 'blur(8px)',
+                                border: 'none',
+                                color: 'white',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '6px',
-                                backdropFilter: 'blur(8px)',
-                                transition: 'all 0.3s ease'
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
                             }}
-                        >
-                            {statusStyle.icon}
-                            <span>{activeSubscription ? 'ACTIVE' : 'INACTIVE'}</span>
-                        </Tag>
-                        
-                        <Dropdown
-                            menu={{
-                                items: actionItems,
-                                style: {
-                                    borderRadius: '12px',
-                                    padding: '8px',
-                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                                }
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                                e.currentTarget.style.transform = 'scale(1.05)';
                             }}
-                            trigger={['click']}
-                            placement="bottomRight"
-                        >
-                            <Button
-                                type="text"
-                                icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-                                className="more-actions-button"
-                            />
-                        </Dropdown>
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                        />
+                    </Dropdown>
                     </div>
                 </div>
 
@@ -271,6 +273,29 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         }}>
                             {company.firstName ? `${company.firstName} ${company.lastName}` : company.name}
                         </Text>
+                        <Tag
+                            className="status-tag"
+                            style={{
+                                background: statusStyle.background,
+                                color: statusStyle.color,
+                                border: statusStyle.border,
+                                boxShadow: statusStyle.boxShadow,
+                                padding: '4px 12px',
+                                marginTop: '10px',
+                                borderRadius: '20px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                letterSpacing: '0.02em',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                backdropFilter: 'blur(8px)',
+                                transition: 'all 0.3s ease'
+                            }}
+                        >
+                            {statusStyle.icon}
+                            <span>{activeSubscription ? 'ACTIVE' : 'INACTIVE'}</span>
+                        </Tag>
                     </div>
 
                     <div style={{

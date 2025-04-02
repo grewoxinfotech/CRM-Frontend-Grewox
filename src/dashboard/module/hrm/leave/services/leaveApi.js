@@ -34,39 +34,13 @@ export const leaveApi = createApi({
       }),
       invalidatesTags: ["Leave"],
     }),
-    verifyUserOtp: builder.mutation({
-      query: (data) => ({
-        url: "auth/verify-otp",
-        method: "POST",
+    approveLeave: builder.mutation({
+      query: ({ id, data }) => ({
+        url: `/leaves/approve/${id}`,
+        method: 'PUT',
         body: data,
       }),
-      invalidatesTags: ["Users"],
-    }),
-    resendOtp: builder.mutation({
-      query: (userId) => ({
-        url: `auth/resend-otp/${userId}`,
-        method: "POST",
-      }),
-    }),
-    verifySignup: builder.mutation({
-      query: ({ otp, token }) => ({
-        url: "auth/verify-signup",
-        method: "POST",
-        body: { otp },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
-      invalidatesTags: ["Users"],
-    }),
-    resendSignupOtp: builder.mutation({
-      query: ({ token }) => ({
-        url: "auth/resend-signup-otp",
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
+      invalidatesTags: ['Leave'],
     }),
   }),
 });
@@ -76,8 +50,5 @@ export const {
   useCreateLeaveMutation,
   useUpdateLeaveMutation,
   useDeleteLeaveMutation,
-  useVerifyUserOtpMutation,
-  useResendOtpMutation,
-  useVerifySignupMutation,
-  useResendSignupOtpMutation,
+  useApproveLeaveMutation,
 } = leaveApi;

@@ -1,6 +1,6 @@
-import React from 'react';
-import { Table, Tag, Tooltip, Button, Space } from 'antd';
-import { FiCalendar, FiUser, FiClock } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { Table, Tag, Tooltip, Button, Space, DatePicker } from 'antd';
+import { FiCalendar, FiUser, FiClock, FiFilter } from 'react-icons/fi';
 import { useGetAllAttendancesQuery } from './services/attendanceApi';
 import { useGetEmployeesQuery } from '../Employee/services/employeeApi';
 import { useGetAllHolidaysQuery } from '../Holiday/services/holidayApi';
@@ -8,7 +8,12 @@ import { useGetLeaveQuery } from '../leave/services/LeaveApi'; // Added leave AP
 import dayjs from 'dayjs';
 import './attendance.scss';
 
-const AttendanceList = ({ searchText, filters, selectedMonth }) => {
+const { MonthPicker } = DatePicker;
+
+const AttendanceList = ({ searchText, filters }) => {
+    // Add state for month filter
+    const [selectedMonth, setSelectedMonth] = useState(dayjs());
+    
     const { data: attendanceData, isLoading: isLoadingAttendance } = useGetAllAttendancesQuery();
     const { data: employeeData, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
     const { data: holidayData, isLoading: isLoadingHolidays } = useGetAllHolidaysQuery();
@@ -61,7 +66,7 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
         const leaveMap = new Map();
 
         data.forEach(leave => {
-            if (leave.status === 'approved' || leave.status === 'pending') {
+            if (leave.status === 'approved') { // Only show approved leaves
                 const startDate = dayjs(leave.startDate);
                 const endDate = dayjs(leave.endDate);
                 let currentDate = startDate;
@@ -80,20 +85,24 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
         return leaveMap;
     }, [leaveData]);
 
-    // Generate dates for the current month
+    // Update month filter handler
+    const handleMonthChange = (date) => {
+        setSelectedMonth(date || dayjs());
+    };
+
+    // Modify getDaysInMonth to use selectedMonth
     const getDaysInMonth = () => {
         const days = [];
-        const date = selectedMonth ? selectedMonth.toDate() : new Date();
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const year = selectedMonth.year();
+        const month = selectedMonth.month();
+        const daysInMonth = selectedMonth.daysInMonth();
 
         for (let i = 1; i <= daysInMonth; i++) {
-            const dayDate = new Date(year, month, i);
+            const dayDate = dayjs(new Date(year, month, i));
             days.push({
                 date: i,
-                day: dayDate.toLocaleDateString('en-US', { weekday: 'short' }),
-                fullDate: dayjs(dayDate).format('YYYY-MM-DD'),
+                day: dayDate.format('ddd'),
+                fullDate: dayDate.format('YYYY-MM-DD'),
             });
         }
         return days;
@@ -112,29 +121,64 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
         'WK': { color: '#13c2c2', text: 'Weekend', background: '#e6fffb' }
     };
 
-    // Generate columns
+    // Add this function to calculate present days
+    const calculateAttendanceRatio = (rowData) => {
+        let presentDays = 0;
+        let totalWorkingDays = 0;
+
+        days.forEach(day => {
+            const status = rowData[`day${day.date}`];
+            // Don't count weekends (WK) and holidays (PH, UNP) in total working days
+            if (status !== 'WK' && status !== 'PH' && status !== 'UNP') {
+                totalWorkingDays++;
+                // Count present (P) and half days (H) as present
+                if (status === 'P' || status === 'H') {
+                    presentDays++;
+                }
+            }
+        });
+
+        return {
+            ratio: `${presentDays}/${totalWorkingDays}`,
+            percentage: totalWorkingDays > 0 
+                ? Math.round((presentDays / totalWorkingDays) * 100) 
+                : 0
+        };
+    };
+
+    // Update the columns definition
     const columns = [
         {
             title: 'Employee Name',
             dataIndex: 'name',
             key: 'name',
             fixed: 'left',
-            width: 200,
-            render: (text, record) => (
-                <div className="employee-info">
-                    <div className="employee-avatar">
-                        {record.avatar ? (
-                            <img src={record.avatar} alt={text} />
-                        ) : (
-                            <FiUser />
-                        )}
+            width: 250,
+            render: (text, record) => {
+                const attendance = calculateAttendanceRatio(record);
+                return (
+                    <div className="employee-info">
+                        <div className="employee-avatar">
+                            {record.avatar ? (
+                                <img src={record.avatar} alt={text} />
+                            ) : (
+                                <FiUser />
+                            )}
+                        </div>
+                        <div className="employee-details">
+                            <span className="employee-name">{text}</span>
+                            <span className="attendance-ratio" style={{
+                                color: attendance.percentage >= 70 ? '#52c41a' : 
+                                       attendance.percentage >= 50 ? '#faad14' : '#ff4d4f',
+                                fontSize: '12px',
+                                fontWeight: 500
+                            }}>
+                                Present: {attendance.ratio} ({attendance.percentage}%)
+                            </span>
+                        </div>
                     </div>
-                    <div className="employee-details">
-                        <span className="employee-name">{text}</span>
-                        <span className="employee-code">{record.code}</span>
-                    </div>
-                </div>
-            ),
+                );
+            },
         },
         ...days.map(day => ({
             title: (
@@ -170,7 +214,7 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
         }))
     ];
 
-    // Generate attendance data
+    // Update your data generation
     const data = React.useMemo(() => {
         const attendances = Array.isArray(attendanceData)
             ? attendanceData
@@ -180,7 +224,6 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
             const rowData = {
                 key: emp.id,
                 name: emp.name,
-                code: emp.code,
                 avatar: emp.avatar
             };
 
@@ -238,6 +281,18 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
     return (
         <div className="attendance-list-container">
             <div className="attendance-header">
+                {/* Add month filter */}
+                <div className="filter-section">
+                    <DatePicker
+                        picker="month"
+                        value={selectedMonth}
+                        onChange={handleMonthChange}
+                        allowClear={false}
+                        format="MMMM YYYY"
+                        className="month-picker"
+                    />
+                
+
                 <div className="status-legend">
                     {Object.entries(statusConfig).map(([key, value]) => (
                         <div key={key} className="legend-item">
@@ -254,12 +309,12 @@ const AttendanceList = ({ searchText, filters, selectedMonth }) => {
                         </div>
                     ))}
                 </div>
+                </div>
             </div>
 
             <Table
                 columns={columns}
                 dataSource={data}
-                loading={isLoadingAttendance || isLoadingEmployees || isLoadingHolidays || isLoadingLeaves}
                 scroll={{ x: 'max-content' }}
                 pagination={false}
                 className="attendance-table"
