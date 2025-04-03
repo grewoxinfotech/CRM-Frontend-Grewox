@@ -53,6 +53,24 @@ const Lead = () => {
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
 
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  const filteredLeads = React.useMemo(() => {
+    if (!leads?.data) return [];
+
+    return leads.data.filter(lead => {
+      const searchLower = searchText.toLowerCase();
+      return (
+        lead.leadTitle?.toLowerCase().includes(searchLower) ||
+        lead.company_name?.toLowerCase().includes(searchLower) ||
+        lead.email?.toLowerCase().includes(searchLower) ||
+        lead.phone?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [leads?.data, searchText]);
+
   const handleLeadClick = (lead) => {
     navigate(`/dashboard/crm/lead/${lead.id}`);
   };
@@ -164,7 +182,7 @@ const Lead = () => {
       <Card className="lead-content">
         {viewMode === "table" ? (
           <LeadList
-            leads={leads}
+            leads={{ data: filteredLeads }}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
@@ -172,7 +190,7 @@ const Lead = () => {
           />
         ) : (
           <LeadCard
-            leads={leads}
+            leads={{ data: filteredLeads }}
             onEdit={handleEdit}
             onDelete={handleDelete}
             categoriesData={categoriesData}
@@ -181,7 +199,6 @@ const Lead = () => {
             currencies={currencies}
             countries={countries}
             pipelines={pipelines}
-
             onView={handleView}
             onLeadClick={handleLeadClick}
           />

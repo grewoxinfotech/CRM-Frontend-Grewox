@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Card, Tag, Button, Tooltip, Avatar, Dropdown, Typography, Progress, Empty, message } from "antd";
+import { Card, Tag, Tooltip, Typography, Empty, message, Button } from "antd";
 import {
-  FiEdit2,
-  FiTrash2,
-  FiEye,
-  FiMoreVertical,
-  FiDollarSign,
-  FiTrendingUp,
+  FiMenu,
   FiTarget,
-  FiZap,
-  FiMenu
+  FiFlag,
+  FiDatabase,
+  FiTag,
+  FiLock,
+  FiMove
 } from "react-icons/fi";
 import CreateDeal from "../deal/CreateDeal";
 import { useGetLeadsQuery, useUpdateLeadMutation } from './services/LeadApi';
@@ -31,15 +29,59 @@ import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
-  horizontalListSortingStrategy,
   useSortable,
-  sortableKeyboardCoordinates
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { useNavigate } from "react-router-dom";
 import { CSS } from '@dnd-kit/utilities';
-import { useGetSourcesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
+import { createPortal } from 'react-dom';
 const { Text } = Typography;
+
+// Currency formatting helper function
+const formatCurrency = (value, currencyCode) => {
+  if (!value) return '0';
+
+  try {
+    const numericValue = parseFloat(value);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode || 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(numericValue);
+  } catch (error) {
+    console.error('Error formatting currency:', error);
+    return `${value} ${currencyCode || 'USD'}`;
+  }
+};
+
+// Add this function near the top with other helper functions
+const getInterestLevel = (level) => {
+  const levels = {
+    "high": {
+      color: "#52c41a",
+      bg: "rgba(82, 196, 26, 0.1)",
+      border: "#b7eb8f",
+      text: "High Interest"
+    },
+    "medium": {
+      color: "#faad14",
+      bg: "rgba(250, 173, 20, 0.1)",
+      border: "#ffd591",
+      text: "Medium Interest"
+    },
+    "low": {
+      color: "#ff4d4f",
+      bg: "rgba(255, 77, 79, 0.1)",
+      border: "#ffa39e",
+      text: "Low Interest"
+    }
+  };
+  return levels[level] || levels.medium;
+};
 
 const DraggableCard = ({ lead, stage, onLeadClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -50,239 +92,299 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
     }
   });
 
+  const handleCardClick = (e) => {
+    if (isDragging) return;
+    if (onLeadClick) {
+      onLeadClick(lead);
+    }
+  };
+
   const { data: sourceData } = useGetSourcesQuery(lead.client_id);
   const { data: categoryData } = useGetCategoriesQuery(lead.client_id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: statusesData } = useGetStatusesQuery(lead.client_id);
 
   const source = sourceData?.data?.find(s => s.id === lead.source);
   const category = categoryData?.data?.find(c => c.id === lead.category);
+  const status = statusesData?.data?.find(s => s.id === lead.status);
 
-  const style = {
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    transition: isDragging ? undefined : 'transform 400ms cubic-bezier(0.16, 1, 0.3, 1)',
-    position: isDragging ? 'relative' : 'static',
-    touchAction: 'none',
-    transformOrigin: '50% 50%',
-    zIndex: isDragging ? 999999 : 'auto',
-    pointerEvents: lead.is_converted ? 'none' : isDragging ? 'none' : undefined,
-    isolation: isDragging ? 'isolate' : 'auto',
-    transformStyle: 'preserve-3d',
-    opacity: lead.is_converted ? 0.7 : 1,
-    cursor: lead.is_converted ? 'default' : isDragging ? 'grabbing' : 'grab'
-  };
+  const cardContent = (
+    <Card
+      className="lead-card"
+      bordered={false}
+      onClick={handleCardClick}
+      style={{
+        marginBottom: '8px',
+        borderRadius: '8px',
+        background: lead.is_converted ? '#f8fafc' : '#ffffff',
+        cursor: lead.is_converted ? 'not-allowed' : isDragging ? 'grabbing' : 'grab',
+        boxShadow: isDragging
+          ? '0 12px 24px rgba(0, 0, 0, 0.12)'
+          : '0 1px 3px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+        transition: isDragging ? 'none' : 'transform 0.2s ease, box-shadow 0.2s ease',
+        transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+        zIndex: isDragging ? 1200 : 1,
+        overflow: 'hidden',
+        opacity: lead.is_converted ? 0.85 : 1
+      }}
+    >
+      {/* Interest Level Top Indicator */}
+      <div style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '3px',
+        background: getInterestLevel(lead.interest_level).color,
+        opacity: 0.9
+      }} />
 
-  const [showCreateDeal, setShowCreateDeal] = useState(false);
-  const [selectedLead, setSelectedLead] = useState(null);
-  const navigate = useNavigate();
-
-  const handleCardClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(`/dashboard/crm/lead/${lead.id}`);
-  };
-
-  const getInterestLevel = (level) => {
-    const levels = {
-      "high": {
-        color: "#ffffff",
-        bg: "#52c41a",
-        text: "High"
-      },
-      "medium": {
-        color: "#ffffff",
-        bg: "#faad14",
-        text: "Med"
-      },
-      "low": {
-        color: "#ffffff",
-        bg: "#ff4d4f",
-        text: "Low"
-      }
-    };
-    return levels[level] || levels.medium;
-  };
-
-  const formatCurrency = (value, currencyId) => {
-    const currencyDetails = currencies.find(c => c.id === currencyId || c.currencyCode === currencyId);
-    if (!currencyDetails) return `${value}`;
-
-    return new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
-  };
-  return (
-    <div ref={setNodeRef} style={style} {...(lead.is_converted ? {} : { ...attributes, ...listeners })}>
-      <Card
-        className={`lead-card ${lead.is_converted ? 'converted' : ''}`}
-        bordered={false}
-        onClick={handleCardClick}
-        style={{
-          width: '100%',
-          marginBottom: '8px',
-          borderRadius: '4px',
-          background: lead.is_converted ? '#f5f5f5' : '#ffffff',
-          cursor: lead.is_converted ? 'default' : isDragging ? 'grabbing' : 'grab',
-          position: 'relative',
-          overflow: 'hidden',
-          borderLeft: `3px solid ${stage.color || '#1890ff'}`,
-          boxShadow: isDragging
-            ? '0 16px 32px -8px rgba(0, 0, 0, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.08)'
-            : '0 1px 3px rgba(0, 0, 0, 0.05)',
-          transition: isDragging
-            ? undefined
-            : 'all 400ms cubic-bezier(0.16, 1, 0.3, 1)',
-          transform: isDragging ? 'scale(1.05)' : 'scale(1)',
-          opacity: isDragging ? 1 : undefined,
-          willChange: 'transform, box-shadow',
-          backfaceVisibility: 'hidden'
-        }}
-      >
-        <div className="card-content" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {/* Title Section at Top */}
-          <div className="title-section" style={{
-            width: '100%',
-            borderBottom: '1px solid #f0f0f0',
-            paddingBottom: '8px',
-            marginBottom: '4px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start'
+      <div className="card-content" style={{
+        padding: '12px 14px 12px 16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px'
+      }}>
+        {/* Top Row with Status and Interest Level */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '-4px'
+        }}>
+          {/* Converted/Active Status */}
+          <div style={{
+            fontSize: '11px',
+            padding: '2px 8px',
+            borderRadius: '12px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: lead.is_converted ? '#dcfce7' : '#dbeafe',
+            color: lead.is_converted ? '#15803d' : '#1e40af',
+            fontWeight: '500',
+            lineHeight: '14px'
           }}>
-            <div>
-              <Tooltip title={lead?.leadTitle}>
-                <Text strong className="lead-title" style={{
-                  fontSize: '14px',
-                  lineHeight: '1.4',
-                  margin: 0,
-                  display: 'block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  color: '#1f2937'
-                }}>
-                  {lead?.leadTitle}
-                </Text>
-              </Tooltip>
-              {lead?.company_name && (
-                <Text className="company-name" style={{
-                  fontSize: '12px',
-                  color: '#6b7280',
-                  display: 'block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  marginTop: '2px'
-                }}>
-                  {lead.company_name}
-                </Text>
-              )}
-            </div>
-            {lead.is_converted && (
-              <Tag color="success" style={{ marginLeft: '8px' }}>
-                Converted
-              </Tag>
-            )}
+            <div style={{
+              width: '4px',
+              height: '4px',
+              borderRadius: '50%',
+              background: 'currentColor'
+            }} />
+            {lead.is_converted ? 'Converted' : 'Active'}
           </div>
 
-          {/* Price and Interest Level */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="metric-value" style={{
-              fontSize: '15px',
+          {/* Interest Level Badge */}
+          <div style={{
+            fontSize: '11px',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: getInterestLevel(lead.interest_level).color,
+            color: '#ffffff',
+            fontWeight: '500',
+            lineHeight: '14px',
+            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+          }}>
+            {getInterestLevel(lead.interest_level).text}
+          </div>
+        </div>
+
+        {/* Title Section */}
+        <div className="title-section" style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: '8px'
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Tooltip title={lead?.leadTitle}>
+              <Text strong className="lead-title" style={{
+                fontSize: '14px',
+                lineHeight: '1.4',
+                display: 'block',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                color: '#1f2937'
+              }}>
+                {lead?.leadTitle}
+              </Text>
+            </Tooltip>
+            {lead?.company_name && (
+              <Text className="company-name" style={{
+                fontSize: '12px',
+                color: '#64748b',
+                display: 'block',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                marginTop: '2px'
+              }}>
+                {lead.company_name}
+              </Text>
+            )}
+          </div>
+          {/* Value Tag */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: '#f0fdf4',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            border: '1px solid #dcfce7',
+            height: '20px'
+          }}>
+            <span style={{
+              fontSize: '12px',
               fontWeight: '600',
-              color: '#52c41a',
-              lineHeight: '1.2',
+              color: '#16a34a',
               whiteSpace: 'nowrap'
             }}>
               {formatCurrency(lead.leadValue, lead.currency)}
             </span>
-            <Tag
-              className={`interest-level ${lead.interest_level}`}
-              style={{
-                backgroundColor: getInterestLevel(lead.interest_level).bg,
-                color: getInterestLevel(lead.interest_level).color,
-                margin: 0,
-                padding: '2px 8px',
-                fontSize: '12px',
-                lineHeight: '18px',
-                height: '20px',
-                borderRadius: '4px',
-                fontWeight: '500',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {getInterestLevel(lead.interest_level).text}
-            </Tag>
           </div>
+        </div>
 
-          {/* Source and Category at Bottom */}
-          <div className="meta-info" style={{
+        {/* Bottom Info Section */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          background: '#f8fafc',
+          margin: '0 -14px -12px -16px',
+          padding: '8px 16px',
+          borderTop: '1px solid #e2e8f0'
+        }}>
+          {/* Tags Row */}
+          <div style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            fontSize: '11px',
-            width: '100%',
-            marginTop: '4px',
-            paddingTop: '8px',
-            borderTop: '1px solid #f0f0f0'
+            gap: '6px',
+            flexWrap: 'wrap',
+            alignItems: 'center'
           }}>
-            {source && (
-              <div className="source" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                width: '100%'
-              }}>
-                <span className="label" style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500', minWidth: '50px' }}>Source:</span>
-                <span style={{
-                  color: '#1890ff',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  padding: '1px 6px',
-                  borderRadius: '3px',
-                  fontSize: '13px'
-                }}>{source.name}</span>
-              </div>
+            {/* Status Tag */}
+            {status && (
+              <Tooltip title={`Status: ${status.name}`}>
+                <Tag style={{
+                  margin: 0,
+                  padding: '2px 8px',
+                  fontSize: '11px',
+                  borderRadius: '4px',
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #e2e8f0',
+                  lineHeight: '16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'default'
+                }}>
+                  <FiFlag style={{ fontSize: '10px' }} />
+                  {status.name}
+                </Tag>
+              </Tooltip>
             )}
+
+            {/* Source Tag */}
+            {source && (
+              <Tooltip title={`Source: ${source.name}`}>
+                <Tag style={{
+                  margin: 0,
+                  padding: '2px 8px',
+                  fontSize: '11px',
+                  borderRadius: '4px',
+                  background: '#eff6ff',
+                  color: '#3b82f6',
+                  border: '1px solid #bfdbfe',
+                  lineHeight: '16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  cursor: 'default'
+                }}>
+                  <FiDatabase style={{ fontSize: '10px' }} />
+                  {source.name}
+                </Tag>
+              </Tooltip>
+            )}
+
+            {/* Category Tag */}
             {category && (
-              <div className="category" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                width: '100%'
-              }}>
-                <span className="label" style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500', minWidth: '50px' }}>Category:</span>
-                <span style={{
-                  color: '#1890ff',
+              <Tooltip title={`Category: ${category.name}`}>
+                <Tag style={{
+                  margin: 0,
+                  padding: '2px 8px',
+                  fontSize: '11px',
+                  borderRadius: '4px',
+                  background: '#ecfeff',
+                  color: '#0891b2',
+                  border: '1px solid #bae6fd',
+                  lineHeight: '16px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  maxWidth: '120px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  padding: '1px 6px',
-                  borderRadius: '3px',
-                  fontSize: '13px'
-                }}>{category.name}</span>
-              </div>
+                  whiteSpace: 'nowrap',
+                  cursor: 'default'
+                }}>
+                  <FiTag style={{ fontSize: '10px' }} />
+                  {category.name}
+                </Tag>
+              </Tooltip>
             )}
           </div>
         </div>
-      </Card>
+      </div>
+    </Card>
+  );
 
-      {showCreateDeal && (
-        <CreateDeal
-          open={showCreateDeal}
-          onCancel={() => {
-            setShowCreateDeal(false);
-            setSelectedLead(null);
-          }}
-          lead={selectedLead}
-        />
-      )}
+  const draggableProps = lead.is_converted ? {} : { ...attributes, ...listeners };
+
+  if (isDragging) {
+    return createPortal(
+      <div
+        ref={setNodeRef}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: 999999,
+          width: '350px',
+          transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+          opacity: 0.95,
+          pointerEvents: 'none',
+          cursor: 'grabbing',
+          transformOrigin: '0 0',
+          willChange: 'transform',
+          transition: 'none'
+        }}
+        {...draggableProps}
+      >
+        {cardContent}
+      </div>,
+      document.body
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        position: 'relative',
+        transform: 'translate3d(0, 0, 0)',
+        touchAction: 'none',
+        transformStyle: 'preserve-3d',
+        backfaceVisibility: 'hidden'
+      }}
+      {...draggableProps}
+    >
+      {cardContent}
     </div>
   );
 };
@@ -295,19 +397,18 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`kanban-column-content ${isColumnDragging ? 'column-dragging' : ''}`}
+      className="kanban-column-content"
       style={{
-        transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
         padding: '8px',
-        minHeight: '50px',
-        backgroundColor: isOver ? '#e6f7ff' : 'transparent',
-        border: isOver ? '2px dashed #1890ff' : '2px dashed transparent',
-        borderRadius: '4px',
-        transform: isOver ? 'scale(1.01)' : 'scale(1)',
-        willChange: 'transform, background-color, border',
+        height: 'calc(100vh - 240px)',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        backgroundColor: isOver ? 'rgba(240, 247, 255, 0.8)' : 'transparent',
+        borderRadius: '0 0 8px 8px',
+        width: '350px',
         position: 'relative',
-        zIndex: 1,
-        transformStyle: 'preserve-3d'
+        transition: 'background-color 0.2s ease',
+        willChange: 'background-color'
       }}
     >
       <SortableContext items={leads.map(lead => lead.id)} strategy={verticalListSortingStrategy}>
@@ -317,6 +418,9 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
               key={lead.id}
               lead={lead}
               stage={stage}
+              onLeadClick={(lead) => {
+                console.log('Lead clicked:', lead);
+              }}
             />
           ))
         ) : (
@@ -347,42 +451,69 @@ const SortableColumn = ({ stage, leads, children }) => {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging
-      ? undefined
-      : 'all 400ms cubic-bezier(0.16, 1, 0.3, 1)',
-    zIndex: 'auto',
-    opacity: isDragging ? 0.95 : 1,
-    touchAction: 'none',
-    transformOrigin: '50% 50%',
-    willChange: 'transform',
-    position: 'relative'
+    transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+    zIndex: isDragging ? 999 : 1,
+    position: 'relative',
+    width: '350px',
+    minWidth: '350px',
+    willChange: 'transform'
   };
 
   return (
     <div ref={setNodeRef} style={style} className={`kanban-column ${isDragging ? 'is-dragging' : ''}`}>
-      <div
-        className="kanban-column-header"
-        {...attributes}
-        {...listeners}
-        style={{
-          cursor: isDragging ? 'grabbing' : 'grab',
-          transition: 'all 300ms cubic-bezier(0.16, 1, 0.3, 1)',
-          padding: '8px 12px',
-          backgroundColor: isDragging ? '#fafafa' : 'transparent',
-          borderRadius: '4px',
-          transform: isDragging ? 'scale(1.02)' : 'scale(1)',
-          willChange: 'transform, background-color',
-          position: 'relative',
-          zIndex: 2
-        }}
-      >
-        <div className="drag-handle">
-          <FiMenu size={16} />
+      <div className="kanban-column-inner" style={{
+        background: '#ffffff',
+        borderRadius: '8px',
+        height: '100%',
+        width: '100%',
+        boxShadow: isDragging
+          ? '0 8px 16px rgba(0, 0, 0, 0.08)'
+          : '0 1px 3px rgba(0, 0, 0, 0.08)',
+        transition: 'box-shadow 0.2s ease',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div
+          className="column-header"
+          {...attributes}
+          {...listeners}
+          style={{
+            padding: '8px 12px',
+            borderBottom: '1px solid #f0f0f0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
+            background: '#ffffff',
+            userSelect: 'none'
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <FiMenu style={{
+              fontSize: '14px',
+              color: '#6B7280'
+            }} />
+            <Text strong style={{
+              fontSize: '13px',
+              margin: 0
+            }}>{stage.stageName}</Text>
+          </div>
+          <Tag style={{
+            marginLeft: '4px',
+            fontSize: '11px',
+            padding: '0 4px'
+          }}>
+            {(leads || []).length}
+          </Tag>
         </div>
-        <Text strong>{stage.stageName}</Text>
-        <Tag>{leads?.length || 0}</Tag>
+        {children}
       </div>
-      {children}
     </div>
   );
 };
@@ -452,7 +583,7 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
       activationConstraint: {
         delay: 0,
         tolerance: 5,
-        distance: 8,
+        distance: 3,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -520,19 +651,27 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
   if (error) return <div>Error loading leads: {error.message}</div>;
 
   return (
-    <div className="kanban-board-container">
+    <div className="lead-kanban" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      position: 'relative'
+    }}>
       {/* Pipeline Selection */}
       <div style={{
-        marginBottom: '20px',
+        marginBottom: '8px',
         display: 'flex',
-        gap: '12px',
+        gap: '8px',
         alignItems: 'center',
-        padding: '0 24px'
+        padding: '0 12px',
+        marginTop: '5px'
       }}>
-        <Text strong style={{ fontSize: '14px', color: '#374151' }}>Pipeline:</Text>
+        <Text strong style={{ fontSize: '13px', color: '#374151' }}>Pipeline:</Text>
         <div style={{
           display: 'flex',
-          gap: '8px'
+          gap: '6px'
         }}>
           {pipelines.map(pipeline => (
             <Button
@@ -540,15 +679,16 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
               type={selectedPipeline === pipeline.id ? "primary" : "default"}
               onClick={() => setSelectedPipeline(pipeline.id)}
               style={{
-                borderRadius: '6px',
+                borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                height: '32px'
+                gap: '4px',
+                padding: '3px 10px',
+                height: '28px',
+                fontSize: '12px'
               }}
             >
-              <FiTarget style={{ fontSize: '14px' }} />
+              <FiTarget style={{ fontSize: '12px' }} />
               {pipeline.name}
             </Button>
           ))}
@@ -561,38 +701,68 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="kanban-board" style={{
-          display: 'flex',
-          gap: '24px',
-          padding: '24px',
-          overflowX: 'auto',
-          minHeight: 'calc(100vh - 300px)',
+        <div className="kanban-board-wrapper" style={{
           width: '100%',
+          height: 'calc(100vh - 180px)',
+          overflow: 'hidden',
           position: 'relative',
           isolation: 'isolate',
-          perspective: '1000px',
+          perspective: 1000,
           transformStyle: 'preserve-3d'
         }}>
-          <SortableContext
-            items={orderedStages.map(stage => `column-${stage.id}`)}
-            strategy={horizontalListSortingStrategy}
-          >
-            {orderedStages.map((stage) => (
-              <SortableColumn
-                key={stage.id}
-                stage={stage}
-                leads={leadsByStage[stage.id] || []}
-              >
-                <DroppableColumn
-                  stage={stage}
-                  leads={leadsByStage[stage.id] || []}
-                  isColumnDragging={activeId === `column-${stage.id}`}
-                />
-              </SortableColumn>
-            ))}
-          </SortableContext>
+          <div className="kanban-board" style={{
+            display: 'flex',
+            gap: '16px',
+            padding: '12px',
+            width: 'max-content',
+            minWidth: '100%',
+            height: '100%',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            position: 'relative',
+            transformStyle: 'preserve-3d',
+            perspective: 1000
+          }}>
+            <SortableContext
+              items={orderedStages.map(stage => `column-${stage.id}`)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {orderedStages.map((stage) => (
+                <div key={stage.id} style={{ transform: 'translateZ(0)' }}>
+                  <SortableColumn
+                    stage={stage}
+                    leads={leadsByStage[stage.id] || []}
+                  >
+                    <DroppableColumn
+                      stage={stage}
+                      leads={leadsByStage[stage.id] || []}
+                      isColumnDragging={activeId === `column-${stage.id}`}
+                    />
+                  </SortableColumn>
+                </div>
+              ))}
+            </SortableContext>
+          </div>
         </div>
       </DndContext>
+
+      <style jsx global>{`
+        .kanban-board {
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .kanban-column-content {
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .lead-card {
+          backface-visibility: hidden;
+        }
+        
+        .kanban-column.is-dragging {
+          cursor: grabbing !important;
+        }
+      `}</style>
     </div>
   );
 };

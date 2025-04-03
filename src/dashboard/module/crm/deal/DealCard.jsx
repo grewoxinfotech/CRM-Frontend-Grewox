@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Tag, Button, Tooltip, Avatar, Dropdown, Typography, Progress, Empty, message } from "antd";
 import {
   FiEdit2,
@@ -10,13 +10,19 @@ import {
   FiBriefcase,
   FiUser,
   FiMail,
-  FiPhone
+  FiPhone,
+  FiMenu,
+  FiFlag,
+  FiDatabase,
+  FiTag,
+  FiLock,
+  FiMove
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation, useUpdateDealStageMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
-import { useGetLabelsQuery, useGetSourcesQuery } from "../crmsystem/souce/services/SourceApi";
+import { useGetLabelsQuery, useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import {
@@ -33,16 +39,68 @@ import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
-  sortableKeyboardCoordinates
+  useSortable,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { restrictToHorizontalAxis, restrictToWindowEdges } from "@dnd-kit/modifiers";
+import { CSS } from '@dnd-kit/utilities';
+import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
+import { createPortal } from 'react-dom';
 
 const { Text } = Typography;
 
-const DraggableCard = ({ deal, stage, onEdit, onDelete, onView }) => {
+// Currency formatting helper function
+const formatCurrency = (value, currencyCode) => {
+  if (!value) return '0';
+
+  try {
+    const numericValue = parseFloat(value);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode || 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(numericValue);
+  } catch (error) {
+    console.error('Error formatting currency:', error);
+    return `${value} ${currencyCode || 'USD'}`;
+  }
+};
+
+// Add interest level helper
+const getInterestLevel = (level) => {
+  const levels = {
+    "high": {
+      color: "#52c41a",
+      bg: "rgba(82, 196, 26, 0.1)",
+      border: "#b7eb8f",
+      text: "High Interest"
+    },
+    "medium": {
+      color: "#faad14",
+      bg: "rgba(250, 173, 20, 0.1)",
+      border: "#ffd591",
+      text: "Medium Interest"
+    },
+    "low": {
+      color: "#ff4d4f",
+      bg: "rgba(255, 77, 79, 0.1)",
+      border: "#ffa39e",
+      text: "Low Interest"
+    }
+  };
+  return levels[level] || levels.medium;
+};
+
+const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick }) => {
   const navigate = useNavigate();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
+    data: {
+      type: 'card',
+      deal
+    }
   });
 
   const style = transform ? {
@@ -64,7 +122,7 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView }) => {
         key: "view",
         icon: <FiEye />,
         label: "View Details",
-        onClick: () => onView(deal),
+        onClick: () => onDealClick(deal),
       },
       {
         key: "edit",
@@ -81,14 +139,6 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView }) => {
       },
     ],
   });
-
-  const formatCurrency = (value, currency = "INR") => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0
-    }).format(value);
-  };
 
   const handleCardClick = (e, deal) => {
     e.stopPropagation();
@@ -183,7 +233,7 @@ const DealCard = ({ onEdit, onDelete, onView }) => {
   const [updateDealStage] = useUpdateDealStageMutation();
   const { data: deals = [], isLoading } = useGetDealsQuery();
   const { data: stages = [] } = useGetLeadStagesQuery();
-  
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -193,7 +243,7 @@ const DealCard = ({ onEdit, onDelete, onView }) => {
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
-    
+
     if (over && active.id !== over.id) {
       try {
         await updateDealStage({
@@ -505,4 +555,4 @@ const DealCard = ({ onEdit, onDelete, onView }) => {
   );
 };
 
-export default DealCard; 
+export default DealCard;

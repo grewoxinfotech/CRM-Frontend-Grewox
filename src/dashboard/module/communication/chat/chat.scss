@@ -10,10 +10,12 @@
             transform: scale(1);
             opacity: 1;
         }
+
         50% {
             transform: scale(1.5);
             opacity: 0;
         }
+
         100% {
             transform: scale(1);
             opacity: 1;
@@ -68,6 +70,7 @@
                     position: absolute;
                     right: 12px;
                     color: #8c8c8c;
+
                     &:hover {
                         color: #1890ff;
                         background: rgba(24, 144, 255, 0.1);
@@ -94,12 +97,14 @@
                     padding: 0 16px;
                     transition: all 0.3s ease;
 
-                    &:hover, &:focus-within {
+                    &:hover,
+                    &:focus-within {
                         border-color: #1890ff;
                         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
                     }
 
-                    .search-icon, .team-icon {
+                    .search-icon,
+                    .team-icon {
                         font-size: 16px;
                         color: #bfbfbf;
                         transition: color 0.3s;
@@ -140,11 +145,11 @@
             position: sticky;
             top: 140px;
             z-index: 9;
-            
+
             .ant-tabs-nav {
                 margin: 0;
                 padding: 0 16px;
-                
+
                 &::before {
                     border: none;
                 }
@@ -152,7 +157,7 @@
                 .ant-tabs-tab {
                     padding: 12px 0;
                     margin: 0 16px 0 0;
-                    
+
                     &:hover {
                         color: #1890ff;
                     }
@@ -207,7 +212,7 @@
                         border: 2px solid #fff;
                         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                         position: relative;
-                        
+
                         &.group-avatar {
                             background: #1890ff;
                         }
@@ -258,7 +263,7 @@
                         .unread-badge {
                             min-width: 18px;
                             height: 18px;
-                            
+
                             .ant-badge-count {
                                 font-size: 11px;
                                 font-weight: 600;
@@ -411,8 +416,8 @@
                 position: relative;
                 transition: all 0.3s ease;
                 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03),
-                          0 2px 4px rgba(24, 144, 255, 0.03),
-                          inset 0 2px 4px rgba(255, 255, 255, 0.8);
+                    0 2px 4px rgba(24, 144, 255, 0.03),
+                    inset 0 2px 4px rgba(255, 255, 255, 0.8);
 
                 .upload-button {
                     min-width: 42px;
@@ -450,8 +455,8 @@
 
                 &:hover {
                     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05),
-                              0 4px 8px rgba(24, 144, 255, 0.06),
-                              inset 0 2px 4px rgba(255, 255, 255, 0.8);
+                        0 4px 8px rgba(24, 144, 255, 0.06),
+                        inset 0 2px 4px rgba(255, 255, 255, 0.8);
                     transform: translateY(-1px);
                 }
 
@@ -463,24 +468,23 @@
                     transform: translateX(-50%);
                     width: calc(100% - 32px);
                     height: 2px;
-                    background: linear-gradient(to right, 
-                        rgba(24, 144, 255, 0.05),
-                        rgba(24, 144, 255, 0.2),
-                        rgba(24, 144, 255, 0.05)
-                    );
+                    background: linear-gradient(to right,
+                            rgba(24, 144, 255, 0.05),
+                            rgba(24, 144, 255, 0.2),
+                            rgba(24, 144, 255, 0.05));
                     box-shadow: 0 1px 2px rgba(24, 144, 255, 0.1);
                     transition: all 0.3s ease;
                     border-radius: 4px;
                 }
 
-                &:hover::after, &:focus-within::after {
+                &:hover::after,
+                &:focus-within::after {
                     height: 2px;
                     width: calc(100% - 24px);
-                    background: linear-gradient(to right, 
-                        rgba(24, 144, 255, 0.1),
-                        rgba(24, 144, 255, 0.4),
-                        rgba(24, 144, 255, 0.1)
-                    );
+                    background: linear-gradient(to right,
+                            rgba(24, 144, 255, 0.1),
+                            rgba(24, 144, 255, 0.4),
+                            rgba(24, 144, 255, 0.1));
                     box-shadow: 0 1px 3px rgba(24, 144, 255, 0.2);
                 }
 
@@ -526,19 +530,19 @@
                     background: linear-gradient(135deg, #1890ff, #096dd9);
                     border: none;
                     box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25),
-                              inset 0 1px 1px rgba(255, 255, 255, 0.15);
+                        inset 0 1px 1px rgba(255, 255, 255, 0.15);
 
                     &:hover {
                         transform: translateY(-1px) scale(1.05);
                         background: linear-gradient(135deg, #40a9ff, #1890ff);
                         box-shadow: 0 4px 12px rgba(24, 144, 255, 0.35),
-                                  inset 0 1px 1px rgba(255, 255, 255, 0.2);
+                            inset 0 1px 1px rgba(255, 255, 255, 0.2);
                     }
 
                     &:active {
                         transform: translateY(0) scale(0.98);
                         box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2),
-                                  inset 0 1px 1px rgba(0, 0, 0, 0.1);
+                            inset 0 1px 1px rgba(0, 0, 0, 0.1);
                     }
 
                     .anticon {

@@ -27,7 +27,7 @@ import {
   FiShield,
   FiUserPlus,
 } from "react-icons/fi";
-import { useUpdateDealMutation, useGetDealsQuery } from "./services/DealApi";
+import { useUpdateDealMutation, useGetDealsQuery } from "./services/dealApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import './Deal.scss';
 import dayjs from 'dayjs';
@@ -78,15 +78,15 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data:labelsData } = useGetLabelsQuery(loggedInUser?.id);
+  const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
   const { data: productsData } = useGetProductsQuery();
 
- 
+
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
   const products = productsData?.data || [];
- 
- 
+
+
 
   // Get pipeline name by ID
   const getPipelineName = (pipelineId) => {
@@ -112,11 +112,11 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
 
-    // Filter users to get team members (excluding subclients)
-    const users = usersResponse?.data?.filter(user =>
-      user?.created_by === loggedInUser?.username &&
-      user?.role_id !== subclientRoleId 
-    ) || [];
+  // Filter users to get team members (excluding subclients)
+  const users = usersResponse?.data?.filter(user =>
+    user?.created_by === loggedInUser?.username &&
+    user?.role_id !== subclientRoleId
+  ) || [];
 
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
@@ -126,7 +126,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
   };
-  
+
 
   const handleCreateUserSuccess = (newUser) => {
     setIsCreateUserVisible(false);
@@ -154,7 +154,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         try {
           const parsedProducts = JSON.parse(initialValues.products);
           selectedProducts = parsedProducts.products || [];
-          
+
           // Calculate initial product prices
           selectedProducts.forEach(productId => {
             const product = products.find(p => p.id === productId);
@@ -170,14 +170,14 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
       // Set the initial manual value (total value minus product prices)
       const totalProductPrices = Object.values(initialProductPrices).reduce((sum, price) => sum + price, 0);
       const initialManualValue = (initialValues.value || 0) - totalProductPrices;
-      
+
       setManualValue(initialManualValue);
       setSelectedProductPrices(initialProductPrices);
 
       const formValues = {
         ...initialValues,
-        closedDate: initialValues.closedDate ? 
-          dayjs(initialValues.closedDate) : 
+        closedDate: initialValues.closedDate ?
+          dayjs(initialValues.closedDate) :
           null,
         phoneCode: initialValues.phone ? initialValues.phone.substring(0, 2) : '91',
         phone: initialValues.phone ? initialValues.phone.substring(2) : '',
@@ -192,7 +192,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         label: initialValues.label,
         products: selectedProducts,
       };
-      
+
       form.setFieldsValue(formValues);
       setSelectedPipeline(initialValues.pipeline);
     }
@@ -228,8 +228,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
     try {
       const submissionValues = {
         ...values,
-        closedDate: values.closedDate ? 
-          values.closedDate.format('YYYY-MM-DD') : 
+        closedDate: values.closedDate ?
+          values.closedDate.format('YYYY-MM-DD') :
           null,
         phone: values.phone ? `${values.phoneCode}${values.phone}` : null,
         value: parseFloat(values.value) || 0,
@@ -244,7 +244,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         id: initialValues.id,
         ...submissionValues,
       }).unwrap();
-      
+
       message.success("Deal updated successfully");
       await refetch();
       onCancel();
@@ -278,10 +278,10 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const handleValueChange = (value) => {
     const numValue = parseFloat(value) || 0;
     setManualValue(numValue);
-    
+
     // Calculate total product prices
     const productPricesTotal = Object.values(selectedProductPrices).reduce((sum, price) => sum + price, 0);
-    
+
     // Set form value to manual value plus product prices
     form.setFieldsValue({ value: numValue + productPricesTotal });
   };
@@ -289,7 +289,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   // Handle products selection change
   const handleProductsChange = (selectedProductIds) => {
     const newSelectedPrices = {};
-    
+
     // Calculate prices for selected products
     selectedProductIds.forEach(productId => {
       const product = products.find(p => p.id === productId);
@@ -356,7 +356,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               right: "24px",
               top: "24px",
             }}
-          />  
+          />
           <div
             style={{
               display: "flex",
@@ -543,55 +543,55 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Input.Group>
             </Form.Item>
 
-            
-                <Form.Item
-                  name="pipeline"
-                  label="Pipeline"
-                >
-                  <Select
-                    placeholder="Select Pipeline"
-                    onChange={handlePipelineChange}
-                    suffixIcon={<FiChevronDown />}
-                    dropdownRender={(menu) => (
-                      <div>
-                        {menu}
-                        <Divider style={{ margin: '8px 0' }} />
-                        <Button
-                          type="text"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddPipelineClick}
-                          style={{ width: '100%', textAlign: 'left' }}
-                        >
-                          Add New Pipeline
-                        </Button>
-                      </div>
-                    )}
-                  >
-                    {pipelines.map((pipeline) => (
-                      <Option key={pipeline.id} value={pipeline.id}>
-                        {pipeline.pipeline_name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
 
-                <Form.Item
-                  name="stage"
-                  label="Stage"
-                >
-                  <Select
-                    placeholder="Select Stage"
-                    disabled={!selectedPipeline}
-                    suffixIcon={<FiChevronDown />}
-                  >
-                    {filteredStages.map((stage) => (
-                      <Option key={stage.id} value={stage.id}>
-                        {stage.stageName}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              
+            <Form.Item
+              name="pipeline"
+              label="Pipeline"
+            >
+              <Select
+                placeholder="Select Pipeline"
+                onChange={handlePipelineChange}
+                suffixIcon={<FiChevronDown />}
+                dropdownRender={(menu) => (
+                  <div>
+                    {menu}
+                    <Divider style={{ margin: '8px 0' }} />
+                    <Button
+                      type="text"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddPipelineClick}
+                      style={{ width: '100%', textAlign: 'left' }}
+                    >
+                      Add New Pipeline
+                    </Button>
+                  </div>
+                )}
+              >
+                {pipelines.map((pipeline) => (
+                  <Option key={pipeline.id} value={pipeline.id}>
+                    {pipeline.pipeline_name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="stage"
+              label="Stage"
+            >
+              <Select
+                placeholder="Select Stage"
+                disabled={!selectedPipeline}
+                suffixIcon={<FiChevronDown />}
+              >
+                {filteredStages.map((stage) => (
+                  <Option key={stage.id} value={stage.id}>
+                    {stage.stageName}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
 
             {/* Company Name */}
             <Form.Item
@@ -655,34 +655,34 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
             {/* Source */}
             <Form.Item
-            name="source"
-            label={<span style={formItemStyle}>Source</span>}
-            rules={[{ required: true, message: "Please select source" }]}
-          >
-            <Select
-              placeholder="Select source"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
+              name="source"
+              label={<span style={formItemStyle}>Source</span>}
+              rules={[{ required: true, message: "Please select source" }]}
             >
-              {sources.map((source) => (
-                <Option key={source.id} value={source.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: source.color || '#1890ff'
-                      }}
-                    />
-                    {source.name}
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
+              <Select
+                placeholder="Select source"
+                style={selectStyle}
+                popupClassName="custom-select-dropdown"
+              >
+                {sources.map((source) => (
+                  <Option key={source.id} value={source.id}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: source.color || '#1890ff'
+                        }}
+                      />
+                      {source.name}
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-          <Form.Item
+            <Form.Item
               name="label"
               label={<span style={formItemStyle}>Label</span>}
             >
@@ -695,7 +695,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 {labels.map(label => (
                   <Option key={label.id} value={label.name}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div  style={{
+                      <div style={{
                         width: '8px',
                         height: '8px',
                         borderRadius: '50%',
@@ -724,14 +724,14 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 {products?.map((product) => (
                   <Option key={product.id} value={product.id}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
+                      <div style={{
+                        width: '32px',
+                        height: '32px',
                         borderRadius: '4px',
                         overflow: 'hidden'
                       }}>
-                        <img 
-                          src={product.image} 
+                        <img
+                          src={product.image}
                           alt={product.name}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={(e) => e.target.style.display = 'none'}
@@ -828,7 +828,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 {users?.map((user) => {
                   const role = rolesData?.data?.find(r => r.id === user.role_id)?.role_name || 'User';
                   const roleColor = getRoleColor(role);
-                  
+
                   return (
                     <Option key={user.id} value={user.id}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -853,7 +853,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
           {/* Form Actions */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-            <Button 
+            <Button
               onClick={handleCancel}
               style={{
                 height: '44px',

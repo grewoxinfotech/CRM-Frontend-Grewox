@@ -8,7 +8,7 @@ import {
     FiChevronDown, FiDownload,
     FiGrid, FiList, FiHome
 } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Deal.scss';
 import CreateDeal from './CreateDeal';
 import DealCard from './DealCard';
@@ -16,6 +16,7 @@ import DealList from './DealList';
 import EditDeal from './EditDeal';
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
+import { useDeleteDealMutation } from './services/dealApi';
 
 const { Title, Text } = Typography;
 
@@ -23,12 +24,18 @@ const Deal = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedDeal, setSelectedDeal] = useState(null);
-    const [viewMode, setViewMode] = useState('card');
+    const [viewMode, setViewMode] = useState('table');
     const [searchText, setSearchText] = useState('');
-
+    const navigate = useNavigate();
     // Fetch pipelines and deal stages
     const { data: pipelines = [] } = useGetPipelinesQuery();
     const { data: dealStages = [] } = useGetLeadStagesQuery();
+    const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
+
+    const handleDealClick = (deal) => {
+        navigate(`/dashboard/crm/deals/${deal.id}`);
+    };
+
 
     const handleCreate = () => {
         setSelectedDeal(null);
@@ -48,7 +55,7 @@ const Deal = () => {
             okType: 'danger',
             cancelText: 'No',
             onOk: () => {
-                // Handle delete action
+                deleteDeal(deal.id);
             },
         });
     };
@@ -128,17 +135,19 @@ const Deal = () => {
             </div>
 
             <Card className="deal-content">
-                {viewMode === 'table' ? (
-                    <DealList
-                        onEdit={handleEdit}
-                        onDelete={handleDelete}
-                        onView={handleView}
-                    />
-                ) : (
+                {viewMode === 'card' ? (
                     <DealCard
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onView={handleView}
+                        onDealClick={handleDealClick}
+                    />
+                ) : (
+                    <DealList
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onView={handleView}
+                        onDealClick={handleDealClick}
                     />
                 )}
             </Card>

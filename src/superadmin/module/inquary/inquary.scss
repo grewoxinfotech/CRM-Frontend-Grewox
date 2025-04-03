@@ -533,7 +533,7 @@
         border-radius: 8px;
         width: 100%;
         max-width: 400px;
-        
+
         .ant-modal-confirm-body {
             .ant-modal-confirm-title {
                 font-size: 16px;
@@ -542,7 +542,7 @@
                 line-height: 1.4;
                 margin-bottom: 12px;
             }
-            
+
             .ant-modal-confirm-content {
                 font-size: 14px;
                 color: rgba(0, 0, 0, 0.65);
@@ -550,7 +550,7 @@
                 margin-top: 0;
             }
         }
-        
+
         .ant-modal-confirm-btns {
             margin-top: 24px;
             display: flex;
@@ -564,23 +564,23 @@
                 border-radius: 2px;
                 font-weight: 400;
                 line-height: 1.5;
-                
+
                 &.ant-btn-default {
                     border-color: #d9d9d9;
                     background: white;
                     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
-                    
+
                     &:hover {
                         border-color: #4096ff;
                         color: #4096ff;
                     }
                 }
-                
+
                 &.ant-btn-primary {
                     background: #ff4d4f;
                     border-color: #ff4d4f;
                     box-shadow: 0 2px 0 rgba(255, 77, 79, 0.1);
-                    
+
                     &:hover {
                         background: #ff7875;
                         border-color: #ff7875;
@@ -588,5 +588,77 @@
                 }
             }
         }
+    }
+}
+
+.colorful-table {
+    .ant-table {
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+
+        .ant-table-thead>tr>th {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 16px;
+
+            &::before {
+                display: none;
+            }
+        }
+
+        .ant-table-tbody>tr {
+            &:hover>td {
+                background: #e6f7ff;
+            }
+
+            >td {
+                padding: 16px;
+                transition: all 0.3s ease;
+            }
+
+            &:nth-child(even) {
+                background-color: #fafafa;
+            }
+        }
+    }
+
+    .ant-table-pagination {
+        margin: 16px !important;
+
+        .ant-pagination-item-active {
+            border-color: #1890ff;
+            background: #1890ff;
+
+            a {
+                color: white;
+            }
+        }
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+    }
+}
+
+.inquiry-table-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    margin-top: 24px;
+
+    .ant-card-body {
+        padding: 0;
     }
 }

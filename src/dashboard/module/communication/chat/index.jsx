@@ -26,7 +26,7 @@ export default function Chat() {
     const [messages, setMessages] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
-    
+
     // Get real users data
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
     // Get roles data
@@ -40,7 +40,7 @@ export default function Chat() {
             return acc;
         }, {});
     }, [rolesData]);
-    
+
     // Get current user from auth state
     const currentUser = useSelector((state) => state.auth.user);
 
@@ -61,14 +61,14 @@ export default function Chat() {
 
     const getFilteredUsers = () => {
         if (!userData?.data) return [];
-        
+
         // First filter users based on creation and client_id, and exclude current user
-        let filtered = userData.data.filter(user => 
-            (user?.created_by === currentUser?.username || 
-            user?.client_id === currentUser?.id) &&
+        let filtered = userData.data.filter(user =>
+            (user?.created_by === currentUser?.username ||
+                user?.client_id === currentUser?.id) &&
             user.id !== currentUser?.id  // Exclude current user from the list
         );
-        
+
         // Then map the filtered users
         filtered = filtered.map(user => {
             const roleName = roleMap[user.role_id] || 'Unknown Role';
@@ -85,7 +85,7 @@ export default function Chat() {
                 email: user.email
             };
         });
-        
+
         // Apply search filter
         if (searchQuery) {
             filtered = filtered.filter(user =>
@@ -147,7 +147,7 @@ export default function Chat() {
 
     const renderChatItem = (item) => {
         const roleStyle = getRoleColor(item.role);
-        
+
         return (
             <List.Item
                 onClick={() => setSelectedUser(item)}
@@ -156,10 +156,10 @@ export default function Chat() {
                 <List.Item.Meta
                     avatar={
                         <Badge dot={item.status === 'online'} offset={[-2, 40]} color="#52c41a">
-                            <Avatar 
+                            <Avatar
                                 size={48}
                                 src={item.avatar}
-                                style={{ 
+                                style={{
                                     background: '#f56a00',
                                     objectFit: 'cover'
                                 }}
@@ -199,9 +199,9 @@ export default function Chat() {
                     }
                 />
                 {item.unread > 0 && (
-                    <Badge 
-                        count={item.unread} 
-                        style={{ 
+                    <Badge
+                        count={item.unread}
+                        style={{
                             backgroundColor: '#1890ff'
                         }}
                         className="unread-badge"
@@ -217,8 +217,8 @@ export default function Chat() {
                 <div className="chat-sider-header">
                     <div className="user-profile">
                         <Badge dot offset={[-2, 40]} color="#52c41a">
-                            <Avatar 
-                                size={48} 
+                            <Avatar
+                                size={48}
                                 src={currentUser?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.username || 'User')}&background=1890ff&color=fff`}
                                 style={{ objectFit: 'cover' }}
                             />
@@ -244,8 +244,8 @@ export default function Chat() {
                         </div>
                     </div>
                 </div>
-                <Tabs 
-                    activeKey={activeTab} 
+                <Tabs
+                    activeKey={activeTab}
                     onChange={setActiveTab}
                     className="chat-tabs"
                 >
@@ -265,8 +265,8 @@ export default function Chat() {
                     <>
                         <div className="chat-header">
                             <div className="chat-user-info">
-                                <Avatar 
-                                    size={40} 
+                                <Avatar
+                                    size={40}
                                     src={selectedUser.avatar}
                                     style={{ objectFit: 'cover' }}
                                 />
@@ -281,8 +281,8 @@ export default function Chat() {
                         </div>
                         <div className="chat-messages">
                             {messages.map(message => (
-                                <div 
-                                    key={message.id} 
+                                <div
+                                    key={message.id}
                                     className={`message ${message.type}`}
                                 >
                                     <div className="message-content">
@@ -297,8 +297,8 @@ export default function Chat() {
                         <div className="chat-input">
                             <div className="input-wrapper">
                                 <label className="upload-button">
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         onChange={(e) => {
                                             // Handle file upload here
                                             console.log(e.target.files[0]);
@@ -320,9 +320,9 @@ export default function Chat() {
                                     }}
                                     className="message-input"
                                 />
-                                <Button 
-                                    type="primary" 
-                                    icon={<SendOutlined />} 
+                                <Button
+                                    type="primary"
+                                    icon={<SendOutlined />}
                                     onClick={handleSendMessage}
                                     className="send-button"
                                 />
@@ -341,8 +341,8 @@ export default function Chat() {
                             <Typography.Title level={4} style={{ margin: '24px 0 8px', color: '#262626' }}>
                                 Welcome to Messages
                             </Typography.Title>
-                            <Text style={{ 
-                                fontSize: '14px', 
+                            <Text style={{
+                                fontSize: '14px',
                                 color: '#8c8c8c',
                                 textAlign: 'center',
                                 maxWidth: '400px',

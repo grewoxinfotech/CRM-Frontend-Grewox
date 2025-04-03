@@ -80,7 +80,7 @@ const DealDetail = () => {
             ),
             children: <DealInvoices deal={deal} />,
         },
-        
+
         {
             key: 'payments',
             label: (
@@ -150,7 +150,7 @@ const DealDetail = () => {
                     <Button
                         type="primary"
                         icon={<FiArrowLeft />}
-                        onClick={() => navigate('/dashboard/crm/deal')}
+                        onClick={() => navigate('/dashboard/crm/deals')}
                         style={{
                             background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                             border: 'none',
