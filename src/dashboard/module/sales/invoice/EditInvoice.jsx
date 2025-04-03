@@ -766,7 +766,7 @@ const data =payload;
             <span style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937' }}>
               <FiPackage style={{ marginRight: '8px', color: '#1890ff' }} />
               Items & Services
-            </span>
+          </span>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Text style={{ marginRight: '8px' }}>Enable Tax</Text>
               <Switch
@@ -775,166 +775,256 @@ const data =payload;
                   setIsTaxEnabled(checked);
                   if (!checked) {
                     const items = form.getFieldValue('items') || [];
-                    const updatedItems = items.map(item => ({
-                      ...item,
-                      tax: 0,
-                      taxId: null,
-                      taxAmount: 0
-                    }));
-                    form.setFieldsValue({ items: updatedItems });
-                    calculateTotals(updatedItems);
+                    items.forEach(item => {
+                      item.tax = 0;
+                      item.taxId = undefined;
+                    });
+                    form.setFieldsValue({ items });
                   }
+                  calculateTotals(form.getFieldValue('items'));
                 }}
                 size="small"
               />
             </div>
           </div>
 
+          <Form.Item
+            name="product_id"
+            rules={[{ required: true, message: 'Please select product' }]}
+          >
+            <Select
+              placeholder="Select Product"
+              size="large"
+              loading={productsLoading}
+              style={{
+                width: '30%',
+                marginLeft: '16px',
+                marginRight: '16px',
+                marginTop: '16px',
+                marginBottom: '16px',
+                borderRadius: '10px',
+              }}
+              value={form.getFieldValue('items')?.[0]?.item_name}
+              onChange={(value, option) => {
+                const selectedProduct = productsData?.data?.find(product => product.id === value);
+                const items = form.getFieldValue('items') || [];
+                const newItems = [...items];
+                const lastIndex = newItems.length - 1;
+                newItems[lastIndex] = {
+                  ...newItems[lastIndex],
+                  id: selectedProduct.id,
+                  item_name: selectedProduct.name,
+                  unit_price: selectedProduct.selling_price,
+                  hsn_sac: selectedProduct.hsn_sac,
+                  tax: selectedProduct.tax,
+                  profilePic: selectedProduct.image
+                };
+                form.setFieldsValue({ items: newItems });
+                calculateTotals(newItems);
+              }}
+            >
+              {productsData?.data?.map(product => (
+                <Option
+                  key={product.id}
+                  value={product.id}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '30px', height: '30px', borderRadius: '4px', overflow: 'hidden' }}>
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 500 }}>{product.name}</span>
+                      {/* <span style={{ fontSize: '12px', color: '#666' }}>
+                        Price: {selectedCurrency} {product.selling_price}
+                      </span> */}
+                    </div>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
-                {fields.map((field, index) => (
-                  <div key={field.key} className="item-row">
-                    <Row gutter={16} align="middle">
-                      <Col span={6}>
-                        <Form.Item
-                          {...field}
-                          name={[field.name, 'product']}
-                          fieldKey={[field.fieldKey, 'product']}
-                          rules={[{ required: true, message: 'Please select a product' }]}
-                          label="Product"
-                        >
-                          <Select
-                            placeholder="Select Product"
-                            onChange={(value) => handleProductSelect(value, field.name)}
-                            style={{ width: '100%' }}
-                          >
-                            {productsData?.data?.map(product => (
-                              <Option key={product.id} value={product.id}>
-                                {product.name} - {selectedCurrency} {product.selling_price}
-                              </Option>
-                            ))}
-                          </Select>
-                        </Form.Item>
-                      </Col>
-                      <Col span={4}>
-                        <Form.Item
-                          {...field}
-                          name={[field.name, 'quantity']}
-                          fieldKey={[field.fieldKey, 'quantity']}
-                          rules={[{ required: true, message: 'Required' }]}
-                          label="Quantity"
-                        >
-                          <InputNumber
-                            min={1}
-                            placeholder="Qty"
-                            style={{ width: '100%' }}
-                            onChange={() => {
-                              const items = form.getFieldValue('items');
-                              calculateTotals(items);
-                            }}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={4}>
-                        <Form.Item
-                          {...field}
-                          name={[field.name, 'unit_price']}
-                          fieldKey={[field.fieldKey, 'unit_price']}
-                          rules={[{ required: true, message: 'Required' }]}
-                          label="Unit Price"
-                        >
-                          <InputNumber
-                            min={0}
-                            placeholder="Price"
-                            style={{ width: '100%' }}
-                            formatter={value => `${selectedCurrency} ${value}`}
-                            parser={value => value.replace(`${selectedCurrency} `, '')}
-                            onChange={() => {
-                              const items = form.getFieldValue('items');
-                              calculateTotals(items);
-                            }}
-                          />
-                        </Form.Item>
-                      </Col>
-                      {isTaxEnabled && (
-                        <Col span={3}>
+                <table className="proposal-items-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                      <th>Unit Price</th>
+                      <th>HSN/SAC</th>
+                      <th>Discount</th>
+                      <th>Tax</th>
+                      <th>Amount</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+              {fields.map(({ key, name, ...restField }, index) => (
+                      <tr key={key} className="item-data-row">
+                        <td>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "item_name"]}
+                        rules={[{ required: true, message: "Required" }]}
+                      >
+                        <Input
+                          placeholder="Item Name"
+                              className="item-input"
+                        />
+                      </Form.Item>
+                        </td>
+                        <td>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "quantity"]}
+                        rules={[{ required: true, message: "Required" }]}
+                            initialValue={1}
+                      >
+                        <InputNumber
+                          min={1}
+                              className="quantity-input"
+                              onChange={() => calculateTotals(form.getFieldValue("items"))}
+                        />
+                      </Form.Item>
+                        </td>
+                        <td>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "unit_price"]}
+                        rules={[{ required: true, message: "Required" }]}
+                      >
+                        <InputNumber
+                              className="price-input"
+                              formatter={value => `${selectedCurrency} ${value}`}
+                              parser={value => value.replace(selectedCurrency, '').trim()}
+                              onChange={() => calculateTotals(form.getFieldValue("items"))}
+                              defaultValue={0}
+                        />
+                      </Form.Item>
+                        </td>
+                        <td>
+                      <Form.Item {...restField} name={[name, "hsn_sac"]}>
+                            <Input placeholder="HSN/SAC" className="item-input" />
+                      </Form.Item>
+                        </td>
+                        <td>
+                      <Form.Item {...restField} name={[name, "discount"]} style={{ margin: 0 }}>
+                        <Space>
                           <Form.Item
-                            {...field}
-                            name={[field.name, 'tax']}
-                            fieldKey={[field.fieldKey, 'tax']}
-                            label="Tax %"
+                            {...restField}
+                            name={[name, "discount_type"]}
+                            style={{ margin: 0 }}
                           >
-                            <InputNumber
-                              min={0}
-                              max={100}
-                              placeholder="Tax %"
-                              style={{ width: '100%' }}
-                              onChange={() => {
-                                const items = form.getFieldValue('items');
+                            <Select
+                          size="large"
+                          style={{
+                                width: '120px',
+                                borderRadius: '8px',
+                                height: '40px',
+                              }}
+                              defaultValue="percentage"
+                              onChange={() => calculateTotals(form.getFieldValue("items"))}
+                            >
+                              <Option value="percentage">Percentage</Option>
+                              <Option value="fixed">Fixed Amount</Option>
+                            </Select>
+                      </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "discount"]}
+                            style={{ margin: 0 }}
+                          >
+                        <InputNumber
+                              className="item-discount-input"
+                              placeholder={form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? 'Amount' : '%'}
+                              formatter={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
+                              parser={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
+                              onChange={() => calculateTotals(form.getFieldValue("items"))}
+                          style={{
+                                width: '100px',
+                                borderRadius: '8px',
+                                height: '40px',
+                              }}
+                        />
+                      </Form.Item>
+                          {form.getFieldValue('items')?.[index]?.discount_type === 'percentage' && <Text style={{ marginTop: '10px' }}>%</Text>}
+                        </Space>
+                      </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item {...restField} name={[name, "taxId"]}>
+                            <Select
+                              placeholder="Select Tax"
+                              loading={taxesLoading}
+                              disabled={!isTaxEnabled}
+                              onChange={(value, option) => {
+                                const items = form.getFieldValue('items') || [];
+                                items[index].tax = option?.taxRate;
+                                form.setFieldsValue({ items });
                                 calculateTotals(items);
                               }}
-                            />
-                          </Form.Item>
-                        </Col>
-                      )}
-                      <Col span={3}>
-                        <Form.Item
-                          {...field}
-                          name={[field.name, 'discount']}
-                          fieldKey={[field.fieldKey, 'discount']}
-                          label="Discount"
-                        >
-                          <InputNumber
-                            min={0}
-                            placeholder="Discount"
-                            style={{ width: '100%' }}
-                            onChange={() => {
-                              const items = form.getFieldValue('items');
-                              calculateTotals(items);
-                            }}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={3}>
-                        <Form.Item label="Total">
-                          <InputNumber
-                            value={calculateItemTotal(form.getFieldValue('items')?.[field.name])}
-                            disabled
-                            style={{ width: '100%' }}
-                            formatter={value => `${selectedCurrency} ${value}`}
-                            parser={value => value.replace(`${selectedCurrency} `, '')}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={1}>
+                            >
+                              {taxesData?.data?.map(tax => (
+                                <Option
+                                  key={tax.id}
+                                  value={tax.id}
+                                  taxRate={tax.gstPercentage}
+                                >
+                                  {tax.gstName} ({tax.gstPercentage}%)
+                                </Option>
+                              ))}
+                            </Select>
+                      </Form.Item>
+                        </td>
+                        <td>
+                          <div className="amount-field">
+                            <span className="currency-symbol">{selectedCurrency}</span>
+                            <span className="amount-value">
+                              {calculateItemTotal(form.getFieldValue("items")[index])?.toFixed(2) || '0.00'}
+                            </span>
+                          </div>
+                        </td>
+                        <td>
+                      {fields.length > 1 && (
                         <Button
-                          type="link"
+                          type="text"
+                              className="delete-btn"
+                              icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
                           onClick={() => {
-                            remove(field.name);
-                            const items = form.getFieldValue('items').filter((_, i) => i !== field.name);
-                            calculateTotals(items);
+                            remove(name);
+                            calculateTotals(form.getFieldValue("items"));
                           }}
-                          icon={<FiTrash2 />}
-                          style={{ color: '#ff4d4f' }}
                         />
-                      </Col>
-                    </Row>
-                  </div>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
+                      )}
+                        </td>
+                      </tr>
+              ))}
+                  </tbody>
+                </table>
+
+                <div className="add-item-container">
+              <Button
+                    type="primary"
+                icon={<FiPlus />}
                     onClick={() => add()}
-                    block
-                    icon={<FiPlus />}
+                    className="add-item-btn"
                   >
-                    Add Item
-                  </Button>
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
+                    Add Items
+              </Button>
+                </div>
+            </>
+          )}
+        </Form.List>
         </div>
 
         <div className="summary-card">

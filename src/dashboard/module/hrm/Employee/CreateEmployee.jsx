@@ -1102,7 +1102,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                             }}
                         />
                     </Form.Item>
-
+                 
                     <Form.Item
                                 name="ifsc"
                                 label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>IFSC Code</span>}

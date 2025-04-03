@@ -59,7 +59,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 max_customers: values.max_customers.toString(),
                 max_vendors: values.max_vendors.toString(),
                 storage_limit: values.storage_limit.toString(),
-                price: values.price.toString()
+                price: values.price.toString(),
+                currency: values.currency
             };
 
             await createPlan(formattedValues).unwrap();
@@ -346,7 +347,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                     }}
                                     loading={currenciesLoading}
                                     className="currency-select"
-                                    defaultValue="INR"
+                                    defaultValue={currencies?.data?.find(c => c.currencyCode === 'INR')?.id}
                                     dropdownStyle={{
                                         padding: '8px',
                                         borderRadius: '10px',
@@ -358,10 +359,10 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                     }
                                 >
                                     {currencies?.map(currency => (
-                                        <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                        <Option key={currency.id} value={currency.id}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <span>{currency.currencyIcon}</span>
-                                                <span>{currency.currencyCode}</span>
+                                                <span>{currency.currencyName}</span>
                                             </div>
                                         </Option>
                                     ))}

@@ -11,9 +11,18 @@ import {
     FiHardDrive
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
 
 const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPageChange }) => {
+    const { data: currencies } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
 
+    const getCurrencyIcon = (currencyId) => {
+        const currency = currencies?.find(c => c.id === currencyId);
+        return currency?.currencyIcon || '$';
+    };
 
     const getDropdownItems = (record) => ({
         items: [
@@ -22,14 +31,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                 icon: <FiEye />,
                 label: 'View Details',
                 onClick: () => onView(record),
-
             },
             {
                 key: 'edit',
                 icon: <FiEdit2 />,
                 label: 'Edit Plan',
                 onClick: () => onEdit(record),
-
             },
             {
                 key: 'delete',
@@ -40,9 +47,6 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             }
         ]
     });
-
-
-
 
     const columns = [
         {
@@ -62,12 +66,11 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             key: 'price',
             render: (price, record) => (
                 <div className="price-cell">
-                    <FiDollarSign className="price-icon" />
                     <span className="plan-price">
-                        {Number(price || 0).toFixed(2)}
                         <small className="currency-duration">
-                            {record.currency}/{record.duration.toLowerCase()}
+                            {getCurrencyIcon(record.currency)}
                         </small>
+                         {Number(price || 0).toFixed(2)}
                     </span>
                 </div>
             ),

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Button, Typography, Divider, Upload, message } from 'antd';
-import { FiFileText, FiX, FiType, FiAlignLeft, FiUpload, FiGitBranch } from 'react-icons/fi';
+import { FiFileText, FiX, FiType, FiAlignLeft, FiUpload } from 'react-icons/fi';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -13,7 +13,6 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
         try {
             await form.validateFields();
             const formData = new FormData();
-            formData.append('branch', values.branch);
             formData.append('title', values.title);
             formData.append('description', values.description);
             
@@ -160,33 +159,6 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                 }}
             >
                 <Form.Item
-                    name="branch"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Branch
-                        </span>
-                    }
-                    rules={[{ required: true, message: 'Please enter branch name' }]}
-                >
-                    <Input
-                        prefix={<FiGitBranch style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter branch name"
-                        size="large"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
                     name="title"
                     label={
                         <span style={{
@@ -252,55 +224,44 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                     }
                 >
                     <Upload
-                        name="file"
-                        multiple={false}
                         beforeUpload={beforeUpload}
                         onChange={handleChange}
-                        maxCount={1}
                         fileList={fileList}
-                        className="policy-file-upload"
+                        maxCount={1}
+                        accept=".pdf,.doc,.docx"
                     >
-                        <Button 
-                            icon={<FiUpload style={{ fontSize: '16px' }} />}
+                        <Button
+                            icon={<FiUpload />}
+                            size="large"
                             style={{
                                 width: '100%',
-                                height: '40px',
-                                borderRadius: '8px',
-                                border: '1px dashed #e6e8eb',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                background: '#f8fafc'
+                                height: '48px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e6e8eb',
+                                transition: 'all 0.3s ease',
                             }}
                         >
-                            Click to Upload
+                            Upload Policy File
                         </Button>
                     </Upload>
                 </Form.Item>
 
-                <Divider style={{ margin: '24px 0' }} />
-
                 <div style={{
                     display: 'flex',
                     justifyContent: 'flex-end',
-                    gap: '12px'
+                    gap: '12px',
+                    marginTop: '24px'
                 }}>
                     <Button
                         size="large"
-                        onClick={() => {
-                            form.resetFields();
-                            onClose();
-                        }}
+                        onClick={onClose}
                         style={{
                             padding: '8px 24px',
                             height: '44px',
                             borderRadius: '10px',
                             border: '1px solid #e6e8eb',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            fontWeight: '500'
                         }}
                     >
                         Cancel
@@ -316,10 +277,7 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                             fontWeight: '500',
                             background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                             border: 'none',
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)'
                         }}
                     >
                         Create Policy

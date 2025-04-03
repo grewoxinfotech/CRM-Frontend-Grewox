@@ -59,62 +59,81 @@ const RevenueList = ({
 
   // Process revenue data to include parsed products
   const processedRevenue = useMemo(() => {
-    return revdata.map(revenue => ({
-      ...revenue,
-      parsedProducts: typeof revenue.products === 'string' ? JSON.parse(revenue.products) : revenue.products
-    }));
+    try {
+      return (revdata || []).map(revenue => ({
+        ...revenue,
+        parsedProducts: revenue?.products ? 
+          (typeof revenue.products === 'string' ? JSON.parse(revenue.products) : revenue.products) 
+          : []
+      }));
+    } catch (error) {
+      console.error('Error processing revenue data:', error);
+      return [];
+    }
   }, [revdata]);
 
   // Calculate product-wise revenue
   const productRevenue = useMemo(() => {
-    const revenueMap = new Map();
+    try {
+      const revenueMap = new Map();
+      (processedRevenue || []).forEach(revenue => {
+        (revenue?.parsedProducts || []).forEach(product => {
+          if (!product?.product_id) return;
+          
+          const existing = revenueMap.get(product.product_id) || {
+            total_revenue: 0,
+            total_profit: 0,
+            quantity_sold: 0,
+            product_name: product.name || 'Unknown Product',
+          };
 
-    processedRevenue.forEach(revenue => {
-      revenue.parsedProducts.forEach(product => {
-        const existing = revenueMap.get(product.product_id) || {
-          total_revenue: 0,
-          total_profit: 0,
-          quantity_sold: 0,
-          product_name: product.name,
-        };
+          existing.total_revenue += Number(product.total) || 0;
+          existing.total_profit += Number(product.profit) || 0;
+          existing.quantity_sold += Number(product.quantity) || 0;
 
-        existing.total_revenue += product.total;
-        existing.total_profit += product.profit;
-        existing.quantity_sold += product.quantity;
-
-        revenueMap.set(product.product_id, existing);
+          revenueMap.set(product.product_id, existing);
+        });
       });
-    });
 
-    return Array.from(revenueMap.entries()).map(([id, data]) => ({
-      id,
-      ...data,
-    }));
+      return Array.from(revenueMap.entries()).map(([id, data]) => ({
+        id,
+        ...data,
+      }));
+    } catch (error) {
+      console.error('Error calculating product revenue:', error);
+      return [];
+    }
   }, [processedRevenue]);
 
   // Calculate customer-wise revenue
   const customerRevenue = useMemo(() => {
-    const revenueMap = new Map();
+    try {
+      const revenueMap = new Map();
+      (processedRevenue || []).forEach(revenue => {
+        if (!revenue?.customer) return;
+        
+        const customerId = revenue.customer;
+        const existing = revenueMap.get(customerId) || {
+          total_revenue: 0,
+          total_profit: 0,
+          transaction_count: 0,
+        };
 
-    processedRevenue.forEach(revenue => {
-      const customerId = revenue.customer;
-      const existing = revenueMap.get(customerId) || {
-        total_revenue: 0,
-        total_profit: 0,
-        transaction_count: 0,
-      };
+        existing.total_revenue += Number(revenue.amount) || 0;
+        existing.total_profit += Number(revenue.profit) || 0;
+        existing.transaction_count += 1;
 
-      existing.total_revenue += revenue.amount;
-      existing.total_profit += revenue.profit;
-      existing.transaction_count += 1;
+        revenueMap.set(customerId, existing);
+      });
 
-      revenueMap.set(customerId, existing);
-    });
-
-    return Array.from(revenueMap.entries()).map(([id, data]) => ({
-      id,
-      ...data,
-    }));
+      return Array.from(revenueMap.entries()).map(([id, data]) => ({
+        id,
+        ...data,
+      }));
+    } catch (error) {
+      console.error('Error calculating customer revenue:', error);
+      return [];
+    }
   }, [processedRevenue]);
 
   // Filter revenue based on selected product and customer
@@ -150,50 +169,58 @@ const RevenueList = ({
   };
 
   const getCurrencyDetails = (currencyId) => {
+    if (!currencyId || !currencies) return { currencyIcon: '₹', currencyCode: 'INR' };
     const currency = currencies.find(c => c.id === currencyId);
     return currency || { currencyIcon: '₹', currencyCode: 'INR' };
   };
 
   const formatAmount = (amount, currencyId) => {
+    if (amount === undefined || amount === null) return '₹ 0.00';
     const currency = getCurrencyDetails(currencyId);
-    return `${currency.currencyIcon} ${amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    const numericAmount = Number(amount) || 0;
+    return `${currency.currencyIcon} ${numericAmount.toLocaleString('en-IN', { 
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2 
+    })}`;
   };
 
   const columns = [
     {
-      title: "Date & Description",
+      title: "Date ",
       key: "date",
       width: '25%',
+      sorter: (a, b) => new Date(a.date) - new Date(b.date),
       render: (_, record) => (
         <div>
           <Text strong style={{ display: "block" }}>
             <FiCalendar style={{ marginRight: "8px" }} />
-            {dayjs(record.date).format("DD MMM, YYYY")}
+            {dayjs(record.date).format("DD-MM-YYYY")}
           </Text>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+          {/* <Text type="secondary" style={{ fontSize: "12px" }}>
             {record.description}
-          </Text>
-          <Tag color="blue" style={{ marginTop: "4px" }}>{record.category}</Tag>
+          </Text> */}
+          {/* <Tag color="blue" style={{ marginTop: "4px" }}>{record.category}</Tag> */}
         </div>
       ),
     },
     {
       title: "Products",
       key: "products",
-      width: '30%',
+        width: '30%',
+        sorter: (a, b) => a.parsedProducts.length - b.parsedProducts.length,
       render: (_, record) => (
         <div>
           {record.parsedProducts.map((product, index) => (
             <div key={index} style={{ marginBottom: index !== record.parsedProducts.length - 1 ? '8px' : 0 }}>
               <Text strong>{product.name}</Text>
               <div>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
+                {/* <Text type="secondary" style={{ fontSize: "12px" }}>
                   Qty: {product.quantity} × {formatAmount(product.unit_price, record.currency)}
                   {product.tax_rate > 0 && ` (Tax: ${product.tax_rate}%)`}
                   {product.discount > 0 && ` (Discount: ${formatAmount(product.discount, record.currency)})`}
-                </Text>
+                </Text> */}
               </div>
-              <Text type="success" style={{ fontSize: "12px" }}>
+              <Text type="success" style={{ fontSize: "12px" }} >
                 Total: {formatAmount(product.total, record.currency)}
               </Text>
             </div>
@@ -205,6 +232,7 @@ const RevenueList = ({
       title: "Amount",
       key: "amount",
       width: '15%',
+      sorter: (a, b) => Number(a.amount) - Number(b.amount),
       render: (_, record) => (
         <div>
           <Text strong style={{ fontSize: "16px", color: "#52c41a" }}>
@@ -220,15 +248,16 @@ const RevenueList = ({
       title: "Profit",
       key: "profit",
       width: '20%',
+      sorter: (a, b) => Number(a.profit) - Number(b.profit),
       render: (_, record) => (
         <div>
           <Text strong style={{ color: "#1890ff", display: "block" }}>
             <FiTrendingUp style={{ marginRight: "4px" }} />
-            {formatAmount(record.profit, record.currency)}
+            {formatAmount(record.profit || 0, record.currency)}
           </Text>
           <Text type="secondary" style={{ fontSize: "12px" }}>
-            <FiPercent style={{ marginRight: "4px" }} />
-            {record.profit_margin_percentage.toFixed(2)}% Margin
+            {/* <FiPercent style={{ marginRight: "4px" }} /> */}
+            {(Number(record.profit_margin_percentage) || 0).toFixed(2)}% Margin
           </Text>
         </div>
       ),
@@ -280,9 +309,9 @@ const RevenueList = ({
   // Calculate totals for stats
   const stats = useMemo(() => {
     return filteredRevenue.reduce((acc, rev) => ({
-      total_revenue: acc.total_revenue + rev.amount,
-      total_profit: acc.total_profit + rev.profit,
-      total_margin: acc.total_margin + rev.profit_margin_percentage,
+      total_revenue: acc.total_revenue + (Number(rev.amount) || 0),
+      total_profit: acc.total_profit + (Number(rev.profit) || 0),
+      total_margin: acc.total_margin + (Number(rev.profit_margin_percentage) || 0),
       count: acc.count + 1
     }), { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 });
   }, [filteredRevenue]);
@@ -329,8 +358,7 @@ const RevenueList = ({
               title="Total Revenue"
               value={stats.total_revenue}
               precision={2}
-              prefix={<FiDollarSign />}
-              formatter={(value) => `₹ ${value.toLocaleString('en-IN')}`}
+              formatter={(value) => `₹ ${(Number(value) || 0).toLocaleString('en-IN')}`}
             />
           </Card>
         </Col>
@@ -340,9 +368,8 @@ const RevenueList = ({
               title="Total Profit"
               value={stats.total_profit}
               precision={2}
-              prefix={<FiDollarSign />}
               valueStyle={{ color: '#3f8600' }}
-              formatter={(value) => `₹ ${value.toLocaleString('en-IN')}`}
+              formatter={(value) => `₹ ${(Number(value) || 0).toLocaleString('en-IN')}`}
             />
           </Card>
         </Col>
@@ -350,7 +377,7 @@ const RevenueList = ({
           <Card>
             <Statistic
               title="Average Profit Margin"
-              value={stats.count > 0 ? stats.total_margin / stats.count : 0}
+              value={stats.count > 0 ? (stats.total_margin / stats.count) : 0}
               precision={2}
               suffix="%"
               valueStyle={{ color: '#3f8600' }}

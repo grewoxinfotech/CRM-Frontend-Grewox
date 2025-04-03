@@ -12,6 +12,7 @@ import {
     FiXCircle,
     FiCheck
 } from 'react-icons/fi';
+import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
 
 const { Text, Title } = Typography;
 
@@ -28,6 +29,15 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
     };
 
     const status = plan.status || 'inactive';
+
+    const { data: currencies } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
+    const getCurrencyIcon = (currencyId) => {
+        const currency = currencies?.find(c => c.id === currencyId);
+        return currency?.currencyIcon || '$';
+    };
 
     const actionItems = [
         {
@@ -95,9 +105,13 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                     {plan.name}
                 </Title>
                 <div className="price-section">
-                    <FiDollarSign className="currency-icon" />
-                    <span className="amount">{Number(plan.price).toFixed(2)}</span>
-                    <span className="duration">/{plan.duration.toLowerCase()}</span>
+                <span className="icon">
+                    <small className="currency-icon">
+                        {getCurrencyIcon(plan.currency)}
+                    </small>
+                    {Number(plan.price || 0).toFixed(2)}
+                </span>
+                    <span className="amount">/{plan.duration.toLowerCase()}</span>
                 </div>
             </div>
 

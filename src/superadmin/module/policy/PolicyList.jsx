@@ -11,7 +11,7 @@ const PolicyList = ({
   onDelete,
   onView,
   pagination,
-  }) => {
+}) => {
 
     // const handleDelete = (id) => {
     //     Modal.confirm({
@@ -40,32 +40,24 @@ const PolicyList = ({
               icon: <FiEye />,
               label: 'View Details',
               onClick: () => onView(record),
-
           },
           {
               key: 'edit',
               icon: <FiEdit2 />,
-              label: 'Edit Plan',
-              onClick: () => onEdit(record),
-
+              label: 'Edit Policy',
+              onClick: () => onEditPolicy(record),
           },
           {
               key: 'delete',
               icon: <FiTrash2 />,
-              label: 'Delete Plan',
+              label: 'Delete Policy',
               danger: true,
               onClick: () => onDelete(record),
           }
       ]
   });
   const columns = [
-    {
-      title: "Branch",
-      dataIndex: "branch",
-      key: "branch",
-      sorter: (a, b) => (a.branch || "").localeCompare(b.branch || ""),
-      render: (text) => text || "N/A",
-    },
+   
     {
       title: "Title",
       dataIndex: "title",
@@ -80,12 +72,7 @@ const PolicyList = ({
       ellipsis: true,
       render: (text) => text || "N/A",
     },
-    {
-      title: "Created By",
-      dataIndex: "created_by",
-      key: "created_by",
-      render: (text) => text || "N/A",
-    },
+    
     {
       title: "Created Date",
       dataIndex: "createdAt",
@@ -123,6 +110,7 @@ const PolicyList = ({
       dataSource={policies}
       rowKey="id"
       pagination={pagination}
+      loading={loading}
       locale={{
         emptyText: "No policies found",
       }}

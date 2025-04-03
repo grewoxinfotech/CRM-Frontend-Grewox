@@ -749,9 +749,9 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: 500 }}>{product.name}</span>
-                      <span style={{ fontSize: '12px', color: '#666' }}>
+                      {/* <span style={{ fontSize: '12px', color: '#666' }}>
                         Price: {selectedCurrency} {product.selling_price}
-                      </span>
+                      </span> */}
                     </div>
                   </div>
                 </Option>

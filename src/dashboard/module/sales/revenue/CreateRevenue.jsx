@@ -27,6 +27,7 @@ import dayjs from "dayjs";
 import "./revenue.scss";
 import { useCreateRevenueMutation } from "./services/revenueApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
+import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -36,7 +37,9 @@ const CreateRevenue = ({ open, onCancel, onSubmit }) => {
   const [form] = Form.useForm();
   const [createRevenue, { isLoading }] = useCreateRevenueMutation();
   const { data: custdata } = useGetCustomersQuery();
-  const customers = custdata?.data;
+  const { data: currencyData } = useGetAllCurrenciesQuery();
+  const customers = custdata?.data || [];
+  const currencies = currencyData || [];
 
   const handleSubmit = async (values) => {
     try {
@@ -225,10 +228,21 @@ const CreateRevenue = ({ open, onCancel, onSubmit }) => {
                 placeholder="Select currency"
                 style={{ width: "100%", borderRadius: "10px" }}
                 suffixIcon={<FiCreditCard style={{ color: "#1890ff" }} />}
+                showSearch
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option?.children?.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
               >
-                <Option value="INR">INR - Indian Rupee</Option>
-                <Option value="USD">USD - US Dollar</Option>
-                <Option value="EUR">EUR - Euro</Option>
+                {currencies && currencies.length > 0 ? (
+                  currencies.map((currency) => (
+                    <Option key={currency.id} value={currency.id}>
+                      {currency.currencyCode} - {currency.currencyName}
+                    </Option>
+                  ))
+                ) : (
+                  <Option value="INR">INR - Indian Rupee</Option>
+                )}
               </Select>
             </Form.Item>
           </Col>

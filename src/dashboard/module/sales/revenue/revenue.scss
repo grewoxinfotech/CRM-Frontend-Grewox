@@ -42,34 +42,90 @@
     .revenue-stats {
         margin-bottom: 24px;
 
+        
         .ant-card {
-            @include hover-shadow;
             border-radius: 12px;
             border: none;
             background: white;
             box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background: linear-gradient(90deg, $primary-color, lighten($primary-color, 20%));
+            }
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba($primary-color, 0.15);
+                
+                &::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    right: 0;
+                    width: 50px;
+                    height: 50px;
+                    background: radial-gradient(circle, rgba($primary-color, 0.1) 0%, transparent 70%);
+                }
+            }
 
             .ant-card-body {
                 padding: 24px;
+                position: relative;
             }
 
             .ant-statistic {
+                position: relative;
+                
                 .ant-statistic-title {
                     color: $text-color-light;
                     font-size: 14px;
                     margin-bottom: 8px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
                 }
 
                 .ant-statistic-content {
                     color: $text-color-dark;
-                    font-size: 24px;
-                    font-weight: 600;
+                    font-size: 28px;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
 
                     .anticon {
-                        margin-right: 8px;
+                        margin-right: 12px;
+                        font-size: 24px;
+                        padding: 8px;
+                        border-radius: 50%;
+                        background: rgba($primary-color, 0.1);
+                        color: $primary-color;
+                    }
+
+                    &:hover .anticon {
+                        animation: pulse 1s infinite;
                     }
                 }
             }
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
         }
     }
 
@@ -85,7 +141,7 @@
                 background: transparent;
 
                 .ant-table-thead > tr > th {
-                    background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
+                    // background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
                     font-weight: 600;
                     color: $text-color-dark;
                     padding: 16px 24px;

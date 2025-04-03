@@ -282,8 +282,19 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                initialValues={initialValues}
                 requiredMark={false}
+                initialValues={{
+                    currency: 'INR',
+                    duration: 'Per Month',
+                    status: true,
+                    trial_period: '7',
+                    max_users: '5',
+                    max_clients: '10',
+                    max_customers: '50',
+                    max_vendors: '20',
+                    storage_limit: '10',
+                    ...initialValues
+                }}
                 style={{
                     padding: '24px',
                 }}
@@ -311,61 +322,85 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
 
                 <Row gutter={16}>
                     <Col span={12}>
-                        <Form.Item
-                            name="price_group"
-                            label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Price</span>}
-                            style={{ marginBottom: 0 }}
-                        >
-                            <Input.Group compact className="price-input-group" style={{
-                                display: 'flex',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                borderRadius: '10px',
-                                border: '1px solid #e6e8eb',
-                                overflow: 'hidden'
+                     <Form.Item
+                        name="price_group"
+                        label={
+                            <span style={{
+                                fontSize: '14px',
+                                fontWeight: '500',
                             }}>
-                                <Form.Item
-                                    name="currency"
-                                    noStyle
-                                    rules={[{ required: true }]}
+                                Price
+                            </span>
+                        }
+                        style={{ flex: 1 }}
+                    >
+                        <Input.Group compact className="price-input-group" style={{
+                            display: 'flex',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '10px',
+                            border: '1px solid #e6e8eb',
+                            overflow: 'hidden',
+                            marginBottom: 0
+                        }}>
+                            <Form.Item
+                                name="currency"
+                                noStyle
+                                rules={[{ required: true }]}
+                            >
+                                <Select
+                                    size="large"
+                                    style={{
+                                        width: '100px',
+                                        height: '48px'
+                                    }}
+                                    loading={currenciesLoading}
+                                    className="currency-select"
+                                    defaultValue={currencies?.data?.find(c => c.currencyCode === 'INR')?.id}
+                                    dropdownStyle={{
+                                        padding: '8px',
+                                        borderRadius: '10px',
+                                    }}
+                                    showSearch
+                                    optionFilterProp="children"
+                                    filterOption={(input, option) =>
+                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    }
                                 >
-                                    <Select
-                                        size="large"
-                                        style={{
-                                            width: '100px',
-                                            height: '48px'
-                                        }}
-                                        loading={currenciesLoading}
-                                        className="currency-select"
-                                        defaultValue="INR"
-                                        dropdownStyle={{
-                                            padding: '8px',
-                                            borderRadius: '10px',
-                                        }}
-                                        showSearch
-                                        optionFilterProp="children"
-                                        filterOption={(input, option) =>
-                                            option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
-                                    >
-                                        {currencies?.data?.map(currency => (
-                                            <Option key={currency.code} value={currency.code}>
-                                                {currency.code}
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
+                                    {currencies?.map(currency => (
+                                        <Option key={currency.id} value={currency.id}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>{currency.currencyIcon}</span>
+                                                <span>{currency.currencyName}</span>
+                                            </div>
+                                        </Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <Form.Item
+                                name="price"
+                                noStyle
+                                rules={[{ required: true, message: 'Please enter price' }]}
+                            >
                                 <InputNumber
-                                    name='price'
-                                    className="price-input"
                                     placeholder="Enter price"
-                                    value={initialValues?.price}
+                                    size="large"
+                                    style={{
+                                        flex: 1,
+                                        width: '100%',
+                                        border: 'none',
+                                        borderLeft: '1px solid #e6e8eb',
+                                        borderRadius: 0,
+                                        height: '48px',
+                                        padding: '0 16px',
+                                    }}
                                     min={0}
-                                    style={{ flex: 1, border: 'none', borderRadius: 0, padding: '0 16px' }}
-                                    onChange={(value) => form.setFieldsValue({ price_group: value?.toString() })}
+                                    precision={2}
+                                    className="price-input"
                                 />
-                            </Input.Group>
-                        </Form.Item>
+                            </Form.Item>
+                        </Input.Group>
+                    </Form.Item>
                     </Col>
                     <Col span={12}>
                         <Form.Item
