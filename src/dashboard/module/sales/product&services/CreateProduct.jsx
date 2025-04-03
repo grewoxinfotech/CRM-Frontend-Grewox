@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -32,6 +32,7 @@ import {
   FiInfo,
   FiPlus,
   FiUser,
+  FiChevronDown,
 } from "react-icons/fi";
 import { useCreateProductMutation } from "./services/productApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
@@ -45,14 +46,6 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-// Find the Indian currency
-const findIndianDefaults = (currencies) => {
-  const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
-  return {
-    defaultCurrency: inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK'
-  };
-};
-
 const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
@@ -63,7 +56,15 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
   const [addCategoryVisible, setAddCategoryVisible] = useState(false);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
 
-  const { defaultCurrency } = findIndianDefaults(currenciesData);
+  // Find default currency (INR)
+  // const findIndianDefaults = (currencies) => {
+  //   const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
+  //   return {
+  //     defaultCurrency: inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK'
+  //   };
+  // };
+
+  // const { defaultCurrency } = findIndianDefaults(currenciesData);
 
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
@@ -91,33 +92,40 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
     }
   ];
 
+  // Update handleCurrencyChange
   const handleCurrencyChange = (value) => {
     const currency = currenciesData?.find(c => c.id === value);
     setSelectedCurrency(currency?.currencyIcon || '₹');
-    form.setFieldsValue({ currency: value });
+    form.setFieldsValue({ 
+      currency: value  // Set the currency ID in form
+    });
   };
+
+  // Initialize form with default currency
+  useEffect(() => {
+    if (currenciesData) {
+      const defaultCurr = currenciesData?.find(c => c.currencyCode === 'INR');
+      if (defaultCurr) {
+        form.setFieldsValue({
+          currency: defaultCurr.id
+        });
+        setSelectedCurrency(defaultCurr.currencyIcon);
+      }
+    }
+  }, [currenciesData, form]);
 
   const handleSubmit = async (values) => {
     try {
       const formData = new FormData();
 
-      // Get the selected currency
-      const selectedCurrency = currenciesData?.find(c => c.id === values.currency);
-
-      // Format prices with currency
-      const formattedBuyingPrice = values.buying_price ? 
-        `${selectedCurrency?.currencyIcon} ${values.buying_price}` :
-        null;
-
-      const formattedSellingPrice = values.selling_price ?
-        `${selectedCurrency?.currencyIcon} ${values.selling_price}` :
-        null;
+      // Get selected currency or use default
+      const currencyId = values.currency ;
 
       formData.append("name", values.name);
       formData.append("category", values.category);
-      formData.append("buying_price", formattedBuyingPrice);
-      formData.append("selling_price", formattedSellingPrice);
-      formData.append("currency", values.currency || defaultCurrency);
+      formData.append("buying_price", values.buying_price);
+      formData.append("selling_price", values.selling_price);
+      formData.append("currency", currencyId); // Store currency ID
       formData.append("sku", values.sku || "");
       formData.append("tax", values.tax || "");
       formData.append("hsn_sac", values.hsn_sac || "");
@@ -299,18 +307,38 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
               placeholder="Select category"
               style={{ width: '100%', height: '48px' }}
               dropdownRender={(menu) => (
-                <>
+                <div onClick={(e) => e.stopPropagation()}>
                   {menu}
                   <Divider style={{ margin: '8px 0' }} />
-                  <Button
-                    type="text"
-                    icon={<FiPlus />}
-                    onClick={handleAddCategory}
-                    style={{ width: '100%', textAlign: 'left' }}
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
                   >
-                    Add Category
-                  </Button>
-                </>
+                    <Button
+                      type="primary"
+                      icon={<FiPlus />}
+                      onClick={handleAddCategory}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Add Category
+                    </Button>
+                  </div>
+                </div>
               )}
             >
               {categories.map((category) => (
@@ -330,13 +358,15 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
           </Form.Item>
         </div>
 
+        <Divider />
+
         {/* Pricing Details */}
         <div className="section-title" style={{ marginBottom: '16px' }}>
           <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Pricing Details</Text>
         </div>
         <div className="form-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
+          // gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '16px',
           marginBottom: '32px'
         }}>
@@ -345,20 +375,31 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Buying Price</span>}
             rules={[{ required: true, message: "Please enter buying price" }]}
           >
-            <div className="value-input-group">
-              <Select
-                onChange={handleCurrencyChange}
-                defaultValue={defaultCurrency}
-                style={{ width: '30%' }}
+            <div className="price-input-group">
+              <Form.Item
+                name="currency"
+                noStyle
               >
-                {currenciesData?.map((currency) => (
-                  <Option key={currency.id} value={currency.id}>
-                    {currency.currencyIcon}
-                  </Option>
-                ))}
-              </Select>
+                <Select
+                  onChange={handleCurrencyChange}
+                  className="currency-select"
+                  dropdownClassName="currency-dropdown"
+                  // defaultValue={defaultCurrency} // Set default currency
+                >
+                  {currenciesData?.map((currency) => (
+                    <Option 
+                      key={currency.id} 
+                      value={currency.id}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{currency.currencyIcon}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
               <InputNumber
-                style={{ width: '70%' }}
+                className="price-input"
                 placeholder="Enter buying price"
                 min={0}
                 precision={2}
@@ -371,37 +412,26 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
             rules={[{ required: true, message: "Please enter selling price" }]}
           >
-            <div className="value-input-group">
+            <div className="price-input-group">
               <Select
                 value={form.getFieldValue('currency')}
-                style={{ width: '30%' }}
+                className="currency-select"
+                dropdownClassName="currency-dropdown"
                 disabled
               >
                 <Option value={form.getFieldValue('currency')}>
-                  {selectedCurrency}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>{selectedCurrency}</span>
+                  </div>
                 </Option>
               </Select>
               <InputNumber
-                style={{ width: '70%' }}
+                className="price-input"
                 placeholder="Enter selling price"
                 min={0}
                 precision={2}
               />
             </div>
-          </Form.Item>
-
-          <Form.Item
-            name="tax"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Tax</span>}
-          >
-            <InputNumber
-              placeholder="Enter tax percentage"
-              min={0}
-              max={100}
-              formatter={value => `${value}%`}
-              parser={value => value.replace('%', '')}
-              style={{ width: '100%' }}
-            />
           </Form.Item>
 
           <Form.Item
@@ -413,79 +443,6 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
               style={{ width: '100%' }}
             />
           </Form.Item>
-        </div>
-
-        {/* Stock Management */}
-        <div className="section-title" style={{ marginBottom: '16px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Stock Management</Text>
-        </div>
-        <div className="form-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '16px',
-          marginBottom: '32px'
-        }}>
-          <Form.Item
-            name="stock_status"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Status</span>}
-          >
-            <Select placeholder="Select status">
-              {stockStatusOptions.map(option => (
-                <Option key={option.value} value={option.value}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {option.icon}
-                    <span style={{ color: option.color }}>{option.label}</span>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="stock_quantity"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Quantity</span>}
-            rules={[{ required: true, message: "Please enter stock quantity" }]}
-          >
-            <InputNumber
-              placeholder="Enter quantity"
-              min={0}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="min_stock_level"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Minimum Stock Level</span>}
-          >
-            <InputNumber
-              placeholder="Enter minimum stock level"
-              min={0}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="max_stock_level"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Maximum Stock Level</span>}
-          >
-            <InputNumber
-              placeholder="Enter maximum stock level"
-              min={0}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="reorder_quantity"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Reorder Quantity</span>}
-          >
-            <InputNumber
-              placeholder="Enter reorder quantity"
-              min={0}
-              style={{ width: '100%' }}
-            />
-          </Form.Item>
-
           <Form.Item
             name="sku"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>SKU</span>}
@@ -496,6 +453,125 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
             />
           </Form.Item>
         </div>
+
+        <Divider />
+
+        {/* Stock Management */}
+        <div className="section-title" style={{ marginBottom: '16px' }}>
+          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Stock Management</Text>
+        </div>
+        <div className="form-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
+          gap: '24px',
+          marginBottom: '32px'
+        }}>
+          <Form.Item
+            name="stock_status"
+            label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Status</span>}
+          >
+            <Select 
+              placeholder="Select status"
+              className="stock-status-select"
+              suffixIcon={<FiChevronDown />}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                border: '1px solid #d1d5db',
+                backgroundColor: '#f9fafb'
+              }}
+            >
+              {stockStatusOptions.map(option => (
+                <Option key={option.value} value={option.value}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {option.icon}
+                    <span>{option.label}</span>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="stock_quantity"
+            label={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ color: '#374151', fontWeight: 500 }}>Stock Quantity</span>
+              </div>
+            }
+            rules={[{ required: true, message: "Please enter stock quantity" }]}
+          >
+            <InputNumber
+              placeholder="Enter quantity"
+              min={0}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                border: '1px solid #d1d5db',
+                backgroundColor: '#f9fafb'
+              }}
+              prefix={<FiPackage style={{ color: '#6b7280', marginRight: '8px' }} />}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="min_stock_level"
+            label={<span style={{ color: '#374151', fontWeight: 500 }}>Minimum Stock Level</span>}
+          >
+            <InputNumber
+              placeholder="Enter minimum stock level"
+              min={0}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                border: '1px solid #d1d5db',
+                backgroundColor: '#f9fafb'
+              }}
+              prefix={<FiAlertCircle style={{ color: '#6b7280', marginRight: '8px' }} />}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="max_stock_level"
+            label={<span style={{ color: '#374151', fontWeight: 500 }}>Maximum Stock Level</span>}
+          >
+            <InputNumber
+              placeholder="Enter maximum stock level"
+              min={0}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                border: '1px solid #d1d5db',
+                backgroundColor: '#f9fafb'
+              }}
+              prefix={<FiTrendingUp style={{ color: '#6b7280', marginRight: '8px' }} />}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="reorder_quantity"
+            label={<span style={{ color: '#374151', fontWeight: 500 }}>Reorder Quantity</span>}
+          >
+            <InputNumber
+              placeholder="Enter reorder quantity"
+              min={0}
+              style={{
+                width: '100%',
+                height: '48px',
+                borderRadius: '10px',
+                border: '1px solid #d1d5db',
+                backgroundColor: '#f9fafb'
+              }}
+              prefix={<FiInfo style={{ color: '#6b7280', marginRight: '8px' }} />}
+            />
+          </Form.Item>
+        </div>
+
+        <Divider />
 
         {/* Additional Information */}
         <div className="section-title" style={{ marginBottom: '16px' }}>

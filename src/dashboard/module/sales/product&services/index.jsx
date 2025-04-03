@@ -9,6 +9,8 @@ import {
   Dropdown,
   Menu,
   Breadcrumb,
+  Row,
+  Col,
 } from "antd";
 import {
   FiPlus,
@@ -189,7 +191,7 @@ const ProductServices = () => {
   );
 
   return (
-    <div className="invoice-page">
+    <div className="inquiry-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
@@ -210,31 +212,37 @@ const ProductServices = () => {
           <Title level={2}>Products & Services</Title>
           <Text type="secondary">Manage all products and services in the organization</Text>
         </div>
-        <div className="header-actions">
-          <div className="search-filter-group">
-            <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-              placeholder="Search products & services..."
-              allowClear
-              onChange={(e) => setSearchText(e.target.value)}
-              value={searchText}
-            />
-          </div>
-          <div className="action-buttons">
-            <Dropdown overlay={exportMenu} placement="bottomRight">
-              <Button icon={<FiDownload />} loading={loading}>
-                Export <FiChevronDown />
-              </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus />}
-              onClick={handleCreate}
-            >
-              Add Product
-            </Button>
-          </div>
-        </div>
+        <Row justify="center" className="header-actions-wrapper">
+          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
+            <div className="header-actions">
+              <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                placeholder="Search products & services..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+              />
+              <div className="action-buttons">
+                <Dropdown menu={exportMenu} trigger={["click"]}>
+                  <Button className="export-button">
+                    <FiDownload size={16} />
+                    <span>Export</span>
+                    <FiChevronDown size={14} />
+                  </Button>
+                </Dropdown>
+                <Button
+                  type="primary"
+                  icon={<FiPlus size={16} />}
+                  onClick={handleCreate}
+                  className="add-button"
+                >
+                  Add Product
+                </Button>
+              </div>
+            </div>
+          </Col>
+        </Row>
       </div>
 
       <Card className="content-card">

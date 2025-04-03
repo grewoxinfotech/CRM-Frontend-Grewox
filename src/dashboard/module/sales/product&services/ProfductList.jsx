@@ -27,6 +27,9 @@ import {
   useDeleteProductMutation,
 } from "./services/productApi";
 import EditProduct from "./EditProduct";
+import { useGetCategoriesQuery } from "../../crm/crmsystem/souce/services/SourceApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
 
 const { Text } = Typography;
 
@@ -36,6 +39,10 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  const currentUser = useSelector(selectCurrentUser);
+  const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
+  const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
   console.log("products", products);
 
@@ -135,12 +142,7 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
           )}
           <div>
             <Text strong style={{ display: "block", fontSize: "14px" }}>{name}</Text>
-            <Text type="secondary" style={{ fontSize: "12px" }}>SKU: {record.sku}</Text>
-            {record.hsn_sac && (
-              <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
-                HSN/SAC: {record.hsn_sac}
-              </Text>
-            )}
+           
           </div>
         </div>
       ),
@@ -201,15 +203,7 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
             <FiTrendingUp style={{ marginRight: "4px" }} />
             Margin: ₹{record.profit_margin}
           </Text>
-          <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
-            <FiPercent style={{ marginRight: "4px" }} />
-            {record.profit_percentage}% Profit
-          </Text>
-          <Tooltip title="Total Investment / Potential Revenue">
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              ₹{record.total_investment} / ₹{record.potential_revenue}
-            </Text>
-          </Tooltip>
+          
         </div>
       ),
     },
@@ -218,20 +212,27 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
       dataIndex: "category",
       key: "category",
       width: '15%',
-      sorter: (a, b) => (a?.category || "").localeCompare(b?.category || ""),
-      render: (category) => (
-        <Tag
-          color="blue"
-          style={{
-            borderRadius: "4px",
-            padding: "2px 8px",
-            fontSize: "13px",
-            textTransform: "capitalize"
-          }}
-        >
-          {category}
-        </Tag>
-      ),
+      sorter: (a, b) => {
+        const categoryA = categories.find(c => c.id === a.category)?.name || "";
+        const categoryB = categories.find(c => c.id === b.category)?.name || "";
+        return categoryA.localeCompare(categoryB);
+      },
+      render: (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return (
+          <Tag
+            color={category?.color || "blue"}
+            style={{
+              borderRadius: "4px",
+              padding: "2px 8px",
+              fontSize: "13px",
+              textTransform: "capitalize"
+            }}
+          >
+            {category?.name || "Uncategorized"}
+          </Tag>
+        );
+      },
     },
     {
       title: "Action",

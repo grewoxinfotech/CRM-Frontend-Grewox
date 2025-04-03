@@ -22,7 +22,7 @@ $border-radius: 6px;
     }
 }
 
-.invoice-page {
+.inquiry-page {
     padding: 24px;
     background: $background-color;
 
@@ -92,103 +92,110 @@ $border-radius: 6px;
             }
         }
 
-        .header-actions {
+        .header-actions-wrapper {
             display: flex;
-            align-items: center;
             justify-content: flex-end;
-            gap: 16px;
-            width: 100%;
-            max-width: 800px;
+            flex: 1;
+            margin: 0;
 
-            .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
+            .header-actions {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                gap: 16px;
+                width: 100%;
+                max-width: 800px;
 
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
+                .search-input {
+                    flex: 1;
+                    max-width: 360px;
+                    min-width: 200px;
 
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
+                    .ant-input-affix-wrapper {
+                        border-radius: 40px;
+                        height: 40px;
+                        padding: 4px 16px;
+                        transition: all 0.3s ease;
+                        border: 1px solid $border-color;
+                        width: 100%;
+
+                        .anticon {
+                            color: $text-color-light;
+                            margin-right: 8px;
+                            font-size: 16px;
+                        }
+
+                        .ant-input {
+                            font-size: 14px;
+                            background: transparent;
+                            border: none;
+                            padding: 0;
+                            margin: 0 4px;
+
+                            &::placeholder {
+                                color: rgba($text-color, 0.45);
+                            }
+                        }
+
+                        &:hover,
+                        &:focus,
+                        &-focused {
+                            border-color: #1677ff;
+                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                        }
                     }
+                }
 
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
+                .action-buttons {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex-shrink: 0;
 
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
+                    .export-button,
+                    .add-button {
+                        height: 40px;
+                        padding: 0 20px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        border-radius: 8px;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+
+                        svg {
+                            font-size: 16px;
                         }
                     }
 
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    .export-button {
+                        border: 1px solid $border-color;
+                        background: white;
+
+                        &:hover {
+                            color: #1677ff;
+                            border-color: #1677ff;
+                            transform: translateY(-2px);
+                        }
                     }
-                }
-            }
 
-            .action-buttons {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex-shrink: 0;
+                    .add-button {
+                        background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                        border: none;
+                        color: white;
 
-                .export-button,
-                .add-button {
-                    height: 40px;
-                    padding: 0 20px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    transition: all 0.3s ease;
-
-                    svg {
-                        font-size: 16px;
-                    }
-                }
-
-                .export-button {
-                    border: 1px solid $border-color;
-                    background: white;
-
-                    &:hover {
-                        color: #1677ff;
-                        border-color: #1677ff;
-                        transform: translateY(-2px);
-                    }
-                }
-
-                .add-button {
-                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                    border: none;
-                    color: white;
-
-                    &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                        transform: translateY(-2px);
+                        &:hover {
+                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                            transform: translateY(-2px);
+                        }
                     }
                 }
             }
         }
     }
 
-    .invoice-table-card {
+    .inquiry-table-card {
         @include hover-shadow;
         background: white;
         border-radius: 12px;
@@ -417,12 +424,12 @@ $border-radius: 6px;
 
 // Responsive styles
 @media (max-width: 768px) {
-    .invoice-page {
+    .inquiry-page {
         .page-header {
             flex-direction: column;
             padding: 16px;
 
-            .header-actions {
+            .header-actions-wrapper {
                 flex-direction: column;
                 width: 100%;
 
@@ -437,7 +444,7 @@ $border-radius: 6px;
             }
         }
 
-        .invoice-table-card {
+        .inquiry-table-card {
             .ant-table {
                 .ant-table-thead>tr>th,
                 .ant-table-tbody>tr>td {

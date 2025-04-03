@@ -52,23 +52,81 @@ const AddCategoryModal = ({ visible, onCancel }) => {
       open={visible}
       onCancel={onCancel}
       footer={null}
-      width={500}
+      width={520}
       destroyOnClose={true}
       centered
       closeIcon={null}
-      className="custom-modal"
+      className="pro-modal custom-modal"
+      styles={{
+        body: {
+          padding: 0,
+          borderRadius: '8px',
+          overflow: 'hidden',
+        }
+      }}
     >
-      <div className="modal-header">
-        <Button type="text" onClick={onCancel} className="close-button">
+      <div
+        className="modal-header"
+        style={{
+          background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+          padding: "24px",
+          color: "#ffffff",
+          position: "relative",
+        }}
+      >
+        <Button
+          type="text"
+          onClick={onCancel}
+          style={{
+            position: "absolute",
+            top: "16px",
+            right: "16px",
+            color: "#ffffff",
+            width: "32px",
+            height: "32px",
+            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.2)",
+            borderRadius: "8px",
+            border: "none",
+          }}
+        >
           <FiX style={{ fontSize: "20px" }} />
         </Button>
-        <div className="header-content">
-          <div className="header-icon">
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <FiTag style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
           <div>
-            <h2>Add New Category</h2>
-            <Text style={{ color: "rgba(255, 255, 255, 0.85)" }}>
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#ffffff",
+              }}
+            >
+              Add Category
+            </h2>
+            <Text
+              style={{
+                fontSize: "14px",
+                color: "rgba(255, 255, 255, 0.85)",
+              }}
+            >
               Create a new category for better organization
             </Text>
           </div>
@@ -79,33 +137,62 @@ const AddCategoryModal = ({ visible, onCancel }) => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        requiredMark={false}
-        className="category-form"
+        autoComplete="off"
+        style={{ padding: "24px" }}
       >
         <Form.Item
           name="name"
-          label={
-            <span>
-              <FiType style={{ marginRight: "8px" }} />
-              Category Name
-            </span>
-          }
-          rules={[{ required: true, message: "Please enter category name" }]}
+          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Category Name</span>}
+          rules={[{ required: true, message: "Please enter the category name" }]}
         >
-          <Input placeholder="Enter category name" />
+          <Input
+            prefix={<FiType style={{ color: "#9ca3af" }} />}
+            placeholder="Enter category name"
+            style={{
+              borderRadius: "10px",
+              padding: "8px 16px",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              border: "1px solid #e6e8eb",
+            }}
+          />
         </Form.Item>
 
-        <div className="form-actions">
-          <Button onClick={onCancel} className="cancel-button">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "24px",
+          }}
+        >
+          <Button
+            onClick={onCancel}
+            style={{
+              padding: "8px 24px",
+              height: "44px",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              fontWeight: "500",
+            }}
+          >
             Cancel
           </Button>
           <Button
             type="primary"
             htmlType="submit"
             loading={isLoading}
-            className="submit-button"
+            style={{
+              padding: "8px 32px",
+              height: "44px",
+              borderRadius: "10px",
+              fontWeight: "500",
+              background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+              border: "none",
+              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
+            }}
           >
-            Create Category
+            Add Category
           </Button>
         </div>
       </Form>

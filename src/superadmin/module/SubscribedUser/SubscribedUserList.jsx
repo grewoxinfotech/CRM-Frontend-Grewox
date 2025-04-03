@@ -7,7 +7,7 @@ import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllCompaniesQuery, useRemovePlanMutation } from '../company/services/companyApi';
 
 const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
-    const { data: subscribedUsersData, isLoading } = useGetAllSubscribedUsersQuery();
+    const { data: subscribedUsersData } = useGetAllSubscribedUsersQuery();
     const { data: companiesData } = useGetAllCompaniesQuery();
     const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
     const { data: plansData } = useGetAllPlansQuery(filters);
