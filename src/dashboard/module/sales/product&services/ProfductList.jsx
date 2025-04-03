@@ -17,6 +17,9 @@ import {
   FiDollarSign,
   FiBox,
   FiTag,
+  FiPackage,
+  FiTrendingUp,
+  FiPercent
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -34,12 +37,13 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  console.log("products", products);
+
   const filteredProducts = React.useMemo(() => {
     return products?.filter((product) => {
       const searchLower = searchText.toLowerCase();
       const name = product?.name?.toLowerCase() || "";
       const category = product?.category?.toLowerCase() || "";
-      const price = product?.price?.toString().toLowerCase() || "";
       const sku = product?.sku?.toLowerCase() || "";
       const description = product?.description?.toLowerCase() || "";
 
@@ -47,7 +51,6 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
         !searchText ||
         name.includes(searchLower) ||
         category.includes(searchLower) ||
-        price.includes(searchLower) ||
         sku.includes(searchLower) ||
         description.includes(searchLower)
       );
@@ -111,22 +114,102 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
 
   const columns = [
     {
-      title: "Name",
+      title: "Product Details",
       dataIndex: "name",
       key: "name",
+      width: '25%',
       sorter: (a, b) => (a?.name || "").localeCompare(b?.name || ""),
-      render: (name) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            color: "#1890ff",
-            fontWeight: 500,
-          }}
-        >
-          <FiBox style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text strong>{name}</Text>
+      render: (name, record) => (
+        <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+          {record.image && (
+            <img 
+              src={record.image} 
+              alt={name} 
+              style={{ 
+                width: "40px", 
+                height: "40px", 
+                objectFit: "cover", 
+                borderRadius: "4px" 
+              }} 
+            />
+          )}
+          <div>
+            <Text strong style={{ display: "block", fontSize: "14px" }}>{name}</Text>
+            <Text type="secondary" style={{ fontSize: "12px" }}>SKU: {record.sku}</Text>
+            {record.hsn_sac && (
+              <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
+                HSN/SAC: {record.hsn_sac}
+              </Text>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Stock Info",
+      key: "stock",
+      width: '20%',
+      render: (_, record) => (
+        <div>
+          <div style={{ marginBottom: "4px" }}>
+            <Tag color={
+              record.stock_status === 'in_stock' ? 'success' :
+              record.stock_status === 'low_stock' ? 'warning' : 'error'
+            }>
+              {record.stock_status === 'in_stock' ? 'In Stock' :
+               record.stock_status === 'low_stock' ? 'Low Stock' : 'Out of Stock'}
+            </Tag>
+          </div>
+          <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
+            <FiPackage style={{ marginRight: "4px" }} />
+            Quantity: {record.stock_quantity}
+          </Text>
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            Min: {record.min_stock_level} | Max: {record.max_stock_level || 'N/A'}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "Pricing",
+      key: "pricing",
+      width: '20%',
+      render: (_, record) => (
+        <div>
+          <Text strong style={{ display: "block", color: "#52c41a" }}>
+            <FiDollarSign style={{ marginRight: "4px" }} />
+            Selling: ₹{record.selling_price}
+          </Text>
+          <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
+            Buying: ₹{record.buying_price}
+          </Text>
+          {record.tax && (
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              Tax: {record.tax}%
+            </Text>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Profit Metrics",
+      key: "profit",
+      width: '20%',
+      render: (_, record) => (
+        <div>
+          <Text strong style={{ display: "block", color: "#1890ff" }}>
+            <FiTrendingUp style={{ marginRight: "4px" }} />
+            Margin: ₹{record.profit_margin}
+          </Text>
+          <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
+            <FiPercent style={{ marginRight: "4px" }} />
+            {record.profit_percentage}% Profit
+          </Text>
+          <Tooltip title="Total Investment / Potential Revenue">
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              ₹{record.total_investment} / ₹{record.potential_revenue}
+            </Text>
+          </Tooltip>
         </div>
       ),
     },
@@ -134,6 +217,7 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
       title: "Category",
       dataIndex: "category",
       key: "category",
+      width: '15%',
       sorter: (a, b) => (a?.category || "").localeCompare(b?.category || ""),
       render: (category) => (
         <Tag
@@ -142,6 +226,7 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
             borderRadius: "4px",
             padding: "2px 8px",
             fontSize: "13px",
+            textTransform: "capitalize"
           }}
         >
           {category}
@@ -149,62 +234,9 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
       ),
     },
     {
-      title: "Price",
-      dataIndex: "price",
-      key: "price",
-      sorter: (a, b) => a.price - b.price,
-      render: (price) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            color: "#1890ff",
-            fontWeight: 500,
-          }}
-        >
-          {/* <FiDollarSign style={{ color: "#1890ff", fontSize: "16px" }} /> */}
-          <Text strong>
-            $
-            {typeof price === "number"
-              ? price.toFixed(2)
-              : Number(price).toFixed(2) || "0.00"}
-          </Text>
-        </div>
-      ),
-    },
-    {
-      title: "SKU",
-      dataIndex: "sku",
-      key: "sku",
-      render: (sku) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            color: "#595959",
-          }}
-        >
-          <FiTag style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{sku}</Text>
-        </div>
-      ),
-    },
-    {
-      title: "Created By",
-      dataIndex: "created_by",
-      key: "created_by",
-      sorter: (a, b) =>
-        (a?.created_by || "").localeCompare(b?.created_by || ""),
-      render: (created_by) => (
-        <Text style={{ color: "#262626" }}>{created_by}</Text>
-      ),
-    },
-    {
       title: "Action",
       key: "actions",
-      width: 80,
+      width: '5%',
       align: "center",
       render: (_, record) => (
         <Dropdown

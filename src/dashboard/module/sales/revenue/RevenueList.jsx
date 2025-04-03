@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   Button,
-  Tag,
   Dropdown,
-  Tooltip,
   Typography,
   Modal,
   message,
+  Select,
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Tag,
+  Tooltip
 } from "antd";
 import {
   FiEdit2,
@@ -16,45 +21,115 @@ import {
   FiMoreVertical,
   FiDollarSign,
   FiCalendar,
+  FiPackage,
+  FiUser,
+  FiTrendingUp,
+  FiPercent
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
   useGetRevenueQuery,
   useDeleteRevenueMutation,
 } from "./services/revenueApi";
+import { useGetProductsQuery } from "../product&services/services/productApi";
+import { useGetCustomersQuery } from "../customer/services/custApi";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
+const { Option } = Select;
 
 const RevenueList = ({
   onEdit,
   onDelete,
   onView,
   searchText = "",
-  revenues = [],
 }) => {
-  const { data: revenueData, isLoading } = useGetRevenueQuery();
-  const [deleteRevenue] = useDeleteRevenueMutation();
-  const revdata = revenueData?.data;
-  const filteredRevenues = React.useMemo(() => {
-    if (!revdata) return [];
-    return revdata.filter((revenue) => {
-      const searchLower = searchText.toLowerCase();
-      const amount = revenue?.amount?.toString().toLowerCase() || "";
-      const category = revenue?.category?.toLowerCase() || "";
-      const description = revenue?.description?.toLowerCase() || "";
-      const account = revenue?.account?.toLowerCase() || "";
-      const currency = revenue?.currency?.toLowerCase() || "";
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
-      return (
-        !searchText ||
-        amount.includes(searchLower) ||
-        category.includes(searchLower) ||
-        description.includes(searchLower) ||
-        account.includes(searchLower) ||
-        currency.includes(searchLower)
-      );
+  const { data: revenueData, isLoading } = useGetRevenueQuery();
+  const { data: productsData } = useGetProductsQuery();
+  const { data: customersData } = useGetCustomersQuery();
+  const [deleteRevenue] = useDeleteRevenueMutation();
+  const { data: currencies } = useGetAllCurrenciesQuery();
+
+  const revdata = revenueData?.data || [];
+  const products = productsData?.data || [];
+  const customers = customersData?.data || [];
+
+  // Process revenue data to include parsed products
+  const processedRevenue = useMemo(() => {
+    return revdata.map(revenue => ({
+      ...revenue,
+      parsedProducts: typeof revenue.products === 'string' ? JSON.parse(revenue.products) : revenue.products
+    }));
+  }, [revdata]);
+
+  // Calculate product-wise revenue
+  const productRevenue = useMemo(() => {
+    const revenueMap = new Map();
+
+    processedRevenue.forEach(revenue => {
+      revenue.parsedProducts.forEach(product => {
+        const existing = revenueMap.get(product.product_id) || {
+          total_revenue: 0,
+          total_profit: 0,
+          quantity_sold: 0,
+          product_name: product.name,
+        };
+
+        existing.total_revenue += product.total;
+        existing.total_profit += product.profit;
+        existing.quantity_sold += product.quantity;
+
+        revenueMap.set(product.product_id, existing);
+      });
     });
-  }, [revdata, searchText]);
+
+    return Array.from(revenueMap.entries()).map(([id, data]) => ({
+      id,
+      ...data,
+    }));
+  }, [processedRevenue]);
+
+  // Calculate customer-wise revenue
+  const customerRevenue = useMemo(() => {
+    const revenueMap = new Map();
+
+    processedRevenue.forEach(revenue => {
+      const customerId = revenue.customer;
+      const existing = revenueMap.get(customerId) || {
+        total_revenue: 0,
+        total_profit: 0,
+        transaction_count: 0,
+      };
+
+      existing.total_revenue += revenue.amount;
+      existing.total_profit += revenue.profit;
+      existing.transaction_count += 1;
+
+      revenueMap.set(customerId, existing);
+    });
+
+    return Array.from(revenueMap.entries()).map(([id, data]) => ({
+      id,
+      ...data,
+    }));
+  }, [processedRevenue]);
+
+  // Filter revenue based on selected product and customer
+  const filteredRevenue = useMemo(() => {
+    return processedRevenue.filter(revenue => {
+      const matchesProduct = !selectedProduct || 
+        revenue.parsedProducts.some(p => p.product_id === selectedProduct);
+      const matchesCustomer = !selectedCustomer || revenue.customer === selectedCustomer;
+      const matchesSearch = !searchText || 
+        revenue.description?.toLowerCase().includes(searchText.toLowerCase()) ||
+        revenue.category?.toLowerCase().includes(searchText.toLowerCase());
+
+      return matchesProduct && matchesCustomer && matchesSearch;
+    });
+  }, [processedRevenue, selectedProduct, selectedCustomer, searchText]);
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -63,9 +138,6 @@ const RevenueList = ({
       okText: "Yes",
       okType: "danger",
       cancelText: "No",
-      bodyStyle: {
-        padding: "20px",
-      },
       onOk: async () => {
         try {
           await deleteRevenue(id).unwrap();
@@ -77,91 +149,122 @@ const RevenueList = ({
     });
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onView?.(record),
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => onEdit?.(record),
-      },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => handleDelete(record.id),
-        danger: true,
-      },
-    ],
-  });
+  const getCurrencyDetails = (currencyId) => {
+    const currency = currencies.find(c => c.id === currencyId);
+    return currency || { currencyIcon: '₹', currencyCode: 'INR' };
+  };
+
+  const formatAmount = (amount, currencyId) => {
+    const currency = getCurrencyDetails(currencyId);
+    return `${currency.currencyIcon} ${amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  };
 
   const columns = [
     {
-      title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
-      sorter: (a, b) => a.amount - b.amount,
-      render: (amount) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* <FiDollarSign style={{ color: "#1890ff" }} /> */}
-          <Text strong>${amount?.toFixed(2)}</Text>
-        </div>
-      ),
-    },
-    {
-      title: "Account",
-      dataIndex: "account",
-      key: "account",
-      sorter: (a, b) => (a?.account || "").localeCompare(b?.account || ""),
-      render: (account) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiCalendar style={{ color: "#1890ff" }} />
-          <Text>{account}</Text>
-        </div>
-      ),
-    },
-    // {
-    //   title: "Customer",
-    //   dataIndex: "customer",
-    //   key: "customer",
-    //   sorter: (a, b) => (a?.customer || "").localeCompare(b?.customer || ""),
-    // },
-    {
-      title: "Category",
-      dataIndex: "category",
-      key: "category",
-      sorter: (a, b) => (a?.category || "").localeCompare(b?.category || ""),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-      ellipsis: true,
-    },
-    {
-      title: "Date",
-      dataIndex: "date",
+      title: "Date & Description",
       key: "date",
-      sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
-      render: (text) => dayjs(text).format("YYYY-MM-DD"),
+      width: '25%',
+      render: (_, record) => (
+        <div>
+          <Text strong style={{ display: "block" }}>
+            <FiCalendar style={{ marginRight: "8px" }} />
+            {dayjs(record.date).format("DD MMM, YYYY")}
+          </Text>
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            {record.description}
+          </Text>
+          <Tag color="blue" style={{ marginTop: "4px" }}>{record.category}</Tag>
+        </div>
+      ),
+    },
+    {
+      title: "Products",
+      key: "products",
+      width: '30%',
+      render: (_, record) => (
+        <div>
+          {record.parsedProducts.map((product, index) => (
+            <div key={index} style={{ marginBottom: index !== record.parsedProducts.length - 1 ? '8px' : 0 }}>
+              <Text strong>{product.name}</Text>
+              <div>
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  Qty: {product.quantity} × {formatAmount(product.unit_price, record.currency)}
+                  {product.tax_rate > 0 && ` (Tax: ${product.tax_rate}%)`}
+                  {product.discount > 0 && ` (Discount: ${formatAmount(product.discount, record.currency)})`}
+                </Text>
+              </div>
+              <Text type="success" style={{ fontSize: "12px" }}>
+                Total: {formatAmount(product.total, record.currency)}
+              </Text>
+            </div>
+          ))}
+        </div>
+      ),
+    },
+    {
+      title: "Amount",
+      key: "amount",
+      width: '15%',
+      render: (_, record) => (
+        <div>
+          <Text strong style={{ fontSize: "16px", color: "#52c41a" }}>
+            {formatAmount(record.amount, record.currency)}
+          </Text>
+          <Text type="secondary" style={{ display: "block", fontSize: "12px" }}>
+            Cost: {formatAmount(record.cost_of_goods, record.currency)}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: "Profit",
+      key: "profit",
+      width: '20%',
+      render: (_, record) => (
+        <div>
+          <Text strong style={{ color: "#1890ff", display: "block" }}>
+            <FiTrendingUp style={{ marginRight: "4px" }} />
+            {formatAmount(record.profit, record.currency)}
+          </Text>
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            <FiPercent style={{ marginRight: "4px" }} />
+            {record.profit_margin_percentage.toFixed(2)}% Margin
+          </Text>
+        </div>
+      ),
     },
     {
       title: "Action",
       key: "actions",
-      width: 80,
+      width: '10%',
       align: "center",
       render: (_, record) => (
         <Dropdown
-          menu={getDropdownItems(record)}
+          menu={{
+            items: [
+              {
+                key: "view",
+                icon: <FiEye />,
+                label: "View Details",
+                onClick: () => onView?.(record),
+              },
+              {
+                key: "edit",
+                icon: <FiEdit2 />,
+                label: "Edit",
+                onClick: () => onEdit?.(record),
+              },
+              {
+                key: "delete",
+                icon: <FiTrash2 />,
+                label: "Delete",
+                onClick: () => handleDelete(record.id),
+                danger: true,
+              },
+            ],
+          }}
           trigger={["click"]}
           placement="bottomRight"
-          overlayClassName="revenue-actions-dropdown"
         >
           <Button
             type="text"
@@ -174,19 +277,102 @@ const RevenueList = ({
     },
   ];
 
+  // Calculate totals for stats
+  const stats = useMemo(() => {
+    return filteredRevenue.reduce((acc, rev) => ({
+      total_revenue: acc.total_revenue + rev.amount,
+      total_profit: acc.total_profit + rev.profit,
+      total_margin: acc.total_margin + rev.profit_margin_percentage,
+      count: acc.count + 1
+    }), { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 });
+  }, [filteredRevenue]);
+
   return (
-    <div className="revenue-list">
-      <Table
-        columns={columns}
-        dataSource={filteredRevenues}
-        rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
-        }}
-        className="revenue-table"
-      />
+    <div className="revenue-container">
+      <Row gutter={[16, 16]} className="revenue-filters">
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Select
+            placeholder="Select Product"
+            allowClear
+            style={{ width: "100%" }}
+            onChange={setSelectedProduct}
+            value={selectedProduct}
+          >
+            {products.map((product) => (
+              <Option key={product.id} value={product.id}>
+                {product.name}
+              </Option>
+            ))}
+          </Select>
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={6}>
+          <Select
+            placeholder="Select Customer"
+            allowClear
+            style={{ width: "100%" }}
+            onChange={setSelectedCustomer}
+            value={selectedCustomer}
+          >
+            {customers.map((customer) => (
+              <Option key={customer.id} value={customer.id}>
+                {customer.name}
+              </Option>
+            ))}
+          </Select>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="revenue-stats">
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic
+              title="Total Revenue"
+              value={stats.total_revenue}
+              precision={2}
+              prefix={<FiDollarSign />}
+              formatter={(value) => `₹ ${value.toLocaleString('en-IN')}`}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic
+              title="Total Profit"
+              value={stats.total_profit}
+              precision={2}
+              prefix={<FiDollarSign />}
+              valueStyle={{ color: '#3f8600' }}
+              formatter={(value) => `₹ ${value.toLocaleString('en-IN')}`}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card>
+            <Statistic
+              title="Average Profit Margin"
+              value={stats.count > 0 ? stats.total_margin / stats.count : 0}
+              precision={2}
+              suffix="%"
+              valueStyle={{ color: '#3f8600' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <div className="revenue-tables">
+        <Table
+          columns={columns}
+          dataSource={filteredRevenue}
+          rowKey="id"
+          loading={isLoading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} items`,
+          }}
+          className="revenue-table"
+        />
+      </div>
     </div>
   );
 };

@@ -41,7 +41,7 @@ import { useGetProductsQuery } from "../product&services/services/productApi";
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
+const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, productsData, productsLoading }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [createInvoice, { isLoading }] = useCreateInvoiceMutation();
@@ -55,7 +55,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
@@ -144,28 +144,30 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
     try {
       setLoading(true);
 
-      // Convert items array to object with numbered keys
-      const itemsObject = {};
-      values.items?.forEach((item, index) => {
-        itemsObject[`item${index + 1}`] = {
-          ...item,
-          taxId: item.taxId,
-          taxAmount: calculateItemTaxAmount(item),
-          amount: calculateItemTotal(item)
-        };
-      });
+      // Format items for backend
+      const formattedItems = values.items?.map(item => ({
+        product_id: item.id,
+        quantity: Number(item.quantity) || 0,
+        unit_price: Number(item.unit_price) || 0,
+        tax_rate: Number(item.tax) || 0,
+        discount: Number(item.discount) || 0,
+        discount_type: item.discount_type || 'percentage',
+        hsn_sac: item.hsn_sac || '',
+        taxAmount: calculateItemTaxAmount(item),
+        amount: calculateItemTotal(item)
+      }));
 
       const payload = {
-        customer: values.customer || "",
-        issueDate: values.issueDate?.format("YYYY-MM-DD") || "",
-        dueDate: values.dueDate?.format("YYYY-MM-DD") || "",         
-        currency: values.currency || "",
-        items: itemsObject,
-        subTotal: values.subTotal || 0,
-        item_discount: values.item_discount || 0,
-        total_tax: values.total_tax || 0,
-        total: values.total || 0,
-        status: values.status || "pending"
+        customer: values.customer,
+        issueDate: values.issueDate?.format("YYYY-MM-DD"),
+        dueDate: values.dueDate?.format("YYYY-MM-DD"),         
+        currency: values.currency,
+        items: formattedItems,
+        subtotal: Number(values.subTotal) || 0,
+        tax: Number(values.total_tax) || 0,
+        discount: Number(values.item_discount) || 0,
+        total: Number(values.total) || 0,
+        payment_status: values.status || "unpaid"
       };
 
       const result = await createInvoice(payload).unwrap();
@@ -175,7 +177,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error("Failed to create invoice");
+      message.error(error?.data?.message || "Failed to create invoice");
     } finally {
       setLoading(false);
     }
@@ -645,11 +647,11 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
             <Form.Item
               name="status"
               label={
-              <span className="form-label">
-                Status <span className="required"></span>
+                <span className="form-label">
+                  Payment Status <span className="required"></span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select status" }]}
+              rules={[{ required: true, message: "Please select payment status" }]}
             >
               <Select
                 placeholder="Select Status"
@@ -659,10 +661,9 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
                   borderRadius: "10px",
                 }}
               >
-                <Option value="pending">Pending</Option>
                 <Option value="paid">Paid</Option>
-                <Option value="overdue">Overdue</Option>
-                <Option value="cancelled">Cancelled</Option>
+                <Option value="unpaid">Unpaid</Option>
+                <Option value="partially_paid">Partially Paid</Option>
               </Select>
             </Form.Item>
         </div>
@@ -702,7 +703,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
               placeholder="Select Product"
               size="large"
               loading={productsLoading}
-                  style={{
+              style={{
                 width: '30%',
                 marginLeft: '16px',
                 marginRight: '16px',
@@ -712,15 +713,18 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
               }}
               value={form.getFieldValue('items')?.[0]?.item_name}
               onChange={(value, option) => {
+                const selectedProduct = productsData?.data?.find(product => product.id === value);
                 const items = form.getFieldValue('items') || [];
                 const newItems = [...items];
                 const lastIndex = newItems.length - 1;
                 newItems[lastIndex] = {
                   ...newItems[lastIndex],
-                  item_name: option.label,
-                  unit_price: option.price,
-                  hsn_sac: option.hsn_sac,
-                  profilePic: option.image
+                  id: selectedProduct.id,
+                  item_name: selectedProduct.name,
+                  unit_price: selectedProduct.selling_price,
+                  hsn_sac: selectedProduct.hsn_sac,
+                  tax: selectedProduct.tax,
+                  profilePic: selectedProduct.image
                 };
                 form.setFieldsValue({ items: newItems });
                 calculateTotals(newItems);
@@ -730,10 +734,6 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
                 <Option
                   key={product.id}
                   value={product.id}
-                  label={product.name}
-                  price={product.price}
-                  hsn_sac={product.hsn_sac}
-                  profilePic={product.image}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '30px', height: '30px', borderRadius: '4px', overflow: 'hidden' }}>
@@ -746,11 +746,12 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible }) => {
                           objectFit: 'cover'
                         }}
                       />
-              </div>
-                    <div style={{ display: 'flex' }}>
-                      <div>
-                        <span style={{ fontWeight: 400 }}>{product.name}</span>
-                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 500 }}>{product.name}</span>
+                      <span style={{ fontSize: '12px', color: '#666' }}>
+                        Price: {selectedCurrency} {product.selling_price}
+                      </span>
                     </div>
                   </div>
                 </Option>

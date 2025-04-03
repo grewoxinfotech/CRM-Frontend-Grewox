@@ -25,6 +25,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
+import { useGetProductsQuery } from "../product&services/services/productApi";
 
 const { Title, Text } = Typography;
 
@@ -35,6 +36,8 @@ const Invoice = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [invoices, setInvoices] = useState([]);
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+
 
   useEffect(() => {
     fetchInvoices();
@@ -293,6 +296,8 @@ const Invoice = () => {
         open={createModalVisible}
         onCancel={() => setCreateModalVisible(false)}
         onSubmit={handleCreate}
+        productsData={productsData}
+        productsLoading={productsLoading}
         setCreateModalVisible={setCreateModalVisible}
       />
 
@@ -303,6 +308,8 @@ const Invoice = () => {
           setSelectedInvoice(null);
         }}
         onSubmit={handleEdit}
+        productsData={productsData}
+        productsLoading={productsLoading}
         initialValues={selectedInvoice}
       />
     </div>

@@ -28,82 +28,8 @@ const InvoiceList = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const invoices = invoicesdata?.data || [];
-  console.log("invoices", invoices);
-  // Sample invoice data
-  const sampleInvoices = [
-    {
-      id: 1,
-      invoice_number: "INV-2024-001",
-      customer_name: "John Doe Enterprises",
-      date: "2024-03-20",
-      due_date: "2024-04-20",
-      total: 2500.0,
-      status: "pending",
-    },
-    {
-      id: 2,
-      invoice_number: "INV-2024-002",
-      customer_name: "Tech Solutions Inc.",
-      date: "2024-03-18",
-      due_date: "2024-04-18",
-      total: 4750.5,
-      status: "paid",
-    },
-    {
-      id: 3,
-      invoice_number: "INV-2024-003",
-      customer_name: "Global Services Ltd.",
-      date: "2024-03-15",
-      due_date: "2024-03-22",
-      total: 1850.75,
-      status: "overdue",
-    },
-    {
-      id: 4,
-      invoice_number: "INV-2024-004",
-      customer_name: "Creative Design Co.",
-      date: "2024-03-22",
-      due_date: "2024-04-22",
-      total: 3200.0,
-      status: "draft",
-    },
-    {
-      id: 5,
-      invoice_number: "INV-2024-005",
-      customer_name: "Marketing Pro Agency",
-      date: "2024-03-19",
-      due_date: "2024-04-19",
-      total: 5600.25,
-      status: "paid",
-    },
-    {
-      id: 6,
-      invoice_number: "INV-2024-006",
-      customer_name: "Digital Solutions LLC",
-      date: "2024-03-21",
-      due_date: "2024-04-21",
-      total: 7200.0,
-      status: "pending",
-    },
-    {
-      id: 7,
-      invoice_number: "INV-2024-007",
-      customer_name: "Innovative Systems Corp",
-      date: "2024-03-17",
-      due_date: "2024-03-24",
-      total: 3450.75,
-      status: "overdue",
-    },
-    {
-      id: 8,
-      invoice_number: "INV-2024-008",
-      customer_name: "Smart Tech Solutions",
-      date: "2024-03-23",
-      due_date: "2024-04-23",
-      total: 4800.5,
-      status: "draft",
-    },
-  ];
+ // Sample invoice data
+ 
 
   const getStatusTag = (status) => {
     const statusColors = {
@@ -270,10 +196,10 @@ const InvoiceList = () => {
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
-      sorter: (a, b) => a.status.localeCompare(b.status),
-      render: (status) => getStatusTag(status),
+      dataIndex: "payment_status",
+      key: "payment_status",
+      sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
+      render: (payment_status) => getStatusTag(payment_status),
     
     },
     {
@@ -314,6 +240,7 @@ const InvoiceList = () => {
       />
       <EditInvoice
         open={editModalVisible}
+        
         onCancel={() => {
           setEditModalVisible(false);
           setSelectedInvoice(null);

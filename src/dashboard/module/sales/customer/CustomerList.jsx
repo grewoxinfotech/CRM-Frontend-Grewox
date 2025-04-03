@@ -143,13 +143,7 @@ const CustomerList = ({
         </div>
       ),
     },
-    {
-      title: "Alternate Number",
-      dataIndex: "alternate_number",
-      key: "alternate_number",
-      sorter: (a, b) =>
-        (a?.alternate_number || "").localeCompare(b?.alternate_number || ""),
-    },
+    
     {
       title: "tax_number ",
       dataIndex: "tax_number",
