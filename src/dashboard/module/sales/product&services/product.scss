@@ -488,3 +488,203 @@
   }
 }
 
+.product-list {
+  padding: 24px;
+  background: $background-color;
+
+  .product-table {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+    overflow: hidden;
+
+    .ant-table {
+      background: transparent;
+
+      .ant-table-thead > tr > th {
+        background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
+        font-weight: 600;
+        color: $text-color-dark;
+        padding: 16px 24px;
+        border-bottom: 1px solid $border-color;
+
+        &::before {
+          display: none;
+        }
+      }
+
+      .ant-table-tbody > tr > td {
+        padding: 16px 24px;
+        border-bottom: 1px solid $border-color;
+
+        &:last-child {
+          padding-right: 24px;
+        }
+
+        // Currency and amount styling
+        .currency-amount {
+          font-weight: 600;
+          font-size: 14px;
+
+          .currency-symbol {
+            margin-right: 2px;
+            opacity: 0.8;
+          }
+        }
+
+        // Stock status tag styling
+        .ant-tag {
+          border-radius: 4px;
+          padding: 2px 8px;
+          font-size: 12px;
+          font-weight: 500;
+          text-transform: capitalize;
+          border: none;
+
+          &.ant-tag-success {
+            background: rgba(#52c41a, 0.1);
+            color: #52c41a;
+          }
+
+          &.ant-tag-warning {
+            background: rgba(#faad14, 0.1);
+            color: #faad14;
+          }
+
+          &.ant-tag-error {
+            background: rgba(#ff4d4f, 0.1);
+            color: #ff4d4f;
+          }
+        }
+
+        // Product metrics styling
+        .product-metrics {
+          .metric-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .anticon {
+              font-size: 14px;
+              color: $primary-color;
+            }
+
+            .metric-value {
+              font-weight: 500;
+              color: $text-color-dark;
+            }
+
+            .metric-label {
+              color: $text-color-light;
+              font-size: 12px;
+            }
+          }
+        }
+      }
+
+      .ant-table-row {
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: #fafafa;
+
+          td {
+            background: transparent;
+          }
+        }
+      }
+    }
+
+    .ant-table-pagination {
+      margin: 16px 24px;
+    }
+  }
+}
+
+// Action button styling
+.action-dropdown-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #f0f5ff;
+    color: #1677ff;
+  }
+}
+
+// Product actions dropdown styling
+.product-actions-dropdown {
+  .ant-dropdown-menu {
+    padding: 4px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    .ant-dropdown-menu-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+
+      .anticon {
+        font-size: 16px;
+      }
+
+      &:hover {
+        background: #f0f5ff;
+      }
+
+      &-danger:hover {
+        background: rgba(#ff4d4f, 0.1);
+      }
+    }
+  }
+}
+
+// Category tag styling
+.category-tag {
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  .color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+  .product-list {
+    padding: 16px;
+
+    .product-table {
+      .ant-table {
+        .ant-table-thead > tr > th,
+        .ant-table-tbody > tr > td {
+          padding: 12px 16px;
+        }
+      }
+    }
+  }
+}
+

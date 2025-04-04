@@ -46,10 +46,9 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateProduct = ({ visible, onClose, onSubmit, loading }) => {
+const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
   const currentUser = useSelector(selectCurrentUser);
   const [createProduct] = useCreateProductMutation();

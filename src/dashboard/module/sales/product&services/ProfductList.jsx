@@ -30,10 +30,11 @@ import EditProduct from "./EditProduct";
 import { useGetCategoriesQuery } from "../../crm/crmsystem/souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
 
-const ProductList = ({ onEdit, onView, searchText = "" }) => {
+const ProductList = ({ onEdit, onView, searchText = "" ,currenciesData}) => {
   const { data: productsData = [], isLoading } = useGetProductsQuery();
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
@@ -44,7 +45,18 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
-  console.log("products", products);
+  // Function to get currency details
+  const getCurrencyDetails = (currencyId) => {
+    if (!currenciesData) return { currencyIcon: "₹", currencyCode: "INR" };
+    const currency = currenciesData.find(c => c.id === currencyId);
+    return currency || { currencyIcon: "₹", currencyCode: "INR" }; // Default to INR if not found
+  };
+
+  // Function to format price with currency
+  const formatPrice = (amount, currencyId) => {
+    const { currencyIcon } = getCurrencyDetails(currencyId);
+    return `${currencyIcon} ${amount?.toLocaleString() || 0}`;
+  };
 
   const filteredProducts = React.useMemo(() => {
     return products?.filter((product) => {
@@ -142,7 +154,11 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
           )}
           <div>
             <Text strong style={{ display: "block", fontSize: "14px" }}>{name}</Text>
-           
+            {record.sku && (
+              <Text type="secondary" style={{ fontSize: "12px" }}>
+                SKU: {record.sku}
+              </Text>
+            )}
           </div>
         </div>
       ),
@@ -180,10 +196,10 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
         <div>
           <Text strong style={{ display: "block", color: "#52c41a" }}>
             <FiDollarSign style={{ marginRight: "4px" }} />
-            Selling: ₹{record.selling_price}
+            Selling: {formatPrice(record.selling_price, record.currency)}
           </Text>
           <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
-            Buying: ₹{record.buying_price}
+            Buying: {formatPrice(record.buying_price, record.currency)}
           </Text>
           {record.tax && (
             <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -197,15 +213,23 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
       title: "Profit Metrics",
       key: "profit",
       width: '20%',
-      render: (_, record) => (
-        <div>
-          <Text strong style={{ display: "block", color: "#1890ff" }}>
-            <FiTrendingUp style={{ marginRight: "4px" }} />
-            Margin: ₹{record.profit_margin}
-          </Text>
-          
-        </div>
-      ),
+      render: (_, record) => {
+        const profit_margin = record.selling_price - record.buying_price;
+        const profit_percentage = record.buying_price > 0 ? ((profit_margin / record.buying_price) * 100).toFixed(2) : 0;
+        
+        return (
+          <div>
+            <Text strong style={{ display: "block", color: "#1890ff" }}>
+              <FiTrendingUp style={{ marginRight: "4px" }} />
+              Margin: {formatPrice(profit_margin, record.currency)}
+            </Text>
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              <FiPercent style={{ marginRight: "4px" }} />
+              {profit_percentage}%
+            </Text>
+          </div>
+        );
+      },
     },
     {
       title: "Category",
@@ -266,7 +290,7 @@ const ProductList = ({ onEdit, onView, searchText = "" }) => {
           loading={isLoading}
           rowKey="id"
           pagination={{
-            defaultPageSize: 10,
+            pageSize: 10,
             showSizeChanger: true,
             showTotal: (total) => `Total ${total} products`,
           }}

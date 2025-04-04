@@ -28,6 +28,8 @@ const InvoiceList = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const invoices = invoicesdata?.data || [];
+
+
  // Sample invoice data
  
 

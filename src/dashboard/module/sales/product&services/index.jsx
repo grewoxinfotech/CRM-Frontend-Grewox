@@ -30,20 +30,24 @@ import moment from "moment";
 import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation } from "./services/productApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Title, Text } = Typography;
 
 const ProductServices = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
   const { data: productsData = [], isLoading, refetch } = useGetProductsQuery();
   const [createProduct] = useCreateProductMutation();
-  const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
+
 
   const handleCreate = () => {
     setSelectedProduct(null);
@@ -64,25 +68,37 @@ const ProductServices = () => {
     }
   };
 
+  // const handleEdit = (record) => {
+  //   setSelectedProduct(record);
+  //   setIsEditModalOpen(true);
+  // };
+
+  // const handleEditSubmit = async (formData) => {
+  //   try {
+  //     setLoading(true);
+  //     await updateProduct({ id: selectedProduct.id, data: formData }).unwrap();
+  //     message.success("Product updated successfully");
+  //     setIsEditModalOpen(false);
+  //     setSelectedProduct(null);
+  //     refetch();
+  //   } catch (error) {
+  //     message.error(error?.data?.message || "Failed to update product");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
   const handleEdit = (record) => {
     setSelectedProduct(record);
-    setIsEditModalOpen(true);
+    setEditModalVisible(true);
   };
 
-  const handleEditSubmit = async (formData) => {
-    try {
-      setLoading(true);
-      await updateProduct({ id: selectedProduct.id, data: formData }).unwrap();
-      message.success("Product updated successfully");
-      setIsEditModalOpen(false);
-      setSelectedProduct(null);
-      refetch();
-    } catch (error) {
-      message.error(error?.data?.message || "Failed to update product");
-    } finally {
-      setLoading(false);
-    }
+  const handleEditModalClose = () => {
+    setEditModalVisible(false);
+    setSelectedProduct(null);
   };
+
 
   const handleView = (record) => {
     console.log("View product:", record);
@@ -251,6 +267,7 @@ const ProductServices = () => {
           loading={isLoading}
           onEdit={handleEdit}
           onView={handleView}
+          currenciesData={currenciesData}
           searchText={searchText}
         />
       </Card>
@@ -259,15 +276,23 @@ const ProductServices = () => {
         visible={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateSubmit}
+        currenciesData={currenciesData}
         loading={loading}
       />
-
+{/* 
       <EditProduct
         visible={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         product={selectedProduct}
         loading={loading}
+      /> */}
+
+<EditProduct
+        open={editModalVisible}
+        currenciesData={currenciesData}
+        onCancel={handleEditModalClose}
+        initialValues={selectedProduct}
       />
     </div>
   );

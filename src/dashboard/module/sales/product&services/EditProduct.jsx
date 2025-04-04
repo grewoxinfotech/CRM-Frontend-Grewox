@@ -45,14 +45,13 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const EditProduct = ({ open, onCancel, initialValues }) => {
+const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [updateProduct, { isLoading }] = useUpdateProductMutation();
   const currentUser = useSelector(selectCurrentUser);
   const [addCategoryVisible, setAddCategoryVisible] = useState(false);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
-  const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
 
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];

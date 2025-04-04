@@ -108,36 +108,59 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   };
 
   const calculateTotals = (items = []) => {
-    let subTotal = 0;
-    let totalTaxAmount = 0;
+    if (!Array.isArray(items)) {
+      items = [];
+    }
 
-    // Calculate subtotal (sum of all item totals)
+    let subTotal = 0;
+    let totalTax = 0;
+    let totalDiscount = 0;
+
     items.forEach(item => {
-      subTotal += calculateItemTotal(item);
+      const quantity = Number(item.quantity) || 0;
+      const price = Number(item.unit_price) || 0;
+      const itemAmount = quantity * price;
+      
+      // Calculate item discount
+      const itemDiscount = Number(item.discount || 0);
+      const itemDiscountType = item.discount_type || 'percentage';
+      let itemDiscountAmount = 0;
+
+      if (itemDiscountType === 'percentage') {
+        itemDiscountAmount = (itemAmount * itemDiscount) / 100;
+      } else {
+        itemDiscountAmount = itemDiscount;
+      }
+
+      totalDiscount += itemDiscountAmount;
+      subTotal += itemAmount;
+      
       if (isTaxEnabled) {
-        totalTaxAmount += calculateItemTaxAmount(item);
+        totalTax += calculateItemTaxAmount(item);
       }
     });
 
-    // Calculate global discount
-    const discountType = form.getFieldValue('discount_type') || 'percentage';
-    const discountValue = Number(form.getFieldValue('item_discount')) || 0;
-    let globalDiscountAmount = 0;
+    const totalAmount = subTotal - totalDiscount + totalTax;
 
-    if (discountType === 'percentage') {
-      globalDiscountAmount = (subTotal * discountValue) / 100;
-    } else {
-      globalDiscountAmount = discountValue;
-    }
-
-    // Final total = subtotal - global discount
-    const totalAmount = subTotal - globalDiscountAmount;
-
+    // Update form values
     form.setFieldsValue({
-      subTotal: subTotal.toFixed(2),
-      total_tax: totalTaxAmount.toFixed(2),
-      total: totalAmount.toFixed(2)
+      subtotal: subTotal.toFixed(2),
+      tax: totalTax.toFixed(2),
+      total: totalAmount.toFixed(2),
     });
+
+    // Update individual item amounts
+    const updatedItems = items.map(item => {
+      const taxAmount = calculateItemTaxAmount(item);
+      const total = calculateItemTotal(item);
+      return {
+        ...item,
+        amount: total.toFixed(2),
+        tax_amount: taxAmount.toFixed(2)
+      };
+    });
+
+    form.setFieldsValue({ items: updatedItems });
   };
 
   const handleSubmit = async (values) => {
@@ -163,9 +186,8 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         dueDate: values.dueDate?.format("YYYY-MM-DD"),         
         currency: values.currency,
         items: formattedItems,
-        subtotal: Number(values.subTotal) || 0,
-        tax: Number(values.total_tax) || 0,
-        discount: Number(values.item_discount) || 0,
+        subtotal: Number(values.subtotal) || 0,
+        tax: Number(values.tax) || 0,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid"
       };
@@ -776,100 +798,106 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                     </tr>
                   </thead>
                   <tbody>
-              {fields.map(({ key, name, ...restField }, index) => (
+                    {fields.map(({ key, name, ...restField }, index) => (
                       <tr key={key} className="item-data-row">
                         <td>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "item_name"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <Input
-                          placeholder="Item Name"
+                          <Form.Item
+                            {...restField}
+                            name={[name, "item_name"]}
+                            rules={[{ required: true, message: "Required" }]}
+                          >
+                            <Input
+                              placeholder="Item Name"
                               className="item-input"
-                        />
-                      </Form.Item>
+                            />
+                          </Form.Item>
                         </td>
                         <td>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "quantity"]}
-                        rules={[{ required: true, message: "Required" }]}
+                          <Form.Item
+                            {...restField}
+                            name={[name, "quantity"]}
+                            rules={[{ required: true, message: "Required" }]}
                             initialValue={1}
-                      >
-                        <InputNumber
-                          min={1}
+                          >
+                            <InputNumber
+                              min={1}
                               className="quantity-input"
                               onChange={() => calculateTotals(form.getFieldValue("items"))}
-                        />
-                      </Form.Item>
+                            />
+                          </Form.Item>
                         </td>
                         <td>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "unit_price"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <InputNumber
+                          <Form.Item
+                            {...restField}
+                            name={[name, "unit_price"]}
+                            rules={[{ required: true, message: "Required" }]}
+                          >
+                            <InputNumber
                               className="price-input"
-                              formatter={value => `${selectedCurrency} ${value}`}
-                              parser={value => value.replace(selectedCurrency, '').trim()}
+                              min={0}
                               onChange={() => calculateTotals(form.getFieldValue("items"))}
-                              defaultValue={0}
-                        />
-                      </Form.Item>
+                              formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              parser={value => value.replace(/[^\d.]/g, '')}
+                            />
+                          </Form.Item>
                         </td>
                         <td>
-                      <Form.Item {...restField} name={[name, "hsn_sac"]}>
-                            <Input placeholder="HSN/SAC" className="item-input" />
-                      </Form.Item>
-                        </td>
-                        <td>
-                      <Form.Item {...restField} name={[name, "discount"]} style={{ margin: 0 }}>
-                        <Space>
                           <Form.Item
                             {...restField}
-                            name={[name, "discount_type"]}
-                            style={{ margin: 0 }}
+                            name={[name, "hsn_sac"]}
                           >
-                            <Select
-                          size="large"
-                          style={{
-                                width: '120px',
-                                borderRadius: '8px',
-                                height: '40px',
-                              }}
-                              defaultValue="percentage"
-                              onChange={() => calculateTotals(form.getFieldValue("items"))}
-                            >
-                              <Option value="percentage">Percentage</Option>
-                              <Option value="fixed">Fixed Amount</Option>
-                            </Select>
-                      </Form.Item>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "discount"]}
-                            style={{ margin: 0 }}
-                          >
-                        <InputNumber
-                              className="item-discount-input"
-                              placeholder={form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? 'Amount' : '%'}
-                              formatter={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
-                              parser={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
-                              onChange={() => calculateTotals(form.getFieldValue("items"))}
-                          style={{
-                                width: '100px',
-                                borderRadius: '8px',
-                                height: '40px',
-                              }}
-                        />
-                      </Form.Item>
-                          {form.getFieldValue('items')?.[index]?.discount_type === 'percentage' && <Text style={{ marginTop: '10px' }}>%</Text>}
-                        </Space>
-                      </Form.Item>
+                            <Input placeholder="HSN/SAC" className="hsn-input" />
+                          </Form.Item>
                         </td>
                         <td>
-                          <Form.Item {...restField} name={[name, "taxId"]}>
+                          <Form.Item {...restField} name={[name, "discount"]} style={{ margin: 0 }}>
+                            <Space>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "discount_type"]}
+                                style={{ margin: 0 }}
+                              >
+                                <Select
+                                  size="large"
+                                  style={{
+                                    width: '120px',
+                                    borderRadius: '8px',
+                                    height: '40px',
+                                  }}
+                                  defaultValue="percentage"
+                                  onChange={() => calculateTotals(form.getFieldValue("items"))}
+                                >
+                                  <Option value="percentage">Percentage</Option>
+                                  <Option value="fixed">Fixed Amount</Option>
+                                </Select>
+                              </Form.Item>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "discount"]}
+                                style={{ margin: 0 }}
+                              >
+                                <InputNumber
+                                  className="item-discount-input"
+                                  placeholder={form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? 'Amount' : '%'}
+                                  formatter={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
+                                  parser={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
+                                  onChange={() => calculateTotals(form.getFieldValue("items"))}
+                                  style={{
+                                    width: '100px',
+                                    borderRadius: '8px',
+                                    height: '40px',
+                                  }}
+                                />
+                              </Form.Item>
+                              {form.getFieldValue('items')?.[index]?.discount_type === 'percentage' && <Text style={{ marginTop: '10px' }}>%</Text>}
+                            </Space>
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "taxId"]}
+                          >
                             <Select
                               placeholder="Select Tax"
                               loading={taxesLoading}
@@ -891,31 +919,34 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                                 </Option>
                               ))}
                             </Select>
-                      </Form.Item>
+                          </Form.Item>
                         </td>
                         <td>
-                          <div className="amount-field">
-                            <span className="currency-symbol">{selectedCurrency}</span>
-                            <span className="amount-value">
-                              {calculateItemTotal(form.getFieldValue("items")[index])?.toFixed(2) || '0.00'}
-                            </span>
-                          </div>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "amount"]}
+                          >
+                            <InputNumber
+                              disabled
+                              className="amount-input"
+                              formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            />
+                          </Form.Item>
                         </td>
                         <td>
-                      {fields.length > 1 && (
-                        <Button
-                          type="text"
-                              className="delete-btn"
-                              icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                          onClick={() => {
-                            remove(name);
-                            calculateTotals(form.getFieldValue("items"));
-                          }}
-                        />
-                      )}
+                          {fields.length > 1 && (
+                            <Button
+                              type="text"
+                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                              onClick={() => {
+                                remove(name);
+                                calculateTotals(form.getFieldValue("items"));
+                              }}
+                            />
+                          )}
                         </td>
                       </tr>
-              ))}
+                    ))}
                   </tbody>
                 </table>
 
@@ -938,92 +969,51 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
           <div className="summary-content">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
               <Text style={{marginTop:'10px'}}>Sub Total</Text>
-              <Form.Item name="subTotal" style={{ margin: 0 }}>
-                  <InputNumber
-                    disabled
-                    size="large"
-                    style={{
+              <Form.Item name="subtotal" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
                     width: '120px',
                     borderRadius: '8px',
                     height: '40px',
                   }}
                   formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  />
-                </Form.Item>
-              </div>
+                />
+              </Form.Item>
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <Text style={{marginTop:'10px'}}>Item Discount</Text>
-              <Space>
-                <Form.Item
-                  name="discount_type"
-                  style={{ margin: 0 }}
-                >
-                  <Select
-                    size="large"
-                style={{
-                      width: '120px',
-                      borderRadius: '8px',
-                      height: '40px',
-                    }}
-                    defaultValue="percentage"
-                    onChange={() => calculateTotals(form.getFieldValue('items'))}
-                  >
-                    <Option value="percentage">Percentage</Option>
-                    <Option value="fixed">Fixed Amount</Option>
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="item_discount"
-                  style={{ margin: 0 }}
-                >
-                    <InputNumber
-                    placeholder={form.getFieldValue('discount_type') === 'fixed' ? 'Amount' : '%'}
-                      size="large"
-                      style={{
-                      width: '100px',
-                      borderRadius: '8px',
-                      height: '40px',
-                    }}
-                    formatter={value => form.getFieldValue('discount_type') === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
-                    parser={value => form.getFieldValue('discount_type') === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
-                    onChange={() => calculateTotals(form.getFieldValue('items'))}
-                    />
-                  </Form.Item>
-                {form.getFieldValue('discount_type') === 'percentage' && <Text>%</Text>}
-                </Space>
-              </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <Text style={{marginTop:'10px'}}>Total Tax</Text>
-                <Form.Item name="total_tax" style={{ margin: 0 }}>
-                  <InputNumber
-                    disabled
-                    size="large"
-                    style={{
+              <Text>Tax</Text>
+              <Form.Item name="tax" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
                     width: '120px',
                     borderRadius: '8px',
                     height: '40px',
                   }}
                   formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  />
-                </Form.Item>
-              </div>
+                />
+              </Form.Item>
+            </div>
             <Divider style={{ margin: '12px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text style={{marginTop:'10px'}}>Total Amount</Text>
-                <Form.Item name="total" style={{ margin: 0 }}>
-                  <InputNumber
-                    disabled
-                    size="large"
-                    style={{
+              <Text strong>Total Amount</Text>
+              <Form.Item name="total" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
                     width: '120px',
                     borderRadius: '8px',
                     height: '40px',
                   }}
                   formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  />
-                </Form.Item>
-              </div>
+                />
+              </Form.Item>
             </div>
+          </div>
         </div>
 
         <div className="form-footer">
