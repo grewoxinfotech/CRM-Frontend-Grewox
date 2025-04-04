@@ -265,22 +265,19 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         {
           title: "Mail",
           icon: <FiMail />,
-          path: "/dashboard/mail",
-          permission: "dashboards-mail"
+          path: "/dashboard/mail"
         },
         {
           title: "Chat",
           icon: <FiMessageSquare />,
-          path: "/dashboard/communication/chat",
-          permission: "dashboards-chat"
+          path: "/dashboard/communication/chat"
         },
         {
           title: "Calendar",
           icon: <FiCalendar />,
-          path: "/dashboard/communication/calendar",
-          permission: "dashboards-calendar"
+          path: "/dashboard/communication/calendar"
         },
-      ].filter(item => shouldShowMenuItem(item)),
+      ]
     },
     {
       title: "HRM",

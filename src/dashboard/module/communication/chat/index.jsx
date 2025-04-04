@@ -1,19 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { Layout, List, Input, Button, Avatar, Badge, Typography, Divider, Tabs, Tag } from 'antd';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs } from 'antd';
 import {
     SendOutlined,
     SearchOutlined,
     EllipsisOutlined,
-    UserOutlined,
     TeamOutlined,
     MessageOutlined,
-    StarOutlined,
     SettingOutlined,
     PaperClipOutlined
 } from '@ant-design/icons';
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
+import { io } from 'socket.io-client';
 import "./chat.scss";
 
 const { Content, Sider } = Layout;
@@ -26,12 +25,14 @@ export default function Chat() {
     const [messages, setMessages] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState('all');
+    const [onlineUsers, setOnlineUsers] = useState(new Set());
+    const [conversations, setConversations] = useState({});
+    const socketRef = useRef(null);
 
     // Get real users data
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
     // Get roles data
     const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
-
     // Create a map of role IDs to role names
     const roleMap = useMemo(() => {
         if (!rolesData?.data) return {};
@@ -44,42 +45,130 @@ export default function Chat() {
     // Get current user from auth state
     const currentUser = useSelector((state) => state.auth.user);
 
-    const handleSendMessage = () => {
-        if (!messageInput.trim()) return;
 
-        const newMessage = {
-            id: messages.length + 1,
-            senderId: 'me',
-            text: messageInput,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            type: 'sent'
+    // Initialize socket connection
+    useEffect(() => {
+        if (!currentUser?.id) return;
+
+        // Extract base URL from API URL
+        const baseUrl = import.meta.env.VITE_API_URL
+            ? import.meta.env.VITE_API_URL.split('/api/')[0]
+            : 'http://localhost:5000';
+
+        socketRef.current = io(baseUrl, {
+            withCredentials: true,
+            path: '/socket.io'
+        });
+
+        // Connect and send user ID
+        socketRef.current.emit('user_connected', currentUser.id);
+
+        // Listen for online users updates
+        socketRef.current.on('users_status', ({ activeUsers, userStatus }) => {
+            setOnlineUsers(new Set(activeUsers));
+        });
+
+        // Get existing conversations
+        socketRef.current.emit('get_conversations', { userId: currentUser.id });
+
+        // Listen for conversations
+        socketRef.current.on('conversations_received', (conversationsData) => {
+            setConversations(conversationsData || {});
+        });
+
+        // Listen for new messages
+        socketRef.current.on('receive_message', ({ user_id, message }) => {
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                if (!newConversations[user_id]) {
+                    newConversations[user_id] = [];
+                }
+                newConversations[user_id].push(message);
+                return newConversations;
+            });
+
+            // If message is from selected user, mark as read
+            if (selectedUser?.id === user_id) {
+                socketRef.current.emit('mark_messages_read', {
+                    sender_id: user_id,
+                    receiver_id: currentUser.id
+                });
+            }
+        });
+
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
+    }, [currentUser?.id]);
+
+    // Mark messages as read when selecting a user
+    useEffect(() => {
+        if (selectedUser?.id && socketRef.current) {
+            socketRef.current.emit('mark_messages_read', {
+                sender_id: selectedUser.id,
+                receiver_id: currentUser?.id
+            });
+        }
+    }, [selectedUser?.id, currentUser?.id]);
+
+    const handleSendMessage = () => {
+        if (!messageInput.trim() || !selectedUser || !socketRef.current) return;
+
+        const messageData = {
+            sender_id: currentUser?.id,
+            receiver_id: selectedUser.id,
+            message: messageInput.trim()
         };
 
-        setMessages([...messages, newMessage]);
+        socketRef.current.emit('send_message', messageData);
         setMessageInput('');
     };
 
     const getFilteredUsers = () => {
         if (!userData?.data) return [];
 
-        // First filter users based on creation and client_id, and exclude current user
-        let filtered = userData.data.filter(user =>
-            (user?.created_by === currentUser?.username ||
-                user?.client_id === currentUser?.id) &&
-            user.id !== currentUser?.id  // Exclude current user from the list
-        );
+        const filteredUsers1 = userData?.data.filter(user => {
+            if (user?.client_id === currentUser?.id) {
+                return true;
+            }
+            return false;
+        });
 
-        // Then map the filtered users
+        const filteredUsers2 = userData?.data.filter(user => {
+            if (user?.client_id === currentUser?.client_id || user?.id == currentUser?.client_id) {
+                return true;
+            }
+            return false;
+        });
+
+        // Check if either array is empty before merging
+        let filtered;
+        if (filteredUsers1.length === 0 || filteredUsers2.length === 0) {
+            // If either is empty, use the non-empty array
+            filtered = filteredUsers1.length > 0 ? filteredUsers1 : filteredUsers2;
+        } else {
+            // If both have data, only use filteredUsers1 
+            filtered = filteredUsers1;
+        }
+
+        // Remove current user from filtered list
+        filtered = filtered.filter(user => user.id !== currentUser?.id);
+
         filtered = filtered.map(user => {
-            const roleName = roleMap[user.role_id] || 'Unknown Role';
+            const roleName = roleMap[user.role_id] || 'Company';
+            const userConversation = conversations[user.id] || [];
+            const lastMessage = userConversation[userConversation.length - 1];
+
             return {
                 id: user.id,
                 name: user.username,
-                status: 'online',
+                status: onlineUsers.has(user.id.toString()) ? 'online' : 'offline',
                 avatar: user.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=1890ff&color=fff`,
-                lastMessage: 'Click to start chat',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                unread: 0,
+                lastMessage: lastMessage ? lastMessage.message : 'Click to start chat',
+                time: lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+                unread: userConversation.filter(msg => msg.sender_id === user.id && msg.status !== 'read').length,
                 isStarred: false,
                 role: roleName,
                 email: user.email
@@ -106,17 +195,28 @@ export default function Chat() {
                 break;
         }
 
-        return filtered;
+        // Sort company users to the top
+        return filtered.sort((a, b) => {
+            // First sort by company (companies first)
+            if (a.role?.toLowerCase() === 'company' && b.role?.toLowerCase() !== 'company') return -1;
+            if (a.role?.toLowerCase() !== 'company' && b.role?.toLowerCase() === 'company') return 1;
+
+            // Then sort by online status
+            if (a.status === 'online' && b.status !== 'online') return -1;
+            if (a.status !== 'online' && b.status === 'online') return 1;
+
+            // Then sort by unread messages
+            if (a.unread > b.unread) return -1;
+            if (a.unread < b.unread) return 1;
+
+            // Finally sort by name
+            return a.name.localeCompare(b.name);
+        });
     };
 
     const getRoleColor = (role) => {
         const roleColors = {
-            'super-admin': {
-                color: '#531CAD',
-                bg: '#F9F0FF',
-                border: '#D3ADF7'
-            },
-            'client': {
+            'company': {
                 color: '#08979C',
                 bg: '#E6FFFB',
                 border: '#87E8DE'
@@ -131,11 +231,6 @@ export default function Chat() {
                 bg: '#FFF7E6',
                 border: '#FFD591'
             },
-            'admin': {
-                color: '#1890FF',
-                bg: '#E6F7FF',
-                border: '#91D5FF'
-            },
             'default': {
                 color: '#595959',
                 bg: '#FAFAFA',
@@ -145,6 +240,112 @@ export default function Chat() {
         return roleColors[role?.toLowerCase()] || roleColors.default;
     };
 
+    const getAvatarContent = (item) => {
+        const isCompany = item.role?.toLowerCase() === 'company';
+        const isSubClient = item.role?.toLowerCase() === 'sub-client';
+        const isEmployee = item.role?.toLowerCase() === 'employee';
+
+        if (isCompany) {
+            return (
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z" />
+                </svg>
+            );
+        } else if (isSubClient) {
+            return (
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                </svg>
+            );
+        } else if (isEmployee) {
+            return (
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+            );
+        }
+
+        return item.name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
+    };
+
+    const getAvatarStyle = (item) => {
+        const isCompany = item.role?.toLowerCase() === 'company';
+        const isSubClient = item.role?.toLowerCase() === 'sub-client';
+        const isEmployee = item.role?.toLowerCase() === 'employee';
+
+        const baseStyle = {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            fontWeight: '600',
+            textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+        };
+
+        if (isCompany) {
+            return {
+                ...baseStyle,
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                boxShadow: 'inset 0 2px 6px rgba(255, 255, 255, 0.2)',
+            };
+        } else if (isSubClient) {
+            return {
+                ...baseStyle,
+                background: 'linear-gradient(135deg, #059669, #047857)',
+                boxShadow: 'inset 0 2px 6px rgba(255, 255, 255, 0.2)',
+            };
+        } else if (isEmployee) {
+            return {
+                ...baseStyle,
+                background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                boxShadow: 'inset 0 2px 6px rgba(255, 255, 255, 0.2)',
+            };
+        }
+
+        // For other roles, use modern gradients
+        const colors = [
+            'linear-gradient(135deg, #f43f5e, #be123c)', // Rose
+            'linear-gradient(135deg, #f97316, #c2410c)', // Orange
+            'linear-gradient(135deg, #06b6d4, #0e7490)', // Cyan
+            'linear-gradient(135deg, #ec4899, #be185d)', // Pink
+            'linear-gradient(135deg, #8b5cf6, #6d28d9)', // Purple
+            'linear-gradient(135deg, #3b82f6, #1d4ed8)', // Blue
+        ];
+
+        const colorIndex = item.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+
+        return {
+            ...baseStyle,
+            background: colors[colorIndex],
+            boxShadow: 'inset 0 2px 6px rgba(255, 255, 255, 0.2)',
+        };
+    };
+
+    const renderAvatar = (item) => {
+        if (item.avatar && !item.avatar.includes('ui-avatars.com')) {
+            // Real profile picture exists
+            return (
+                <Avatar
+                    size={48}
+                    src={item.avatar}
+                    style={{
+                        objectFit: 'cover'
+                    }}
+                />
+            );
+        }
+
+        // No profile picture, show custom avatar
+        return (
+            <Avatar
+                size={48}
+                style={getAvatarStyle(item)}
+            >
+                {getAvatarContent(item)}
+            </Avatar>
+        );
+    };
+
     const renderChatItem = (item) => {
         const roleStyle = getRoleColor(item.role);
 
@@ -152,46 +353,29 @@ export default function Chat() {
             <List.Item
                 onClick={() => setSelectedUser(item)}
                 className={`chat-list-item ${selectedUser?.id === item.id ? 'selected' : ''}`}
+                data-role={item.role?.toLowerCase()}
             >
                 <List.Item.Meta
                     avatar={
                         <Badge dot={item.status === 'online'} offset={[-2, 40]} color="#52c41a">
-                            <Avatar
-                                size={48}
-                                src={item.avatar}
-                                style={{
-                                    background: '#f56a00',
-                                    objectFit: 'cover'
-                                }}
-                            />
+                            <div className={`custom-avatar ${item.role?.toLowerCase()}`}>
+                                {renderAvatar(item)}
+                            </div>
                         </Badge>
                     }
                     title={
                         <div className="chat-item-title">
                             <Text strong>{item.name}</Text>
+                            {item.role?.toLowerCase() === 'company' && (
+                                <span className="verified-badge" />
+                            )}
+                            <span className="role-badge" data-role={item.role?.toLowerCase() || 'default'}>
+                                {item.role}
+                            </span>
                         </div>
                     }
                     description={
                         <div className="chat-item-description">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                <div
-                                    className="role-indicator"
-                                    style={{
-                                        width: '6px',
-                                        height: '6px',
-                                        borderRadius: '50%',
-                                        background: roleStyle.color,
-                                        boxShadow: `0 0 6px ${roleStyle.color}`
-                                    }}
-                                />
-                                <Text style={{
-                                    fontSize: '12px',
-                                    color: roleStyle.color,
-                                    textTransform: 'capitalize'
-                                }}>
-                                    {item.role || 'User'}
-                                </Text>
-                            </div>
                             <Text type="secondary" className="last-message">
                                 {item.lastMessage}
                             </Text>
@@ -216,20 +400,18 @@ export default function Chat() {
             <Sider width={380} className="chat-sider">
                 <div className="chat-sider-header">
                     <div className="user-profile">
-                        <Badge dot offset={[-2, 40]} color="#52c41a">
-                            <Avatar
-                                size={48}
-                                src={currentUser?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.username || 'User')}&background=1890ff&color=fff`}
-                                style={{ objectFit: 'cover' }}
-                            />
-                        </Badge>
+                        <Avatar src={currentUser?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.username || 'User')}&background=1890ff&color=fff`} size={40}>
+                            {!currentUser?.profilePic && currentUser?.username?.charAt(0)}
+                        </Avatar>
                         <div className="user-info">
-                            <Text strong>Me ({currentUser?.username})</Text>
-                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                            <div className="user-name-wrapper">
+                                <Typography.Text className="user-name">{currentUser?.username}</Typography.Text>
+                                <span className="me-badge">Me</span>
+                            </div>
+                            <Typography.Text type="secondary" className="user-role">
                                 {roleMap[currentUser?.role_id] || currentUser?.Role?.role_name || 'Online'}
-                            </Text>
+                            </Typography.Text>
                         </div>
-                        <Button type="text" icon={<SettingOutlined />} className="settings-button" />
                     </div>
                     <div className="search-container">
                         <div className="theme-search-wrapper">
@@ -280,15 +462,24 @@ export default function Chat() {
                             <Button type="text" icon={<EllipsisOutlined />} />
                         </div>
                         <div className="chat-messages">
-                            {messages.map(message => (
+                            {selectedUser && conversations[selectedUser.id]?.map((message, index) => (
                                 <div
-                                    key={message.id}
-                                    className={`message ${message.type}`}
+                                    key={`${message.timestamp}-${index}`}
+                                    className={`message ${message.sender_id === currentUser?.id ? 'sent' : 'received'}`}
                                 >
                                     <div className="message-content">
-                                        <Text>{message.text}</Text>
+                                        <Text>{message.message}</Text>
                                         <Text type="secondary" className="message-time">
-                                            {message.time}
+                                            {new Date(message.timestamp).toLocaleTimeString([], {
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                            {message.status === 'read' && message.sender_id === currentUser?.id && (
+                                                <span className="message-status">✓✓</span>
+                                            )}
+                                            {message.status === 'delivered' && message.sender_id === currentUser?.id && (
+                                                <span className="message-status">✓</span>
+                                            )}
                                         </Text>
                                     </div>
                                 </div>
