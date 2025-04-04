@@ -645,7 +645,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: '500' }}>{product.name}</span>
-                          <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.price}</span>
+                          <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.selling_price}</span>
                         </div>
                       </div>
                     </Option>

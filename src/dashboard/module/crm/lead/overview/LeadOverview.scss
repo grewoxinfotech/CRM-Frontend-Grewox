@@ -454,6 +454,127 @@
                 }
             }
 
+            &.status-card {
+                &.won {
+                    background: linear-gradient(145deg, #ffffff, #f6ffed);
+                }
+
+                &.pending {
+                    background: linear-gradient(145deg, #ffffff, #fff7e6);
+                }
+
+                &.lost {
+                    background: linear-gradient(145deg, #ffffff, #fff1f0);
+                }
+
+                .metric-icon {
+                    &.won {
+                        background: linear-gradient(135deg, #52c41a, #95de64);
+                        box-shadow: 0 8px 16px -4px rgba(82, 196, 26, 0.3);
+
+                        svg {
+                            color: white;
+                        }
+                    }
+
+                    &.pending {
+                        background: linear-gradient(135deg, #faad14, #ffd666);
+                        box-shadow: 0 8px 16px -4px rgba(250, 173, 20, 0.3);
+
+                        svg {
+                            color: white;
+                        }
+                    }
+
+                    &.lost {
+                        background: linear-gradient(135deg, #ff4d4f, #ff7875);
+                        box-shadow: 0 8px 16px -4px rgba(255, 77, 79, 0.3);
+
+                        svg {
+                            color: white;
+                        }
+                    }
+                }
+
+                .metric-content {
+                    .metric-label {
+                        &.won {
+                            color: #52c41a;
+                        }
+
+                        &.pending {
+                            color: #faad14;
+                        }
+
+                        &.lost {
+                            color: #ff4d4f;
+                        }
+                    }
+
+                    .metric-value {
+                        .interest-text {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            font-size: 18px;
+                            font-weight: 600;
+
+                            &.won {
+                                background: linear-gradient(135deg, #52c41a, #95de64);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+
+                                .icon {
+                                    color: #52c41a;
+                                }
+                            }
+
+                            &.pending {
+                                background: linear-gradient(135deg, #faad14, #ffd666);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+
+                                .icon {
+                                    color: #faad14;
+                                }
+                            }
+
+                            &.lost {
+                                background: linear-gradient(135deg, #ff4d4f, #ff7875);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+
+                                .icon {
+                                    color: #ff4d4f;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                &:hover {
+                    &.won {
+                        background: linear-gradient(145deg, #f6ffed, #ffffff);
+                    }
+
+                    &.pending {
+                        background: linear-gradient(145deg, #fff7e6, #ffffff);
+                    }
+
+                    &.lost {
+                        background: linear-gradient(145deg, #fff1f0, #ffffff);
+                    }
+
+                    .metric-icon {
+                        transform: scale(1.1) rotate(10deg);
+                    }
+
+                    .metric-value .interest-text {
+                        transform: translateX(4px);
+                    }
+                }
+            }
+
             &.created-date-card {
                 background: linear-gradient(145deg, #ffffff, #f0f5ff);
 

@@ -12,21 +12,64 @@ import {
     FiActivity,
     FiFolder,
     FiClock,
+    FiCheck,
+    FiX,
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import { useGetAllCurrenciesQuery } from '../../../../module/settings/services/settingsApi';
+import { useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadStageApi';
 
 const { Title, Text } = Typography;
 
-const DealOverview = ({ deal }) => {
+const DealOverview = ({ deal, currentStatus }) => {
+    const { data: currencies = [] } = useGetAllCurrenciesQuery();
+    const { data: leadStages = [] } = useGetLeadStagesQuery();
+
     if (!deal) return <div>Deal not found</div>;
 
-    const formatCurrency = (value, currency = "INR") => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0
-        }).format(value);
+    const formatCurrency = (value, currencyId) => {
+        const currencyDetails = currencies.find(c => c.id === currencyId);
+        if (!currencyDetails) return `${value}`;
+
+        return new Intl.NumberFormat('en-US', {
+            style: 'decimal',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
     };
+
+    const getStageNameById = (stageId) => {
+        const stage = leadStages.find(stage => stage.id === stageId);
+        return stage ? stage.stageName : '-';
+    };
+
+    const getStatusStyle = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'won':
+                return {
+                    background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                    color: '#52c41a',
+                    icon: <FiTarget className="status-icon" />,
+                    text: 'Won'
+                };
+            case 'lost':
+                return {
+                    background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
+                    color: '#ff4d4f',
+                    icon: <FiTarget className="status-icon" />,
+                    text: 'Lost'
+                };
+            default:
+                return {
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    color: '#1890ff',
+                    icon: <FiTarget className="status-icon" />,
+                    text: 'Pending'
+                };
+        }
+    };
+
+    const statusStyle = getStatusStyle(currentStatus || deal?.status);
 
     return (
         <div className="overview-content">
@@ -64,7 +107,7 @@ const DealOverview = ({ deal }) => {
                         <div className="stat-content">
                             <div className="stat-label">Phone Number</div>
                             <a href={`tel:${deal?.phone}`} className="stat-value">
-                                {deal?.phone || '-'}
+                                +{deal?.phone || '-'}
                             </a>
                         </div>
                     </div>
@@ -96,14 +139,22 @@ const DealOverview = ({ deal }) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card status-card">
-                        <div className="metric-icon">
-                            <FiTarget />
+                    <Card className={`metric-card status-card ${currentStatus || deal?.status}`}>
+                        <div 
+                            className="metric-icon"
+                            style={{
+                                background: statusStyle.background
+                            }}
+                        >
+                            {statusStyle.icon}
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Status</div>
-                            <div className="metric-value">
-                                {deal?.status || '-'}
+                            <div className="metric-label"  style={{ color: statusStyle.color }}>Status</div>
+                            <div 
+                                className="metric-value"
+                                style={{ color: statusStyle.color }}
+                            >
+                                {statusStyle.text}
                             </div>
                         </div>
                     </Card>
@@ -147,7 +198,9 @@ const DealOverview = ({ deal }) => {
                                 </div>
                                 <div className="detail-info">
                                     <div className="detail-label">Stage</div>
-                                    <div className="detail-value">{deal?.stage || '-'}</div>
+                                    <div className="detail-value">
+                                        {getStageNameById(deal?.stage)}
+                                    </div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>

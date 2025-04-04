@@ -13,7 +13,8 @@ import {
   FiCheck,
   FiArrowRight,
   FiDollarSign,
-  FiBriefcase
+  FiBriefcase,
+  FiX
 } from "react-icons/fi";
 import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
@@ -22,6 +23,7 @@ import { useGetLabelsQuery, useGetSourcesQuery } from "../crmsystem/souce/servic
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useNavigate } from "react-router-dom";
+import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
 
 const { Text } = Typography;
 
@@ -34,19 +36,46 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
   const [filterStatus, setFilterStatus] = React.useState('all');
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
   const deals = Array.isArray(data) ? data : [];
 
+  // Calculate won deals count based on is_won flag
+  const wonDealsCount = deals.filter(deal => deal.is_won).length;
+
+  const filterButtons = [
+    { id: 'all', name: 'All Deals', count: deals.length },
+    { 
+      id: 'pending', 
+      name: 'Pending', 
+      count: deals.filter(deal => deal.status === 'pending').length,
+      icon: <FiTarget />
+    },
+    { 
+      id: 'won', 
+      name: 'Won', 
+      count: wonDealsCount, // Use the count of deals where is_won is true
+      icon: <FiCheck />
+    },
+    { 
+      id: 'lost', 
+      name: 'Lost', 
+      count: deals.filter(deal => deal.status === 'lost').length,
+      icon: <FiX />
+    }
+  ];
+
+  // Filter deals based on status and is_won
   const filteredDeals = React.useMemo(() => {
     switch (filterStatus) {
-      case 'active':
-        return deals.filter(deal => deal.status?.toLowerCase() === 'active');
       case 'won':
-        return deals.filter(deal => deal.status?.toLowerCase() === 'won');
+        return deals.filter(deal => deal.is_won); // Filter by is_won flag
       case 'lost':
-        return deals.filter(deal => deal.status?.toLowerCase() === 'lost');
+        return deals.filter(deal => deal.status === 'lost');
+      case 'pending':
+        return deals.filter(deal => deal.status === 'pending');
       default:
         return deals;
     }
@@ -63,22 +92,37 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
 
   const getStatusColor = (status) => {
     const colors = {
-      active: { bg: '#dbeafe', color: '#1e40af' },
-      won: { bg: '#dcfce7', color: '#15803d' },
-      lost: { bg: '#fee2e2', color: '#b91c1c' },
-      pending: { bg: '#fef3c7', color: '#92400e' }
+      pending: { 
+        bg: '#dbeafe', 
+        color: '#1e40af', 
+        icon: <FiTarget />,
+        text: 'Pending'
+      },
+      won: { 
+        bg: '#dcfce7', 
+        color: '#15803d', 
+        icon: <FiTarget />,
+        text: 'Won'
+      },
+      lost: { 
+        bg: '#fee2e2', 
+        color: '#b91c1c', 
+        icon: <FiTarget />,
+        text: 'Lost'
+      }
     };
     return colors[status?.toLowerCase()] || colors.pending;
   };
 
-  const formatCurrency = (value, currency = 'USD') => {
-    if (!value) return '0';
+  const formatCurrency = (value, currencyId) => {
+    const currencyDetails = currencies.find(c => c.id === currencyId);
+    if (!currencyDetails) return `${value}`;
+
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
+      style: 'decimal',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
+      maximumFractionDigits: 0,
+    }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
   };
 
   const getDropdownItems = (record) => ({
@@ -119,8 +163,8 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
   const columns = [
     {
       title: "Deal Name",
-      dataIndex: "dealName",
-      key: "dealName",
+      dataIndex: "dealTitle",
+      key: "dealTitle",
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Avatar style={{
@@ -209,19 +253,21 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => {
-        const statusColors = getStatusColor(status);
+      render: (status, record) => {
+        // Use is_won to determine the status display
+        const effectiveStatus = record.is_won ? 'won' : status;
+        const statusConfig = getStatusColor(effectiveStatus);
         return (
           <Tag style={{
             margin: 0,
-            padding: '2px 8px',
-            fontSize: '11px',
+            padding: '4px 11px',
+            fontSize: '13px',
             borderRadius: '12px',
-            background: statusColors.bg,
-            color: statusColors.color,
-            border: 'none'
+            background: statusConfig.bg,
+            color: statusConfig.color,
+            border: 'none',
           }}>
-            {status || "Pending"}
+            {statusConfig.text}
           </Tag>
         );
       },
@@ -264,12 +310,7 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
           display: 'flex',
           gap: '6px'
         }}>
-          {[
-            { id: 'all', name: 'All Deals', count: deals.length },
-            { id: 'active', name: 'Active', count: deals.filter(deal => deal.status?.toLowerCase() === 'active').length },
-            { id: 'won', name: 'Won', count: deals.filter(deal => deal.status?.toLowerCase() === 'won').length },
-            { id: 'lost', name: 'Lost', count: deals.filter(deal => deal.status?.toLowerCase() === 'lost').length }
-          ].map(filter => (
+          {filterButtons.map(filter => (
             <Button
               key={filter.id}
               type={filterStatus === filter.id ? "primary" : "default"}
@@ -284,7 +325,7 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
                 fontSize: '12px'
               }}
             >
-              <FiTarget style={{ fontSize: '12px' }} />
+              {filter.icon}
               {filter.name} ({filter.count})
             </Button>
           ))}

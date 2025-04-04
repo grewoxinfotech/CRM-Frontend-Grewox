@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider } from 'antd';
-import { FiPlus, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase } from 'react-icons/fi';
+import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider, Dropdown } from 'antd';
+import { FiPlus, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiMoreVertical } from 'react-icons/fi';
 import { useGetFollowupsQuery, useCreateFollowupMutation, useUpdateFollowupMutation, useDeleteFollowupMutation } from '../../../lead/services/LeadApi';
 import { useGetDealQuery } from '../../services/dealApi';
 import { useSelector } from 'react-redux';
@@ -9,6 +9,7 @@ import dayjs from 'dayjs';
 import './followup.scss';
 import { useGetUsersQuery } from '../../../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../../../hrm/role/services/roleApi';
+import { useGetFollowupTypesQuery } from '../../../crmsystem/souce/services/SourceApi';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -30,7 +31,19 @@ const DealFollowup = ({ deal }) => {
     const [deleteFollowup] = useDeleteFollowupMutation();
     const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
     const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+    const { data: followupTypes } = useGetFollowupTypesQuery(currentUser?.id)
 
+    // Filter followup type options
+    const typeOptions = React.useMemo(() => {
+        if (!followupTypes?.data) return [];
+        return followupTypes.data
+            .filter(item => item.lableType === 'followup')
+            .map(type => ({
+                value: type.id,
+                label: type.name,
+                color: type.color
+            }));
+    }, [followupTypes]);
 
     // Get deal members from dealData and ensure it's an array
     const dealMembers = React.useMemo(() => {
@@ -43,7 +56,6 @@ const DealFollowup = ({ deal }) => {
             // Get the assigned_to array from the parsed data
             const assignedMembers = parsedData.assigned_to || [];
 
-            
 
             // Map the members to the required format
             return assignedMembers.map(memberId => {
@@ -129,12 +141,8 @@ const DealFollowup = ({ deal }) => {
         user?.role_id !== subclientRoleId
     ) || [];
 
-    const followupTypes = [
-        { label: 'Call', value: 'call', icon: <FiPhoneCall className="type-icon" /> },
-        { label: 'Meeting', value: 'meeting', icon: <FiUsers className="type-icon" /> },
-        { label: 'Email', value: 'email', icon: <FiMail className="type-icon" /> },
-        { label: 'Task', value: 'task', icon: <FiCheckSquare className="type-icon" /> }
-    ];
+
+   
 
     const getStatusColor = (status) => {
         const colors = {
@@ -146,17 +154,33 @@ const DealFollowup = ({ deal }) => {
         return colors[status] || '#1890ff';
     };
 
-    const getTypeIcon = (type) => {
-        const foundType = followupTypes.find(t => t.value === type);
-        return foundType?.icon || <FiClock />;
+    const getTypeIcon = (typeId) => {
+        const foundType = typeOptions.find(t => t.value === typeId);
+        if (!foundType) return <FiClock />;
+
+        return (
+            <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: foundType.color,
+                display: 'inline-block',
+                marginRight: '6px'
+            }} />
+        );
     };
 
     const handleSubmit = async (values) => {
         try {
+            // Find the user object based on the selected username
+            const selectedUser = users.find(user => user.username === values.followup_by);
+            
             const payload = {
                 ...values,
                 date: values.date.format('YYYY-MM-DD'),
-                time: values.time.format('HH:mm:ss')
+                time: values.time.format('HH:mm:ss'),
+                // Set the user ID for database storage
+                followup_by: selectedUser?.id
             };
 
             if (editingFollowup) {
@@ -168,6 +192,7 @@ const DealFollowup = ({ deal }) => {
             }
 
             setIsModalVisible(false);
+            form.resetFields(['followup_by']);
             form.resetFields();
             setEditingFollowup(null);
         } catch (error) {
@@ -184,19 +209,73 @@ const DealFollowup = ({ deal }) => {
         }
     };
 
+    const handleEdit = (followup) => {
+        // Find the user object based on the followup_by value
+        const assignedUser = users.find(user => user.id === followup.followup_by);
+        
+        setEditingFollowup(followup);
+        form.setFieldsValue({
+            name: followup.name,
+            type: followup.type,
+            date: dayjs(followup.date),
+            time: dayjs(followup.time, 'HH:mm:ss'),
+            description: followup.description,
+            status: followup.status,
+            // Set the username instead of ID
+            followup_by: assignedUser?.username || undefined
+        });
+        setIsModalVisible(true);
+    };
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: (
+                    <Text>
+                        Edit Follow-up
+                    </Text>
+                ),
+                onClick: () => handleEdit(record)
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: (
+                    <Text style={{ color: '#ff4d4f' }}>
+                        Delete Follow-up
+                    </Text>
+                ),
+                onClick: () => handleDelete(record.id),
+                danger: true
+            }
+        ]
+    });
+
     const columns = [
         {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            render: (text, record) => (
-                <Space>
-                    <Tag className="type-tag" color="blue" icon={getTypeIcon(record.type)}>
-                        {record.type.charAt(0).toUpperCase() + record.type.slice(1)}
-                    </Tag>
-                    <Text strong>{text}</Text>
-                </Space>
-            )
+            render: (text, record) => {
+                const type = typeOptions.find(t => t.value === record.type);
+                return (
+                    <Space>
+                        <Tag 
+                            className="type-tag" 
+                            style={{
+                                color: type?.color || '#1890ff',
+                                backgroundColor: `${type?.color}15` || '#e6f7ff'
+                            }}
+                        >
+                            {getTypeIcon(record.type)}
+                            {type?.label || record.type}
+                        </Tag>
+                        <Text strong>{text}</Text>
+                    </Space>
+                );
+            }
         },
         {
             title: 'Date & Time',
@@ -214,20 +293,21 @@ const DealFollowup = ({ deal }) => {
             dataIndex: 'followup_by',
             key: 'followup_by',
             render: (value) => {
-                const member = getMemberByValue(value);
-                const display = getMemberDisplay(member);
+                // Find the user from users array using the ID stored in followup_by
+                const assignedUser = users.find(user => user.id === value);
+                
                 return (
                     <Space>
                         <Avatar
                             size="small"
                             style={{
-                                backgroundColor: display.color,
+                                backgroundColor: assignedUser?.color || '#1890ff',
                                 fontSize: '12px'
                             }}
                         >
-                            {display.initial}
+                            {assignedUser?.username?.[0]?.toUpperCase() || '?'}
                         </Avatar>
-                        <Text>{display.name}</Text>
+                        <Text>{assignedUser?.username || 'Unknown'}</Text>
                     </Space>
                 );
             }
@@ -254,7 +334,7 @@ const DealFollowup = ({ deal }) => {
                     <Select
                         value={status}
                         onChange={handleStatusChange}
-                        style={{ width: 130 }}
+                        style={{ width: 140 }}
                         bordered={false}
                         dropdownStyle={{ padding: '8px' }}
                     >
@@ -295,38 +375,43 @@ const DealFollowup = ({ deal }) => {
             }
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
+            width: 80,
+            align: "center",
             render: (_, record) => (
-                <Space>
-                    <Tooltip title="Edit">
+                <div onClick={e => e.stopPropagation()}>
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={["click"]}
+                        placement="bottomRight"
+                    >
                         <Button
                             type="text"
+                            icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
                             className="action-btn"
-                            icon={<FiEdit2 />}
-                            onClick={() => {
-                                setEditingFollowup(record);
-                                form.setFieldsValue({
-                                    ...record,
-                                    date: dayjs(record.date),
-                                    time: dayjs(record.time, 'HH:mm:ss')
-                                });
-                                setIsModalVisible(true);
-                            }}
+                            onClick={e => e.stopPropagation()}
                         />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            className="action-btn delete"
-                            icon={<FiTrash2 />}
-                            onClick={() => handleDelete(record.id)}
-                        />
-                    </Tooltip>
-                </Space>
+                    </Dropdown>
+                </div>
             )
         }
     ];
+
+    // Add useEffect for form reset
+    useEffect(() => {
+        if (isModalVisible && !editingFollowup) {
+            form.setFieldsValue({ followup_by: undefined });
+        }
+    }, [isModalVisible, editingFollowup]);
+
+    // Update the handleCancel function
+    const handleCancel = () => {
+        setIsModalVisible(false);
+        setEditingFollowup(null);
+        form.setFieldsValue({ followup_by: undefined });
+        form.resetFields();
+    };
 
     return (
         <div className="lead-followup">
@@ -369,10 +454,7 @@ const DealFollowup = ({ deal }) => {
             <Modal
                 title={null}
                 open={isModalVisible}
-                onCancel={() => {
-                    setIsModalVisible(false);
-                    form.resetFields();
-                }}
+                onCancel={handleCancel}
                 footer={null}
                 width={520}
                 destroyOnClose={true}
@@ -401,10 +483,7 @@ const DealFollowup = ({ deal }) => {
                 >
                     <Button
                         type="text"
-                        onClick={() => {
-                            setIsModalVisible(false);
-                            form.resetFields();
-                        }}
+                        onClick={handleCancel}
                         style={{
                             position: "absolute",
                             top: "16px",
@@ -533,15 +612,34 @@ const DealFollowup = ({ deal }) => {
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",
-                                height: "48px",
+                                height: "48px"
                             }}
+                            popupClassName="custom-select-dropdown"
                         >
-                            {followupTypes.map(type => (
+                            {typeOptions.map(type => (
                                 <Option key={type.value} value={type.value}>
-                                    <Space>
-                                        {type.icon}
-                                        {type.label}
-                                    </Space>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '13px',
+                                            gap: '4px'
+                                        }}>
+                                            <div style={{
+                                                width: '8px',
+                                                height: '8px',
+                                                borderRadius: '50%',
+                                                backgroundColor: type.color
+                                            }} />
+                                            {type.label}
+                                        </div>
+                                    </div>
                                 </Option>
                             ))}
                         </Select>
@@ -558,106 +656,52 @@ const DealFollowup = ({ deal }) => {
                     >
                         <Select
                             showSearch
-                            placeholder="Select assignee"
                             size="large"
-                            loading={usersLoading || rolesLoading}
+                            placeholder="Select team member"
                             optionFilterProp="children"
-                            filterOption={(input, option) =>
-                                option?.label?.toLowerCase().includes(input.toLowerCase()) ||
-                                option?.email?.toLowerCase().includes(input.toLowerCase())
-                            }
-                            notFoundContent={
-                                users.length === 0 ? (
-                                    <div style={{ padding: "12px", textAlign: "center" }}>
-                                        <FiUsers style={{ fontSize: "24px", color: "#bfbfbf", marginBottom: "8px" }} />
-                                        <div>No team members available</div>
-                                    </div>
-                                ) : (
-                                    <div style={{ padding: "12px", textAlign: "center" }}>
-                                        <FiSearch style={{ fontSize: "24px", color: "#bfbfbf", marginBottom: "8px" }} />
-                                        <div>No matches found</div>
-                                    </div>
-                                )
-                            }
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",
+                                height: "48px"
                             }}
-                            dropdownStyle={{
-                                padding: "8px",
-                                borderRadius: "12px",
-                                border: "1px solid #e5e7eb",
-                                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+                            filterOption={(input, option) => {
+                                const username = option?.username?.toLowerCase() || '';
+                                const searchTerm = input.toLowerCase();
+                                return username.includes(searchTerm);
                             }}
+                            defaultOpen={false}
                         >
-                            {users.map(user => {
+                            {users.map((user) => {
                                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
                                 const roleStyle = getRoleStyle(userRole?.role_name);
 
                                 return (
                                     <Option
                                         key={user.id}
-                                        value={user.id}
-                                        label={user.username}
+                                        value={user.username}
+                                        username={user.username}
                                     >
                                         <div style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'space-between',
-                                            padding: '8px 4px',
                                             width: '100%'
                                         }}>
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '12px'
+                                                gap: '8px'
                                             }}>
-                                                <div style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%',
-                                                    background: '#E6F4FF',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: '#1890FF',
-                                                    fontSize: '14px',
-                                                    fontWeight: '500',
-                                                    textTransform: 'uppercase',
-                                                    flexShrink: 0
-                                                }}>
-                                                    {user.profilePic ? (
-                                                        <img
-                                                            src={user.profilePic}
-                                                            alt={user.username}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                borderRadius: '50%',
-                                                                objectFit: 'cover'
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        user.username?.charAt(0)
-                                                    )}
-                                                </div>
-                                                <div style={{
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    gap: '2px'
-                                                }}>
-                                                    <Text strong style={{
-                                                        color: '#1f2937',
-                                                        fontSize: '14px'
-                                                    }}>
-                                                        {user.username}
-                                                    </Text>
-                                                    <Text type="secondary" style={{
+                                                <Avatar
+                                                    size="small"
+                                                    style={{
+                                                        backgroundColor: user.color || '#1890ff',
                                                         fontSize: '12px'
-                                                    }}>
-                                                        {user.email}
-                                                    </Text>
-                                                </div>
+                                                    }}
+                                                >
+                                                    {user.username?.[0]?.toUpperCase() || '?'}
+                                                </Avatar>
+                                                <Text strong>{user.username}</Text>
                                             </div>
                                             <Tag style={{
                                                 margin: 0,
@@ -667,10 +711,9 @@ const DealFollowup = ({ deal }) => {
                                                 fontSize: '12px',
                                                 borderRadius: '16px',
                                                 padding: '2px 10px',
-                                                display: 'inline-flex',
+                                                display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '4px',
-                                                height: '24px'
+                                                gap: '4px'
                                             }}>
                                                 {roleStyle.icon}
                                                 {userRole?.role_name || 'User'}
@@ -678,7 +721,7 @@ const DealFollowup = ({ deal }) => {
                                         </div>
                                     </Option>
                                 );
-                            })}
+                            }).filter(Boolean)}
                         </Select>
                     </Form.Item>
 
@@ -838,10 +881,7 @@ const DealFollowup = ({ deal }) => {
                     >
                         <Button
                             size="large"
-                            onClick={() => {
-                                setIsModalVisible(false);
-                                form.resetFields();
-                            }}
+                            onClick={handleCancel}
                             style={{
                                 padding: "8px 24px",
                                 height: "44px",

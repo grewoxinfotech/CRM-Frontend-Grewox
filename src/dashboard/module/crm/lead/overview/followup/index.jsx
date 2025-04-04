@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider } from 'antd';
-import { FiPlus, FiPhone, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiBell, FiMapPin, FiMonitor, FiDollarSign, FiMessageSquare, FiSend, FiVideo, FiAlertCircle, FiPause, FiInfo } from 'react-icons/fi';
+import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider, Dropdown } from 'antd';
+import { FiPlus, FiPhone, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiBell, FiMapPin, FiMonitor, FiDollarSign, FiMessageSquare, FiSend, FiVideo, FiAlertCircle, FiPause, FiInfo, FiMoreVertical } from 'react-icons/fi';
 import { useGetLeadQuery, useGetFollowupsQuery, useCreateFollowupMutation, useUpdateFollowupMutation, useDeleteFollowupMutation } from '../../services/LeadApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
@@ -133,19 +133,6 @@ const LeadFollowup = ({ leadId }) => {
             }));
     }, [followupTypes]);
 
-    // Get type icon based on name
-    const getTypeIcon = (name) => {
-        const icons = {
-            'Phone Call': <FiPhone />,
-            'Video Call': <FiVideo />,
-            'Client Meeting': <FiUsers />,
-            'WhatsApp': <FiMessageSquare />,
-            'Email': <FiMail />,
-            'Telegram': <FiSend />
-        };
-        return icons[name] || <FiCheckSquare />;
-    };
-
     // Get status icon based on name
     const getStatusIcon = (name) => {
         const icons = {
@@ -225,10 +212,15 @@ const LeadFollowup = ({ leadId }) => {
 
     const handleSubmit = async (values) => {
         try {
+            // Find the user object based on the selected username
+            const selectedUser = users.find(user => user.username === values.followup_by);
+            
             const payload = {
                 ...values,
                 date: values.date.format('YYYY-MM-DD'),
-                time: values.time.format('HH:mm:ss')
+                time: values.time.format('HH:mm:ss'),
+                // Set the user ID for database storage
+                followup_by: selectedUser?.id
             };
 
             if (editingFollowup) {
@@ -258,6 +250,9 @@ const LeadFollowup = ({ leadId }) => {
     };
 
     const handleEdit = (followup) => {
+        // Find the user object based on the followup_by value
+        const assignedUser = users.find(user => user.id === followup.followup_by);
+        
         setEditingFollowup(followup);
         form.setFieldsValue({
             name: followup.name,
@@ -265,7 +260,9 @@ const LeadFollowup = ({ leadId }) => {
             date: dayjs(followup.date),
             time: dayjs(followup.time, 'HH:mm:ss'),
             description: followup.description,
-            status: followup.status
+            status: followup.status,
+            // Set the username instead of ID
+            followup_by: assignedUser?.username || undefined
         });
         setIsModalVisible(true);
     };
@@ -282,6 +279,32 @@ const LeadFollowup = ({ leadId }) => {
             form.setFieldsValue({ followup_by: undefined });
         }
     }, [isModalVisible, editingFollowup]);
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'edit',
+                icon: <FiEdit2 />,
+                label: (
+                    <Text>
+                        Edit Follow-up
+                    </Text>
+                ),
+                onClick: () => handleEdit(record)
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: (
+                    <Text style={{ color: '#ff4d4f' }}>
+                        Delete Follow-up
+                    </Text>
+                ),
+                onClick: () => handleDelete(record.id),
+                danger: true
+            }
+        ]
+    });
 
     const columns = [
         {
@@ -311,20 +334,21 @@ const LeadFollowup = ({ leadId }) => {
             dataIndex: 'followup_by',
             key: 'followup_by',
             render: (value) => {
-                const member = getMemberByValue(value);
-                const display = getMemberDisplay(member);
+                // Find the user from users array using the ID stored in followup_by
+                const assignedUser = users.find(user => user.id === value);
+                
                 return (
                     <Space>
                         <Avatar
                             size="small"
                             style={{
-                                backgroundColor: display.color,
+                                backgroundColor: assignedUser?.color || '#1890ff',
                                 fontSize: '12px'
                             }}
                         >
-                            {display.initial}
+                            {assignedUser?.username?.[0]?.toUpperCase() || '?'}
                         </Avatar>
-                        <Text>{display.name}</Text>
+                        <Text>{assignedUser?.username || 'Unknown'}</Text>
                     </Space>
                 );
             }
@@ -344,29 +368,27 @@ const LeadFollowup = ({ leadId }) => {
             )
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
+            width: 80,
+            align: "center",
             render: (_, record) => (
-                <Space>
-                    <Tooltip title="Edit">
+                <div onClick={e => e.stopPropagation()}>
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={["click"]}
+                        placement="bottomRight"
+                    >
                         <Button
                             type="text"
+                            icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
                             className="action-btn"
-                            icon={<FiEdit2 />}
-                            onClick={() => handleEdit(record)}
+                            onClick={e => e.stopPropagation()}
                         />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            className="action-btn delete"
-                            icon={<FiTrash2 />}
-                            onClick={() => handleDelete(record.id)}
-                        />
-                    </Tooltip>
-                </Space>
+                    </Dropdown>
+                </div>
             )
-        }
+        },
     ];
 
     return (
@@ -570,6 +592,7 @@ const LeadFollowup = ({ leadId }) => {
                                 borderRadius: "10px",
                                 height: "48px"
                             }}
+                            popupClassName="custom-select-dropdown"
                         >
                             {typeOptions.map(type => (
                                 <Option key={type.value} value={type.value}>
@@ -578,19 +601,22 @@ const LeadFollowup = ({ leadId }) => {
                                         alignItems: 'center',
                                         gap: '8px'
                                     }}>
-                                        <span style={{
+                                        <div style={{
                                             display: 'flex',
                                             alignItems: 'center',
                                             padding: '2px 8px',
                                             borderRadius: '4px',
                                             fontSize: '13px',
-                                            color: type.color,
-                                            backgroundColor: `${type.color}15`,
                                             gap: '4px'
                                         }}>
-                                            {getTypeIcon(type.label)}
+                                            <div style={{
+                                                width: '8px',
+                                                height: '8px',
+                                                borderRadius: '50%',
+                                                backgroundColor: type.color
+                                            }} />
                                             {type.label}
-                                        </span>
+                                        </div>
                                     </div>
                                 </Option>
                             ))}
@@ -622,7 +648,6 @@ const LeadFollowup = ({ leadId }) => {
                                 return username.includes(searchTerm);
                             }}
                             defaultOpen={false}
-                            value={form.getFieldValue('followup_by') || undefined}
                         >
                             {users.map((user) => {
                                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
@@ -631,7 +656,7 @@ const LeadFollowup = ({ leadId }) => {
                                 return (
                                     <Option
                                         key={user.id}
-                                        value={user.id}
+                                        value={user.username}
                                         username={user.username}
                                     >
                                         <div style={{
@@ -674,7 +699,7 @@ const LeadFollowup = ({ leadId }) => {
                                         </div>
                                     </Option>
                                 );
-                            }).filter(Boolean)} {/* Filter out null values */}
+                            }).filter(Boolean)}
                         </Select>
                     </Form.Item>
 
