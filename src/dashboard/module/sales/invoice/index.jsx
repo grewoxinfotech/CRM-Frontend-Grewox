@@ -222,7 +222,7 @@ const Invoice = () => {
   );
 
   return (
-    <div className="inquiry-page">
+    <div className="invoice-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>

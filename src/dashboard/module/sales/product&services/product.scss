@@ -9,682 +9,303 @@
     }
 }
 
-
-.invoice-page {
+.product-page {
     padding: 24px;
-    background-color: #f5f7fa;
-    min-height: 100vh;
+    background: $background-color;
 
     .page-breadcrumb {
         margin-bottom: 16px;
+
+        .ant-breadcrumb {
+            font-size: 14px;
+
+            .ant-breadcrumb-link {
+                color: $text-color-light;
+                transition: all 0.3s ease;
+
+                a {
+                    color: $text-color-light;
+                    display: inline-flex;
+                    align-items: center;
+
+                    &:hover {
+                        color: #1677ff;
+                    }
+                }
+
+                &:last-child {
+                    color: $text-color-dark;
+                    font-weight: 500;
+                }
+            }
+
+            .ant-breadcrumb-separator {
+                margin: 0 8px;
+                color: $text-color-light;
+            }
+        }
     }
 
     .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
+        @include hover-shadow;
         margin-bottom: 24px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        background: white;
+        padding: 24px 32px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
 
         .page-title {
+            text-align: left;
+            margin-bottom: 0;
+            flex-shrink: 0;
+
             h2 {
-                margin: 0;
-                color: #1f1f1f;
+                color: $text-color-dark;
+                margin-bottom: 4px;
+                font-size: 28px;
                 font-weight: 600;
+                line-height: 1.2;
             }
 
             .ant-typography-secondary {
-                font-size: 14px;
-                margin-top: 4px;
+                color: $text-color-light;
+                font-size: 15px;
+                display: block;
             }
         }
 
         .header-actions {
             display: flex;
-            gap: 16px;
             align-items: center;
+            justify-content: flex-end;
+            gap: 16px;
+            width: 100%;
+            max-width: 800px;
 
             .search-filter-group {
-                .ant-input-affix-wrapper {
-                    width: 300px;
-                    border-radius: 6px;
-                    border: 1px solid #d9d9d9;
-                    transition: all 0.3s;
+                flex: 1;
+                max-width: 360px;
+                min-width: 200px;
 
-                    &:hover {
-                        border-color: #40a9ff;
+                .ant-input-affix-wrapper {
+                    border-radius: 40px;
+                    height: 40px;
+                    padding: 4px 16px;
+                    transition: all 0.3s ease;
+                    border: 1px solid $border-color;
+                    width: 100%;
+
+                    .anticon {
+                        color: $text-color-light;
+                        margin-right: 8px;
+                        font-size: 16px;
                     }
 
                     .ant-input {
+                        font-size: 14px;
+                        background: transparent;
                         border: none;
-                        padding: 8px 12px;
+                        padding: 0;
+                        margin: 0 4px;
+
+                        &::placeholder {
+                            color: rgba($text-color, 0.45);
+                        }
+                    }
+
+                    &:hover,
+                    &:focus,
+                    &-focused {
+                        border-color: #1677ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
                     }
                 }
             }
 
             .action-buttons {
                 display: flex;
+                align-items: center;
                 gap: 12px;
+                flex-shrink: 0;
 
-                .ant-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    border-radius: 6px;
+                .export-button,
+                .add-button {
                     height: 40px;
-                    padding: 0 16px;
+                    padding: 0 20px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
 
-                    &.ant-btn-primary {
-                        background: #1890ff;
-                        border: none;
-                        box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
-                        transition: all 0.3s;
-
-                        &:hover {
-                            background: #40a9ff;
-                            box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
-                        }
+                    svg {
+                        font-size: 16px;
                     }
+                }
 
-                    &.ant-btn-default {
-                        border: 1px solid #d9d9d9;
-                        background: #ffffff;
-                        color: #595959;
+                .export-button {
+                    border: 1px solid $border-color;
+                    background: white;
 
-                        &:hover {
-                            border-color: #40a9ff;
-                            color: #40a9ff;
-                        }
+                    &:hover {
+                        color: #1677ff;
+                        border-color: #1677ff;
+                        transform: translateY(-2px);
+                    }
+                }
+
+                .add-button {
+                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                    border: none;
+                    color: white;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                        transform: translateY(-2px);
                     }
                 }
             }
         }
     }
 
-    .content-card {
-        background: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    .customer-table-card {
+        @include hover-shadow;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
 
         .ant-card-body {
-            padding: 24px;
-        }
-    }
-}
-
-
-// Table styles
-.ant-table {
-    .ant-table-thead > tr > th {
-        background: #fafafa;
-        font-weight: 600;
-        color: #1f1f1f;
-    }
-
-    .ant-table-tbody > tr > td {
-        color: #595959;
-    }
-
-    .ant-table-tbody > tr:hover > td {
-        background: #f5f7fa;
-    }
-}
-
-// Dropdown menu styles
-.ant-dropdown-menu {
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    padding: 4px 0;
-
-    .ant-dropdown-menu-item {
-        padding: 8px 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #595959;
-
-        &:hover {
-            background: #f5f7fa;
-            color: #40a9ff;
+            padding: 0;
         }
 
-        .anticon {
-            font-size: 16px;
-        }
-    }
-}
+        .ant-table-wrapper {
+            .ant-table {
+                background: transparent;
 
-// Responsive styles
-@media screen and (max-width: 768px) {
-    .invoice-page {
-        padding: 16px;
+                .ant-table-thead>tr>th {
+                    background: #fafafa;
+                    font-weight: 600;
+                    color: $text-color-dark;
+                    padding: 16px 24px;
+                    border-bottom: 1px solid $border-color;
 
-        .page-header {
-            flex-direction: column;
-            gap: 16px;
-
-            .header-actions {
-                width: 100%;
-                flex-direction: column;
-                align-items: stretch;
-
-                .search-filter-group {
-                    .ant-input-affix-wrapper {
-                        width: 100%;
+                    &::before {
+                        display: none;
                     }
                 }
 
-                .action-buttons {
-                    justify-content: space-between;
+                .ant-table-tbody>tr>td {
+                    padding: 16px 24px;
+                    border-bottom: 1px solid $border-color;
 
-                    .ant-btn {
-                        flex: 1;
-                        justify-content: center;
+                    &:last-child {
+                        padding-right: 24px;
+                    }
+                }
+
+                .ant-table-row {
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        background: #fafafa;
                     }
                 }
             }
-        }
-    }
-}
 
-
-// Full width utility
-.full-width {
-  width: 100% !important;
-}
-
-
-// Upload button styles
-.ant-upload-wrapper {
-  .ant-upload-select {
-    width: 100%;
-    
-    .ant-btn {
-      width: 100%;
-      height: 120px;
-      border-radius: 10px;
-      border: 2px dashed #e6e8eb;
-      background-color: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.3s ease;
-
-      svg {
-        font-size: 24px;
-        color: #9ca3af;
-      }
-
-      &:hover {
-        border-color: #1890ff;
-        color: #1890ff;
-
-        svg {
-          color: #1890ff;
-        }
-      }
-    }
-  }
-}
-
-
-
-// Dropdown styles for category select
-.ant-select-dropdown {
-  padding: 8px !important;
-  border-radius: 10px !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
-
-  .ant-select-item {
-    padding: 8px 12px !important;
-    border-radius: 6px !important;
-    min-height: 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    color: #1f2937 !important;
-
-    &-option-selected {
-      background-color: #E6F4FF !important;
-      font-weight: 500 !important;
-      color: #1890ff !important;
-    }
-
-    &-option-active {
-      background-color: #F3F4F6 !important;
-    }
-  }
-
-  .ant-divider {
-    margin: 4px 0 !important;
-  }
-
-  // Style for the Add Category button container
-  .ant-btn {
-    &:hover {
-      background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
-      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25) !important;
-    }
-
-    .anticon {
-      font-size: 16px !important;
-    }
-  }
-}
-
-// Category select styles
-.ant-select {
-  &.ant-select-single {
-    .ant-select-selector {
-      height: 48px !important;
-      border-radius: 10px !important;
-      border: 1px solid #e6e8eb !important;
-      background-color: #f8fafc !important;
-      padding: 0 16px !important;
-
-      .ant-select-selection-item {
-        line-height: 46px !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-      }
-    }
-
-    &.ant-select-focused {
-      .ant-select-selector {
-        border-color: #1890ff !important;
-        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
-      }
-    }
-  }
-}
-
-// Add these styles for the currency input
-.price-input-group {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #f8fafc;
-  border: 1px solid #e6e8eb;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: #1890ff;
-    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-  }
-
-  .currency-select {
-    width: 80px !important;
-    
-    .ant-select-selector {
-      height: 48px !important;
-      padding: 0 8px !important;
-      border: none !important;
-      background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
-      border-radius: 10px 0 0 10px !important;
-      box-shadow: none !important;
-
-      .ant-select-selection-item {
-        color: white;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 48px;
-      }
-    }
-
-    &.ant-select-disabled {
-      .ant-select-selector {
-        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
-        opacity: 0.8;
-        cursor: not-allowed;
-      }
-    }
-  }
-
-  .price-input {
-    flex: 1;
-    border: none !important;
-    border-radius: 0 10px 10px 0 !important;
-    height: 48px !important;
-    background: transparent;
-    padding: 0 16px !important;
-
-    &:focus {
-      box-shadow: none !important;
-    }
-
-    .ant-input-number-input-wrap {
-      height: 48px;
-      
-      input {
-        height: 48px;
-        font-size: 14px;
-        padding: 0 16px 0 10px !important;
-      }
-    }
-
-    .price-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9ca3af;
-      font-size: 16px;
-    }
-  }
-}
-
-// Currency dropdown styles
-.currency-dropdown {
-  padding: 4px;
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-
-  .ant-select-item {
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin: 2px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-
-    &-option-selected {
-      background: #e6f4ff;
-      color: #1890ff;
-    }
-
-    &-option-active {
-      background: #f0f7ff;
-    }
-  }
-}
-
-
-
-// Focus state for the entire input group
-.ant-form-item-has-error {
-  .price-input-group {
-    border-color: #ff4d4f;
-
-    &:hover {
-      box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1);
-    }
-  }
-}
-
-// Add or update these styles for consistent dropdown appearance
-.pro-modal {
-  .ant-select-dropdown {
-    padding: 8px !important;
-    border-radius: 10px !important;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
-
-    .ant-select-item {
-      padding: 8px 12px !important;
-      border-radius: 6px !important;
-      min-height: 32px !important;
-      display: flex !important;
-      align-items: center !important;
-      color: #1f2937 !important;
-
-      &-option-selected {
-        background-color: #E6F4FF !important;
-        font-weight: 500 !important;
-        color: #1890ff !important;
-      }
-
-      &-option-active {
-        background-color: #F3F4F6 !important;
-      }
-    }
-
-    .ant-divider {
-      margin: 4px 0 !important;
-    }
-
-    // Style for the Add Category button container
-    .ant-btn {
-      &:hover {
-        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
-        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25) !important;
-      }
-
-      .anticon {
-        font-size: 16px !important;
-      }
-    }
-  }
-
-  // Category select styles
-  .ant-select {
-    &.ant-select-single {
-      .ant-select-selector {
-        height: 48px !important;
-        border-radius: 10px !important;
-        border: 1px solid #e6e8eb !important;
-        background-color: #f8fafc !important;
-        padding: 0 16px !important;
-
-        .ant-select-selection-item {
-          line-height: 46px !important;
-          display: flex !important;
-          align-items: center !important;
-          gap: 8px !important;
-        }
-      }
-
-      &.ant-select-focused {
-        .ant-select-selector {
-          border-color: #1890ff !important;
-          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
-        }
-      }
-    }
-  }
-}
-
-.product-list {
-  padding: 24px;
-  background: $background-color;
-
-  .product-table {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-    overflow: hidden;
-
-    .ant-table {
-      background: transparent;
-
-      .ant-table-thead > tr > th {
-        background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
-        font-weight: 600;
-        color: $text-color-dark;
-        padding: 16px 24px;
-        border-bottom: 1px solid $border-color;
-
-        &::before {
-          display: none;
-        }
-      }
-
-      .ant-table-tbody > tr > td {
-        padding: 16px 24px;
-        border-bottom: 1px solid $border-color;
-
-        &:last-child {
-          padding-right: 24px;
-        }
-
-        // Currency and amount styling
-        .currency-amount {
-          font-weight: 600;
-          font-size: 14px;
-
-          .currency-symbol {
-            margin-right: 2px;
-            opacity: 0.8;
-          }
-        }
-
-        // Stock status tag styling
-        .ant-tag {
-          border-radius: 4px;
-          padding: 2px 8px;
-          font-size: 12px;
-          font-weight: 500;
-          text-transform: capitalize;
-          border: none;
-
-          &.ant-tag-success {
-            background: rgba(#52c41a, 0.1);
-            color: #52c41a;
-          }
-
-          &.ant-tag-warning {
-            background: rgba(#faad14, 0.1);
-            color: #faad14;
-          }
-
-          &.ant-tag-error {
-            background: rgba(#ff4d4f, 0.1);
-            color: #ff4d4f;
-          }
-        }
-
-        // Product metrics styling
-        .product-metrics {
-          .metric-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 4px;
-
-            &:last-child {
-              margin-bottom: 0;
+            .ant-table-pagination {
+                margin: 16px 24px;
             }
-
-            .anticon {
-              font-size: 14px;
-              color: $primary-color;
-            }
-
-            .metric-value {
-              font-weight: 500;
-              color: $text-color-dark;
-            }
-
-            .metric-label {
-              color: $text-color-light;
-              font-size: 12px;
-            }
-          }
         }
-      }
-
-      .ant-table-row {
-        transition: all 0.3s ease;
-
-        &:hover {
-          background: #fafafa;
-
-          td {
-            background: transparent;
-          }
-        }
-      }
     }
-
-    .ant-table-pagination {
-      margin: 16px 24px;
-    }
-  }
 }
 
 // Action button styling
 .action-dropdown-button {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: all 0.3s ease;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
 
-  &:hover {
-    background: #f0f5ff;
-    color: #1677ff;
-  }
+    &:hover {
+        background: #f0f5ff;
+        color: #1677ff;
+    }
 }
 
 // Product actions dropdown styling
 .product-actions-dropdown {
-  .ant-dropdown-menu {
-    padding: 4px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    .ant-dropdown-menu {
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
-    .ant-dropdown-menu-item {
-      padding: 8px 12px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      transition: all 0.3s ease;
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
 
-      .anticon {
-        font-size: 16px;
-      }
+            .anticon {
+                font-size: 16px;
+            }
 
-      &:hover {
-        background: #f0f5ff;
-      }
+            &:hover {
+                background: #f0f5ff;
+            }
 
-      &-danger:hover {
-        background: rgba(#ff4d4f, 0.1);
-      }
+            &-danger:hover {
+                background: rgba(#ff4d4f, 0.1);
+            }
+        }
     }
-  }
-}
-
-// Category tag styling
-.category-tag {
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 13px;
-  font-weight: 500;
-  text-transform: capitalize;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-
-  .color-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
 }
 
 // Responsive styles
 @media (max-width: 768px) {
-  .product-list {
-    padding: 16px;
+    .product-page {
+        padding: 16px;
 
-    .product-table {
-      .ant-table {
-        .ant-table-thead > tr > th,
-        .ant-table-tbody > tr > td {
-          padding: 12px 16px;
+        .page-header {
+            flex-direction: column;
+            padding: 16px;
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+
+                .search-filter-group {
+                    max-width: 100%;
+                }
+
+                .action-buttons {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+            }
         }
-      }
+
+        .customer-table-card {
+            .ant-table {
+                .ant-table-thead>tr>th,
+                .ant-table-tbody>tr>td {
+                    padding: 12px 8px;
+                }
+            }
+        }
     }
-  }
 }
 

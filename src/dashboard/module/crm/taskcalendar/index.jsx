@@ -334,7 +334,7 @@ const TaskCalendarPage = () => {
                                             }}>
                                                 <div className="event-date" style={{
                                                     display: 'flex',
-                                                    alignItems: '   ',
+                                                    alignItems: 'center',
                                                     color: task.color || defaultColor,
                                                     fontSize: '14px',
                                                     fontWeight: '500'
@@ -427,6 +427,7 @@ const TaskCalendarPage = () => {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     display: 'flex',
                     alignItems: 'center',
+                    marginTop: '10px',
                     justifyContent: 'center',
                     fontSize: '20px'
                 }}
@@ -439,7 +440,7 @@ const TaskCalendarPage = () => {
                 selectedDate={selectedDate}
             />
         </div>
-    );
+    );  
 };
 
 export default TaskCalendarPage;

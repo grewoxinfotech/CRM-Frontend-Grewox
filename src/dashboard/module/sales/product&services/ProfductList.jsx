@@ -8,6 +8,8 @@ import {
   Typography,
   Modal,
   message,
+  Input,
+  Space,
 } from "antd";
 import {
   FiEdit2,
@@ -19,7 +21,10 @@ import {
   FiTag,
   FiPackage,
   FiTrendingUp,
-  FiPercent
+  FiPercent,
+  FiSearch,
+  FiPlus,
+  FiDownload,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -33,13 +38,15 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
+const { Search } = Input;
 
-const ProductList = ({ onEdit, onView, searchText = "" ,currenciesData}) => {
+const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
   const { data: productsData = [], isLoading } = useGetProductsQuery();
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchValue, setSearchValue] = useState("");
 
   const currentUser = useSelector(selectCurrentUser);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
@@ -60,21 +67,21 @@ const ProductList = ({ onEdit, onView, searchText = "" ,currenciesData}) => {
 
   const filteredProducts = React.useMemo(() => {
     return products?.filter((product) => {
-      const searchLower = searchText.toLowerCase();
+      const searchLower = searchValue.toLowerCase();
       const name = product?.name?.toLowerCase() || "";
       const category = product?.category?.toLowerCase() || "";
       const sku = product?.sku?.toLowerCase() || "";
       const description = product?.description?.toLowerCase() || "";
 
       return (
-        !searchText ||
+        !searchValue ||
         name.includes(searchLower) ||
         category.includes(searchLower) ||
         sku.includes(searchLower) ||
         description.includes(searchLower)
       );
     });
-  }, [products, searchText]);
+  }, [products, searchValue]);
 
   const handleDelete = async (id) => {
     Modal.confirm({
@@ -167,6 +174,7 @@ const ProductList = ({ onEdit, onView, searchText = "" ,currenciesData}) => {
       title: "Stock Info",
       key: "stock",
       width: '20%',
+      sorter: (a, b) => a.stock_quantity - b.stock_quantity,  
       render: (_, record) => (
         <div>
           <div style={{ marginBottom: "4px" }}>
@@ -192,6 +200,7 @@ const ProductList = ({ onEdit, onView, searchText = "" ,currenciesData}) => {
       title: "Pricing",
       key: "pricing",
       width: '20%',
+      sorter: (a, b) => a.selling_price - b.selling_price,
       render: (_, record) => (
         <div>
           <Text strong style={{ display: "block", color: "#52c41a" }}>
@@ -213,6 +222,7 @@ const ProductList = ({ onEdit, onView, searchText = "" ,currenciesData}) => {
       title: "Profit Metrics",
       key: "profit",
       width: '20%',
+      sorter: (a, b) => a.profit_margin - b.profit_margin,
       render: (_, record) => {
         const profit_margin = record.selling_price - record.buying_price;
         const profit_percentage = record.buying_price > 0 ? ((profit_margin / record.buying_price) * 100).toFixed(2) : 0;

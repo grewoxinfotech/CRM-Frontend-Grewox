@@ -49,23 +49,24 @@ const { TextArea } = Input;
 const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const [selectedCurrency, setSelectedCurrency] = useState('₹');
   const currentUser = useSelector(selectCurrentUser);
   const [createProduct] = useCreateProductMutation();
   const [addCategoryVisible, setAddCategoryVisible] = useState(false);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
 
-  // Find default currency (INR)
-  // const findIndianDefaults = (currencies) => {
-  //   const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
-  //   return {
-  //     defaultCurrency: inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK'
-  //   };
-  // };
-
-  // const { defaultCurrency } = findIndianDefaults(currenciesData);
-
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
+
+  // Initialize form with INR currency
+  useEffect(() => {
+    if (currenciesData) {
+      const inrCurrency = currenciesData.find(c => c.currencyCode === 'INR');
+      if (inrCurrency) {
+        form.setFieldsValue({
+          currency: inrCurrency.id
+        });
+      }
+    }
+  }, [currenciesData, form]);
 
   const stockStatusOptions = [
     {
@@ -77,7 +78,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
     },
     {
       value: 'low_stock',
-      label: 'Low Stock', 
+      label: 'Low Stock',
       icon: <FiAlertTriangle style={{ color: '#faad14' }} />,
       color: '#faad14',
       description: 'Stock is below minimum level'
@@ -91,40 +92,15 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
     }
   ];
 
-  // Update handleCurrencyChange
-  const handleCurrencyChange = (value) => {
-    const currency = currenciesData?.find(c => c.id === value);
-    setSelectedCurrency(currency?.currencyIcon || '₹');
-    form.setFieldsValue({ 
-      currency: value  // Set the currency ID in form
-    });
-  };
-
-  // Initialize form with default currency
-  useEffect(() => {
-    if (currenciesData) {
-      const defaultCurr = currenciesData?.find(c => c.currencyCode === 'INR');
-      if (defaultCurr) {
-        form.setFieldsValue({
-          currency: defaultCurr.id
-        });
-        setSelectedCurrency(defaultCurr.currencyIcon);
-      }
-    }
-  }, [currenciesData, form]);
-
   const handleSubmit = async (values) => {
     try {
       const formData = new FormData();
-
-      // Get selected currency or use default
-      const currencyId = values.currency ;
 
       formData.append("name", values.name);
       formData.append("category", values.category);
       formData.append("buying_price", values.buying_price);
       formData.append("selling_price", values.selling_price);
-      formData.append("currency", currencyId); // Store currency ID
+      formData.append("currency", values.currency || 'BEzBBPneRQq6rbGYiwYj45k'); // Default to INR if not set
       formData.append("sku", values.sku || "");
       formData.append("tax", values.tax || "");
       formData.append("hsn_sac", values.hsn_sac || "");
@@ -365,7 +341,6 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
         </div>
         <div className="form-grid" style={{
           display: 'grid',
-          // gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '16px',
           marginBottom: '32px'
         }}>
@@ -374,35 +349,68 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Buying Price</span>}
             rules={[{ required: true, message: "Please enter buying price" }]}
           >
-            <div className="price-input-group">
+            <div className="price-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden',
+              marginBottom: 0
+            }}>
               <Form.Item
                 name="currency"
                 noStyle
+                rules={[{ required: true }]}
               >
                 <Select
-                  onChange={handleCurrencyChange}
+                  size="large"
+                  style={{
+                    width: '100px',
+                    height: '48px'
+                  }}
                   className="currency-select"
-                  dropdownClassName="currency-dropdown"
-                  // defaultValue={defaultCurrency} // Set default currency
+                  defaultValue="BEzBBPneRQq6rbGYiwYj45k"
+                  dropdownStyle={{
+                    padding: '8px',
+                    borderRadius: '10px',
+                  }}
+                  showSearch
+                  optionFilterProp="children"
+                  filterOption={(input, option) =>
+                    option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                  }
                 >
-                  {currenciesData?.map((currency) => (
-                    <Option 
-                      key={currency.id} 
-                      value={currency.id}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{currency.currencyIcon}</span>
-                      </div>
-                    </Option>
-                  ))}
+                  <Option value="BEzBBPneRQq6rbGYiwYj45k">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>₹</span>
+                      <span>INR</span>
+                    </div>
+                  </Option>
                 </Select>
               </Form.Item>
-              <InputNumber
-                className="price-input"
-                placeholder="Enter buying price"
-                min={0}
-                precision={2}
-              />
+              <Form.Item
+                name="buying_price"
+                noStyle
+                rules={[{ required: true, message: 'Please enter buying price' }]}
+              >
+                <InputNumber
+                  placeholder="Enter buying price"
+                  size="large"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    border: 'none',
+                    borderLeft: '1px solid #e6e8eb',
+                    borderRadius: 0,
+                    height: '48px',
+                    padding: '0 16px',
+                  }}
+                  min={0}
+                  precision={2}
+                  className="price-input"
+                />
+              </Form.Item>
             </div>
           </Form.Item>
 
@@ -411,25 +419,54 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
             rules={[{ required: true, message: "Please enter selling price" }]}
           >
-            <div className="price-input-group">
+            <div className="price-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden',
+              marginBottom: 0
+            }}>
               <Select
-                value={form.getFieldValue('currency')}
+                value="BEzBBPneRQq6rbGYiwYj45k"
+                size="large"
+                style={{
+                  width: '100px',
+                  height: '48px'
+                }}
                 className="currency-select"
-                dropdownClassName="currency-dropdown"
                 disabled
               >
-                <Option value={form.getFieldValue('currency')}>
+                <Option value="BEzBBPneRQq6rbGYiwYj45k">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>{selectedCurrency}</span>
+                    <span>₹</span>
+                    <span>INR</span>
                   </div>
                 </Option>
               </Select>
-              <InputNumber
-                className="price-input"
-                placeholder="Enter selling price"
-                min={0}
-                precision={2}
-              />
+              <Form.Item
+                name="selling_price"
+                noStyle
+                rules={[{ required: true, message: 'Please enter selling price' }]}
+              >
+                <InputNumber
+                  placeholder="Enter selling price"
+                  size="large"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    border: 'none',
+                    borderLeft: '1px solid #e6e8eb',
+                    borderRadius: 0,
+                    height: '48px',
+                    padding: '0 16px',
+                  }}
+                  min={0}
+                  precision={2}
+                  className="price-input"
+                />
+              </Form.Item>
             </div>
           </Form.Item>
 
@@ -437,7 +474,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             name="hsn_sac"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>HSN/SAC Code</span>}
           >
-            <Input 
+            <Input
               placeholder="Enter HSN/SAC code"
               style={{ width: '100%' }}
             />
@@ -469,7 +506,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             name="stock_status"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Status</span>}
           >
-            <Select 
+            <Select
               placeholder="Select status"
               className="stock-status-select"
               suffixIcon={<FiChevronDown />}
@@ -598,7 +635,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           </Upload>
         </Form.Item>
 
-        <div style={{ 
+        <div style={{
           display: 'flex',
           justifyContent: 'flex-end',
           gap: '16px',
@@ -617,6 +654,158 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
         visible={addCategoryVisible}
         onCancel={() => setAddCategoryVisible(false)}
       />
+
+      <style jsx>{`
+        .currency-select .ant-select-selector {
+          background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+          border: none !important;
+          color: white !important;
+          height: 48px !important;
+          line-height: 46px !important;
+          padding: 0 12px !important;
+          display: flex;
+          align-items: center;
+          box-shadow: none !important;
+        }
+
+        .currency-select .ant-select-selection-item {
+          color: white !important;
+          font-weight: 500 !important;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          height: 46px !important;
+          line-height: 46px !important;
+          font-size: 14px;
+        }
+
+        .currency-select .ant-select-arrow {
+          color: white !important;
+        }
+
+        .currency-select .ant-select-clear {
+          background: transparent !important;
+          color: white !important;
+          opacity: 0.8;
+        }
+
+        .currency-select .ant-select-clear:hover {
+          opacity: 1;
+        }
+
+        .currency-select.ant-select-status-error:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+          border-color: rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .currency-select.ant-select-status-error .ant-select-arrow {
+          color: white !important;
+        }
+
+        .currency-select .ant-select-selection-search-input {
+          color: white !important;
+        }
+
+        .currency-select .ant-select-selection-placeholder {
+          color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .currency-select .ant-select-dropdown {
+          padding: 8px !important;
+        }
+
+        .currency-select .ant-select-item {
+          padding: 8px 12px !important;
+          border-radius: 6px !important;
+        }
+
+        .currency-select .ant-select-item-option-content {
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+
+        .currency-select .ant-select-item-option-selected {
+          background-color: #e6f4ff !important;
+          font-weight: 500 !important;
+        }
+
+        .price-input-group {
+          margin-bottom: 0 !important;
+          display: flex !important;
+          width: 100% !important;
+
+          .ant-select-selector,
+          .ant-input-number {
+            height: 46px !important;
+            line-height: 46px !important;
+          }
+
+          .ant-select-selector {
+            border: none !important;
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+            color: white !important;
+            padding: 0 16px !important;
+            display: flex;
+            align-items: center;
+            box-shadow: none !important;
+            height: 46px !important;
+          }
+
+          .ant-select-selection-item {
+            color: white !important;
+            font-weight: 500 !important;
+            display: flex;
+            align-items: center;
+            height: 46px !important;
+            line-height: 46px !important;
+          }
+
+          .price-input {
+            flex: 1 !important;
+            width: calc(100% - 100px) !important;
+          }
+
+          .ant-input-number {
+            background-color: transparent;
+            height: 46px !important;
+            
+            &:hover, &:focus {
+              border-color: transparent !important;
+              box-shadow: none !important;
+            }
+
+            .ant-input-number-input-wrap {
+              height: 46px !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              
+              input {
+                height: 46px !important;
+                font-size: 14px;
+                padding: 0 16px;
+                line-height: 46px !important;
+              }
+            }
+
+            .ant-input-number-handler-wrap {
+              display: none;
+            }
+          }
+
+          &:hover {
+            border-color: #1890ff;
+            
+            .ant-select-selector {
+              background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+            }
+          }
+
+          &:focus-within {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+          }
+        }
+      `}</style>
     </Modal>
   );
 };

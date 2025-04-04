@@ -55,6 +55,8 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
+  const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
 
 
   const calculateItemTaxAmount = (item) => {
@@ -248,14 +250,26 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
             {menu}
             <Divider style={{ margin: '8px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Button
-                type="link"
-                icon={<FiPlus />}
-                onClick={() => setIsCustomerModalOpen(true)}
-                style={{ padding: '8px 12px' }}
-              >
-                Add New Customer
-              </Button>
+            <Button
+                          type="primary"
+                          icon={<FiPlus />}
+                          onClick={() => setIsCustomerModalOpen(true)}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Customer
+                        </Button>
             </div>
           </>
         )}
@@ -458,20 +472,54 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   );
 
   const handleCurrencyChange = (value, option) => {
-    const currencySymbol = option?.symbol || '₹';
-    setSelectedCurrency(currencySymbol);
-    setSelectedCurrencyId(value);
+    const currency = currenciesData?.find(c => c.id === value);
+    if (currency) {
+      setSelectedCurrency(currency.currencyIcon);
+      setSelectedCurrencyId(value);
+      
+      // Update all prices with new currency
+      const items = form.getFieldValue('items') || [];
+      const updatedItems = items.map(item => ({
+        ...item,
+        unit_price: item.unit_price || 0
+      }));
+      form.setFieldsValue({ items: updatedItems });
+      calculateTotals(updatedItems);
+    }
+  };
 
-    // Update all existing items with new currency
-    const items = form.getFieldValue('items') || [];
-    const updatedItems = items.map(item => ({
-      ...item,
-      unit_price: item.unit_price || 0
-    }));
-    form.setFieldsValue({ items: updatedItems });
+  const handleProductSelect = (value, option) => {
+    const selectedProduct = productsData?.data?.find(product => product.id === value);
+    if (selectedProduct) {
+      // Get the product's currency from currencies list
+      const productCurrency = currenciesData?.find(c => c.id === selectedProduct.currency);
+      if (productCurrency) {
+        setSelectedProductCurrency(productCurrency);
+        setSelectedCurrency(productCurrency.currencyIcon);
+        setSelectedCurrencyId(productCurrency.id);
+        setIsCurrencyDisabled(true);
+      }
 
-    // Recalculate all amounts with new currency
-    calculateTotals(updatedItems);
+      // Update the items list
+      const items = form.getFieldValue('items') || [];
+      const newItems = [...items];
+      const lastIndex = newItems.length - 1;
+      newItems[lastIndex] = {
+        ...newItems[lastIndex],
+        id: selectedProduct.id,
+        item_name: selectedProduct.name,
+        unit_price: selectedProduct.selling_price,
+        hsn_sac: selectedProduct.hsn_sac,
+        tax: selectedProduct.tax,
+        profilePic: selectedProduct.image,
+        currency: selectedProduct.currency
+      };
+      form.setFieldsValue({ 
+        items: newItems,
+        currency: selectedProduct.currency
+      });
+      calculateTotals(newItems);
+    }
   };
 
   return (
@@ -480,7 +528,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={1000}
+      width={1100}
       destroyOnClose={true}
       centered
       closeIcon={null}
@@ -603,7 +651,9 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
               <Select
                 placeholder="Select Currency"
                 size="large"
+                value={selectedProductCurrency?.id || selectedCurrencyId}
                 onChange={handleCurrencyChange}
+                disabled={isCurrencyDisabled}
                 style={{
                   width: "450px",
                   borderRadius: "10px",
@@ -734,23 +784,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 borderRadius: '10px',
               }}
               value={form.getFieldValue('items')?.[0]?.item_name}
-              onChange={(value, option) => {
-                const selectedProduct = productsData?.data?.find(product => product.id === value);
-                const items = form.getFieldValue('items') || [];
-                const newItems = [...items];
-                const lastIndex = newItems.length - 1;
-                newItems[lastIndex] = {
-                  ...newItems[lastIndex],
-                  id: selectedProduct.id,
-                  item_name: selectedProduct.name,
-                  unit_price: selectedProduct.selling_price,
-                  hsn_sac: selectedProduct.hsn_sac,
-                  tax: selectedProduct.tax,
-                  profilePic: selectedProduct.image
-                };
-                form.setFieldsValue({ items: newItems });
-                calculateTotals(newItems);
-              }}
+              onChange={handleProductSelect}
             >
               {productsData?.data?.map(product => (
                 <Option
@@ -922,16 +956,12 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                           </Form.Item>
                         </td>
                         <td>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "amount"]}
-                          >
-                            <InputNumber
-                              disabled
-                              className="amount-input"
-                              formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            />
-                          </Form.Item>
+                          <div className="amount-field">
+                            <span className="currency-symbol">{selectedCurrency}</span>
+                            <span className="amount-value">
+                              {calculateItemTotal(form.getFieldValue("items")[index])?.toFixed(2) || '0.00'}
+                            </span>
+                          </div>
                         </td>
                         <td>
                           {fields.length > 1 && (

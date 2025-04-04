@@ -22,7 +22,7 @@ $border-radius: 6px;
     }
 }
 
-.inquiry-page {
+.invoice-page {
     padding: 24px;
     background: $background-color;
 
@@ -408,7 +408,7 @@ $border-radius: 6px;
 
 // Responsive styles
 @media (max-width: 768px) {
-    .inquiry-page {
+    .invoice-page {
         .page-header {
             flex-direction: column;
             padding: 16px;
