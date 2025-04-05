@@ -72,23 +72,24 @@ const Interviews = () => {
             <div className="interview-cell">
                 {dayInterviews.map(interview => (
                     <div key={interview.id} className="interview-item">
-                        {/* <Badge 
-                            status="processing" 
-                            text={ */}
-                                <div className="interview-details">
-                                    <div>
-                                    <span className="interview-candidate">
-                                        {getCandidateName(interview.candidate)}
-                                    </span>
-                                    
-                                    </div>
-                                    
-                                    <span className="interview-time">
-                                        {interview.startTime?.slice(0, 5)}
-                                    </span>
-                                </div>
-                            {/* } 
-                        /> */}
+                        <div className="interview-details">
+                            <div className="interview-info">
+                                <span className="interview-candidate">
+                                    {getCandidateName(interview.candidate)}
+                                </span>
+                                <span className="interview-type">
+                                    {/* {interview.interviewType} */}
+                                </span>
+                            </div>
+                            <div className="interview-time">
+                                <span className="time">
+                                    {interview.startTime?.slice(0, 5)}
+                                </span>
+                                {/* <span className="mode">
+                                    {interview.status || 'Online'}
+                                </span> */}
+                            </div>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -142,9 +143,15 @@ const Interviews = () => {
                                                 {getCandidateName(interview.candidate)}
                                             </div>
                                             <div className="interview-datetime">
-                                                {dayjs(interview.date).format('MMM DD, YYYY')}
-                                                <br />
-                                                {interview.startTime} · {interview.status || 'Online'}
+                                                <div className="date">
+                                                    {dayjs(interview.startOn).format('MMM DD, YYYY')}
+                                                </div>
+                                                <div className="time">
+                                                    {interview.startTime?.slice(0, 5)}
+                                                </div>
+                                                <div className="type">
+                                                    {interview.interviewType}
+                                                </div>
                                             </div>
                                         </div>
                                         <Button

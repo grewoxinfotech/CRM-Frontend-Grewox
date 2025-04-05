@@ -72,11 +72,10 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
                 job: values.job,                   // job ID
                 candidate: values.candidate,        // candidate ID
                 interviewer: values.interviewer,
-                round: values.round,
+                round: values.round,  // Send round as array directly
                 interviewType: values.interview_type,
                 startOn: values.start_date.format('YYYY-MM-DD'),
                 startTime: values.start_time.format('HH:mm:ss'),
-                // mode: values.interview_type,        // online/offline
                 commentForInterviewer: values.interviewer_comments?.trim() || '',
                 commentForCandidate: values.candidate_comments?.trim() || '',
                 status: 'scheduled',

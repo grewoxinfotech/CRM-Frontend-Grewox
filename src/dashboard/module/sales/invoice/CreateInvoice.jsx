@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -52,12 +52,25 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   const [createCustomer] = useCreateCustomerMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
-  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState('BEzBBPneRQq6rbGYiwYj45k'); // INR currency ID
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
 
+  useEffect(() => {
+    // Set default currency to INR when component mounts
+    if (currenciesData) {
+      const inrCurrency = currenciesData.find(c => c.id === 'BEzBBPneRQq6rbGYiwYj45k');
+      if (inrCurrency) {
+        setSelectedCurrency(inrCurrency.currencyIcon);
+        setSelectedCurrencyId(inrCurrency.id);
+        form.setFieldsValue({
+          currency: inrCurrency.id
+        });
+      }
+    }
+  }, [currenciesData, form]);
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
@@ -651,9 +664,9 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
               <Select
                 placeholder="Select Currency"
                 size="large"
-                value={selectedProductCurrency?.id || selectedCurrencyId}
+                value={selectedCurrencyId}
                 onChange={handleCurrencyChange}
-                disabled={isCurrencyDisabled}
+                disabled={true}
                 style={{
                   width: "450px",
                   borderRadius: "10px",
