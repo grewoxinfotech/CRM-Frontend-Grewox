@@ -274,7 +274,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
   const selectStyle = {
     width: '100%',
-    height: '48px'
+    height: '48px',
   };
 
   // Add multiSelectStyle for multiple select components
@@ -410,7 +410,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               display: 'grid',
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '16px',
-              marginBottom: '32px'
+              // marginBottom: '32px'
             }}>
               <Form.Item
                 name="dealTitle"
@@ -428,7 +428,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               </Form.Item>
 
               <Form.Item
-                name="valueGroup"
+                name="value"
                 label={<span style={formItemStyle}>Deal Value</span>}
                 className="combined-input-item"
               >
@@ -440,7 +440,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     rules={[{ required: true, message: "Please select currency" }]}
                   >
                     <Select
-                      style={{ width: '120px' }}
+                      style={{ width: '90px' }}
                       className="currency-select"
                       dropdownMatchSelectWidth={false}
                       suffixIcon={<FiChevronDown size={14} />}
@@ -613,6 +613,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   ))}
                 </Select>
               </Form.Item>
+              </div>
 
               <Form.Item
                 name="products"
@@ -632,7 +633,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{
                           width: '32px',
-                          height: '32px',
+                          // height: '40px',
                           borderRadius: '4px',
                           overflow: 'hidden'
                         }}>
@@ -645,17 +646,17 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: '500' }}>{product.name}</span>
-                          <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.selling_price}</span>
+                          <span style={{ fontSize: '12px', color: '#6B7280' }}>{product.selling_price}</span>
                         </div>
                       </div>
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
-            </div>
+            
 
             {/* Contact Information Section */}
-            <div className="section-title" style={{ marginBottom: '16px' }}>
+            <div className="section-title" style={{ marginBottom: '16px',marginTop:'32px' }}>
               <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
             </div>
 
@@ -725,7 +726,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     initialValue={defaultPhoneCode}
                   >
                     <Select
-                      style={{ width: '120px' }}
+                      style={{ width: '90px' }}
                       dropdownMatchSelectWidth={false}
                       showSearch
                       optionFilterProp="children"
@@ -765,7 +766,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         backgroundColor: '#f8fafc'
                       }}
                       placeholder="Enter phone number"
-                      prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
+                      // prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
                     />
                   </Form.Item>
                 </Input.Group>
@@ -974,7 +975,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             border-radius: 10px !important;
             display: flex !important;
             align-items: flex-start !important;
-            flex-wrap: wrap !important;
+            // flex-wrap: wrap !important;
           }
 
           .ant-select-selection-item {
@@ -1037,6 +1038,127 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
         .role-indicator {
           animation: pulse 2s infinite;
+        }
+
+        /* Add these new styles for product selection */
+        .ant-select-multiple {
+          .ant-select-selection-item {
+            height: auto !important;
+            background: #f0f7ff !important;
+            border: 1px solid #91caff !important;
+            border-radius: 8px !important;
+            margin: 4px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+
+            /* Product image container */
+            .ant-select-selection-item-content > div {
+              display: flex !important;
+              align-items: center !important;
+              gap: 12px !important;
+            }
+
+            /* Product details container */
+            .ant-select-selection-item-content > div > div:last-child {
+              display: flex !important;
+              flex-direction: column !important;
+              gap: 2px !important;
+            }
+
+            /* Product name */
+            .ant-select-selection-item-content span:first-child {
+              color: #1f2937 !important;
+              font-weight: 500 !important;
+              font-size: 14px !important;
+              line-height: 1.4 !important;
+            }
+
+            /* Product price */
+            .ant-select-selection-item-content span:last-child {
+              color: #6B7280 !important;
+              font-size: 12px !important;
+              line-height: 1.2 !important;
+            }
+
+            /* Product image */
+            img {
+              width: 32px !important;
+              height: 32px !important;
+              border-radius: 4px !important;
+              object-fit: cover !important;
+            }
+
+            /* Remove button */
+            .ant-select-selection-item-remove {
+              color: #6B7280 !important;
+              font-size: 14px !important;
+              margin-left: auto !important;
+              padding: 4px !important;
+              border-radius: 4px !important;
+              
+              &:hover {
+                background-color: #EEF2FF !important;
+                color: #4B5563 !important;
+              }
+            }
+          }
+
+          /* Adjust the selector height when items are selected */
+          .ant-select-selector {
+            height: auto !important;
+            min-height: 48px !important;
+            padding: 4px 8px !important;
+          }
+
+          /* Style for the search input */
+          .ant-select-selection-search {
+            margin: 4px !important;
+            padding: 4px !important;
+          }
+        }
+
+        /* Dropdown styles for product options */
+        .ant-select-dropdown {
+          .ant-select-item-option-content {
+            > div {
+              padding: 8px 0 !important;
+            }
+
+            /* Product option container */
+            div[style*="display: flex"] {
+              gap: 12px !important;
+            }
+
+            /* Product image in dropdown */
+            div[style*="width: 32px"] {
+              flex-shrink: 0 !important;
+            }
+
+            /* Product details in dropdown */
+            div[style*="flex-direction: column"] {
+              flex-grow: 1 !important;
+              
+              span:first-child {
+                color: #1f2937 !important;
+                font-weight: 500 !important;
+                margin-bottom: 2px !important;
+              }
+              
+              span:last-child {
+                color: #6B7280 !important;
+                font-size: 12px !important;
+              }
+            }
+          }
+
+          .ant-select-item-option-selected {
+            .ant-select-item-option-content {
+              > div {
+                background-color: #f0f7ff !important;
+              }
+            }
+          }
         }
       }
     `}</style>

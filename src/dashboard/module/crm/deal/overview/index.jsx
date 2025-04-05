@@ -44,29 +44,30 @@ const DealOverview = ({ deal, currentStatus }) => {
     };
 
     const getStatusStyle = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'won':
-                return {
-                    background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
-                    color: '#52c41a',
-                    icon: <FiTarget className="status-icon" />,
-                    text: 'Won'
-                };
-            case 'lost':
-                return {
-                    background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
-                    color: '#ff4d4f',
-                    icon: <FiTarget className="status-icon" />,
-                    text: 'Lost'
-                };
-            default:
-                return {
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                    color: '#1890ff',
-                    icon: <FiTarget className="status-icon" />,
-                    text: 'Pending'
-                };
+        // First check is_won flag
+        if (deal?.is_won === true) {
+            return {
+                background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                color: '#52c41a',
+                icon: <FiTarget className="status-icon" />,
+                text: 'Won'
+            };
+        } else if (deal?.is_won === false) {
+            return {
+                background: 'linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%)',
+                color: '#ff4d4f',
+                icon: <FiTarget className="status-icon" />,
+                text: 'Lost'
+            };
         }
+
+        // Default to pending if is_won is null
+        return {
+            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+            color: '#1890ff',
+            icon: <FiTarget className="status-icon" />,
+            text: 'Pending'
+        };
     };
 
     const statusStyle = getStatusStyle(currentStatus || deal?.status);

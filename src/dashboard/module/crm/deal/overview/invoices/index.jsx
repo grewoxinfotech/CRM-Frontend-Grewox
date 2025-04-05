@@ -84,7 +84,7 @@ const DealInvoice = (deal) => {
 
   return (
     <div className="invoice-page">
-      <div className="page-breadcrumb">
+      {/* <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -97,7 +97,7 @@ const DealInvoice = (deal) => {
           </Breadcrumb.Item>
           <Breadcrumb.Item>Invoices</Breadcrumb.Item>
         </Breadcrumb>
-      </div>
+      </div> */}
 
       <div className="page-header">
         <div className="header-left">

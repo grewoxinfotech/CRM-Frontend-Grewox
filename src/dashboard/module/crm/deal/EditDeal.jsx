@@ -26,6 +26,7 @@ import {
   FiTag,
   FiShield,
   FiUserPlus,
+  FiBox,
 } from "react-icons/fi";
 import { useUpdateDealMutation, useGetDealsQuery } from "./services/dealApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
@@ -111,6 +112,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   // });
   const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
+  
 
   // Filter users to get team members (excluding subclients)
   const users = usersResponse?.data?.filter(user =>
@@ -147,56 +149,72 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         }
       }
 
-      // Parse products if it's a string and set initial product prices
+      // Parse products if it's a string
       let selectedProducts = [];
-      const initialProductPrices = {};
       if (typeof initialValues.products === 'string') {
         try {
           const parsedProducts = JSON.parse(initialValues.products);
           selectedProducts = parsedProducts.products || [];
-
-          // Calculate initial product prices
-          selectedProducts.forEach(productId => {
-            const product = products.find(p => p.id === productId);
-            if (product) {
-              initialProductPrices[productId] = product.price || 0;
-            }
-          });
         } catch (e) {
           selectedProducts = [];
         }
       }
 
-      // Set the initial manual value (total value minus product prices)
-      const totalProductPrices = Object.values(initialProductPrices).reduce((sum, price) => sum + price, 0);
-      const initialManualValue = (initialValues.value || 0) - totalProductPrices;
+      // Parse phone number to separate code and number
+      let phoneCode = '91';
+      let phoneNumber = '';
+      if (initialValues.phone) {
+        const phoneMatch = initialValues.phone.match(/\+(\d{1,3})\s*(.+)/);
+        if (phoneMatch) {
+          phoneCode = phoneMatch[1];
+          phoneNumber = phoneMatch[2];
+        }
+      }
 
-      setManualValue(initialManualValue);
-      setSelectedProductPrices(initialProductPrices);
+      // Parse the closed date
+      const closedDate = initialValues.closedDate ? 
+        dayjs(initialValues.closedDate) : 
+        null;
 
       const formValues = {
-        ...initialValues,
-        closedDate: initialValues.closedDate ?
-          dayjs(initialValues.closedDate) :
-          null,
-        phoneCode: initialValues.phone ? initialValues.phone.substring(0, 2) : '91',
-        phone: initialValues.phone ? initialValues.phone.substring(2) : '',
+        leadTitle: initialValues.dealTitle,
+        dealName: `${initialValues.firstName} ${initialValues.lastName}`,
+        email: initialValues.email,
+        phoneCode: phoneCode,
+        phone: phoneNumber,
         currency: initialValues.currency || 'INR',
-        status: initialValues.status || 'pending',
-        value: initialValues.value || '',
-        deal_members: initialValues.deal_members || [],
-        assigned_to: assignedTo?.assigned_to || [],
-        pipelineName: getPipelineName(initialValues.pipeline),
-        stageName: getStageName(initialValues.stage),
+        value: initialValues.value || 0,
+        pipeline: initialValues.pipeline,
+        stage: initialValues.stage,
+        company: initialValues.company_name,
+        website: initialValues.website,
+        address: initialValues.address,
         source: initialValues.source,
         label: initialValues.label,
         products: selectedProducts,
+        closedDate: closedDate,
+        status: initialValues.status || 'pending',
+        assigned_to: assignedTo?.assigned_to || [],
+        is_won: initialValues.is_won
       };
 
-      form.setFieldsValue(formValues);
+      // Set the selected pipeline for stage filtering
       setSelectedPipeline(initialValues.pipeline);
+      
+      // Calculate product prices if needed
+      const initialProductPrices = {};
+      selectedProducts.forEach(productId => {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          initialProductPrices[productId] = product.price || 0;
+        }
+      });
+      setSelectedProductPrices(initialProductPrices);
+
+      // Set form values
+      form.setFieldsValue(formValues);
     }
-  }, [initialValues, form, pipelines, dealStages, products]);
+  }, [initialValues, form, products]);
 
   const getRoleColor = (role) => {
     const roleColors = {
@@ -226,18 +244,37 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
   const handleSubmit = async (values) => {
     try {
+      // Format phone number
+      const formattedPhone = values.phone ? 
+        `+${values.phoneCode} ${values.phone}` : 
+        null;
+
+      // Prepare submission values
       const submissionValues = {
-        ...values,
-        closedDate: values.closedDate ?
-          values.closedDate.format('YYYY-MM-DD') :
-          null,
-        phone: values.phone ? `${values.phoneCode}${values.phone}` : null,
+        dealTitle: values.leadTitle,
+        firstName: values.dealName?.split(' ')[0] || '',
+        lastName: values.dealName?.split(' ').slice(1).join(' ') || '',
+        email: values.email,
+        phone: formattedPhone,
+        currency: values.currency,
         value: parseFloat(values.value) || 0,
-        deal_members: values.deal_members || [],
+        pipeline: values.pipeline,
+        stage: values.stage,
+        status: values.status,
+        label: values.label,
+        closedDate: values.closedDate ? 
+          values.closedDate.format('YYYY-MM-DD') : 
+          null,
+        company_name: values.company,
+        address: values.address,
+        website: values.website,
+        products: { products: values.products || [] },
         assigned_to: {
           assigned_to: values.assigned_to || []
         },
-        products: { products: values.products || [] },
+        is_won: values.status === 'won' ? true : 
+                values.status === 'lost' ? false : 
+                null
       };
 
       await updateDeal({
@@ -477,54 +514,44 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               />
             </Form.Item>
 
-            {/* Phone Number */}
-            <Form.Item
-              label={<span style={formItemStyle}>Phone Number</span>}
-            >
-              <Input.Group compact>
-                <Form.Item
-                  name="phoneCode"
-                  noStyle
-                >
-                  <Select
-                    style={{ width: '30%' }}
-                    placeholder="+91"
-                  >
-                    {countries?.map((country) => (
-                      <Option key={country.id} value={country.phoneCode.replace('+', '')}>
-                        +{country.phoneCode.replace('+', '')}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item
-                  name="phone"
-                  noStyle
-                >
-                  <Input
-                    style={{ width: '70%' }}
-                    placeholder="Enter phone number"
-                  />
-                </Form.Item>
-              </Input.Group>
-            </Form.Item>
-
             {/* Deal Value */}
             <Form.Item
+              name="value"
               label={<span style={formItemStyle}>Deal Value</span>}
+              className="combined-input-item"
             >
-              <Input.Group compact>
+              <Input.Group compact className="value-input-group">
                 <Form.Item
                   name="currency"
                   noStyle
+                  rules={[{ required: true, message: "Please select currency" }]}
                 >
                   <Select
-                    style={{ width: '30%' }}
-                    placeholder="Currency"
+                    style={{ width: '90px' }}
+                    className="currency-select"
+                    dropdownMatchSelectWidth={false}
+                    suffixIcon={<FiChevronDown size={14} />}
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) => {
+                      const currencyData = currencies.find(c => c.currencyCode === option.value);
+                      return (
+                        currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
+                        currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
+                      );
+                    }}
+                    dropdownStyle={{ minWidth: '180px' }}
+                    popupClassName="custom-select-dropdown"
                   >
                     {currencies?.map((currency) => (
                       <Option key={currency.id} value={currency.currencyCode}>
-                        {currency.currencyCode}
+                        <div className="currency-option">
+                          <span className="currency-icon">{currency.currencyIcon}</span>
+                          <div className="currency-details">
+                            <span className="currency-code">{currency.currencyCode}</span>
+                            <span className="currency-name">{currency.currencyName}</span>
+                          </div>
+                        </div>
                       </Option>
                     ))}
                   </Select>
@@ -534,8 +561,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                   noStyle
                 >
                   <Input
-                    style={{ width: '70%' }}
-                    placeholder="Enter value"
+                    style={{ width: 'calc(100% - 120px)' }}
+                    placeholder="Enter amount"
                     type="number"
                     onChange={(e) => handleValueChange(e.target.value)}
                   />
@@ -543,6 +570,63 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Input.Group>
             </Form.Item>
 
+            {/* Phone Number */}
+            <Form.Item
+              name="phoneGroup"
+              label={<span style={formItemStyle}>Phone Number</span>}
+              className="combined-input-item"
+            >
+              <Input.Group compact className="phone-input-group">
+                <Form.Item
+                  name="phoneCode"
+                  noStyle
+                >
+                  <Select
+                    style={{ width: '90px' }}
+                    dropdownMatchSelectWidth={false}
+                    showSearch
+                    optionFilterProp="children"
+                    className="phone-code-select"
+                    suffixIcon={<FiChevronDown size={14} />}
+                    filterOption={(input, option) => {
+                      const countryData = countries.find(c => c.phoneCode.replace('+', '') === option.value);
+                      return (
+                        countryData?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
+                        countryData?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
+                        countryData?.phoneCode?.includes(input)
+                      );
+                    }}
+                    dropdownStyle={{ minWidth: '200px' }}
+                    popupClassName="custom-select-dropdown"
+                  >
+                    {countries?.map((country) => (
+                      <Option key={country.id} value={country.phoneCode.replace('+', '')}>
+                        <div className="phone-code-option">
+                          <div className="phone-code-main">
+                            <span className="phone-code">+{country.phoneCode.replace('+', '')}</span>
+                            <span className="country-code">{country.countryCode}</span>
+                          </div>
+                          <span className="country-name">{country.countryName}</span>
+                        </div>
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                
+                <Form.Item
+                  name="phone"
+                  noStyle
+                >
+                  <Input
+                    style={{
+                      width: 'calc(100% - 120px)',
+                      backgroundColor: '#f8fafc'
+                    }}
+                    placeholder="Enter phone number"
+                  />
+                </Form.Item>
+              </Input.Group>
+            </Form.Item>
 
             <Form.Item
               name="pipeline"
@@ -708,44 +792,56 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Select>
             </Form.Item>
 
+            </div>
+          
+
             <Form.Item
               name="products"
               label={<Text style={formItemStyle}>Products</Text>}
-              rules={[{ required: false, message: 'Please select products' }]}
+              className="products-section"
             >
               <Select
                 mode="multiple"
                 placeholder="Select products"
-                style={selectStyle}
+                style={{ width: '100%' }}
                 optionFilterProp="children"
                 showSearch
                 onChange={handleProductsChange}
+                popupClassName="products-dropdown"
               >
                 {products?.map((product) => (
                   <Option key={product.id} value={product.id}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '4px',
-                        overflow: 'hidden'
-                      }}>
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          onError={(e) => e.target.style.display = 'none'}
-                        />
+                    <div className="product-option">
+                      <div className="product-image">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentElement.innerHTML = '<FiBox className="product-icon" />';
+                            }}
+                          />
+                        ) : (
+                          <FiBox className="product-icon" />
+                        )}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column',marginLeft: '8px' }}>
                         <span style={{ fontWeight: '500' }}>{product.name}</span>
-                        <span style={{ fontSize: '12px', color: '#6B7280' }}>₹{product.price}</span>
+                        <span style={{ fontSize: '12px', color: '#6B7280' }}>{product.selling_price}</span>
                       </div>
                     </div>
                   </Option>
                 ))}
               </Select>
             </Form.Item>
+
+            <div className="form-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '16px',
+            marginBottom: '32px'
+          }}>
 
             {/* Closed Date */}
             <Form.Item
@@ -839,6 +935,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                           borderRadius: '4px',
                           background: roleColor.bg,
                           color: roleColor.color,
+                          gap: '8px',
                           textTransform: 'capitalize'
                         }}>
                           {role}

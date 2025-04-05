@@ -135,7 +135,7 @@
                         &:hover {
                             .nav-item {
                                 color: #1890ff;
-                                background: rgba(24, 144, 255, 0.04);
+                                // background: rgba(24, 144, 255, 0.04);
 
                                 .nav-icon {
                                     transform: translateY(-1px);
@@ -151,7 +151,7 @@
                             .nav-item {
                                 color: #1890ff;
                                 font-weight: 600;
-                                background: rgba(24, 144, 255, 0.08);
+                                // background: rgba(24, 144, 255, 0.08);
 
                                 .nav-icon {
                                     animation: tabIconBounce 0.3s ease;
@@ -558,60 +558,154 @@
 .ant-select-multiple {
   .ant-select-selector {
     min-height: 48px !important;
-    padding: 4px 8px !important;
+    padding: 8px !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #e6e8eb !important;
+    border-radius: 10px !important;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
+    gap: 8px;
 
     .ant-select-selection-item {
-      background: #e6f4ff;
-      border: 1px solid #91caff;
-      border-radius: 6px;
-      color: #1890ff;
-      margin: 0;
-      height: 28px;
-      line-height: 26px;
-      padding: 0 8px;
+      background: #fff !important;
+      border: 1px solid #e6e8eb !important;
+      // border-radius: 24px !important;
+      margin: 0 !important;
+      height: 32px !important;
+      padding: 4px 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+
+      .member-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #e6e8eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .avatar-icon {
+          color: #94a3b8;
+          font-size: 14px;
+        }
+      }
+
+      .member-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .member-name {
+          color: #1f2937;
+          font-weight: 500;
+        }
+
+        .member-role {
+          font-size: 12px;
+          padding: 2px 8px;
+          border-radius: 12px;
+          background: #f1f5f9;
+          color: #64748b;
+        }
+      }
 
       .ant-select-selection-item-remove {
-        color: #1890ff;
-        margin-left: 6px;
-
+        color: #94a3b8;
+        margin-left: 4px;
+        padding: 2px;
+        border-radius: 50%;
+        
         &:hover {
-          color: #40a9ff;
+          background: #f1f5f9;
+          color: #64748b;
+        }
+      }
+    }
+  }
+
+  &:hover .ant-select-selector {
+    border-color: #1890ff !important;
+  }
+
+  &.ant-select-focused .ant-select-selector {
+    border-color: #1890ff !important;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+  }
+}
+
+// Dropdown styles for team members
+.team-members-dropdown {
+  .ant-select-item {
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    margin: 4px !important;
+
+    .member-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .member-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .avatar-icon {
+          color: #94a3b8;
+          font-size: 16px;
+        }
+      }
+
+      .member-details {
+        flex: 1;
+        
+        .member-name {
+          font-weight: 500;
+          color: #1f2937;
+          margin-bottom: 2px;
+        }
+
+        .member-role {
+          font-size: 12px;
+          color: #64748b;
         }
       }
     }
 
-    .ant-select-selection-search {
-      margin: 0;
-      padding: 0;
-    }
-  }
-
-  &.ant-select-focused {
-    .ant-select-selector {
-      border-color: #1890ff !important;
-      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
-    }
-  }
-}
-
-// Update dropdown styles for team members
-.ant-select-dropdown {
-  .ant-select-item-option {
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin: 2px 0;
-
     &-selected {
-      background-color: #e6f4ff !important;
-      font-weight: 500;
+      background-color: #f0f7ff !important;
+
+      .member-option {
+        .member-name {
+          color: #1890ff;
+        }
+      }
     }
 
-    &-active {
+    &:hover {
+      background-color: #f8fafc !important;
+    }
+  }
+
+  .add-user-button {
+    margin: 8px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    
+    &:hover {
       background-color: #f0f7ff !important;
+      color: #1890ff !important;
+    }
+
+    .anticon {
+      font-size: 16px;
+      margin-right: 8px;
     }
   }
 }
@@ -910,7 +1004,7 @@
                 box-shadow: 0 8px 16px -4px rgba(255, 77, 79, 0.3);
             }
 
-            &.in_progress {
+            &.pending {
                 background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
                 box-shadow: 0 8px 16px -4px rgba(24, 144, 255, 0.3);
             }
@@ -952,7 +1046,7 @@
                     color: #ff4d4f;
                 }
 
-                &.in_progress {
+                &.pending {
                     color: #1890ff;
                 }
             }
@@ -967,4 +1061,447 @@
             }
         }
     }
+}
+
+// Add these styles if they don't exist
+.lead-form-modal {
+  .currency-select, .phone-code-select {
+    cursor: pointer;
+    .ant-select-selector {
+      padding: 8px 8px !important;
+      height: 48px !important;
+    }
+    
+    .ant-select-selection-search {
+      input {
+        height: 100% !important;
+      }
+    }
+
+    .ant-select-selection-item {
+      padding-right: 20px !important;
+      font-weight: 500 !important;
+    }
+
+    .ant-select-selection-placeholder {
+      color: #9CA3AF !important;
+    }
+  }
+
+  .currency-select .ant-select-selector {
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+    border: none !important;
+    
+    .ant-select-selection-item {
+      color: white !important;
+    }
+  }
+
+  .combined-input-item {
+    .value-input-group,
+    .phone-input-group {
+      display: flex !important;
+      align-items: stretch !important;
+      border-radius: 10px;
+      border: 1px solid #e6e8eb;
+      background-color: #f8fafc;
+      height: 48px;
+      overflow: hidden;
+
+      .ant-select {
+        .ant-select-selector {
+          height: 48px !important;
+          padding: 0 16px !important;
+          border: none !important;
+          border-right: 1px solid #e6e8eb !important;
+          border-radius: 10px 0 0 10px !important;
+          display: flex;
+          align-items: center;
+
+          .ant-select-selection-item {
+            line-height: normal;
+            display: flex;
+            align-items: center;
+          }
+        }
+      }
+
+      .ant-input {
+        height: 48px !important;
+        border: none !important;
+        background-color: transparent !important;
+        padding: 0 16px !important;
+
+        &:focus {
+          box-shadow: none;
+        }
+      }
+
+      &:hover {
+        border-color: #1890ff;
+      }
+
+      &:focus-within {
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+      }
+    }
+  }
+
+  .currency-option,
+  .phone-code-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 8px;
+
+    .currency-icon,
+    .phone-code {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .currency-details,
+    .phone-code-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .currency-name,
+    .country-name {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .country-code {
+      font-size: 12px;
+      padding: 2px 4px;
+      background: #f3f4f6;
+      border-radius: 4px;
+      color: #6b7280;
+    }
+  }
+}
+
+.team-members-section {
+  .ant-select-multiple {
+    .ant-select-selector {
+      min-height: 48px !important;
+      padding: 8px !important;
+      background-color: #f8fafc !important;
+      border: 1px solid #e6e8eb !important;
+      border-radius: 10px !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .ant-select-selection-item {
+        background: #fff !important;
+        border: 1px solid #e6e8eb !important;
+        border-radius: 24px !important;
+        margin: 0 !important;
+        height: 32px !important;
+        padding: 4px 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+
+        .member-avatar {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: #e6e8eb;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          .avatar-icon {
+            color: #94a3b8;
+            font-size: 14px;
+          }
+        }
+
+        .member-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .member-name {
+            color: #1f2937;
+            font-weight: 500;
+          }
+
+          .member-role {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+          }
+        }
+
+        .ant-select-selection-item-remove {
+          color: #94a3b8;
+          margin-left: 4px;
+          padding: 2px;
+          border-radius: 50%;
+          
+          &:hover {
+            background: #f1f5f9;
+            color: #64748b;
+          }
+        }
+      }
+    }
+
+    &:hover .ant-select-selector {
+      border-color: #1890ff !important;
+    }
+
+    &.ant-select-focused .ant-select-selector {
+      border-color: #1890ff !important;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
+  }
+}
+
+// Dropdown styles for team members
+.team-members-dropdown {
+  .ant-select-item {
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    margin: 4px !important;
+
+    .member-option {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .member-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .avatar-icon {
+          color: #94a3b8;
+          font-size: 16px;
+        }
+      }
+
+      .member-details {
+        flex: 1;
+        
+        .member-name {
+          font-weight: 500;
+          color: #1f2937;
+          margin-bottom: 2px;
+        }
+
+        .member-role {
+          font-size: 12px;
+          color: #64748b;
+        }
+      }
+    }
+
+    &-selected {
+      background-color: #f0f7ff !important;
+
+      .member-option {
+        .member-name {
+          color: #1890ff;
+        }
+      }
+    }
+
+    &:hover {
+      background-color: #f8fafc !important;
+    }
+  }
+
+  .add-user-button {
+    margin: 8px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    
+    &:hover {
+      background-color: #f0f7ff !important;
+      color: #1890ff !important;
+    }
+
+    .anticon {
+      font-size: 16px;
+      margin-right: 8px;
+    }
+  }
+}
+
+// Add these new styles for the products section
+.products-section {
+  .ant-select-multiple {
+    .ant-select-selector {
+      min-height: 48px !important;
+      padding: 8px !important;
+      background-color: #f8fafc !important;
+      border: 1px solid #e6e8eb !important;
+      border-radius: 10px !important;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .ant-select-selection-item {
+        background: #fff !important;
+        border: 1px solid #e6e8eb !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        height: 40px !important;
+        padding: 4px 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+
+        .product-image {
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          background: #f1f5f9;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+
+          .product-icon {
+            color: #94a3b8;
+            font-size: 16px;
+          }
+        }
+
+        .product-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .product-name {
+            color: #1f2937;
+            font-weight: 500;
+            font-size: 14px;
+          }
+
+          .product-price {
+            font-size: 12px;
+            color: #64748b;
+          }
+        }
+
+        .ant-select-selection-item-remove {
+          color: #94a3b8;
+          margin-left: auto;
+          padding: 4px;
+          border-radius: 50%;
+          
+          &:hover {
+            background: #f1f5f9;
+            color: #64748b;
+          }
+        }
+      }
+
+      .ant-select-selection-placeholder {
+        color: #9ca3af;
+      }
+    }
+
+    &:hover .ant-select-selector {
+      border-color: #1890ff !important;
+    }
+
+    &.ant-select-focused .ant-select-selector {
+      border-color: #1890ff !important;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
+  }
+}
+
+// Products dropdown styles
+.products-dropdown {
+  .ant-select-item {
+    // padding: 8px !important;
+    border-radius: 8px !important;
+    margin: 4px !important;
+
+    .product-option {
+      display: flex;
+      align-items: center;
+      // gap: 12px;
+
+      .product-image {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        background: #f1f5f9;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .product-icon {
+          color: #94a3b8;
+          font-size: 20px;
+        }
+      }
+
+      .product-details {
+        flex: 1;
+        
+        .product-name {
+          font-weight: 500;
+          color: #1f2937;
+          margin-bottom: 4px;
+        }
+
+        .product-price {
+          font-size: 13px;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .currency {
+            color: #1890ff;
+          }
+        }
+      }
+    }
+
+    &-selected {
+      background-color: #f0f7ff !important;
+
+      .product-option {
+        .product-name {
+          color: #1890ff;
+        }
+      }
+    }
+
+    &:hover {
+      background-color: #f8fafc !important;
+    }
+  }
 }

@@ -63,7 +63,8 @@ const DealDetail = () => {
 
     // Function to check if buttons should be shown
     const shouldShowStatusButtons = () => {
-        return currentStatus === 'pending';
+        // Show buttons only if is_won is null (not yet marked as won or lost)
+        return deal?.is_won === null;
     };
 
     const items = [

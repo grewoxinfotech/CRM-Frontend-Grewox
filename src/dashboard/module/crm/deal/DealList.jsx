@@ -50,20 +50,20 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
     { 
       id: 'pending', 
       name: 'Pending', 
-      count: deals.filter(deal => deal.status === 'pending').length,
+      count: deals.filter(deal => deal.is_won === null).length,
       icon: <FiTarget />
     },
     { 
       id: 'won', 
       name: 'Won', 
-      count: wonDealsCount, // Use the count of deals where is_won is true
-      icon: <FiCheck />
+      count: deals.filter(deal => deal.is_won === true).length,
+      icon: <FiTarget />
     },
     { 
       id: 'lost', 
       name: 'Lost', 
-      count: deals.filter(deal => deal.status === 'lost').length,
-      icon: <FiX />
+      count: deals.filter(deal => deal.is_won === false).length,
+      icon: <FiTarget />
     }
   ];
 
@@ -71,11 +71,11 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
   const filteredDeals = React.useMemo(() => {
     switch (filterStatus) {
       case 'won':
-        return deals.filter(deal => deal.is_won); // Filter by is_won flag
+        return deals.filter(deal => deal.is_won === true);
       case 'lost':
-        return deals.filter(deal => deal.status === 'lost');
+        return deals.filter(deal => deal.is_won === false);
       case 'pending':
-        return deals.filter(deal => deal.status === 'pending');
+        return deals.filter(deal => deal.is_won === null);
       default:
         return deals;
     }
@@ -90,28 +90,31 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: { 
+  const getStatusColor = (status, is_won) => {
+    // First check is_won flag
+    if (is_won === true) {
+        return { 
+            bg: '#dcfce7', 
+            color: '#15803d', 
+            icon: <FiTarget />,
+            text: 'Won'
+        };
+    } else if (is_won === false) {
+        return { 
+            bg: '#fee2e2', 
+            color: '#b91c1c', 
+            icon: <FiTarget />,
+            text: 'Lost'
+        };
+    }
+
+    // Default to pending if is_won is null
+    return { 
         bg: '#dbeafe', 
         color: '#1e40af', 
         icon: <FiTarget />,
         text: 'Pending'
-      },
-      won: { 
-        bg: '#dcfce7', 
-        color: '#15803d', 
-        icon: <FiTarget />,
-        text: 'Won'
-      },
-      lost: { 
-        bg: '#fee2e2', 
-        color: '#b91c1c', 
-        icon: <FiTarget />,
-        text: 'Lost'
-      }
     };
-    return colors[status?.toLowerCase()] || colors.pending;
   };
 
   const formatCurrency = (value, currencyId) => {
@@ -254,9 +257,7 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
       dataIndex: "status",
       key: "status",
       render: (status, record) => {
-        // Use is_won to determine the status display
-        const effectiveStatus = record.is_won ? 'won' : status;
-        const statusConfig = getStatusColor(effectiveStatus);
+        const statusConfig = getStatusColor(status, record.is_won);
         return (
           <Tag style={{
             margin: 0,

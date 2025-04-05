@@ -233,10 +233,6 @@ const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
               <FiTrendingUp style={{ marginRight: "4px" }} />
               Margin: {formatPrice(profit_margin, record.currency)}
             </Text>
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              <FiPercent style={{ marginRight: "4px" }} />
-              {profit_percentage}%
-            </Text>
           </div>
         );
       },
