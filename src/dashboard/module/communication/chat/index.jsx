@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs } from 'antd';
+import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs, Modal, Form, Select, Checkbox, message, Divider, Tag } from 'antd';
 import {
     SendOutlined,
     SearchOutlined,
@@ -14,6 +14,7 @@ import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import "./chat.scss";
+import { FiX, FiUsers, FiUserPlus } from 'react-icons/fi';
 
 const { Content, Sider } = Layout;
 const { Text } = Typography;
@@ -30,6 +31,10 @@ export default function Chat() {
     const [typingUsers, setTypingUsers] = useState(new Map());
     const socketRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const [createGroupModalVisible, setCreateGroupModalVisible] = useState(false);
+    const [selectedMembers, setSelectedMembers] = useState([]);
+    const [groupForm] = Form.useForm();
+    const [groupInfoVisible, setGroupInfoVisible] = useState(false);
 
     // Get real users data
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
@@ -79,33 +84,122 @@ export default function Chat() {
 
         // Listen for conversations
         socketRef.current.on('conversations_received', (conversationsData) => {
-            setConversations(conversationsData || {});
+            // Ensure proper data structure for both direct and group chats
+            const formattedConversations = {};
+            Object.entries(conversationsData || {}).forEach(([key, value]) => {
+                if (key.startsWith('group_')) {
+                    // Group chat structure
+                    formattedConversations[key] = {
+                        ...value,
+                        messages: value.messages || [],
+                        unread_count: value.unread_count || {}
+                    };
+                } else {
+                    // Direct chat structure - ensure it's an array
+                    formattedConversations[key] = Array.isArray(value) ? value : [];
+                }
+            });
+            setConversations(formattedConversations);
         });
 
-        // Listen for new messages
+        // Listen for new messages with deduplication
         socketRef.current.on('receive_message', ({ user_id, message }) => {
             setConversations(prev => {
                 const newConversations = { ...prev };
+                // Ensure the conversation array exists
                 if (!newConversations[user_id]) {
                     newConversations[user_id] = [];
                 }
+                // Ensure we're working with an array for direct messages
+                if (!Array.isArray(newConversations[user_id])) {
+                    newConversations[user_id] = [];
+                }
 
-                // Set message status based on whether chat is open
-                const messageStatus = selectedUser?.id === user_id ? 'read' : 'delivered';
+                // Check for duplicate message
+                const isDuplicate = newConversations[user_id].some(
+                    existingMsg =>
+                        existingMsg.timestamp === message.timestamp &&
+                        existingMsg.sender_id === message.sender_id &&
+                        existingMsg.message === message.message
+                );
 
-                newConversations[user_id].push({
-                    ...message,
-                    status: messageStatus
-                });
+                if (!isDuplicate) {
+                    const messageStatus = selectedUser?.id === user_id ? 'read' : 'delivered';
+                    newConversations[user_id].push({
+                        ...message,
+                        status: messageStatus
+                    });
+                }
 
                 return newConversations;
             });
 
-            // If message is from selected user, mark as read immediately
             if (selectedUser?.id === user_id) {
                 socketRef.current.emit('mark_messages_read', {
                     sender_id: user_id,
                     receiver_id: currentUser?.id
+                });
+            }
+        });
+
+        // Listen for group messages with deduplication
+        socketRef.current.on('receive_group_message', ({ group_id, message, group }) => {
+            console.log('Received group message:', { group_id, message, group });
+
+            setConversations(prev => {
+                const newConversations = { ...prev };
+
+                // Initialize group if it doesn't exist
+                if (!newConversations[group_id]) {
+                    newConversations[group_id] = {
+                        ...group,
+                        messages: [],
+                        unread_count: {}
+                    };
+                }
+
+                // Ensure messages array exists
+                if (!Array.isArray(newConversations[group_id].messages)) {
+                    newConversations[group_id].messages = [];
+                }
+
+                // Check for duplicate message
+                const isDuplicate = newConversations[group_id].messages.some(
+                    existingMsg =>
+                        existingMsg.timestamp === message.timestamp &&
+                        existingMsg.sender_id === message.sender_id &&
+                        existingMsg.message === message.message
+                );
+
+                if (!isDuplicate) {
+                    // Add new message with proper structure
+                    newConversations[group_id] = {
+                        ...newConversations[group_id],
+                        messages: [
+                            ...newConversations[group_id].messages,
+                            {
+                                ...message,
+                                status: selectedUser?.id === group_id ? 'read' : 'delivered'
+                            }
+                        ],
+                        last_message: message.message,
+                        unread_count: {
+                            ...newConversations[group_id].unread_count,
+                            [currentUser?.id]: selectedUser?.id === group_id
+                                ? 0
+                                : ((newConversations[group_id].unread_count[currentUser?.id] || 0) + 1)
+                        }
+                    };
+                }
+
+                return newConversations;
+            });
+
+            // If the group chat is currently open, mark messages as read
+            if (selectedUser?.id === group_id) {
+                socketRef.current.emit('mark_group_messages_read', {
+                    group_id,
+                    user_id: currentUser?.id
                 });
             }
         });
@@ -142,58 +236,137 @@ export default function Chat() {
             if (socketRef.current) {
                 socketRef.current.disconnect();
             }
-            socketRef.current.off('receive_message');
-            socketRef.current.off('message_status_updated');
+            socketRef.current?.off('conversations_received');
+            socketRef.current?.off('receive_message');
+            socketRef.current?.off('receive_group_message');
         };
-    }, [currentUser?.id]);
+    }, [selectedUser?.id, currentUser?.id]);
 
     // Mark messages as read when selecting a user
     useEffect(() => {
         if (selectedUser?.id && socketRef.current) {
-            // Mark messages as read
-            socketRef.current.emit('mark_messages_read', {
-                sender_id: selectedUser.id,
-                receiver_id: currentUser?.id
-            });
+            if (selectedUser.type === 'group') {
+                socketRef.current.emit('mark_group_messages_read', {
+                    group_id: selectedUser.id,
+                    user_id: currentUser?.id
+                });
 
-            // Update local conversations state to remove unread status
-            setConversations(prev => {
-                const newConversations = { ...prev };
-                if (newConversations[selectedUser.id]) {
-                    newConversations[selectedUser.id] = newConversations[selectedUser.id].map(msg => ({
-                        ...msg,
-                        status: msg.sender_id === selectedUser.id ? 'read' : msg.status
-                    }));
-                }
-                return newConversations;
-            });
+                setConversations(prev => {
+                    const newConversations = { ...prev };
+                    if (newConversations[selectedUser.id]) {
+                        newConversations[selectedUser.id] = {
+                            ...newConversations[selectedUser.id],
+                            unread_count: {
+                                ...newConversations[selectedUser.id].unread_count,
+                                [currentUser?.id]: 0
+                            }
+                        };
+                    }
+                    return newConversations;
+                });
+            } else {
+                socketRef.current.emit('mark_messages_read', {
+                    sender_id: selectedUser.id,
+                    receiver_id: currentUser?.id
+                });
+
+                setConversations(prev => {
+                    const newConversations = { ...prev };
+                    if (Array.isArray(newConversations[selectedUser.id])) {
+                        newConversations[selectedUser.id] = newConversations[selectedUser.id].map(msg => ({
+                            ...msg,
+                            status: msg.sender_id === selectedUser.id ? 'read' : msg.status
+                        }));
+                    }
+                    return newConversations;
+                });
+            }
         }
     }, [selectedUser?.id, currentUser?.id]);
+
+    const getMessages = () => {
+        if (!selectedUser || !conversations[selectedUser.id]) return [];
+
+        if (selectedUser.type === 'group') {
+            // Ensure we're accessing the messages array from the group object
+            return conversations[selectedUser.id]?.messages || [];
+        }
+
+        // For direct messages
+        return Array.isArray(conversations[selectedUser.id])
+            ? conversations[selectedUser.id]
+            : [];
+    };
 
     const handleSendMessage = () => {
         if (!messageInput.trim() || !selectedUser || !socketRef.current) return;
 
         const messageData = {
             sender_id: currentUser?.id,
-            receiver_id: selectedUser.id,
             message: messageInput.trim(),
             timestamp: new Date().toISOString()
         };
 
-        socketRef.current.emit('send_message', messageData);
-
-        // Update conversations immediately for instant UI update
-        setConversations(prev => {
-            const newConversations = { ...prev };
-            if (!newConversations[selectedUser.id]) {
-                newConversations[selectedUser.id] = [];
-            }
-            newConversations[selectedUser.id].push({
+        if (selectedUser.type === 'group') {
+            // For group messages
+            socketRef.current.emit('send_group_message', {
                 ...messageData,
-                status: 'sent'
+                group_id: selectedUser.id
             });
-            return newConversations;
-        });
+
+            // Update conversations immediately for instant UI update
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                const groupId = selectedUser.id;
+
+                if (!newConversations[groupId]) {
+                    newConversations[groupId] = {
+                        ...selectedUser,
+                        messages: [],
+                        unread_count: {}
+                    };
+                }
+
+                // Ensure messages array exists
+                if (!Array.isArray(newConversations[groupId].messages)) {
+                    newConversations[groupId].messages = [];
+                }
+
+                // Add new message
+                newConversations[groupId] = {
+                    ...newConversations[groupId],
+                    messages: [
+                        ...newConversations[groupId].messages,
+                        {
+                            ...messageData,
+                            status: 'sent'
+                        }
+                    ],
+                    last_message: messageData.message
+                };
+
+                return newConversations;
+            });
+        } else {
+            // For direct messages
+            socketRef.current.emit('send_message', {
+                ...messageData,
+                receiver_id: selectedUser.id
+            });
+
+            // Update conversations immediately for instant UI update
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                if (!Array.isArray(newConversations[selectedUser.id])) {
+                    newConversations[selectedUser.id] = [];
+                }
+                newConversations[selectedUser.id].push({
+                    ...messageData,
+                    status: 'sent'
+                });
+                return newConversations;
+            });
+        }
 
         setMessageInput('');
     };
@@ -234,6 +407,7 @@ export default function Chat() {
     const getFilteredUsers = () => {
         if (!userData?.data) return [];
 
+        // Get direct chat users
         const filteredUsers1 = userData?.data.filter(user => {
             if (user?.client_id === currentUser?.id) {
                 return true;
@@ -251,24 +425,19 @@ export default function Chat() {
         // Check if either array is empty before merging
         let filtered;
         if (filteredUsers1.length === 0 || filteredUsers2.length === 0) {
-            // If either is empty, use the non-empty array
             filtered = filteredUsers1.length > 0 ? filteredUsers1 : filteredUsers2;
         } else {
-            // If both have data, only use filteredUsers1 
             filtered = filteredUsers1;
         }
 
         // Remove current user from filtered list
         filtered = filtered.filter(user => user.id !== currentUser?.id);
 
-        filtered = filtered.map(user => {
+        // Convert users to chat items
+        let chatItems = filtered.map(user => {
             const roleName = roleMap[user.role_id] || 'Company';
             const userConversation = conversations[user.id] || [];
             const lastMessage = userConversation[userConversation.length - 1];
-
-            // Calculate unread count - count messages that are:
-            // 1. From the other user (sender_id === user.id)
-            // 2. Not marked as read
             const unreadCount = userConversation.filter(msg =>
                 msg.sender_id === user.id &&
                 msg.status !== 'read'
@@ -284,45 +453,71 @@ export default function Chat() {
                 unread: unreadCount,
                 isStarred: false,
                 role: roleName,
-                email: user.email
+                email: user.email,
+                type: 'direct'
             };
         });
 
+        // Add group chats
+        const groups = Object.entries(conversations)
+            .filter(([id, conv]) => id.startsWith('group_'))
+            .map(([id, group]) => {
+                const lastMessage = group.messages?.[group.messages.length - 1];
+                const unreadCount = group.unread_count?.[currentUser?.id] || 0;
+
+                return {
+                    id: group.id,
+                    name: group.name,
+                    status: 'group',
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(group.name)}&background=1890ff&color=fff`,
+                    lastMessage: lastMessage ? lastMessage.message : 'No messages yet',
+                    time: lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+                    unread: unreadCount,
+                    isStarred: false,
+                    role: 'Group',
+                    members: group.members,
+                    type: 'group'
+                };
+            });
+
+        chatItems = [...chatItems, ...groups];
+
         // Apply search filter
         if (searchQuery) {
-            filtered = filtered.filter(user =>
-                user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase()))
+            chatItems = chatItems.filter(item =>
+                item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (item.role && item.role.toLowerCase().includes(searchQuery.toLowerCase()))
             );
         }
 
         // Apply tab filter
         switch (activeTab) {
             case 'starred':
-                filtered = filtered.filter(user => user.isStarred);
+                chatItems = chatItems.filter(item => item.isStarred);
                 break;
             case 'online':
-                filtered = filtered.filter(user => user.status === 'online');
+                chatItems = chatItems.filter(item => item.status === 'online');
                 break;
             default:
                 break;
         }
 
-        // Sort company users to the top
-        return filtered.sort((a, b) => {
-            // First sort by company (companies first)
-            if (a.role?.toLowerCase() === 'company' && b.role?.toLowerCase() !== 'company') return -1;
-            if (a.role?.toLowerCase() !== 'company' && b.role?.toLowerCase() === 'company') return 1;
+        // Sort items: groups first, then by unread messages, then by last message time
+        return chatItems.sort((a, b) => {
+            // Groups first
+            if (a.type === 'group' && b.type !== 'group') return -1;
+            if (a.type !== 'group' && b.type === 'group') return 1;
 
-            // Then sort by online status
-            if (a.status === 'online' && b.status !== 'online') return -1;
-            if (a.status !== 'online' && b.status === 'online') return 1;
-
-            // Then sort by unread messages
+            // Then by unread messages
             if (a.unread > b.unread) return -1;
             if (a.unread < b.unread) return 1;
 
-            // Finally sort by name
+            // Then by last message time (if exists)
+            if (a.time && b.time) {
+                return new Date(b.time) - new Date(a.time);
+            }
+
+            // Finally by name
             return a.name.localeCompare(b.name);
         });
     };
@@ -435,8 +630,23 @@ export default function Chat() {
     };
 
     const renderAvatar = (item) => {
+        if (item.type === 'group') {
+            return (
+                <Avatar
+                    size={48}
+                    style={{
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    <FiUsers style={{ fontSize: '24px', color: '#ffffff' }} />
+                </Avatar>
+            );
+        }
+
         if (item.avatar && !item.avatar.includes('ui-avatars.com')) {
-            // Real profile picture exists
             return (
                 <Avatar
                     size={48}
@@ -448,7 +658,6 @@ export default function Chat() {
             );
         }
 
-        // No profile picture, show custom avatar
         return (
             <Avatar
                 size={48}
@@ -515,6 +724,427 @@ export default function Chat() {
         );
     };
 
+    const handleCreateGroup = async (values) => {
+        if (!socketRef.current) return;
+
+        const members = [...selectedMembers, currentUser?.id];
+
+        socketRef.current.emit('create_group', {
+            name: values.group_name,
+            members: members,
+            creator_id: currentUser?.id
+        });
+
+        setCreateGroupModalVisible(false);
+        groupForm.resetFields();
+        setSelectedMembers([]);
+        message.success('Group created successfully');
+    };
+
+    const CreateGroupModal = () => (
+        <Modal
+            title={null}
+            open={createGroupModalVisible}
+            onCancel={() => setCreateGroupModalVisible(false)}
+            footer={null}
+            width={520}
+            destroyOnClose={true}
+            centered
+            closeIcon={null}
+            className="pro-modal custom-modal"
+            style={{
+                '--antd-arrow-background-color': '#ffffff',
+            }}
+            styles={{
+                body: {
+                    padding: 0,
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                }
+            }}
+        >
+            <div
+                className="modal-header"
+                style={{
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    padding: '24px',
+                    color: '#ffffff',
+                    position: 'relative',
+                }}
+            >
+                <Button
+                    type="text"
+                    onClick={() => setCreateGroupModalVisible(false)}
+                    style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        color: '#ffffff',
+                        width: '32px',
+                        height: '32px',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                    }}
+                >
+                    <FiX style={{ fontSize: '20px' }} />
+                </Button>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                    }}
+                >
+                    <div
+                        style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            backdropFilter: 'blur(8px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <FiUsers style={{ fontSize: '24px', color: '#ffffff' }} />
+                    </div>
+                    <div>
+                        <h2
+                            style={{
+                                margin: '0',
+                                fontSize: '24px',
+                                fontWeight: '600',
+                                color: '#ffffff',
+                            }}
+                        >
+                            Create New Group
+                        </h2>
+                        <Text
+                            style={{
+                                fontSize: '14px',
+                                color: 'rgba(255, 255, 255, 0.85)',
+                            }}
+                        >
+                            Create a group chat with your team members
+                        </Text>
+                    </div>
+                </div>
+            </div>
+
+            <Form
+                form={groupForm}
+                layout="vertical"
+                onFinish={handleCreateGroup}
+                requiredMark={false}
+                style={{
+                    padding: '24px',
+                }}
+            >
+                <Form.Item
+                    name="group_name"
+                    label={
+                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                            Group Name
+                        </span>
+                    }
+                    rules={[
+                        { required: true, message: 'Please enter group name' },
+                        { max: 50, message: 'Group name cannot exceed 50 characters' }
+                    ]}
+                >
+                    <Input
+                        prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
+                        placeholder="Enter group name"
+                        size="large"
+                        style={{
+                            borderRadius: '10px',
+                            padding: '8px 16px',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            border: '1px solid #e6e8eb',
+                            transition: 'all 0.3s ease',
+                        }}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    name="members"
+                    label={
+                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                            Select Members
+                        </span>
+                    }
+                    rules={[{ required: true, message: 'Please select at least one member' }]}
+                >
+                    <Select
+                        mode="multiple"
+                        placeholder="Select members"
+                        onChange={setSelectedMembers}
+                        style={{ width: '100%' }}
+                        size="large"
+                        optionFilterProp="children"
+                    >
+                        {getFilteredUsers().map(user => (
+                            <Select.Option key={user.id} value={user.id}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Avatar size={24} src={user.avatar}>
+                                        {user.name.charAt(0)}
+                                    </Avatar>
+                                    <span>{user.name}</span>
+                                </div>
+                            </Select.Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+
+                <Divider style={{ margin: '24px 0' }} />
+
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '12px',
+                    }}
+                >
+                    <Button
+                        size="large"
+                        onClick={() => setCreateGroupModalVisible(false)}
+                        style={{
+                            padding: '8px 24px',
+                            height: '44px',
+                            borderRadius: '10px',
+                            border: '1px solid #e6e8eb',
+                            fontWeight: '500',
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        size="large"
+                        type="primary"
+                        htmlType="submit"
+                        style={{
+                            padding: '8px 32px',
+                            height: '44px',
+                            borderRadius: '10px',
+                            fontWeight: '500',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
+                        }}
+                    >
+                        Create Group
+                    </Button>
+                </div>
+            </Form>
+        </Modal>
+    );
+
+    const GroupInfoModal = () => {
+        const [editMode, setEditMode] = useState(false);
+        const [editForm] = Form.useForm();
+
+        // Return null if no user is selected or if modal is not visible
+        if (!selectedUser || !groupInfoVisible) {
+            return null;
+        }
+
+        const groupMembers = selectedUser?.members || [];
+        const memberDetails = groupMembers.map(memberId =>
+            userData?.data?.find(u => u.id === memberId)
+        ).filter(Boolean);
+
+        const handleUpdateGroup = (values) => {
+            if (!socketRef.current || !selectedUser) return;
+
+            socketRef.current.emit('update_group', {
+                group_id: selectedUser.id,
+                name: values.group_name,
+                members: values.members,
+                updater_id: currentUser?.id
+            });
+
+            setEditMode(false);
+            message.success('Group updated successfully');
+        };
+
+        return (
+            <Modal
+                title={null}
+                open={groupInfoVisible}
+                onCancel={() => {
+                    setGroupInfoVisible(false);
+                    setEditMode(false);
+                }}
+                footer={null}
+                width={520}
+                destroyOnClose={true}
+                centered
+                closeIcon={null}
+                className="pro-modal custom-modal"
+                style={{
+                    '--antd-arrow-background-color': '#ffffff',
+                }}
+            >
+                <div className="modal-header" style={{
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    padding: '24px',
+                    color: '#ffffff',
+                    position: 'relative',
+                }}>
+                    <Button
+                        type="text"
+                        onClick={() => {
+                            setGroupInfoVisible(false);
+                            setEditMode(false);
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: '16px',
+                            right: '16px',
+                            color: '#ffffff',
+                            width: '32px',
+                            height: '32px',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <FiX style={{ fontSize: '20px' }} />
+                    </Button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <FiUsers style={{ fontSize: '24px', color: '#ffffff' }} />
+                        </div>
+                        <div>
+                            <h2 style={{ margin: '0', fontSize: '24px', fontWeight: '600', color: '#ffffff' }}>
+                                Group Information
+                            </h2>
+                            <Text style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.85)' }}>
+                                {memberDetails.length} members
+                            </Text>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ padding: '24px' }}>
+                    {editMode ? (
+                        <Form
+                            form={editForm}
+                            layout="vertical"
+                            onFinish={handleUpdateGroup}
+                            initialValues={{
+                                group_name: selectedUser?.name || '',
+                                members: groupMembers
+                            }}
+                        >
+                            <Form.Item
+                                name="group_name"
+                                label="Group Name"
+                                rules={[{ required: true, message: 'Please enter group name' }]}
+                            >
+                                <Input prefix={<FiUsers />} />
+                            </Form.Item>
+                            <Form.Item
+                                name="members"
+                                label="Members"
+                                rules={[{ required: true, message: 'Please select members' }]}
+                            >
+                                <Select
+                                    mode="multiple"
+                                    placeholder="Select members"
+                                    style={{ width: '100%' }}
+                                    optionFilterProp="children"
+                                >
+                                    {getFilteredUsers().map(user => (
+                                        <Select.Option key={user.id} value={user.id}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Avatar size={24} src={user.avatar}>
+                                                    {user.name?.charAt(0)}
+                                                </Avatar>
+                                                <span>{user.name}</span>
+                                            </div>
+                                        </Select.Option>
+                                    ))}
+                                </Select>
+                            </Form.Item>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
+                                <Button onClick={() => setEditMode(false)}>Cancel</Button>
+                                <Button type="primary" htmlType="submit">Save Changes</Button>
+                            </div>
+                        </Form>
+                    ) : (
+                        <>
+                            <div style={{ marginBottom: '24px' }}>
+                                <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: '8px' }}>
+                                    Group Name
+                                </Text>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Text>{selectedUser?.name}</Text>
+                                    <Button
+                                        type="link"
+                                        onClick={() => setEditMode(true)}
+                                        icon={<SettingOutlined />}
+                                    >
+                                        Edit
+                                    </Button>
+                                </div>
+                            </div>
+                            <Divider />
+                            <div>
+                                <Text strong style={{ fontSize: '16px', display: 'block', marginBottom: '16px' }}>
+                                    Members ({memberDetails.length})
+                                </Text>
+                                <List
+                                    dataSource={memberDetails}
+                                    renderItem={member => (
+                                        <List.Item>
+                                            <List.Item.Meta
+                                                avatar={
+                                                    <Avatar src={member?.profilePic}>
+                                                        {member?.username?.charAt(0)}
+                                                    </Avatar>
+                                                }
+                                                title={member?.username}
+                                                description={roleMap[member?.role_id]}
+                                            />
+                                            {member?.id === selectedUser?.creator_id && (
+                                                <Tag color="blue">Admin</Tag>
+                                            )}
+                                        </List.Item>
+                                    )}
+                                />
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Modal>
+        );
+    };
+
     return (
         <Layout className="chat-container">
             <Sider width={380} className="chat-sider">
@@ -542,7 +1172,19 @@ export default function Chat() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="theme-search-input"
                             />
-                            <TeamOutlined className="team-icon" />
+                            <Button
+                                type="text"
+                                icon={<FiUserPlus />}
+                                onClick={() => setCreateGroupModalVisible(true)}
+                                style={{
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#1890ff',
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
@@ -573,28 +1215,48 @@ export default function Chat() {
                                     style={{ objectFit: 'cover' }}
                                 />
                                 <div>
-                                    <Text strong>{selectedUser.name}</Text>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Text strong>{selectedUser.name}</Text>
+                                        {selectedUser.type === 'group' && (
+                                            <Text type="secondary" style={{ fontSize: '12px' }}>
+                                                ({selectedUser.members?.length || 0} members)
+                                            </Text>
+                                        )}
+                                    </div>
                                     <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
                                         {typingUsers.has(selectedUser.id) ? (
-                                            <span className="typing-indicator">
-                                                {console.log('Showing typing indicator for user:', selectedUser.id)}
-                                                typing...
-                                            </span>
+                                            <span className="typing-indicator">typing...</span>
                                         ) : (
-                                            selectedUser.role
+                                            selectedUser.type === 'group' ?
+                                                'Group Chat' :
+                                                selectedUser.role
                                         )}
                                     </Text>
                                 </div>
                             </div>
-                            <Button type="text" icon={<EllipsisOutlined />} />
+                            {selectedUser.type === 'group' ? (
+                                <Button
+                                    type="text"
+                                    icon={<FiUsers />}
+                                    onClick={() => setGroupInfoVisible(true)}
+                                    style={{ fontSize: '20px' }}
+                                />
+                            ) : (
+                                <Button type="text" icon={<EllipsisOutlined />} />
+                            )}
                         </div>
                         <div className="chat-messages">
-                            {selectedUser && conversations[selectedUser.id]?.map((message, index) => (
+                            {getMessages().map((message, index) => (
                                 <div
                                     key={`${message.timestamp}-${index}`}
                                     className={`message ${message.sender_id === currentUser?.id ? 'sent' : 'received'}`}
                                 >
                                     <div className="message-content">
+                                        {selectedUser.type === 'group' && message.sender_id !== currentUser?.id && (
+                                            <Text type="secondary" className="message-sender">
+                                                {userData?.data?.find(u => u.id === message.sender_id)?.username || 'Unknown'}
+                                            </Text>
+                                        )}
                                         <Text>{message.message}</Text>
                                         <Text type="secondary" className="message-time">
                                             {new Date(message.timestamp).toLocaleTimeString([], {
@@ -724,6 +1386,8 @@ export default function Chat() {
                     </div>
                 )}
             </Content>
+            <CreateGroupModal />
+            <GroupInfoModal />
         </Layout>
     );
 }
