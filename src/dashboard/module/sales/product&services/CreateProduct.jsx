@@ -361,7 +361,6 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
               <Form.Item
                 name="currency"
                 noStyle
-                rules={[{ required: true }]}
               >
                 <Select
                   size="large"

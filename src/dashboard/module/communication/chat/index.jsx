@@ -27,7 +27,9 @@ export default function Chat() {
     const [activeTab, setActiveTab] = useState('all');
     const [onlineUsers, setOnlineUsers] = useState(new Set());
     const [conversations, setConversations] = useState({});
+    const [typingUsers, setTypingUsers] = useState(new Map());
     const socketRef = useRef(null);
+    const typingTimeoutRef = useRef(null);
 
     // Get real users data
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
@@ -55,6 +57,8 @@ export default function Chat() {
             ? import.meta.env.VITE_API_URL.split('/api/')[0]
             : 'http://localhost:5000';
 
+        console.log('Connecting to socket server:', baseUrl);
+
         socketRef.current = io(baseUrl, {
             withCredentials: true,
             path: '/socket.io'
@@ -62,9 +66,11 @@ export default function Chat() {
 
         // Connect and send user ID
         socketRef.current.emit('user_connected', currentUser.id);
+        console.log('Emitted user_connected with ID:', currentUser.id);
 
         // Listen for online users updates
         socketRef.current.on('users_status', ({ activeUsers, userStatus }) => {
+            console.log('Received users_status update:', { activeUsers, userStatus });
             setOnlineUsers(new Set(activeUsers));
         });
 
@@ -83,32 +89,83 @@ export default function Chat() {
                 if (!newConversations[user_id]) {
                     newConversations[user_id] = [];
                 }
-                newConversations[user_id].push(message);
+
+                // Set message status based on whether chat is open
+                const messageStatus = selectedUser?.id === user_id ? 'read' : 'delivered';
+
+                newConversations[user_id].push({
+                    ...message,
+                    status: messageStatus
+                });
+
                 return newConversations;
             });
 
-            // If message is from selected user, mark as read
+            // If message is from selected user, mark as read immediately
             if (selectedUser?.id === user_id) {
                 socketRef.current.emit('mark_messages_read', {
                     sender_id: user_id,
-                    receiver_id: currentUser.id
+                    receiver_id: currentUser?.id
                 });
             }
+        });
+
+        // Listen for message status updates
+        socketRef.current.on('message_status_updated', ({ sender_id, receiver_id, status }) => {
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                if (newConversations[sender_id]) {
+                    newConversations[sender_id] = newConversations[sender_id].map(msg => ({
+                        ...msg,
+                        status: msg.sender_id === sender_id ? status : msg.status
+                    }));
+                }
+                return newConversations;
+            });
+        });
+
+        // Add typing status listener with debug logs
+        socketRef.current.on('user_typing', ({ userId, isTyping }) => {
+            console.log('Received typing status:', { userId, isTyping });
+            setTypingUsers(prev => {
+                const newTypingUsers = new Map(prev);
+                if (isTyping) {
+                    newTypingUsers.set(userId, true);
+                } else {
+                    newTypingUsers.delete(userId);
+                }
+                return newTypingUsers;
+            });
         });
 
         return () => {
             if (socketRef.current) {
                 socketRef.current.disconnect();
             }
+            socketRef.current.off('receive_message');
+            socketRef.current.off('message_status_updated');
         };
     }, [currentUser?.id]);
 
     // Mark messages as read when selecting a user
     useEffect(() => {
         if (selectedUser?.id && socketRef.current) {
+            // Mark messages as read
             socketRef.current.emit('mark_messages_read', {
                 sender_id: selectedUser.id,
                 receiver_id: currentUser?.id
+            });
+
+            // Update local conversations state to remove unread status
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                if (newConversations[selectedUser.id]) {
+                    newConversations[selectedUser.id] = newConversations[selectedUser.id].map(msg => ({
+                        ...msg,
+                        status: msg.sender_id === selectedUser.id ? 'read' : msg.status
+                    }));
+                }
+                return newConversations;
             });
         }
     }, [selectedUser?.id, currentUser?.id]);
@@ -119,11 +176,59 @@ export default function Chat() {
         const messageData = {
             sender_id: currentUser?.id,
             receiver_id: selectedUser.id,
-            message: messageInput.trim()
+            message: messageInput.trim(),
+            timestamp: new Date().toISOString()
         };
 
         socketRef.current.emit('send_message', messageData);
+
+        // Update conversations immediately for instant UI update
+        setConversations(prev => {
+            const newConversations = { ...prev };
+            if (!newConversations[selectedUser.id]) {
+                newConversations[selectedUser.id] = [];
+            }
+            newConversations[selectedUser.id].push({
+                ...messageData,
+                status: 'sent'
+            });
+            return newConversations;
+        });
+
         setMessageInput('');
+    };
+
+    // Add typing handler with debug logs
+    const handleTyping = () => {
+        if (socketRef.current && selectedUser) {
+            console.log('Emitting typing event:', {
+                sender_id: currentUser?.id,
+                receiver_id: selectedUser.id,
+                isTyping: true
+            });
+
+            // Clear existing timeout
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            // Emit typing start
+            socketRef.current.emit('typing', {
+                sender_id: currentUser?.id,
+                receiver_id: selectedUser.id,
+                isTyping: true
+            });
+
+            // Set timeout to stop typing
+            typingTimeoutRef.current = setTimeout(() => {
+                console.log('Emitting typing stop event');
+                socketRef.current.emit('typing', {
+                    sender_id: currentUser?.id,
+                    receiver_id: selectedUser.id,
+                    isTyping: false
+                });
+            }, 2000); // Stop typing after 2 seconds of inactivity
+        }
     };
 
     const getFilteredUsers = () => {
@@ -161,6 +266,14 @@ export default function Chat() {
             const userConversation = conversations[user.id] || [];
             const lastMessage = userConversation[userConversation.length - 1];
 
+            // Calculate unread count - count messages that are:
+            // 1. From the other user (sender_id === user.id)
+            // 2. Not marked as read
+            const unreadCount = userConversation.filter(msg =>
+                msg.sender_id === user.id &&
+                msg.status !== 'read'
+            ).length;
+
             return {
                 id: user.id,
                 name: user.username,
@@ -168,7 +281,7 @@ export default function Chat() {
                 avatar: user.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=1890ff&color=fff`,
                 lastMessage: lastMessage ? lastMessage.message : 'Click to start chat',
                 time: lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
-                unread: userConversation.filter(msg => msg.sender_id === user.id && msg.status !== 'read').length,
+                unread: unreadCount,
                 isStarred: false,
                 role: roleName,
                 email: user.email
@@ -348,11 +461,14 @@ export default function Chat() {
 
     const renderChatItem = (item) => {
         const roleStyle = getRoleColor(item.role);
+        const isTyping = typingUsers.has(item.id);
+        const isChatOpen = selectedUser?.id === item.id;
+        const showUnreadBadge = !isChatOpen && item.unread > 0;
 
         return (
             <List.Item
                 onClick={() => setSelectedUser(item)}
-                className={`chat-list-item ${selectedUser?.id === item.id ? 'selected' : ''}`}
+                className={`chat-list-item ${isChatOpen ? 'selected' : ''}`}
                 data-role={item.role?.toLowerCase()}
             >
                 <List.Item.Meta
@@ -376,13 +492,17 @@ export default function Chat() {
                     }
                     description={
                         <div className="chat-item-description">
-                            <Text type="secondary" className="last-message">
-                                {item.lastMessage}
+                            <Text type="secondary" className={`last-message ${isTyping ? 'typing' : ''}`}>
+                                {isTyping ? (
+                                    <span className="typing-indicator-sidebar">typing...</span>
+                                ) : (
+                                    item.lastMessage
+                                )}
                             </Text>
                         </div>
                     }
                 />
-                {item.unread > 0 && (
+                {showUnreadBadge && (
                     <Badge
                         count={item.unread}
                         style={{
@@ -455,7 +575,14 @@ export default function Chat() {
                                 <div>
                                     <Text strong>{selectedUser.name}</Text>
                                     <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-                                        {selectedUser.role}
+                                        {typingUsers.has(selectedUser.id) ? (
+                                            <span className="typing-indicator">
+                                                {console.log('Showing typing indicator for user:', selectedUser.id)}
+                                                typing...
+                                            </span>
+                                        ) : (
+                                            selectedUser.role
+                                        )}
                                     </Text>
                                 </div>
                             </div>
@@ -500,7 +627,18 @@ export default function Chat() {
                                 </label>
                                 <Input.TextArea
                                     value={messageInput}
-                                    onChange={(e) => setMessageInput(e.target.value)}
+                                    onChange={(e) => {
+                                        console.log('Input changed, triggering typing event');
+                                        setMessageInput(e.target.value);
+                                        if (socketRef.current && selectedUser) {
+                                            handleTyping();
+                                        } else {
+                                            console.log('Cannot trigger typing event:', {
+                                                socketConnected: !!socketRef.current,
+                                                selectedUser: selectedUser
+                                            });
+                                        }
+                                    }}
                                     placeholder="Type a message..."
                                     autoSize={{ minRows: 1, maxRows: 4 }}
                                     onPressEnter={(e) => {
