@@ -65,6 +65,7 @@ import Chat from "../dashboard/module/communication/chat/index.jsx";
 import Vendor from "../dashboard/module/purchase/vendor/index.jsx";
 import Billing from "../dashboard/module/purchase/billing/index.jsx";
 import DebitNote from "../dashboard/module/purchase/debitnote/index.jsx";
+import Mail from "../dashboard/module/communication/mail/mail.jsx";
 
 
   const PermissionRoute = ({ children, permissionKey }) => {
@@ -327,6 +328,10 @@ const routes = createBrowserRouter([
           {
             path: "chat",
             element: <Chat />,
+          },
+          {
+            path: "mail",
+            element: <Mail />,
           },
           {
             path: "calendar",

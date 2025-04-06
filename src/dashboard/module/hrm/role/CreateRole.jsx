@@ -11,18 +11,29 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
     const [selectedPermissions, setSelectedPermissions] = useState({});
 
     // Define the modules with their submodules and permissions
-    const modules = ['User Management', 'CRM', 'Communication', 'HRM', 'Job'];
+    const modules = ['CRM', 'Sales', 'Purchase', 'User Management', 'Communication', 'HRM', 'Job', 'Support'];
 
     const subModules = {
         CRM: [
             { key: 'dashboards-project-list', title: 'Project' },
-            { key: 'dashboards-sales', title: 'Sales' },
             { key: 'dashboards-lead', title: 'Leads' },
             { key: 'dashboards-deal', title: 'Deals' },
             { key: 'dashboards-proposal', title: 'Proposal' },
             { key: 'dashboards-task', title: 'Task' },
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
             { key: 'dashboards-systemsetup', title: 'CRM System Setup' }
+        ],
+        Sales: [
+            { key: 'dashboards-sales-product-services', title: 'Product & Services' },
+            { key: 'dashboards-sales-customer', title: 'Customer' },
+            { key: 'dashboards-sales-invoice', title: 'Invoice' },
+            { key: 'dashboards-sales-revenue', title: 'Revenue' },
+            { key: 'dashboards-sales-credit-notes', title: 'Credit Notes' }
+        ],
+        Purchase: [
+            { key: 'dashboards-purchase-vendor', title: 'Vendor' },
+            { key: 'dashboards-purchase-billing', title: 'Billing' },
+            { key: 'dashboards-purchase-debit-note', title: 'Debit Note' }
         ],
         'User Management': [
             { key: 'extra-users-list', title: 'Users' },
@@ -42,6 +53,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'extra-hrm-designation', title: 'Designation' },
             { key: 'extra-hrm-department', title: 'Department' },
             { key: 'extra-hrm-attendance-attendancelist', title: 'Attendance' },
+            { key: 'extra-hrm-holiday', title: 'Holiday' },
             { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
             { key: 'extra-hrm-meeting', title: 'Meeting' },
             { key: 'extra-hrm-announcement', title: 'Announcement' },
@@ -56,6 +68,9 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'extra-hrm-jobs-jobapplication', title: 'Job Applications' },
             { key: 'extra-hrm-jobs-jobofferletter', title: 'Offer Letters' },
             { key: 'extra-hrm-jobs-interview', title: 'Interviews' }
+        ],
+        Support: [
+            { key: 'extra-pages-customersupports-ticket', title: 'Ticket' }
         ]
     };
 
@@ -238,7 +253,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             open={visible}
             onCancel={onCancel}
             footer={null}
-            width={720}
+            width={920}
             destroyOnClose={true}
             centered
             closeIcon={null}

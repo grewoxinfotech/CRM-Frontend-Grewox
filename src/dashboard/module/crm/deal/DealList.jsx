@@ -337,7 +337,7 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
         columns={columns}
         dataSource={filteredDeals}
         rowKey="id"
-        loading={isLoading}
+        // loading={isLoading}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,

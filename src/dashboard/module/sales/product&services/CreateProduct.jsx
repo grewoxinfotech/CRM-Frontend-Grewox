@@ -261,25 +261,25 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           gap: '16px',
           marginBottom: '32px'
         }}>
-          <Form.Item
-            name="name"
+            <Form.Item
+              name="name"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Product Name</span>}
-            rules={[{ required: true, message: "Please enter product name" }]}
-          >
-            <Input
+              rules={[{ required: true, message: "Please enter product name" }]}
+            >
+              <Input
               prefix={<FiBox style={{ color: '#9CA3AF' }} />}
-              placeholder="Enter product name"
+                placeholder="Enter product name"
               style={{ height: '48px', borderRadius: '10px' }}
-            />
-          </Form.Item>
+              />
+            </Form.Item>
 
-          <Form.Item
-            name="category"
+            <Form.Item
+              name="category"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Category</span>}
             rules={[{ required: true, message: "Please select a category" }]}
-          >
-            <Select
-              placeholder="Select category"
+            >
+              <Select
+                placeholder="Select category"
               style={{ width: '100%', height: '48px' }}
               dropdownRender={(menu) => (
                 <div onClick={(e) => e.stopPropagation()}>
@@ -296,7 +296,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
                       type="primary"
                       icon={<FiPlus />}
                       onClick={handleAddCategory}
-                      style={{
+                style={{
                         width: '100%',
                         background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                         border: 'none',
@@ -380,40 +380,28 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
                     option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
                   }
                 >
-                  <Option value="BEzBBPneRQq6rbGYiwYj45k">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span>₹</span>
-                      <span>INR</span>
-                    </div>
-                  </Option>
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="buying_price"
-                noStyle
-                rules={[{ required: true, message: 'Please enter buying price' }]}
-              >
-                <InputNumber
-                  placeholder="Enter buying price"
-                  size="large"
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    border: 'none',
-                    borderLeft: '1px solid #e6e8eb',
-                    borderRadius: 0,
-                    height: '48px',
-                    padding: '0 16px',
-                  }}
-                  min={0}
-                  precision={2}
-                  className="price-input"
-                />
-              </Form.Item>
+                  {currenciesData?.map((currency) => (
+                    <Option 
+                      key={currency.id} 
+                      value={currency.id}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>{currency.currencyIcon}</span>
+                      </div>
+                    </Option>
+                  ))}
+              </Select>
+            </Form.Item>
+              <InputNumber
+                className="price-input"
+                placeholder="Enter buying price"
+                min={0}
+                precision={2}
+              />
             </div>
           </Form.Item>
 
-          <Form.Item
+            <Form.Item
             name="selling_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
             rules={[{ required: true, message: "Please enter selling price" }]}
@@ -476,17 +464,17 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             <Input
               placeholder="Enter HSN/SAC code"
               style={{ width: '100%' }}
-            />
-          </Form.Item>
-          <Form.Item
-            name="sku"
+              />
+            </Form.Item>
+            <Form.Item
+              name="sku"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>SKU</span>}
-          >
-            <Input
-              placeholder="Enter SKU"
+            >
+              <Input
+                placeholder="Enter SKU"
               style={{ width: '100%' }}
-            />
-          </Form.Item>
+              />
+            </Form.Item>
         </div>
 
         <Divider />
@@ -501,7 +489,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           gap: '24px',
           marginBottom: '32px'
         }}>
-          <Form.Item
+            <Form.Item
             name="stock_status"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Status</span>}
           >
@@ -594,7 +582,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             <InputNumber
               placeholder="Enter reorder quantity"
               min={0}
-              style={{
+                style={{
                 width: '100%',
                 height: '48px',
                 borderRadius: '10px',
@@ -602,8 +590,8 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
                 backgroundColor: '#f9fafb'
               }}
               prefix={<FiInfo style={{ color: '#6b7280', marginRight: '8px' }} />}
-            />
-          </Form.Item>
+              />
+            </Form.Item>
         </div>
 
         <Divider />

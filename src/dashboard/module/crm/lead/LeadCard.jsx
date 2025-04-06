@@ -59,29 +59,29 @@ const formatCurrency = (value, currencyCode) => {
 };
 
 // Add this function near the top with other helper functions
-const getInterestLevel = (level) => {
-  const levels = {
-    "high": {
-      color: "#52c41a",
-      bg: "rgba(82, 196, 26, 0.1)",
-      border: "#b7eb8f",
+  const getInterestLevel = (level) => {
+    const levels = {
+      "high": {
+        color: "#52c41a",
+        bg: "rgba(82, 196, 26, 0.1)",
+        border: "#b7eb8f",
       text: "High Interest"
-    },
-    "medium": {
-      color: "#faad14",
-      bg: "rgba(250, 173, 20, 0.1)",
-      border: "#ffd591",
+      },
+      "medium": {
+        color: "#faad14",
+        bg: "rgba(250, 173, 20, 0.1)",
+        border: "#ffd591",
       text: "Medium Interest"
-    },
-    "low": {
-      color: "#ff4d4f",
-      bg: "rgba(255, 77, 79, 0.1)",
-      border: "#ffa39e",
+      },
+      "low": {
+        color: "#ff4d4f",
+        bg: "rgba(255, 77, 79, 0.1)",
+        border: "#ffa39e",
       text: "Low Interest"
-    }
+      }
+    };
+    return levels[level] || levels.medium;
   };
-  return levels[level] || levels.medium;
-};
 
 const DraggableCard = ({ lead, stage, onLeadClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -109,11 +109,11 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
   const status = statusesData?.data?.find(s => s.id === lead.status);
 
   const cardContent = (
-    <Card
-      className="lead-card"
-      bordered={false}
-      onClick={handleCardClick}
-      style={{
+      <Card
+        className="lead-card"
+        bordered={false}
+        onClick={handleCardClick}
+        style={{
         marginBottom: '8px',
         borderRadius: '8px',
         background: lead.is_converted ? '#f8fafc' : '#ffffff',
@@ -121,11 +121,11 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
         boxShadow: isDragging
           ? '0 12px 24px rgba(0, 0, 0, 0.12)'
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
-        position: 'relative',
+          position: 'relative',
         transition: isDragging ? 'none' : 'transform 0.2s ease, box-shadow 0.2s ease',
         transform: isDragging ? 'scale(1.02)' : 'scale(1)',
         zIndex: isDragging ? 1200 : 1,
-        overflow: 'hidden',
+          overflow: 'hidden',
         opacity: lead.is_converted ? 0.85 : 1
       }}
     >
@@ -201,7 +201,7 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
           gap: '8px'
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <Tooltip title={lead?.leadTitle}>
+              <Tooltip title={lead?.leadTitle}>
               <Text strong className="lead-title" style={{
                 fontSize: '14px',
                 lineHeight: '1.4',
@@ -211,9 +211,9 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
                 whiteSpace: 'nowrap',
                 color: '#1f2937'
               }}>
-                {lead?.leadTitle}
-              </Text>
-            </Tooltip>
+                  {lead?.leadTitle}
+                </Text>
+              </Tooltip>
             {lead?.company_name && (
               <Text className="company-name" style={{
                 fontSize: '12px',
@@ -244,10 +244,10 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
               color: '#16a34a',
               whiteSpace: 'nowrap'
             }}>
-              {formatCurrency(lead.leadValue, lead.currency)}
-            </span>
+                {formatCurrency(lead.leadValue, lead.currency)}
+              </span>
+            </div>
           </div>
-        </div>
 
         {/* Bottom Info Section */}
         <div style={{
@@ -338,10 +338,10 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
                 </Tag>
               </Tooltip>
             )}
+            </div>
           </div>
         </div>
-      </div>
-    </Card>
+      </Card>
   );
 
   const draggableProps = lead.is_converted ? {} : { ...attributes, ...listeners };
@@ -619,7 +619,7 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         dispatch(setStageOrder(newOrder.map(stage => stage.id)));
       }
     } else if (isCard && over.id !== active.id) {
-      const draggedId = active.id;
+    const draggedId = active.id;
       const destinationId = over.id.toString().replace('column-', '');
 
       // Find the lead that's being dragged
@@ -631,18 +631,18 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         return;
       }
 
-      try {
-        await updateLead({
-          id: draggedId,
-          data: {
-            leadStage: destinationId,
-            updated_by: loggedInUser?.username || ''
-          }
-        }).unwrap();
+    try {
+      await updateLead({
+        id: draggedId,
+        data: {
+          leadStage: destinationId,
+          updated_by: loggedInUser?.username || ''
+        }
+      }).unwrap();
 
-        message.success('Lead stage updated successfully');
-      } catch (error) {
-        message.error('Failed to update lead stage');
+      message.success('Lead stage updated successfully');
+    } catch (error) {
+      message.error('Failed to update lead stage');
       }
     }
   };
@@ -695,11 +695,11 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
         onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
+      onDragEnd={handleDragEnd}
       >
         <div className="kanban-board-wrapper" style={{
           width: '100%',
@@ -733,17 +733,17 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
                     stage={stage}
                     leads={leadsByStage[stage.id] || []}
                   >
-                    <DroppableColumn
-                      stage={stage}
-                      leads={leadsByStage[stage.id] || []}
+            <DroppableColumn
+              stage={stage}
+              leads={leadsByStage[stage.id] || []}
                       isColumnDragging={activeId === `column-${stage.id}`}
-                    />
+            />
                   </SortableColumn>
                 </div>
               ))}
             </SortableContext>
           </div>
-        </div>
+      </div>
       </DndContext>
 
       <style jsx global>{`

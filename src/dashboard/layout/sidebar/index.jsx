@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
-import { selectUserRole } from '../../../auth/services/authSlice';
+import { selectCurrentUser, selectUserRole } from '../../../auth/services/authSlice';
 import {
   FiHome,
   FiSettings,
@@ -34,7 +34,7 @@ import {
   FiBell,
   FiFile,
   FiEdit3,
-  FiBookOpen,
+  FiBookOpen, 
   FiPackage,
   FiGlobe,
   FiPercent,
@@ -43,8 +43,9 @@ import {
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
+import { useGetAllRolesQuery } from "../../module/hrm/role/services/roleApi";
 
-const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
+const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermissions }) => {
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSystemSetupOpen, setIsSystemSetupOpen] = useState(false);
@@ -58,6 +59,24 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
   const handleLogout = useLogout();
 
+  const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetAllRolesQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
+
+  // console.log("rolesData", rolesData);
+
+  // Find user's role data
+  const userRoleData = rolesData?.data?.find(role => role.id === loggedInUser?.role_id);
+  
+
+  const rolename = userRoleData?.role_name;
+
+
+  // Parse permissions if they exist
+  const userPermissionsData = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
+
+  // Check if user has any permissions
+  const hasNoPermissions = !userPermissionsData || Object.keys(userPermissionsData).length === 0;
+
   const userRole = useSelector(selectUserRole);
 
   useEffect(() => {
@@ -69,27 +88,41 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
   }, [userRole]);
 
   const checkPermission = (moduleKey) => {
-    if (!userRole) return false;
-
-    // Check if user is a client
-    if (userRole?.toLowerCase() === 'client') {
-      return true;
+    // Check if user's role is client
+    if (rolename?.toLowerCase() === 'client') {
+      return true; // Show everything for client role
     }
 
-    try {
-      // Parse permissions if it's a string
-      const parsedPermissions = typeof userRole.permissions === 'string' ?
-        JSON.parse(userRole.permissions) : userRole.permissions;
-
-      // Check if the permission exists
-      return !!parsedPermissions?.[moduleKey];
-    } catch (error) {
-      console.error('Error checking permissions:', error);
-      return false;
+    // If user has no permissions, only allow specific modules
+    if (hasNoPermissions) {
+      const allowedModules = ['settings', 'communication', 'support'];
+      return allowedModules.includes(moduleKey);
     }
+
+    // For other roles, check specific permissions
+    if (!userPermissionsData) return false;
+
+    // Check if the permission exists and has at least view access
+    const modulePermissions = userPermissionsData[moduleKey];
+    if (modulePermissions && modulePermissions.length > 0) {
+      return modulePermissions[0].permissions.includes('view');
+    }
+
+    return false;
   };
 
   const shouldShowMenuItem = (item) => {
+    // If role is client, show everything
+    if (rolename?.toLowerCase() === 'client') {
+      return true;
+    }
+
+    // If user has no permissions, only show specific items
+    if (hasNoPermissions) {
+      const allowedModules = ['Setting', 'Communication', 'Support'];
+      return allowedModules.includes(item.title);
+    }
+
     // If no permission required, show the item
     if (!item.permission) return true;
 
@@ -265,7 +298,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         {
           title: "Mail",
           icon: <FiMail />,
-          path: "/dashboard/mail"
+          path: "/dashboard/communication/mail",
+          permission: "dashboards-mail"
         },
         {
           title: "Chat",

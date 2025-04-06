@@ -293,7 +293,7 @@ const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
         <Table
           columns={columns}
           dataSource={filteredProducts}
-          loading={isLoading}
+          // loading={isLoading}
           rowKey="id"
           pagination={{
             pageSize: 10,
