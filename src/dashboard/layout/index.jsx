@@ -4,9 +4,23 @@ import Header from './header';
 import Sidebar from './sidebar';
 import Footer from './footer';
 import './layout.scss';
+import { useGetRolesQuery } from '../module/hrm/role/services/roleApi';
+import { selectCurrentUser } from '../../auth/services/authSlice';
+import { useSelector } from 'react-redux';
 
 const DashboardLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetRolesQuery();
+    const loggedInUser = useSelector(selectCurrentUser);
+
+    // Find user's role data
+    const userRoleData = rolesData?.data?.find(role => role.id === loggedInUser?.role_id);
+    
+    // Parse permissions if they exist
+    const userPermissions = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
+
+    console.log("User Role Data:", userRoleData);
+    console.log("User Permissions:", userPermissions);
 
     const handleSidebarToggle = (collapsed) => {
         setSidebarCollapsed(collapsed);
@@ -25,6 +39,7 @@ const DashboardLayout = () => {
             <Sidebar
                 collapsed={sidebarCollapsed}
                 onCollapsedChange={handleSidebarToggle}
+                userPermissions={userPermissions}
             />
             <div className="main-content">
                 <Header />

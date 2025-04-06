@@ -233,7 +233,7 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
         columns={columns}
         dataSource={filteredCreditNotes}
         rowKey="id"
-        loading={isLoading}
+        // loading={isLoading}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,

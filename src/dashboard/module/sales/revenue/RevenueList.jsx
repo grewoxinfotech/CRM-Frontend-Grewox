@@ -270,27 +270,27 @@ const RevenueList = ({
       render: (_, record) => (
         <Dropdown
           menu={{
-            items: [
-              {
-                key: "view",
-                icon: <FiEye />,
-                label: "View Details",
-                onClick: () => onView?.(record),
-              },
-              {
-                key: "edit",
-                icon: <FiEdit2 />,
-                label: "Edit",
-                onClick: () => onEdit?.(record),
-              },
-              {
-                key: "delete",
-                icon: <FiTrash2 />,
-                label: "Delete",
-                onClick: () => handleDelete(record.id),
-                danger: true,
-              },
-            ],
+    items: [
+      {
+        key: "view",
+        icon: <FiEye />,
+        label: "View Details",
+        onClick: () => onView?.(record),
+      },
+      {
+        key: "edit",
+        icon: <FiEdit2 />,
+        label: "Edit",
+        onClick: () => onEdit?.(record),
+      },
+      {
+        key: "delete",
+        icon: <FiTrash2 />,
+        label: "Delete",
+        onClick: () => handleDelete(record.id),
+        danger: true,
+      },
+    ],
           }}
           trigger={["click"]}
           placement="bottomRight"
@@ -387,18 +387,18 @@ const RevenueList = ({
       </Row>
 
       <div className="revenue-tables">
-        <Table
-          columns={columns}
+      <Table
+        columns={columns}
           dataSource={filteredRevenue}
-          rowKey="id"
+        rowKey="id"
           loading={isLoading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} items`,
-          }}
-          className="revenue-table"
-        />
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} items`,
+        }}
+        className="revenue-table"
+      />
       </div>
     </div>
   );

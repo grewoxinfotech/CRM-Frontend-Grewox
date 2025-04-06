@@ -57,6 +57,7 @@ import { debitNoteApi } from "../dashboard/module/purchase/debitnote/services/de
 import leadStageReducer from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageSlice";
 import { meetingApi } from "../dashboard/module/hrm/Meeting/services/meetingApi";
 import { announcementApi } from "../dashboard/module/hrm/Announcement/services/announcementApi";
+import { mailApi } from '../dashboard/module/communication/mail/services/mailApi';
 
 const persistConfig = {
   key: "root",
@@ -116,11 +117,13 @@ const rootReducer = combineReducers({
   [attendanceApi.reducerPath]: attendanceApi.reducer,
   [holidayApi.reducerPath]: holidayApi.reducer,
   [salaryApi.reducerPath]: salaryApi.reducer,
+  [dealInvoiceApi.reducerPath]: dealInvoiceApi.reducer,
   [vendorApi.reducerPath]: vendorApi.reducer,
   [billingApi.reducerPath]: billingApi.reducer,
   [debitNoteApi.reducerPath]: debitNoteApi.reducer,
   [meetingApi.reducerPath]: meetingApi.reducer,
   [announcementApi.reducerPath]: announcementApi.reducer,
+  [mailApi.reducerPath]: mailApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -185,7 +188,8 @@ export const store = configureStore({
       .concat(billingApi.middleware)
       .concat(debitNoteApi.middleware)
       .concat(meetingApi.middleware)
-      .concat(announcementApi.middleware),
+      .concat(announcementApi.middleware)
+      .concat(mailApi.middleware),
 });
 
 export const persistor = persistStore(store);
