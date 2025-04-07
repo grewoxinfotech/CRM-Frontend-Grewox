@@ -1,43 +1,36 @@
 import React, { useMemo } from 'react';
-import { Table, Button, Tag, Dropdown, Menu, Avatar } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiEye, FiShield, FiBriefcase, FiUsers } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Menu, Avatar, message } from 'antd';
+import {
+    FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiEye, FiShield, FiBriefcase, FiUsers, FiLogIn,
+    FiGitBranch, FiGrid, FiAward, FiMapPin, FiLayers, FiCpu
+} from 'react-icons/fi';
 import moment from 'moment';
 import { useGetRolesQuery } from '../role/services/roleApi'; // Adjust the import path as needed
 import { useGetAllBranchesQuery } from '../Branch/services/branchApi'; // Add this import
 import { useGetEmployeesQuery } from './services/employeeApi';
 import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import { useGetAllDesignationsQuery } from '../Designation/services/designationApi';
+import { useNavigate } from 'react-router-dom';
+import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 
 const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
+    const navigate = useNavigate();
+    const [adminLogin] = useAdminLoginMutation();
+
     // Fetch roles data
     const { data: rolesData } = useGetRolesQuery();
-   
-
 
     // Add branch data fetch
     const { data: branchesData } = useGetAllBranchesQuery();
     const { data: departmentsData } = useGetAllDepartmentsQuery();
     const { data: designationsData } = useGetAllDesignationsQuery();
 
-
- 
-
     // Function to get role name from role_id
     const getRoleName = (role_id) => {
-
-        // Check if rolesData exists and has data property
-        if (!rolesData?.data) {
-            return 'N/A';
-        }
-
-        // Find the role that matches the role_id
-        const foundRole = rolesData.data.find(role => {
-            return role.id === role.id;
-        });
-
-        // Return the role name if found, otherwise return N/A
-        const roleName = foundRole ? foundRole.role_name : 'N/A';
-        return roleName;
+        console.log(role_id)
+        if (!rolesData?.data) return 'N/A';
+        const foundRole = rolesData.data.find(role => role.id === role_id);
+        return foundRole ? foundRole.role_name : 'N/A';
     };
 
     // Helper functions to find names using find method
@@ -56,7 +49,30 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         return designation ? designation.designation_name : 'N/A';
     };
 
-    // Function to get role color similar to user list
+    // Function to get badge style based on type
+    const getBadgeStyle = (type, value) => {
+        const styles = {
+            branch: {
+                color: '#1890FF',
+                bg: '#E6F7FF',
+                border: '#91D5FF'
+            },
+            department: {
+                color: '#722ED1',
+                bg: '#F9F0FF',
+                border: '#D3ADF7'
+            },
+            designation: {
+                color: '#13C2C2',
+                bg: '#E6FFFB',
+                border: '#87E8DE'
+            }
+        };
+
+        return styles[type] || styles.branch;
+    };
+
+    // Update the role color mapping to match user management
     const getRoleColor = (role) => {
         const roleColors = {
             'super-admin': {
@@ -97,6 +113,22 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             : 'U';
     };
 
+    const handleEmployeeLogin = async (employee) => {
+        try {
+            const response = await adminLogin({
+                email: employee.email,
+                isClientPage: true
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Logged in as employee successfully');
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to login as employee');
+        }
+    };
+
     const getActionMenu = (record) => (
         <Menu className="action-menu">
             <Menu.Item
@@ -112,6 +144,13 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
                 onClick={() => onEdit(record)}
             >
                 Edit Employee
+            </Menu.Item>
+            <Menu.Item
+                key="login"
+                icon={<FiLogIn />}
+                onClick={() => handleEmployeeLogin(record)}
+            >
+                Login as Employee
             </Menu.Item>
             <Menu.Item
                 key="status"
@@ -131,6 +170,24 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         </Menu>
     );
 
+    const getItemStyle = (type) => {
+        const styles = {
+            branch: {
+                color: '#2563EB',
+                icon: <FiGitBranch className="item-icon" />,
+            },
+            department: {
+                color: '#7C3AED',
+                icon: <FiGrid className="item-icon" />,
+            },
+            designation: {
+                color: '#EA580C',
+                icon: <FiAward className="item-icon" />,
+            }
+        };
+        return styles[type];
+    };
+
     const columns = [
         {
             title: 'Profile',
@@ -138,16 +195,16 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'profilePic',
             render: (profilePic, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar
-                    size={40}
-                    src={profilePic}
-                    icon={!profilePic && <FiUser />}
-                    style={{
-                        backgroundColor: !profilePic ? '#1890ff' : 'transparent',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
+                    <Avatar
+                        size={40}
+                        src={profilePic}
+                        icon={!profilePic && <FiUser />}
+                        style={{
+                            backgroundColor: !profilePic ? '#1890ff' : 'transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
                     >
                         {!profilePic && getInitials(record.name)}
                     </Avatar>
@@ -175,17 +232,34 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'role_id',
             render: (role_id) => {
                 const roleName = getRoleName(role_id);
+                const roleStyle = getRoleColor(roleName);
                 return (
-                    <span style={{ 
-                        color: '#595959', 
-                        fontSize: '14px',
-                        padding: '4px 8px',
-                        background: '#f5f5f5',
-                        borderRadius: '4px',
-                        display: 'inline-block'
-                    }}>
-                        {roleName}
-                    </span>
+                    <div className="role-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                            className="role-indicator"
+                            style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: roleStyle.color,
+                                boxShadow: `0 0 8px ${roleStyle.color}`,
+                            }}
+                        />
+                        <span className="custom-badge" style={{
+                            color: roleStyle.color,
+                            backgroundColor: roleStyle.bg,
+                            border: `1px solid ${roleStyle.border}`,
+                            padding: '4px 12px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            display: 'inline-block',
+                            lineHeight: '1.4',
+                            transition: 'all 0.3s ease'
+                        }}>
+                            {roleName}
+                        </span>
+                    </div>
                 );
             },
             sorter: (a, b) => {
@@ -198,66 +272,90 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             title: 'Branch',
             dataIndex: 'branch',
             key: 'branch',
-            render: (branchId) => (
-                <span style={{ 
-                    color: '#595959', 
-                    fontSize: '14px',
-                    padding: '4px 8px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    display: 'inline-block'
-                }}>
-                    {getBranchName(branchId)}
-                </span>
-            ),
-            sorter: (a, b) => {
-                const branchNameA = getBranchName(a.branch);
-                const branchNameB = getBranchName(b.branch);
-                return branchNameA.localeCompare(branchNameB);
+            render: (branchId) => {
+                const branchName = getBranchName(branchId);
+                const style = getItemStyle('branch');
+                return (
+                    <div className="item-wrapper">
+                        <div className="item-content">
+                            <div className="icon-wrapper" style={{
+                                color: style.color,
+                                background: `${style.color}15`
+                            }}>
+                                {style.icon}
+                            </div>
+                            <div className="info-wrapper">
+                                <div className="name" style={{
+                                    color: style.color,
+                                    fontWeight: 600,
+                                    fontSize: '14px'
+                                }}>
+                                    {branchName}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             },
         },
         {
             title: 'Department',
             dataIndex: 'department',
             key: 'department',
-            render: (departmentId) => (
-                <span style={{ 
-                    color: '#595959', 
-                    fontSize: '14px',
-                    padding: '4px 8px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    display: 'inline-block'
-                }}>
-                    {getDepartmentName(departmentId)}
-                </span>
-            ),
-            sorter: (a, b) => {
-                const deptNameA = getDepartmentName(a.department);
-                const deptNameB = getDepartmentName(b.department);
-                return deptNameA.localeCompare(deptNameB);
+            render: (departmentId) => {
+                const departmentName = getDepartmentName(departmentId);
+                const style = getItemStyle('department');
+                return (
+                    <div className="item-wrapper">
+                        <div className="item-content">
+                            <div className="icon-wrapper" style={{
+                                color: style.color,
+                                background: `${style.color}15`
+                            }}>
+                                {style.icon}
+                            </div>
+                            <div className="info-wrapper">
+                                <div className="name" style={{
+                                    color: style.color,
+                                    fontWeight: 600,
+                                    fontSize: '14px'
+                                }}>
+                                    {departmentName}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             },
         },
         {
             title: 'Designation',
             dataIndex: 'designation',
             key: 'designation',
-            render: (designationId) => (
-                <span style={{ 
-                    color: '#595959', 
-                    fontSize: '14px',
-                    padding: '4px 8px',
-                    background: '#f5f5f5',
-                    borderRadius: '4px',
-                    display: 'inline-block'
-                }}>
-                    {getDesignationName(designationId)}
-                </span>
-            ),
-            sorter: (a, b) => {
-                const desigNameA = getDesignationName(a.designation);
-                const desigNameB = getDesignationName(b.designation);
-                return desigNameA.localeCompare(desigNameB);
+            render: (designationId) => {
+                const designationName = getDesignationName(designationId);
+                const style = getItemStyle('designation');
+                return (
+                    <div className="item-wrapper">
+                        <div className="item-content">
+                            <div className="icon-wrapper" style={{
+                                color: style.color,
+                                background: `${style.color}15`
+                            }}>
+                                {style.icon}
+                            </div>
+                            <div className="info-wrapper">
+                                <div className="name" style={{
+                                    color: style.color,
+                                    fontWeight: 600,
+                                    fontSize: '14px'
+                                }}>
+                                    {designationName}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             },
         },
         {
@@ -305,21 +403,48 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         {
             title: 'Actions',
             key: 'actions',
+            width: '120px',
             align: 'center',
             render: (_, record) => (
-                <Dropdown
-                    overlay={getActionMenu(record)}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayClassName="user-actions-dropdown"
-                >
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <Button
-                        type="text"
-                        icon={<FiMoreVertical size={16} />}
-                        className="action-button"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </Dropdown>
+                        type="primary"
+                        icon={<FiLogIn size={14} />}
+                        size="small"
+                        onClick={() => handleEmployeeLogin(record)}
+                        className="login-button"
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                            height: '32px',
+                            padding: '0 12px',
+                            borderRadius: '6px',
+                            fontWeight: 500,
+                            background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
+                            border: 'none',
+                            transition: 'all 0.3s ease',
+                            boxShadow: '0 2px 4px rgba(24, 144, 255, 0.2)',
+                            fontSize: '13px'
+                        }}
+                    >
+                        Login
+                    </Button>
+                    <Dropdown
+                        overlay={getActionMenu(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="user-actions-dropdown"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical size={16} />}
+                            className="action-button"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </Dropdown>
+                </div>
             ),
         },
     ];

@@ -28,7 +28,7 @@ import CreateEmployee from './CreateEmployee';
 // import EditEmployee from './EditEmployee';
 import EmployeeList from './EmployeeList';
 import EmployeeCard from './EmployeeCard';
-import './Employee.scss';                                   
+import './Employee.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -56,20 +56,17 @@ const Employee = () => {
 
     const [viewMode, setViewMode] = useState('table');
 
-  
+
 
     useEffect(() => {
         if (employeesData?.data) {
-            const filteredData = employeesData.data.filter(employee => 
-                employee?.created_by === loggedInUser?.username || 
+            const filteredData = employeesData.data.filter(employee =>
+                employee?.created_by === loggedInUser?.username ||
                 employee?.client_id === loggedInUser?.id
             );
 
-      
+
             const transformedData = filteredData.map(employee => ({
-
-                
-
                 id: employee.id,
                 firstName: employee.firstName || 'N/A',
                 lastName: employee.lastName || 'N/A',
@@ -104,8 +101,7 @@ const Employee = () => {
                 salary: employee.salary || null,
                 ifsc: employee.ifsc || null,
                 banklocation: employee.banklocation || null,
-
-
+                role_id: employee.role_id
             }));
             setEmployees(transformedData);
             setFilteredEmployees(transformedData);
@@ -121,8 +117,8 @@ const Employee = () => {
             employee.designation?.toLowerCase().includes(searchText.toLowerCase())
         );
         setFilteredEmployees(filtered);
-  
- 
+
+
     }, [employees, searchText]);
 
     // Handlers
@@ -173,7 +169,7 @@ const Employee = () => {
             gender: employee.gender,
             joiningDate: employee.joiningDate,
             // IDs for dropdowns
-            branch:employee.branch,
+            branch: employee.branch,
             department: employee.department,
             designation: employee.designation,
             // Salary information
@@ -189,7 +185,7 @@ const Employee = () => {
 
 
         setSelectedEmployee(formattedEmployee);
-        setIsEditFormVisible(true);   
+        setIsEditFormVisible(true);
 
 
     };
@@ -206,7 +202,7 @@ const Employee = () => {
         try {
             await createEmployee(formData).unwrap();
             message.success('Employee created successfully');
-            
+
             setIsCreateFormVisible(false);
             refetch();
         } catch (error) {

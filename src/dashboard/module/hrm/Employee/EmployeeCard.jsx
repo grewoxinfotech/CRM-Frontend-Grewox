@@ -1,33 +1,51 @@
 import React from 'react';
-import { Card, Avatar, Tag, Button, Dropdown, Menu } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiUser, FiEye, FiMail, FiCalendar, FiBriefcase, FiLogIn } from 'react-icons/fi';
+import { Card, Avatar, Tag, Button, Dropdown, Menu, message } from 'antd';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiUser, FiEye, FiMail, FiCalendar, FiBriefcase, FiLogIn, FiUsers } from 'react-icons/fi';
 import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
+import { useAdminLoginMutation } from '../../../../auth/services/authApi';
+import { useGetRolesQuery } from '../role/services/roleApi';
 
 const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
-    const getStatusColor = (status) => {
-        const statusColors = {
-            'active': {
+    const navigate = useNavigate();
+    const [adminLogin] = useAdminLoginMutation();
+    const { data: rolesData } = useGetRolesQuery();
+
+    const getRoleName = (role_id) => {
+        if (!rolesData?.data) return 'Employee';
+        const foundRole = rolesData.data.find(role => role.id === role_id);
+        return foundRole ? foundRole.role_name : 'Employee';
+    };
+
+    const getRoleColor = (role) => {
+        const roleColors = {
+            'super-admin': {
+                color: '#531CAD',
+                bg: '#F9F0FF',
+                border: '#D3ADF7'
+            },
+            'client': {
+                color: '#08979C',
+                bg: '#E6FFFB',
+                border: '#87E8DE'
+            },
+            'sub-client': {
                 color: '#389E0D',
                 bg: '#F6FFED',
                 border: '#B7EB8F'
             },
-            'inactive': {
-                color: '#FF4D4F',
-                bg: '#FFF1F0',
-                border: '#FFA39E'
-            },
-            'pending': {
+            'employee': {
                 color: '#D46B08',
                 bg: '#FFF7E6',
                 border: '#FFD591'
             },
             'default': {
-                color: '#595959',
-                bg: '#FAFAFA',
-                border: '#D9D9D9'
+                color: '#D46B08', // Default to employee color
+                bg: '#FFF7E6',
+                border: '#FFD591'
             }
         };
-        return statusColors[status?.toLowerCase()] || statusColors.default;
+        return roleColors[role?.toLowerCase()] || roleColors.default;
     };
 
     const getInitials = (name) => {
@@ -37,6 +55,22 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
                 .join('')
                 .toUpperCase()
             : 'E';
+    };
+
+    const handleAdminLogin = async () => {
+        try {
+            const response = await adminLogin({
+                email: employee.email,
+                isClientPage: true
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Logged in as employee successfully');
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to login as employee');
+        }
     };
 
     const getActionMenu = (record) => (
@@ -56,7 +90,18 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
         </Menu>
     );
 
-    const statusStyle = getStatusColor(employee.status);
+    const roleName = getRoleName(employee.role_id);
+    const roleStyle = getRoleColor(roleName);
+
+    const getLoginButtonText = (roleName) => {
+        if (!roleName) return 'Login as Employee';
+        const formattedRole = roleName
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ');
+
+        return `Login as ${formattedRole}`;
+    };
 
     return (
         <Card
@@ -76,7 +121,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
                     icon={<FiLogIn />}
                     className="login-as-button"
                     block
-                    onClick={() => console.log('Login as', employee.name)}
+                    onClick={handleAdminLogin}
                     style={{
                         background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                         border: 'none',
@@ -90,7 +135,7 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
                         fontWeight: '500'
                     }}
                 >
-                    Login as Employee
+                    {getLoginButtonText(roleName)}
                 </Button>
             ]}
         >
@@ -115,15 +160,15 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
                     </Avatar>
                     <div className="employee-info">
                         <h3>{employee.name}</h3>
-                        <div className="status-wrapper">
+                        <div className="role-wrapper">
                             <div
-                                className="status-indicator"
+                                className="role-indicator"
                                 style={{
                                     width: '8px',
                                     height: '8px',
                                     borderRadius: '50%',
-                                    background: statusStyle.color,
-                                    boxShadow: `0 0 8px ${statusStyle.color}`
+                                    background: roleStyle.color,
+                                    boxShadow: `0 0 8px ${roleStyle.color}`
                                 }}
                             />
                             <Tag
@@ -133,17 +178,17 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
                                     borderRadius: '6px',
                                     fontSize: '13px',
                                     margin: 0,
-                                    background: statusStyle.bg,
-                                    border: `1px solid ${statusStyle.border}`,
-                                    color: statusStyle.color,
+                                    background: roleStyle.bg,
+                                    border: `1px solid ${roleStyle.border}`,
+                                    color: roleStyle.color,
                                     fontWeight: 500,
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '6px'
                                 }}
                             >
-                                <FiUserCheck size={12} />
-                                {employee.status || 'N/A'}
+                                <FiUsers size={12} />
+                                {roleName}
                             </Tag>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs, Modal, Form, Select, Checkbox, message, Divider, Tag } from 'antd';
+import { Layout, List, Input, Button, Avatar, Badge, Typography, Tabs, Modal, Form, Select, Checkbox, message, Divider, Tag, Upload, Dropdown } from 'antd';
 import {
     SendOutlined,
     SearchOutlined,
@@ -7,7 +7,18 @@ import {
     TeamOutlined,
     MessageOutlined,
     SettingOutlined,
-    PaperClipOutlined
+    PaperClipOutlined,
+    FileOutlined,
+    FilePdfOutlined,
+    FileWordOutlined,
+    FileExcelOutlined,
+    FileImageOutlined,
+    FileZipOutlined,
+    FileTextOutlined,
+    DownloadOutlined,
+    DeleteOutlined,
+    CheckOutlined,
+    EditOutlined
 } from '@ant-design/icons';
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
@@ -20,6 +31,35 @@ const { Content, Sider } = Layout;
 const { Text } = Typography;
 const { TabPane } = Tabs;
 
+// Add formatFileSize utility function
+const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const getFileIcon = (fileType) => {
+    if (fileType.startsWith('image/')) return <FileImageOutlined />;
+    if (fileType === 'application/pdf') return <FilePdfOutlined />;
+    if (fileType.includes('word') || fileType.includes('msword')) return <FileWordOutlined />;
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return <FileExcelOutlined />;
+    if (fileType.includes('zip') || fileType.includes('compressed')) return <FileZipOutlined />;
+    if (fileType.includes('text')) return <FileTextOutlined />;
+    return <FileOutlined />;
+};
+
+const getFileTypeLabel = (fileType) => {
+    if (fileType.startsWith('image/')) return 'Image';
+    if (fileType === 'application/pdf') return 'PDF';
+    if (fileType.includes('word') || fileType.includes('msword')) return 'Word';
+    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return 'Excel';
+    if (fileType.includes('zip') || fileType.includes('compressed')) return 'ZIP';
+    if (fileType.includes('text')) return 'Text';
+    return 'File';
+};
+
 export default function Chat() {
     const [selectedUser, setSelectedUser] = useState(null);
     const [messageInput, setMessageInput] = useState('');
@@ -31,10 +71,16 @@ export default function Chat() {
     const [typingUsers, setTypingUsers] = useState(new Map());
     const socketRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+    const messagesContainerRef = useRef(null);
     const [createGroupModalVisible, setCreateGroupModalVisible] = useState(false);
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [groupForm] = Form.useForm();
     const [groupInfoVisible, setGroupInfoVisible] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const fileInputRef = useRef(null);
+    const [editingMessage, setEditingMessage] = useState(null);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
     // Get real users data
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
@@ -52,6 +98,30 @@ export default function Chat() {
     // Get current user from auth state
     const currentUser = useSelector((state) => state.auth.user);
 
+    // Define getMessages function before using it
+    const getMessages = () => {
+        if (!selectedUser || !conversations[selectedUser.id]) return [];
+
+        if (selectedUser.type === 'group') {
+            return conversations[selectedUser.id]?.messages || [];
+        }
+
+        return Array.isArray(conversations[selectedUser.id])
+            ? conversations[selectedUser.id]
+            : [];
+    };
+
+    // Add scrollToBottom function
+    const scrollToBottom = () => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+    };
+
+    // Add useEffect for auto-scrolling
+    useEffect(() => {
+        scrollToBottom();
+    }, [conversations, selectedUser]); // Update dependency array to watch for conversation changes
 
     // Initialize socket connection
     useEffect(() => {
@@ -115,20 +185,17 @@ export default function Chat() {
                     newConversations[user_id] = [];
                 }
 
-                // Check for duplicate message
+                // Check for duplicate message by ID
                 const isDuplicate = newConversations[user_id].some(
-                    existingMsg =>
-                        existingMsg.timestamp === message.timestamp &&
-                        existingMsg.sender_id === message.sender_id &&
-                        existingMsg.message === message.message
+                    existingMsg => existingMsg.id === message.id
                 );
 
                 if (!isDuplicate) {
                     const messageStatus = selectedUser?.id === user_id ? 'read' : 'delivered';
-                    newConversations[user_id].push({
+                    newConversations[user_id] = [...newConversations[user_id], {
                         ...message,
                         status: messageStatus
-                    });
+                    }];
                 }
 
                 return newConversations;
@@ -205,15 +272,24 @@ export default function Chat() {
         });
 
         // Listen for message status updates
-        socketRef.current.on('message_status_updated', ({ sender_id, receiver_id, status }) => {
+        socketRef.current.on('message_status_updated', ({ message_id, status }) => {
             setConversations(prev => {
                 const newConversations = { ...prev };
-                if (newConversations[sender_id]) {
-                    newConversations[sender_id] = newConversations[sender_id].map(msg => ({
-                        ...msg,
-                        status: msg.sender_id === sender_id ? status : msg.status
-                    }));
-                }
+
+                // Update status in all conversations
+                Object.keys(newConversations).forEach(key => {
+                    if (Array.isArray(newConversations[key])) {
+                        newConversations[key] = newConversations[key].map(msg =>
+                            msg.id === message_id ? { ...msg, status } : msg
+                        );
+                    } else if (newConversations[key]?.messages) {
+                        // For group messages
+                        newConversations[key].messages = newConversations[key].messages.map(msg =>
+                            msg.id === message_id ? { ...msg, status } : msg
+                        );
+                    }
+                });
+
                 return newConversations;
             });
         });
@@ -232,6 +308,49 @@ export default function Chat() {
             });
         });
 
+        // Add these new socket event listeners
+        socketRef.current.on('message_deleted', ({ message_id, conversation_id }) => {
+            if (!message_id || !conversation_id) return;
+
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                const conversation = newConversations[conversation_id];
+
+                if (Array.isArray(conversation)) {
+                    newConversations[conversation_id] = conversation.filter(
+                        msg => msg.id !== message_id
+                    );
+                } else if (conversation?.messages) {
+                    conversation.messages = conversation.messages.filter(
+                        msg => msg.id !== message_id
+                    );
+                }
+
+                return newConversations;
+            });
+        });
+
+        socketRef.current.on('message_edited', ({ message_id, new_message, conversation_id }) => {
+            if (!message_id || !conversation_id || !new_message) return;
+
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                const conversation = newConversations[conversation_id];
+
+                if (Array.isArray(conversation)) {
+                    newConversations[conversation_id] = conversation.map(msg =>
+                        msg.id === message_id ? { ...msg, message: new_message, edited: true } : msg
+                    );
+                } else if (conversation?.messages) {
+                    conversation.messages = conversation.messages.map(msg =>
+                        msg.id === message_id ? { ...msg, message: new_message, edited: true } : msg
+                    );
+                }
+
+                return newConversations;
+            });
+        });
+
         return () => {
             if (socketRef.current) {
                 socketRef.current.disconnect();
@@ -239,6 +358,8 @@ export default function Chat() {
             socketRef.current?.off('conversations_received');
             socketRef.current?.off('receive_message');
             socketRef.current?.off('receive_group_message');
+            socketRef.current?.off('message_deleted');
+            socketRef.current?.off('message_edited');
         };
     }, [selectedUser?.id, currentUser?.id]);
 
@@ -284,93 +405,6 @@ export default function Chat() {
         }
     }, [selectedUser?.id, currentUser?.id]);
 
-    const getMessages = () => {
-        if (!selectedUser || !conversations[selectedUser.id]) return [];
-
-        if (selectedUser.type === 'group') {
-            // Ensure we're accessing the messages array from the group object
-            return conversations[selectedUser.id]?.messages || [];
-        }
-
-        // For direct messages
-        return Array.isArray(conversations[selectedUser.id])
-            ? conversations[selectedUser.id]
-            : [];
-    };
-
-    const handleSendMessage = () => {
-        if (!messageInput.trim() || !selectedUser || !socketRef.current) return;
-
-        const messageData = {
-            sender_id: currentUser?.id,
-            message: messageInput.trim(),
-            timestamp: new Date().toISOString()
-        };
-
-        if (selectedUser.type === 'group') {
-            // For group messages
-            socketRef.current.emit('send_group_message', {
-                ...messageData,
-                group_id: selectedUser.id
-            });
-
-            // Update conversations immediately for instant UI update
-            setConversations(prev => {
-                const newConversations = { ...prev };
-                const groupId = selectedUser.id;
-
-                if (!newConversations[groupId]) {
-                    newConversations[groupId] = {
-                        ...selectedUser,
-                        messages: [],
-                        unread_count: {}
-                    };
-                }
-
-                // Ensure messages array exists
-                if (!Array.isArray(newConversations[groupId].messages)) {
-                    newConversations[groupId].messages = [];
-                }
-
-                // Add new message
-                newConversations[groupId] = {
-                    ...newConversations[groupId],
-                    messages: [
-                        ...newConversations[groupId].messages,
-                        {
-                            ...messageData,
-                            status: 'sent'
-                        }
-                    ],
-                    last_message: messageData.message
-                };
-
-                return newConversations;
-            });
-        } else {
-            // For direct messages
-            socketRef.current.emit('send_message', {
-                ...messageData,
-                receiver_id: selectedUser.id
-            });
-
-            // Update conversations immediately for instant UI update
-            setConversations(prev => {
-                const newConversations = { ...prev };
-                if (!Array.isArray(newConversations[selectedUser.id])) {
-                    newConversations[selectedUser.id] = [];
-                }
-                newConversations[selectedUser.id].push({
-                    ...messageData,
-                    status: 'sent'
-                });
-                return newConversations;
-            });
-        }
-
-        setMessageInput('');
-    };
-
     // Add typing handler with debug logs
     const handleTyping = () => {
         if (socketRef.current && selectedUser) {
@@ -403,6 +437,225 @@ export default function Chat() {
             }, 2000); // Stop typing after 2 seconds of inactivity
         }
     };
+
+    const handleUpdateMessage = () => {
+        if (!socketRef.current || !editingMessage?.id || !messageInput.trim() || !selectedUser?.id) return;
+
+        const data = {
+            message_id: editingMessage.id,
+            new_message: messageInput.trim(),
+            conversation_id: selectedUser.id,
+            sender_id: currentUser?.id,
+            is_group: selectedUser.type === 'group'
+        };
+
+        socketRef.current.emit('edit_message', data);
+
+        // Update local state immediately for better UX
+        setConversations(prev => {
+            const newConversations = { ...prev };
+            const targetConversation = selectedUser.id;
+
+            if (selectedUser.type === 'group') {
+                if (newConversations[targetConversation]?.messages) {
+                    newConversations[targetConversation].messages = newConversations[targetConversation].messages.map(msg =>
+                        msg.id === editingMessage.id ? { ...msg, message: messageInput.trim(), edited: true } : msg
+                    );
+                }
+            } else {
+                if (Array.isArray(newConversations[targetConversation])) {
+                    newConversations[targetConversation] = newConversations[targetConversation].map(msg =>
+                        msg.id === editingMessage.id ? { ...msg, message: messageInput.trim(), edited: true } : msg
+                    );
+                }
+            }
+            return newConversations;
+        });
+
+        setEditingMessage(null);
+        setMessageInput('');
+    };
+
+    const handleMessageDelete = (message) => {
+        if (!socketRef.current || !message?.id || !selectedUser?.id) return;
+
+        const data = {
+            message_id: message.id,
+            conversation_id: selectedUser.id,
+            sender_id: currentUser?.id,
+            is_group: selectedUser.type === 'group'
+        };
+
+        socketRef.current.emit('delete_message', data);
+
+        // Update local state immediately for better UX
+        setConversations(prev => {
+            const newConversations = { ...prev };
+            const targetConversation = selectedUser.id;
+
+            if (selectedUser.type === 'group') {
+                if (newConversations[targetConversation]?.messages) {
+                    newConversations[targetConversation].messages = newConversations[targetConversation].messages.filter(
+                        msg => msg.id !== message.id
+                    );
+                }
+            } else {
+                if (Array.isArray(newConversations[targetConversation])) {
+                    newConversations[targetConversation] = newConversations[targetConversation].filter(
+                        msg => msg.id !== message.id
+                    );
+                }
+            }
+            return newConversations;
+        });
+
+        // If we're deleting a message we're currently editing, clear the edit state
+        if (editingMessage?.id === message.id) {
+            setEditingMessage(null);
+            setMessageInput('');
+        }
+    };
+
+    const handleSendMessage = () => {
+        if (!messageInput.trim() || !selectedUser || !socketRef.current) return;
+
+        // If in edit mode, handle message update instead
+        if (editingMessage) {
+            handleUpdateMessage();
+            return;
+        }
+
+        const messageId = `${Date.now()}-${currentUser?.id}`;
+        const messageData = {
+            id: messageId,
+            sender_id: currentUser?.id,
+            message: messageInput.trim(),
+            timestamp: new Date().toISOString(),
+            status: 'sent'
+        };
+
+        if (selectedUser.type === 'group') {
+            socketRef.current.emit('send_group_message', {
+                ...messageData,
+                group_id: selectedUser.id
+            });
+        } else {
+            socketRef.current.emit('send_message', {
+                ...messageData,
+                receiver_id: selectedUser.id
+            });
+
+            // Add message to conversation immediately with 'sent' status
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                if (!newConversations[selectedUser.id]) {
+                    newConversations[selectedUser.id] = [];
+                }
+
+                // Check if message already exists
+                const isDuplicate = newConversations[selectedUser.id].some(
+                    msg => msg.id === messageId
+                );
+
+                if (!isDuplicate) {
+                    newConversations[selectedUser.id] = [
+                        ...newConversations[selectedUser.id],
+                        messageData
+                    ];
+                }
+                return newConversations;
+            });
+        }
+
+        // Clear input and edit state
+        setMessageInput('');
+        setEditingMessage(null);
+    };
+
+    // Update the message input handler
+    const handleMessageInputChange = (e) => {
+        setMessageInput(e.target.value);
+        if (socketRef.current && selectedUser) {
+            handleTyping();
+        }
+    };
+
+    const handleMessageEdit = (message) => {
+        if (!message) return;
+        setEditingMessage(message);
+        setMessageInput(message.message);
+    };
+
+    // Add socket event listeners for edit and delete responses
+    useEffect(() => {
+        if (!socketRef.current) return;
+
+        const handleMessageEdited = ({ message_id, new_message, conversation_id }) => {
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                const targetConversation = conversation_id === currentUser?.id ? selectedUser?.id : conversation_id;
+
+                if (selectedUser?.type === 'group') {
+                    if (newConversations[targetConversation]?.messages) {
+                        newConversations[targetConversation].messages = newConversations[targetConversation].messages.map(msg =>
+                            msg.id === message_id ? { ...msg, message: new_message, edited: true } : msg
+                        );
+                    }
+                } else {
+                    if (Array.isArray(newConversations[targetConversation])) {
+                        newConversations[targetConversation] = newConversations[targetConversation].map(msg =>
+                            msg.id === message_id ? { ...msg, message: new_message, edited: true } : msg
+                        );
+                    }
+                }
+                return newConversations;
+            });
+        };
+
+        const handleMessageDeleted = ({ message_id, conversation_id }) => {
+            setConversations(prev => {
+                const newConversations = { ...prev };
+                const targetConversation = conversation_id === currentUser?.id ? selectedUser?.id : conversation_id;
+
+                if (selectedUser?.type === 'group') {
+                    if (newConversations[targetConversation]?.messages) {
+                        newConversations[targetConversation].messages = newConversations[targetConversation].messages.filter(
+                            msg => msg.id !== message_id
+                        );
+                    }
+                } else {
+                    if (Array.isArray(newConversations[targetConversation])) {
+                        newConversations[targetConversation] = newConversations[targetConversation].filter(
+                            msg => msg.id !== message_id
+                        );
+                    }
+                }
+                return newConversations;
+            });
+        };
+
+        socketRef.current.on('message_edited', handleMessageEdited);
+        socketRef.current.on('message_deleted', handleMessageDeleted);
+        socketRef.current.on('edit_error', ({ message: errorMessage }) => {
+            message.error('Failed to edit message: ' + errorMessage);
+            setEditingMessage(null);
+            setMessageInput('');
+        });
+        socketRef.current.on('delete_error', ({ message: errorMessage }) => {
+            message.error('Failed to delete message: ' + errorMessage);
+        });
+        socketRef.current.on('send_error', ({ message: errorMessage }) => {
+            message.error('Failed to send message: ' + errorMessage);
+        });
+
+        return () => {
+            socketRef.current?.off('message_edited', handleMessageEdited);
+            socketRef.current?.off('message_deleted');
+            socketRef.current?.off('edit_error');
+            socketRef.current?.off('delete_error');
+            socketRef.current?.off('send_error');
+        };
+    }, [currentUser?.id, selectedUser]);
 
     const getFilteredUsers = () => {
         if (!userData?.data) return [];
@@ -668,11 +921,140 @@ export default function Chat() {
         );
     };
 
+    const renderMessageStatus = (message) => {
+        if (!message.status) return null;
+
+        const getTickClass = (status) => {
+            switch (status) {
+                case 'sent':
+                    return 'single';
+                case 'delivered':
+                    return 'double';
+                case 'read':
+                    return 'seen';
+                default:
+                    return 'single';
+            }
+        };
+
+        const tickClass = getTickClass(message.status);
+
+        return (
+            <div className="message-status">
+                <div className="tick-wrapper">
+                    {message.status === 'sent' ? (
+                        <CheckOutlined className={`tick-icon ${tickClass}`} />
+                    ) : (
+                        <>
+                            <CheckOutlined className={`tick-icon ${tickClass}`} />
+                            <CheckOutlined className={`tick-icon ${tickClass}`} />
+                        </>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderMessage = (message) => {
+        const isCurrentUser = message.sender_id === currentUser?.id;
+        const messageTime = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const menuItems = [
+            {
+                key: 'edit',
+                label: 'Edit Message',
+                icon: <EditOutlined />,
+                onClick: () => handleMessageEdit(message)
+            },
+            {
+                key: 'delete',
+                label: 'Delete Message',
+                icon: <DeleteOutlined />,
+                danger: true,
+                onClick: () => handleMessageDelete(message)
+            }
+        ];
+
+        return (
+            <Dropdown
+                menu={{ items: isCurrentUser ? menuItems : [] }}
+                trigger={['contextMenu']}
+                disabled={!isCurrentUser}
+            >
+                <div
+                    className={`message ${isCurrentUser ? 'sent' : 'received'}`}
+                    key={message.id || message.timestamp}
+                >
+                    <div className="message-content">
+                        {message.attachments ? (
+                            <>
+                                {message.attachments.map((file, index) => (
+                                    <div
+                                        key={index}
+                                        className={`file-attachment ${file.type.startsWith('image/') ? 'image-attachment' : ''}`}
+                                    >
+                                        {file.type.startsWith('image/') ? (
+                                            <div className="image-preview">
+                                                <img src={file.url} alt="attachment" onClick={() => window.open(file.url, '_blank')} />
+                                            </div>
+                                        ) : (
+                                            <div className="file-info">
+                                                <div className="file-icon-wrapper">
+                                                    <FileOutlined />
+                                                    <span className="file-type">{file.type.split('/')[1]}</span>
+                                                </div>
+                                                <div className="file-details">
+                                                    <span className="file-name">{file.name}</span>
+                                                    <span className="file-size">{formatFileSize(file.size)}</span>
+                                                </div>
+                                                <div className="download-icon" onClick={() => window.open(file.url, '_blank')}>
+                                                    <DownloadOutlined />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {message.message && (
+                                    <Typography.Text>{message.message}</Typography.Text>
+                                )}
+                            </>
+                        ) : (
+                            <Typography.Text>{message.message}</Typography.Text>
+                        )}
+                        <div className="message-footer">
+                            <span className="message-time">
+                                {messageTime}
+                                {message.edited && <span className="edited-indicator">(edited)</span>}
+                            </span>
+                            {isCurrentUser && renderMessageStatus(message)}
+                        </div>
+                    </div>
+                </div>
+            </Dropdown>
+        );
+    };
+
     const renderChatItem = (item) => {
         const roleStyle = getRoleColor(item.role);
         const isTyping = typingUsers.has(item.id);
         const isChatOpen = selectedUser?.id === item.id;
         const showUnreadBadge = !isChatOpen && item.unread > 0;
+
+        const getMessagePreview = () => {
+            if (isTyping) {
+                return <span className="typing-indicator-sidebar">typing...</span>;
+            }
+
+            if (showUnreadBadge && item.unread > 1) {
+                return (
+                    <span className="new-messages-indicator">
+                        {item.unread}+ new messages
+                    </span>
+                );
+            }
+
+            return item.lastMessage;
+        };
 
         return (
             <List.Item
@@ -701,12 +1083,11 @@ export default function Chat() {
                     }
                     description={
                         <div className="chat-item-description">
-                            <Text type="secondary" className={`last-message ${isTyping ? 'typing' : ''}`}>
-                                {isTyping ? (
-                                    <span className="typing-indicator-sidebar">typing...</span>
-                                ) : (
-                                    item.lastMessage
-                                )}
+                            <Text
+                                type="secondary"
+                                className={`last-message ${isTyping ? 'typing' : ''} ${showUnreadBadge && item.unread > 1 ? 'new-messages' : ''}`}
+                            >
+                                {getMessagePreview()}
                             </Text>
                         </div>
                     }
@@ -1145,6 +1526,137 @@ export default function Chat() {
         );
     };
 
+    // Add file handling functions
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+        const validFiles = files.map(file => ({
+            file,
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: null
+        }));
+
+        // Read files as base64
+        validFiles.forEach(fileObj => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                fileObj.data = e.target.result;
+                setSelectedFiles(prev => [...prev, fileObj]);
+            };
+            reader.readAsDataURL(fileObj.file);
+        });
+    };
+
+    const handleFileSend = async () => {
+        if (!selectedFiles.length || !selectedUser || !socketRef.current) return;
+
+        setUploading(true);
+        try {
+            socketRef.current.emit('upload_chat_files', {
+                files: selectedFiles,
+                sender_id: currentUser?.id,
+                receiver_id: selectedUser.id,
+                message: messageInput.trim()
+            });
+
+            setSelectedFiles([]);
+            setMessageInput('');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        } catch (error) {
+            message.error('Failed to upload files');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleFileDelete = (fileIndex) => {
+        setSelectedFiles(prev => prev.filter((_, index) => index !== fileIndex));
+    };
+
+    // Update chat input section
+    const renderChatInput = () => (
+        <div className="chat-input">
+            {editingMessage && (
+                <div className="edit-mode-indicator">
+                    <EditOutlined /> Editing message
+                    <Button
+                        type="link"
+                        size="small"
+                        onClick={() => {
+                            setEditingMessage(null);
+                            setMessageInput('');
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            )}
+            {selectedFiles.length > 0 && (
+                <div className="selected-files">
+                    {selectedFiles.map((file, index) => (
+                        <div key={index} className="selected-file">
+                            {file.type.startsWith('image/') ? (
+                                <div className="image-preview">
+                                    <img src={file.data} alt={file.name} />
+                                </div>
+                            ) : (
+                                <FileOutlined className="file-icon" />
+                            )}
+                            <span className="file-name">{file.name}</span>
+                            <Button
+                                type="text"
+                                icon={<DeleteOutlined />}
+                                onClick={() => handleFileDelete(index)}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div className="input-wrapper">
+                <label className="upload-button">
+                    <input
+                        type="file"
+                        onChange={handleFileSelect}
+                        multiple
+                        ref={fileInputRef}
+                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    />
+                    <PaperClipOutlined />
+                </label>
+                <Input.TextArea
+                    value={messageInput}
+                    onChange={handleMessageInputChange}
+                    placeholder="Type a message..."
+                    autoSize={{ minRows: 1, maxRows: 4 }}
+                    onPressEnter={(e) => {
+                        if (!e.shiftKey) {
+                            e.preventDefault();
+                            if (selectedFiles.length > 0) {
+                                handleFileSend();
+                            } else {
+                                handleSendMessage();
+                            }
+                        }
+                    }}
+                    className="message-input"
+                />
+                <Button
+                    type="primary"
+                    icon={<SendOutlined />}
+                    onClick={selectedFiles.length > 0 ? handleFileSend : handleSendMessage}
+                    className="send-button"
+                    loading={uploading}
+                />
+            </div>
+            <Text type="secondary" className="input-hint">
+                Press Enter to send, Shift + Enter for new line
+            </Text>
+        </div>
+    );
+
     return (
         <Layout className="chat-container">
             <Sider width={380} className="chat-sider">
@@ -1245,83 +1757,10 @@ export default function Chat() {
                                 <Button type="text" icon={<EllipsisOutlined />} />
                             )}
                         </div>
-                        <div className="chat-messages">
-                            {getMessages().map((message, index) => (
-                                <div
-                                    key={`${message.timestamp}-${index}`}
-                                    className={`message ${message.sender_id === currentUser?.id ? 'sent' : 'received'}`}
-                                >
-                                    <div className="message-content">
-                                        {selectedUser.type === 'group' && message.sender_id !== currentUser?.id && (
-                                            <Text type="secondary" className="message-sender">
-                                                {userData?.data?.find(u => u.id === message.sender_id)?.username || 'Unknown'}
-                                            </Text>
-                                        )}
-                                        <Text>{message.message}</Text>
-                                        <Text type="secondary" className="message-time">
-                                            {new Date(message.timestamp).toLocaleTimeString([], {
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
-                                            {message.status === 'read' && message.sender_id === currentUser?.id && (
-                                                <span className="message-status">✓✓</span>
-                                            )}
-                                            {message.status === 'delivered' && message.sender_id === currentUser?.id && (
-                                                <span className="message-status">✓</span>
-                                            )}
-                                        </Text>
-                                    </div>
-                                </div>
-                            ))}
+                        <div className="chat-messages" ref={messagesContainerRef}>
+                            {getMessages().map((message, index) => renderMessage(message))}
                         </div>
-                        <div className="chat-input">
-                            <div className="input-wrapper">
-                                <label className="upload-button">
-                                    <input
-                                        type="file"
-                                        onChange={(e) => {
-                                            // Handle file upload here
-                                            console.log(e.target.files[0]);
-                                        }}
-                                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
-                                    />
-                                    <PaperClipOutlined />
-                                </label>
-                                <Input.TextArea
-                                    value={messageInput}
-                                    onChange={(e) => {
-                                        console.log('Input changed, triggering typing event');
-                                        setMessageInput(e.target.value);
-                                        if (socketRef.current && selectedUser) {
-                                            handleTyping();
-                                        } else {
-                                            console.log('Cannot trigger typing event:', {
-                                                socketConnected: !!socketRef.current,
-                                                selectedUser: selectedUser
-                                            });
-                                        }
-                                    }}
-                                    placeholder="Type a message..."
-                                    autoSize={{ minRows: 1, maxRows: 4 }}
-                                    onPressEnter={(e) => {
-                                        if (!e.shiftKey) {
-                                            e.preventDefault();
-                                            handleSendMessage();
-                                        }
-                                    }}
-                                    className="message-input"
-                                />
-                                <Button
-                                    type="primary"
-                                    icon={<SendOutlined />}
-                                    onClick={handleSendMessage}
-                                    className="send-button"
-                                />
-                            </div>
-                            <Text type="secondary" className="input-hint">
-                                Press Enter to send, Shift + Enter for new line
-                            </Text>
-                        </div>
+                        {renderChatInput()}
                     </>
                 ) : (
                     <div className="no-chat-selected">
