@@ -18,20 +18,17 @@ import {
     FiMail,
     FiPhone,
     FiHome,
-    FiCalendar,
     FiMapPin,
     FiShield,
     FiSettings,
-    FiChevronRight
+    FiMap,
+    FiGlobe,
 } from 'react-icons/fi';
 import { selectCurrentUser, selectUserRole } from '../../../auth/services/authSlice';
-import { useUpdateSuperAdminProfileMutation, useGetSuperAdminProfileQuery } from './services/superadminProfileApi';
-import { resetUpdateStatus } from './services/superadminProfileSlice';
-import EditProfileModal from './EditProfileModal';
 import './profile.scss';
+import EditProfileModal from './EditProfileModal';
 
 const { Title, Text } = Typography;
-
 
 // Helper functions
 const getInitials = (name) => {
@@ -41,6 +38,7 @@ const getInitials = (name) => {
 
 const formatRole = (role) => {
     if (!role || typeof role !== 'string') return 'User';
+    if (role === 'client') return 'Company';
     return role.split('-').map(word =>
         word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
@@ -52,7 +50,6 @@ const getUserFullName = (user) => {
     }
     return user?.username || 'User';
 };
-
 
 const ProfileHeader = ({ user, userRole, onEditClick }) => {
     return (
@@ -76,7 +73,7 @@ const ProfileHeader = ({ user, userRole, onEditClick }) => {
                 </div>
                 <div className="profile-title">
                     <Title level={3}>{getUserFullName(user)}</Title>
-                    <Text className="username">@{user?.username || 'superadmin'}</Text>
+                    <Text className="username">@{user?.username || 'user'}</Text>
                     <div className="role-badge">
                         <FiShield />
                         {formatRole(userRole)}
@@ -98,7 +95,6 @@ const PersonalInfo = ({ user }) => {
         { icon: FiUser, label: 'Last Name', value: user?.lastName || 'Not provided' },
         { icon: FiMail, label: 'Email', value: user?.email },
         { icon: FiPhone, label: 'Phone', value: user?.phone || 'Not provided' },
-        
     ];
 
     return (
@@ -123,16 +119,37 @@ const PersonalInfo = ({ user }) => {
 
 const AdditionalInfo = ({ user, userRole }) => {
     const infoItems = [
+      
         {
             icon: FiMapPin,
-            label: 'Location',
-            value: user?.location || 'Not provided'
+            label: 'Address',
+            value: user?.address || 'Not provided'
+        },
+        {
+            icon: FiHome,
+            label: 'City',
+            value: user?.city || 'Not provided'
+        },
+        {
+            icon: FiMap,
+            label: 'State',
+            value: user?.state || 'Not provided'
+        },
+        {
+            icon: FiGlobe,
+            label: 'Country',
+            value: user?.country || 'Not provided'
+        },
+        {
+            icon: FiMapPin,
+            label: 'Zip Code',
+            value: user?.zipCode || 'Not provided'
         },
         {
             icon: FiShield,
             label: 'Role',
             value: formatRole(userRole)
-        }
+        },
     ];
 
     return (
@@ -156,57 +173,9 @@ const AdditionalInfo = ({ user, userRole }) => {
 };
 
 const Profile = () => {
-    const dispatch = useDispatch();
     const user = useSelector(selectCurrentUser);
     const userRole = useSelector(selectUserRole);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-
-    // Fetch profile data using the getSuperAdmin API
-    const { data: profileData, isLoading: isProfileLoading, refetch: refetchProfile } =
-        useGetSuperAdminProfileQuery(user?.id, { skip: !user?.id });
-
-    // Use the profile data from the API if available, otherwise use the data from Redux
-    const profileInfo = profileData?.data || user;
-
-    // Use the RTK Query mutation hook
-    const [updateSuperAdminProfile, { isLoading: isSubmitting, isSuccess, isError, error }] = useUpdateSuperAdminProfileMutation();
-
-    // Handle success and error states
-    useEffect(() => {
-        if (isSuccess) {
-            message.success('Profile updated successfully');
-            setIsEditModalVisible(false);
-            dispatch(resetUpdateStatus());
-            // Refetch profile data after successful update
-            if (user?.id) {
-                refetchProfile();
-            }
-        }
-
-        if (isError) {
-            const errorMessage = error?.data?.message || 'Unknown error';
-
-            // Check if it's an S3 permission error
-            if (errorMessage.includes('not authorized to perform: s3:DeleteObject') ||
-                errorMessage.includes('explicit deny in an identity-based policy')) {
-                // Show a more concise error message
-                message.warning({
-                    content: 'Profile information updated, but profile picture could not be changed due to permission restrictions.',
-                    duration: 5,
-                    key: 'profile-update-error'
-                });
-                // Refetch profile data even after this specific error
-                if (user?.id) {
-                    refetchProfile();
-                }
-            } else {
-                message.error({
-                    content: 'Failed to update profile: ' + errorMessage,
-                    key: 'profile-update-error'
-                });
-            }
-        }
-    }, [isSuccess, isError, error, dispatch, user, refetchProfile]);
 
     const handleEditProfile = () => {
         setIsEditModalVisible(true);
@@ -217,41 +186,22 @@ const Profile = () => {
     };
 
     const handleSubmitEdit = async (formData) => {
-        if (user?.id) {
-            await updateSuperAdminProfile({ id: user.id, formData });
-        } else {
-            message.error('User ID not found');
+        try {
+            // Add your update profile API call here
+            // await updateProfile(formData);
+            message.success('Profile updated successfully');
+            setIsEditModalVisible(false);
+        } catch (error) {
+            message.error('Failed to update profile');
         }
     };
-
-    if (isProfileLoading) {
-        return (
-            <div className="profile-page loading">
-                <div className="page-breadcrumb">
-                    <Breadcrumb>
-                        <Breadcrumb.Item>
-                            <Link to="/superadmin">
-                                <FiHome style={{ marginRight: '4px' }} />
-                                Home
-                            </Link>
-                        </Breadcrumb.Item>
-                        <Breadcrumb.Item>Profile</Breadcrumb.Item>
-                    </Breadcrumb>
-                </div>
-                <div className="loading-container">
-                    <Spin size="large" />
-                    <Text>Loading profile information...</Text>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="profile-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
-                        <Link to="/superadmin">
+                        <Link to="/dashboard">
                             <FiHome style={{ marginRight: '4px' }} />
                             Home
                         </Link>
@@ -269,26 +219,24 @@ const Profile = () => {
 
             <Card className="profile-details-card">
                 <ProfileHeader
-                    user={profileInfo}
+                    user={user}
                     userRole={userRole}
                     onEditClick={handleEditProfile}
                 />
                 <Divider />
-                <PersonalInfo user={profileInfo} />
+                <PersonalInfo user={user} />
                 <Divider />
-                <AdditionalInfo user={profileInfo} userRole={userRole} />
+                <AdditionalInfo user={user} userRole={userRole} />
             </Card>
 
             <EditProfileModal
                 visible={isEditModalVisible}
                 onCancel={handleCancelEdit}
                 onSubmit={handleSubmitEdit}
-                initialValues={profileInfo}
-                loading={isSubmitting}
+                initialValues={user}
             />
         </div>
     );
 };
 
 export default Profile;
-

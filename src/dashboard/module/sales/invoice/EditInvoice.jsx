@@ -41,8 +41,6 @@ const { Option } = Select;
 
 const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
-
-  console.log("initialValues",initialValues);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [updateInvoice] = useUpdateInvoiceMutation();
@@ -60,7 +58,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
-  // console.log("productsData",productsData.data);
 
   useEffect(() => {
     if (initialValues) {

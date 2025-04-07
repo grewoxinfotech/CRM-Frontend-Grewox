@@ -246,14 +246,14 @@ const Revenue = () => {
                 <FiChevronDown size={16} />
               </Button>
             </Dropdown>
-            <Button
+            {/* <Button
               type="primary"
               icon={<FiPlus size={16} />}
               onClick={handleCreate}
               className="add-button"
             >
               Add Revenue
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>

@@ -34,7 +34,7 @@ import {
   FiBell,
   FiFile,
   FiEdit3,
-  FiBookOpen, 
+  FiBookOpen,
   FiPackage,
   FiGlobe,
   FiPercent,
@@ -57,24 +57,18 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
   const [isJobOpen, setJobOpen] = useState(false);
   const [isSalesOpen, setSalesOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
+  const [isProfileOpen, setProfileOpen] = useState(false);
   const handleLogout = useLogout();
 
   const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetAllRolesQuery();
   const loggedInUser = useSelector(selectCurrentUser);
 
-  // console.log("rolesData", rolesData);
-
-  // Find user's role data
   const userRoleData = rolesData?.data?.find(role => role.id === loggedInUser?.role_id);
   
-
   const rolename = userRoleData?.role_name;
 
-
-  // Parse permissions if they exist
   const userPermissionsData = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
 
-  // Check if user has any permissions
   const hasNoPermissions = !userPermissionsData || Object.keys(userPermissionsData).length === 0;
 
   const userRole = useSelector(selectUserRole);
@@ -88,21 +82,17 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
   }, [userRole]);
 
   const checkPermission = (moduleKey) => {
-    // Check if user's role is client
     if (rolename?.toLowerCase() === 'client') {
-      return true; // Show everything for client role
+      return true;
     }
 
-    // If user has no permissions, only allow specific modules
     if (hasNoPermissions) {
       const allowedModules = ['settings', 'communication', 'support'];
       return allowedModules.includes(moduleKey);
     }
 
-    // For other roles, check specific permissions
     if (!userPermissionsData) return false;
 
-    // Check if the permission exists and has at least view access
     const modulePermissions = userPermissionsData[moduleKey];
     if (modulePermissions && modulePermissions.length > 0) {
       return modulePermissions[0].permissions.includes('view');
@@ -112,38 +102,30 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
   };
 
   const shouldShowMenuItem = (item) => {
-    // If role is client, show everything
     if (rolename?.toLowerCase() === 'client') {
       return true;
     }
 
-    // If user has no permissions, only show specific items
     if (hasNoPermissions) {
       const allowedModules = ['Setting', 'Communication', 'Support'];
       return allowedModules.includes(item.title);
     }
 
-    // If no permission required, show the item
     if (!item.permission) return true;
 
-    // For parent menu items with subItems
     if (item.subItems?.length > 0) {
-      // Show if any child has permission
       return item.subItems.some(subItem =>
         !subItem.permission || checkPermission(subItem.permission)
       );
     }
 
-    // For individual items
     return checkPermission(item.permission);
   };
 
-  // Sync local state with props
   useEffect(() => {
     setIsCollapsed(collapsed);
   }, [collapsed]);
 
-  // Handle sidebar collapse toggle
   const handleToggleCollapse = () => {
     const newCollapsedState = !isCollapsed;
     setIsCollapsed(newCollapsedState);

@@ -66,6 +66,7 @@ import Vendor from "../dashboard/module/purchase/vendor/index.jsx";
 import Billing from "../dashboard/module/purchase/billing/index.jsx";
 import DebitNote from "../dashboard/module/purchase/debitnote/index.jsx";
 import Mail from "../dashboard/module/communication/mail/mail.jsx";
+import Profiles from "../dashboard/module/profile/index.jsx";
 
 
   const PermissionRoute = ({ children, permissionKey }) => {
@@ -121,6 +122,10 @@ const routes = createBrowserRouter([
       {
         path: "/dashboard/clients",
         element: <SubClient />,
+      },
+      {
+        path: "/dashboard/profile",
+        element: <Profiles />,
       },
       {
         path: "customers",
