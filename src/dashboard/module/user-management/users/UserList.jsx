@@ -1,9 +1,30 @@
 import React from 'react';
-import { Table, Button, Tag, Dropdown, Menu, Avatar } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiShield, FiUser, FiBriefcase, FiUsers, FiEye } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Menu, Avatar, message } from 'antd';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiShield, FiUser, FiBriefcase, FiUsers, FiEye, FiLogIn } from 'react-icons/fi';
 import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
+import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 
 const UserList = ({ users, loading, onEdit, onDelete, onView, currentPage, onPageChange }) => {
+    const navigate = useNavigate();
+    const [adminLogin] = useAdminLoginMutation();
+
+    const handleAdminLogin = async (user) => {
+        try {
+            const response = await adminLogin({
+                email: user.email,
+                isClientPage: true
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Logged in as user successfully');
+                navigate('/dashboard');
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to login as user');
+        }
+    };
+
     const getRoleColor = (role) => {
         const roleColors = {
             'super-admin': {
@@ -74,7 +95,7 @@ const UserList = ({ users, loading, onEdit, onDelete, onView, currentPage, onPag
             >
                 Change Status
             </Menu.Item>
-            {record.role_name !== 'Super Admin' && (
+            {record.role_name !== 'super-admin' && (
                 <Menu.Item
                     key="delete"
                     icon={<FiTrash2 />}
@@ -246,22 +267,58 @@ const UserList = ({ users, loading, onEdit, onDelete, onView, currentPage, onPag
         {
             title: 'Actions',
             key: 'actions',
-            width: '60px',
+            width: '120px',
             align: 'center',
             render: (_, record) => (
-                <Dropdown
-                    overlay={getActionMenu(record)}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayClassName="user-actions-dropdown"
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical size={16} />}
-                        className="action-button"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </Dropdown>
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                    {record.role_name !== 'super-admin' && (
+                        <Button
+                            type="primary"
+                            icon={<FiLogIn size={14} />}
+                            size="small"
+                            onClick={() => handleAdminLogin(record)}
+                            className="login-button"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '4px',
+                                height: '32px',
+                                padding: '0 12px',
+                                borderRadius: '6px',
+                                fontWeight: 500,
+                                background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
+                                border: 'none',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 2px 4px rgba(24, 144, 255, 0.2)',
+                                fontSize: '13px'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                        >
+                            Login
+                        </Button>
+                    )}
+                    <Dropdown
+                        overlay={getActionMenu(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="user-actions-dropdown"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical size={16} />}
+                            className="action-button"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </Dropdown>
+                </div>
             ),
         },
     ];

@@ -457,8 +457,12 @@
                     justify-content: flex-start;
 
                     .message-content {
-                        background: #fff;
-                        border-radius: 12px 12px 12px 0;
+                        background: #f0f2f5;
+                        border-radius: 0 12px 12px 12px;
+
+                        .message-sender {
+                            color: #1890ff;
+                        }
                     }
 
                     .message-status {
@@ -484,6 +488,14 @@
                             color: #1890ff;
                         }
                     }
+                }
+
+                .message-sender {
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                    display: block;
+                    color: #1890ff;
+                    font-weight: 500;
                 }
             }
         }
