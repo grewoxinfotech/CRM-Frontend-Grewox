@@ -492,6 +492,13 @@ const CreateProposal = ({ open, onCancel, onSuccess }) => {
               height: '48px',
               backgroundColor: '#f8fafc',
             }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
           >
             {currencyOptions.map(currency => (
               <Option key={currency.value} value={currency.value}>

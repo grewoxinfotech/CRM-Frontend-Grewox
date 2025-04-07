@@ -215,6 +215,13 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
               rules={[{ required: true, message: "Please select an employee" }]}
             >
               <Select
+              listHeight={100}
+              dropdownStyle={{
+                Height: '100px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
                 placeholder="Select Employee"
                 size="large"
                 loading={isLoadingEmployees}
@@ -255,6 +262,13 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
               ]}
             >
               <Select
+              listHeight={100}
+              dropdownStyle={{
+                Height: '100px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
                 placeholder="Select Payslip Type"
                 size="large"
                 style={{

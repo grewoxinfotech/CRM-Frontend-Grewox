@@ -279,6 +279,13 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
           <Select
             placeholder="Select payment method"
             style={{ width: "100%" }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '100px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
           >
             <Option value="cash">Cash</Option>
             <Option value="bank_transfer">Bank Transfer</Option>

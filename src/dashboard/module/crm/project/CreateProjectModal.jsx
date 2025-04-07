@@ -338,7 +338,13 @@ const CreateProjectModal = ({ visible, onCancel, onSubmit, loading }) => {
                             placeholder="Select project category"
                             style={selectStyle}
                             suffixIcon={<FiFolder style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            dropdownStyle={{ borderRadius: '10px' }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                         >
                             <Option value="web">Web Development</Option>
                             <Option value="mobile">Mobile App</Option>
@@ -386,7 +392,13 @@ const CreateProjectModal = ({ visible, onCancel, onSubmit, loading }) => {
                             placeholder="Select client"
                             style={selectStyle}
                             suffixIcon={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            dropdownStyle={{ borderRadius: '10px' }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             showSearch
                             loading={subclientsLoading}
                             optionFilterProp="children"
@@ -496,7 +508,13 @@ const CreateProjectModal = ({ visible, onCancel, onSubmit, loading }) => {
                         showSearch
                         open={projectMembersOpen}
                         onDropdownVisibleChange={setProjectMembersOpen}
-                        dropdownStyle={{ borderRadius: '10px' }}
+                        listHeight={100}
+                        dropdownStyle={{
+                            maxHeight: '120px',
+                            overflowY: 'auto',
+                            scrollbarWidth: 'thin',
+                            scrollBehavior: 'smooth'
+                        }}
                         dropdownRender={(menu) => (
                             <>
                                 {menu}

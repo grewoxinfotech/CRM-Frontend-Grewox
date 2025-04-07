@@ -32,6 +32,7 @@ const LeadFollowup = ({ leadId }) => {
     const { data: statuses } = useGetStatusesQuery(currentUser?.id);
     const { data: followupTypes } = useGetFollowupTypesQuery(currentUser?.id);
 
+
     const followupTypesData = followupTypes?.data || [];
 
     // Get lead members from leadData and ensure it's an array
@@ -120,6 +121,8 @@ const LeadFollowup = ({ leadId }) => {
                 color: status.color
             }));
     }, [statuses]);
+
+
 
     // Filter followup type options
     const typeOptions = React.useMemo(() => {
@@ -592,6 +595,13 @@ const LeadFollowup = ({ leadId }) => {
                                 borderRadius: "10px",
                                 height: "48px"
                             }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             popupClassName="custom-select-dropdown"
                         >
                             {typeOptions.map(type => (
@@ -641,6 +651,13 @@ const LeadFollowup = ({ leadId }) => {
                                 width: "100%",
                                 borderRadius: "10px",
                                 height: "48px"
+                            }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
                             }}
                             filterOption={(input, option) => {
                                 const username = option?.username?.toLowerCase() || '';
@@ -819,6 +836,13 @@ const LeadFollowup = ({ leadId }) => {
                                 width: "100%",
                                 borderRadius: "10px",
                                 height: "48px"
+                            }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
                             }}
                         >
                             {statusOptions.map(status => (

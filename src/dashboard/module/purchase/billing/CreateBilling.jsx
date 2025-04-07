@@ -329,6 +329,13 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                         rules={[{ required: true, message: 'Please select currency' }]}
                     >
                         <Select
+                        listHeight={100}
+                        dropdownStyle={{
+                          Height: '100px',
+                          overflowY: 'auto',
+                          scrollbarWidth: 'thin',
+                          scrollBehavior: 'smooth'
+                        }}
                             placeholder="Select Currency"
                             size="large"
                             loading={currenciesLoading}

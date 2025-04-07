@@ -175,6 +175,13 @@ const CreateLeave = ({ open, onCancel }) => {
                 placeholder="Select Employee"
                 size="large"
                 loading={isLoadingEmployees}
+                listHeight={100}
+              dropdownStyle={{
+                Height: '100px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                  scrollBehavior: "smooth",
+                }}
                 showSearch
                 allowClear
                 style={{
@@ -214,6 +221,13 @@ const CreateLeave = ({ open, onCancel }) => {
               rules={[{ required: true, message: "Please select leave type" }]}
             >
               <Select
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: "smooth",
+                }}
                 placeholder="Select Leave Type"
                 size="large"
                 style={{

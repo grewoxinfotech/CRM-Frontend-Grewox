@@ -250,6 +250,13 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
       rules={[{ required: true, message: "Please select customer" }]}
     >
       <Select
+       listHeight={100}
+       dropdownStyle={{
+         Height: '100px',
+         overflowY: 'auto',
+         scrollbarWidth: 'thin',
+         scrollBehavior: 'smooth'
+       }}
         placeholder="Select Customer"
         showSearch
         optionFilterProp="children"

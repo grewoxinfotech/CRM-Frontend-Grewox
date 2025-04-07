@@ -395,6 +395,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         rules={[{ required: true, message: 'Please select category' }]}
                     >
                         <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             placeholder="Select category"
                             size="large"
                             style={{
@@ -417,6 +424,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         rules={[{ required: true, message: 'Please select skills' }]}
                     >
                         <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             mode="multiple"
                             placeholder="Select required skills"
                             size="large"
@@ -445,6 +459,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         rules={[{ required: true, message: 'Please select interview rounds' }]}
                     >
                         <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             mode="multiple"
                             placeholder="Select interview rounds"
                             size="large"
@@ -473,6 +494,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         rules={[{ required: true, message: 'Please select work experience' }]}
                     >
                         <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             placeholder="Select work experience"
                             size="large"
                             style={{
@@ -522,7 +550,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     >
                         <DatePicker
                             size="large"
-                            format="YYYY-MM-DD"
+                            format="DD-MM-YYYY"
                             style={{
                                 width: '100%',
                                 height: '48px',
@@ -560,7 +588,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     >
                         <DatePicker
                             size="large"
-                            format="YYYY-MM-DD"
+                            format="DD-MM-YYYY"
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
@@ -582,6 +610,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         rules={[{ required: true, message: 'Please select job type' }]}
                     >
                         <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             placeholder="Select job type"
                             size="large"
                             style={{
@@ -604,6 +639,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         rules={[{ required: true, message: 'Please select status' }]}
                     >
                         <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             size="large"
                             style={{
                                 width: '100%',

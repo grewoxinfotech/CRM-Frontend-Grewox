@@ -565,6 +565,13 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
               placeholder="Select source"
               style={selectStyle}
               popupClassName="custom-select-dropdown"
+              listHeight={100}
+              dropdownStyle={{
+                maxHeight: '120px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
             >
               {sources.map((source) => (
                 <Option key={source.id} value={source.id}>
@@ -593,6 +600,13 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
               placeholder="Select status"
               style={selectStyle}
               popupClassName="custom-select-dropdown"
+              listHeight={100}
+              dropdownStyle={{
+                maxHeight: '120px', 
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
             >
               {statuses.map((status) => (
                 <Option key={status.id} value={status.id}>
@@ -621,6 +635,13 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
               placeholder="Select category"
               style={selectStyle}
               popupClassName="custom-select-dropdown"
+              listHeight={100}
+              dropdownStyle={{
+                maxHeight: '120px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
             >
               {categories.map((category) => (
                 <Option key={category.id} value={category.id}>
@@ -653,8 +674,15 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
               placeholder="Select team members"
               style={{
                 width: '100%',
-                height: 'auto',
-                minHeight: '48px'
+                // height: 'auto',
+                // minHeight: '48px'
+              }}
+              listHeight={100}
+              dropdownStyle={{
+                Height: '120px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
               }}
               popupClassName="custom-select-dropdown"
               showSearch

@@ -19,8 +19,7 @@ const DashboardLayout = () => {
     // Parse permissions if they exist
     const userPermissions = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
 
-    console.log("User Role Data:", userRoleData);
-    console.log("User Permissions:", userPermissions);
+  
 
     const handleSidebarToggle = (collapsed) => {
         setSidebarCollapsed(collapsed);

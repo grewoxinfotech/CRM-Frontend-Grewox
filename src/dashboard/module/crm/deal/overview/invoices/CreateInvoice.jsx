@@ -457,6 +457,13 @@ const CreateInvoice = ({ open,currencies, dealId, deal, onCancel, onSubmit, setC
                   const selected = currencies.find(c => c.id === value);
                   setSelectedCurrency(selected);
                 }}
+                listHeight={100}
+                dropdownStyle={{
+                  maxHeight: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
               >
                 {currencies.map((currency) => (
                   <Option key={currency.id} value={currency.id}>
@@ -552,7 +559,13 @@ const CreateInvoice = ({ open,currencies, dealId, deal, onCancel, onSubmit, setC
               }
             }}
             style={{ width: '100%' }}
-            dropdownStyle={{ maxHeight: 400 }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '100px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
             optionLabelProp="label"
           >
             {productsData?.data?.map(product => (

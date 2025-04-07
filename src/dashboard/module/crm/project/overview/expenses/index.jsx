@@ -229,7 +229,15 @@ const ProjectExpenses = ({ project }) => {
                             label="Category"
                             rules={[{ required: true, message: 'Please select category' }]}
                         >
-                            <Select placeholder="Select category">
+                            <Select placeholder="Select category"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    maxHeight: '120px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
+                            >
                                 {categories.map(category => (
                                     <Select.Option key={category} value={category}>
                                         {category}

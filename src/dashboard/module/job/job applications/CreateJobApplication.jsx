@@ -429,6 +429,13 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                         rules={[{ required: true, message: 'Please enter total experience' }]}
                     >
                         <Select
+                        listHeight={100}
+                        dropdownStyle={{
+                          Height: '100px',
+                          overflowY: 'auto',
+                          scrollbarWidth: 'thin',
+                          scrollBehavior: 'smooth'
+                        }}
                             placeholder="Select total experience"
                             size="large"
                             style={{

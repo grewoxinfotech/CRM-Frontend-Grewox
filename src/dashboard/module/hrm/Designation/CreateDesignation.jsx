@@ -281,6 +281,13 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                             showSearch
                             placeholder="Select a branch"
                             size="large"
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             loading={isLoadingBranches}
                             dropdownRender={dropdownRender}
                             style={{

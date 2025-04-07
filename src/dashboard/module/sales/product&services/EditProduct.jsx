@@ -336,6 +336,13 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
               rules={[{ required: true, message: "Please select a category" }]}
             >
               <Select
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
                 placeholder="Select category"
                 style={{ width: '100%', height: '48px' }}
                 dropdownRender={(menu) => (
@@ -398,42 +405,61 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
           gap: '16px',
           marginBottom: '32px'
         }}>
-          <Form.Item
+         <Form.Item
             name="buying_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Buying Price</span>}
             rules={[{ required: true, message: "Please enter buying price" }]}
           >
-            <div className="price-input-group">
+            <div className="price-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden',
+              marginBottom: 0
+            }}>
               <Form.Item
                 name="currency"
                 noStyle
+                rules={[{ required: true }]}
               >
-                <Select
-                  onChange={handleCurrencyChange}
-                  className="currency-select"
-                  dropdownClassName="currency-dropdown"
-                  // defaultValue={defaultCurrency}
-                >
-                  {currenciesData?.map((currency) => (
-                    <Option 
-                      key={currency.id} 
-                      value={currency.id}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{currency.currencyIcon}</span>
-                      </div>
-                    </Option>
-                  ))}
-                </Select>
+                <div style={{
+                  width: '100px',
+                  height: '48px',
+                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '10px 0 0 10px',
+                  fontWeight: 500
+                }}>
+                  <span>₹</span>
+                </div>
               </Form.Item>
-              <InputNumber
-                className="price-input"
-                placeholder="Enter buying price"
-                min={0}
-                precision={2}
-                value={form.getFieldValue('buying_price')}
-                onChange={(value) => form.setFieldsValue({ buying_price: value })}
-              />
+              <Form.Item
+                name="buying_price"
+                noStyle
+                rules={[{ required: true, message: 'Please enter buying price' }]}
+              >
+                <InputNumber
+                  placeholder="Enter buying price"
+                  size="large"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    border: 'none',
+                    borderLeft: '1px solid #e6e8eb',
+                    borderRadius: 0,
+                    height: '48px',
+                    padding: '0 16px',
+                  }}
+                  min={0}
+                  precision={2}
+                  className="price-input"
+                />
+              </Form.Item>
             </div>
           </Form.Item>
 
@@ -442,25 +468,54 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
             rules={[{ required: true, message: "Please enter selling price" }]}
           >
-            <div className="price-input-group">
+            <div className="price-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden',
+              marginBottom: 0
+            }}>
               <Select
-                value={form.getFieldValue('currency')}
+                value="BEzBBPneRQq6rbGYiwYj45k"
+                size="large"
+                style={{
+                  width: '100px',
+                  height: '48px'
+                }}
                 className="currency-select"
-                dropdownClassName="currency-dropdown"
                 disabled
               >
-                <Option value={form.getFieldValue('currency')}>
-                  {selectedCurrency}
+                <Option value="BEzBBPneRQq6rbGYiwYj45k">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>₹</span>
+                   
+                  </div>
                 </Option>
               </Select>
-              <InputNumber
-                className="price-input"
-                placeholder="Enter selling price"
-                min={0}
-                precision={2}
-                value={form.getFieldValue('selling_price')}
-                onChange={(value) => form.setFieldsValue({ selling_price: value })}
-              />
+              <Form.Item
+                name="selling_price"
+                noStyle
+                rules={[{ required: true, message: 'Please enter selling price' }]}
+              >
+                <InputNumber
+                  placeholder="Enter selling price"
+                  size="large"
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    border: 'none',
+                    borderLeft: '1px solid #e6e8eb',
+                    borderRadius: 0,
+                    height: '48px',
+                    padding: '0 16px',
+                  }}
+                  min={0}
+                  precision={2}
+                  className="price-input"
+                />
+              </Form.Item>
             </div>
           </Form.Item>
 

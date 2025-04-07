@@ -614,6 +614,13 @@ const DealFollowup = ({ deal }) => {
                                 borderRadius: "10px",
                                 height: "48px"
                             }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             popupClassName="custom-select-dropdown"
                         >
                             {typeOptions.map(type => (
@@ -663,6 +670,13 @@ const DealFollowup = ({ deal }) => {
                                 width: "100%",
                                 borderRadius: "10px",
                                 height: "48px"
+                            }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
                             }}
                             filterOption={(input, option) => {
                                 const username = option?.username?.toLowerCase() || '';
@@ -841,6 +855,13 @@ const DealFollowup = ({ deal }) => {
                                 width: "100%",
                                 borderRadius: "10px",
                                 height: "48px",
+                            }}
+                            listHeight={100}
+                            dropdownStyle={{
+                                maxHeight: '120px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
                             }}
                         >
                             <Option value="pending">

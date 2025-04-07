@@ -323,7 +323,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
                             }}
-                            format="YYYY-MM-DD"
+                            format="DD-MM-YYYY"
                             placeholder="Select expiry date"
                         />
                     </Form.Item>
@@ -349,7 +349,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
                             }}
-                            format="YYYY-MM-DD"
+                            format="DD-MM-YYYY"
                             placeholder="Select joining date"
                         />
                     </Form.Item>

@@ -254,6 +254,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                                 Branch Name
                             </span>
                         }
+                        
                         rules={[
                             { required: true, message: 'Please enter branch name' },
                             { max: 100, message: 'Branch name cannot exceed 100 characters' }
@@ -276,6 +277,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
 
                     <Form.Item
                         name="branchManager"
+                        
                         label={
                             <div style={{ 
                                 display: 'flex', 
@@ -296,6 +298,13 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                             optionFilterProp="label"
                             loading={isLoadingUsers}
                             size="large"
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',

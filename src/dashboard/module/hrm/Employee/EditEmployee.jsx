@@ -910,6 +910,13 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             }
                         >
                             <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                              Height: '100px',
+                              overflowY: 'auto',
+                              scrollbarWidth: 'thin',
+                              scrollBehavior: 'smooth'
+                            }}
                                 showSearch
                                 placeholder="Select a branch"
                                 size="large"
@@ -936,6 +943,13 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Department</span>}
                         >
                             <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                              Height: '100px',
+                              overflowY: 'auto',
+                              scrollbarWidth: 'thin',
+                              scrollBehavior: 'smooth'
+                            }}
                                 showSearch
                                 placeholder={form.getFieldValue('branch') ? "Select a department" : "Please select a branch first"}
                                 size="large"
@@ -962,6 +976,13 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Designation</span>}
                         >
                             <Select
+                            listHeight={100}
+                            dropdownStyle={{
+                              Height: '100px',
+                              overflowY: 'auto',
+                              scrollbarWidth: 'thin',
+                              scrollBehavior: 'smooth'
+                            }}
                                 showSearch
                                 placeholder={form.getFieldValue('branch') ? "Select a designation" : "Please select a branch first"}
                                 size="large"

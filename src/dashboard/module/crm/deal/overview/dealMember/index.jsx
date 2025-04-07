@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Table, Typography, Button, Space, Avatar, Tag, Tooltip, Modal, Form, Input, Select, message, Divider } from 'antd';
 import { FiPlus, FiTrash2, FiMail, FiPhone, FiStar, FiX, FiUserPlus, FiShield, FiUser, FiBriefcase } from 'react-icons/fi';
 import { useUpdateDealMutation, useGetDealsQuery } from '../../services/dealApi';
@@ -6,16 +6,17 @@ import { useGetUsersQuery } from "../../../../user-management/users/services/use
 import { useGetRolesQuery } from "../../../../hrm/role/services/roleApi";
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
-import './projectMember.scss';
+import CreateUser from '../../../../user-management/users/CreateUser';
+import './dealMember.scss';
 
 const { Text } = Typography;
 const { Option } = Select;
 
 const DealMember = ({ deal }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [form] = Form.useForm();
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [selectedMembers, setSelectedMembers] = useState([]);
+    const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+    const [form] = Form.useForm();
     const [updateDeal] = useUpdateDealMutation();
     const { data: usersResponse = { data: [] } } = useGetUsersQuery();
     const { refetch } = useGetDealsQuery();
@@ -35,14 +36,6 @@ const DealMember = ({ deal }) => {
     const assignedMembers = deal?.assigned_to ? 
         JSON.parse(deal.assigned_to)?.assigned_to || [] 
         : [];
-
-    // Set selected members when modal opens
-    useEffect(() => {
-        if (isModalVisible) {
-            setSelectedMembers(assignedMembers);
-            form.setFieldsValue({ members: assignedMembers });
-        }
-    }, [isModalVisible, assignedMembers, form]);
 
     const getRoleColor = (role) => {
         const roleColors = {
@@ -133,7 +126,7 @@ const DealMember = ({ deal }) => {
 
                 return (
                     <div className="role-wrapper">
-                        <Tag style={{
+                    <Tag style={{ 
                             margin: 0,
                             background: roleStyle.bg,
                             color: roleStyle.color,
@@ -150,43 +143,8 @@ const DealMember = ({ deal }) => {
                         }}>
                             {roleStyle.icon}
                             {userRole?.role_name || 'User'}
-                        </Tag>
-                        <span className="role-indicator" style={{
-                            position: 'absolute',
-                            left: '-2px',
-                            transform: 'translateY(-50%)',
-                            width: '7px',
-                            height: '7px',
-                            borderRadius: '50%',
-                            background: roleStyle.color
-                        }} />
-                    </div>
-                );
-            }
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            width: 100,
-            render: (_, record) => {
-                const user = users.find(u => u.id === record) || {};
-                return (
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <Tooltip title="Remove Member">
-                            <Button
-                                type="text"
-                                icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                                onClick={() => handleRemoveMember(record)}
-                                style={{
-                                    padding: '4px 8px',
-                                    height: 'auto',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            />
-                        </Tooltip>
-                    </div>
+                    </Tag>
+                </div>
                 );
             }
         }
@@ -194,7 +152,7 @@ const DealMember = ({ deal }) => {
 
     const handleModalSubmit = async (values) => {
         try {
-            const newAssignedTo = values.members || [];
+            const newAssignedTo = [...new Set([...assignedMembers, ...values.members])];
             
             await updateDeal({
                 id: deal.id,
@@ -204,11 +162,11 @@ const DealMember = ({ deal }) => {
             }).unwrap();
 
             await refetch();
-            message.success('Members updated successfully');
+            message.success('Members added successfully');
             setIsModalVisible(false);
             form.resetFields();
         } catch (error) {
-            message.error('Failed to update members');
+            message.error('Failed to add members');
         }
     };
 
@@ -230,6 +188,16 @@ const DealMember = ({ deal }) => {
         }
     };
 
+    const handleCreateUser = () => {
+        setIsCreateUserVisible(true);
+    };
+
+    const handleCreateUserSuccess = (newUser) => {
+        setIsCreateUserVisible(false);
+        const currentMembers = form.getFieldValue('members') || [];
+        form.setFieldValue('members', [...currentMembers, newUser.id]);
+    };
+
     return (
         <div className="deal-member">
             <Card
@@ -249,7 +217,7 @@ const DealMember = ({ deal }) => {
                         icon={<FiUserPlus style={{ fontSize: '16px' }} />}
                         onClick={() => {
                             setIsModalVisible(true);
-                            form.setFieldsValue({ members: assignedMembers });
+                            form.setFieldsValue({ members: [] });
                         }}
                         style={{
                             background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
@@ -262,7 +230,7 @@ const DealMember = ({ deal }) => {
                             borderRadius: '8px'
                         }}
                     >
-                        Update Members
+                        Add Members
                     </Button>
                 </div>
 
@@ -391,11 +359,16 @@ const DealMember = ({ deal }) => {
                                 mode="multiple"
                                 placeholder="Search and select members"
                                 style={{ width: '100%' }}
-                                open={dropdownOpen}
-                                onDropdownVisibleChange={setDropdownOpen}
                                 maxTagCount={5}
                                 maxTagTextLength={20}
                                 maxTagPlaceholder={(omittedValues) => `+${omittedValues.length} more`}
+                                listHeight={100}
+                                dropdownMatchSelectWidth={false}
+                                dropdownStyle={{
+                                    Height: '120px',
+                                    overflow: 'auto',
+                                    scrollbarWidth: 'thin',
+                                }}
                                 dropdownRender={(menu) => (
                                     <div>
                                         {menu}
@@ -403,19 +376,56 @@ const DealMember = ({ deal }) => {
                                         <div style={{
                                             padding: '8px',
                                             display: 'flex',
-                                            justifyContent: 'flex-end'
+                                            justifyContent: 'flex-end',
+                                            gap: '8px'
                                         }}>
                                             <Button
-                                                type="primary"
+                                                type="text"
+                                                icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                                                onClick={handleCreateUser}
+                                                style={{
+                                                    height: '36px',
+                                                    padding: '8px 12px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                                    color: '#ffffff',
+                                                    border: 'none',
+                                                    borderRadius: '6px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                                                }}
+                                            >
+                                                Add New User
+                                            </Button>
+                                            <Button
+                                                type="text"
+                                                icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
                                                 onClick={() => setDropdownOpen(false)}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                                    border: 'none',
                                                     height: '36px',
                                                     borderRadius: '6px',
-                                                    padding: '0 16px',
-                                                    fontSize: '14px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '8px',
+                                                    background: '#ffffff',
+                                                    border: '1px solid #1890ff',
+                                                    color: '#1890ff',
                                                     fontWeight: '500'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = '#e6f4ff';
+                                                    e.currentTarget.style.borderColor = '#69b1ff';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = '#ffffff';
+                                                    e.currentTarget.style.borderColor = '#1890ff';
                                                 }}
                                             >
                                                 Done
@@ -512,8 +522,8 @@ const DealMember = ({ deal }) => {
 
                                     return (
                                         <Option
-                                    key={user.id} 
-                                    value={user.id}
+                                            key={user.id} 
+                                            value={user.id}
                                             label={user.username}
                                             username={user.username}
                                         >
@@ -551,8 +561,8 @@ const DealMember = ({ deal }) => {
                                                         fontSize: '14px'
                                                     }}>
                                                         {user.username}
-                                        </span>
-                                    </div>
+                                                    </span>
+                                                </div>
                                                 <Tag style={{
                                                     margin: 0,
                                                     background: roleStyle.bg,
@@ -571,8 +581,8 @@ const DealMember = ({ deal }) => {
                                         </Option>
                                     );
                                 })}
-                        </Select>
-                    </Form.Item>
+                            </Select>
+                        </Form.Item>
                     </div>
 
                     <div style={{
@@ -620,126 +630,11 @@ const DealMember = ({ deal }) => {
                 </Form>
             </Modal>
 
-            <style jsx global>{`
-                .deal-member {
-                    .custom-card {
-                        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-                        border-radius: 12px;
-                        border: none;
-                    }
-
-                    .ant-table {
-                        background: transparent;
-                    }
-
-                    .ant-table-thead > tr > th {
-                        background: transparent;
-                        font-weight: 600;
-                        color: #4b5563;
-                        padding: 16px;
-                        border-bottom: 2px solid #e5e7eb;
-                    }
-
-                    .ant-table-tbody > tr > td {
-                        padding: 16px;
-                        border-bottom: 1px solid #e5e7eb;
-                    }
-
-                    .ant-table-tbody > tr:hover > td {
-                        background: #f8fafc;
-                    }
-
-                    .ant-select:not(.ant-select-customize-input) .ant-select-selector {
-                        background-color: #ffffff !important;
-                        border: 1px solid #d1d5db !important;
-                        border-radius: 8px !important;
-                        min-height: 42px !important;
-                        padding: 4px 8px !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        flex-wrap: wrap !important;
-                        gap: 4px !important;
-                    }
-
-                    .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
-                        border-color: #1890ff !important;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
-                    }
-
-                    .ant-select-multiple {
-                        .ant-select-selection-overflow {
-                            flex-wrap: wrap !important;
-                            gap: 4px !important;
-                            padding: 2px !important;
-                        }
-
-                        .ant-select-selection-overflow-item {
-                            margin: 0 !important;
-                        }
-
-                        .ant-select-selection-placeholder {
-                            padding: 0 8px !important;
-                        }
-                    }
-
-                    .ant-select-dropdown {
-                        padding: 8px !important;
-                        border-radius: 12px !important;
-                        border: 1px solid #e5e7eb !important;
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-                        
-                        .ant-select-item {
-                            padding: 8px !important;
-                            border-radius: 8px !important;
-                            margin: 2px 0 !important;
-                            
-                            &-option-selected {
-                                background-color: #E6F4FF !important;
-                                font-weight: 500 !important;
-                            }
-                            
-                            &-option-active {
-                                background-color: #F0F7FF !important;
-                            }
-                            
-                            &:hover {
-                                background-color: #F0F7FF !important;
-                            }
-                        }
-                    }
-
-                    .custom-dropdown {
-                        .ant-select-item-option-content {
-                            white-space: normal !important;
-                            word-break: break-word !important;
-                        }
-                    }
-
-                    .role-wrapper {
-                        position: relative;
-                        padding-left: 12px;
-                    }
-
-                    .role-indicator {
-                        animation: pulse 2s infinite;
-                    }
-
-                    @keyframes pulse {
-                        0% {
-                            transform: translateY(-50%) scale(1);
-                            opacity: 1;
-                        }
-                        50% {
-                            transform: translateY(-50%) scale(1.2);
-                            opacity: 0.8;
-                        }
-                        100% {
-                            transform: translateY(-50%) scale(1);
-                            opacity: 1;
-                        }
-                    }
-                }
-            `}</style>
+            <CreateUser
+                visible={isCreateUserVisible}
+                onCancel={() => setIsCreateUserVisible(false)}
+                onSuccess={handleCreateUserSuccess}
+            />
         </div>
     );
 };

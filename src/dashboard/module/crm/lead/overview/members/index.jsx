@@ -192,6 +192,10 @@ const LeadMembers = ({ leadId }) => {
         }
     ];
 
+    const handleCreateUser = () => {
+        setIsCreateUserVisible(true);
+    };
+
     const handleCreateUserSuccess = (newUser) => {
         setIsCreateUserVisible(false);
         const currentMembers = form.getFieldValue('lead_members') || [];
@@ -362,6 +366,13 @@ const LeadMembers = ({ leadId }) => {
                                 open={dropdownOpen}
                                 onDropdownVisibleChange={setDropdownOpen}
                                 loading={usersLoading || rolesLoading}
+                                listHeight={90}
+                                dropdownStyle={{
+                                    Height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
                                 maxTagCount={5}
                                 maxTagTextLength={20}
                                 maxTagPlaceholder={(omittedValues) => `+${omittedValues.length} more`}
@@ -372,19 +383,56 @@ const LeadMembers = ({ leadId }) => {
                                         <div style={{
                                             padding: '8px',
                                             display: 'flex',
-                                            justifyContent: 'flex-end'
+                                            justifyContent: 'flex-end',
+                                            gap: '8px'
                                         }}>
                                             <Button
-                                                type="primary"
+                                                type="text"
+                                                icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                                                onClick={handleCreateUser}
+                                                style={{
+                                                    height: '36px',
+                                                    padding: '8px 12px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                                    color: '#ffffff',
+                                                    border: 'none',
+                                                    borderRadius: '6px'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                                                }}
+                                            >
+                                                Add New User
+                                            </Button>
+                                            <Button
+                                                type="text"
+                                                icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
                                                 onClick={() => setDropdownOpen(false)}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                                    border: 'none',
                                                     height: '36px',
                                                     borderRadius: '6px',
-                                                    padding: '0 16px',
-                                                    fontSize: '14px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: '8px',
+                                                    background: '#ffffff',
+                                                    border: '1px solid #1890ff',
+                                                    color: '#1890ff',
                                                     fontWeight: '500'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.background = '#e6f4ff';
+                                                    e.currentTarget.style.borderColor = '#69b1ff';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.background = '#ffffff';
+                                                    e.currentTarget.style.borderColor = '#1890ff';
                                                 }}
                                             >
                                                 Done
@@ -590,7 +638,7 @@ const LeadMembers = ({ leadId }) => {
             </Modal>
 
             <CreateUser
-                open={isCreateUserVisible}
+                visible={isCreateUserVisible}
                 onCancel={() => setIsCreateUserVisible(false)}
                 onSuccess={handleCreateUserSuccess}
             />

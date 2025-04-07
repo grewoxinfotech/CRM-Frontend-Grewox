@@ -893,6 +893,13 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         rules={[{ required: true, message: 'Please select a branch' }]}
                     >
                         <Select
+                        listHeight={100}
+                        dropdownStyle={{
+                          Height: '100px',
+                          overflowY: 'auto',
+                          scrollbarWidth: 'thin',
+                          scrollBehavior: 'smooth'
+                        }}
                             showSearch
                             placeholder="Select a branch"
                             size="large"
@@ -920,6 +927,13 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         rules={[{ required: true, message: 'Please select a department' }]}
                     >
                         <Select
+                        listHeight={100}
+                        dropdownStyle={{
+                          Height: '100px',
+                          overflowY: 'auto',
+                          scrollbarWidth: 'thin',
+                          scrollBehavior: 'smooth'
+                        }}
                             showSearch
                             placeholder={form.getFieldValue('branch') ? "Select a department" : "Please select a branch first"}
                             size="large"
@@ -950,6 +964,13 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         rules={[{ required: true, message: 'Please select a designation' }]}
                     >
                         <Select
+                        listHeight={100}
+                        dropdownStyle={{
+                          Height: '100px',
+                          overflowY: 'auto',
+                          scrollbarWidth: 'thin',
+                          scrollBehavior: 'smooth'
+                        }}
                             showSearch
                             placeholder={form.getFieldValue('branch') ? "Select a designation" : "Please select a branch first"}
                             size="large"

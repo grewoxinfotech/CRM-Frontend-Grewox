@@ -317,6 +317,13 @@ const CreateAnnouncement = ({
                                 mode="multiple"
                                 placeholder="Select branches"
                                 size="large"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    Height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',

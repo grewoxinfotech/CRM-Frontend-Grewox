@@ -186,6 +186,13 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
               rules={[{ required: true, message: "Please select employee" }]}
             >
               <Select
+              listHeight={100}
+              dropdownStyle={{
+                Height: '100px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
                 placeholder="Select Employee"
                 size="large"
                 loading={isLoadingEmployees}
@@ -224,6 +231,13 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
               rules={[{ required: true, message: "Please select leave type" }]}
             >
               <Select
+              listHeight={100}
+              dropdownStyle={{
+                Height: '100px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
                 placeholder="Select Leave Type"
                 size="large"
                 style={{

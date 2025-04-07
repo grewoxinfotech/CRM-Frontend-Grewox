@@ -552,6 +552,13 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   style={selectStyle}
                   suffixIcon={<FiChevronDown size={14} />}
                   popupClassName="custom-select-dropdown"
+                  listHeight={100}
+                  dropdownStyle={{
+                    maxHeight: '100px',                  
+                    overflowY: 'auto',
+                    scrollbarWidth: 'thin',
+                    scrollBehavior: 'smooth'
+                  }}
                 >
                   {filteredStages.map((stage) => (
                     <Option key={stage.id} value={stage.id}>
@@ -568,7 +575,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               >
                 <DatePicker
                   size="large"
-                  format="YYYY-MM-DD"
+                  format="DD-MM-YYYY"
                   style={{
                     width: '100%',
                     borderRadius: "10px",
@@ -595,6 +602,13 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   placeholder="Select source"
                   style={selectStyle}
                   popupClassName="custom-select-dropdown"
+                  listHeight={100} // Sets height to show 2 items
+                  dropdownStyle={{
+                    maxHeight: '100px',                  
+                    overflowY: 'auto',
+                    scrollbarWidth: 'thin',
+                    scrollBehavior: 'smooth'
+                  }}
                 >
                   {sources.map((source) => (
                     <Option key={source.id} value={source.id}>
@@ -627,6 +641,13 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   optionFilterProp="children"
                   showSearch
                   onChange={handleProductsChange}
+                  listHeight={100}
+                  dropdownStyle={{
+                    maxHeight: '100px',                  
+                    overflowY: 'auto',
+                    scrollbarWidth: 'thin',
+                    scrollBehavior: 'smooth'
+                  }}
                 >
                   {products?.map((product) => (
                     <Option key={product.id} value={product.id}>

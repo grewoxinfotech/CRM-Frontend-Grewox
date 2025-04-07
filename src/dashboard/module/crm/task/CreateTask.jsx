@@ -367,6 +367,13 @@ const CreateTask = ({
               width: "100%",
               borderRadius: "10px",
             }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
             suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
             optionFilterProp="children"
             showSearch
@@ -399,6 +406,13 @@ const CreateTask = ({
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                }}
+                listHeight={100}
+                dropdownStyle={{
+                  maxHeight: '120px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
                 }}
                 suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
                 optionFilterProp="children"

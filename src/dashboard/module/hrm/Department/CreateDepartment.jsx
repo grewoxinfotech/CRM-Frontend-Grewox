@@ -255,6 +255,13 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                             placeholder="Select a branch"
                             size="large"
                             loading={isLoadingBranches}
+                            listHeight={100}
+                            dropdownStyle={{
+                              Height: '100px',
+                              overflowY: 'auto',
+                              scrollbarWidth: 'thin',
+                              scrollBehavior: 'smooth'
+                            }}
                             dropdownRender={dropdownRender}
                             style={{
                                 width: '100%',

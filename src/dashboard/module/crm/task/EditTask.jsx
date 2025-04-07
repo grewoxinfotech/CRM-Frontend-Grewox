@@ -424,6 +424,13 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
             optionFilterProp="children"
             showSearch
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
           >
             {users.map((user) => (
               <Option key={user.id} value={user.id}>
@@ -453,6 +460,13 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
                 style={{ width: "100%", borderRadius: "10px" }}
                 suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
                 optionFilterProp="children"
+                listHeight={100}
+                dropdownStyle={{
+                  maxHeight: '120px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
               >
                 {users.map((user) => (
                   <Option key={user.id} value={user.id}>

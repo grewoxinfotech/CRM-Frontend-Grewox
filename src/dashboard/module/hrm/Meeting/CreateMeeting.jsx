@@ -309,6 +309,13 @@ const CreateMeeting = ({
                             <Select
                                 placeholder="Select department"
                                 size="large"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    Height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
                                 loading={departmentsLoading}
                                 style={{
                                     borderRadius: '10px',
@@ -338,6 +345,13 @@ const CreateMeeting = ({
                         >
                             <Select
                                 mode="multiple"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    Height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
                                 placeholder="Select employees"
                                 size="large"
                                 loading={employeesLoading}
@@ -369,6 +383,13 @@ const CreateMeeting = ({
                         >
                             <Select
                                 placeholder="Select client"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    Height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
                                 size="large"
                                 loading={subClientsLoading}
                                 style={{
