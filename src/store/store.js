@@ -58,6 +58,7 @@ import leadStageReducer from "../dashboard/module/crm/crmsystem/leadstage/servic
 import { meetingApi } from "../dashboard/module/hrm/Meeting/services/meetingApi";
 import { announcementApi } from "../dashboard/module/hrm/Announcement/services/announcementApi";
 import { mailApi } from '../dashboard/module/communication/mail/services/mailApi';
+import { notificationApi } from '../common/notifacations/services/notificationApi';
 
 const persistConfig = {
   key: "root",
@@ -124,6 +125,7 @@ const rootReducer = combineReducers({
   [meetingApi.reducerPath]: meetingApi.reducer,
   [announcementApi.reducerPath]: announcementApi.reducer,
   [mailApi.reducerPath]: mailApi.reducer,
+  [notificationApi.reducerPath]: notificationApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -189,7 +191,8 @@ export const store = configureStore({
       .concat(debitNoteApi.middleware)
       .concat(meetingApi.middleware)
       .concat(announcementApi.middleware)
-      .concat(mailApi.middleware),
+      .concat(mailApi.middleware)
+      .concat(notificationApi.middleware),
 });
 
 export const persistor = persistStore(store);

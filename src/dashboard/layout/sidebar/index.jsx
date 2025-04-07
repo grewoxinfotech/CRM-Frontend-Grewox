@@ -65,7 +65,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
 
 
   // Find user's role data if not client
-  const userRoleData = userRole?.toLowerCase() !== 'client' ? 
+  const userRoleData = userRole?.toLowerCase() !== 'client' ?
     rolesData?.data?.find(role => role.id === loggedInUser?.role_id) : null;
 
   // Parse permissions if they exist
@@ -288,13 +288,13 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           title: "Chat",
           icon: <FiMessageSquare />,
           path: "/dashboard/communication/chat",
-       
+
         },
         {
           title: "Calendar",
           icon: <FiCalendar />,
           path: "/dashboard/communication/calendar",
-     
+
         },
       ].filter(item => shouldShowMenuItem(item)),
     },
@@ -315,12 +315,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           icon: <FiDollarSign />,
           path: "/dashboard/hrm/payroll",
           permission: "extra-hrm-payroll"
-        },
-        {
-          title: "Performance",
-          icon: <FiTrendingUp />,
-          path: "/dashboard/hrm/performance",
-          permission: "extra-hrm-performance-indicator"
         },
         {
           title: "Role",
@@ -375,12 +369,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           icon: <FiBell />,
           path: "/dashboard/hrm/announcement",
           permission: "extra-hrm-announcement"
-        },
-        {
-          title: "Job",
-          icon: <FiBriefcase />,
-          path: "/dashboard/hrm/job",
-          permission: "extra-hrm-jobs-joblist"
         },
         {
           title: "Document",
@@ -445,25 +433,25 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
       icon: <FiSettings />,
       isDropdown: true,
       subItems: [
-        {
-          title: 'General',
-          icon: <FiSettings />,
-          path: '/superadmin/settings/general'
-        },
-        {
-          title: 'Payment',
-          icon: <FiDollarSign />,
-          path: '/superadmin/settings/payment'
-        },
+        // {
+        //   title: 'General',
+        //   icon: <FiSettings />,
+        //   path: '/dashboard/settings/general'
+        // },
+        // {
+        //   title: 'Payment',
+        //   icon: <FiDollarSign />,
+        //   path: '/dashboard/settings/payment'
+        // },
         {
           title: 'Countries',
           icon: <FiGlobe />,
-          path: '/superadmin/settings/countries'
+          path: '/dashboard/settings/countries'
         },
         {
           title: 'Currencies',
           icon: <FiCreditCard />,
-          path: '/superadmin/settings/currencies'
+          path: '/dashboard/settings/currencies'
         },
         {
           title: 'Tax',
@@ -473,7 +461,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
         {
           title: 'ESignature',
           icon: <FiEdit3 />,
-          path: '/superadmin/settings/esignature'
+          path: '/dashboard/settings/esignature'
         }
       ]
     },
@@ -486,7 +474,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           title: "Ticket",
           icon: <FiMessageSquare />,
           path: "/dashboard/support/ticket",
-      
+
         },
       ],
     },

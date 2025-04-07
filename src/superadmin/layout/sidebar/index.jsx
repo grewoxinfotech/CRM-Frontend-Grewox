@@ -77,16 +77,6 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
             isDropdown: true,
             subItems: [
                 {
-                    title: 'General',
-                    icon: <FiSettings />,
-                    path: '/superadmin/settings/general'
-                },
-                {
-                    title: 'Payment',
-                    icon: <FiDollarSign />,
-                    path: '/superadmin/settings/payment'
-                },
-                {
                     title: 'Countries',
                     icon: <FiGlobe />,
                     path: '/superadmin/settings/countries'
