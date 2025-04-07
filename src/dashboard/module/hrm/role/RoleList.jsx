@@ -29,11 +29,11 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
             { key: 'dashboards-systemsetup', title: 'CRM System Setup' }
         ],
-        Communication: [
-            { key: 'dashboards-mail', title: 'Mail' },
-            { key: 'dashboards-chat', title: 'Chat' },
-            { key: 'dashboards-calendar', title: 'Calendar' },
-        ],
+        // Communication: [
+        //     { key: 'dashboards-mail', title: 'Mail' },
+        //     { key: 'dashboards-chat', title: 'Chat' },
+        //     { key: 'dashboards-calendar', title: 'Calendar' },
+        // ],
         HRM: [
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll', title: 'Payroll' },

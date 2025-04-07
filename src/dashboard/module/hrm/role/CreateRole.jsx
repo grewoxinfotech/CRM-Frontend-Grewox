@@ -11,7 +11,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
     const [selectedPermissions, setSelectedPermissions] = useState({});
 
     // Define the modules with their submodules and permissions
-    const modules = ['CRM', 'Sales', 'Purchase', 'User Management', 'Communication', 'HRM', 'Job', 'Support'];
+    const modules = ['CRM', 'Sales', 'Purchase', 'User Management', 'HRM', 'Job'];
 
     const subModules = {
         CRM: [
@@ -39,15 +39,15 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'extra-users-list', title: 'Users' },
             { key: 'extra-users-client-list', title: 'Clients' }
         ],
-        Communication: [
-            { key: 'dashboards-mail', title: 'Mail' },
-            { key: 'dashboards-chat', title: 'Chat' },
-            { key: 'dashboards-calendar', title: 'Calendar' }
-        ],
+        // Communication: [
+        //     { key: 'dashboards-mail', title: 'Mail' },
+        //     { key: 'dashboards-chat', title: 'Chat' },
+        //     { key: 'dashboards-calendar', title: 'Calendar' }
+        // ],
         HRM: [
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll', title: 'PayRoll' },
-            { key: 'extra-hrm-performance-indicator', title: 'Performance' },
+            // { key: 'extra-hrm-performance-indicator', title: 'Performance' },
             { key: 'extra-hrm-role', title: 'Role' },
             { key: 'extra-hrm-branch', title: 'Branch' },
             { key: 'extra-hrm-designation', title: 'Designation' },
@@ -57,7 +57,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
             { key: 'extra-hrm-meeting', title: 'Meeting' },
             { key: 'extra-hrm-announcement', title: 'Announcement' },
-            { key: 'extra-hrm-jobs-joblist', title: 'Job' },
+            // { key: 'extra-hrm-jobs-joblist', title: 'Job' },
             { key: 'extra-hrm-document', title: 'Document' },
             { key: 'extra-hrm-trainingSetup', title: 'Training Setup' }
         ],
@@ -69,9 +69,9 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             { key: 'extra-hrm-jobs-jobofferletter', title: 'Offer Letters' },
             { key: 'extra-hrm-jobs-interview', title: 'Interviews' }
         ],
-        Support: [
-            { key: 'extra-pages-customersupports-ticket', title: 'Ticket' }
-        ]
+        // Support: [
+        //     { key: 'extra-pages-customersupports-ticket', title: 'Ticket' }
+        // ]
     };
 
     const permissions = ['view', 'create', 'update', 'delete'];
@@ -253,7 +253,7 @@ const CreateRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => 
             open={visible}
             onCancel={onCancel}
             footer={null}
-            width={920}
+            width={820}
             destroyOnClose={true}
             centered
             closeIcon={null}

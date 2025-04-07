@@ -10,8 +10,10 @@ import { useSelector } from 'react-redux';
 
 const DashboardLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetRolesQuery();
     const loggedInUser = useSelector(selectCurrentUser);
+    const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetRolesQuery({
+        skip: !loggedInUser // Skip query if user not logged in
+    });
 
     // Find user's role data
     const userRoleData = rolesData?.data?.find(role => role.id === loggedInUser?.role_id);
@@ -33,12 +35,21 @@ const DashboardLayout = () => {
         }
     }, []);
 
+    // Fetch roles when user logs in
+    useEffect(() => {
+        if (loggedInUser) {
+            refetch();
+        }
+    }, [loggedInUser, refetch]);
+
     return (
         <div className="dashboard-layout">
             <Sidebar
                 collapsed={sidebarCollapsed}
                 onCollapsedChange={handleSidebarToggle}
                 userPermissions={userPermissions}
+                rolesData={rolesData}
+                loggedInUser={loggedInUser}
             />
             <div className="main-content">
                 <Header />
@@ -51,4 +62,4 @@ const DashboardLayout = () => {
     );
 };
 
-export default DashboardLayout; 
+export default DashboardLayout;

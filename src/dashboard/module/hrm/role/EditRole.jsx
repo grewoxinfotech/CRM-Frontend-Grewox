@@ -11,12 +11,11 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
     const [selectedPermissions, setSelectedPermissions] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const modules = ['User Management', 'CRM', 'Communication', 'HRM', 'Job'];
+    const modules = ['CRM', 'Sales', 'Purchase', 'User Management', 'HRM', 'Job'];
 
     const subModules = {
         CRM: [
             { key: 'dashboards-project-list', title: 'Project' },
-            { key: 'dashboards-sales', title: 'Sales' },
             { key: 'dashboards-lead', title: 'Leads' },
             { key: 'dashboards-deal', title: 'Deals' },
             { key: 'dashboards-proposal', title: 'Proposal' },
@@ -24,28 +23,39 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
             { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
             { key: 'dashboards-systemsetup', title: 'CRM System Setup' }
         ],
+        Sales: [
+            { key: 'dashboards-sales-product-services', title: 'Product & Services' },
+            { key: 'dashboards-sales-customer', title: 'Customer' },
+            { key: 'dashboards-sales-invoice', title: 'Invoice' },
+            { key: 'dashboards-sales-revenue', title: 'Revenue' },
+            { key: 'dashboards-sales-credit-notes', title: 'Credit Notes' }
+        ],
+        Purchase: [
+            { key: 'dashboards-purchase-vendor', title: 'Vendor' },
+            { key: 'dashboards-purchase-billing', title: 'Billing' },
+            { key: 'dashboards-purchase-debit-note', title: 'Debit Note' }
+        ],
         'User Management': [
             { key: 'extra-users-list', title: 'Users' },
             { key: 'extra-users-client-list', title: 'Clients' }
         ],
-        Communication: [
-            { key: 'dashboards-mail', title: 'Mail' },
-            { key: 'dashboards-chat', title: 'Chat' },
-            { key: 'dashboards-calendar', title: 'Calendar' }
-        ],
+        // Communication: [
+        //     { key: 'dashboards-mail', title: 'Mail' },
+        //     { key: 'dashboards-chat', title: 'Chat' },
+        //     { key: 'dashboards-calendar', title: 'Calendar' }
+        // ],
         HRM: [
             { key: 'extra-hrm-employee', title: 'Employee' },
             { key: 'extra-hrm-payroll', title: 'PayRoll' },
-            { key: 'extra-hrm-performance-indicator', title: 'Performance' },
             { key: 'extra-hrm-role', title: 'Role' },
             { key: 'extra-hrm-branch', title: 'Branch' },
             { key: 'extra-hrm-designation', title: 'Designation' },
             { key: 'extra-hrm-department', title: 'Department' },
             { key: 'extra-hrm-attendance-attendancelist', title: 'Attendance' },
+            { key: 'extra-hrm-holiday', title: 'Holiday' },
             { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
             { key: 'extra-hrm-meeting', title: 'Meeting' },
             { key: 'extra-hrm-announcement', title: 'Announcement' },
-            { key: 'extra-hrm-jobs-joblist', title: 'Job' },
             { key: 'extra-hrm-document', title: 'Document' },
             { key: 'extra-hrm-trainingSetup', title: 'Training Setup' }
         ],

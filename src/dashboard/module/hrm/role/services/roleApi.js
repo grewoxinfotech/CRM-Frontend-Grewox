@@ -28,15 +28,7 @@ export const roleApi = createApi({
             providesTags: ['Roles']
         }),
 
-        getAllRoles: builder.query({
-            query: () => ({
-                url: '/roles/all',
-                method: 'GET'
-            }),
-            providesTags: ['Roles']
-        }),
-
-
+       
         getRole: builder.query({
             query: (id) => ({
                 url: `/roles/${id}`,
@@ -78,7 +70,7 @@ export const roleApi = createApi({
 
 export const {
     useGetRolesQuery,
-    useGetAllRolesQuery,
+
     useGetRoleQuery,
     useCreateRoleMutation,
     useUpdateRoleMutation,

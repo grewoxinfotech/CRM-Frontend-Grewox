@@ -43,9 +43,9 @@ import {
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
-import { useGetAllRolesQuery } from "../../module/hrm/role/services/roleApi";
+import { useGetRolesQuery } from "../../module/hrm/role/services/roleApi";
 
-const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermissions }) => {
+const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, loggedInUser }) => {
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSystemSetupOpen, setIsSystemSetupOpen] = useState(false);
@@ -57,43 +57,37 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
   const [isJobOpen, setJobOpen] = useState(false);
   const [isSalesOpen, setSalesOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
-  const [isProfileOpen, setProfileOpen] = useState(false);
+
+
   const handleLogout = useLogout();
-
-  const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetAllRolesQuery();
-  const loggedInUser = useSelector(selectCurrentUser);
-
-  const userRoleData = rolesData?.data?.find(role => role.id === loggedInUser?.role_id);
-  
-  const rolename = userRoleData?.role_name;
-
-  const userPermissionsData = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
-
-  const hasNoPermissions = !userPermissionsData || Object.keys(userPermissionsData).length === 0;
 
   const userRole = useSelector(selectUserRole);
 
-  useEffect(() => {
-    try {
-      JSON.parse(userRole?.permissions || '{}');
-    } catch (error) {
-      console.error('Error parsing permissions:', error);
-    }
-  }, [userRole]);
+
+  // Find user's role data if not client
+  const userRoleData = userRole?.toLowerCase() !== 'client' ? 
+    rolesData?.data?.find(role => role.id === loggedInUser?.role_id) : null;
+
+  // Parse permissions if they exist
+  const userPermissions = userRoleData?.permissions ? JSON.parse(userRoleData.permissions) : null;
 
   const checkPermission = (moduleKey) => {
-    if (rolename?.toLowerCase() === 'client') {
+    // Always allow settings, communication and support modules
+    const alwaysAllowedModules = ['settings', 'communication', 'support'];
+    if (alwaysAllowedModules.includes(moduleKey?.toLowerCase())) {
       return true;
     }
 
-    if (hasNoPermissions) {
-      const allowedModules = ['settings', 'communication', 'support'];
-      return allowedModules.includes(moduleKey);
+    // If user is client, show everything
+    if (userRole?.toLowerCase() === 'client') {
+      return true;
     }
 
-    if (!userPermissionsData) return false;
+    // For other roles, check specific permissions
+    if (!userPermissions) return false;
 
-    const modulePermissions = userPermissionsData[moduleKey];
+    // Check if the permission exists and has at least view access
+    const modulePermissions = userPermissions[moduleKey];
     if (modulePermissions && modulePermissions.length > 0) {
       return modulePermissions[0].permissions.includes('view');
     }
@@ -102,18 +96,25 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
   };
 
   const shouldShowMenuItem = (item) => {
-    if (rolename?.toLowerCase() === 'client') {
+    // Always show Settings, Communication and Support
+    const alwaysShowItems = ['Setting', 'Communication', 'Support'];
+    if (alwaysShowItems.includes(item.title)) {
       return true;
     }
 
-    if (hasNoPermissions) {
-      const allowedModules = ['Setting', 'Communication', 'Support'];
-      return allowedModules.includes(item.title);
+    // If role is client, show everything
+    if (userRole?.toLowerCase() === 'client') {
+      return true;
     }
 
     if (!item.permission) return true;
 
     if (item.subItems?.length > 0) {
+      // If it's an always shown item, show all its subitems
+      if (alwaysShowItems.includes(item.title)) {
+        return true;
+      }
+      // Show if any child has permission
       return item.subItems.some(subItem =>
         !subItem.permission || checkPermission(subItem.permission)
       );
@@ -281,19 +282,21 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
           title: "Mail",
           icon: <FiMail />,
           path: "/dashboard/communication/mail",
-          permission: "dashboards-mail"
+
         },
         {
           title: "Chat",
           icon: <FiMessageSquare />,
-          path: "/dashboard/communication/chat"
+          path: "/dashboard/communication/chat",
+       
         },
         {
           title: "Calendar",
           icon: <FiCalendar />,
-          path: "/dashboard/communication/calendar"
+          path: "/dashboard/communication/calendar",
+     
         },
-      ]
+      ].filter(item => shouldShowMenuItem(item)),
     },
     {
       title: "HRM",
@@ -483,7 +486,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
           title: "Ticket",
           icon: <FiMessageSquare />,
           path: "/dashboard/support/ticket",
-          permission: "extra-pages-customersupports-ticket"
+      
         },
       ],
     },
@@ -595,7 +598,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
                         ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
                         : item.title === "HRM"
                           ? renderDropdown(item, isHrmOpen, setHrmOpen)
-                          : item.title === "Settings"
+                          : item.title === "Setting"
                             ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
                             : item.title === "Support"
                               ? renderDropdown(item, isSupportOpen, setSupportOpen)
@@ -633,3 +636,4 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, userPermiss
 };
 
 export default Sidebar;
+

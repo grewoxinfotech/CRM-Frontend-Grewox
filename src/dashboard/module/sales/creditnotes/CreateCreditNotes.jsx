@@ -57,7 +57,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
     const selectedInvoice = invoices?.find(inv => inv.id === value);
     if (selectedInvoice) {
       // Set amount from invoice total
-      form.setFieldValue('amount', selectedInvoice.total);
+      form.setFieldValue('amount', selectedInvoice.amount);
       
       // Set currency from invoice
       form.setFieldValue('currency', selectedInvoice.currency);
@@ -229,7 +229,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               >
                 {invoices?.map((invoice) => (
                   <Option key={invoice.id} value={invoice.id}>
-                    {invoice.salesInvoiceNumber} - {invoice.total}
+                    {invoice.salesInvoiceNumber} - {invoice.amount}
                   </Option>
                 ))}
               </Select>

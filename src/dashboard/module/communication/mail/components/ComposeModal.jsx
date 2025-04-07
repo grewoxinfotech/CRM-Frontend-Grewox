@@ -1,7 +1,8 @@
 import React from 'react';
-import { Modal, Form, Input, Button, Select, Upload, Space, Checkbox } from 'antd';
+import { Modal, Form, Input, Button, Select, Upload, Space, Checkbox, DatePicker, TimePicker } from 'antd';
 import { FiFileText, FiPaperclip, FiClock, FiX } from 'react-icons/fi';
 import { emailTemplates } from '../templates/emailTemplates';
+import dayjs from 'dayjs';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -39,7 +40,18 @@ const ComposeModal = ({
   const handleFieldChange = (field, value) => {
     if (!selectedTemplate) return;
 
-    const newFields = { ...templateFields, [field]: value };
+    // Format date and time values
+    let formattedValue = value;
+    if (value instanceof dayjs) {
+      const fieldType = selectedTemplate.fields.find(f => f.name === field)?.type;
+      if (fieldType === 'date') {
+        formattedValue = value.format('YYYY-MM-DD');
+      } else if (fieldType === 'time') {
+        formattedValue = value.format('HH:mm');
+      }
+    }
+
+    const newFields = { ...templateFields, [field]: formattedValue };
     setTemplateFields(newFields);
 
     let updatedSubject = selectedTemplate.subject;
@@ -59,6 +71,36 @@ const ComposeModal = ({
 
   const handleAttachmentChange = ({ fileList }) => {
     setAttachments(fileList);
+  };
+
+  const renderFieldInput = (field) => {
+    switch (field.type) {
+      case 'date':
+        return (
+          <DatePicker
+            style={{ width: '100%' }}
+            onChange={(date) => handleFieldChange(field.name, date)}
+            placeholder={`Select ${field.name.replace(/_/g, ' ')}`}
+          />
+        );
+      case 'time':
+        return (
+          <TimePicker
+            style={{ width: '100%' }}
+            format="HH:mm"
+            onChange={(time) => handleFieldChange(field.name, time)}
+            placeholder={`Select ${field.name.replace(/_/g, ' ')}`}
+          />
+        );
+      default:
+        return (
+          <Input
+            value={templateFields[field.name]}
+            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            placeholder={`Enter ${field.name.replace(/_/g, ' ')}`}
+          />
+        );
+    }
   };
 
   return (
@@ -122,12 +164,8 @@ const ComposeModal = ({
         {selectedTemplate && (
           <div className="template-fields">
             {selectedTemplate.fields.map(field => (
-              <Form.Item key={field} label={field.replace(/_/g, ' ').toUpperCase()}>
-                <Input
-                  value={templateFields[field]}
-                  onChange={(e) => handleFieldChange(field, e.target.value)}
-                  placeholder={`Enter ${field.replace(/_/g, ' ')}`}
-                />
+              <Form.Item key={field.name} label={field.name.replace(/_/g, ' ').toUpperCase()}>
+                {renderFieldInput(field)}
               </Form.Item>
             ))}
           </div>
