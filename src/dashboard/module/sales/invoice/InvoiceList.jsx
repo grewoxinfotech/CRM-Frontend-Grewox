@@ -179,7 +179,7 @@ const InvoiceList = () => {
       sorter: (a, b) => new Date(a.dueDate) - new Date(b.dueDate),
     },
     {
-      title: "Amount",
+      title: "Total",
       dataIndex: "total",
       key: "total",
       render: (amount, record) => {
@@ -196,6 +196,25 @@ const InvoiceList = () => {
       },
       sorter: (a, b) => a.total - b.total,
     },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      render: (amount, record) => {
+        // Get currency details from the record
+        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
+        const currencyIcon = currencyDetails?.currencyIcon || '₹';
+        
+        return (
+          <Text strong>
+            {currencyIcon}
+            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </Text>
+        );
+      },
+      sorter: (a, b) => a.total - b.total,
+    },
+
     {
       title: "Status",
       dataIndex: "payment_status",
