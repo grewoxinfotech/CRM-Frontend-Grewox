@@ -23,16 +23,16 @@ export const mailApi = createApi({
 
 
     sendEmail: builder.mutation({
-      query: (data) => ({
-        url: "/mail",
-        method: "POST",
-        body: {
-          ...data,
-          type: data.isImportant ? 'important' : (data.scheduledFor ? 'scheduled' : 'sent'),
-          isRead: true,
-          isStarred: false
-        },
-      }),
+      query: (formData) => {
+        console.log('Sending email with attachments:', formData.getAll('attachments').length);
+        return {
+          url: "/mail",
+          method: "POST",
+          body: formData,
+          formData: true,
+          // Don't set Content-Type - browser will set it with boundary
+        };
+      },
       invalidatesTags: ["Mail"],
     }),
 

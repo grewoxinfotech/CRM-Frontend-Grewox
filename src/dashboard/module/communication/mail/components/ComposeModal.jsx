@@ -1,6 +1,6 @@
 import React from 'react';
-import { Modal, Form, Input, Button, Select, Upload, Space, Checkbox, DatePicker, TimePicker } from 'antd';
-import { FiFileText, FiPaperclip, FiClock, FiX } from 'react-icons/fi';
+import { Modal, Form, Input, Button, Select, Upload, Space, Checkbox, DatePicker, TimePicker, message } from 'antd';
+import { FiFileText, FiPaperclip, FiClock, FiX, FiFile } from 'react-icons/fi';
 import { emailTemplates } from '../templates/emailTemplates';
 import dayjs from 'dayjs';
 
@@ -69,8 +69,27 @@ const ComposeModal = ({
     });
   };
 
-  const handleAttachmentChange = ({ fileList }) => {
-    setAttachments(fileList);
+  const handleAttachmentChange = ({ file, fileList }) => {
+    // Validate file size (max 10MB)
+    const isLt10M = file.size / 1024 / 1024 < 10;
+    if (!isLt10M) {
+      message.error('File must be smaller than 10MB!');
+      return;
+    }
+
+    // Update file list with additional properties
+    const updatedFileList = fileList.map(f => {
+      if (f.uid === file.uid) {
+        return {
+          ...f,
+          status: 'done',
+          url: URL.createObjectURL(f.originFileObj), // Create URL for preview
+        };
+      }
+      return f;
+    });
+
+    setAttachments(updatedFileList);
   };
 
   const renderFieldInput = (field) => {
@@ -143,10 +162,11 @@ const ComposeModal = ({
               fileList={attachments}
               onChange={handleAttachmentChange}
               beforeUpload={() => false}
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
               showUploadList={false}
             >
               <Button icon={<FiPaperclip />}>
-                Attach
+                Attach ({attachments.length})
               </Button>
             </Upload>
             <Button onClick={handleSchedule} icon={<FiClock />}>
@@ -199,12 +219,19 @@ const ComposeModal = ({
           <div className="attachments-preview">
             {attachments.map(file => (
               <div key={file.uid} className="attachment-item">
-                <span>{file.name}</span>
-                <Button
-                  type="text"
-                  icon={<FiX />}
-                  onClick={() => setAttachments(prev => prev.filter(f => f.uid !== file.uid))}
-                />
+                <Space>
+                  <FiFile />
+                  <span>{file.name}</span>
+                  <span className="file-size">({(file.size / 1024).toFixed(1)} KB)</span>
+                  <Button
+                    type="text"
+                    icon={<FiX />}
+                    onClick={() => {
+                      setAttachments(prev => prev.filter(f => f.uid !== file.uid));
+                      URL.revokeObjectURL(file.url); // Clean up the URL
+                    }}
+                  />
+                </Space>
               </div>
             ))}
           </div>
@@ -221,6 +248,26 @@ const ComposeModal = ({
           </Space>
         </Form.Item>
       </Form>
+
+      <style jsx>{`
+        .attachments-preview {
+          margin-bottom: 16px;
+          padding: 8px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+        }
+        .attachment-item {
+          padding: 8px;
+          border-bottom: 1px solid #e8e8e8;
+        }
+        .attachment-item:last-child {
+          border-bottom: none;
+        }
+        .file-size {
+          color: #8c8c8c;
+          font-size: 12px;
+        }
+      `}</style>
     </Modal>
   );
 };
