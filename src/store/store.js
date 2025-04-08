@@ -59,6 +59,7 @@ import { meetingApi } from "../dashboard/module/hrm/Meeting/services/meetingApi"
 import { announcementApi } from "../dashboard/module/hrm/Announcement/services/announcementApi";
 import { mailApi } from '../dashboard/module/communication/mail/services/mailApi';
 import { notificationApi } from '../common/notifacations/services/notificationApi';
+import { companyAccountApi } from "../dashboard/module/crm/companyacoount/services/companyAccountApi";
 
 const persistConfig = {
   key: "root",
@@ -125,7 +126,8 @@ const rootReducer = combineReducers({
   [meetingApi.reducerPath]: meetingApi.reducer,
   [announcementApi.reducerPath]: announcementApi.reducer,
   [mailApi.reducerPath]: mailApi.reducer,
-  [notificationApi.reducerPath]: notificationApi.reducer,
+    [notificationApi.reducerPath]: notificationApi.reducer,
+    [companyAccountApi.reducerPath]: companyAccountApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -192,7 +194,8 @@ export const store = configureStore({
       .concat(meetingApi.middleware)
       .concat(announcementApi.middleware)
       .concat(mailApi.middleware)
-      .concat(notificationApi.middleware),
+      .concat(notificationApi.middleware)
+      .concat(companyAccountApi.middleware),
 });
 
 export const persistor = persistStore(store);

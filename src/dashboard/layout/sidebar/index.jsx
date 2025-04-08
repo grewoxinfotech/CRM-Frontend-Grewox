@@ -152,6 +152,18 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           permission: "dashboards-project-list"
         },
         {
+          title: "Company",
+          icon: <FiBriefcase />,
+            path: "/dashboard/crm/company-account", 
+          permission: "dashboards-crm-company-account"
+        },
+        {
+          title: "Contact",
+          icon: <FiFileText />,
+          path: "/dashboard/crm/contact",
+          permission: "dashboards-crm-contact"
+        },
+        {
           title: "Leads",
           icon: <FiTarget />,
           path: "/dashboard/crm/lead",
@@ -207,6 +219,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           path: "/dashboard/sales/customer",
           permission: "dashboards-sales-customer"
         },
+        
         {
           title: "Invoice",
           icon: <FiFileText />,

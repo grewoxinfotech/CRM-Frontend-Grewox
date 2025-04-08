@@ -110,13 +110,13 @@ const LeadFollowup = ({ leadId }) => {
         user?.client_id !== user?.id    // Exclude if user is their own client
     ) || [];
 
-    // Filter status options
+    // Update the status options mapping
     const statusOptions = React.useMemo(() => {
         if (!statuses?.data) return [];
         return statuses.data
             .filter(item => item.lableType === 'status')
             .map(status => ({
-                value: status.id,
+                value: status.id,  // Use status ID as value
                 label: status.name,
                 color: status.color
             }));
@@ -360,15 +360,24 @@ const LeadFollowup = ({ leadId }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            render: (status) => (
-                <Tag
-                    className="status-tag"
-                    color={getStatusColor(status)}
-                    icon={status === 'completed' ? <FiCheck /> : status === 'cancelled' ? <FiX /> : <FiClock />}
-                >
-                    {status?.charAt(0).toUpperCase() + status?.slice(1)}
-                </Tag>
-            )
+            render: (statusId) => {
+                const status = statuses?.data?.find(item => item.id === statusId);
+                const statusName = status?.name || 'Unknown';
+                const color = status?.color || '#1890ff';
+                return (
+                    <Tag color={color} style={{ 
+                        borderRadius: '4px',
+                        padding: '4px 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        width: '100px'
+                    }}>
+                        {getStatusIcon(statusName)}
+                        {statusName}
+                    </Tag>
+                );
+            }
         },
         {
             title: "Actions",
@@ -540,7 +549,7 @@ const LeadFollowup = ({ leadId }) => {
                     layout="vertical"
                     onFinish={handleSubmit}
                     initialValues={{
-                        status: 'pending',
+                        // status: 'pending',
                         followup_by: currentUser?.id
                     }}
                     style={{
@@ -745,7 +754,7 @@ const LeadFollowup = ({ leadId }) => {
                         >
                             <DatePicker
                                 size="large"
-                                format="YYYY-MM-DD"
+                                format="DD-MM-YYYY"
                                 style={{
                                     width: '100%',
                                     borderRadius: "10px",
@@ -831,7 +840,7 @@ const LeadFollowup = ({ leadId }) => {
                         rules={[{ required: true, message: 'Please select status' }]}
                     >
                         <Select
-                            size="large"
+                            // size="large"
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",

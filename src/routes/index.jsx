@@ -67,6 +67,8 @@ import Billing from "../dashboard/module/purchase/billing/index.jsx";
 import DebitNote from "../dashboard/module/purchase/debitnote/index.jsx";
 import Mail from "../dashboard/module/communication/mail/mail.jsx";
 import Profiles from "../dashboard/module/profile/index.jsx";
+import CompanyAccount from "../dashboard/module/crm/companyacoount/index.jsx";
+import Contact from "../dashboard/module/crm/contact/index.jsx";
 
 
   const PermissionRoute = ({ children, permissionKey }) => {
@@ -242,6 +244,14 @@ const routes = createBrowserRouter([
             ],
           },
           {
+            path: "company-account",
+            element: <CompanyAccount />,
+          },
+          {
+            path: "contact",
+            element: <Contact />,
+          },
+          {
             path: "lead",
             children: [
               {
@@ -309,6 +319,7 @@ const routes = createBrowserRouter([
             path: "product-services",
             element: <ProductServices />,
           },
+         
           {
             path: "customer",
             element: <Customer />,

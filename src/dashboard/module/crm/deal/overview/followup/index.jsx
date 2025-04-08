@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Table, Tag, Space, Modal, Form, Input, DatePicker, TimePicker, Select, message, Typography, Avatar, Tooltip, Divider, Dropdown } from 'antd';
-import { FiPlus, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiMoreVertical } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiClock, FiCalendar, FiUser, FiCheck, FiX, FiPhoneCall, FiMail, FiCheckSquare, FiUsers, FiSearch, FiShield, FiBriefcase, FiMoreVertical, FiBell, FiPause, FiAlertCircle  } from 'react-icons/fi';
 import { useGetFollowupsQuery, useCreateFollowupMutation, useUpdateFollowupMutation, useDeleteFollowupMutation } from '../../../lead/services/LeadApi';
 import { useGetDealQuery } from '../../services/dealApi';
 import { useSelector } from 'react-redux';
@@ -10,6 +10,7 @@ import './followup.scss';
 import { useGetUsersQuery } from '../../../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../../../hrm/role/services/roleApi';
 import { useGetFollowupTypesQuery } from '../../../crmsystem/souce/services/SourceApi';
+import { useGetStatusesQuery } from '../../../crmsystem/souce/services/SourceApi';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -31,7 +32,20 @@ const DealFollowup = ({ deal }) => {
     const [deleteFollowup] = useDeleteFollowupMutation();
     const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
     const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
-    const { data: followupTypes } = useGetFollowupTypesQuery(currentUser?.id)
+    const { data: followupTypes } = useGetFollowupTypesQuery(currentUser?.id);
+    const { data: statuses } = useGetStatusesQuery(currentUser?.id);
+
+    // Update the status options mapping
+    const statusOptions = React.useMemo(() => {
+        if (!statuses?.data) return [];
+        return statuses.data
+            .filter(item => item.lableType === 'status')
+            .map(status => ({
+                value: status.id,  // Use status ID as value
+                label: status.name,
+                color: status.color
+            }));
+    }, [statuses]);
 
     // Filter followup type options
     const typeOptions = React.useMemo(() => {
@@ -170,6 +184,22 @@ const DealFollowup = ({ deal }) => {
         );
     };
 
+    const getStatusIcon = (name) => {
+        const icons = {
+            'Pending': <FiClock />,
+            'In Progress': <FiBell/>,
+            'Completed': <FiCheck />,
+            'Cancelled': <FiX />,
+            'Review': <FiShield />,
+            'On Hold': <FiPause />,
+            'Delayed': <FiAlertCircle />,
+            'New': <FiPlus />,
+            'Approved': <FiCheck />,
+            'Rejected': <FiX />
+        };
+        return icons[name] || <FiCheckSquare />;
+    };
+
     const handleSubmit = async (values) => {
         try {
             // Find the user object based on the selected username
@@ -180,7 +210,9 @@ const DealFollowup = ({ deal }) => {
                 date: values.date.format('YYYY-MM-DD'),
                 time: values.time.format('HH:mm:ss'),
                 // Set the user ID for database storage
-                followup_by: selectedUser?.id
+                followup_by: selectedUser?.id,
+                // Use the status ID directly
+                status: values.status
             };
 
             if (editingFollowup) {
@@ -220,7 +252,7 @@ const DealFollowup = ({ deal }) => {
             date: dayjs(followup.date),
             time: dayjs(followup.time, 'HH:mm:ss'),
             description: followup.description,
-            status: followup.status,
+            status: followup.status, // Use status ID directly
             // Set the username instead of ID
             followup_by: assignedUser?.username || undefined
         });
@@ -316,61 +348,22 @@ const DealFollowup = ({ deal }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            render: (status, record) => {
-                const handleStatusChange = async (newStatus) => {
-                    try {
-                        await updateFollowup({
-                            id: record.id,
-                            ...record,
-                            status: newStatus
-                        }).unwrap();
-                        message.success('Status updated successfully');
-                    } catch (error) {
-                        message.error(error?.data?.message || 'Failed to update status');
-                    }
-                };
-
+            render: (statusId) => {
+                const status = statuses?.data?.find(item => item.id === statusId);
+                const statusName = status?.name || 'Unknown';
+                const color = status?.color || '#1890ff';
                 return (
-                    <Select
-                        value={status}
-                        onChange={handleStatusChange}
-                        style={{ width: 140 }}
-                        bordered={false}
-                        dropdownStyle={{ padding: '8px' }}
-                    >
-                        <Option value="pending">
-                            <Tag color={getStatusColor('pending')} style={{ margin: 0 }}>
-                                <Space>
-                                    <FiClock className="status-icon pending" />
-                                    Pending
-                                </Space>
-                            </Tag>
-                        </Option>
-                        <Option value="in_progress">
-                            <Tag color={getStatusColor('in_progress')} style={{ margin: 0 }}>
-                                <Space>
-                                    <FiClock className="status-icon in-progress" />
-                                    In Progress
-                                </Space>
-                            </Tag>
-                        </Option>
-                        <Option value="completed">
-                            <Tag color={getStatusColor('completed')} style={{ margin: 0 }}>
-                                <Space>
-                                    <FiCheck className="status-icon completed" />
-                                    Completed
-                                </Space>
-                            </Tag>
-                        </Option>
-                        <Option value="cancelled">
-                            <Tag color={getStatusColor('cancelled')} style={{ margin: 0 }}>
-                                <Space>
-                                    <FiX className="status-icon cancelled" />
-                                    Cancelled
-                                </Space>
-                            </Tag>
-                        </Option>
-                    </Select>
+                    <Tag color={color} style={{ 
+                        borderRadius: '4px',
+                        padding: '4px 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        width: '100px'
+                    }}>
+                        {getStatusIcon(statusName)}
+                        {statusName}
+                    </Tag>
                 );
             }
         },
@@ -559,7 +552,7 @@ const DealFollowup = ({ deal }) => {
                     layout="vertical"
                     onFinish={handleSubmit}
                     initialValues={{
-                        status: 'pending',
+                        status: statuses?.data?.find(item => item.name.toLowerCase() === '')?.id,
                         followup_by: currentUser?.id
                     }}
                     style={{
@@ -764,7 +757,7 @@ const DealFollowup = ({ deal }) => {
                         >
                             <DatePicker
                                 size="large"
-                                format="YYYY-MM-DD"
+                                format="DD-MM-YYYY"
                                 style={{
                                     width: '100%',
                                     borderRadius: "10px",
@@ -850,11 +843,11 @@ const DealFollowup = ({ deal }) => {
                         rules={[{ required: true, message: 'Please select status' }]}
                     >
                         <Select
-                            size="large"
+                            // size="large"
                             style={{
                                 width: "100%",
                                 borderRadius: "10px",
-                                height: "48px",
+                                height: "48px"
                             }}
                             listHeight={100}
                             dropdownStyle={{
@@ -864,30 +857,29 @@ const DealFollowup = ({ deal }) => {
                                 scrollBehavior: 'smooth'
                             }}
                         >
-                            <Option value="pending">
-                                <Space>
-                                    <FiClock className="status-icon pending" />
-                                    Pending
-                                </Space>
-                            </Option>
-                            <Option value="in_progress">
-                                <Space>
-                                    <FiClock className="status-icon in-progress" />
-                                    In Progress
-                                </Space>
-                            </Option>
-                            <Option value="completed">
-                                <Space>
-                                    <FiCheck className="status-icon completed" />
-                                    Completed
-                                </Space>
-                            </Option>
-                            <Option value="cancelled">
-                                <Space>
-                                    <FiX className="status-icon cancelled" />
-                                    Cancelled
-                                </Space>
-                            </Option>
+                            {statusOptions.map(status => (
+                                <Option key={status.value} value={status.value}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <span style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '13px',
+                                            color: status.color,
+                                            backgroundColor: `${status.color}15`,
+                                            gap: '4px'
+                                        }}>
+                                            {getStatusIcon(status.label)}
+                                            {status.label}
+                                        </span>
+                                    </div>
+                                </Option>
+                            ))}
                         </Select>
                     </Form.Item>
 

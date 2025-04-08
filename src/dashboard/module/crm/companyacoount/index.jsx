@@ -1,0 +1,285 @@
+import React, { useState } from "react";
+import {
+  Card,
+  Typography,
+  Button,
+  Modal,
+  message,
+  Input,
+  Dropdown,
+  Menu,
+  Breadcrumb,
+} from "antd";
+import {
+  FiPlus,
+  FiSearch,
+  FiDownload,
+  FiHome,
+  FiChevronDown,
+} from "react-icons/fi";
+import { Link } from "react-router-dom";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import CompanyAccountList from "./CompanyAccountList";
+import CreateCompanyAccount from "./CreateCompanyAccount";
+import EditCompanyAccount from "./EditCompanyAccount";
+
+const { Title, Text } = Typography;
+
+const CompanyAccount = () => {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleCreate = () => {
+    setSelectedCompany(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEdit = (record) => {
+    setSelectedCompany(record);
+    setIsEditModalOpen(true);
+  };
+
+  const handleView = (record) => {
+    console.log("View company:", record);
+  };
+
+  const handleDelete = (record) => {
+    Modal.confirm({
+      title: 'Delete Company',
+      content: 'Are you sure you want to delete this company?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      bodyStyle: {
+        padding: '20px',
+      },
+      onOk: async () => {
+        try {
+          message.success('Company deleted successfully');
+        } catch (error) {
+          message.error('Failed to delete company');
+        }
+      },
+    });
+  };
+
+  const handleCreateSubmit = async (values) => {
+    try {
+      setLoading(true);
+      message.success('Company created successfully');
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      message.error('Failed to create company');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditSubmit = async (values) => {
+    try {
+      setLoading(true);
+      message.success('Company updated successfully');
+      setIsEditModalOpen(false);
+      setSelectedCompany(null);
+    } catch (error) {
+      message.error('Failed to update company');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = async (type) => {
+    try {
+      setLoading(true);
+      const data = [
+        {
+          "Company Name": "ABC Corp",
+          "Email": "abc@example.com",
+          "Phone": "+1234567890",
+          "Status": "Active",
+          "Created Date": "2023-01-01"
+        },
+        {
+          "Company Name": "XYZ Ltd", 
+          "Email": "xyz@example.com",
+          "Phone": "+0987654321",
+          "Status": "Inactive",
+          "Created Date": "2023-02-01"
+        }
+      ];
+
+      switch (type) {
+        case "csv":
+          exportToCSV(data, "companies_export");
+          break;
+        case "excel":
+          exportToExcel(data, "companies_export");
+          break;
+        case "pdf":
+          exportToPDF(data, "companies_export");
+          break;
+        default:
+          break;
+      }
+      message.success(`Successfully exported as ${type.toUpperCase()}`);
+    } catch (error) {
+      message.error(`Failed to export: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToCSV = (data, filename) => {
+    const csvContent = [
+      Object.keys(data[0]).join(","),
+      ...data.map((item) =>
+        Object.values(item)
+          .map((value) => `"${value?.toString().replace(/"/g, '""')}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${filename}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const exportToExcel = (data, filename) => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Companies");
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  };
+
+  const exportToPDF = (data, filename) => {
+    const doc = new jsPDF("l", "pt", "a4");
+    doc.autoTable({
+      head: [Object.keys(data[0])],
+      body: data.map((item) => Object.values(item)),
+      margin: { top: 20 },
+      styles: { fontSize: 8 },
+    });
+    doc.save(`${filename}.pdf`);
+  };
+
+  const exportMenu = (
+    <Menu>
+      <Menu.Item
+        key="csv"
+        icon={<FiDownload />}
+        onClick={() => handleExport("csv")}
+      >
+        Export as CSV
+      </Menu.Item>
+      <Menu.Item
+        key="excel"
+        icon={<FiDownload />}
+        onClick={() => handleExport("excel")}
+      >
+        Export as Excel
+      </Menu.Item>
+      <Menu.Item
+        key="pdf"
+        icon={<FiDownload />}
+        onClick={() => handleExport("pdf")}
+      >
+        Export as PDF
+      </Menu.Item>
+    </Menu>
+  );
+
+  return (
+    <div className="invoice-page">
+      <div className="page-breadcrumb">
+        <Breadcrumb>
+          <Breadcrumb.Item>
+            <Link to="/dashboard">
+              <FiHome style={{ marginRight: "4px" }} />
+              Home
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>
+            <Link to="/dashboard/sales">Sales</Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>Company Accounts</Breadcrumb.Item>
+        </Breadcrumb>
+      </div>
+
+      <div className="page-header">
+        <div className="page-title">
+          <Title level={2}>Company Accounts</Title>
+          <Text type="secondary">Manage all company accounts in the organization</Text>
+        </div>
+        <div className="header-actions">
+          <div className="search-filter-group">
+            <Input
+              prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+              placeholder="Search companies..."
+              allowClear
+              onChange={(e) => setSearchText(e.target.value)}
+              value={searchText}
+              className="search-input"
+              style={{ width: 300 }}
+            />
+          </div>
+          <div className="action-buttons">
+            <Dropdown overlay={exportMenu} trigger={["click"]}>
+              <Button
+                className="export-button"
+                icon={<FiDownload size={16} />}
+                loading={loading}
+              >
+                Export
+                <FiChevronDown size={16} />
+              </Button>
+            </Dropdown>
+            <Button
+              type="primary"
+              icon={<FiPlus />}
+              onClick={handleCreate}
+              className="add-button"
+            >
+              Add Company
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <Card className="main-card">
+        <CompanyAccountList
+          onEdit={handleEdit}
+          onView={handleView}
+          onDelete={handleDelete}
+          searchText={searchText}
+        />
+      </Card>
+
+      <CreateCompanyAccount
+        open={isCreateModalOpen}
+        onCancel={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateSubmit}
+      />
+
+      <EditCompanyAccount
+        open={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        onSubmit={handleEditSubmit}
+        companyData={selectedCompany}
+      />
+    </div>
+  );
+};
+
+export default CompanyAccount;
