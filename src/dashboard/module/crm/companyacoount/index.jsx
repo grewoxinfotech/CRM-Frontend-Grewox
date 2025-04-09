@@ -279,10 +279,7 @@ const CompanyAccount = () => {
      
         isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
-      <CompanyAccountDetails
-        data={companyAccountsResponse}
-      
-        />
+     
     </div>
   );
 };

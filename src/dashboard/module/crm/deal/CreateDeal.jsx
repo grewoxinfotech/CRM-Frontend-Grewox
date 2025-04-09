@@ -81,8 +81,8 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
   const { data: contactsResponse, isLoading :isContactsLoading, error } = useGetContactsQuery();
 
 
-console.log("companyAccountsResponse",companyAccountsResponse.data);
-console.log("contactsResponse",contactsResponse.data);
+// console.log("companyAccountsResponse",companyAccountsResponse.data);
+// console.log("contactsResponse",contactsResponse.data);
 
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);

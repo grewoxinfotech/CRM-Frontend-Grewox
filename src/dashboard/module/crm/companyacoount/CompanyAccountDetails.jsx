@@ -11,6 +11,8 @@ import {
 } from 'react-icons/fi';
 
 import CompanyOverview from './overview/index';
+import CompanyDealList from './overview/companydeals';
+
 // import CompanyContacts from './overview/contacts';
 // import CompanyFiles from './overview/files';
 // import CompanyInvoices from './overview/invoices';
@@ -19,7 +21,6 @@ import CompanyOverview from './overview/index';
 // import CompanyActivity from './overview/activity';
 import './companyaccount.scss';
 import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from './services/companyAccountApi';
-import CompanyDealList from './overview/companydeals';
 
 const { Title, Text } = Typography;
 
@@ -28,7 +29,6 @@ const CompanyAccountDetails = () => {
     const navigate = useNavigate();
     const { data, isLoading } = useGetCompanyAccountsQuery();
     const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
-    
 
     // Get companies array first
     const companies = Array.isArray(data.data) ? data.data : [];
