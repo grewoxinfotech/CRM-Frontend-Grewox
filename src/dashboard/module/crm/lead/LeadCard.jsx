@@ -436,7 +436,7 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
   );
 };
 
-const SortableColumn = ({ stage, leads, children }) => {
+const SortableColumn = ({ stage, leads, children, index }) => {
   const {
     attributes,
     listeners,
@@ -497,6 +497,16 @@ const SortableColumn = ({ stage, leads, children }) => {
             alignItems: 'center',
             gap: '6px'
           }}>
+            <Tag color="blue" style={{
+              fontSize: '10px',
+              fontWeight: 'bold',
+              padding: '0 4px',
+              height: '16px',
+              lineHeight: '16px',
+              marginRight: '2px'
+            }}>
+              {index + 1}
+            </Tag>
             <FiMenu style={{
               fontSize: '14px',
               color: '#6B7280'
@@ -529,7 +539,7 @@ const SortableColumn = ({ stage, leads, children }) => {
               }}>
                 {formatCurrency(
                   leads.reduce((sum, lead) => sum + (parseFloat(lead.leadValue) || 0), 0),
-                  // leads[0]?.currency || 'USD'
+                  leads.length > 0 ? leads[0]?.currency : undefined
                 )}
               </span>
             </div>
@@ -654,10 +664,8 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     const draggedId = active.id;
       const destinationId = over.id.toString().replace('column-', '');
 
-      // Find the lead that's being dragged
       const draggedLead = leads.find(lead => lead.id === draggedId);
 
-      // Check if the lead is converted
       if (draggedLead?.is_converted) {
         message.error("Cannot move a converted lead");
         return;
@@ -679,19 +687,15 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     }
   };
 
-  // Handler to show the modal
   const showStageModal = () => {
     setIsStageModalVisible(true);
   };
 
-  // Updated handler to close the modal and refetch if needed
   const handleStageModalClose = (didAddStage = false) => {
     setIsStageModalVisible(false);
     if (didAddStage) {
       console.log("Stage added, refetching stages...");
-      refetchStages(); // Trigger refetch for the stage list
-      // Optional: You might want to invalidate lead data too if stage affects leads immediately
-      // queryClient.invalidateQueries('leads'); // Example if using React Query
+      refetchStages();
     }
   };
 
@@ -776,11 +780,12 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
               items={orderedStages.map(stage => `column-${stage.id}`)}
               strategy={horizontalListSortingStrategy}
             >
-              {orderedStages.map((stage) => (
+              {orderedStages.map((stage, index) => (
                 <div key={stage.id} style={{ transform: 'translateZ(0)' }}>
                   <SortableColumn
                     stage={stage}
                     leads={leadsByStage[stage.id] || []}
+                    index={index}
                   >
             <DroppableColumn
               stage={stage}
@@ -816,6 +821,7 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
                     boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
                     disabled: isLoadingStages
                   }}
+                  disabled={isLoadingStages}
                 >
                   <FiPlus />
                   Add Stage

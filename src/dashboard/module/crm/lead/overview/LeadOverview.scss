@@ -1630,3 +1630,126 @@
         transform: translateY(0);
     }
 }
+
+// --- Styles for Stage Progress Bar ---
+.stage-progress-card {
+    margin-bottom: 24px;
+    border-radius: 12px;
+    // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    // background-color: #f8fafc;
+
+    .ant-card-body {
+        padding: 16px 24px;
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+.lead-stage-progress-container {
+    display: flex;
+    width: auto;
+    // max-width: 50%; // Keep or adjust as needed
+    height: 40px; // Keep or adjust as needed
+    overflow: hidden;
+}
+
+.stage-item {
+    flex: 1 1 auto;
+    min-width: 80px; // Reduced min-width slightly if needed
+    max-width: 180px; // Reduced max-width slightly if needed
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // Adjusted padding to reduce gap (difference matches new clip-path offset)
+    padding: 0 15px 0 25px;
+    position: relative;
+    color: #6b7280;
+    background-color: #e5e7eb;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, opacity 0.3s ease, transform 0.2s ease;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    // Reduced the clip-path offset to make the arrow point less deep
+    clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%, 10px 50%);
+    border: 2px solid transparent;
+    margin: -2px; // Keep negative margin for overlap if using borders
+    cursor: pointer;
+    text-align: center;
+    appearance: none;
+    outline: none;
+
+    .stage-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &:first-child {
+        padding-left: 15px; // Adjusted padding
+        // Adjusted clip-path
+        clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%);
+    }
+
+    &:last-child {
+        padding-right: 15px; // Adjusted padding
+        // Adjusted clip-path
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 10px 50%);
+    }
+
+    &:hover {
+        transform: translateY(-1px);
+        filter: brightness(95%);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    &.completed {
+        background-color: #d1d5db;
+        color: #4b5563;
+        z-index: 1;
+         &:hover {
+             filter: brightness(90%);
+        }
+    }
+
+    &.current {
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+        color: white;
+        font-weight: 600;
+        z-index: 2;
+        margin: -2px; // Keep consistent margin
+        // Adjusted padding for current state (extra 2px to account for margin/potential border visibility)
+        padding: 0 17px 0 27px;
+        cursor: default;
+        // Apply adjusted clip-path for current state as well
+        clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%, 10px 50%);
+
+
+        &:first-child {
+             padding-left: 17px; // Adjusted padding for first child current
+             // Adjusted clip-path for first child current
+             clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%);
+        }
+        &:last-child {
+            padding-right: 17px; // Adjusted padding for last child current
+             // Adjusted clip-path for last child current
+             clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 10px 50%);
+        }
+
+         &:hover {
+            filter: brightness(105%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    }
+
+    &:disabled {
+       cursor: wait;
+       opacity: 0.7;
+       &:hover {
+          transform: none;
+          box-shadow: none;
+          filter: none;
+       }
+    }
+}
+
+// --- End Stage Progress Bar Styles ---

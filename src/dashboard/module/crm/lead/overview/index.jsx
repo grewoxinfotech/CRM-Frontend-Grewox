@@ -24,10 +24,14 @@ import {
     FiBox,
     FiBriefcase,
 } from 'react-icons/fi';
-import { useGetLeadQuery } from '../services/LeadApi';
+import { useGetLeadQuery, useUpdateLeadMutation } from '../services/LeadApi';
 import { useGetAllCurrenciesQuery } from '../../../../module/settings/services/settingsApi';
 import CreateDeal from '../../deal/CreateDeal';
 import { useGetPipelinesQuery } from '../../crmsystem/pipeline/services/pipelineApi';
+import { useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadStageApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../../auth/services/authSlice.js';
+import { selectStageOrder } from '../../crmsystem/leadstage/services/leadStageSlice';
 
 import LeadActivity from './activity';
 import LeadNotes from './notes';
@@ -38,7 +42,49 @@ import './LeadOverview.scss';
 
 const { Title, Text } = Typography;
 
-const LeadOverviewContent = ({ leadData }) => {
+const LeadStageProgress = ({ stages = [], currentStageId, onStageClick, isConverted, isLoading }) => {
+    if (!stages || stages.length === 0) {
+        return null;
+    }
+    const currentStageIndex = stages.findIndex(stage => stage.id === currentStageId);
+
+    const handleItemClick = (stageId) => {
+        if (isLoading || stageId === currentStageId || isConverted || !onStageClick) {
+            return;
+        }
+        onStageClick(stageId);
+    };
+
+    return (
+        <div className="lead-stage-progress-container">
+            {stages.map((stage, index) => {
+                const isCompleted = currentStageIndex > -1 && index < currentStageIndex;
+                const isCurrent = stage.id === currentStageId;
+                const isUpcoming = currentStageIndex === -1 || index > currentStageIndex;
+
+                let statusClass = '';
+                if (isCompleted) statusClass = 'completed';
+                else if (isCurrent) statusClass = 'current';
+                else if (isUpcoming) statusClass = 'upcoming';
+
+                return (
+                    <button
+                        key={stage.id}
+                        className={`stage-item ${statusClass}`}
+                        onClick={() => handleItemClick(stage.id)}
+                        type="button"
+                        aria-label={`Set stage to ${stage.stageName}`}
+                        aria-current={isCurrent ? 'step' : undefined}
+                    >
+                        <span className="stage-name">{stage.stageName}</span>
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
+
+const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdating }) => {
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
 
     const formatCurrencyValue = (value, currencyId) => {
@@ -55,6 +101,15 @@ const LeadOverviewContent = ({ leadData }) => {
 
     return (
         <div className="overview-content">
+            <Card className="stage-progress-card">
+                <LeadStageProgress
+                    stages={pipelineStages}
+                    currentStageId={leadData?.leadStage}
+                    onStageClick={onStageUpdate}
+                    isConverted={leadData?.is_converted}
+                />
+            </Card>
+
             <Card className="info-card contact-card">
                 <div className="profile-header">
                     <div className="profile-main">
@@ -104,7 +159,7 @@ const LeadOverviewContent = ({ leadData }) => {
                     </div>
                 </div>
             </Card>
-            {/* Key Metrics Cards */}
+
             <Row gutter={[16, 16]} className="metrics-row">
                 <Col xs={24} sm={12} md={6}>
                     <Card className="metric-card lead-value-card">
@@ -172,10 +227,8 @@ const LeadOverviewContent = ({ leadData }) => {
                 </Col>
             </Row>
 
-            {/* Lead Details Section */}
             <div className="lead-details-section">
                 <Row gutter={[24, 24]}>
-                    {/* Source Card */}
                     <Col xs={24} sm={12} md={6}>
                         <div className="detail-card source-card">
                             <div className="detail-content">
@@ -191,7 +244,6 @@ const LeadOverviewContent = ({ leadData }) => {
                         </div>
                     </Col>
 
-                    {/* Stage Card */}
                     <Col xs={24} sm={12} md={6}>
                         <div className="detail-card stage-card">
                             <div className="detail-content">
@@ -207,7 +259,6 @@ const LeadOverviewContent = ({ leadData }) => {
                         </div>
                     </Col>
 
-                    {/* Category Card */}
                     <Col xs={24} sm={12} md={6}>
                         <div className="detail-card category-card">
                             <div className="detail-content">
@@ -223,7 +274,6 @@ const LeadOverviewContent = ({ leadData }) => {
                         </div>
                     </Col>
 
-                    {/* Status Card */}
                     <Col xs={24} sm={12} md={6}>
                         <div className="detail-card status-card">
                             <div className="detail-content">
@@ -247,16 +297,51 @@ const LeadOverviewContent = ({ leadData }) => {
 const LeadOverview = () => {
     const { leadId } = useParams();
     const navigate = useNavigate();
-    const { data: lead, isLoading } = useGetLeadQuery(leadId);
+    const { data: lead, isLoading: isLoadingLead, refetch: refetchLead } = useGetLeadQuery(leadId);
     const { data: pipelines = [] } = useGetPipelinesQuery();
+    const { data: allStagesData, isLoading: isLoadingStages } = useGetLeadStagesQuery();
+    const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
+    const currentUser = useSelector(selectCurrentUser);
     const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
     const leadData = lead?.data;
+    const savedStageOrder = useSelector(selectStageOrder);
 
-    // Format lead data for CreateDeal
+    const pipelineStages = useMemo(() => {
+        if (!leadData?.pipeline || !allStagesData) return [];
+        const stagesArray = Array.isArray(allStagesData) ? allStagesData : (allStagesData.data || []);
+
+        const filteredStages = stagesArray.filter(stage =>
+            stage.pipeline === leadData.pipeline && stage.stageType === 'lead'
+        );
+
+        if (savedStageOrder && savedStageOrder.length > 0) {
+            const stageOrderMap = new Map(savedStageOrder.map((id, index) => [id, index]));
+
+            return [...filteredStages].sort((a, b) => {
+                const indexA = stageOrderMap.has(a.id) ? stageOrderMap.get(a.id) : Infinity;
+                const indexB = stageOrderMap.has(b.id) ? stageOrderMap.get(b.id) : Infinity;
+
+                if (indexA !== Infinity && indexB !== Infinity) {
+                    return indexA - indexB;
+                }
+                if (indexA !== Infinity && indexB === Infinity) {
+                    return -1;
+                }
+                if (indexA === Infinity && indexB !== Infinity) {
+                    return 1;
+                }
+                return (a.order ?? 0) - (b.order ?? 0) || a.stageName.localeCompare(b.stageName);
+            });
+        } else {
+            return filteredStages.sort((a, b) =>
+                (a.order ?? 0) - (b.order ?? 0) || a.stageName.localeCompare(b.stageName)
+            );
+        }
+    }, [leadData?.pipeline, allStagesData, savedStageOrder]);
+
     const formattedLeadData = useMemo(() => {
         if (!leadData) return null;
-
-        return {
+         return {
             id: leadData.id,
             leadTitle: leadData.leadTitle,
             firstName: leadData.firstName,
@@ -274,7 +359,7 @@ const LeadOverview = () => {
             address: leadData.address,
             status: leadData.status,
             interest_level: leadData.interest_level,
-            lead_members: leadData.lead_members ? JSON.parse(leadData.lead_members).lead_members : []
+             lead_members: leadData.lead_members ? JSON.parse(leadData.lead_members).lead_members : []
         };
     }, [leadData]);
 
@@ -286,33 +371,30 @@ const LeadOverview = () => {
         setIsCreateDealModalOpen(true);
     };
 
-    const getInterestLevel = (level) => {
-        const levels = {
-            "high": {
-                color: "#52c41a",
-                bg: "rgba(82, 196, 26, 0.1)",
-                text: "High Interest"
-            },
-            "medium": {
-                color: "#faad14",
-                bg: "rgba(250, 173, 20, 0.1)",
-                text: "Medium Interest"
-            },
-            "low": {
-                color: "#ff4d4f",
-                bg: "rgba(255, 77, 79, 0.1)",
-                text: "Low Interest"
-            }
-        };
-        return levels[level] || levels.medium;
-    };
+    const handleStageUpdate = async (newStageId) => {
+        if (newStageId === leadData?.leadStage) {
+             console.log("Clicked current stage, no update needed.");
+             return;
+        }
 
-    const formatCurrency = (value, currency = "INR") => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency,
-            minimumFractionDigits: 0
-        }).format(value);
+        if (isUpdatingLead) return;
+
+        console.log(`Attempting to update stage to: ${newStageId}`);
+
+        try {
+            await updateLead({
+                id: leadId,
+                data: {
+                    leadStage: newStageId,
+                    updated_by: currentUser?.username || 'system'
+                }
+            }).unwrap();
+            message.success('Lead stage updated successfully!');
+            refetchLead();
+        } catch (error) {
+            console.error("Failed to update lead stage:", error);
+            message.error(error?.data?.message || 'Failed to update lead stage.');
+        }
     };
 
     const items = [
@@ -325,8 +407,9 @@ const LeadOverview = () => {
             ),
             children: <LeadOverviewContent
                 leadData={leadData}
-                formatCurrency={formatCurrency}
-                getInterestLevel={getInterestLevel}
+                pipelineStages={pipelineStages}
+                onStageUpdate={handleStageUpdate}
+                isUpdating={isUpdatingLead}
             />,
         },
         {
@@ -375,6 +458,8 @@ const LeadOverview = () => {
             children: <LeadFollowup leadId={leadId} />,
         }
     ];
+
+    const isLoading = isLoadingLead || isLoadingStages;
 
     return (
         <div className="project-page">
@@ -453,7 +538,7 @@ const LeadOverview = () => {
 
             <div className="page-contentt">
                 <div className="content-main">
-                    <Card loading={isLoading}>
+                    <Card loading={isLoading || isUpdatingLead}>
                         <Tabs
                             defaultActiveKey="overview"
                             items={items}
