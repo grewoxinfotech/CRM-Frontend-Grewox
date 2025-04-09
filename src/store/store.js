@@ -60,7 +60,7 @@ import { announcementApi } from "../dashboard/module/hrm/Announcement/services/a
 import { mailApi } from '../dashboard/module/communication/mail/services/mailApi';
 import { notificationApi } from '../common/notifacations/services/notificationApi';
 import { companyAccountApi } from "../dashboard/module/crm/companyacoount/services/companyAccountApi";
-
+import { contactApi } from "../dashboard/module/crm/contact/services/contactApi";
 const persistConfig = {
   key: "root",
   storage,
@@ -128,6 +128,7 @@ const rootReducer = combineReducers({
   [mailApi.reducerPath]: mailApi.reducer,
     [notificationApi.reducerPath]: notificationApi.reducer,
     [companyAccountApi.reducerPath]: companyAccountApi.reducer,
+    [contactApi.reducerPath]: contactApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -195,7 +196,8 @@ export const store = configureStore({
       .concat(announcementApi.middleware)
       .concat(mailApi.middleware)
       .concat(notificationApi.middleware)
-      .concat(companyAccountApi.middleware),
+      .concat(companyAccountApi.middleware)
+      .concat(contactApi.middleware)
 });
 
 export const persistor = persistStore(store);

@@ -22,6 +22,11 @@ import {
   FiPhone,
   FiMapPin,
   FiTag,
+  FiDollarSign,
+  FiGlobe,
+  FiBriefcase,
+  FiUsers,
+  FiCopy,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./companyaccount.scss";
@@ -30,7 +35,7 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const EditCompanyAccount = ({ open, onCancel, companyData }) => {
+const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
   const [form] = Form.useForm();
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
 
@@ -38,10 +43,11 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
     if (companyData) {
       form.setFieldsValue({
         ...companyData,
+        account_owner: loggedInUser?.username,
         registrationDate: companyData.registrationDate ? dayjs(companyData.registrationDate) : null
       });
     }
-  }, [companyData, form]);
+  }, [companyData, form, loggedInUser]);
 
   const handleCopyBillingToShipping = (checked) => {
     setCopyBillingToShipping(checked);
@@ -100,84 +106,21 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
         },
       }}
     >
-      <div
-        className="modal-header"
-        style={{
-          background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
-          padding: "24px",
-          color: "#ffffff",
-          position: "relative",
-        }}
-      >
+      <div className="modal-header">
         <Button
           type="text"
           onClick={onCancel}
-          style={{
-            position: "absolute",
-            top: "16px",
-            right: "16px",
-            color: "#ffffff",
-            width: "32px",
-            height: "32px",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(255, 255, 255, 0.2)",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-          }}
+          className="close-button"
         >
-          <FiX style={{ fontSize: "20px" }} />
+          <FiX />
         </Button>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
-          }}
-        >
-          <div
-            style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "12px",
-              background: "rgba(255, 255, 255, 0.2)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <FiFileText style={{ fontSize: "24px", color: "#ffffff" }} />
+        <div className="header-content">
+          <div className="header-icon">
+            <FiFileText />
           </div>
           <div>
-            <h2
-              style={{
-                margin: "0",
-                fontSize: "24px",
-                fontWeight: "600",
-                color: "#ffffff",
-              }}
-            >
-              Edit Company Account
-            </h2>
-            <Text
-              style={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.85)",
-              }}
-            >
-              Update company account information
-            </Text>
+            <h2>Edit Company Account</h2>
+            <Text>Update company account information</Text>
           </div>
         </div>
       </div>
@@ -187,305 +130,302 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
         layout="vertical"
         onFinish={handleSubmit}
         requiredMark={false}
-        style={{
-          padding: "24px",
-        }}
+        className="company-account-form"
       >
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="account_owner"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Account Owner <span style={{ color: '#ff4d4f' }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter account owner" }]}
-            >
-              <Input
-                placeholder="Enter account owner name"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="company_name"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Name <span style={{ color: '#ff4d4f' }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter company name" }]}
-            >
-              <Input
-                placeholder="Enter company name"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="company_site"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Site
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter company site"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="company_number"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Number
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter company number"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="company_type"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Type
-                </span>
-              }
-            >
-              <Select
-                size="large"
-                placeholder="Select company type"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                <Option value="private">Private</Option>
-                <Option value="public">Public</Option>
-                <Option value="partnership">Partnership</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="company_category"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Category
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter company category"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="company_industry"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Industry
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter company industry"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="company_revenue"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Company Revenue
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter company revenue"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="phone_number"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Phone Number
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter phone number"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="website"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Website
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter website"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="fax"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  
-                  Fax
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter fax number"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col span={12}>
-            <Form.Item
-              name="ownership"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  
-                  Ownership
-                </span>
-              }
-            >
-              <Input
-                placeholder="Enter ownership details"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="number_of_employees"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Number of Employees
-                </span>
-              }
-            >
-              <Input
-                type="number"
-                placeholder="Enter number of employees"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  height: "48px",
-                }}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-       
-
-        <div style={{ marginBottom: "24px", marginTop: "24px" }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <Text strong>Billing Address</Text>
-          </div>
+        <div className="form-section">
+          <Text strong className="section-title">Basic Information</Text>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
+                name="account_owner"
+                label={
+                  <span className="form-label">
+                    <FiUser />
+                    Account Owner <span className="required">*</span>
+                  </span>
+                }
+                rules={[{ required: true, message: "Please enter account owner" }]}
+              >
+                <Input
+                  placeholder="Enter account owner name"
+                  size="large"
+                  className="form-input"
+                  disabled
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="company_name"
+                label={
+                  <span className="form-label">
+                    {/* <FiBuilding /> */}
+                    Company Name <span className="required">*</span>
+                  </span>
+                }
+                rules={[{ required: true, message: "Please enter company name" }]}
+              >
+                <Input
+                  placeholder="Enter company name"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="company_site"
+                label={
+                  <span className="form-label">
+                    <FiGlobe />
+                    Company Site
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter company site"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="company_number"
+                label={
+                  <span className="form-label">
+                    <FiPhone />
+                    Company Number
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter company number"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="form-section">
+          <Text strong className="section-title">Company Details</Text>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="company_type"
+                label={
+                  <span className="form-label">
+                    <FiBriefcase />
+                    Company Type
+                  </span>
+                }
+              >
+                <Select
+                  size="large"
+                  placeholder="Select company type"
+                  className="form-input"
+                >
+                  <Option value="private">Private</Option>
+                  <Option value="public">Public</Option>
+                  <Option value="partnership">Partnership</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="company_category"
+                label={
+                  <span className="form-label">
+                    <FiTag />
+                    Company Category
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter company category"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="company_industry"
+                label={
+                  <span className="form-label">
+                    <FiBriefcase />
+                    Company Industry
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter company industry"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="company_revenue"
+                label={
+                  <span className="form-label">
+                    <FiDollarSign />
+                    Company Revenue
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter company revenue"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="form-section">
+          <Text strong className="section-title">Contact Information</Text>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="phone_number"
+                label={
+                  <span className="form-label">
+                    <FiPhone />
+                    Phone Number
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter phone number"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="website"
+                label={
+                  <span className="form-label">
+                    <FiGlobe />
+                    Website
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter website"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="fax"
+                label={
+                  <span className="form-label">
+                    <FiPhone />
+                    Fax
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter fax number"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="ownership"
+                label={
+                  <span className="form-label">
+                    <FiUsers />
+                    Ownership
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter ownership details"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="number_of_employees"
+                label={
+                  <span className="form-label">
+                    <FiUsers />
+                    Number of Employees
+                  </span>
+                }
+              >
+                <Input
+                  type="number"
+                  placeholder="Enter number of employees"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="form-section">
+          <div className="section-header">
+            <Text strong className="section-title">Billing Address</Text>
+          </div>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                name="billing_address"
+                label={
+                  <span className="form-label">
+                    <FiMapPin />
+                    Address
+                  </span>
+                }
+              >
+                <TextArea
+                  placeholder="Enter billing address"
+                  rows={3}
+                  className="form-textarea"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item
                 name="billing_city"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     City
                   </span>
                 }
@@ -493,23 +433,16 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
                 <Input
                   placeholder="Enter city"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                  onChange={(e) => {
-                    if (copyBillingToShipping) {
-                      form.setFieldValue('shipping_city', e.target.value);
-                    }
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="billing_state"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     State
                   </span>
                 }
@@ -517,47 +450,36 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
                 <Input
                   placeholder="Enter state"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                  onChange={(e) => {
-                    if (copyBillingToShipping) {
-                      form.setFieldValue('shipping_state', e.target.value);
-                    }
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="billing_pincode"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     Pincode
                   </span>
                 }
               >
                 <Input
+                  type="number"
                   placeholder="Enter pincode"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                  onChange={(e) => {
-                    if (copyBillingToShipping) {
-                      form.setFieldValue('shipping_pincode', e.target.value);
-                    }
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
               <Form.Item
                 name="billing_country"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     Country
                   </span>
                 }
@@ -565,50 +487,18 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
                 <Input
                   placeholder="Enter country"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                  onChange={(e) => {
-                    if (copyBillingToShipping) {
-                      form.setFieldValue('shipping_country', e.target.value);
-                    }
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                name="billing_address"
-                label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Address
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter billing address"
-                  size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                  onChange={(e) => {
-                    if (copyBillingToShipping) {
-                      form.setFieldValue('shipping_address', e.target.value);
-                    }
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
           </Row>
         </div>
 
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <Text strong>Shipping Address</Text>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Text>Shipping Address</Text>
+        <div className="form-section">
+          <div className="section-header">
+            <Text strong className="section-title">Shipping Address</Text>
+            <div className="copy-address-switch">
+              <Text>Same as Billing Address</Text>
               <Switch 
                 checked={copyBillingToShipping}
                 onChange={handleCopyBillingToShipping}
@@ -617,11 +507,31 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
             </div>
           </div>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={24}>
+              <Form.Item
+                name="shipping_address"
+                label={
+                  <span className="form-label">
+                    <FiMapPin />
+                    Address
+                  </span>
+                }
+              >
+                <TextArea
+                  placeholder="Enter shipping address"
+                  rows={3}
+                  className="form-textarea"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={8}>
               <Form.Item
                 name="shipping_city"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     City
                   </span>
                 }
@@ -629,18 +539,16 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
                 <Input
                   placeholder="Enter city"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="shipping_state"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     State
                   </span>
                 }
@@ -648,37 +556,36 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
                 <Input
                   placeholder="Enter state"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="shipping_pincode"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     Pincode
                   </span>
                 }
               >
                 <Input
+                  type="number"
                   placeholder="Enter pincode"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+          </Row>
+          <Row gutter={16}>
+            <Col span={24}>
               <Form.Item
                 name="shipping_country"
                 label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <span className="form-label">
+                    <FiMapPin />
                     Country
                   </span>
                 }
@@ -686,71 +593,39 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
                 <Input
                   placeholder="Enter country"
                   size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                name="shipping_address"
-                label={
-                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Address
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter shipping address"
-                  size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
+                  className="form-input"
                 />
               </Form.Item>
             </Col>
           </Row>
         </div>
 
-        <Form.Item
-          name="description"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Description
-            </span>
-          }
-        >
-          <TextArea
-            placeholder="Enter description"
-            rows={4}
-            style={{
-              borderRadius: "10px",
-            }}
-          />
-        </Form.Item>
+        <div className="form-section">
+          <Text strong className="section-title">Additional Information</Text>
+          <Form.Item
+            name="description"
+            label={
+              <span className="form-label">
+                <FiFileText />
+                Description
+              </span>
+            }
+          >
+            <TextArea
+              placeholder="Enter description"
+              rows={4}
+              className="form-textarea"
+            />
+          </Form.Item>
+        </div>
 
-        <Divider style={{ margin: "24px 0" }} />
+        <Divider className="form-divider" />
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "12px",
-          }}
-        >
+        <div className="form-footer">
           <Button
             size="large"
             onClick={onCancel}
-            style={{
-              padding: "8px 24px",
-              height: "44px",
-              borderRadius: "10px",
-              border: "1px solid #e6e8eb",
-              fontWeight: "500",
-            }}
+            className="cancel-button"
           >
             Cancel
           </Button>
@@ -758,15 +633,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData }) => {
             size="large"
             type="primary"
             htmlType="submit"
-            style={{
-              padding: "8px 32px",
-              height: "44px",
-              borderRadius: "10px",
-              fontWeight: "500",
-              background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-              border: "none",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
-            }}
+            className="submit-button"
           >
             Update Company Account
           </Button>

@@ -65,6 +65,9 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const selectRef = React.useRef(null);
 
+
+
+
   // Add state to track selected pipeline
   const [selectedPipeline, setSelectedPipeline] = useState(null);
 

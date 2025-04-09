@@ -19,22 +19,18 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import EditCompanyAccount from "./EditCompanyAccount";
 import CreateCompanyAccount from "./CreateCompanyAccount";
-import { 
-  useGetCompanyAccountsQuery,
-  useDeleteCompanyAccountMutation 
-} from "./services/companyAccountApi";
+
 
 const { Text } = Typography;
 
-const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
+const CompanyAccountList = ({ onEdit, onDelete, onView, searchText = "", companyAccountsResponse, isLoading, isCompanyAccountsLoading, loggedInUser }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const navigate = useNavigate();
   
   // RTK Query hooks
-  const { data: companyAccountsResponse = { data: [] }, isLoading } = useGetCompanyAccountsQuery();
-  const [deleteCompanyAccount] = useDeleteCompanyAccountMutation();
+
 
   // Extract the actual company accounts array from the response
   const companyAccounts = Array.isArray(companyAccountsResponse.data) 
@@ -43,32 +39,8 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
       ? companyAccountsResponse 
       : [];
 
-  const handleDelete = (id) => {
-    Modal.confirm({
-      title: "Delete Company",
-      content: "Are you sure you want to delete this company?",
-      okText: "Yes",
-      okType: "danger",
-      cancelText: "No",
-      bodyStyle: {
-        padding: "20px",
-      },
-      onOk: async () => {
-        try {
-          await deleteCompanyAccount(id).unwrap();
-          message.success("Company deleted successfully");
-        } catch (error) {
-          message.error("Failed to delete company");
-          console.error('Error deleting company:', error);
-        }
-      },
-    });
-  };
 
-  const handleEdit = (record) => {
-    setSelectedCompany(record);
-    setEditModalVisible(true);
-  };
+
 
   const handleView = (record) => {
     navigate(`/dashboard/crm/company-account/${record.id}`);
@@ -117,13 +89,13 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
-        onClick: () => handleEdit(record),
+        onClick: () => onEdit(record),
       },
       {
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
-        onClick: () => handleDelete(record.id),
+        onClick: () => onDelete(record.id),
         danger: true,
       },
     ],
@@ -148,20 +120,19 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
       title: "Account Owner",
       dataIndex: "account_owner",
       key: "account_owner",
-      sorter: (a, b) => a.account_owner.localeCompare(b.account_owner),
+      render: (ownerId) => {
+        if (ownerId === loggedInUser?.id) {
+          return <Text>{loggedInUser?.username}</Text>;
+        }
+        return <Text>{ownerId}</Text>;
+      }
     },
-   
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      sorter: (a, b) => a.status.localeCompare(b.status),
-      render: (status) => (
-        <Tag color={status === "Active" ? "green" : "red"}>
-          {status || "Inactive"}
-        </Tag>
-      ),
+      title: "Phone",
+      dataIndex: "phone_number",
+      key: "phone_number",
     },
+    
     {
       title: "Created Date",
       dataIndex: "createdAt",

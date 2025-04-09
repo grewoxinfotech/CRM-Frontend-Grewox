@@ -24,6 +24,10 @@ import "jspdf-autotable";
 import CompanyAccountList from "./CompanyAccountList";
 import CreateCompanyAccount from "./CreateCompanyAccount";
 import EditCompanyAccount from "./EditCompanyAccount";
+import { useCreateCompanyAccountMutation, useDeleteCompanyAccountMutation, useGetCompanyAccountsQuery } from "./services/companyAccountApi";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
+import CompanyAccountDetails from "./CompanyAccountDetails";
 
 const { Title, Text } = Typography;
 
@@ -33,6 +37,10 @@ const CompanyAccount = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const loggedInUser = useSelector(selectCurrentUser);
+  const [deleteCompanyAccount] = useDeleteCompanyAccountMutation();
+  const [createCompanyAccount] = useCreateCompanyAccountMutation();
+  const { data: companyAccountsResponse = { data: [] }, isLoading:isCompanyAccountsLoading  } = useGetCompanyAccountsQuery();
 
   const handleCreate = () => {
     setSelectedCompany(null);
@@ -48,7 +56,8 @@ const CompanyAccount = () => {
     console.log("View company:", record);
   };
 
-  const handleDelete = (record) => {
+  const handleDelete = (id) => {
+    console.log("Delete company:", id);
     Modal.confirm({
       title: 'Delete Company',
       content: 'Are you sure you want to delete this company?',
@@ -60,7 +69,8 @@ const CompanyAccount = () => {
       },
       onOk: async () => {
         try {
-          message.success('Company deleted successfully');
+          await deleteCompanyAccount(id).unwrap();
+          // message.success('Company deleted successfully');
         } catch (error) {
           message.error('Failed to delete company');
         }
@@ -68,30 +78,9 @@ const CompanyAccount = () => {
     });
   };
 
-  const handleCreateSubmit = async (values) => {
-    try {
-      setLoading(true);
-      message.success('Company created successfully');
-      setIsCreateModalOpen(false);
-    } catch (error) {
-      message.error('Failed to create company');
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
-  const handleEditSubmit = async (values) => {
-    try {
-      setLoading(true);
-      message.success('Company updated successfully');
-      setIsEditModalOpen(false);
-      setSelectedCompany(null);
-    } catch (error) {
-      message.error('Failed to update company');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const handleExport = async (type) => {
     try {
@@ -263,21 +252,37 @@ const CompanyAccount = () => {
           onView={handleView}
           onDelete={handleDelete}
           searchText={searchText}
-        />
+          loggedInUser={loggedInUser}
+          companyAccountsResponse={companyAccountsResponse}
+        
+          isCompanyAccountsLoading={isCompanyAccountsLoading}
+       />
       </Card>
 
       <CreateCompanyAccount
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateSubmit}
+   
+        loggedInUser={loggedInUser}
+        companyAccountsResponse={companyAccountsResponse}
+    
+        isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
 
       <EditCompanyAccount
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
-        onSubmit={handleEditSubmit}
-        companyData={selectedCompany}
+          
+          companyData={selectedCompany}
+        loggedInUser={loggedInUser}
+        companyAccountsResponse={companyAccountsResponse}
+     
+        isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
+      <CompanyAccountDetails
+        data={companyAccountsResponse}
+      
+        />
     </div>
   );
 };

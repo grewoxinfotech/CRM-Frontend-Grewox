@@ -21,45 +21,58 @@ import CreateContact from "./CreateContact";
 
 const { Text } = Typography;
 
-const ContactList = ({ onEdit, onView, searchText = "" }) => {
+const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoading, companyAccountsResponse, isCompanyAccountsLoading, loggedInUser }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
 
-  // Mock data for contacts
-  const contacts = [
-    {
-      id: 1,
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-      phone: "+1234567890",
-      company: "ABC Corp",
-      jobTitle: "Sales Manager",
-      status: "Active",
-      createdAt: "2023-01-01"
-    },
-    {
-      id: 2,
-      firstName: "Jane",
-      lastName: "Smith",
-      email: "jane.smith@example.com", 
-      phone: "+0987654321",
-      company: "XYZ Ltd",
-      jobTitle: "Marketing Director",
-      status: "Inactive",
-      createdAt: "2023-02-01"
+  // Safely handle contacts data
+  const contacts = React.useMemo(() => {
+    if (!contactsResponse) return [];
+    if (Array.isArray(contactsResponse)) return contactsResponse;
+    if (contactsResponse?.data && Array.isArray(contactsResponse.data)) {
+      return contactsResponse.data;
     }
-  ];
+    return [];
+  }, [contactsResponse]);
+
+  // Safely handle company accounts data
+  const companyAccounts = React.useMemo(() => {
+    if (!companyAccountsResponse) return [];
+    if (Array.isArray(companyAccountsResponse)) return companyAccountsResponse;
+    if (companyAccountsResponse?.data && Array.isArray(companyAccountsResponse.data)) {
+      return companyAccountsResponse.data;
+    }
+    return [];
+  }, [companyAccountsResponse]);
+
+  // Create a map of company IDs to company names
+  const companyMap = React.useMemo(() => {
+    return companyAccounts.reduce((acc, company) => {
+      acc[company.id] = company.company_name;
+      return acc;
+    }, {});
+  }, [companyAccounts]);
+
+  // Enhance contacts with company names
+  const enhancedContacts = React.useMemo(() => {
+    return contacts.map(contact => ({
+      ...contact,
+      company_display_name: companyMap[contact.company_name] || contact.company_name
+    }));
+  }, [contacts, companyMap]);
 
   const filteredContacts = React.useMemo(() => {
-    return contacts?.filter((contact) => {
+    if (!enhancedContacts || !Array.isArray(enhancedContacts)) {
+      return [];
+    }
+    return enhancedContacts.filter((contact) => {
       const searchLower = searchText.toLowerCase();
-      const firstName = contact?.firstName?.toLowerCase() || "";
-      const lastName = contact?.lastName?.toLowerCase() || "";
+      const firstName = contact?.first_name?.toLowerCase() || "";
+      const lastName = contact?.last_name?.toLowerCase() || "";
       const email = contact?.email?.toLowerCase() || "";
       const phone = contact?.phone?.toLowerCase() || "";
-      const company = contact?.company?.toLowerCase() || "";
+      const company = contact?.company_display_name?.toLowerCase() || "";
       const status = contact?.status?.toLowerCase() || "";
 
       return (
@@ -72,7 +85,7 @@ const ContactList = ({ onEdit, onView, searchText = "" }) => {
         status.includes(searchLower)
       );
     });
-  }, [contacts, searchText]);
+  }, [enhancedContacts, searchText]);
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -131,11 +144,11 @@ const ContactList = ({ onEdit, onView, searchText = "" }) => {
   const columns = [
     {
       title: "Name",
-      key: "name",
-      sorter: (a, b) => `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`),
+      key: "first_name",
+      sorter: (a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`),
       render: (_, record) => (
         <Text style={{ fontWeight: 500 }}>
-          {`${record.firstName} ${record.lastName}`}
+          {`${record.first_name} ${record.last_name}`}
         </Text>
       ),
     },
@@ -152,24 +165,20 @@ const ContactList = ({ onEdit, onView, searchText = "" }) => {
     },
     {
       title: "Company",
-      dataIndex: "company",
-      key: "company",
-      sorter: (a, b) => a.company.localeCompare(b.company),
+      dataIndex: "company_display_name",
+      key: "company_display_name",
+      sorter: (a, b) => a.company_display_name.localeCompare(b.company_display_name),
     },
     {
-      title: "Job Title",
-      dataIndex: "jobTitle",
-      key: "jobTitle",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <Tag color={status === "Active" ? "green" : "red"}>
-          {status}
-        </Tag>
-      ),
+      title: "Contact Owner",
+      dataIndex: "contact_owner",
+      key: "contact_owner",
+      render: (ownerId) => {
+        if (ownerId === loggedInUser?.id) {
+          return <Text>{loggedInUser?.username}</Text>;
+        }
+        return <Text>{ownerId}</Text>;
+      }
     },
     {
       title: "Created Date",

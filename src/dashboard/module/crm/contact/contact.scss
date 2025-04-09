@@ -227,3 +227,135 @@
         }
     }
 }
+
+// Create Contact Modal Styles
+.pro-modal {
+  .modal-header {
+    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+    padding: 24px;
+    color: #ffffff;
+    position: relative;
+
+    .close-button {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      color: #ffffff;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      svg {
+        font-size: 20px;
+      }
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .header-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        svg {
+          font-size: 24px;
+          color: #ffffff;
+        }
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      .ant-typography {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.85);
+      }
+    }
+  }
+
+  .contact-form {
+    padding: 24px;
+
+    .form-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #262626;
+
+      svg {
+        color: #1890ff;
+      }
+
+      .required {
+        color: #ff4d4f;
+      }
+    }
+
+    .form-input {
+      border-radius: 10px;
+      height: 48px;
+
+      &.ant-select {
+        height: 48px;
+      }
+    }
+
+    .form-textarea {
+      border-radius: 10px;
+    }
+
+    .form-divider {
+      margin: 24px 0;
+    }
+
+    .form-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+
+      .cancel-button {
+        padding: 8px 24px;
+        height: 44px;
+        border-radius: 10px;
+        border: 1px solid #e6e8eb;
+        font-weight: 500;
+      }
+
+      .submit-button {
+        padding: 8px 32px;
+        height: 44px;
+        border-radius: 10px;
+        font-weight: 500;
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+        border: none;
+        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+      }
+    }
+  }
+}

@@ -15,10 +15,9 @@ import {
 import {
   FiUser,
   FiMail,
-  FiPhone,
+
   FiX,
   FiBriefcase,
-  FiHash,
   FiDollarSign,
   FiMapPin,
   FiChevronDown,
@@ -28,7 +27,6 @@ import {
   FiInfo,
 } from "react-icons/fi";
 import { useCreateDealMutation } from "./services/dealApi";
-import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import { PlusOutlined } from '@ant-design/icons';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
@@ -40,6 +38,8 @@ import { useGetProductsQuery } from "../../sales/product&services/services/produ
 import dayjs from "dayjs";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useUpdateLeadMutation } from '../lead/services/LeadApi';
+import { useGetContactsQuery } from "../contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -52,7 +52,7 @@ const findIndianDefaults = (currencies, countries) => {
   };
 };
 
-const CreateDeal = ({ open, onCancel, leadData }) => {
+const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
   const loggedInUser = useSelector(selectCurrentUser);
 
   const [form] = Form.useForm();
@@ -63,6 +63,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const dispatch = useDispatch();
   const [manualValue, setManualValue] = useState(0);
   const [selectedProductPrices, setSelectedProductPrices] = useState({});
+  const [filteredContacts, setFilteredContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
 
   const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
@@ -71,19 +73,17 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const { data: productsData } = useGetProductsQuery();
   const { data: dealStages } = useGetLeadStagesQuery();
   const { data: pipelinesData } = useGetPipelinesQuery();
-
   const pipelines = pipelinesData || [];
   const sources = sourcesData?.data || [];
   const products = productsData?.data || [];
 
-  const { data: currencies = [] } = useGetAllCurrenciesQuery({
-    page: 1,
-    limit: 100
-  });
-  const { data: countries = [] } = useGetAllCountriesQuery({
-    page: 1,
-    limit: 100
-  });
+  const { data: companyAccountsResponse = { data: [] }, isLoading:isCompanyAccountsLoading  } = useGetCompanyAccountsQuery();
+  const { data: contactsResponse, isLoading :isContactsLoading, error } = useGetContactsQuery();
+
+
+console.log("companyAccountsResponse",companyAccountsResponse.data);
+console.log("contactsResponse",contactsResponse.data);
+
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
@@ -295,6 +295,35 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       background: '#E5E7EB',
       border: 'none',
       margin: '4px',
+    }
+  };
+
+  const handleCompanyChange = (companyId) => {
+    // Find contacts matching the selected company
+    const matchingContacts = contactsResponse?.data?.filter(
+      contact => contact.company_name === companyId
+    ) || [];
+    setFilteredContacts(matchingContacts);
+    
+    // Clear the first name and last name fields
+    form.setFieldsValue({
+      firstName: undefined,
+      lastName: undefined
+    });
+  };
+
+  const handleFirstNameChange = (contactId) => {
+    // Find the selected contact
+    const contact = filteredContacts.find(c => c.id === contactId);
+    if (contact) {
+      // Set the form values
+      form.setFieldsValue({
+        lastName: contact.last_name,
+        email: contact.email,
+        phone: contact.phone?.replace(/^\+\+91\s/, ''), // Remove ++91 prefix if present
+        address: contact.address
+      });
+      setSelectedContact(contact);
     }
   };
 
@@ -690,15 +719,21 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               <Form.Item
                 name="firstName"
                 label={<span style={formItemStyle}>First Name</span>}
+                rules={[{ required: true, message: "Please select contact" }]}
               >
-                <Input
-                  prefix={<FiUser style={prefixIconStyle} />}
-                  placeholder="Enter first name"
-                  style={{
-                    ...inputStyle,
-                    backgroundColor: '#f8fafc'
-                  }}
-                />
+                <Select
+                  placeholder="Select contact"
+                  onChange={handleFirstNameChange}
+                  style={selectStyle}
+                  suffixIcon={<FiUser style={prefixIconStyle} />}
+                  disabled={!form.getFieldValue('company_name')}
+                >
+                  {filteredContacts.map((contact) => (
+                    <Option key={contact.id} value={contact.id}>
+                      {contact.first_name}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
 
               <Form.Item
@@ -707,11 +742,12 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               >
                 <Input
                   prefix={<FiUser style={prefixIconStyle} />}
-                  placeholder="Enter last name"
+                  placeholder="Last name will auto-fill"
                   style={{
                     ...inputStyle,
                     backgroundColor: '#f8fafc'
                   }}
+                  readOnly
                 />
               </Form.Item>
 
@@ -796,15 +832,20 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               <Form.Item
                 name="company_name"
                 label={<span style={formItemStyle}>Company Name</span>}
+                rules={[{ required: true, message: "Please select company" }]}
               >
-                <Input
-                  prefix={<FiBriefcase style={prefixIconStyle} />}
-                  placeholder="Enter company name"
-                  style={{
-                    ...inputStyle,
-                    backgroundColor: '#f8fafc'
-                  }}
-                />
+                <Select
+                  placeholder="Select company"
+                  onChange={handleCompanyChange}
+                  style={selectStyle}
+                  suffixIcon={<FiBriefcase style={prefixIconStyle} />}
+                >
+                  {companyAccountsResponse?.data?.map((company) => (
+                    <Option key={company.id} value={company.id}>
+                      {company.company_name}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
 
               <Form.Item

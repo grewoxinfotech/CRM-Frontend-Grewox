@@ -24,6 +24,10 @@ import "jspdf-autotable";
 import ContactList from "./ContactList";
 import CreateContact from "./CreateContact";
 import EditContact from "./EditContact";
+import { useGetContactsQuery } from "./services/contactApi";
+import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -33,6 +37,11 @@ const Contact = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const { data: contactsResponse, isLoading, error } = useGetContactsQuery();
+  const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
+
+
 
   const handleCreate = () => {
     setSelectedContact(null);
@@ -269,6 +278,11 @@ const Contact = () => {
           onView={handleView}
           onDelete={handleDelete}
           searchText={searchText}
+          isLoading={isLoading}
+          loggedInUser={loggedInUser}
+          contactsResponse={contactsResponse}
+          companyAccountsResponse={companyAccountsResponse}
+          isCompanyAccountsLoading={isCompanyAccountsLoading}
         />
       </Card>
 
@@ -276,6 +290,11 @@ const Contact = () => {
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateSubmit}
+        isLoading={isLoading}
+        loggedInUser={loggedInUser}
+        contactsResponse={contactsResponse}
+        companyAccountsResponse={companyAccountsResponse}
+        isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
 
       <EditContact
@@ -283,6 +302,11 @@ const Contact = () => {
         onCancel={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         contactData={selectedContact}
+        isLoading={isLoading}
+        loggedInUser={loggedInUser}
+        contactsResponse={contactsResponse}
+        companyAccountsResponse={companyAccountsResponse}
+        isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
     </div>
   );

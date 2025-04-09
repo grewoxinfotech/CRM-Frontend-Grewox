@@ -3,6 +3,8 @@ import { Tabs, Typography, Button, Badge, Empty, Dropdown } from 'antd';
 import { BiBell, BiCalendarEvent } from 'react-icons/bi';
 import { useGetAllNotificationsQuery, useMarkAsReadMutation, useClearAllNotificationsMutation } from './services/notificationApi';
 import './notifications.scss';
+import { selectCurrentUser } from '../../auth/services/authSlice';
+import { useSelector } from 'react-redux';
 
 const { Title } = Typography;
 
@@ -10,10 +12,16 @@ const NotificationsComponent = () => {
     const { data: notificationsData, isLoading } = useGetAllNotificationsQuery();
     const [markAsRead] = useMarkAsReadMutation();
     const [clearAll] = useClearAllNotificationsMutation();
+  const loggedInUser = useSelector(selectCurrentUser);
+
+
+console.log("loggedInUser",loggedInUser)
 
     const notifications = notificationsData?.data || [];
     const normalNotifications = notifications.filter(n => n.notification_type === 'normal');
     const reminders = notifications.filter(n => n.notification_type === 'reminder');
+
+console.log("notifications",notifications)
 
     const handleMarkAsRead = async (id) => {
         try {

@@ -225,17 +225,16 @@ const EmailList = ({
                   <div className="attachments-list">
                     {(() => {
                       try {
-                        // Parse attachments - now we expect an array of objects with name, size, and url
-                        const attachmentsArray = typeof selectedEmail.attachments === 'string' 
-                          ? JSON.parse(selectedEmail.attachments)
-                          : selectedEmail.attachments;
-
-                        if (!Array.isArray(attachmentsArray)) {
-                          console.error('Attachments is not an array:', attachmentsArray);
+                        // Parse double stringified JSON
+                        const firstParse = JSON.parse(selectedEmail.attachments);
+                        const attachments = JSON.parse(firstParse);
+                        
+                        if (!Array.isArray(attachments)) {
+                          console.error('Attachments is not an array:', attachments);
                           return null;
                         }
 
-                        return attachmentsArray.map((attachment, index) => (
+                        return attachments.map((attachment, index) => (
                           <div key={index} className="attachment-item">
                             <Space>
                               <FiFile className={`file-icon ${getFileIcon(attachment.name)}`} />
@@ -251,13 +250,13 @@ const EmailList = ({
                                   ({(attachment.size / 1024).toFixed(1)} KB)
                                 </span>
                               )}
-                              <Button
+                              {/* <Button
                                 type="link"
                                 icon={<FiDownload />}
                                 onClick={() => handleDownloadAttachment(attachment)}
                               >
                                 Download
-                              </Button>
+                              </Button> */}
                             </Space>
                           </div>
                         ));
