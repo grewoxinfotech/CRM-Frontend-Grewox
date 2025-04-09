@@ -225,9 +225,6 @@ const Contact = () => {
               Home
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/dashboard/sales">Sales</Link>
-          </Breadcrumb.Item>
           <Breadcrumb.Item>Contacts</Breadcrumb.Item>
         </Breadcrumb>
       </div>
@@ -272,7 +269,7 @@ const Contact = () => {
         </div>
       </div>
 
-      <Card className="main-card">
+      <Card className="content-card">
         <ContactList
           onEdit={handleEdit}
           onView={handleView}

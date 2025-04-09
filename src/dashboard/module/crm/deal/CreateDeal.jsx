@@ -138,27 +138,34 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
 
   // Pre-fill form with lead data when available
   useEffect(() => {
-    if (leadData && open) {
-      // Find the country details
-      const countryDetails = countries.find(c => c.id === leadData.phoneCode);
+    // Add checks: Ensure leadData, countries, and dealStages exist and are arrays before proceeding
+    if (leadData && open && Array.isArray(countries) && countries.length > 0 && Array.isArray(dealStages) && dealStages.length > 0) {
+      
+      // Find country details safely
+      const countryDetails = leadData.phoneCode
+        ? countries.find(c => c.id === leadData.phoneCode)
+        : undefined; // Default to undefined if phoneCode is missing
 
-      //find the stage details
-      const stageDetails = dealStages.find(s => s.id === leadData.stage);
+      // Find stage details safely
+      const stageDetails = leadData.stage
+        ? dealStages.find(s => s.id === leadData.stage)
+        : undefined; // Default to undefined if stage is missing
 
       form.setFieldsValue({
         dealTitle: leadData.leadTitle,
-        currency: leadData.currency,
-        phoneCode: countryDetails?.phoneCode,
-        value: leadData.value,
-        // pipeline: leadData.pipeline,
+        currency: leadData.currency || defaultCurrency, // Use default if missing
+        // Use optional chaining for safety when accessing countryDetails
+        phoneCode: countryDetails?.phoneCode || defaultPhoneCode, // Use default if missing
+        value: leadData.value || 0,
         source: leadData.source,
-        // stage: stageDetails?.stageName,
+        // Set stage ID directly, assuming the form field expects the ID
+        stage: leadData.stage,
         firstName: leadData.firstName,
         lastName: leadData.lastName,
         email: leadData.email,
-        phone: leadData.phone,
+        phone: leadData.phone?.replace(/^\+?\d+\s/, ''), // Attempt to clean phone number prefix more broadly
         address: leadData.address,
-        company_name: leadData.company,
+        company_name: leadData.company, // Ensure this matches the field name used for company selection
         leadId: leadData.id
       });
 
@@ -168,9 +175,51 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
       // Set selected pipeline if lead data has pipeline
       if (leadData.pipeline) {
         setSelectedPipeline(leadData.pipeline);
+         // Also set the form field value for pipeline
+         form.setFieldsValue({ pipeline: leadData.pipeline });
       }
+
+       // Pre-filter contacts and potentially select one based on lead data
+       if (leadData.company && Array.isArray(contactsResponse?.data)) {
+         const matchingContacts = contactsResponse.data.filter(
+           contact => contact.company_name === leadData.company // Make sure this matches the company ID field
+         ) || [];
+         setFilteredContacts(matchingContacts);
+
+         // Try to find a contact matching the lead's name within the filtered list
+         const matchedContact = matchingContacts.find(c =>
+           c.first_name === leadData.firstName && c.last_name === leadData.lastName
+         );
+
+         if (matchedContact) {
+           // If a match is found, set the 'firstName' form field to the contact's ID
+           // and prefill other fields from this matched contact
+           form.setFieldsValue({
+             firstName: matchedContact.id, // Set select value to contact ID
+             lastName: matchedContact.last_name,
+             email: matchedContact.email,
+             phone: matchedContact.phone?.replace(/^\+?\d+\s/, ''), // Clean phone
+             address: matchedContact.address,
+           });
+           setSelectedContact(matchedContact);
+         } else {
+           // If no exact contact match, just keep the lead's names (they won't be selectable)
+           // Or clear the contact selection if preferred
+           // form.setFieldsValue({ firstName: undefined, lastName: undefined });
+         }
+       }
+
+
+    } else if (open) {
+      // Optional: Handle case where modal is open but data is missing
+       console.warn("CreateDeal modal opened, but leadData, countries, or dealStages might be missing/invalid.");
+       // You might want to reset specific fields here if necessary
+       form.setFieldsValue({
+         currency: defaultCurrency,
+         phoneCode: defaultPhoneCode,
+       });
     }
-  }, [leadData, form, open, currencies, countries]);
+  }, [leadData, open, countries, dealStages, contactsResponse, form, defaultCurrency, defaultPhoneCode]); // Added dependencies
 
   // Reset form when modal closes
   useEffect(() => {

@@ -145,11 +145,11 @@ const InvoiceList = ({ deal, onEdit, onView, currencies }) => {
           />
           <div>
             <Text strong>{text || "-"}</Text>
-            <div>
+            {/* <div>
               <Text type="secondary" style={{ fontSize: "12px" }}>
                 {record.description || "-"}
               </Text>
-            </div>
+            </div> */}
           </div>
         </div>
       ),
@@ -191,7 +191,7 @@ const InvoiceList = ({ deal, onEdit, onView, currencies }) => {
         const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
         return dateA - dateB;
       },
-      render: (date) => (date ? dayjs(date).format("YYYY-MM-DD") : "-"),
+      render: (date) => (date ? dayjs(date).format("DD-MM-YYYY") : "-"),
     },
     {
       title: "Amount",

@@ -15,6 +15,7 @@ import {
   FiEye,
   FiMoreVertical,
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import EditContact from "./EditContact";
 import CreateContact from "./CreateContact";
@@ -25,6 +26,7 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
+  const navigate = useNavigate();
 
   // Safely handle contacts data
   const contacts = React.useMemo(() => {
@@ -61,6 +63,10 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
       company_display_name: companyMap[contact.company_name] || contact.company_name
     }));
   }, [contacts, companyMap]);
+
+  const handleView = (record) => {
+    navigate(`/dashboard/crm/contact/${record.id}`);
+  };
 
   const filteredContacts = React.useMemo(() => {
     if (!enhancedContacts || !Array.isArray(enhancedContacts)) {
@@ -123,7 +129,7 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
         key: "view",
         icon: <FiEye />,
         label: "View Details",
-        onClick: () => onView?.(record),
+        onClick: () => handleView(record),
       },
       {
         key: "edit",
@@ -147,7 +153,7 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
       key: "first_name",
       sorter: (a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`),
       render: (_, record) => (
-        <Text style={{ fontWeight: 500 }}>
+        <Text style={{ fontWeight: 500, cursor: 'pointer', color: '#1890ff' }} onClick={() => handleView(record)}>
           {`${record.first_name} ${record.last_name}`}
         </Text>
       ),
@@ -255,6 +261,10 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
               background: "#f5f5f5",
             },
           }}
+          onRow={(record) => ({
+            onClick: () => handleView(record),
+            style: { cursor: 'pointer' }
+          })}
         />
       </div>
 

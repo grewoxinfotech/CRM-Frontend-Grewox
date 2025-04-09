@@ -70,6 +70,8 @@ import Profiles from "../dashboard/module/profile/index.jsx";
 import CompanyAccount from "../dashboard/module/crm/companyacoount/index.jsx";
 import Contact from "../dashboard/module/crm/contact/index.jsx";
 import CompanyAccountDetails from "../dashboard/module/crm/companyacoount/CompanyAccountDetails.jsx";
+import ContactDetails from "../dashboard/module/crm/contact/ContactDetails.jsx";
+import ContactDetailsOverview from "../dashboard/module/crm/contact/ContactDetails.jsx";
 
   const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
@@ -258,7 +260,16 @@ const routes = createBrowserRouter([
           },
           {
             path: "contact",
-            element: <Contact />,
+            children: [
+              {
+                path: "",
+                element: <Contact />,
+              },
+              {
+                path: ":contactId",
+                element: <ContactDetailsOverview />,
+              },
+            ],
           },
           {
             path: "lead",

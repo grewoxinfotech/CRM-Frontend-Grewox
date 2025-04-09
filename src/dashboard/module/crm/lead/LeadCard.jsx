@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Tag, Tooltip, Typography, Empty, message, Button } from "antd";
+import { Card, Tag, Tooltip, Typography, Empty, message, Button, Modal } from "antd";
 import {
   FiMenu,
   FiTarget,
@@ -7,7 +7,8 @@ import {
   FiDatabase,
   FiTag,
   FiLock,
-  FiMove
+  FiMove,
+  FiPlus
 } from "react-icons/fi";
 import CreateDeal from "../deal/CreateDeal";
 import { useGetLeadsQuery, useUpdateLeadMutation } from './services/LeadApi';
@@ -38,6 +39,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import { createPortal } from 'react-dom';
+import AddLeadStageModal from "../crmsystem/leadstage/AddLeadStageModal";
 const { Text } = Typography;
 
 // Currency formatting helper function
@@ -504,13 +506,42 @@ const SortableColumn = ({ stage, leads, children }) => {
               margin: 0
             }}>{stage.stageName}</Text>
           </div>
-          <Tag style={{
-            marginLeft: '4px',
-            fontSize: '11px',
-            padding: '0 4px'
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
           }}>
-            {(leads || []).length}
-          </Tag>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: '#f0fdf4',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              border: '1px solid #dcfce7'
+            }}>
+              <span style={{
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#16a34a',
+                whiteSpace: 'nowrap'
+              }}>
+                {formatCurrency(
+                  leads.reduce((sum, lead) => sum + (parseFloat(lead.leadValue) || 0), 0),
+                  // leads[0]?.currency || 'USD'
+                )}
+              </span>
+            </div>
+            <Tag style={{
+              marginLeft: '4px',
+              fontSize: '11px',
+              padding: '0 4px'
+            }}>
+              {(leads || []).length}
+            </Tag>
+          </div>
+          
         </div>
         {children}
       </div>
@@ -519,47 +550,48 @@ const SortableColumn = ({ stage, leads, children }) => {
 };
 
 const LeadCard = ({ currencies, countries, sourcesData, statusesData, categoriesData }) => {
-  const { data: leadsData, isLoading, error } = useGetLeadsQuery();
-  const { data: stageQueryData } = useGetLeadStagesQuery();
+  const { data: leadsData, isLoading: isLoadingLeads, error: errorLeads } = useGetLeadsQuery();
+  const { data: stageQueryData, isLoading: isLoadingStages, error: errorStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const [updateLead] = useUpdateLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const savedStageOrder = useSelector(selectStageOrder);
   const [activeId, setActiveId] = useState(null);
   const [orderedStages, setOrderedStages] = useState([]);
-  const [selectedPipeline, setSelectedPipeline] = useState("95QsEzSA7EGnxrlRqnDShFw"); // Set default pipeline
+  const [selectedPipeline, setSelectedPipeline] = useState("95QsEzSA7EGnxrlRqnDShFw");
+  const [isStageModalVisible, setIsStageModalVisible] = useState(false);
 
   // Filter and order lead stages
   const stages = React.useMemo(() => {
     if (!stageQueryData) return [];
-    const leadStages = stageQueryData.filter(stage =>
+    const actualStages = Array.isArray(stageQueryData) ? stageQueryData : (stageQueryData.data || []);
+
+    const leadStages = actualStages.filter(stage =>
       stage.stageType === 'lead' &&
-      stage.pipeline === selectedPipeline // Only show stages for selected pipeline
+      stage.pipeline === selectedPipeline
     );
 
-    if (savedStageOrder.length > 0) {
-      // Sort stages based on saved order
-      return leadStages.sort((a, b) => {
-        const indexA = savedStageOrder.indexOf(a.id);
-        const indexB = savedStageOrder.indexOf(b.id);
-        // If stage is not in saved order, put it at the end
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-      });
-    }
+    if (savedStageOrder.length > 0 && leadStages.length > 0) {
+        const stageOrderMap = new Map(savedStageOrder.map((id, index) => [id, index]));
+        return [...leadStages].sort((a, b) => {
+            const indexA = stageOrderMap.has(a.id) ? stageOrderMap.get(a.id) : Infinity;
+            const indexB = stageOrderMap.has(b.id) ? stageOrderMap.get(b.id) : Infinity;
+            return indexA - indexB;
+        });
+     }
 
     return leadStages;
   }, [stageQueryData, savedStageOrder, selectedPipeline]);
 
-  // Initialize ordered stages when stagesData changes
+  // Initialize ordered stages when stages derived from query data change
   useEffect(() => {
     if (stages.length > 0) {
-      setOrderedStages(stages);
-      // If no saved order exists, initialize it
-      if (savedStageOrder.length === 0) {
-        dispatch(setStageOrder(stages.map(stage => stage.id)));
-      }
+        setOrderedStages(stages);
+        if (savedStageOrder.length === 0) {
+            dispatch(setStageOrder(stages.map(stage => stage.id)));
+        }
+    } else {
+        setOrderedStages([]);
     }
   }, [stages, dispatch, savedStageOrder.length]);
 
@@ -647,8 +679,24 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     }
   };
 
-  if (isLoading) return <div>Loading leads...</div>;
-  if (error) return <div>Error loading leads: {error.message}</div>;
+  // Handler to show the modal
+  const showStageModal = () => {
+    setIsStageModalVisible(true);
+  };
+
+  // Updated handler to close the modal and refetch if needed
+  const handleStageModalClose = (didAddStage = false) => {
+    setIsStageModalVisible(false);
+    if (didAddStage) {
+      console.log("Stage added, refetching stages...");
+      refetchStages(); // Trigger refetch for the stage list
+      // Optional: You might want to invalidate lead data too if stage affects leads immediately
+      // queryClient.invalidateQueries('leads'); // Example if using React Query
+    }
+  };
+
+  if (isLoadingLeads || isLoadingStages) return <div>Loading...</div>;
+  if (errorLeads || errorStages) return <div>Error loading data. Please try again.</div>;
 
   return (
     <div className="lead-kanban" style={{
@@ -659,7 +707,6 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
       overflow: 'hidden',
       position: 'relative'
     }}>
-      {/* Pipeline Selection */}
       <div style={{
         marginBottom: '8px',
         display: 'flex',
@@ -671,7 +718,8 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         <Text strong style={{ fontSize: '13px', color: '#374151' }}>Pipeline:</Text>
         <div style={{
           display: 'flex',
-          gap: '6px'
+          gap: '6px',
+          flex: 1
         }}>
           {pipelines.map(pipeline => (
             <Button
@@ -721,7 +769,8 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
             overflowY: 'hidden',
             position: 'relative',
             transformStyle: 'preserve-3d',
-            perspective: 1000
+            perspective: 1000,
+            alignItems: 'flex-start'
           }}>
             <SortableContext
               items={orderedStages.map(stage => `column-${stage.id}`)}
@@ -742,9 +791,48 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
                 </div>
               ))}
             </SortableContext>
+             <div style={{
+                width: '350px',
+                minWidth: '350px',
+                height: 'auto',
+                paddingTop: '0px'
+              }}>
+                <Button
+                  type="dashed"
+                  onClick={showStageModal}
+                  style={{
+                    width: '100%',
+                    height: '45px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontSize: '13px',
+                    fontWeight: '500',
+                    color: '#4b5563',
+                    background: '#f9fafb',
+                    border: '1px dashed #d1d5db',
+                    borderRadius: '8px',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                    disabled: isLoadingStages
+                  }}
+                >
+                  <FiPlus />
+                  Add Stage
+                </Button>
+              </div>
           </div>
       </div>
       </DndContext>
+
+       {/* Use AddLeadStageModal component directly */}
+       {isStageModalVisible && (
+         <AddLeadStageModal
+           isOpen={isStageModalVisible}
+           onClose={handleStageModalClose}
+           pipelineId={selectedPipeline}
+         />
+       )}
 
       <style jsx global>{`
         .kanban-board {

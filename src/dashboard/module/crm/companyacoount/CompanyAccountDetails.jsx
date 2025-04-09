@@ -31,7 +31,7 @@ const CompanyAccountDetails = () => {
     const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
 
     // Get companies array first
-    const companies = Array.isArray(data.data) ? data.data : [];
+    const companies = data && Array.isArray(data.data) ? data.data : [];
     // Then find the company
     const company = companies.find(company => company.id === accountId);
 
