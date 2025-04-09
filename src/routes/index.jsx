@@ -69,7 +69,7 @@ import Mail from "../dashboard/module/communication/mail/mail.jsx";
 import Profiles from "../dashboard/module/profile/index.jsx";
 import CompanyAccount from "../dashboard/module/crm/companyacoount/index.jsx";
 import Contact from "../dashboard/module/crm/contact/index.jsx";
-
+import CompanyAccountDetails from "../dashboard/module/crm/companyacoount/CompanyAccountDetails.jsx";
 
   const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
@@ -245,7 +245,16 @@ const routes = createBrowserRouter([
           },
           {
             path: "company-account",
-            element: <CompanyAccount />,
+            children: [
+              {
+                path: "",
+                element: <CompanyAccount />,
+              },
+              {
+                path: ":accountId",
+                element: <CompanyAccountDetails />,
+              },
+            ],
           },
           {
             path: "contact",

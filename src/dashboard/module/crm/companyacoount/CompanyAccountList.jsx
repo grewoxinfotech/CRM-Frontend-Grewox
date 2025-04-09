@@ -15,6 +15,7 @@ import {
   FiEye,
   FiMoreVertical,
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import EditCompanyAccount from "./EditCompanyAccount";
 import CreateCompanyAccount from "./CreateCompanyAccount";
@@ -29,6 +30,7 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const navigate = useNavigate();
   
   // RTK Query hooks
   const { data: companyAccountsResponse = { data: [] }, isLoading } = useGetCompanyAccountsQuery();
@@ -40,8 +42,6 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
     : Array.isArray(companyAccountsResponse) 
       ? companyAccountsResponse 
       : [];
-
-  
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -68,6 +68,10 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
   const handleEdit = (record) => {
     setSelectedCompany(record);
     setEditModalVisible(true);
+  };
+
+  const handleView = (record) => {
+    navigate(`/dashboard/crm/company-account/${record.id}`);
   };
 
   const handleEditModalClose = () => {
@@ -107,7 +111,7 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
         key: "view",
         icon: <FiEye />,
         label: "View Details",
-        onClick: () => onView?.(record),
+        onClick: () => handleView(record),
       },
       {
         key: "edit",
@@ -131,8 +135,11 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
       dataIndex: "company_name",
       key: "company_name",
       sorter: (a, b) => a.company_name.localeCompare(b.company_name),
-      render: (name) => (
-        <Text style={{ fontWeight: 500 }}>
+      render: (name, record) => (
+        <Text 
+          style={{ fontWeight: 500, cursor: 'pointer', color: '#1890ff' }}
+          onClick={() => handleView(record)}
+        >
           {name}
         </Text>
       ),
@@ -143,15 +150,12 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
       key: "account_owner",
       sorter: (a, b) => a.account_owner.localeCompare(b.account_owner),
     },
-    {
-      title: "Phone",
-      dataIndex: "phone_number",
-      key: "phone_number",
-    },
+   
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status) => (
         <Tag color={status === "Active" ? "green" : "red"}>
           {status || "Inactive"}
@@ -234,6 +238,10 @@ const CompanyAccountList = ({ onEdit, onView, searchText = "" }) => {
               background: "#f5f5f5",
             },
           }}
+          onRow={(record) => ({
+            onClick: () => handleView(record),
+            style: { cursor: 'pointer' }
+          })}
         />
       </div>
 
