@@ -24,10 +24,11 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from '../../../../../module/settings/services/settingsApi';
 import { useGetDealsQuery } from "../../../deal/services/dealApi";
+import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
 
-const ContactDealList = ({ onEdit, onView, onDealClick, deleteDeal, contact }) => {
+const ContactDealList = ({ onEdit, deleteDeal, contact }) => {
   const loggedInUser = useSelector(selectCurrentUser);
 
   const { data: dealStages = [] } = useGetLeadStagesQuery();
@@ -37,6 +38,7 @@ const ContactDealList = ({ onEdit, onView, onDealClick, deleteDeal, contact }) =
   const [filterStatus, setFilterStatus] = React.useState('all');
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: dealdata, isLoading, error } = useGetDealsQuery();
+  const navigate = useNavigate();
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
@@ -95,6 +97,12 @@ const ContactDealList = ({ onEdit, onView, onDealClick, deleteDeal, contact }) =
     }
   };
 
+
+  const handleDealClick = (deal) => {
+    navigate(`/dashboard/crm/deals/${deal.id}`);
+};
+
+
   const getStatusColor = (status, is_won) => {
     // First check is_won flag
     if (is_won === true) {
@@ -143,7 +151,7 @@ const ContactDealList = ({ onEdit, onView, onDealClick, deleteDeal, contact }) =
             Overview
           </Text>
         ),
-        onClick: () => onDealClick(record),
+        onClick: () => handleDealClick(record),
       },
       {
         key: "edit",
@@ -350,7 +358,7 @@ const ContactDealList = ({ onEdit, onView, onDealClick, deleteDeal, contact }) =
         }}
         className="colorful-table"
         onRow={(record) => ({
-          onClick: () => onDealClick(record),
+          onClick: () => handleDealClick(record),
           style: { cursor: 'pointer' }
         })}
       />

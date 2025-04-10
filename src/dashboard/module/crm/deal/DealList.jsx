@@ -24,6 +24,8 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useNavigate } from "react-router-dom";
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
+import { useGetContactsQuery } from "../contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 
 const { Text } = Typography;
 
@@ -36,12 +38,17 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
   const [filterStatus, setFilterStatus] = React.useState('all');
-  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: currencies = [] } = useGetAllCurrenciesQuery(); 
+  const { data: contactsResponse, isLoading: isContactsLoading, error: contactsError } = useGetContactsQuery();
+  const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+
+
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
   const deals = Array.isArray(data) ? data : [];
 
+  
   // Calculate won deals count based on is_won flag
   const wonDealsCount = deals.filter(deal => deal.is_won).length;
 

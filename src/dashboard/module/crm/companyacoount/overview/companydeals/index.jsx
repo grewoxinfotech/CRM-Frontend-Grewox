@@ -24,12 +24,12 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from '../../../../../module/settings/services/settingsApi';
 import { useGetDealsQuery } from "../../../deal/services/dealApi";
+import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
 
-const CompanyDealList = ({ onEdit, onView, onDealClick, deleteDeal, company }) => {
+const CompanyDealList = ({ onEdit, deleteDeal, company }) => {
   const loggedInUser = useSelector(selectCurrentUser);
-
   const { data: dealStages = [] } = useGetLeadStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
@@ -37,6 +37,7 @@ const CompanyDealList = ({ onEdit, onView, onDealClick, deleteDeal, company }) =
   const [filterStatus, setFilterStatus] = React.useState('all');
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: dealdata, isLoading, error } = useGetDealsQuery();
+  const navigate = useNavigate();
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
@@ -122,6 +123,12 @@ const CompanyDealList = ({ onEdit, onView, onDealClick, deleteDeal, company }) =
     };
   };
 
+  
+  const handleDealClick = (deal) => {
+    navigate(`/dashboard/crm/deals/${deal.id}`);
+};
+
+
   const formatCurrency = (value, currencyId) => {
     const currencyDetails = currencies.find(c => c.id === currencyId);
     if (!currencyDetails) return `${value}`;
@@ -143,7 +150,7 @@ const CompanyDealList = ({ onEdit, onView, onDealClick, deleteDeal, company }) =
             Overview
           </Text>
         ),
-        onClick: () => onDealClick(record),
+        onClick: () => handleDealClick(record),
       },
       {
         key: "edit",
@@ -350,7 +357,7 @@ const CompanyDealList = ({ onEdit, onView, onDealClick, deleteDeal, company }) =
         }}
         className="colorful-table"
         onRow={(record) => ({
-          onClick: () => onDealClick(record),
+            onClick: () => handleDealClick(record),
           style: { cursor: 'pointer' }
         })}
       />

@@ -40,6 +40,10 @@ import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi
 import { useUpdateLeadMutation } from '../lead/services/LeadApi';
 import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
+
+import AddContactModal from "./AddContactModal";
+import AddCompanyModal from "./AddCompanyModal";
+import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -52,13 +56,15 @@ const findIndianDefaults = (currencies, countries) => {
   };
 };
 
-const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
+const CreateDeal = ({ open, onCancel, leadData }) => {
   const loggedInUser = useSelector(selectCurrentUser);
 
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);
   const selectRef = useRef(null);
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
+  const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
+  const [isAddContactVisible, setIsAddContactVisible] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dispatch = useDispatch();
   const [manualValue, setManualValue] = useState(0);
@@ -79,10 +85,14 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
 
   const { data: companyAccountsResponse = { data: [] }, isLoading:isCompanyAccountsLoading  } = useGetCompanyAccountsQuery();
   const { data: contactsResponse, isLoading :isContactsLoading, error } = useGetContactsQuery();
-
-
-// console.log("companyAccountsResponse",companyAccountsResponse.data);
-// console.log("contactsResponse",contactsResponse.data);
+  const { data: currencies = [] } = useGetAllCurrenciesQuery({
+    page: 1,
+    limit: 100
+  });
+  const { data: countries = [] } = useGetAllCountriesQuery({
+    page: 1,
+    limit: 100
+  });
 
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
@@ -138,34 +148,27 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
 
   // Pre-fill form with lead data when available
   useEffect(() => {
-    // Add checks: Ensure leadData, countries, and dealStages exist and are arrays before proceeding
-    if (leadData && open && Array.isArray(countries) && countries.length > 0 && Array.isArray(dealStages) && dealStages.length > 0) {
-      
-      // Find country details safely
-      const countryDetails = leadData.phoneCode
-        ? countries.find(c => c.id === leadData.phoneCode)
-        : undefined; // Default to undefined if phoneCode is missing
+    if (leadData && open) {
+      // Find the country details
+      const countryDetails = countries.find(c => c.id === leadData.phoneCode);
 
-      // Find stage details safely
-      const stageDetails = leadData.stage
-        ? dealStages.find(s => s.id === leadData.stage)
-        : undefined; // Default to undefined if stage is missing
+      //find the stage details
+      const stageDetails = dealStages.find(s => s.id === leadData.stage);
 
       form.setFieldsValue({
         dealTitle: leadData.leadTitle,
-        currency: leadData.currency || defaultCurrency, // Use default if missing
-        // Use optional chaining for safety when accessing countryDetails
-        phoneCode: countryDetails?.phoneCode || defaultPhoneCode, // Use default if missing
-        value: leadData.value || 0,
+        currency: leadData.currency,
+        phoneCode: countryDetails?.phoneCode,
+        value: leadData.value,
+        // pipeline: leadData.pipeline,
         source: leadData.source,
-        // Set stage ID directly, assuming the form field expects the ID
-        stage: leadData.stage,
+        // stage: stageDetails?.stageName,
         firstName: leadData.firstName,
         lastName: leadData.lastName,
         email: leadData.email,
-        phone: leadData.phone?.replace(/^\+?\d+\s/, ''), // Attempt to clean phone number prefix more broadly
+        phone: leadData.phone,
         address: leadData.address,
-        company_name: leadData.company, // Ensure this matches the field name used for company selection
+        company_name: leadData.company,
         leadId: leadData.id
       });
 
@@ -175,51 +178,9 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
       // Set selected pipeline if lead data has pipeline
       if (leadData.pipeline) {
         setSelectedPipeline(leadData.pipeline);
-         // Also set the form field value for pipeline
-         form.setFieldsValue({ pipeline: leadData.pipeline });
       }
-
-       // Pre-filter contacts and potentially select one based on lead data
-       if (leadData.company && Array.isArray(contactsResponse?.data)) {
-         const matchingContacts = contactsResponse.data.filter(
-           contact => contact.company_name === leadData.company // Make sure this matches the company ID field
-         ) || [];
-         setFilteredContacts(matchingContacts);
-
-         // Try to find a contact matching the lead's name within the filtered list
-         const matchedContact = matchingContacts.find(c =>
-           c.first_name === leadData.firstName && c.last_name === leadData.lastName
-         );
-
-         if (matchedContact) {
-           // If a match is found, set the 'firstName' form field to the contact's ID
-           // and prefill other fields from this matched contact
-           form.setFieldsValue({
-             firstName: matchedContact.id, // Set select value to contact ID
-             lastName: matchedContact.last_name,
-             email: matchedContact.email,
-             phone: matchedContact.phone?.replace(/^\+?\d+\s/, ''), // Clean phone
-             address: matchedContact.address,
-           });
-           setSelectedContact(matchedContact);
-         } else {
-           // If no exact contact match, just keep the lead's names (they won't be selectable)
-           // Or clear the contact selection if preferred
-           // form.setFieldsValue({ firstName: undefined, lastName: undefined });
-         }
-       }
-
-
-    } else if (open) {
-      // Optional: Handle case where modal is open but data is missing
-       console.warn("CreateDeal modal opened, but leadData, countries, or dealStages might be missing/invalid.");
-       // You might want to reset specific fields here if necessary
-       form.setFieldsValue({
-         currency: defaultCurrency,
-         phoneCode: defaultPhoneCode,
-       });
     }
-  }, [leadData, open, countries, dealStages, contactsResponse, form, defaultCurrency, defaultPhoneCode]); // Added dependencies
+  }, [leadData, form, open, currencies, countries]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -251,8 +212,12 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
         firstName: values.firstName,
         lastName: values.lastName,
         address: values.address,
-        leadId: leadData?.id
+        leadId: leadData?.id,
+
       };
+
+      console.log("Form Values:", values);
+      console.log("Deal Data Payload:", dealData);
 
       // Create the deal
       const dealResponse = await createDeal(dealData).unwrap();
@@ -298,6 +263,16 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
     e.stopPropagation();
     setDropdownOpen(false);
     setIsAddPipelineVisible(true);
+  };
+
+  const handleAddCompanyClick = (e) => {
+    e.stopPropagation();
+    setIsAddCompanyVisible(true);
+  };
+
+  const handleAddContactClick = (e) => {
+    e.stopPropagation();
+    setIsAddContactVisible(true);
   };
 
   // Add these consistent styles from CreateLead
@@ -348,32 +323,64 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
   };
 
   const handleCompanyChange = (companyId) => {
-    // Find contacts matching the selected company
-    const matchingContacts = contactsResponse?.data?.filter(
-      contact => contact.company_name === companyId
-    ) || [];
-    setFilteredContacts(matchingContacts);
+    console.log("Selected Company ID:", companyId);
     
-    // Clear the first name and last name fields
+    // Set the company_name field with the selected company ID
     form.setFieldsValue({
+      company_name: companyId,
       firstName: undefined,
-      lastName: undefined
+      lastName: undefined,
+      email: undefined,
+      phone: undefined,
+      address: undefined
     });
+    
+    console.log("Form values after company selection:", form.getFieldsValue());
   };
 
   const handleFirstNameChange = (contactId) => {
-    // Find the selected contact
-    const contact = filteredContacts.find(c => c.id === contactId);
+    // Find the selected contact from all contacts
+    const contact = contactsResponse?.data?.find(c => c.id === contactId);
     if (contact) {
-      // Set the form values
+      // Get current form values
+      const currentValues = form.getFieldsValue();
+      
+      // Set the form values including company if it exists
       form.setFieldsValue({
-        lastName: contact.last_name,
+        firstName: contact.id, // Set contact ID for form submission
+        lastName: contact.last_name, // Set actual last name for display
         email: contact.email,
-        phone: contact.phone?.replace(/^\+\+91\s/, ''), // Remove ++91 prefix if present
-        address: contact.address
+        phone: contact.phone?.replace(/^\+\+91\s/, ''),
+        address: contact.address,
+        // Only update company_name if it's not already set
+        company_name: currentValues.company_name || contact.company_name
       });
       setSelectedContact(contact);
     }
+  };
+
+  const handleClearCompany = () => {
+    form.setFieldsValue({
+      company_name: undefined,
+      firstName: undefined,
+      lastName: undefined,
+      email: undefined,
+      phone: undefined,
+      address: undefined
+    });
+    setFilteredContacts([]); // Reset filtered contacts to show all contacts
+    setSelectedContact(null);
+  };
+
+  const handleClearContact = () => {
+    form.setFieldsValue({
+      firstName: undefined,
+      lastName: undefined,
+      email: undefined,
+      phone: undefined,
+      address: undefined
+    });
+    setSelectedContact(null);
   };
 
   return (
@@ -765,24 +772,157 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
               gap: '16px',
               marginBottom: '32px'
             }}>
+                 <Form.Item
+                name="company_name"
+                label={<span style={formItemStyle}>Company Name</span>}
+              >
+                <div style={{ position: 'relative' }}>
+                  <Select
+                    placeholder="Select company"
+                    onChange={handleCompanyChange}
+                    style={selectStyle}
+                    allowClear
+                    suffixIcon={<FiBriefcase style={prefixIconStyle} />}
+                    dropdownRender={(menu) => (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        {menu}
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            display: 'flex',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAddCompanyClick}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                              border: 'none',
+                              height: '40px',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Add Company
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  >
+                    {companyAccountsResponse?.data?.map((company) => (
+                      <Option key={company.id} value={company.id}>
+                        {company.company_name}
+                      </Option>
+                    ))}
+                  </Select>
+                  {form.getFieldValue('company_name') && (
+                    <Button
+                      type="text"
+                      icon={<FiX />}
+                      onClick={handleClearCompany}
+                      style={{
+                        position: 'absolute',
+                        right: '40px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 2,
+                        padding: '4px',
+                        height: 'auto',
+                        color: '#6B7280'
+                      }}
+                    />
+                  )}
+                </div>
+              </Form.Item>
               <Form.Item
                 name="firstName"
                 label={<span style={formItemStyle}>First Name</span>}
-                rules={[{ required: true, message: "Please select contact" }]}
               >
-                <Select
-                  placeholder="Select contact"
-                  onChange={handleFirstNameChange}
-                  style={selectStyle}
-                  suffixIcon={<FiUser style={prefixIconStyle} />}
-                  disabled={!form.getFieldValue('company_name')}
-                >
-                  {filteredContacts.map((contact) => (
-                    <Option key={contact.id} value={contact.id}>
-                      {contact.first_name}
-                    </Option>
-                  ))}
-                </Select>
+                <div style={{ position: 'relative' }}>
+                  <Select
+                    placeholder="Select contact"
+                    onChange={handleFirstNameChange}
+                    style={selectStyle}
+                    suffixIcon={<FiUser style={prefixIconStyle} />}
+                    showSearch
+                    allowClear
+                    filterOption={(input, option) => {
+                      const contact = contactsResponse?.data?.find(c => c.id === option.value);
+                      return contact?.first_name?.toLowerCase().includes(input.toLowerCase());
+                    }}
+                    dropdownRender={(menu) => (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        {menu}
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            display: 'flex',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAddContactClick}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                              border: 'none',
+                              height: '40px',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Add Contact
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  >
+                    {contactsResponse?.data?.map((contact) => (
+                      <Option key={contact.id} value={contact.id}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span>{contact.first_name}</span>
+                          <span style={{ fontSize: '12px', color: '#6B7280' }}>
+                            {companyAccountsResponse?.data?.find(c => c.id === contact.company_name)?.company_name || 'No Company'}
+                          </span>
+                        </div>
+                      </Option>
+                    ))}
+                  </Select>
+                  {form.getFieldValue('firstName') && (
+                    <Button
+                      type="text"
+                      icon={<FiX />}
+                      onClick={handleClearContact}
+                      style={{
+                        position: 'absolute',
+                        right: '40px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 2,
+                        padding: '4px',
+                        height: 'auto',
+                        color: '#6B7280'
+                      }}
+                    />
+                  )}
+                </div>
               </Form.Item>
 
               <Form.Item
@@ -797,6 +937,7 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
                     backgroundColor: '#f8fafc'
                   }}
                   readOnly
+                  value={selectedContact?.last_name || ''}
                 />
               </Form.Item>
 
@@ -878,24 +1019,7 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
                 </Input.Group>
               </Form.Item>
 
-              <Form.Item
-                name="company_name"
-                label={<span style={formItemStyle}>Company Name</span>}
-                rules={[{ required: true, message: "Please select company" }]}
-              >
-                <Select
-                  placeholder="Select company"
-                  onChange={handleCompanyChange}
-                  style={selectStyle}
-                  suffixIcon={<FiBriefcase style={prefixIconStyle} />}
-                >
-                  {companyAccountsResponse?.data?.map((company) => (
-                    <Option key={company.id} value={company.id}>
-                      {company.company_name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
+           
 
               <Form.Item
                 name="address"
@@ -964,6 +1088,22 @@ const CreateDeal = ({ open, onCancel, leadData, currencies, countries }) => {
       <AddPipelineModal
         isOpen={isAddPipelineVisible}
         onClose={() => setIsAddPipelineVisible(false)}
+      />
+
+      <AddCompanyModal
+        open={isAddCompanyVisible}
+        onCancel={() => setIsAddCompanyVisible(false)}
+        loggedInUser={loggedInUser}
+        companyAccountsResponse={companyAccountsResponse}
+        onsubmit={handleAddCompanyClick}
+      />
+
+      <AddContactModal
+        open={isAddContactVisible}
+        onCancel={() => setIsAddContactVisible(false)}
+        loggedInUser={loggedInUser}
+        companyAccountsResponse={companyAccountsResponse}
+        onsubmit={handleAddContactClick}
       />
 
       <style jsx global>{`

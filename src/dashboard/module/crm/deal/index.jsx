@@ -17,8 +17,6 @@ import EditDeal from './EditDeal';
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDeleteDealMutation, useGetDealsQuery } from './services/dealApi';
-import CompanyDealList from '../companyacoount/overview/companydeals/index';
-import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from '../../settings/services/settingsApi';
 
 const { Title, Text } = Typography;
 
@@ -34,14 +32,6 @@ const Deal = () => {
     const { data: dealStages = [] } = useGetLeadStagesQuery();
     const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
   const { data, isLoading, error } = useGetDealsQuery();
-  const { data: currencies = [] } = useGetAllCurrenciesQuery({
-    page: 1,
-    limit: 100
-  });
-  const { data: countries = [] } = useGetAllCountriesQuery({
-    page: 1,
-    limit: 100
-  });
 
 
   
@@ -171,8 +161,7 @@ const Deal = () => {
                 onCancel={() => setIsModalOpen(false)}
                 pipelines={pipelines}
                 dealStages={dealStages}
-                countries={countries}
-                currencies={currencies}
+      
             />
 
             <EditDeal
@@ -186,13 +175,13 @@ const Deal = () => {
                 dealStages={dealStages}
             />
 
-            <CompanyDealList
+            {/* <CompanyDealList
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onView={handleView}
                 onDealClick={handleDealClick}
                 deleteDeal={deleteDeal}
-            />
+            /> */}
         </div>
     );
 };

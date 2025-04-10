@@ -12,7 +12,7 @@ import {
 
 import CompanyOverview from './overview/index';
 import CompanyDealList from './overview/companydeals';
-
+import CompanyContactList from './overview/companycontacts';
 // import CompanyContacts from './overview/contacts';
 // import CompanyFiles from './overview/files';
 // import CompanyInvoices from './overview/invoices';
@@ -77,15 +77,15 @@ const CompanyAccountDetails = () => {
             ),
             children: <CompanyDealList company={company} currentStatus={currentStatus} />,
         },
-        // {
-        //     key: 'contacts',
-        //     label: (
-        //         <span className="nav-item">
-        //             <FiUsers className="nav-icon" /> Contacts
-        //         </span>
-        //     ),
-        //     children: <CompanyContacts company={company} />,
-        // },
+        {
+            key: 'contacts',
+            label: (
+                <span className="nav-item">
+                    <FiUsers className="nav-icon" /> Company Contacts
+                </span>
+            ),
+            children: <CompanyContactList company={company} />,
+        },
         // {
         //     key: 'files',
         //     label: (
