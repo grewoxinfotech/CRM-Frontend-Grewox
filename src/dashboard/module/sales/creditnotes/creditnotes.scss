@@ -11,7 +11,6 @@
 
 .invoice-page {
     padding: 24px;
-    background-color: #f5f7fa;
     min-height: 100vh;
 
     .page-breadcrumb {
@@ -134,17 +133,17 @@
 
         .ant-table-wrapper {
             .ant-table {
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: #262626;
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 12px 16px;
                 }
 
-                .ant-table-tbody > tr:hover > td {
+                .ant-table-tbody>tr:hover>td {
                     background: #f5f5f5;
                 }
             }

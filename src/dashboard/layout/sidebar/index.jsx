@@ -154,7 +154,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
         {
           title: "Company",
           icon: <FiBriefcase />,
-            path: "/dashboard/crm/company-account", 
+          path: "/dashboard/crm/company-account",
           permission: "dashboards-crm-company-account"
         },
         {
@@ -162,6 +162,18 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           icon: <FiFileText />,
           path: "/dashboard/crm/contact",
           permission: "dashboards-crm-contact"
+        },
+        {
+          title: "Generate links",
+          icon: <FiMessageSquare />,
+          path: "/dashboard/crm/generate-links",
+          permission: "dashboards-generate-links"
+        },
+        {
+          title: "Inquiry",
+          icon: <FiMessageSquare />,
+          path: "/dashboard/crm/company-inquiry",
+          permission: "dashboards-inquiry"
         },
         {
           title: "Leads",
@@ -219,7 +231,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           path: "/dashboard/sales/customer",
           permission: "dashboards-sales-customer"
         },
-        
+
         {
           title: "Invoice",
           icon: <FiFileText />,

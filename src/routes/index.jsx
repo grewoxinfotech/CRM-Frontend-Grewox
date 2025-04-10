@@ -39,6 +39,9 @@ import OfferLetters from "../dashboard/module/job/offer letters/index.jsx";
 import Interviews from "../dashboard/module/job/interviews/index.jsx";
 import Lead from "../dashboard/module/crm/lead/index.jsx";
 import Deal from "../dashboard/module/crm/deal/index.jsx";
+import CompanyInquiry from "../dashboard/module/crm/company-inquiry/index.jsx";
+import CompanyLinkGenerator from "../dashboard/module/crm/generate-link/index.jsx";
+import PublicFormView from "../dashboard/module/crm/generate-link/PublicFormView.jsx";
 import Crmsystem from "../dashboard/module/crm/crmsystem/index.jsx";
 import Task from "../dashboard/module/crm/task/index.jsx";
 import Project from "../dashboard/module/crm/project/index.jsx";
@@ -70,10 +73,9 @@ import Profiles from "../dashboard/module/profile/index.jsx";
 import CompanyAccount from "../dashboard/module/crm/companyacoount/index.jsx";
 import Contact from "../dashboard/module/crm/contact/index.jsx";
 import CompanyAccountDetails from "../dashboard/module/crm/companyacoount/CompanyAccountDetails.jsx";
-import ContactDetails from "../dashboard/module/crm/contact/ContactDetails.jsx";
 import ContactDetailsOverview from "../dashboard/module/crm/contact/ContactDetails.jsx";
 
-  const PermissionRoute = ({ children, permissionKey }) => {
+const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
 
@@ -272,6 +274,14 @@ const routes = createBrowserRouter([
             ],
           },
           {
+            path: "company-inquiry",
+            element: <CompanyInquiry />,
+          },
+          {
+            path: "generate-links",
+            element: <CompanyLinkGenerator />,
+          },
+          {
             path: "lead",
             children: [
               {
@@ -320,15 +330,15 @@ const routes = createBrowserRouter([
         children: [
           {
             path: "vendor",
-            element: <Vendor/>,
+            element: <Vendor />,
           },
           {
             path: "billing",
-            element: <Billing/>,
+            element: <Billing />,
           },
           {
-            path:"debit-note",
-            element:<DebitNote/>
+            path: "debit-note",
+            element: <DebitNote />
           }
         ]
       },
@@ -339,7 +349,7 @@ const routes = createBrowserRouter([
             path: "product-services",
             element: <ProductServices />,
           },
-         
+
           {
             path: "customer",
             element: <Customer />,
@@ -403,10 +413,6 @@ const routes = createBrowserRouter([
       {
         path: "settings/tax",
         element: <Tax />,
-      },
-      {
-        path: "inquiry",
-        element: <Inquiry />,
       },
       {
         path: "help",
@@ -509,6 +515,10 @@ const routes = createBrowserRouter([
       //   element: <Inquiry />,
       // },
     ],
+  },
+  {
+    path: "/forms/:formId",
+    element: <PublicFormView />,
   },
 ]);
 

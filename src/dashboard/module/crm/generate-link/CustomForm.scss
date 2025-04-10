@@ -1,0 +1,244 @@
+.custom-form-container {
+    padding: 24px;
+
+    .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item:hover[data-menu-id*=delete] {
+        background: rgba(255, 77, 79, 0.08) !important;
+    }
+
+    .page-header {
+        margin-bottom: 24px;
+
+        .breadcrumb {
+            margin-bottom: 16px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+
+            .title-section {
+                .page-title {
+                    margin-bottom: 4px;
+                }
+            }
+
+            .action-section {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .search-input {
+                    width: 300px;
+                }
+
+                .ant-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .anticon,
+                    svg {
+                        font-size: 16px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.custom-form-list {
+    padding: 16px;
+
+    .custom-form-card {
+        height: 100%;
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .ant-card-body {
+            padding: 20px;
+        }
+
+        .form-header {
+            margin-bottom: 16px;
+
+            h4.ant-typography {
+                margin-bottom: 8px;
+                color: #1890ff;
+            }
+        }
+
+        .form-details {
+            margin: 16px 0;
+
+            .icon {
+                color: #1890ff;
+                font-size: 16px;
+            }
+        }
+
+        .form-dates {
+            margin: 16px 0;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+
+            .ant-tag {
+                margin: 0;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }
+        }
+
+        .form-meta {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .ant-typography {
+                font-size: 12px;
+            }
+        }
+
+        .ant-card-actions {
+            background: #fafafa;
+
+            .delete-button {
+                color: #ff4d4f;
+
+                &:hover {
+                    color: #ff7875;
+                }
+            }
+        }
+    }
+}
+
+.qr-code-container {
+    padding: 24px;
+    text-align: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+    canvas {
+        margin: 0 auto;
+        display: block;
+        padding: 16px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-url {
+        margin-top: 24px;
+        display: block;
+        word-break: break-all;
+        padding: 12px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 14px;
+
+        .anticon {
+            margin-left: 8px;
+            color: #1890ff;
+        }
+    }
+}
+
+// Modal Form Styles
+.ant-modal {
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .ant-form-item {
+        margin-bottom: 16px;
+    }
+
+    textarea.ant-input {
+        resize: vertical;
+        min-height: 60px;
+    }
+}
+
+// Status Tag Colors
+.ant-tag {
+    text-transform: capitalize;
+    min-width: 80px;
+    text-align: center;
+
+    &-blue {
+        color: #1890ff;
+        background: #e6f7ff;
+        border-color: #91d5ff;
+    }
+
+    &-orange {
+        color: #fa8c16;
+        background: #fff7e6;
+        border-color: #ffd591;
+    }
+
+    &-green {
+        color: #52c41a;
+        background: #f6ffed;
+        border-color: #b7eb8f;
+    }
+
+    &-red {
+        color: #ff4d4f;
+        background: #fff1f0;
+        border-color: #ffa39e;
+    }
+}
+
+// Responsive Styles
+@media (max-width: 768px) {
+    .custom-form-container {
+        .header {
+            flex-direction: column;
+            gap: 16px;
+
+            .right {
+                width: 100%;
+                flex-wrap: wrap;
+
+                .search-input {
+                    width: 100%;
+                }
+            }
+        }
+    }
+
+    .ant-modal {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .custom-form-list {
+        padding: 8px;
+    }
+
+    .custom-form-card {
+        .form-meta {
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+    }
+}

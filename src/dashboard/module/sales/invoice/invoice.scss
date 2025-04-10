@@ -24,7 +24,6 @@ $border-radius: 6px;
 
 .invoice-page {
     padding: 24px;
-    background: $background-color;
 
     .page-breadcrumb {
         margin-bottom: 16px;
@@ -302,7 +301,8 @@ $border-radius: 6px;
         border-collapse: separate;
         border-spacing: 0;
 
-        th, td {
+        th,
+        td {
             padding: 16px;
             text-align: left;
             border-bottom: 1px solid #f0f0f0;
@@ -323,7 +323,8 @@ $border-radius: 6px;
             border-radius: 8px;
         }
 
-        .quantity-input, .price-input {
+        .quantity-input,
+        .price-input {
             width: 100%;
             border-radius: 8px;
         }
@@ -335,6 +336,7 @@ $border-radius: 6px;
 
         .delete-btn {
             color: #ff4d4f;
+
             &:hover {
                 background: #fff1f0;
             }
@@ -430,6 +432,7 @@ $border-radius: 6px;
 
         .inquiry-table-card {
             .ant-table {
+
                 .ant-table-thead>tr>th,
                 .ant-table-tbody>tr>td {
                     padding: 12px 8px;

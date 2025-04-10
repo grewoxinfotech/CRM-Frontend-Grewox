@@ -61,6 +61,9 @@ import { mailApi } from '../dashboard/module/communication/mail/services/mailApi
 import { notificationApi } from '../common/notifacations/services/notificationApi';
 import { companyAccountApi } from "../dashboard/module/crm/companyacoount/services/companyAccountApi";
 import { contactApi } from "../dashboard/module/crm/contact/services/contactApi";
+import { companyInquiryApi } from "../dashboard/module/crm/company-inquiry/services/companyInquiryApi";
+import { customFormApi } from "../dashboard/module/crm/generate-link/services/customFormApi";
+
 const persistConfig = {
   key: "root",
   storage,
@@ -126,9 +129,11 @@ const rootReducer = combineReducers({
   [meetingApi.reducerPath]: meetingApi.reducer,
   [announcementApi.reducerPath]: announcementApi.reducer,
   [mailApi.reducerPath]: mailApi.reducer,
-    [notificationApi.reducerPath]: notificationApi.reducer,
-    [companyAccountApi.reducerPath]: companyAccountApi.reducer,
-    [contactApi.reducerPath]: contactApi.reducer,
+  [notificationApi.reducerPath]: notificationApi.reducer,
+  [companyAccountApi.reducerPath]: companyAccountApi.reducer,
+  [contactApi.reducerPath]: contactApi.reducer,
+  [companyInquiryApi.reducerPath]: companyInquiryApi.reducer,
+  [customFormApi.reducerPath]: customFormApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -198,6 +203,8 @@ export const store = configureStore({
       .concat(notificationApi.middleware)
       .concat(companyAccountApi.middleware)
       .concat(contactApi.middleware)
+      .concat(companyInquiryApi.middleware)
+      .concat(customFormApi.middleware)
 });
 
 export const persistor = persistStore(store);
