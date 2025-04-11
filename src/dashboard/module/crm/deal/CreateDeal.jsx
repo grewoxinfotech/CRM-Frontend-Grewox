@@ -71,6 +71,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [selectedProductPrices, setSelectedProductPrices] = useState({});
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
+  const [newCompanyName, setNewCompanyName] = useState("");
 
   const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
@@ -93,6 +94,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     page: 1,
     limit: 100
   });
+
+console.log("companyAccountsResponse",companyAccountsResponse.data);
 
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
@@ -146,30 +149,34 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     form.setFieldsValue({ value: manualValue + productPricesTotal });
   };
 
-  // Pre-fill form with lead data when available
+  // Modify the useEffect to remove automatic modal opening
   useEffect(() => {
     if (leadData && open) {
       // Find the country details
       const countryDetails = countries.find(c => c.id === leadData.phoneCode);
 
-      //find the stage details
-      const stageDetails = dealStages.find(s => s.id === leadData.stage);
+      // Find if the company exists in companyAccounts
+      const existingCompany = companyAccountsResponse?.data?.find(
+        c => c.company_name?.toLowerCase() === leadData.company?.toLowerCase()
+      );
+
+console.log("asdasdsa",leadData);
 
       form.setFieldsValue({
         dealTitle: leadData.leadTitle,
         currency: leadData.currency,
-        phoneCode: countryDetails?.phoneCode,
+        phoneCode: countryDetails?.phoneCode?.replace('+', ''),
         value: leadData.value,
-        // pipeline: leadData.pipeline,
         source: leadData.source,
-        // stage: stageDetails?.stageName,
         firstName: leadData.firstName,
         lastName: leadData.lastName,
         email: leadData.email,
-        phone: leadData.phone,
+        phone: leadData.phone?.replace(/^\+\d+\s/, ''),
         address: leadData.address,
-        company_name: leadData.company,
-        leadId: leadData.id
+        company_name: existingCompany?.id || undefined,
+        leadId: leadData.id,
+        pipeline: leadData.pipeline,
+        stage: leadData.stage
       });
 
       // Set manual value for value field
@@ -180,7 +187,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         setSelectedPipeline(leadData.pipeline);
       }
     }
-  }, [leadData, form, open, currencies, countries]);
+  }, [leadData, form, open, currencies, countries, companyAccountsResponse?.data]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -216,8 +223,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
       };
 
-      console.log("Form Values:", values);
-      console.log("Deal Data Payload:", dealData);
 
       // Create the deal
       const dealResponse = await createDeal(dealData).unwrap();
@@ -238,7 +243,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         }
       }
 
-      message.success("Deal created successfully");
+      // message.success("Deal created successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
@@ -265,9 +270,12 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     setIsAddPipelineVisible(true);
   };
 
+  // Modify handleAddCompanyClick
   const handleAddCompanyClick = (e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     setIsAddCompanyVisible(true);
+    // Set the company name from lead data
+    setNewCompanyName(leadData?.company || "");
   };
 
   const handleAddContactClick = (e) => {
@@ -335,7 +343,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       address: undefined
     });
     
-    console.log("Form values after company selection:", form.getFieldsValue());
   };
 
   const handleFirstNameChange = (contactId) => {
@@ -381,6 +388,21 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       address: undefined
     });
     setSelectedContact(null);
+  };
+
+  // Add this function to handle company creation success
+  const handleCompanyCreationSuccess = (newCompany) => {
+    setIsAddCompanyVisible(false);
+    form.setFieldsValue({
+      company_name: newCompany.id,
+      firstName: undefined,
+      lastName: undefined,
+      email: undefined,
+      phone: undefined,
+      address: undefined
+    });
+    message.success('Company added successfully');
+    setNewCompanyName(""); // Reset the new company name
   };
 
   return (
@@ -778,7 +800,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               >
                 <div style={{ position: 'relative' }}>
                   <Select
-                    placeholder="Select company"
+                    placeholder={leadData?.company ? `Add "${leadData.company}" as new company` : "Select company"}
                     onChange={handleCompanyChange}
                     style={selectStyle}
                     allowClear
@@ -786,35 +808,39 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     dropdownRender={(menu) => (
                       <div onClick={(e) => e.stopPropagation()}>
                         {menu}
-                        <Divider style={{ margin: '8px 0' }} />
-                        <div
-                          style={{
-                            padding: '8px 12px',
-                            display: 'flex',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddCompanyClick}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                              border: 'none',
-                              height: '40px',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add Company
-                          </Button>
-                        </div>
+                        {leadData?.company && !companyAccountsResponse?.data?.some(c => c.company_name?.toLowerCase() === leadData.company?.toLowerCase()) && (
+                          <>
+                            <Divider style={{ margin: '8px 0' }} />
+                            <div
+                              style={{
+                                padding: '8px 12px',
+                                display: 'flex',
+                                justifyContent: 'center'
+                              }}
+                            >
+                              <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleAddCompanyClick}
+                                style={{
+                                  width: '100%',
+                                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                  border: 'none',
+                                  height: '40px',
+                                  borderRadius: '8px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '8px',
+                                  boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                  fontWeight: '500',
+                                }}
+                              >
+                                {`Add "${leadData.company}" as New Company`}
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   >
@@ -1095,7 +1121,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         onCancel={() => setIsAddCompanyVisible(false)}
         loggedInUser={loggedInUser}
         companyAccountsResponse={companyAccountsResponse}
-        onsubmit={handleAddCompanyClick}
+        onSuccess={handleCompanyCreationSuccess}
+        initialCompanyName={newCompanyName}
       />
 
       <AddContactModal

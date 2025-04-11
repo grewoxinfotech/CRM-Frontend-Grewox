@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Empty, Checkbox, Radio, Space, Avatar } from 'antd';
-import { FiX, FiCalendar, FiMapPin, FiUsers, FiPlus, FiSearch, FiRepeat, FiUser, FiShield, FiBriefcase } from 'react-icons/fi';
+import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Empty, Checkbox, Radio, Space, Avatar, Switch } from 'antd';
+import { FiX, FiCalendar, FiMapPin, FiUsers, FiPlus, FiSearch, FiRepeat, FiUser, FiShield, FiBriefcase, FiChevronDown } from 'react-icons/fi';
 import dayjs from 'dayjs';
-import { useGetUsersQuery } from '../../../../user-management/users/services/userApi';
-import { useGetRolesQuery } from '../../../../hrm/role/services/roleApi';
+import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
+import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
+import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
+import { message } from 'antd';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -17,12 +18,17 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState('Contacts');
   const [showContactsWithoutEmail, setShowContactsWithoutEmail] = useState(false);
-  const [showRepeatOptions, setShowRepeatOptions] = React.useState(false);
   const [repeatEndType, setRepeatEndType] = React.useState('never');
   const [repeatType, setRepeatType] = React.useState('none');
   const [frequency, setFrequency] = React.useState('daily');
   const [repeatTimes, setRepeatTimes] = useState(1);
   const [venueType, setVenueType] = useState(null);
+  const [showReminder, setShowReminder] = useState(false);
+  const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
+  const [customRepeatDays, setCustomRepeatDays] = useState([]);
+  const [customFrequency, setCustomFrequency] = useState('weekly');
+  const [monthlyPattern, setMonthlyPattern] = useState('day');
+  const [yearlyPattern, setYearlyPattern] = useState('date');
 
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
@@ -69,13 +75,43 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
   };
 
   const handleSubmit = (values) => {
-    onSubmit({
-      ...values,
-      from_date: values.from_date.format('YYYY-MM-DD'),
-      from_time: values.from_time.format('HH:mm:ss'),
-      to_date: values.to_date.format('YYYY-MM-DD'),
-      to_time: values.to_time.format('HH:mm:ss'),
-    });
+    try {
+      // Organize reminder fields
+      const reminderData = showReminder ? {
+        reminder_date: values.reminder_date ? values.reminder_date.format('YYYY-MM-DD') : null,
+        reminder_time: values.reminder_time ? values.reminder_time.format('HH:mm:ss') : null,
+      } : null;
+
+      // Organize repeat fields
+      const repeatData = repeatType !== 'none' ? {
+        repeat_type: repeatType,
+        repeat_end_type: repeatEndType,
+        repeat_times: repeatEndType === 'after' ? repeatTimes : null,
+        repeat_end_date: values.repeat_end_date ? values.repeat_end_date.format('YYYY-MM-DD') : null,
+        custom_repeat_interval: repeatType === 'custom' ? customRepeatInterval : null,
+        custom_repeat_days: repeatType === 'custom' ? customRepeatDays : null,
+        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
+      } : null;
+
+      // Format the final payload
+      const formattedValues = {
+        ...values,
+        from_date: values.from_date.format('YYYY-MM-DD'),
+        from_time: values.from_time.format('HH:mm:ss'),
+        to_date: values.to_date.format('YYYY-MM-DD'),
+        to_time: values.to_time.format('HH:mm:ss'),
+        reminder: reminderData,
+        repeat: repeatData
+      };
+
+      onSubmit(formattedValues);
+      message.success('Meeting created successfully');
+      form.resetFields();
+      onCancel();
+    } catch (error) {
+      console.error('Error creating meeting:', error);
+      message.error('Failed to create meeting');
+    }
   };
 
   const removeParticipant = (id) => {
@@ -83,7 +119,6 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
   };
 
   const handleRepeatChange = (value) => {
-    setShowRepeatOptions(value !== 'none');
     setRepeatType(value);
   };
   
@@ -116,6 +151,32 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
   ];
 
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Update handleRepeatToggle to work independently
+  const handleRepeatToggle = (checked) => {
+    setRepeatType(checked ? 'daily' : 'none');
+  };
+
+  // Add formItemStyle constant
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#1f2937"
+  };
+
+  const inputStyle = {
+    height: "48px", 
+    borderRadius: "10px",
+    padding: "8px 16px",
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e6e8eb",
+    transition: "all 0.3s ease"
+  };
+
+  const selectStyle = {
+    width: '100%',
+    height: '48px'
+  };
 
   return (
     <Modal
@@ -458,215 +519,276 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
         </Form.Item>
         </div>
 
-        <Form.Item
-          name="repeat"
-          label="Repeat"
-          style={{marginTop:"20px"}}
-        >
-          <Select
-            placeholder="Select repeat option"
-            size="large"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px",
-            }}
-            onChange={handleRepeatChange}
-          >
-            {repeatOptions.map(option => (
-              <Option key={option.value} value={option.value}>{option.label}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        {showRepeatOptions && repeatType !== 'custom' && (
-          <div style={{
-            border: '1px solid #f0f0f0',
-            borderRadius: '8px',
-            padding: '16px',
-            marginTop: '-12px',
-            marginBottom: '16px',
-            background: '#fafafa'
-          }}>
-            <Form.Item
-              label="Repeat every"
-              style={{ marginBottom: '16px' }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Input
-                  type="number"
-                  min={1}
-                  defaultValue={1}
-                  style={{ width: '80px' }}
-                />
-                <span style={{ marginLeft: '8px' }}>{repeatType === 'daily' ? 'days' : repeatType === 'weekly' ? 'weeks' : repeatType === 'monthly' ? 'months' : 'years'}</span>
-              </div>
-            </Form.Item>
-
-            {repeatType === 'weekly' && (
-              <Form.Item
-                label="On these days"
-                style={{ marginBottom: '16px' }}
-              >
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {weekDays.map(day => (
-                    <Checkbox key={day} style={{ marginRight: '8px' }}>
-                      {day}
-                    </Checkbox>
-                  ))}
-                </div>
-              </Form.Item>
-            )}
-
-            <Form.Item
-              label="Ends"
-              style={{ marginBottom: '16px' }}
-            >
-              <Radio.Group 
-                value={repeatEndType}
-                onChange={(e) => setRepeatEndType(e.target.value)}
-              >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Radio value="never">
-                    <span style={{ fontWeight: '500' }}>Never</span>
-                  </Radio>
-                  <Radio value="after">
-                    <Space align="center">
-                      <span style={{ fontWeight: '500' }}>After</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={repeatTimes}
-                        onChange={(e) => setRepeatTimes(e.target.value)}
-                        style={{ width: '60px' }}
-                        disabled={repeatEndType !== 'after'}
-                      />
-                      <span style={{ fontWeight: '500' }}>occurrences</span>
-                    </Space>
-                  </Radio>
-                  <Radio value="on">
-                    <Space align="center">
-                      <span style={{ fontWeight: '500' }}>On</span>
-                      <DatePicker
-                        disabled={repeatEndType !== 'on'}
-                        format="DD/MM/YYYY"
-                        style={{ width: '100%' }}
-                      />
-                    </Space>
-                  </Radio>
-                </Space>
-              </Radio.Group>
-            </Form.Item>
-
-            <Form.Item name="send_separate_invites" valuePropName="checked">
-              <Checkbox>
-                Send separate invites for each meeting.
-              </Checkbox>
-            </Form.Item>
-          </div>
-        )}
-
-        {repeatType === 'custom' && (
-          <div style={{
-            border: '1px solid #f0f0f0',
-            borderRadius: '8px',
-            padding: '16px',
-            marginTop: '-12px',
-            marginBottom: '16px'
-          }}>
-            <Form.Item
-              label="Repeat type"
-              style={{ marginBottom: '16px' }}
-            >
-              <Select
-                value={repeatType}
-                size="large"
-                style={{ width: '100%' }}
-              >
-                <Option value="custom">Custom</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Frequency"
-              style={{ marginBottom: '16px' }}
-            >
-              <Select
-                value={frequency}
-                onChange={setFrequency}
-                size="large"
-                style={{ width: '100%' }}
-              >
-                <Option value="daily">Daily</Option>
-                <Option value="weekly">Weekly</Option>
-                <Option value="monthly">Monthly</Option>
-                <Option value="yearly">Yearly</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Repeat every"
-              style={{ marginBottom: '16px' }}
-            >
-              <Space>
-                <Input
-                  type="number"
-                  min={1}
-                  defaultValue={1}
-                  style={{ width: '80px' }}
-                />
-                <span>{frequency === 'daily' ? 'days' : 
-                       frequency === 'weekly' ? 'weeks' : 
-                       frequency === 'monthly' ? 'months' : 'years'}</span>
-              </Space>
-            </Form.Item>
-
-            <Form.Item
-              label="Ends"
-              style={{ marginBottom: '16px' }}
-            >
-              <Radio.Group 
-                value={repeatEndType}
-                onChange={(e) => setRepeatEndType(e.target.value)}
-              >
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Radio value="never">Never</Radio>
-                  <Radio value="after">
-                    <Space align="center">
-                      After{' '}
-                      <Input
-                        type="number"
-                        min={1}
-                        value={repeatTimes}
-                        onChange={(e) => setRepeatTimes(e.target.value)}
-                        style={{ width: '60px' }}
-                        disabled={repeatEndType !== 'after'}
-                      />
-                      {' '}Times
-                    </Space>
-                  </Radio>
-                  <Radio value="on">
-                    <Space align="center">
-                      On{' '}
-                      <DatePicker
-                        disabled={repeatEndType !== 'on'}
-                        format="DD/MM/YYYY"
-                      />
-                    </Space>
-                  </Radio>
-                </Space>
-              </Radio.Group>
-            </Form.Item>
-
-            <Form.Item name="send_separate_invites" valuePropName="checked">
-              <Checkbox>
-                Send separate invites for each meeting.
-              </Checkbox>
-            </Form.Item>
-          </div>
-        )}
         
-     
+
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Reminder</Text>
+            <Switch checked={showReminder} onChange={setShowReminder} />
+          </div>
+
+          {showReminder && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <Form.Item
+                name="reminder_date"
+                label={<span style={formItemStyle}>Reminder Date</span>}
+              >
+                <DatePicker
+                  format="DD/MM/YYYY"
+                  style={{
+                    ...inputStyle,
+                    width: '100%'
+                  }}
+                  suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="reminder_time"
+                label={<span style={formItemStyle}>Reminder Time</span>}
+              >
+                <TimePicker
+                  format="hh:mm A"
+                  style={{
+                    ...inputStyle,
+                    width: '100%'
+                  }}
+                  use12Hours
+                />
+              </Form.Item>
+            </div>
+          )}
+        </div>
+
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
+            <Switch 
+              checked={repeatType !== 'none'} 
+              onChange={handleRepeatToggle}
+            />
+          </div>
+
+          {repeatType !== 'none' && (
+            <div>
+              <Form.Item
+                name="repeat"
+                label={<span style={formItemStyle}>Repeat Type</span>}
+              >
+                <Select
+                  placeholder="Select repeat option"
+                  style={selectStyle}
+                  value={repeatType}
+                  onChange={(value) => setRepeatType(value)}
+                  suffixIcon={<FiChevronDown size={14} />}
+                >
+                  <Option value="daily">Daily</Option>
+                  <Option value="weekly">Weekly</Option>
+                  <Option value="monthly">Monthly</Option>
+                  <Option value="yearly">Yearly</Option>
+                  <Option value="custom">Custom</Option>
+                </Select>
+              </Form.Item>
+
+              {repeatType === 'custom' && (
+                <div style={{ 
+                  marginTop: '16px', 
+                  padding: '16px', 
+                  border: '1px solid #f0f0f0', 
+                  borderRadius: '8px',
+                  backgroundColor: '#f8fafc'
+                }}>
+                  <Form.Item
+                    name="repeat_frequency"
+                    label={<span style={formItemStyle}>Frequency</span>}
+                  >
+                    <Select 
+                      defaultValue="weekly" 
+                      style={selectStyle}
+                      onChange={(value) => setCustomFrequency(value)}
+                      suffixIcon={<FiChevronDown size={14} />}
+                    >
+                      <Option value="weekly">Weekly</Option>
+                      <Option value="monthly">Monthly</Option>
+                      <Option value="yearly">Yearly</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item label={<span style={formItemStyle}>Repeat Every</span>}>
+                    <Input.Group compact>
+                      <Input 
+                        type="number" 
+                        min={1} 
+                        value={customRepeatInterval}
+                        onChange={(e) => setCustomRepeatInterval(e.target.value)}
+                        style={{ 
+                          width: '20%', 
+                          ...inputStyle,
+                          borderTopRightRadius: 0,
+                          borderBottomRightRadius: 0
+                        }}
+                      />
+                      <div style={{ 
+                        lineHeight: '48px', 
+                        padding: '0 16px', 
+                        backgroundColor: '#f3f4f6',
+                        border: '1px solid #e6e8eb',
+                        borderLeft: 'none',
+                        borderTopRightRadius: '10px',
+                        borderBottomRightRadius: '10px'
+                      }}>
+                        {customFrequency === 'weekly' ? 'weeks' : customFrequency === 'monthly' ? 'months' : 'years'}
+                      </div>
+                    </Input.Group>
+                  </Form.Item>
+
+                  {customFrequency === 'weekly' && (
+                    <Form.Item label={<span style={formItemStyle}>On These Days</span>}>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                          <Button
+                            key={day}
+                            type={customRepeatDays.includes(index) ? 'primary' : 'default'}
+                            shape="circle"
+                            onClick={() => {
+                              const newDays = customRepeatDays.includes(index)
+                                ? customRepeatDays.filter(d => d !== index)
+                                : [...customRepeatDays, index];
+                              setCustomRepeatDays(newDays);
+                            }}
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              padding: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              ...(customRepeatDays.includes(index) ? {
+                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                border: 'none'
+                              } : {})
+                            }}
+                          >
+                            {day}
+                          </Button>
+                        ))}
+                      </div>
+                    </Form.Item>
+                  )}
+
+                  {customFrequency === 'monthly' && (
+                    <Form.Item label={<span style={formItemStyle}>On</span>}>
+                      <Space>
+                        <Select style={{ width: 120 }} defaultValue="first">
+                          <Option value="first">First</Option>
+                          <Option value="second">Second</Option>
+                          <Option value="third">Third</Option>
+                          <Option value="fourth">Fourth</Option>
+                          <Option value="last">Last</Option>
+                        </Select>
+                        <Select style={{ width: 120 }} defaultValue="monday">
+                          <Option value="sunday">Sunday</Option>
+                          <Option value="monday">Monday</Option>
+                          <Option value="tuesday">Tuesday</Option>
+                          <Option value="wednesday">Wednesday</Option>
+                          <Option value="thursday">Thursday</Option>
+                          <Option value="friday">Friday</Option>
+                          <Option value="saturday">Saturday</Option>
+                        </Select>
+                      </Space>
+                    </Form.Item>
+                  )}
+
+                  {customFrequency === 'yearly' && (
+                    <Form.Item label={<span style={formItemStyle}>On</span>}>
+                      <Space direction="vertical">
+                        <Space>
+                          <Select style={{ width: 120 }} defaultValue="1">
+                            {Array.from({ length: 12 }, (_, i) => (
+                              <Option key={i + 1} value={i + 1}>
+                                {new Date(2024, i, 1).toLocaleString('default', { month: 'long' })}
+                              </Option>
+                            ))}
+                          </Select>
+                          <Select style={{ width: 120 }} defaultValue="first">
+                            <Option value="first">First</Option>
+                            <Option value="second">Second</Option>
+                            <Option value="third">Third</Option>
+                            <Option value="fourth">Fourth</Option>
+                            <Option value="last">Last</Option>
+                          </Select>
+                          <Select style={{ width: 120 }} defaultValue="monday">
+                            <Option value="sunday">Sunday</Option>
+                            <Option value="monday">Monday</Option>
+                            <Option value="tuesday">Tuesday</Option>
+                            <Option value="wednesday">Wednesday</Option>
+                            <Option value="thursday">Thursday</Option>
+                            <Option value="friday">Friday</Option>
+                            <Option value="saturday">Saturday</Option>
+                          </Select>
+                        </Space>
+                      </Space>
+                    </Form.Item>
+                  )}
+                </div>
+              )}
+
+              <div style={{
+                border: '1px solid #f0f0f0',
+                borderRadius: '8px',
+                padding: '16px',
+                marginTop: '16px',
+                backgroundColor: '#f8fafc'
+              }}>
+                <Form.Item
+                  label={<span style={formItemStyle}>Ends</span>}
+                  style={{ marginBottom: '16px' }}
+                >
+                  <Radio.Group 
+                    value={repeatEndType}
+                    onChange={(e) => setRepeatEndType(e.target.value)}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      <Radio value="never">Never</Radio>
+                      <Radio value="after">
+                        <Space align="center">
+                          After{' '}
+                          <Input
+                            type="number"
+                            min={1}
+                            value={repeatTimes}
+                            onChange={(e) => setRepeatTimes(e.target.value)}
+                            style={{ 
+                              width: '60px',
+                              ...inputStyle,
+                              height: '32px'
+                            }}
+                            disabled={repeatEndType !== 'after'}
+                          />
+                          {' '}Times
+                        </Space>
+                      </Radio>
+                      <Radio value="on">
+                        <Space align="center">
+                          On{' '}
+                          <DatePicker
+                            disabled={repeatEndType !== 'on'}
+                            format="DD/MM/YYYY"
+                            style={{
+                              ...inputStyle,
+                              height: '32px'
+                            }}
+                          />
+                        </Space>
+                      </Radio>
+                    </Space>
+                  </Radio.Group>
+                </Form.Item>
+              </div>
+            </div>
+          )}
+        </div>
+
         <Form.Item
           name="participants_reminder"
           label="Participants Reminder"

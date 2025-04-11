@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Checkbox, Space, Avatar, Radio, Switch, message } from 'antd';
 import { FiX, FiCalendar, FiPhone, FiUser, FiShield, FiBriefcase } from 'react-icons/fi';
 import dayjs from 'dayjs';
-import { useGetUsersQuery } from '../../../../user-management/users/services/userApi';
-import { useGetRolesQuery } from '../../../../hrm/role/services/roleApi';
+import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
+import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
+import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
+const CreateCall = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
   const [form] = Form.useForm();
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
@@ -85,17 +85,32 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
     }
     setRepeatType(checked ? 'daily' : 'none');
   };
+
+  const handleCancel = () => {
+    form.resetFields();
+    onCancel();
+  };
+
   const handleSubmit = (values) => {
     try {
       const formattedValues = {
         ...values,
-        call_date: values.call_date ? values.call_date.format('YYYY-MM-DD') : null,
-        call_time: values.call_time ? values.call_time.format('HH:mm:ss') : null,
+        call_start_date: values.call_start_date ? values.call_start_date.format('YYYY-MM-DD') : null,
+        call_start_time: values.call_start_time ? values.call_start_time.format('HH:mm:ss') : null,
       };
-      onSubmit(formattedValues);
+
+      console.log('Call Data:', formattedValues);
+      message.success('Call scheduled successfully');
+
+      form.resetFields();
+      onCancel();
+
+      if (onSubmit) {
+        onSubmit(formattedValues);
+      }
     } catch (error) {
-      console.error('Error formatting log data:', error);
-      message.error('Failed to create log');
+      console.error('Error scheduling call:', error);
+      message.error('Failed to schedule call');
     }
   };
 
@@ -103,7 +118,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
     <Modal
       title={null}
       open={open}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       footer={null}
       width={800}
       destroyOnClose={true}
@@ -129,7 +144,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
       >
         <Button
           type="text"
-          onClick={onCancel}
+          onClick={handleCancel}
           style={{
             position: "absolute",
             top: "16px",
@@ -176,13 +191,13 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
               fontWeight: "600",
               color: "#ffffff",
             }}>
-              Log a call
+              Schedule Call
             </h2>
             <Text style={{
               fontSize: "14px",
               color: "rgba(255, 255, 255, 0.85)",
             }}>
-              Log your call details
+              Add a new call to your deal
             </Text>
           </div>
         </div>
@@ -192,69 +207,85 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
+        initialValues={{
+          call_date: initialDate,
+          call_time: initialTime,
+          created_by: currentUser?.username,
+        }}
         style={{ padding: "24px" }}
       >
         <Typography.Title level={5} style={{ marginBottom: '24px' }}>Call Information</Typography.Title>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-
-        <Form.Item
-          name="call_for"
-          label="Call For"
-          rules={[{ required: true, message: 'Please select call for' }]}
-        >
-          <Select
-            placeholder="Contact"
-            size="large"
-            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+          <Form.Item
+            name="call_for"
+            label="Call For"
+            rules={[{ required: true, message: 'Please select call for' }]}
           >
-            <Option value="contact">Contact</Option>
-            <Option value="lead">Lead</Option>
-            {/* Add more options as needed */}
-          </Select>
-        </Form.Item>
+            <Select
+              placeholder="Contact"
+              size="large"
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="contact">Contact</Option>
+              <Option value="lead">Lead</Option>
+            </Select>
+          </Form.Item>
 
-        <Form.Item
-          name="call_type"
-          label="Call Type"
-          rules={[{ required: true, message: 'Please select call type' }]}
-        >
-          <Select
-            placeholder="Select call type"
-            size="large"
-            listHeight={100}
-            virtual={true}
-            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+          <Form.Item
+            name="call_type"
+            label="Call Type"
+            rules={[{ required: true, message: 'Please select call type' }]}
           >
-            <Option value="outbound">Outbound</Option>
-            <Option value="inbound">Inbound</Option>
-            <Option value="missed">Missed</Option>
+            <Select
+              placeholder="Select call type"
+              size="large"
+              listHeight={100}
+              virtual={true}
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="outbound">Outbound</Option>
+              <Option value="inbound">Inbound</Option>
+              <Option value="missed">Missed</Option>
+            </Select>
+          </Form.Item>
 
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="outgoing_call_status"
-          label="Outgoing Call Status"
-          rules={[{ required: true, message: 'Please select call status' }]}
-        >
-          <Select
-            placeholder="Select status"
-            size="large"
-            listHeight={100}
-            virtual={true}
-            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+          <Form.Item
+            name="outgoing_call_status"
+            label="Outgoing Call Status"
+            rules={[{ required: true, message: 'Please select call status' }]}
           >
-            <Option value="completed">Completed</Option>
-            <Option value="no_answer">No Answer</Option>
-            <Option value="busy">Busy</Option>
-            <Option value="wrong_number">Wrong Number</Option>
-          </Select>
+            <Select
+              placeholder="Select status"
+              size="large"
+              listHeight={100}
+              virtual={true}
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="completed">Completed</Option>
+              <Option value="no_answer">No Answer</Option>
+              <Option value="busy">Busy</Option>
+              <Option value="wrong_number">Wrong Number</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
+          name="created_by"
+          label="Call Owner"
+          rules={[{ required: true, message: 'Please select creator' }]}
+        >
+          <Input
+            value={currentUser?.username}
+            disabled
+            size="large"
+            style={{
+              borderRadius: "10px",
+              height: "48px",
+            }}
+          />
         </Form.Item>
         </div>
 
-
-        <div style={{ display: "flex", gap: "16px",marginTop:"20px" }}>
+        <div style={{ display: "flex", gap: "16px", marginTop: "20px" }}>
           <Form.Item
             name="call_start_date"
             label="Call Start Date"
@@ -283,84 +314,86 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
           </Form.Item>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',marginTop:"20px"  }}>
-
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
+         
         <Form.Item
-          name="call_duration"
-          label="Call Duration"
-          rules={[{ required: true, message: 'Please enter call duration' }]}
+          name="`reminder"
+          label=" Reminder"
         >
-          <Input
-            placeholder="00 minutes 00 seconds"
+          <Select
+            placeholder="Select reminder option"
             size="large"
-            style={{ borderRadius: "10px", height: "48px" }}
-          />
+            listHeight={100}
+            virtual={true}
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              height: "48px",
+            }}
+          >
+            <Option value="none">None</Option>
+            <Option value="at_time_of_meeting">At time of meeting</Option>
+            <Option value="15_min">15 minutes before</Option>
+            <Option value="30_min">30 minutes before</Option>
+            <Option value="1_hour">1 hour before</Option>
+            <Option value="1_day">1 day before</Option>
+            <Option value="2_days">2 days before</Option>
+
+          </Select>
         </Form.Item>
 
-        <Form.Item
-          name="subject"
-          label="Subject"
-          rules={[{ required: true, message: 'Please enter subject' }]}
-        >
-          <Input
-            placeholder="Outgoing call to contact"
-            size="large"
-            style={{ borderRadius: "10px", height: "48px" }}
-          />
-        </Form.Item>
+          <Form.Item
+            name="subject"
+            label="Subject"
+            rules={[{ required: true, message: 'Please enter subject' }]}
+          >
+            <Input
+              placeholder="Outgoing call to contact"
+              size="large"
+              style={{ borderRadius: "10px", height: "48px" }}
+            />
+          </Form.Item>
         </div>
-
-
-        {/* <Form.Item
-          name="voice_recording"
-          label="Voice Recording"
-        >
-          <Input
-            type="file"
-            accept="audio/*"
-            size="large"
-            style={{ borderRadius: "10px", height: "48px" }}
-          />
-        </Form.Item> */}
 
         <Typography.Title level={5} style={{ margin: '24px 0' }}>Purpose Of Outgoing Call</Typography.Title>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <Form.Item
+            name="call_purpose"
+            label="Call Purpose"
+            rules={[{ required: true, message: 'Please select call purpose' }]}
+          >
+            <Select
+              placeholder="Select purpose"
+              size="large"
+              listHeight={100}
+              virtual={true}
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="none">-None-</Option>
+              <Option value="prospecting">Prospecting</Option>
+              <Option value="administrative">Administrative</Option>
+              <Option value="negotiation">Negotiation</Option>
+              <Option value="demo">Demo</Option>
+              <Option value="project">Project</Option>
+              <Option value="desk">Desk</Option>
+            </Select>
+          </Form.Item>
 
-                  <Form.Item
-                      name="call_purpose"
-                      label="Call Purpose"
-                      rules={[{ required: true, message: 'Please select call purpose' }]}
-                  >
-                      <Select
-                          placeholder="Select purpose"
-                          size="large"
-                          listHeight={100}
-                          virtual={true}
-                          style={{ width: "100%", borderRadius: "10px", height: "48px" }}
-                      >
-                          <Option value="none">-None-</Option>
-                          <Option value="prospecting">Prospecting</Option>
-                          <Option value="administrative">Administrative</Option>
-                          <Option value="negotiation">Negotiation</Option>
-                          <Option value="demo">Demo</Option>
-                          <Option value="project">Project</Option>
-                          <Option value="desk">Desk</Option>
-                      </Select>
-                  </Form.Item>
+          <Form.Item
+            name="call_agenda"
+            label="Call Agenda"
+            rules={[{ required: true, message: 'Please enter call agenda' }]}
+          >
+            <Input
+              placeholder="Call Agenda"
+              size="large"
+              style={{ borderRadius: "10px", height: "48px" }}
+            />
+          </Form.Item>
+        </div>
 
-                  <Form.Item
-                      name="call_agenda"
-                      label="Call Agenda"
-                      rules={[{ required: true, message: 'Please enter call agenda' }]}
-                  >
-                      <Input
-                          placeholder="Call Agenda"
-                          size="large"
-                          style={{ borderRadius: "10px", height: "48px" }}
-                      />
-                  </Form.Item>
-              </div>
+       
 
         <div style={{
           display: "flex",
@@ -370,7 +403,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
         }}>
           <Button
             size="large"
-            onClick={onCancel}
+            onClick={handleCancel}
             style={{
               padding: "8px 24px",
               height: "44px",
@@ -391,7 +424,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
               background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
             }}
           >
-            Submit
+            Schedule Call
           </Button>
         </div>
       </Form>
@@ -399,4 +432,4 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
   );
 };
 
-export default CreateLog;
+export default CreateCall;

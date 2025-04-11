@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -36,10 +36,18 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const AddCompanyModal = ({ open, onCancel, loggedInUser,companyAccountsResponse,onsubmit }) => {
+const AddCompanyModal = ({ open, onCancel, loggedInUser, companyAccountsResponse, onSuccess, initialCompanyName }) => {
   const [form] = Form.useForm();
   const [createCompanyAccount, { isLoading }] = useCreateCompanyAccountMutation();
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
+
+  useEffect(() => {
+    if (open && initialCompanyName) {
+      form.setFieldsValue({
+        company_name: initialCompanyName
+      });
+    }
+  }, [open, initialCompanyName, form]);
 
   const handleSubmit = async (values) => {
     try {
@@ -51,8 +59,12 @@ const AddCompanyModal = ({ open, onCancel, loggedInUser,companyAccountsResponse,
       form.resetFields();
       onCancel();
     } catch (error) {
+      if (error?.data?.message?.includes("already exists")) {
+        message.error("A company with this name already exists");
+        return;
+      }
       console.error("Submit Error:", error);
-      message.error("Failed to create company account");
+      message.error(error?.data?.message || "Failed to create company account");
     }
   };
 

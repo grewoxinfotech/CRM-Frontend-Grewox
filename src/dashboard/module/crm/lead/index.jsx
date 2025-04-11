@@ -210,7 +210,7 @@ const Lead = () => {
                     <FiChevronDown size={14} />
                   </Button>
                 </Dropdown>
-                {/* <Button
+                <Button
                   icon={<FiLink size={16} />}
                   onClick={() => setIsGenerateLinkModalOpen(true)}
                   className="generate-link-button"
@@ -222,7 +222,7 @@ const Lead = () => {
                   }}
                 >
                   Generate Link
-                </Button> */}
+                </Button>
                 <Button
                   type="primary"
                   icon={<FiPlus size={16} />}
