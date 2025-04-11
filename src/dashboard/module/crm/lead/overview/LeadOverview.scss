@@ -1648,9 +1648,11 @@
 .lead-stage-progress-container {
     display: flex;
     width: auto;
-    // max-width: 50%; // Keep or adjust as needed
-    height: 40px; // Keep or adjust as needed
+    height: 60px;
     overflow: hidden;
+    justify-content: flex-end;
+    background-color: #f8fafc;
+    padding: 10px;
 }
 
 .stage-item {

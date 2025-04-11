@@ -6,18 +6,21 @@ import { useGetUsersQuery } from '../../../../../user-management/users/services/
 import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
-import { useCreateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
+import { useUpdateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
 import { useParams } from 'react-router-dom';
+
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
+const EditFollowupTask = ({ open, onCancel, taskId, onSubmit }) => {
+  const idd = useParams();
+  const dealId = idd.dealId;
 
-
- 
-  const [createFollowupTask, { isLoading: followupTaskResponseLoading }] = useCreateFollowupTaskMutation();
   const [form] = Form.useForm();
+  const [updateFollowupTask] = useUpdateFollowupTaskMutation();
+  const { data: taskData, isLoading } = useGetFollowupTaskByIdQuery(taskId);
+
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
   const [repeatTimes, setRepeatTimes] = useState(1);
@@ -124,6 +127,87 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     setRepeatType(checked ? 'daily' : 'none');
   };
 
+  // Initialize form with task data
+  useEffect(() => {
+    if (taskData?.data) {
+      const task = taskData.data.find(t => t.id === taskId);
+      
+      if (!task) {
+        console.error('Task not found');
+        return;
+      }
+
+      // Parse assigned_to
+      let assignedTo = task.assigned_to;
+      if (typeof assignedTo === 'string') {
+        try {
+          assignedTo = JSON.parse(assignedTo);
+        } catch (e) {
+          assignedTo = { assigned_to: [] };
+        }
+      }
+
+      // Parse reminder
+      let reminderData = task.reminder;
+      if (typeof reminderData === 'string') {
+        try {
+          reminderData = JSON.parse(reminderData);
+        } catch (e) {
+          reminderData = null;
+        }
+      }
+
+      // Parse repeat data
+      let repeatData = task.repeat;
+      if (typeof repeatData === 'string') {
+        try {
+          repeatData = JSON.parse(repeatData);
+          // Set repeat states
+          if (repeatData) {
+            setRepeatType(repeatData.repeat_type || 'none');
+            setRepeatEndType(repeatData.repeat_end_type || 'never');
+            setRepeatTimes(repeatData.repeat_times || 1);
+            setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
+            setCustomRepeatDays(repeatData.custom_repeat_days || []);
+            setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
+            // Set repeat end date if it exists
+            setRepeatEndDate(repeatData.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null);
+            setShowRepeat(true);
+          }
+        } catch (e) {
+        }
+      }
+
+      // Set form values
+      const formValues = {
+        subject: task.subject || '',
+        due_date: task.due_date ? dayjs(task.due_date) : null,
+        priority: task.priority || '',
+        task_reporter: task.task_reporter || '',
+        assigned_to: assignedTo?.assigned_to || [],
+        status: task.status || '',
+        description: task.description || '',
+        created_by: task.created_by || currentUser?.username,
+        repeat_end_date: repeatData?.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null,
+      };
+
+      // Add reminder values if exists
+      if (reminderData) {
+        setShowReminder(true);
+        formValues.reminder_date = reminderData.reminder_date ? dayjs(reminderData.reminder_date) : null;
+        formValues.reminder_time = reminderData.reminder_time ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null;
+      }
+
+      // Add repeat values if exists
+      if (repeatData) {
+        formValues.repeat = repeatData.repeat_type;
+      }
+
+      // Set form values
+      form.setFieldsValue(formValues);
+    }
+  }, [taskData, form, currentUser, taskId]);
+
   const handleSubmit = async (values) => {
     try {
       // Prepare reminder data
@@ -133,47 +217,46 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
       } : null;
 
       // Prepare repeat data
-      const repeatData = repeatType !== 'none' ? {
+      const repeatData = showRepeat && repeatType !== 'none' ? {
         repeat_type: repeatType,
         repeat_end_type: repeatEndType,
-        repeat_times: parseInt(repeatTimes) || 1,
+        repeat_times: repeatTimes,
         repeat_end_date: repeatEndType === 'on' ? repeatEndDate?.format('YYYY-MM-DD') : null,
-        custom_repeat_interval: parseInt(customRepeatInterval) || 1,
+        custom_repeat_interval: customRepeatInterval,
         custom_repeat_days: customRepeatDays,
         custom_repeat_frequency: customFrequency,
       } : null;
 
-      // Format the final payload
-      const formattedValues = {
+      // Format the update payload
+      const updateData = {        
         subject: values.subject,
         due_date: values.due_date?.format('YYYY-MM-DD'),
         priority: values.priority,
-        task_reporter: currentUser?.username,
+        task_reporter: values.task_reporter,
         assigned_to: {
           assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to]
         },
         status: values.status,
-        description: values.description || null,
+        description: values.description,
         reminder: reminderData,
         repeat: repeatData,
-        created_by: currentUser?.username,
+        client_id: taskData?.data?.client_id,
         updated_by: currentUser?.username
       };
 
-  
-      // Make API call to create task
-      await createFollowupTask({id: dealId, data: formattedValues}).unwrap();
-      
-      message.success('Task created successfully');
-      form.resetFields();
-      onCancel();
+      const data = updateData;
 
-      if (onSubmit) {
-        onSubmit(formattedValues);
+      // Make the update API call
+      const result = await updateFollowupTask({ id: taskId, data}).unwrap();
+
+      if (result.success) {
+        message.success('Task updated successfully');
+        onCancel();
+        if (onSubmit) onSubmit();
       }
     } catch (error) {
-      console.error('Error creating task:', error);
-      message.error('Failed to create task');
+      console.error('Error updating task:', error);
+      message.error(error?.data?.message || 'Failed to update task');
     }
   };
 
@@ -254,13 +337,13 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
               fontWeight: "600",
               color: "#ffffff",
             }}>
-              Create Task
+              Edit Task
             </h2>
             <Text style={{
               fontSize: "14px",
               color: "rgba(255, 255, 255, 0.85)",
             }}>
-              Add a new task to your deal
+              Update task details
             </Text>
           </div>
         </div>
@@ -270,11 +353,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        initialValues={{
-          due_date: initialDate,
-          due_time: initialTime,
-          created_by: currentUser?.username,
-        }}
         style={{ padding: "24px" }}
       >
         <div style={{ marginBottom: '24px' }}>
@@ -283,7 +361,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             <Form.Item
               name="subject"
               label={<span style={formItemStyle}>Subject</span>}
-              rules={[{ required: true, message: 'Please enter subject' }]}
             >
               <Input
                 placeholder="Enter subject"
@@ -294,7 +371,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             <Form.Item
               name="due_date"
               label={<span style={formItemStyle}>Due Date</span>}
-              rules={[{ required: true, message: 'Please select due date' }]}
             >
               <DatePicker
                 format="DD-MM-YYYY"
@@ -310,7 +386,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             <Form.Item
               name="priority"
               label={<span style={formItemStyle}>Priority</span>}
-              rules={[{ required: true, message: "Please select priority" }]}
             >
               <Select
                 placeholder="Select priority"
@@ -345,9 +420,8 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             </Form.Item>
 
             <Form.Item
-              name="task_reporter"
+              name="created_by"
               label={<span style={formItemStyle}>Task Reporter</span>}
-              initialValue={currentUser?.username}
             >
               <Input
                 value={currentUser?.username}
@@ -366,7 +440,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           <Form.Item
             name="assigned_to"
             label={<span style={formItemStyle}>Assign To</span>}
-            rules={[{ required: true, message: 'Please select assignee' }]}
           >
             <Select
               mode="multiple"
@@ -434,7 +507,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           <Form.Item
             name="status"
             label={<span style={formItemStyle}>Status</span>}
-            rules={[{ required: true, message: "Please select status" }]}
           >
             <Select
               placeholder="Select status"
@@ -759,37 +831,10 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             }}
           />
         </Form.Item>
-
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "12px",
-          marginTop: "24px"
-        }}>
-          <Button
-            size="large"
-            onClick={onCancel}
-            style={{
-              padding: "8px 24px",
-              height: "44px",
-              borderRadius: "10px",
-              border: "1px solid #e6e8eb",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
-            style={{
-              padding: "8px 32px",
-              height: "44px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
-            }}
-          >
-            Create Task
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button type="primary" htmlType="submit">
+            Update Task
           </Button>
         </div>
       </Form>
@@ -797,4 +842,4 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   );
 };
 
-export default CreatefollowupTask;
+export default EditFollowupTask; 

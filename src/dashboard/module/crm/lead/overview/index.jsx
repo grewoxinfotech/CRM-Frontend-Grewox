@@ -91,7 +91,6 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
         const currencyDetails = currencies?.find(c => c.id === currencyId || c.currencyCode === currencyId);
         if (!currencyDetails) return `${value}`;
 
-
         return new Intl.NumberFormat('en-US', {
             style: 'decimal',
             minimumFractionDigits: 0,
@@ -101,14 +100,14 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
 
     return (
         <div className="overview-content">
-            <Card className="stage-progress-card">
-                <LeadStageProgress
-                    stages={pipelineStages}
-                    currentStageId={leadData?.leadStage}
-                    onStageClick={onStageUpdate}
-                    isConverted={leadData?.is_converted}
-                />
-            </Card>
+            <div className="stage-progress-card">
+                    <LeadStageProgress
+                        stages={pipelineStages}
+                        currentStageId={leadData?.leadStage}
+                        onStageClick={onStageUpdate}
+                        isConverted={leadData?.is_converted}
+                    />
+            </div>
 
             <Card className="info-card contact-card">
                 <div className="profile-header">

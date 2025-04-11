@@ -1,23 +1,38 @@
-import React from 'react';
-import { Table, Tag, Space, Button, Avatar, Tooltip, Dropdown } from 'antd';
-import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
-import { useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
+import React, { useState } from 'react';
+import { Table, Tag, Space, Button, Avatar, Tooltip, Dropdown, Modal, message } from 'antd';
+import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical, FiAlertCircle } from 'react-icons/fi';
+import { useGetFollowupTaskByIdQuery, useDeleteFollowupTaskMutation } from './services/followupTaskApi';
 import dayjs from 'dayjs';
 import './followuptask.scss';
-
-
+import EditFollowupTask from './EditFollowupTask';
 
 const FollowupTaskList = ({ dealId, users }) => {
     const { data: followupTask, isLoading: followupTaskLoading } = useGetFollowupTaskByIdQuery(dealId);
+    const [deleteFollowupTask] = useDeleteFollowupTaskMutation();
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [selectedTaskId, setSelectedTaskId] = useState(null);
 
-    const handleEdit = (record) => {
-        // Handle edit
-        console.log('Edit:', record);
+    const handleEdit = (taskId) => {
+        setSelectedTaskId(taskId);
+        setEditModalVisible(true);
     };
 
     const handleDelete = (id) => {
-        // Handle delete
-        console.log('Delete:', id);
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this task?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteFollowupTask(id).unwrap();
+                    message.success('Task deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete task');
+                }
+            },
+        });
     };
 
     const columns = [
@@ -151,12 +166,13 @@ const FollowupTaskList = ({ dealId, users }) => {
                                     key: 'edit',
                                     label: 'Edit',
                                     icon: <FiEdit2 />,
-                                    onClick: () => handleEdit(record)
+                                    onClick: () => handleEdit(record.id)
                                 },
                                 {
                                     key: 'delete',
                                     label: 'Delete',
-                                    icon: <FiTrash2 />,
+                                    icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
+                                    danger: true,
                                     onClick: () => handleDelete(record.id)
                                 }
                             ]
@@ -175,18 +191,34 @@ const FollowupTaskList = ({ dealId, users }) => {
     ];
 
     return (
-        <Table
-            dataSource={followupTask?.data || []}
-            columns={columns}
-            rowKey="id"
-            loading={followupTaskLoading}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} tasks`
-            }}
-            className="followup-table"
-        />
+        <>
+            <Table
+                dataSource={followupTask?.data || []}
+                columns={columns}
+                rowKey="id"
+                loading={followupTaskLoading}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} tasks`
+                }}
+                className="followup-table"
+            />
+            {editModalVisible && (
+                <EditFollowupTask
+                    open={editModalVisible}
+                    taskId={selectedTaskId}
+                    onCancel={() => {
+                        setEditModalVisible(false);
+                        setSelectedTaskId(null);
+                    }}
+                    onSubmit={() => {
+                        setEditModalVisible(false);
+                        setSelectedTaskId(null);
+                    }}
+                />
+            )}
+        </>
     );
 };
 
