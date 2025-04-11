@@ -4,20 +4,18 @@ import { baseQueryWithReauth } from "../../../../../store/baseQuery";
 export const customFormApi = createApi({
     reducerPath: "customFormApi",
     baseQuery: baseQueryWithReauth,
-    tagTypes: ["CustomForms"],
+    tagTypes: ["CustomForms", "FormSubmissions"],
     endpoints: (builder) => ({
         getCustomForms: builder.query({
             query: () => ({
                 url: "/custom-forms",
                 method: "GET"
             }),
-            transformResponse: (response) => {
-                return {
-                    data: response.data || [],
-                    success: response.success,
-                    message: response.message
-                };
-            },
+            transformResponse: (response) => ({
+                data: response.data || [],
+                success: response.success,
+                message: response.message
+            }),
             providesTags: ["CustomForms"],
         }),
         createCustomForm: builder.mutation({
@@ -45,7 +43,76 @@ export const customFormApi = createApi({
         }),
         getCustomFormById: builder.query({
             query: (id) => `/custom-forms/${id}`,
+            transformResponse: (response) => ({
+                data: response.data,
+                success: response.success,
+                message: response.message
+            }),
             providesTags: (result, error, id) => [{ type: 'CustomForms', id }],
+        }),
+        // Form Submissions endpoints
+        getFormSubmissions: builder.query({
+            query: (formId) => ({
+                url: `/form-submissions/${formId}/submissions`,
+                method: 'GET'
+            }),
+            transformResponse: (response) => ({
+                data: response.data || [],
+                success: response.success,
+                message: response.message
+            }),
+            providesTags: (result, error, formId) => [
+                { type: 'FormSubmissions', id: formId },
+                'FormSubmissions'
+            ],
+        }),
+        getFormSubmissionById: builder.query({
+            query: (id) => ({
+                url: `/form-submissions/${id}`,
+                method: 'GET'
+            }),
+            transformResponse: (response) => ({
+                data: response.data,
+                success: response.success,
+                message: response.message
+            }),
+            providesTags: (result, error, id) => [{ type: 'FormSubmissions', id }],
+        }),
+        deleteFormSubmission: builder.mutation({
+            query: (submissionId) => ({
+                url: `/form-submissions/${submissionId}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: (result, error, submissionId) => [
+                { type: 'FormSubmissions', id: submissionId },
+                'FormSubmissions'
+            ],
+        }),
+        updateFormSubmission: builder.mutation({
+            query: ({ submissionId, data }) => ({
+                url: `/form-submissions/${submissionId}`,
+                method: 'PUT',
+                body: {
+                    submission_data: data
+                },
+            }),
+            invalidatesTags: (result, error, { submissionId }) => [
+                { type: 'FormSubmissions', id: submissionId },
+                'FormSubmissions'
+            ],
+        }),
+        submitFormResponse: builder.mutation({
+            query: ({ formId, data }) => ({
+                url: `/form-submissions/${formId}/submit`,
+                method: 'POST',
+                body: {
+                    submission_data: data
+                },
+            }),
+            invalidatesTags: (result, error, { formId }) => [
+                { type: 'FormSubmissions', id: formId },
+                'FormSubmissions'
+            ],
         }),
     }),
 });
@@ -56,6 +123,11 @@ export const {
     useUpdateCustomFormMutation,
     useDeleteCustomFormMutation,
     useGetCustomFormByIdQuery,
+    useGetFormSubmissionsQuery,
+    useGetFormSubmissionByIdQuery,
+    useDeleteFormSubmissionMutation,
+    useUpdateFormSubmissionMutation,
+    useSubmitFormResponseMutation,
 } = customFormApi;
 
 // Sample data for testing

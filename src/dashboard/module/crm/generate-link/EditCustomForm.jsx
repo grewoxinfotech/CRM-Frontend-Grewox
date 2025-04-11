@@ -82,6 +82,7 @@ const EditCustomForm = ({ open, onCancel, onSubmit, loading, initialValues }) =>
 
             const formData = {
                 ...values,
+                id: initialValues.id,
                 fields: fieldsObject,
                 start_date: values.event_dates[0].toISOString(),
                 end_date: values.event_dates[1].toISOString(),

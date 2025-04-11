@@ -12,17 +12,23 @@ const NotificationsComponent = () => {
     const { data: notificationsData, isLoading } = useGetAllNotificationsQuery();
     const [markAsRead] = useMarkAsReadMutation();
     const [clearAll] = useClearAllNotificationsMutation();
-  const loggedInUser = useSelector(selectCurrentUser);
+    const loggedInUser = useSelector(selectCurrentUser);
 
 
+<<<<<<< Updated upstream
 // console.log("loggedInUser",loggedInUser)
 
+=======
+>>>>>>> Stashed changes
     const notifications = notificationsData?.data || [];
     const normalNotifications = notifications.filter(n => n.notification_type === 'normal');
     const reminders = notifications.filter(n => n.notification_type === 'reminder');
 
+<<<<<<< Updated upstream
 // console.log("notifications",notifications)
 
+=======
+>>>>>>> Stashed changes
     const handleMarkAsRead = async (id) => {
         try {
             await markAsRead(id);

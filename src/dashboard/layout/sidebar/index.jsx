@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
-import { selectCurrentUser, selectUserRole } from '../../../auth/services/authSlice';
+import { selectUserRole } from '../../../auth/services/authSlice';
 import {
   FiHome,
   FiSettings,
@@ -43,12 +43,10 @@ import {
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
-import { useGetRolesQuery } from "../../module/hrm/role/services/roleApi";
 
 const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, loggedInUser }) => {
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isSystemSetupOpen, setIsSystemSetupOpen] = useState(false);
   const [isCommunicationOpen, setCommunicationOpen] = useState(false);
   const [isCrmOpen, setCrmOpen] = useState(false);
   const [isUserManagementOpen, setUserManagementOpen] = useState(false);
@@ -164,10 +162,10 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           permission: "dashboards-crm-contact"
         },
         {
-          title: "Generate links",
-          icon: <FiMessageSquare />,
-          path: "/dashboard/crm/generate-links",
-          permission: "dashboards-generate-links"
+          title: "Custom Form",
+          icon: <FiFileText />,
+          path: "/dashboard/crm/custom-form",
+          permission: "dashboards-custom-form"
         },
         {
           title: "Inquiry",

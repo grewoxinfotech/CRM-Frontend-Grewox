@@ -74,6 +74,7 @@ import CompanyAccount from "../dashboard/module/crm/companyacoount/index.jsx";
 import Contact from "../dashboard/module/crm/contact/index.jsx";
 import CompanyAccountDetails from "../dashboard/module/crm/companyacoount/CompanyAccountDetails.jsx";
 import ContactDetailsOverview from "../dashboard/module/crm/contact/ContactDetails.jsx";
+import FormSubmissions from "../dashboard/module/crm/generate-link/FormSubmissions.jsx";
 
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
@@ -278,8 +279,17 @@ const routes = createBrowserRouter([
             element: <CompanyInquiry />,
           },
           {
-            path: "generate-links",
-            element: <CompanyLinkGenerator />,
+            path: "custom-form",
+            children: [
+              {
+                path: "",
+                element: <CompanyLinkGenerator />,
+              },
+              {
+                path: ":formId/submissions",
+                element: <FormSubmissions />,
+              },
+            ],
           },
           {
             path: "lead",

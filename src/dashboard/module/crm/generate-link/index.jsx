@@ -9,6 +9,8 @@ import {
     Dropdown,
     Menu,
     Breadcrumb,
+    Space,
+    Popconfirm,
 } from "antd";
 import {
     FiPlus,
@@ -17,7 +19,7 @@ import {
     FiHome,
     FiChevronDown,
 } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -33,6 +35,7 @@ import {
     useDeleteCustomFormMutation,
 } from "./services/customFormApi";
 import "./CustomForm.scss";
+import { FileTextOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -43,6 +46,7 @@ const CustomFormPage = () => {
     const [generateLinkModalVisible, setGenerateLinkModalVisible] = useState(false);
     const [selectedForm, setSelectedForm] = useState(null);
     const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
 
     const {
         data: formsData,
@@ -89,7 +93,7 @@ const CustomFormPage = () => {
     const handleUpdate = async (values) => {
         try {
             await updateForm({
-                id: values._id,
+                id: values.id || values._id,
                 data: values
             }).unwrap();
             message.success("Custom form updated successfully");
@@ -97,6 +101,7 @@ const CustomFormPage = () => {
             setSelectedForm(null);
             refetch(); // Refresh the list after updating
         } catch (error) {
+            console.error('Update error:', error);
             message.error(error?.data?.message || "Failed to update custom form");
         }
     };
@@ -222,6 +227,39 @@ const CustomFormPage = () => {
             <Menu.Item key="pdf">Export as PDF</Menu.Item>
         </Menu>
     );
+
+    const columns = [
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Space>
+                    <Button
+                        type="primary"
+                        icon={<FileTextOutlined />}
+                        onClick={() => navigate(`/dashboard/crm/custom-form/${record.id}/submissions`)}
+                    >
+                        View Submissions
+                    </Button>
+                    <Button
+                        type="primary"
+                        onClick={() => handleCopyLink(record.id)}
+                    >
+                        Copy Form Link
+                    </Button>
+                    <Popconfirm
+                        title="Delete Form"
+                        description="Are you sure you want to delete this form?"
+                        onConfirm={() => handleDelete(record.id)}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button type="text" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
 
     return (
         <div className="invoice-page">
