@@ -11,7 +11,7 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateCall = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
+const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
   const [form] = Form.useForm();
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
@@ -317,11 +317,12 @@ const CreateCall = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
          
         <Form.Item
-          name="`reminder"
-          label=" Reminder"
+          name="call_reminder"
+          label="Call Reminder"
+          rules={[{ required: true, message: 'Please select call reminder' }]}
         >
           <Select
-            placeholder="Select reminder option"
+            placeholder="Select call reminder"
             size="large"
             listHeight={100}
             virtual={true}
@@ -331,14 +332,15 @@ const CreateCall = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
               height: "48px",
             }}
           >
-            <Option value="none">None</Option>
-            <Option value="at_time_of_meeting">At time of meeting</Option>
+            <Option value="none">No Reminder</Option>
+            <Option value="at_time">At time of call</Option>
+            <Option value="5_min">5 minutes before</Option>
+            <Option value="10_min">10 minutes before</Option>
             <Option value="15_min">15 minutes before</Option>
             <Option value="30_min">30 minutes before</Option>
             <Option value="1_hour">1 hour before</Option>
+            <Option value="2_hour">2 hours before</Option>
             <Option value="1_day">1 day before</Option>
-            <Option value="2_days">2 days before</Option>
-
           </Select>
         </Form.Item>
 
@@ -432,4 +434,4 @@ const CreateCall = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
   );
 };
 
-export default CreateCall;
+export default CreateFollowupCall;

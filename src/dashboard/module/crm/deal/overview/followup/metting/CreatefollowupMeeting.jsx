@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Empty, Checkbox, Radio, Space, Avatar, Switch } from 'antd';
-import { FiX, FiCalendar, FiMapPin, FiUsers, FiPlus, FiSearch, FiRepeat, FiUser, FiShield, FiBriefcase, FiChevronDown } from 'react-icons/fi';
+import { FiX, FiCalendar, FiMapPin, FiUsers, FiPlus, FiSearch, FiRepeat, FiUser, FiShield, FiBriefcase, FiChevronDown, FiLink } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
 import { message } from 'antd';
+import { useCreateFollowupMeetingMutation } from './services/followupMettingApi';
 
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
+const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
   const [form] = Form.useForm();
   const [showParticipantsSection, setShowParticipantsSection] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState([]);
@@ -29,7 +30,10 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
   const [customFrequency, setCustomFrequency] = useState('weekly');
   const [monthlyPattern, setMonthlyPattern] = useState('day');
   const [yearlyPattern, setYearlyPattern] = useState('date');
+  const [meetingType, setMeetingType] = useState(null);
 
+
+  const [createFollowupMeeting, { isLoading: isCreating }] = useCreateFollowupMeetingMutation();
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
@@ -74,7 +78,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
     return roleColors[roleName?.toLowerCase()] || roleColors.default;
   };
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
     try {
       // Organize reminder fields
       const reminderData = showReminder ? {
@@ -93,21 +97,37 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
         custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
       } : null;
 
+      // Ensure assigned_to is always an array
+      const assignedToArray = Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to].filter(Boolean);
+
       // Format the final payload
       const formattedValues = {
-        ...values,
+        title: values.title,
+        meeting_type: values.meeting_type,
+        venue: values.venue,
+        location: values.location,
+        meeting_link: values.meeting_link,
         from_date: values.from_date.format('YYYY-MM-DD'),
         from_time: values.from_time.format('HH:mm:ss'),
         to_date: values.to_date.format('YYYY-MM-DD'),
         to_time: values.to_time.format('HH:mm:ss'),
+        host: values.host,
+        assigned_to: {
+          assigned_to: assignedToArray
+        },
         reminder: reminderData,
-        repeat: repeatData
+        repeat: repeatData,
+        participants_reminder: values.participants_reminder
       };
 
-      onSubmit(formattedValues);
+      await createFollowupMeeting({id: dealId, data: formattedValues}).unwrap();
       message.success('Meeting created successfully');
       form.resetFields();
       onCancel();
+
+      if (onSubmit) {
+        onSubmit(formattedValues);
+      }
     } catch (error) {
       console.error('Error creating meeting:', error);
       message.error('Failed to create meeting');
@@ -279,63 +299,115 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
         }}
         style={{ padding: "24px" }}
       >
-         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        <Form.Item
-          name="title"
-          label="Title"
-          rules={[{ required: true, message: 'Please enter meeting title' }]}
-        >
-          <Input
-            placeholder="Enter meeting title"
-            size="large"
-            style={{
-              borderRadius: "10px",
-              height: "48px",
-            }}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="venue"
-          label="Meeting Venue"
-          rules={[{ required: true, message: 'Please select meeting venue' }]}
-        >
-          <Select
-            placeholder="Select venue"
-            size="large"
-            listHeight={100}
-            virtual={true}
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px",
-            }}
-            onChange={handleVenueChange}
-          >
-            <Option value="client_location">Client Location</Option>
-            <Option value="office">In-Office</Option>
-            <Option value="online">Online</Option>
-          </Select>
-        </Form.Item>
-
-        {(venueType === 'client_location' || venueType === 'office') && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <Form.Item
-            name="location"
-            label="Location"
+            name="title"
+            label="Title"
+            rules={[{ required: true, message: 'Please enter meeting title' }]}
           >
             <Input
-              placeholder="Enter location details"
+              placeholder="Enter meeting title"
               size="large"
               style={{
                 borderRadius: "10px",
                 height: "48px",
               }}
-              prefix={<FiMapPin style={{ color: "#1890ff" }} />}
             />
           </Form.Item>
-        )}
 
+          <Form.Item
+            name="meeting_type"
+            label="Meeting Type"
+            rules={[{ required: true, message: 'Please select meeting type' }]}
+          >
+            <Select
+              placeholder="Select meeting type"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+              }}
+              onChange={(value) => {
+                setMeetingType(value);
+                // Reset venue and location when meeting type changes
+                form.setFieldsValue({
+                  venue: undefined,
+                  location: undefined
+                });
+                setVenueType(null);
+              }}
+            >
+              <Option value="online">Online Meeting</Option>
+              <Option value="offline">Offline Meeting</Option>
+            </Select>
+          </Form.Item>
         </div>
+
+        {meetingType && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {meetingType === 'offline' && (
+              <>
+                <Form.Item
+                  name="venue"
+                  label="Meeting Venue"
+                  rules={[{ required: true, message: 'Please select meeting venue' }]}
+                >
+                  <Select
+                    placeholder="Select venue"
+                    size="large"
+                    style={{
+                      width: "100%",
+                      borderRadius: "10px",
+                      height: "48px",
+                    }}
+                    onChange={handleVenueChange}
+                  >
+                    <Option value="client_location">Client Location</Option>
+                    <Option value="office">In-Office</Option>
+                  </Select>
+                </Form.Item>
+
+                {venueType && (
+                  <Form.Item
+                    name="location"
+                    label="Location"
+                    rules={[{ required: true, message: 'Please enter location details' }]}
+                  >
+                    <Input
+                      placeholder="Enter location details"
+                      size="large"
+                      style={{
+                        borderRadius: "10px",
+                        height: "48px",
+                      }}
+                      prefix={<FiMapPin style={{ color: "#1890ff" }} />}
+                    />
+                  </Form.Item>
+                )}
+              </>
+            )}
+
+            {meetingType === 'online' && (
+              <Form.Item
+                name="meeting_link"
+                label="Meeting Link"
+                rules={[{ required: true, message: 'Please enter meeting link' }]}
+                style={{ gridColumn: '1 / -1' }}
+              >
+                <Input
+                  placeholder="Enter meeting link (e.g., Zoom, Google Meet)"
+                  size="large"
+                  style={{
+                    borderRadius: "10px",
+                    height: "48px",
+                  }}
+                  prefix={<FiLink style={{ color: "#1890ff" }} />}
+                />
+              </Form.Item>
+            )}
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',marginTop:"20px"  }}>
           <Form.Item
@@ -438,12 +510,13 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
               Participants
             </span>
           }
-          rules={[{ required: true, message: 'Please select assignee' }]}
+          rules={[{ required: true, message: 'Please select participants' }]}
         >
           <Select
+            mode="multiple"
             showSearch
             size="large"
-            placeholder="Select team member"
+            placeholder="Select team members"
             optionFilterProp="children"
             style={{
               width: "100%",
@@ -471,7 +544,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
               return (
                 <Option
                   key={user.id}
-                  value={user.username}
+                  value={user.id}
                   username={user.username}
                 >
                   <div style={{
@@ -514,7 +587,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime }) =
                   </div>
                 </Option>
               );
-            }).filter(Boolean)}
+            })}
           </Select>
         </Form.Item>
         </div>

@@ -800,7 +800,7 @@ console.log("asdasdsa",leadData);
               >
                 <div style={{ position: 'relative' }}>
                   <Select
-                    placeholder={leadData?.company ? `Add "${leadData.company}" as new company` : "Select company"}
+                    placeholder="Select company"
                     onChange={handleCompanyChange}
                     style={selectStyle}
                     allowClear
@@ -808,39 +808,35 @@ console.log("asdasdsa",leadData);
                     dropdownRender={(menu) => (
                       <div onClick={(e) => e.stopPropagation()}>
                         {menu}
-                        {leadData?.company && !companyAccountsResponse?.data?.some(c => c.company_name?.toLowerCase() === leadData.company?.toLowerCase()) && (
-                          <>
-                            <Divider style={{ margin: '8px 0' }} />
-                            <div
-                              style={{
-                                padding: '8px 12px',
-                                display: 'flex',
-                                justifyContent: 'center'
-                              }}
-                            >
-                              <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAddCompanyClick}
-                                style={{
-                                  width: '100%',
-                                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                  border: 'none',
-                                  height: '40px',
-                                  borderRadius: '8px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '8px',
-                                  boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                                  fontWeight: '500',
-                                }}
-                              >
-                                {`Add "${leadData.company}" as New Company`}
-                              </Button>
-                            </div>
-                          </>
-                        )}
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div
+                          style={{
+                            padding: '8px 12px',
+                            display: 'flex',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAddCompanyClick}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                              border: 'none',
+                              height: '40px',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Add Company
+                          </Button>
+                        </div>
                       </div>
                     )}
                   >

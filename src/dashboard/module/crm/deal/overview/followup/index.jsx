@@ -12,10 +12,13 @@ import CreateCall from './call/CreatefollowupCall';
 import CreateLog from './call/CreatefollowupLog';
 import FollowupTaskList from './task';
 import FollowupMeetingList from './metting';
+import { useParams } from 'react-router-dom';
 const { Title, Text } = Typography;
 
 
 const DealFollowup = ({ deal }) => {
+    const dealId = useParams();
+    const id = dealId.dealId;
     const [activeTab, setActiveTab] = useState('task');
     const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
     const [isMeetingModalVisible, setIsMeetingModalVisible] = useState(false);
@@ -92,7 +95,7 @@ const DealFollowup = ({ deal }) => {
                     <FiCheckSquare /> Tasks
                 </span>
             ),
-            children: <FollowupTaskList dealId={deal?.id} users={users} />
+            children: <FollowupTaskList dealId={id} users={users} />
         },
         {
             key: 'meeting',
@@ -101,7 +104,7 @@ const DealFollowup = ({ deal }) => {
                     <FiUsers /> Meetings
                 </span>
             ),
-            children: <FollowupMeetingList dealId={deal?.id} users={users} />
+            children: <FollowupMeetingList dealId={id} users={users} />
         },
         {
             key: 'call',
@@ -191,14 +194,18 @@ const DealFollowup = ({ deal }) => {
             <CreatefollowupTask
                 open={isTaskModalVisible}
                 onCancel={() => setIsTaskModalVisible(false)}
+                dealId={id}
+
             />
             <CreateMeeting
                 open={isMeetingModalVisible}
                 onCancel={() => setIsMeetingModalVisible(false)}
+                dealId={id}
             />
             <CreateCall
                 open={isCallModalVisible}
                 onCancel={() => setIsCallModalVisible(false)}
+                dealId={id}
             />
             <CreateLog
                 open={isLogModalVisible}

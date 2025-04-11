@@ -12,10 +12,8 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime }) => {
+const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
 
-  const idd = useParams();
-  const id = idd.dealId;
 
  
   const [createFollowupTask, { isLoading: followupTaskResponseLoading }] = useCreateFollowupTaskMutation();
@@ -155,13 +153,12 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
         description: values.description || null,
         reminder: reminderData,
         repeat: repeatData,
-        deal_id: id
+
       };
 
-      console.log("formattedValues", formattedValues);
   
       // Make API call to create task
-      await createFollowupTask({id: id, data: formattedValues}).unwrap();
+      await createFollowupTask({id: dealId, data: formattedValues}).unwrap();
       
       message.success('Task created successfully');
       form.resetFields();
