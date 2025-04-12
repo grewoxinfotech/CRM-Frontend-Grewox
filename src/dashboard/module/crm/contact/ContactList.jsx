@@ -4,6 +4,8 @@ import {
   Button,
   Tag,
   Dropdown,
+  Input,
+  Space,
   Tooltip,
   Typography,
   Modal,
@@ -157,7 +159,33 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
     {
       title: "Name",
       key: "first_name",
-      sorter: (a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search contact name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.first_name.toLowerCase().includes(value.toLowerCase()) ||
+        record.last_name.toLowerCase().includes(value.toLowerCase()),
       render: (_, record) => (
         <Text style={{ fontWeight: 500, cursor: 'pointer', color: '#1890ff' }} onClick={() => handleView(record)}>
           {`${record.first_name} ${record.last_name}`}
@@ -180,13 +208,66 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
       title: "Company",
       dataIndex: "company_display_name",
       key: "company_display_name",
-      sorter: (a, b) => a.company_display_name.localeCompare(b.company_display_name),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search company name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.company_display_name.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
     },
     {
       title: "Contact Owner",
       dataIndex: "contact_owner",
-      key: "contact_owner",
-      sorter: (a, b) => a.contact_owner.localeCompare(b.contact_owner),
+        key: "contact_owner",
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search account owner"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button> 
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>  
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.contact_owner.toLowerCase().includes(value.toLowerCase()),
+
+
       render: (ownerId) => {
         if (ownerId === loggedInUser?.id) {
           return <Text>{loggedInUser?.username}</Text>;

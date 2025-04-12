@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown } from 'antd';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import { useGetAllDepartmentsQuery, useDeleteDepartmentMutation } from './services/departmentApi';
 import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
@@ -116,21 +116,71 @@ const DepartmentList = ({ onEdit, onView, searchText, filters }) => {
             title: 'Department Name',
             dataIndex: 'department_name',
             key: 'department_name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search department name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.department_name.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
                 <span className="text-base">
                     {text || record.name || 'N/A'}
                 </span>
             ),
-            sorter: (a, b) => {
-                const nameA = a.department_name || a.name || '';
-                const nameB = b.department_name || b.name || '';
-                return nameA.localeCompare(nameB);
-            },
+            
         },
         {
             title: 'Branch',
             dataIndex: 'branch',
             key: 'branch',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search branch"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.branch.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (branchId) => {
                 const branch = branchMap[branchId];
                 return (
@@ -139,11 +189,7 @@ const DepartmentList = ({ onEdit, onView, searchText, filters }) => {
                     </span>
                 );
             },
-            sorter: (a, b) => {
-                const branchNameA = branchMap[a.branch]?.branchName || '';
-                const branchNameB = branchMap[b.branch]?.branchName || '';
-                return branchNameA.localeCompare(branchNameB);
-            },
+           
         },
         {
             title: 'Actions',

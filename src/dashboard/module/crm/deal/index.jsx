@@ -31,10 +31,19 @@ const Deal = () => {
     const { data: pipelines = [] } = useGetPipelinesQuery();
     const { data: dealStages = [] } = useGetLeadStagesQuery();
     const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
-  const { data, isLoading, error } = useGetDealsQuery();
+    const { data, isLoading, error } = useGetDealsQuery();
 
+    // Filter deals based on search text
+    const filteredDeals = React.useMemo(() => {
+        if (!data) return [];
+        if (!searchText) return data;
 
-  
+        const searchLower = searchText.toLowerCase();
+        return data.filter(deal => 
+            deal.dealTitle?.toLowerCase().includes(searchLower) ||
+            deal.company_name?.toLowerCase().includes(searchLower)
+        );
+    }, [data, searchText]);
 
     const handleDealClick = (deal) => {
         navigate(`/dashboard/crm/deals/${deal.id}`);
@@ -112,6 +121,7 @@ const Deal = () => {
                         className="search-input"
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
+                        allowClear
                     />
                     <div className="view-buttons">
                         <div className="view-toggle">
@@ -145,6 +155,7 @@ const Deal = () => {
                         onDelete={handleDelete}
                         onView={handleView}
                         onDealClick={handleDealClick}
+                        deals={filteredDeals}
                     />
                 ) : (
                     <DealList
@@ -152,6 +163,8 @@ const Deal = () => {
                         onDelete={handleDelete}
                         onView={handleView}
                         onDealClick={handleDealClick}
+                        deals={filteredDeals}
+                        searchText={searchText}
                     />
                 )}
             </Card>

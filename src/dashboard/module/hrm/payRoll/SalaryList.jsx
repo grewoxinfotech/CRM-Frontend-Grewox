@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -36,6 +36,12 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const [processingSalaryId, setProcessingSalaryId] = useState(null);
   const [processedSalary, setProcessedSalary] = useState(new Set());
 
+  // Define status options
+  const statusOptions = [
+    { text: 'Paid', value: 'paid' },
+    { text: 'Unpaid', value: 'unpaid' },
+  ];
+
   // Create a map of employee IDs to employee names
   const employeeMap = useMemo(() => {
     return employees.reduce((acc, employee) => {
@@ -60,6 +66,8 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       return acc;
     }, {});
   }, [currencies]);
+
+  
 
   const filteredSalary = React.useMemo(() => {
     return salary?.filter((salary) => {
@@ -187,6 +195,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         margin: { left: 20, right: 20 }
       });
 
+
       // Footer
       const pageHeight = doc.internal.pageSize.height;
       doc.setFontSize(8);
@@ -249,10 +258,33 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Employee Name",
       dataIndex: "employeeId",
       key: "employeeId",
-      sorter: (a, b) =>
-        (employeeMap[a.employeeId] || "").localeCompare(
-          employeeMap[b.employeeId] || ""
-        ),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search employee name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.employeeId.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (employeeId) => (
         <Text style={{ color: "#262626" }}>
           {employeeMap[employeeId] || "Unknown Employee"}
@@ -356,7 +388,8 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      sorter: (a, b) => (a?.status || "").localeCompare(b?.status || ""),
+      filters: statusOptions,
+      onFilter: (value, record) => record.status?.toLowerCase() === value.toLowerCase(),
       render: (status) => (
         <Tag
           color={getStatusColor(status)}

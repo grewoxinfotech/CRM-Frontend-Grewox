@@ -1,11 +1,12 @@
 import React from 'react';
 import {
     Table, Empty, Tag, Button, Tooltip,
-    Typography, Space, Spin
+    Typography, Space, Spin, Dropdown, Input    
 } from 'antd';
 import {
     FiTrash2,
-    FiCalendar, FiEye
+    FiCalendar, FiEye,
+    FiMoreVertical
 } from 'react-icons/fi';
 import moment from 'moment';
 
@@ -40,6 +41,7 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             title: 'Signature Preview',
             dataIndex: 'e_signatures',
             key: 'e_signatures',
+            sorter: (a, b) => a.e_signatures.localeCompare(b.e_signatures),
             render: (data, record) => (
                 <div className="signature-preview">
                     <img
@@ -54,13 +56,64 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             title: 'Name',
             dataIndex: 'esignature_name',
             key: 'esignature_name',
-            render: (text) => <Text strong>{text}</Text>,
-            sorter: (a, b) => a.name.localeCompare(b.esignature_name)
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search signature name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                (record.esignature_name?.toLowerCase() || '').includes(value.toLowerCase()),
+            render: (text) => <Text strong>{text || 'N/A'}</Text>,
         },
         {
             title: 'Type',
             dataIndex: 'type',
             key: 'type',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search type"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                (record.type?.toLowerCase() || '').includes(value.toLowerCase()),
             render: (type) => (
                 <Tag color={type === 'draw' ? 'blue' : 'purple'}>
                     {type === 'draw' ? 'Hand Drawn' : 'Uploaded'}
@@ -84,34 +137,40 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
         {
             title: 'Actions',
             key: 'actions',
-            render: (_, record) => (
-                <Space size="small" className="action-buttons">
-                    {/* <Tooltip title="Edit">
+            width: 80,
+            render: (_, record) => {
+                const items = [
+                    {
+                        key: 'view',
+                        icon: <FiEye style={{ fontSize: '14px' }} />,
+                        label: 'View',
+                        onClick: () => onDownload(record),
+                    },
+                    {
+                        key: 'delete',
+                        icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => onDelete(record.id),
+                    },
+                ];
+
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="signature-actions-dropdown"
+                    >
                         <Button
                             type="text"
-                            icon={<FiEdit2 />}
-                            onClick={() => onEdit(record)}
-                            className="action-button edit"
+                            icon={<FiMoreVertical />}
+                            className="action-dropdown-button"
+                            onClick={(e) => e.preventDefault()}
                         />
-                    </Tooltip> */}
-                    <Tooltip title="Download">
-                        <Button
-                            type="text"
-                            icon={<FiEye />}
-                            onClick={() => onDownload(record)}
-                            className="action-button download"
-                        />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            icon={<FiTrash2 />}
-                            onClick={() => onDelete(record.id)}
-                            className="action-button delete"
-                        />
-                    </Tooltip>
-                </Space>
-            )
+                    </Dropdown>
+                );
+            }
         }
     ];
 

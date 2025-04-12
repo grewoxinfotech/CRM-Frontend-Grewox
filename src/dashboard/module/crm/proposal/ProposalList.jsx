@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { Table, Tag, Dropdown, Button, message, Space, Tooltip, Popconfirm } from 'antd';
+import { Table, Tag, Dropdown, Button, message, Space, Tooltip, Popconfirm, Input } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiFileText, FiDollarSign } from 'react-icons/fi';
 import moment from 'moment';
 import dayjs from 'dayjs';
@@ -60,6 +60,33 @@ const ProposalList = ({ proposals, onDelete, onView, loading, onProposalUpdated 
             title: 'Lead Title',
             dataIndex: 'lead_title',
             key: 'lead_title',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search lead title"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.lead_title.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (leadId) => {
                 const leadTitle = leadTitleMap.get(leadId);
                 return (
@@ -75,6 +102,7 @@ const ProposalList = ({ proposals, onDelete, onView, loading, onProposalUpdated 
             title: 'Subtotal',
             dataIndex: 'subtotal',
             key: 'subtotal',
+            sorter: (a, b) => (a?.subtotal || '').localeCompare(b?.subtotal || ''),
             render: (amount) => (
                 <span> ₹ {parseFloat(amount).toFixed(2)}</span>
             )
@@ -83,6 +111,7 @@ const ProposalList = ({ proposals, onDelete, onView, loading, onProposalUpdated 
             title: 'Tax',
             dataIndex: 'tax',
             key: 'tax',
+            sorter: (a, b) => (a?.tax || '').localeCompare(b?.tax || ''),
             render: (amount) => (
                 <span> ₹ {parseFloat(amount).toFixed(2)}</span>
             )
@@ -91,6 +120,7 @@ const ProposalList = ({ proposals, onDelete, onView, loading, onProposalUpdated 
             title: 'Discount',
             dataIndex: 'discount',
             key: 'discount',
+            sorter: (a, b) => (a?.discount || '').localeCompare(b?.discount || ''),
             render: (amount) => (
                 <span> ₹ {parseFloat(amount).toFixed(2)}</span>
             )
@@ -108,7 +138,8 @@ const ProposalList = ({ proposals, onDelete, onView, loading, onProposalUpdated 
         {
             title: 'Valid Till',
             dataIndex: 'valid_till',
-            key: 'valid_till',
+                key: 'valid_till',
+            sorter: (a, b) => (a?.valid_till || '').localeCompare(b?.valid_till || ''),
             render: (date) => dayjs(date).format('DD-MM-YYYY')
         },
         {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Tooltip, Typography, Modal, Spin, Alert, Menu } from 'antd';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Modal, Spin, Alert, Menu, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiUser, FiPhone } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetVendorsQuery, useDeleteVendorMutation } from './services/vendorApi';
@@ -56,6 +56,33 @@ const VendorList = ({ onEdit, onDelete, onView, loading, searchText }) => {
             title: 'Vendor Name',
             dataIndex: 'name',
             key: 'name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search vendor name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.name.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (name) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiUser style={{ color: '#1890ff' }} />
@@ -87,6 +114,7 @@ const VendorList = ({ onEdit, onDelete, onView, loading, searchText }) => {
             dataIndex: 'address',
             key: 'address',
             ellipsis: true,
+            sorter: (a, b) => (a?.address || '').localeCompare(b?.address || ''),
         },
         {
             title: 'City',

@@ -274,7 +274,7 @@ const CompanyInquiry = () => {
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
                             className="search-input"
-                            style={{ width: 300 }}
+                            style={{ width: 350 }}
                         />
                     </div>
                     <div className="action-buttons">

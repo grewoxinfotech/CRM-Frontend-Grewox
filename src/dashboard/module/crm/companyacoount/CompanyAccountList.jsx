@@ -7,6 +7,8 @@ import {
   Tooltip,
   Typography,
   Modal,
+  Input,
+  Space,
   message,
 } from "antd";
 import {
@@ -113,20 +115,72 @@ const CompanyAccountList = ({ onEdit, onDelete, onView, searchText = "", company
       title: "Company Name",
       dataIndex: "company_name",
       key: "company_name",
-      sorter: (a, b) => a.company_name.localeCompare(b.company_name),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search company name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.company_name.toLowerCase().includes(value.toLowerCase()),
       render: (name, record) => (
         <Text 
-          style={{ fontWeight: 500, cursor: 'pointer', color: '#1890ff' }}
-          onClick={() => handleView(record)}
+        style={{ fontWeight: 500, cursor: 'pointer', color: '#1890ff' }}
+        onClick={() => handleView(record)}
         >
           {name}
         </Text>
       ),
+      // sorter: (a, b) => a.company_name.localeCompare(b.company_name),
     },
     {
       title: "Account Owner",
       dataIndex: "account_owner",
       key: "account_owner",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search account owner"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.account_owner.toLowerCase().includes(value.toLowerCase()),
       render: (ownerId) => {
         if (ownerId === loggedInUser?.id) {
           return <Text>{loggedInUser?.username}</Text>;
@@ -138,6 +192,7 @@ const CompanyAccountList = ({ onEdit, onDelete, onView, searchText = "", company
       title: "Phone",
       dataIndex: "phone_number",
       key: "phone_number",
+      sorter: (a, b) => a.phone_number.localeCompare(b.phone_number),
     },
     
     {

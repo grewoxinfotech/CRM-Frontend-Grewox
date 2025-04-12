@@ -73,6 +73,14 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
     return `${currencyIcon} ${amount?.toLocaleString() || 0}`;
   };
 
+  const statuses = [
+    { id: 'in_stock', name: 'In Stock' },
+    { id: 'low_stock', name: 'Low Stock' },
+    { id: 'out_of_stock', name: 'Out of Stock' },
+  ];
+
+    const categoriess = categories;
+  
   // Filter products based on search text and category
   const filteredProducts = React.useMemo(() => {
     if (!products) return [];
@@ -156,7 +164,33 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       dataIndex: "name",
       key: "name",
       width: '25%',
-      sorter: (a, b) => (a?.name || "").localeCompare(b?.name || ""),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search product name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.name.toLowerCase().includes(value.toLowerCase()) ||
+        record.category?.toLowerCase().includes(value.toLowerCase()), 
       render: (name, record) => (
         <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
           {record.image && (
@@ -186,7 +220,11 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       title: "Stock Info",
       key: "stock",
       width: '20%',
-      sorter: (a, b) => a.stock_quantity - b.stock_quantity,  
+      filters: statuses.map(status => ({
+        text: status.name,
+        value: status.id
+      })),
+      onFilter: (value, record) => record.stock_status === value,
       render: (_, record) => (
         <div>
           <div style={{ marginBottom: "4px" }}>
@@ -254,11 +292,11 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       dataIndex: "category",
       key: "category",
       width: '15%',
-      sorter: (a, b) => {
-        const categoryA = categories.find(c => c.id === a.category)?.name || "";
-        const categoryB = categories.find(c => c.id === b.category)?.name || "";
-        return categoryA.localeCompare(categoryB);
-      },
+      filters: categoriess.map(categorys => ({
+        text: categorys.name,
+        value: categorys.id
+      })),
+      onFilter: (value, record) => record.category === value,
       render: (categoryId) => {
         const category = categories.find(c => c.id === categoryId);
         return (

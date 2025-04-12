@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Table, Button, Tooltip, Empty, Typography, Dropdown } from 'antd';
+import { Table, Button, Tooltip, Empty, Typography, Dropdown, Input, Space } from 'antd';
 import { FiEdit2, FiEye, FiTrash2, FiMoreVertical } from 'react-icons/fi';
 
 const { Text } = Typography;
@@ -49,7 +49,32 @@ const CompanyInquiryList = ({
             title: "Full Name",
             dataIndex: "fullname",
             key: "fullname",
-            sorter: (a, b) => (a?.fullname || '').localeCompare(b?.fullname || ''),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search full name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])} 
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>   
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.fullname.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
                 <Text strong style={{ cursor: 'pointer' }} onClick={() => onView?.(record)}>
                     {text || '-'}
@@ -61,7 +86,32 @@ const CompanyInquiryList = ({
             dataIndex: "business_category",
             key: "business_category",
             width: 180,
-            sorter: (a, b) => (a?.business_category || '').localeCompare(b?.business_category || ''),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search business category"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.business_category.toLowerCase().includes(value.toLowerCase()),
             render: (text) => text || '-',
         },
         {
@@ -69,6 +119,7 @@ const CompanyInquiryList = ({
             dataIndex: "phone",
             key: "phone",
             width: 150,
+            sorter: (a, b) => (a?.phone || '').localeCompare(b?.phone || ''),
             render: (text) => text || '-',
         },
         {
@@ -77,6 +128,7 @@ const CompanyInquiryList = ({
             key: "description",
             ellipsis: true,
             width: 300,
+            sorter: (a, b) => (a?.description || '').localeCompare(b?.description || ''),
             render: (text) => text || '-',
         },
         {
@@ -84,6 +136,7 @@ const CompanyInquiryList = ({
             dataIndex: "created_by",
             key: "created_by",
             width: 150,
+            sorter: (a, b) => (a?.created_by || '').localeCompare(b?.created_by || ''),
             render: (text) => text || '-',
         },
         {

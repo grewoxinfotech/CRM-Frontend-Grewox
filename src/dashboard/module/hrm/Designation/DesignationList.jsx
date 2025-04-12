@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Space, Button, Tooltip, Tag, message, Modal, Select, Dropdown } from 'antd';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Select, Dropdown, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
 import { 
     useGetAllDesignationsQuery, 
@@ -127,13 +127,68 @@ const DesignationList = ({ onEdit, onView, searchText, filters }) => {
             title: 'Designation Name',
             dataIndex: 'designation_name',
             key: 'designation_name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search designation name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                (record.designation_name?.toLowerCase() || '').includes(value.toLowerCase()),
             render: (text) => <span className="text-base">{text}</span>,
-            sorter: (a, b) => a.designation_name.localeCompare(b.designation_name),
+          
         },
         {
             title: 'Branch',
             dataIndex: 'branch',
             key: 'branch',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search branch"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) => {
+                const branch = branchMap[record.branch];
+                const branchName = branch?.branchName || '';
+                return branchName.toLowerCase().includes(value.toLowerCase());
+              },
             render: (branchId) => {
                 const branch = branchMap[branchId];
                 return (
@@ -142,17 +197,13 @@ const DesignationList = ({ onEdit, onView, searchText, filters }) => {
                     </span>
                 );
             },
-            sorter: (a, b) => {
-                const branchNameA = branchMap[a.branch]?.branchName || '';
-                const branchNameB = branchMap[b.branch]?.branchName || '';
-                return branchNameA.localeCompare(branchNameB);
-            },
+           
         },
         {
             title: 'Created At',
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (date) => dayjs(date).format('YYYY-MM-DD'),
+            render: (date) => dayjs(date).format('DD-MM-YYYY'),
             sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
         },
         {

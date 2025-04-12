@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Space, Dropdown, Modal, Tabs, Row, Col, Typography, Tooltip, message } from "antd";
+import { Table, Button, Tag, Space, Dropdown, Modal, Tabs, Row, Col, Typography, Tooltip, message, Input } from "antd";
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye, FiX, FiShield, FiCheck, FiPlus, FiEdit } from "react-icons/fi";
 import EditRole from "./EditRole";
 
@@ -361,6 +361,33 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             dataIndex: "role_name",
             key: "role_name",
             width: "20%",
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search role name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.role_name.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => (
                 <div style={{
                     fontWeight: 500,
@@ -376,6 +403,7 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
             dataIndex: "permissions",
             key: "permissions",
             width: "65%",
+            sorter: (a, b) => (a?.permissions || "").localeCompare(b?.permissions || ""),
             render: (permissions, record) => renderPermissionTags(permissions, record),
         },
         {

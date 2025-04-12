@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Input } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -11,7 +11,7 @@ import {
   FiLink,
   FiInfo,
   FiCheck,
-  FiArrowRight
+  FiBarChart2
 } from "react-icons/fi";
 import { useDeleteLeadMutation } from "./services/LeadApi";
 import { useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
@@ -22,6 +22,7 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
+const { Search } = Input;
 
 const adjustColor = (color, amount) => {
   return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
@@ -31,7 +32,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
-  const [filterStatus, setFilterStatus] = React.useState('all');
+
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
@@ -43,19 +44,6 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   const sources = sourcesData?.data || [];
   const statuses = statusesData?.data || [];
 
-  const filteredLeads = React.useMemo(() => {
-    if (!leads?.data) return [];
-
-    switch (filterStatus) {
-      case 'active':
-        return leads.data.filter(lead => !lead.is_converted);
-      case 'converted':
-        return leads.data.filter(lead => lead.is_converted);
-      default:
-        return leads.data;
-    }
-  }, [leads?.data, filterStatus]);
-
   const handleDelete = async (record) => {
     try {
       await deleteLead(record.id).unwrap();
@@ -65,65 +53,6 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
         "Failed to delete lead: " + (error.data?.message || "Unknown error")
       );
     }
-  };
-
-
-  // Get stage data
-  const getStageData = (stageId) => {
-    const stage = stages.find(s => s.id === stageId) || {};
-    return {
-      name: stage.stageName || "Unknown",
-      color: stage.color || "#1890ff"
-    };
-  };
-
-  // Get source data
-  const getSourceData = (sourceId) => {
-    const source = sources.find(s => s.id === sourceId) || {};
-    return {
-      name: source.name || "Unknown",
-      color: source.color || "#1890ff"
-    };
-  };
-
-  // Get interest level style
-  const getInterestLevel = (level) => {
-    const levels = {
-      "high": {
-        color: "#52c41a",
-        bg: "rgba(82, 196, 26, 0.1)",
-        border: "#b7eb8f",
-        text: "High Interest",
-        icon: <FiZap style={{ marginRight: '4px' }} />
-      },
-      "medium": {
-        color: "#faad14",
-        bg: "rgba(250, 173, 20, 0.1)",
-        border: "#ffd591",
-        text: "Medium Interest",
-        icon: <FiTarget style={{ marginRight: '4px' }} />
-      },
-      "low": {
-        color: "#ff4d4f",
-        bg: "rgba(255, 77, 79, 0.1)",
-        border: "#ffa39e",
-        text: "Low Interest",
-        icon: <FiTrendingUp style={{ marginRight: '4px' }} />
-      }
-    };
-    return levels[level] || levels.medium;
-  };
-
-  // Format currency
-  const formatCurrency = (value, currencyId) => {
-    const currencyDetails = currencies?.find(c => c.id === currencyId || c.currencyCode === currencyId);
-    if (!currencyDetails) return `${value}`;
-
-    return new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
   };
 
   const getDropdownItems = (record) => ({
@@ -169,6 +98,33 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
       title: "Lead Title",
       dataIndex: "leadTitle",
       key: "leadTitle",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search lead title"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.leadTitle.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Avatar style={{
@@ -194,103 +150,117 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
           </div>
         </div>
       ),
-      width: '30%',
     },
     {
       title: "Source",
       dataIndex: "source",
       key: "source",
+      filters: sources.map(source => ({
+        text: source.name,
+        value: source.id
+      })),
+      onFilter: (value, record) => record.source === value,
       render: (sourceId) => {
-        const source = getSourceData(sourceId);
-        const className = `source-${source.name.toLowerCase().replace(/\s+/g, '')}`;
+        const source = sources.find(s => s.id === sourceId) || {};
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FiLink size={14} className={className} />
-            <Text className={className} style={{ fontSize: '13px', fontWeight: '500' }}>
-              {source.name}
+            <FiLink style={{ color: source.color || '#1890ff' }} />
+            <Text style={{ color: source.color || '#1890ff', fontWeight: '500' }}>
+              {source.name || 'Unknown'}
             </Text>
           </div>
         );
-      },
+      }
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      filters: statuses.map(status => ({
+        text: status.name,
+        value: status.id
+      })),
+      onFilter: (value, record) => record.status === value,
       render: (statusId) => {
         const status = statuses.find(s => s.id === statusId) || {};
-        const statusName = status.name || "Unknown";
-        const className = `status-${statusName.toLowerCase().replace(/\s+/g, '')}`;
-
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FiInfo size={14} className={className} />
-            <Text className={className} style={{ fontSize: '13px', fontWeight: '500' }}>
-              {statusName}
+            <FiInfo style={{ color: status.color || '#1890ff' }} />
+            <Text style={{ color: status.color || '#1890ff', fontWeight: '500' }}>
+              {status.name || 'Unknown'}
             </Text>
           </div>
         );
-      },
-    },
-    {
-      title: "Lead Stage",
-      dataIndex: "leadStage",
-      key: "leadStage",
-      render: (stageId) => {
-        const stage = getStageData(stageId);
-        return (
-          <Tag
-            style={{
-              textTransform: 'capitalize',
-              padding: '4px 12px',
-              borderRadius: '4px',
-              fontSize: '13px',
-              fontWeight: '500',
-              color: 'white',
-              background: `linear-gradient(135deg, ${stage.color} 0%, ${adjustColor(stage.color, -20)} 100%)`
-            }}
-          >
-            {stage.name}
-          </Tag>
-        );
-      },
+      }
     },
     {
       title: "Interest Level",
       dataIndex: "interest_level",
       key: "interest_level",
+      filters: [
+        { text: 'High Interest', value: 'high' },
+        { text: 'Medium Interest', value: 'medium' },
+        { text: 'Low Interest', value: 'low' }
+      ],
+      onFilter: (value, record) => record.interest_level === value,
       render: (level) => {
-        const interestStyle = getInterestLevel(level);
+        const interestStyle = {
+          high: {
+            color: '#52c41a',
+            bg: 'rgba(82, 196, 26, 0.1)',
+            icon: <FiZap style={{ marginRight: '4px' }} />,
+            text: 'High Interest'
+          },
+          medium: {
+            color: '#faad14',
+            bg: 'rgba(250, 173, 20, 0.1)',
+            icon: <FiTarget style={{ marginRight: '4px' }} />,
+            text: 'Medium Interest'
+          },
+          low: {
+            color: '#ff4d4f',
+            bg: 'rgba(255, 77, 79, 0.1)',
+            icon: <FiTrendingUp style={{ marginRight: '4px' }} />,
+            text: 'Low Interest'
+          }
+        }[level] || {
+          color: '#1890ff',
+          bg: 'rgba(24, 144, 255, 0.1)',
+          icon: <FiTarget style={{ marginRight: '4px' }} />,
+          text: 'Unknown'
+        };
+
         return (
           <Tag style={{
             color: interestStyle.color,
             backgroundColor: interestStyle.bg,
-            border: `1px solid ${interestStyle.border}`,
+            border: 'none',
             borderRadius: '4px',
             padding: '4px 12px',
             display: 'flex',
             alignItems: 'center',
             fontSize: '13px',
-            fontWeight: '500',
-            width: 'fit-content'
+            fontWeight: '500'
           }}>
             {interestStyle.icon}
             {interestStyle.text}
           </Tag>
         );
-      },
+      }
     },
     {
       title: "Lead Value",
+      dataIndex: "leadValue",
       key: "leadValue",
-      render: (record) => (
-        <Text strong style={{
-          fontSize: '14px',
-          color: '#52c41a'
-        }}>
-          {formatCurrency(record.leadValue || 0, record.currency)}
-        </Text>
-      ),
+      sorter: (a, b) => (a.leadValue || 0) - (b.leadValue || 0),
+      render: (value, record) => {
+        const currency = currencies.find(c => c.id === record.currency);
+        return (
+          <Text strong style={{ fontSize: '14px', color: '#52c41a' }}>
+            {currency?.currencyIcon || ''} {(value || 0).toLocaleString()}
+          </Text>
+        );
+      }
     },
     {
       title: "Actions",
@@ -318,47 +288,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
 
   return (
     <>
-      <div style={{
-        marginBottom: '8px',
-        display: 'flex',
-        gap: '8px',
-        alignItems: 'center',
-        padding: '0 12px'
-      }}>
-        <Text strong style={{ fontSize: '13px', color: '#374151' }}>View:</Text>
-        <div style={{
-          display: 'flex',
-          gap: '6px'
-        }}>
-          {[
-            { id: 'all', name: 'All Leads', count: leads?.data?.length || 0 },
-            { id: 'active', name: 'Active', count: leads?.data?.filter(lead => !lead.is_converted).length || 0 },
-            { id: 'converted', name: 'Converted', count: leads?.data?.filter(lead => lead.is_converted).length || 0 }
-          ].map(filter => (
-            <Button
-              key={filter.id}
-              type={filterStatus === filter.id ? "primary" : "default"}
-              onClick={() => setFilterStatus(filter.id)}
-              style={{
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 10px',
-                height: '28px',
-                fontSize: '12px'
-              }}
-            >
-              <FiTarget style={{ fontSize: '12px' }} />
-              {filter.name} ({filter.count})
-            </Button>
-          ))}
-        </div>
-      </div>
-
       <Table
         columns={columns}
-        dataSource={filteredLeads}
+        dataSource={leads?.data || []}
         rowKey="id"
         pagination={{
           pageSize: 10,
@@ -409,6 +341,60 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
             }
           }
 
+          .ant-table-filter-trigger {
+            color: #8c8c8c;
+            &:hover {
+              color: #1890ff;
+            }
+            &.active {
+              color: #1890ff;
+            }
+          }
+
+          .ant-table-filter-dropdown {
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+            .ant-dropdown-menu {
+              max-height: 300px;
+              overflow-y: auto;
+              padding: 4px;
+              border-radius: 6px;
+            }
+
+            .ant-input {
+              border-radius: 4px;
+              &:hover, &:focus {
+                border-color: #1890ff;
+              }
+            }
+
+            .ant-btn {
+              border-radius: 4px;
+              &:not(:last-child) {
+                margin-right: 8px;
+              }
+            }
+
+            .ant-dropdown-menu-item {
+              padding: 8px 12px;
+              margin: 2px 0;
+              border-radius: 4px;
+              font-size: 13px;
+
+              &:hover {
+                background: rgba(24, 144, 255, 0.1);
+              }
+
+              &.ant-dropdown-menu-item-selected {
+                color: #1890ff;
+                font-weight: 500;
+                background: rgba(24, 144, 255, 0.1);
+              }
+            }
+          }
+
           .ant-table-pagination {
             margin: 16px !important;
 
@@ -418,39 +404,6 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
               
               a {
                 color: white;
-              }
-            }
-          }
-        }
-
-        .ant-dropdown {
-          .ant-dropdown-menu {
-            padding: 4px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
-            
-            .ant-dropdown-menu-item {
-              padding: 8px 12px !important;
-              border-radius: 6px !important;
-              margin: 2px 0 !important;
-              transition: all 0.3s ease !important;
-              
-              &:hover {
-                background: rgba(24, 144, 255, 0.04) !important;
-
-                &[data-menu-id*="view"] {
-                  background: rgba(24, 144, 255, 0.08) !important;
-                }
-
-                &[data-menu-id*="edit"] {
-                  background: rgba(82, 196, 26, 0.08) !important;
-                }
-              }
-              
-              &-danger {
-                &:hover {
-                  background: rgba(255, 77, 79, 0.08) !important;
-                }
               }
             }
           }
@@ -472,30 +425,10 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
             background: rgba(24, 144, 255, 0.1);
           }
         }
-
-        // Status colors
-        .status-review { color: #1890ff !important; }
-        .status-completed { color: #52c41a !important; }
-        .status-rejected { color: #ff4d4f !important; }
-        .status-pending { color: #faad14 !important; }
-        .status-unknown { color: #8c8c8c !important; }
-
-        // Source colors
-        .source-social { color: #1890ff !important; }
-        .source-partner { color: #52c41a !important; }
-        .source-referral { color: #722ed1 !important; }
-        .source-website { color: #13c2c2 !important; }
-        .source-event { color: #fa8c16 !important; }
-
-        // Lead stage colors
-        .stage-new { background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important; }
-        .stage-qualified { background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%) !important; }
-        .stage-negotiation { background: linear-gradient(135deg, #722ed1 0%, #531dab 100%) !important; }
-        .stage-won { background: linear-gradient(135deg, #13c2c2 0%, #08979c 100%) !important; }
-        .stage-active { background: linear-gradient(135deg, #fa8c16 0%, #d46b08 100%) !important; }
       `}</style>
     </>
   );
 };
 
 export default LeadList;
+

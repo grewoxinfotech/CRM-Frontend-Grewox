@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Space, Button, Tag, message, Modal, Dropdown } from 'antd';
+import { Table, Space, Button, Tag, message, Modal, Dropdown, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
 import { useGetMeetingsQuery, useUpdateMeetingMutation, useDeleteMeetingMutation } from './services/meetingApi';
 import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
@@ -28,6 +28,12 @@ const MeetingList = ({ searchText }) => {
         }
         return map;
     }, [departmentsData]);
+
+    const statuses = [
+        { id: 'scheduled', name: 'Scheduled' },
+        { id: 'completed', name: 'Completed' },
+        { id: 'cancelled', name: 'Cancelled' },
+    ];
 
     // Filter meetings based on search text
     const filteredMeetings = useMemo(() => {
@@ -113,23 +119,71 @@ const MeetingList = ({ searchText }) => {
         {
             title: 'Title',
             dataIndex: 'title',
-            key: 'title',
-            sorter: (a, b) => a.title.localeCompare(b.title),
+            key: 'title',filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search meeting title"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.title.toLowerCase().includes(value.toLowerCase()) ||
+                record.department?.toLowerCase().includes(value.toLowerCase()), 
         },
         {
             title: 'Department',
             dataIndex: 'department',
             key: 'department',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search department"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.department.toLowerCase().includes(value.toLowerCase()) ||
+                record.title?.toLowerCase().includes(value.toLowerCase()),  
             render: (departmentId) => (
                 <span style={{ color: '#4b5563' }}>
                     {departmentMap[departmentId] || 'N/A'}
                 </span>
             ),
-            sorter: (a, b) => {
-                const deptA = departmentMap[a.department] || '';
-                const deptB = departmentMap[b.department] || '';
-                return deptA.localeCompare(deptB);
-            },
+           
         },
         {
             title: 'Date',
@@ -154,7 +208,11 @@ const MeetingList = ({ searchText }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            sorter: (a, b) => a.status.localeCompare(b.status),
+            filters: statuses.map(status => ({
+                text: status.name,
+                value: status.id
+              })),
+              onFilter: (value, record) => record.status === value,
             render: (status) => (
                 <Tag color={
                     status === 'scheduled' ? 'blue' :

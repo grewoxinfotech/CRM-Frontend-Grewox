@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Table, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip
+    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip, Space
 } from 'antd';
 import {
     FiSearch, FiChevronDown,
@@ -134,20 +134,73 @@ const Countries = () => {
             title: 'Country Name',
             dataIndex: 'countryName',
             key: 'countryName',
-            sorter: (a, b) => a.countryName.localeCompare(b.countryName),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search country name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.countryName.toLowerCase().includes(value.toLowerCase()) ||
+                record.countryCode?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <Text strong>{text}</Text>
         },
         {
             title: 'Code',
             dataIndex: 'countryCode',
             key: 'countryCode',
-            sorter: (a, b) => a.countryCode.localeCompare(b.countryCode),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search country code"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.countryCode.toLowerCase().includes(value.toLowerCase()),
+         
             render: (text) => <Tag color="blue">{text}</Tag>
         },
         {
             title: 'Phone Code',
             dataIndex: 'phoneCode',
             key: 'phoneCode',
+            sorter: (a, b) => a.phoneCode.localeCompare(b.phoneCode),
             render: (text) => <Text className="phone-code">{text}</Text>
         },
         {

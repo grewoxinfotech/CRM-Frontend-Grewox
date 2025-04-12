@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Tag, Dropdown, Menu, Avatar } from 'antd';
+import { Table, Button, Tag, Dropdown, Menu, Avatar, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiShield, FiUser, FiBriefcase, FiUsers, FiEye } from 'react-icons/fi';
 import moment from 'moment';
 
@@ -70,6 +70,7 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
             dataIndex: 'profilePic',
             key: 'profilePic',
             width: 80,
+            sorter: (a, b) => (a.profilePic || '').localeCompare(b.profilePic || ''),
             render: (profilePic, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Avatar
@@ -92,6 +93,33 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
             title: 'Username',
             dataIndex: 'username',
             key: 'username',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search username"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.username.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),   
             render: (text) => (
                 <div style={{
                     fontWeight: 500,
@@ -101,13 +129,13 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
                     {text}
                 </div>
             ),
-            sorter: (a, b) => (a.username || '').localeCompare(b.username || ''),
             width: '200px'
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            sorter: (a, b) => (a.email || '').localeCompare(b.email || ''),
             render: (text) => (
                 <span style={{ color: '#595959', fontSize: '14px' }}>
                     {text || 'N/A'}
@@ -119,6 +147,33 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
             title: 'Role',
             dataIndex: 'role_name',
             key: 'role_name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search role"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.role_name.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             width: '20%',
             render: (role) => {
                 const roleStyle = getRoleColor(role);
@@ -174,7 +229,6 @@ const SubclientList = ({ subclients, loading, onEdit, onDelete, onView }) => {
                     </div>
                 );
             },
-            sorter: (a, b) => (a.role_name || '').localeCompare(b.role_name || ''),
         },
         {
             title: 'Created At',

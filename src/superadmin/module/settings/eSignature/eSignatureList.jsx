@@ -1,7 +1,7 @@
 import React from 'react';
 import {
     Table, Empty, Tag, Button, Tooltip,
-    Typography, Space, Spin
+    Typography, Space, Spin, Input
 } from 'antd';
 import {
     FiTrash2,
@@ -40,6 +40,7 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             title: 'Signature Preview',
             dataIndex: 'e_signatures',
             key: 'e_signatures',
+            sorter: (a, b) => a.e_signatures.localeCompare(b.e_signatures),
             render: (data, record) => (
                 <div className="signature-preview">
                     <img
@@ -54,13 +55,40 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             title: 'Name',
             dataIndex: 'esignature_name',
             key: 'esignature_name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search signature name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.esignature_name.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <Text strong>{text}</Text>,
-            sorter: (a, b) => a.name.localeCompare(b.esignature_name)
+            
         },
         {
             title: 'Type',
             dataIndex: 'type',
             key: 'type',
+            sorter: (a, b) => a.type.localeCompare(b.type),
             render: (type) => (
                 <Tag color={type === 'draw' ? 'blue' : 'purple'}>
                     {type === 'draw' ? 'Hand Drawn' : 'Uploaded'}

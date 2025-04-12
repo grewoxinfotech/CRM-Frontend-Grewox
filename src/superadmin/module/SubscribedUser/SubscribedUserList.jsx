@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Table, Button, Tag, Dropdown, message, Switch, Popconfirm } from 'antd';
+import { Table, Button, Tag, message, Switch, Popconfirm, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import { useGetAllSubscribedUsersQuery } from './services/SubscribedUserApi';
 import moment from 'moment'; // Import moment for date formatting
@@ -11,6 +11,13 @@ const SubscribedUserList = ({ data, loading }) => {
     const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
     const { data: plansData } = useGetAllPlansQuery(filters);
     const [removePlan] = useRemovePlanMutation();
+
+    // Define payment status options
+    const paymentStatuses = [
+        { text: 'Paid', value: 'paid' },
+        { text: 'Unpaid', value: 'unpaid' },
+        { text: 'Pending', value: 'pending' }
+    ];
 
     // Use the passed data instead of making a new query
     const users = React.useMemo(() => {
@@ -46,23 +53,67 @@ const SubscribedUserList = ({ data, loading }) => {
             title: 'Plan Name',
             dataIndex: 'plan_id',
             key: 'plan_id',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search plan name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.plan_id.toLowerCase().includes(value.toLowerCase()),
             render: (planId) => getPlanName(planId),
-            sorter: (a, b) => {
-                const planNameA = getPlanName(a.plan_id) || '';
-                const planNameB = getPlanName(b.plan_id) || '';
-                return planNameA.localeCompare(planNameB);
-            }
+            
         },
         {
             title: 'Client Name',
             dataIndex: 'client_id', // or 'company_id' depending on your API response
             key: 'client_id',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search client name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.client_id.toLowerCase().includes(value.toLowerCase()),
             render: (clientId) => getCompanyName(clientId),
-            sorter: (a, b) => {
-                const companyNameA = getCompanyName(a.client_id) || '';
-                const companyNameB = getCompanyName(b.client_id) || '';
-                return companyNameA.localeCompare(companyNameB);
-            }
+           
         },
         {
             title: 'Total Client Count',
@@ -89,6 +140,9 @@ const SubscribedUserList = ({ data, loading }) => {
             title: 'Payment Status',
             dataIndex: 'payment_status',
             key: 'payment_status',
+            filters: paymentStatuses,
+            onFilter: (value, record) => 
+                (record.payment_status?.toLowerCase() || '') === value.toLowerCase(),
             render: (status) => {
                 let color = 'blue';
                 switch (status?.toLowerCase()) {

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Table, Button, Tag, Dropdown, Menu, Avatar, message } from 'antd';
+import { Table, Button, Tag, Dropdown, Menu, Avatar, message, Input, Space } from 'antd';
 import {
     FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiEye, FiShield, FiBriefcase, FiUsers, FiLogIn,
     FiGitBranch, FiGrid, FiAward, FiMapPin, FiLayers, FiCpu
@@ -193,6 +193,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             title: 'Profile',
             dataIndex: 'profilePic',
             key: 'profilePic',
+            sorter: (a, b) => (a.profilePic || '').localeCompare(b.profilePic || ''),
             render: (profilePic, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                     <Avatar
@@ -215,6 +216,33 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.name.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => (
                 <div style={{
                     fontWeight: 500,
@@ -224,12 +252,38 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
                     {text}
                 </div>
             ),
-            sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
         },
         {
             title: 'Role',
             dataIndex: 'role_id',
             key: 'role_id',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search role"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.roleName.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (role_id) => {
                 const roleName = getRoleName(role_id);
                 const roleStyle = getRoleColor(roleName);
@@ -262,16 +316,39 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
                     </div>
                 );
             },
-            sorter: (a, b) => {
-                const roleNameA = getRoleName(a.role_id);
-                const roleNameB = getRoleName(b.role_id);
-                return roleNameA.localeCompare(roleNameB);
-            },
+           
         },
         {
             title: 'Branch',
             dataIndex: 'branch',
             key: 'branch',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search branch"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.branchName.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (branchId) => {
                 const branchName = getBranchName(branchId);
                 const style = getItemStyle('branch');
@@ -302,6 +379,33 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             title: 'Department',
             dataIndex: 'department',
             key: 'department',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search department"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.departmentName.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (departmentId) => {
                 const departmentName = getDepartmentName(departmentId);
                 const style = getItemStyle('department');
@@ -332,6 +436,33 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             title: 'Designation',
             dataIndex: 'designation',
             key: 'designation',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search designation"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.designationName.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (designationId) => {
                 const designationName = getDesignationName(designationId);
                 const style = getItemStyle('designation');

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown } from 'antd';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
 import { useGetAllHolidaysQuery, useDeleteHolidayMutation } from './services/holidayApi';
 import dayjs from 'dayjs';
@@ -8,6 +8,12 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
     // RTK Query hooks
     const { data: holidaysData = [], isLoading } = useGetAllHolidaysQuery();
     const [deleteHoliday] = useDeleteHolidayMutation();
+
+    // Define leave types
+    const leaveTypes = [
+        { text: 'Paid', value: 'paid' },
+        { text: 'Unpaid', value: 'unpaid' }
+    ];
 
     // Transform holidays data
     const holidays = useMemo(() => {
@@ -66,26 +72,52 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
             title: 'Holiday Name',
             dataIndex: 'holiday_name',
             key: 'holiday_name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search holiday name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                (record.holiday_name?.toLowerCase() || '').includes(value.toLowerCase()),
             render: (text) => <span className="text-base">{text || 'N/A'}</span>,
-            sorter: (a, b) => (a.holiday_name || '').localeCompare(b.holiday_name || ''),
         },
         {
-            title: 'Holiday Type',
+            title: 'Leave Type',
             dataIndex: 'leave_type',
             key: 'leave_type',
+            filters: leaveTypes,
+            onFilter: (value, record) => record.leave_type === value,
             render: (type) => (
                 <Tag color={type === 'paid' ? 'green' : 'blue'}>
                     {type || 'N/A'}
                 </Tag>
             ),
-            sorter: (a, b) => (a.leave_type || '').localeCompare(b.leave_type || ''),
         },
         {
             title: 'Start Date',
             dataIndex: 'start_date',
             key: 'start_date',
             render: (date) => (
-                <span>{dayjs(date).isValid() ? dayjs(date).format('DD MMM YYYY') : 'N/A'}</span>
+                <span>{dayjs(date).isValid() ? dayjs(date).format('DD-MM-YYYY') : 'N/A'}</span>
             ),
             sorter: (a, b) => dayjs(a.start_date).unix() - dayjs(b.start_date).unix(),
         },
@@ -94,7 +126,7 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
             dataIndex: 'end_date',
             key: 'end_date',
             render: (date) => (
-                <span>{dayjs(date).isValid() ? dayjs(date).format('DD MMM YYYY') : 'N/A'}</span>
+                <span>{dayjs(date).isValid() ? dayjs(date).format('DD-MM-YYYY') : 'N/A'}</span>
             ),
             sorter: (a, b) => dayjs(a.end_date).unix() - dayjs(b.end_date).unix(),
         },
@@ -107,7 +139,8 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
                 const days = end.diff(start, 'day') + 1; // Adding 1 to include both start and end dates
                 return <span>{days} day{days > 1 ? 's' : ''}</span>;
             },
-        },
+            sorter: (a, b) => a.duration - b.duration,
+                },
         {
             title: 'Actions',
             key: 'actions',

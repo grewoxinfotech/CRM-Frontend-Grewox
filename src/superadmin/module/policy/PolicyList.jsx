@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Space, Button, Tag, Tooltip, Modal, message, Dropdown } from "antd";
+import { Table, Space, Button, Tag, Tooltip, Modal, message, Dropdown, Input } from "antd";
 import { FiEye, FiEdit2, FiTrash2, FiMoreVertical } from "react-icons/fi";
 import moment from "moment";
 
@@ -62,13 +62,39 @@ const PolicyList = ({
       title: "Title",
       dataIndex: "title",
       key: "title",
-      sorter: (a, b) => (a.title || "").localeCompare(b.title || ""),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search policy title"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.title.toLowerCase().includes(value.toLowerCase()),
       render: (text) => text || "N/A",
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
+      sorter: (a, b) => (a.description || "").localeCompare(b.description || ""),
       ellipsis: true,
       render: (text) => text || "N/A",
     },

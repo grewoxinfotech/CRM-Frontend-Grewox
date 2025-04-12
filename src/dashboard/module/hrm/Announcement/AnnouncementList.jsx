@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message } from 'antd';
+import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
 import moment from 'moment';
 import { useGetAllBranchesQuery } from '../Branch/services/branchApi';
@@ -38,13 +38,66 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
-            sorter: (a, b) => a.title.localeCompare(b.title),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search announcement title"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.title.toLowerCase().includes(value.toLowerCase()) ||
+                record.branch?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <span className="text-base">{text}</span>,
         },
         {
             title: 'Branch',
             dataIndex: 'branch',
             key: 'branch',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                        placeholder="Search branch"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.branch.toLowerCase().includes(value.toLowerCase()) ||
+                record.title?.toLowerCase().includes(value.toLowerCase()),
             render: (branchData) => {
                 try {
                     const branchObj = JSON.parse(branchData);
@@ -84,6 +137,7 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
             title: 'Description',
             dataIndex: 'description',
             key: 'description',
+            sorter: (a, b) => a.description.localeCompare(b.description),
             render: (text) => (
                 <Tooltip title={text}>
                     <span className="text-base" style={{ color: '#4b5563' }}>

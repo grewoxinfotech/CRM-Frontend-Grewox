@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Tag, Dropdown, Button, message } from 'antd';
+import { Table, Tag, Dropdown, Button, message, Input, Space } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
 import moment from 'moment';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
@@ -10,6 +10,12 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
     const [updateJobApplication] = useUpdateJobApplicationMutation();
     const { data: jobs, isLoading: jobsLoading } = useGetAllJobsQuery();
     
+    const statuses = [
+        { id: 'pending', name: 'Pending' },
+        { id: 'shortlisted', name: 'Shortlisted' },
+        { id: 'selected', name: 'Selected' },
+        { id: 'rejected', name: 'Rejected' },
+    ];
 
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
@@ -48,7 +54,39 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            sorter: (a, b) => a.name.localeCompare(b.name)
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search candidate name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.name.toLowerCase().includes(value.toLowerCase()),
+        },
+        {
+            title: 'Job',
+            dataIndex: 'job',
+            key: 'job',
+            sorter: (a, b) => a.job.localeCompare(b.job),
+            render: (jobId) => getJobTitle(jobId)
         },
         {
             title: 'Notice Period',
@@ -56,39 +94,18 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
             key: 'notice_period',
             sorter: (a, b) => a.notice_period.localeCompare(b.notice_period),
         },
-        {
-            title: 'Location',
-            dataIndex: 'location',
-            key: 'location',
-            sorter: (a, b) => a.location.localeCompare(b.location),
-        },
-        {
-            title: 'Job',
-            dataIndex: 'job',
-            key: 'job',
-            render: (jobId) => getJobTitle(jobId)
-        },
-        {
-            title: 'Current Location',
-            dataIndex: 'current_location',
-            key: 'current_location'
-        },
+       
         {
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
-           
+            sorter: (a, b) => a.phone.localeCompare(b.phone),   
         },
         {
             title: 'Experience',
             dataIndex: 'total_experience',
-            key: 'total_experience'
-        },
-        {
-            title: 'Applied Source',
-            dataIndex: 'applied_source',
-            key: 'applied_source',
-            sorter: (a, b) => a.applied_source.localeCompare(b.applied_source),
+            key: 'total_experience',
+            sorter: (a, b) => a.total_experience.localeCompare(b.total_experience),
         },
         {
             title: 'Cover Letter',
@@ -101,6 +118,11 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            filters: statuses.map(status => ({
+                text: status.name,
+                value: status.id
+              })),
+              onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color;
                 switch (status?.toLowerCase()) {

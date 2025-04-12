@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Dropdown, Menu, Tag, Modal } from 'antd';
+import { Table, Button, Dropdown, Menu, Tag, Modal, Input, Space } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
 import { useGetVendorsQuery } from './services/billingApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
@@ -23,6 +23,13 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
         }, {});
     }, [vendorsData]);
 
+    const statuses = [
+        { id: 'paid', name: 'Paid' },
+        { id: 'pending', name: 'Pending' },
+        { id: 'overdue', name: 'Overdue' },
+        { id: 'cancelled', name: 'Cancelled' },
+    ];
+
     // Create a map of currency IDs/codes to currency icons
     const currencyMap = React.useMemo(() => {
         if (!currenciesData) return {};
@@ -38,12 +45,66 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
             title: 'Bill Number',
             dataIndex: 'billNumber',
             key: 'billNumber',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search bill number"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.billNumber.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <span style={{ fontWeight: '500' }}>{text}</span>,
         },
         {
             title: 'Vendor',
             dataIndex: 'vendor',
             key: 'vendor',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search vendor name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}     
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.vendor.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (vendorId) => {
                 const vendorName = vendorMap[vendorId] || 'Unknown Vendor';
                 return <span>{vendorName}</span>;
@@ -53,12 +114,14 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
             title: 'Bill Date',
             dataIndex: 'billDate',
             key: 'billDate',
+            sorter: (a, b) => new Date(a.billDate) - new Date(b.billDate),
             render: (date) => new Date(date).toLocaleDateString(),
         },
         {
             title: 'Total',
             dataIndex: 'total',
             key: 'total',
+            sorter: (a, b) => a.total - b.total,
             render: (amount, record) => {
                 const currencyIcon = currencyMap[record.currency] || '₹';
                 return (
@@ -72,6 +135,11 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            filters: statuses.map(status => ({
+                text: status.name,
+                value: status.id
+              })),
+              onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color = 'default';
                 switch (status?.toLowerCase()) {

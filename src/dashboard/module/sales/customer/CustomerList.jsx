@@ -8,6 +8,8 @@ import {
   Typography,
   Modal,
   message,
+  Input,
+  Space,
 } from "antd";
 import {
   FiEdit2,
@@ -100,10 +102,37 @@ const CustomerList = ({
 
   const columns = [
     {
-      title: "Customer Number",
+      title: "Customer Name",
       dataIndex: "name",
       key: "name",
-      sorter: (a, b) => (a?.name || "").localeCompare(b?.name || ""),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search customer name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.name.toLowerCase().includes(value.toLowerCase()) ||
+        record.company?.toLowerCase().includes(value.toLowerCase()),
+    
       render: (text, record) => (
         <Text
           strong
@@ -118,13 +147,39 @@ const CustomerList = ({
       title: "Created By",
       dataIndex: "created_by",
       key: "created_by",
-      sorter: (a, b) =>
-        (a?.created_by || "").localeCompare(b?.created_by || ""),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search created by"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.created_by.toLowerCase().includes(value.toLowerCase()) ||
+        record.company?.toLowerCase().includes(value.toLowerCase()),
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
+      sorter: (a, b) => (a?.email || "").localeCompare(b?.email || ""),
       render: (email) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiMail style={{ color: "#1890ff" }} />
@@ -136,6 +191,7 @@ const CustomerList = ({
       title: "Contact",
       dataIndex: "contact",
       key: "contact",
+      sorter: (a, b) => (a?.contact || "").localeCompare(b?.contact || ""),
       render: (contact) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiPhone style={{ color: "#1890ff" }} />

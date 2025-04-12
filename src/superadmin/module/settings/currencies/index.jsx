@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Table, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip
+    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip, Space
 } from 'antd';
 import {
     FiSearch, FiChevronDown,
@@ -134,20 +134,72 @@ const Currencies = () => {
             title: 'Currency Name',
             dataIndex: 'currencyName',
             key: 'currencyName',
-            sorter: (a, b) => a.currencyName.localeCompare(b.currencyName),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search currency name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.currencyName.toLowerCase().includes(value.toLowerCase()) ||
+                record.currencyCode?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <Text strong>{text}</Text>
         },
         {
             title: 'Code',
             dataIndex: 'currencyCode',
             key: 'currencyCode',
-            sorter: (a, b) => a.currencyCode.localeCompare(b.currencyCode),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search currency code"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.currencyCode.toLowerCase().includes(value.toLowerCase()),   
             render: (text) => <Tag color="blue">{text}</Tag>
         },
         {
             title: 'Symbol',
             dataIndex: 'currencyIcon',
             key: 'currencyIcon',
+            sorter: (a, b) => a.currencyIcon.localeCompare(b.currencyIcon),
             render: (text) => <Text className="currency-symbol">{text}</Text>
         },
         {

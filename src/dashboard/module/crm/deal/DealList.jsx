@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip, Menu, Input, Select } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -14,7 +14,12 @@ import {
   FiArrowRight,
   FiDollarSign,
   FiBriefcase,
-  FiX
+  FiX,
+  FiFilter,
+  FiSearch,
+  FiTag,
+  FiLayers,
+  FiStar
 } from "react-icons/fi";
 import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
@@ -29,64 +34,19 @@ import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAc
 
 const { Text } = Typography;
 
-const DealList = ({ onEdit, onView, onDealClick }) => {
+const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
   const loggedInUser = useSelector(selectCurrentUser);
-  const { data, isLoading, error } = useGetDealsQuery();
-  const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
+  const [deleteDeal] = useDeleteDealMutation();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
-  const [filterStatus, setFilterStatus] = React.useState('all');
   const { data: currencies = [] } = useGetAllCurrenciesQuery(); 
   const { data: contactsResponse, isLoading: isContactsLoading, error: contactsError } = useGetContactsQuery();
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
 
-
-
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
-  const deals = Array.isArray(data) ? data : [];
-
-  
-  // Calculate won deals count based on is_won flag
-  const wonDealsCount = deals.filter(deal => deal.is_won).length;
-
-  const filterButtons = [
-    { id: 'all', name: 'All Deals', count: deals.length },
-    { 
-      id: 'pending', 
-      name: 'Pending', 
-      count: deals.filter(deal => deal.is_won === null).length,
-      icon: <FiTarget />
-    },
-    { 
-      id: 'won', 
-      name: 'Won', 
-      count: deals.filter(deal => deal.is_won === true).length,
-      icon: <FiTarget />
-    },
-    { 
-      id: 'lost', 
-      name: 'Lost', 
-      count: deals.filter(deal => deal.is_won === false).length,
-      icon: <FiTarget />
-    }
-  ];
-
-  // Filter deals based on status and is_won
-  const filteredDeals = React.useMemo(() => {
-    switch (filterStatus) {
-      case 'won':
-        return deals.filter(deal => deal.is_won === true);
-      case 'lost':
-        return deals.filter(deal => deal.is_won === false);
-      case 'pending':
-        return deals.filter(deal => deal.is_won === null);
-      default:
-        return deals;
-    }
-  }, [deals, filterStatus]);
 
   const handleDelete = async (record) => {
     try {
@@ -175,6 +135,33 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
       title: "Deal Name",
       dataIndex: "dealTitle",
       key: "dealTitle",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search deal title"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.dealTitle.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (text, record) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Avatar style={{
@@ -206,6 +193,11 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
       title: "Source",
       dataIndex: "source",
       key: "source",
+      filters: sources.map(source => ({
+        text: source.name,
+        value: source.id
+      })),
+      onFilter: (value, record) => record.source === value,
       render: (sourceId) => {
         const source = sources.find(s => s.id === sourceId) || {};
         const className = `source-${source.name?.toLowerCase().replace(/\s+/g, '')}`;
@@ -230,6 +222,11 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
       title: "Stage",
       dataIndex: "stage",
       key: "stage",
+      filters: dealStages.map(stage => ({
+        text: stage.stageName,
+        value: stage.id
+      })),
+      onFilter: (value, record) => record.stage === value,
       render: (stageId) => {
         const stage = dealStages.find(s => s.id === stageId);
         return (
@@ -250,6 +247,7 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
     {
       title: "Value",
       key: "value",
+      sorter: (a, b) => a.value - b.value,
       render: (_, record) => (
         <Text strong style={{
           fontSize: '14px',
@@ -263,6 +261,12 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      filters: [
+        { text: 'Won', value: true },
+        { text: 'Lost', value: false },
+        { text: 'Pending', value: null }
+      ],
+      onFilter: (value, record) => record.is_won === value,
       render: (status, record) => {
         const statusConfig = getStatusColor(status, record.is_won);
         return (
@@ -307,44 +311,21 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
   return (
     <>
       <div style={{
-        marginBottom: '8px',
+        marginBottom: '16px',
         display: 'flex',
-        gap: '8px',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0 12px'
       }}>
-        <Text strong style={{ fontSize: '13px', color: '#374151' }}>View:</Text>
-        <div style={{
-          display: 'flex',
-          gap: '6px'
-        }}>
-          {filterButtons.map(filter => (
-            <Button
-              key={filter.id}
-              type={filterStatus === filter.id ? "primary" : "default"}
-              onClick={() => setFilterStatus(filter.id)}
-              style={{
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 10px',
-                height: '28px',
-                fontSize: '12px'
-              }}
-            >
-              {filter.icon}
-              {filter.name} ({filter.count})
-            </Button>
-          ))}
-        </div>
+        <Text strong>
+          {deals.length} {deals.length === 1 ? 'Deal' : 'Deals'}
+        </Text>
       </div>
 
       <Table
         columns={columns}
-        dataSource={filteredDeals}
+        dataSource={deals}
         rowKey="id"
-        // loading={isLoading}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
@@ -430,6 +411,92 @@ const DealList = ({ onEdit, onView, onDealClick }) => {
           &:hover {
             color: #1890ff;
             background: rgba(24, 144, 255, 0.1);
+          }
+        }
+
+        .custom-filter-menu {
+          width: 320px;
+          padding: 16px;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+          .filter-search-section {
+            margin-bottom: 16px;
+
+            .ant-input-affix-wrapper {
+              border-radius: 6px;
+              
+              &:hover, &:focus {
+                border-color: #1890ff;
+              }
+            }
+          }
+
+          .filter-section {
+            margin-bottom: 16px;
+            
+            &:last-child {
+              margin-bottom: 0;
+            }
+
+            .filter-section-title {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 8px;
+              color: #1f2937;
+              font-weight: 500;
+
+              .filter-icon {
+                color: #6b7280;
+              }
+            }
+
+            .filter-options {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 6px;
+
+              .ant-tag {
+                margin: 0;
+                padding: 4px 8px;
+                cursor: pointer;
+                user-select: none;
+                border-radius: 4px;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.3s;
+
+                &:hover {
+                  opacity: 0.8;
+                }
+
+                &.active {
+                  color: #1890ff;
+                  background: rgba(24, 144, 255, 0.1);
+                  border-color: #1890ff;
+                }
+              }
+            }
+          }
+
+          .filter-footer {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: center;
+
+            .ant-btn {
+              color: #6b7280;
+              
+              &:hover {
+                color: #1890ff;
+              }
+            }
           }
         }
       `}</style>

@@ -12,7 +12,9 @@ import {
   Col,
   Statistic,
   Tag,
-  Tooltip
+  Tooltip,
+  Input,
+  Space
 } from "antd";
 import {
   FiEdit2,
@@ -207,7 +209,32 @@ const RevenueList = ({
       title: "Products",
       key: "products",
         width: '30%',
-        sorter: (a, b) => a.parsedProducts.length - b.parsedProducts.length,
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+          <div style={{ padding: 8 }}>
+            <Input
+              placeholder="Search product name"
+              value={selectedKeys[0]}
+              onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+              onPressEnter={() => confirm()}
+              style={{ width: 188, marginBottom: 8, display: 'block' }}
+            />
+            <Space>
+              <Button
+                type="primary"
+                onClick={() => confirm()}
+                size="small"
+                style={{ width: 90 }}
+              >
+                Filter
+              </Button>
+              <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                Reset
+              </Button>
+            </Space>
+          </div>
+        ),
+        onFilter: (value, record) =>
+          record.parsedProducts.some(p => p.name.toLowerCase().includes(value.toLowerCase())),  
       render: (_, record) => (
         <div>
           {record.parsedProducts.map((product, index) => (

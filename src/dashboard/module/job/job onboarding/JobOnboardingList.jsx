@@ -1,10 +1,17 @@
 import React from 'react';
-import { Table, Tag, Dropdown, Button } from 'antd';
+import { Table, Tag, Dropdown, Button, Input, Space  } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
 import moment from 'moment';
 
 const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) => {
     // Function to get menu items for each row
+
+    const statuses = [
+        { id: 'pending', name: 'Pending' },
+        { id: 'in_progress', name: 'In Progress' },
+        { id: 'completed', name: 'Completed' },
+        { id: 'delayed', name: 'Delayed' },
+    ];  
     const getActionItems = (record) => [
         {
             key: 'view',
@@ -32,33 +39,67 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
             title: 'Interviewer',
             dataIndex: 'Interviewer',
             key: 'Interviewer',
-            sorter: (a, b) => a.Interviewer?.localeCompare(b.Interviewer || '')
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search Interviewer"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.Interviewer.toLowerCase().includes(value.toLowerCase()),
         },
         {
             title: 'Joining Date',
             dataIndex: 'JoiningDate',
             key: 'JoiningDate',
+            sorter: (a, b) => a.JoiningDate.localeCompare(b.JoiningDate),
             render: (date) => date ? moment(date).format('DD MMM YYYY') : 'N/A'
         },
         {
             title: 'Days of Week',
             dataIndex: 'DaysOfWeek',
-            key: 'DaysOfWeek'
+            key: 'DaysOfWeek',
+            sorter: (a, b) => a.DaysOfWeek.localeCompare(b.DaysOfWeek),
         },
         {
             title: 'Salary',
             dataIndex: 'Salary',
-            key: 'Salary'
+            key: 'Salary',
+            sorter: (a, b) => a.Salary.localeCompare(b.Salary),
         },
         {
             title: 'Salary Type',
             dataIndex: 'SalaryType',
-            key: 'SalaryType'
+            key: 'SalaryType',
+            sorter: (a, b) => a.SalaryType.localeCompare(b.SalaryType),
         },
         {
             title: 'Status',
             dataIndex: 'Status',
             key: 'Status',
+            filters: statuses.map(status => ({
+                text: status.name,
+                value: status.id
+              })),
+              onFilter: (value, record) => record.status === value,
             render: (status) => {
                 if (!status) return <Tag color="default">N/A</Tag>;
                 

@@ -16,6 +16,7 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
+  FiFilter,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -37,10 +38,40 @@ const CompanyAccount = () => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedCompanyType, setSelectedCompanyType] = useState(null);
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteCompanyAccount] = useDeleteCompanyAccountMutation();
   const [createCompanyAccount] = useCreateCompanyAccountMutation();
   const { data: companyAccountsResponse = { data: [] }, isLoading:isCompanyAccountsLoading  } = useGetCompanyAccountsQuery();
+
+  const companyTypes = [
+    { key: 'all', label: 'All Types' },
+    { key: 'private', label: 'Private Limited' },
+    { key: 'public', label: 'Public Limited' },
+    { key: 'partnership', label: 'Partnership' },
+    { key: 'proprietorship', label: 'Proprietorship' }
+  ];
+
+  const handleCompanyTypeFilter = (type) => {
+    setSelectedCompanyType(type);
+    // You can implement the filtering logic here based on the selected type
+  };
+
+  const filterMenu = (
+    <Menu>
+      {companyTypes.map((type) => (
+        <Menu.Item
+          key={type.key}
+          onClick={() => handleCompanyTypeFilter(type.key)}
+          style={{
+            backgroundColor: selectedCompanyType === type.key ? '#e6f7ff' : 'transparent'
+          }}
+        >
+          {type.label}
+        </Menu.Item>
+      ))}
+    </Menu>
+  );
 
   const handleCreate = () => {
     setSelectedCompany(null);
@@ -208,7 +239,7 @@ const CompanyAccount = () => {
           <Text type="secondary">Manage all company accounts in the organization</Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
+          <div className="search-filter-group" style={{ display: 'flex', gap: '8px' }}>
             <Input
               prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
               placeholder="Search companies..."
@@ -216,8 +247,22 @@ const CompanyAccount = () => {
               onChange={(e) => setSearchText(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ width: 300 }}
+              style={{ width: 350}}
             />
+            <Dropdown 
+              overlay={filterMenu} 
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              {/* <Button
+                icon={<FiFilter size={16} />}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  backgroundColor: selectedCompanyType ? '#e6f7ff' : 'transparent'
+                }}
+              /> */}
+            </Dropdown>
           </div>
           <div className="action-buttons">
             <Dropdown overlay={exportMenu} trigger={["click"]}>

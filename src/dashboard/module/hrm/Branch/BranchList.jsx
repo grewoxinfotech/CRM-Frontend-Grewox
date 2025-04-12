@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown } from 'antd';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
 import { useGetAllBranchesQuery, useDeleteBranchMutation } from './services/branchApi';
 import dayjs from 'dayjs';
@@ -84,13 +84,66 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
             title: 'Branch Name',
             dataIndex: 'branchName',
             key: 'branchName',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search branch name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.branchName.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <span className="text-base">{text || 'N/A'}</span>,
-            sorter: (a, b) => (a.branchName || '').localeCompare(b.branchName || ''),
         },
         {
             title: 'Branch Manager',
             dataIndex: 'branchManager',
             key: 'branchManager',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search branch manager"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.branchManager.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (managerId) => {
                 const manager = userMap[managerId] || {};
                 const managerName = manager?.username || 'No Manager';
@@ -102,13 +155,7 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
                     </Tooltip>
                 );
             },
-            sorter: (a, b) => {
-                const managerA = userMap[a.branchManager] || {};
-                const managerB = userMap[b.branchManager] || {};
-                const nameA = managerA?.username || '';
-                const nameB = managerB?.username || '';
-                return nameA.localeCompare(nameB);
-            },
+            
         },
         {
             title: 'Address',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Dropdown, Typography, Spin, Alert, Menu } from 'antd';
+import { Table, Button, Dropdown, Typography, Spin, Alert, Menu, Input, Space } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiFileText, FiCalendar, FiDollarSign } from 'react-icons/fi';
 import { useGetDebitNotesQuery } from './services/debitnoteApi';
 import { useSelector } from 'react-redux';
@@ -33,17 +33,40 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText, loading }) 
             title: 'Bill Number',
             dataIndex: 'bill',
             key: 'bill',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search bill number"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.bill.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (billId) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiFileText style={{ color: '#1890ff' }} />
                     <Text>{getBillNumber(billId)}</Text>
                 </div>
             ),
-            sorter: (a, b) => {
-                const billNumA = getBillNumber(a.bill);
-                const billNumB = getBillNumber(b.bill);
-                return billNumA.localeCompare(billNumB);
-            },
+            
         },
         {
             title: 'Date',

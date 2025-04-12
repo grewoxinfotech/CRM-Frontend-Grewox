@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Dropdown, Tag, Tooltip, Modal, message } from 'antd';
+import { Table, Button, Dropdown, Tag, Tooltip, Modal, message, Input, Space } from 'antd';
 import {
     FiEye,
     FiEdit2,
@@ -19,6 +19,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         page: 1,
         limit: 100
     });
+
+    // Define plan status options
+    const planStatuses = [
+        { text: 'Active', value: 'active' },
+        { text: 'Inactive', value: 'inactive' }
+    ];
 
     const getCurrencyIcon = (currencyId) => {
         const currency = currencies?.find(c => c.id === currencyId);
@@ -88,7 +94,32 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search plan name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => {
                 if (!searchText?.trim() || !text) return <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>;
                 
@@ -114,6 +145,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             title: 'Price',
             dataIndex: 'price',
             key: 'price',
+            sorter: (a, b) => (a.price || 0) - (b.price || 0),
             render: (price, record) => (
                 <div className="price-cell">
                     <span className="plan-price">
@@ -129,6 +161,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: 'Limits',
             key: 'limits',
+            sorter: (a, b) => (a.max_users || 0) - (b.max_users || 0),
             render: (_, record) => (
                 <div className="limits-cell">
                     <div className="limits-row">
@@ -162,6 +195,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: 'Storage & Trial',
             key: 'storage_trial',
+            sorter: (a, b) => (a.storage_limit || 0) - (b.storage_limit || 0),
             render: (_, record) => (
                 <div className="storage-trial-cell">
                     <Tooltip title="Storage Limit">
@@ -182,8 +216,10 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            filters: planStatuses,
+            onFilter: (value, record) => (record.status?.toLowerCase() || '') === value.toLowerCase(),
             render: (status) => (
-                <span className={`plan-status ${status || 'inactive'}`}>
+                <span className={`plan-status ${status?.toLowerCase() || 'inactive'}`}>
                     {(status || 'Inactive').charAt(0).toUpperCase() + (status || 'inactive').slice(1)}
                 </span>
             ),

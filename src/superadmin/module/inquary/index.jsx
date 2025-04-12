@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Card, Typography, Button, Modal, Input, Avatar,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, Descriptions, Tooltip, message
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Descriptions, Tooltip, message, Space
 } from 'antd';
 import {
     FiPlus, FiSearch, FiMessageSquare,
@@ -77,7 +77,34 @@ const Inquiry = () => {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            sorter: (a, b) => a.name.localeCompare(b.name),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.name.toLowerCase().includes(value.toLowerCase()) ||
+                record.company_name?.toLowerCase().includes(value.toLowerCase()),
+           
             render: (text) => (
                 <div style={{
                     display: 'flex',
@@ -100,6 +127,8 @@ const Inquiry = () => {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            sorter: (a, b) => (a.email || '').localeCompare(b.email || ''),
+
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiMail style={{ color: '#1890ff' }} />
@@ -111,6 +140,7 @@ const Inquiry = () => {
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
+            sorter: (a, b) => (a.phone || '').localeCompare(b.phone || ''),
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiPhone style={{ color: '#52c41a' }} />
@@ -122,6 +152,7 @@ const Inquiry = () => {
             title: 'Subject',
             dataIndex: 'subject',
             key: 'subject',
+            sorter: (a, b) => (a.subject || '').localeCompare(b.subject || ''),
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiBookmark style={{ color: '#722ed1' }} />
@@ -134,6 +165,7 @@ const Inquiry = () => {
             dataIndex: 'message',
             key: 'message',
             ellipsis: true,
+            sorter: (a, b) => (a.message || '').localeCompare(b.message || ''),
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiMessageSquare style={{ color: '#faad14' }} />
@@ -145,6 +177,7 @@ const Inquiry = () => {
             title: 'Created Date',
             dataIndex: 'createdAt',
             key: 'createdAt',
+            sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
             render: (date) => (
                 <Tooltip title={formatDateTime(date)}>
                     <div style={{

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Dropdown, Modal, message } from "antd";
+import { Table, Button, Tag, Dropdown, Modal, message, Input, Space } from "antd";
 import { FiEye, FiEdit2, FiTrash2, FiMoreVertical } from "react-icons/fi";
 import moment from "moment";
 import EditCompany from "./EditNotes";
@@ -9,6 +9,14 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Define note type options
+  const noteTypes = [
+    { text: 'General', value: 'general' },
+    { text: 'Important', value: 'important' },
+    { text: 'Urgent', value: 'urgent' },
+   
+    
+  ];
 
   const handleEdit = (company) => {
     setSelectedCompany(company);
@@ -57,7 +65,32 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
       title: "Title",
       dataIndex: "title",
       key: "title",
-      sorter: (a, b) => (a.title || "").localeCompare(b.title || ""),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search note title"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        (record.title?.toLowerCase() || '').includes(value.toLowerCase()),
       render: (text) => <div style={{ fontWeight: 500 }}>{text || "N/A"}</div>,
       width: "20%",
     },
@@ -65,9 +98,12 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
       title: "Type",
       dataIndex: "type",
       key: "type",
+      filters: noteTypes,
+      onFilter: (value, record) => 
+        (record.type?.toLowerCase() || '') === value.toLowerCase(),
       render: (type) => {
-        const color = type === "important" ? "red" : "blue";
-        return <Tag color={color}>{type.toUpperCase()}</Tag>;
+        const color = (type?.toLowerCase() || '') === "important" ? "red" : "blue";
+        return <Tag color={color}>{type?.toUpperCase() || 'N/A'}</Tag>;
       },
       width: "10%",
     },
@@ -75,6 +111,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
       title: "Description",
       dataIndex: "description",
       key: "description",
+      sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
       render: (text) => text || "N/A",
       width: "30%",
     },

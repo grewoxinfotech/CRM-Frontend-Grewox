@@ -1,9 +1,14 @@
 import React from 'react';
-import { Table, Button, Tag, Dropdown } from 'antd';
+import { Table, Button, Tag, Dropdown, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import moment from 'moment';
 
 const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
+
+    const statuses = [
+        { id: 'active', name: 'Active' },
+        { id: 'inactive', name: 'Inactive' },
+    ];
     // Define action items for dropdown
     const getActionItems = (record) => [
         {
@@ -32,27 +37,84 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
-            sorter: (a, b) => (a.title || '').localeCompare(b.title || '')
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search job title"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.title.toLowerCase().includes(value.toLowerCase()),
+           
         },
         {
-            title: 'Department',
+            title: 'Category',
             dataIndex: 'category',
             key: 'category',
-            sorter: (a, b) => (a.category || '').localeCompare(b.category || '')
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search category"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.category.toLowerCase().includes(value.toLowerCase()),
+           
         },
         {
             title: 'Location',
             dataIndex: 'location',
-            key: 'location'
+            key: 'location',
+            sorter: (a, b) => (a.location || '').localeCompare(b.location || '')
         },
         {
             title: 'Experience',
             dataIndex: 'workExperience',
-            key: 'workExperience'
+            key: 'workExperience',
+            sorter: (a, b) => (a.workExperience || '').localeCompare(b.workExperience || '')
+
         },
         {
             title: 'Salary',
             key: 'salary',
+            sorter: (a, b) => (a.salary || '').localeCompare(b.salary || ''),
+
             render: (record) => (
                 <span>{record.currency || ''} {record.expectedSalary || 'N/A'}</span>
             )
@@ -61,6 +123,11 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            filters: statuses.map(status => ({
+                text: status.name,
+                value: status.id
+              })),
+              onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color = 'blue';
                 switch (status?.toLowerCase()) {

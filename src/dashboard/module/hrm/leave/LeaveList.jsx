@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -39,6 +39,19 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       return acc;
     }, {});
   }, [employees]);
+
+  const leaveTypes = [
+    { id: 'annual', name: 'Annual' },
+    { id: 'sick', name: 'Sick' },
+    { id: 'casual', name: 'Casual' },
+    { id: 'other', name: 'Other' },
+  ];
+
+  const statuses = [
+    { id: 'approved', name: 'Approved' },
+    { id: 'pending', name: 'Pending' },
+    { id: 'rejected', name: 'Rejected' },
+  ];
 
   const filteredLeaves = React.useMemo(() => {
     return leaves?.filter((leave) => {
@@ -156,10 +169,33 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       title: "Employee Name",
       dataIndex: "employeeId",
       key: "employeeId",
-      sorter: (a, b) =>
-        (employeeMap[a.employeeId] || "").localeCompare(
-          employeeMap[b.employeeId] || ""
-        ),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search employee name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.employeeId.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (employeeId) => (
         <Text style={{ color: "#262626" }}>
           {employeeMap[employeeId] || "Unknown Employee"}
@@ -170,7 +206,11 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       title: "Leave Type",
       dataIndex: "leaveType",
       key: "leaveType",
-      sorter: (a, b) => (a?.leaveType || "").localeCompare(b?.leaveType || ""),
+      filters: leaveTypes.map(leaveType => ({
+        text: leaveType.name,
+        value: leaveType.id
+      })),
+      onFilter: (value, record) => record.leaveType === value,
       render: (leaveType) => (
         <Tag
           color="blue"
@@ -207,8 +247,12 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
     {
       title: "Status",
       dataIndex: "status",
-      key: "status",
-      sorter: (a, b) => (a?.status || "").localeCompare(b?.status || ""),
+        key: "status",
+        filters: statuses.map(status => ({
+            text: status.name,
+            value: status.id
+          })),
+          onFilter: (value, record) => record.status === value,
       render: (status) => (
         <Tag
           color={getStatusColor(status)}

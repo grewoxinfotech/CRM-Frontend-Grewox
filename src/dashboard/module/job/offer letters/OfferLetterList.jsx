@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Table, Tag, Dropdown, Button } from 'antd';
+import { Table, Tag, Dropdown, Button, Input, Space } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
 import moment from 'moment';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
@@ -53,12 +53,65 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
             title: 'Job',
             dataIndex: 'job',
             key: 'job',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search job title"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.job.toLowerCase().includes(value.toLowerCase()),
+
             render: (jobId) => getJobTitle(jobId)
         },
         {
             title: 'Applicant',
             dataIndex: 'job_applicant',
             key: 'job_applicant',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search applicant name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.job_applicant.toLowerCase().includes(value.toLowerCase()),
             render: (applicantId) => {
                 const applicantName = applicationMap[applicantId] || 'Unknown Applicant';
                 return (
@@ -67,11 +120,7 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
                     </span>
                 );
             },
-            sorter: (a, b) => {
-                const nameA = applicationMap[a.job_applicant] || '';
-                const nameB = applicationMap[b.job_applicant] || '';
-                return nameA.localeCompare(nameB);
-            }
+           
         },
         {
             title: 'Salary',
@@ -95,9 +144,14 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
             title: 'Expected Joining Date',
             dataIndex: 'expected_joining_date',
             key: 'expected_joining_date',
+            sorter: (a, b) => {
+                const dateA = new Date(a.expected_joining_date);
+                const dateB = new Date(b.expected_joining_date);
+                return dateA - dateB;
+            },
             render: (date) => (
                 <span>
-                    {date ? moment(date).format('DD MMM YYYY') : '-'}
+                    {date ? moment(date).format('DD-MM-YYYY') : '-'}
                 </span>
             )
         },
@@ -105,7 +159,12 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
             title: 'Offer Expiry Date',
             dataIndex: 'offer_expiry',
             key: 'offer_expiry',
-            render: (date) => date ? moment(date).format('DD MMM YYYY') : '-'
+            sorter: (a, b) => {
+                const dateA = new Date(a.offer_expiry);
+                const dateB = new Date(b.offer_expiry);
+                return dateA - dateB;
+            },
+            render: (date) => date ? moment(date).format('DD-MM-YYYY') : '-'
         },
         {
             title: 'Description',

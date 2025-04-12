@@ -8,6 +8,8 @@ import {
   Typography,
   Modal,
   message,
+  Input,
+  Space
 } from "antd";
 import {
   FiEdit2,
@@ -123,7 +125,33 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
       title: "Invoice",
       dataIndex: "invoice",
       key: "invoice",
-      sorter: (a, b) => a.invoice - b.invoice,
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search invoice"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.invoice.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (invoice) => {
         const invoiceData = invoices?.find(inv => inv.id === invoice);
         return (
@@ -188,36 +216,7 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
       render: (date) => dayjs(date).format("DD-MM-YYYY"),
       sorter: (a, b) => new Date(a.date) - new Date(b.date),
     },
-    {
-      title: "Action",
-      key: "actions",
-      width: 80,
-      align: "center",
-      render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="revenue-actions-dropdown"
-        >
-          <Button
-            type="text"
-            icon={
-              <FiMoreVertical style={{ fontSize: "18px", color: "#8c8c8c" }} />
-            }
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              padding: "4px",
-              borderRadius: "4px",
-              "&:hover": {
-                background: "#f5f5f5",
-              },
-            }}
-          />
-        </Dropdown>
-      ),
-    },
+    
   ];
 
   return (

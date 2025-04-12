@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message } from "antd";
+import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message, Input } from "antd";
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiLink } from "react-icons/fi";
 import moment from "moment";
 import { useGetDocumentsQuery, useDeleteDocumentMutation } from "./services/documentApi";
@@ -46,7 +46,33 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      sorter: (a, b) => a.name.localeCompare(b.name),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search document name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.name.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (name) => (
         <span className="text-base" style={{ 
           color: searchText && name.toLowerCase().includes(searchText.toLowerCase()) 
@@ -60,14 +86,40 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
     {
       title: "Role",
       dataIndex: "role",
-      key: "role",
-      sorter: (a, b) => a.role.localeCompare(b.role),
+      key: "role",filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search role"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.role.toLowerCase().includes(value.toLowerCase()) ||
+        record.name?.toLowerCase().includes(value.toLowerCase()),
       render: (role) => <Tag color="blue">{role}</Tag>,
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
+      sorter: (a, b) => a.description.localeCompare(b.description),
       render: (text) => (
         <Tooltip title={text}>
           <span className="text-base" style={{ color: '#4b5563' }}>

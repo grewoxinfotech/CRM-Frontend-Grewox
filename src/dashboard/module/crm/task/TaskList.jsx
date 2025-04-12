@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar } from 'antd';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar, Space, Input, DatePicker } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiUser } from 'react-icons/fi';
 import dayjs from 'dayjs';
 
 const { Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tasks = [], users = [] }) => {
     const userMap = useMemo(() => {
@@ -13,6 +14,22 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
         }, {});
     }, [users]);
 
+    // Define status options
+    const statusOptions = [
+        { id: 'Pending', name: 'Pending' },
+        { id: 'In Progress', name: 'In Progress' },
+        { id: 'Completed', name: 'Completed' }
+    ];
+
+    // Define priority options
+    const priorityOptions = [
+        { id: 'Low', name: 'Low' },
+        { id: 'Medium', name: 'Medium' },
+        { id: 'High', name: 'High' }
+        ];
+
+    // Define date options
+   
     const filteredTasks = useMemo(() => {
         const tasksArray = Array.isArray(tasks) ? tasks : [];
 
@@ -82,7 +99,32 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Title',
             dataIndex: 'taskName',
             key: 'taskName',
-            sorter: (a, b) => (a?.taskName || '').localeCompare(b?.taskName || ''),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search task title"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.taskName.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
                 <Text strong style={{ cursor: 'pointer' }} onClick={() => onView?.(record)}>
                     {text}
@@ -93,6 +135,32 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Assigned To',
             dataIndex: 'assignTo',
             key: 'assignTo',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search assigned to"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.assignTo.toLowerCase().includes(value.toLowerCase()),
             render: (assignTo) => {
                 const assignedUserIds = getAssignedUsers(assignTo);
                 const assignedUsers = assignedUserIds.map(id => userMap[id]).filter(Boolean);
@@ -152,6 +220,32 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Task Reporter',
             dataIndex: 'task_reporter',
             key: 'task_reporter',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search task reporter"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                record.task_reporter.toLowerCase().includes(value.toLowerCase()),
             render: (reporterId) => {
                 const user = userMap[reporterId];
                 if (!user) return <span>-</span>;
@@ -173,8 +267,13 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
         },
         {
             title: 'Status',
-            dataIndex: 'status',
+            dataIndex: 'status',            
             key: 'status',
+            filters: statusOptions.map(status => ({
+                text: status.name,
+                value: status.id
+            })),
+            onFilter: (value, record) => record.status === value,
             render: (status) => (
                 <Tag color={
                     status === 'Completed' ? 'green' :
@@ -190,6 +289,11 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Priority',
             dataIndex: 'priority',
             key: 'priority',
+            filters: priorityOptions.map(priority => ({
+                text: priority.name,
+                value: priority.id
+            })),
+            onFilter: (value, record) => record.priority === value,
             render: (priority) => (
                 <Tag color={
                     priority === 'High' ? 'red' :
@@ -205,6 +309,34 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Start Date',
             dataIndex: 'startDate',
             key: 'startDate',
+            // filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+            //     <div style={{ padding: 8 }}>
+            //         <RangePicker
+            //             value={selectedKeys[0]}
+            //             onChange={(dates) => setSelectedKeys(dates ? [dates] : [])}
+            //             style={{ width: 250, marginBottom: 8, display: 'block' }}
+            //         />
+            //         <Space>
+            //             <Button
+            //                 type="primary"
+            //                 onClick={() => confirm()}
+            //                 size="small"
+            //                 style={{ width: 90 }}
+            //             >
+            //                 Filter
+            //             </Button>
+            //             <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            //                 Reset
+            //             </Button>
+            //         </Space>
+            //     </div>
+            // ),
+            // onFilter: (value, record) => {
+            //     if (!value || !record.startDate) return false;
+            //     const startDate = dayjs(record.startDate);
+            //     return startDate.isAfter(value[0]) && startDate.isBefore(value[1]);
+            // },
+            sorter: (a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)),
             render: (date) => (
                 <span>{date ? dayjs(date).format('MMM DD, YYYY') : '-'}</span>
             ),
@@ -213,6 +345,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Due Date',
             dataIndex: 'dueDate',
             key: 'dueDate',
+            sorter: (a, b) => dayjs(a.dueDate).diff(dayjs(b.dueDate)),
             render: (date) => (
                 <span>{date ? dayjs(date).format('MMM DD, YYYY') : '-'}</span>
             ),
@@ -221,6 +354,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Files',
             dataIndex: 'file',
             key: 'file',
+            sorter: (a, b) => a.file.length - b.file.length,
             render: (file) => {
                 if (!file) return <span>-</span>;
 
@@ -287,6 +421,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Created By',
             dataIndex: 'created_by',
             key: 'created_by',
+            sorter: (a, b) => a.created_by.localeCompare(b.created_by),
             render: (createdBy) => <span>{createdBy || '-'}</span>,
         },
         {
@@ -321,7 +456,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
+                    showTotal: (total) => `Total ${total} items`
                 }}
                 className="task-table"
             />
@@ -329,4 +464,4 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
     );
 };
 
-export default TaskList; 
+export default TaskList;

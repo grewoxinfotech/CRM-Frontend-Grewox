@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Modal, Avatar, message } from 'antd';
+import { Table, Button, Tag, Dropdown, Modal, Avatar, message, Input, Space } from 'antd';
 import { FiEye, FiEdit2, FiTrash2, FiMoreVertical, FiUser, FiLogIn } from 'react-icons/fi';
 import { PiRocketBold } from 'react-icons/pi';
 import moment from 'moment';
@@ -18,6 +18,12 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [adminLogin] = useAdminLoginMutation();
     const navigate = useNavigate();
+
+    // Define status options
+    const planStatuses = [
+        { text: 'Active', value: 'active' },
+        { text: 'Inactive', value: 'inactive' }
+    ];
 
     // Fetch all assigned plans
     const { data: assignedPlans } = useGetAllAssignedPlansQuery();
@@ -101,6 +107,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             title: 'Profile',
             dataIndex: 'profilePic',
             key: 'profilePic',
+            sorter: (a, b) => a.profilePic.localeCompare(b.profilePic),
             width: 80,
             render: (profilePic, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -124,7 +131,32 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             title: 'Company Name',
             dataIndex: 'name',
             key: 'name',
-            sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                  <Input
+                    placeholder="Search company name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
+                </div>
+              ),
+              onFilter: (value, record) =>
+                (record.name?.toLowerCase() || '').includes(value.toLowerCase()),    
             render: (text) => (
                 <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>
             ),
@@ -134,6 +166,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            sorter: (a, b) => a.email.localeCompare(b.email),
             render: (text) => (
                 text && text !== 'N/A' ? (
                     <a href={`mailto:${text}`} onClick={(e) => e.stopPropagation()}>
@@ -147,6 +180,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
+            sorter: (a, b) => a.phone.localeCompare(b.phone),
             render: (text) => text || 'N/A',
             width: '15%',
         },
@@ -154,6 +188,11 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             title: 'Plan Status',
             key: 'planStatus',
             width: '140px',
+            filters: planStatuses,
+            onFilter: (value, record) => {
+                const isActive = hasActiveSubscription(record.id);
+                return value === (isActive ? 'active' : 'inactive');
+            },
             render: (_, record) => {
                 const isActive = hasActiveSubscription(record.id);
                 return (
