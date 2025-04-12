@@ -19,15 +19,16 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   const [searchText, setSearchText] = useState('');
   const [filterType, setFilterType] = useState('Contacts');
   const [showContactsWithoutEmail, setShowContactsWithoutEmail] = useState(false);
-  const [repeatEndType, setRepeatEndType] = React.useState('never');
-  const [repeatType, setRepeatType] = React.useState('none');
-  const [frequency, setFrequency] = React.useState('daily');
+  const [repeatType, setRepeatType] = useState('none');
+  const [repeatEndType, setRepeatEndType] = useState('never');
   const [repeatTimes, setRepeatTimes] = useState(1);
-  const [venueType, setVenueType] = useState(null);
-  const [showReminder, setShowReminder] = useState(false);
+  const [showRepeat, setShowRepeat] = useState(false);
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
   const [customFrequency, setCustomFrequency] = useState('weekly');
+  const [repeatEndDate, setRepeatEndDate] = useState(null);
+  const [venueType, setVenueType] = useState(null);
+  const [showReminder, setShowReminder] = useState(false);
   const [monthlyPattern, setMonthlyPattern] = useState('day');
   const [yearlyPattern, setYearlyPattern] = useState('date');
   const [meetingType, setMeetingType] = useState(null);
@@ -52,14 +53,14 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
     const roleColors = {
       'employee': {
         color: '#D46B08',
-        bg: '#FFF7E6', 
+        bg: '#FFF7E6',
         border: '#FFD591',
         icon: <FiUser style={{ fontSize: '14px' }} />
       },
       'admin': {
         color: '#096DD9',
         bg: '#E6F7FF',
-        border: '#91D5FF', 
+        border: '#91D5FF',
         icon: <FiShield style={{ fontSize: '14px' }} />
       },
       'manager': {
@@ -86,15 +87,15 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         reminder_time: values.reminder_time ? values.reminder_time.format('HH:mm:ss') : null,
       } : null;
 
-      // Organize repeat fields
+      // Update repeat data format to match task payload
       const repeatData = repeatType !== 'none' ? {
         repeat_type: repeatType,
         repeat_end_type: repeatEndType,
-        repeat_times: repeatEndType === 'after' ? repeatTimes : null,
-        repeat_end_date: values.repeat_end_date ? values.repeat_end_date.format('YYYY-MM-DD') : null,
-        custom_repeat_interval: repeatType === 'custom' ? customRepeatInterval : null,
-        custom_repeat_days: repeatType === 'custom' ? customRepeatDays : null,
-        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
+        repeat_times: repeatEndType === 'after' ? parseInt(repeatTimes) : (repeatEndType === 'never' ? null : 1),
+        repeat_end_date: repeatEndType === 'on' ? repeatEndDate?.format('YYYY-MM-DD') : null,
+        custom_repeat_interval: repeatType === 'custom' ? parseInt(customRepeatInterval) : 1,
+        custom_repeat_days: repeatType === 'custom' ? customRepeatDays : [],
+        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : 'weekly'
       } : null;
 
       // Ensure assigned_to is always an array
@@ -120,7 +121,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         participants_reminder: values.participants_reminder
       };
 
-      await createFollowupMeeting({id: dealId, data: formattedValues}).unwrap();
+      await createFollowupMeeting({ id: dealId, data: formattedValues }).unwrap();
       message.success('Meeting created successfully');
       form.resetFields();
       onCancel();
@@ -141,7 +142,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   const handleRepeatChange = (value) => {
     setRepeatType(value);
   };
-  
+
   const handleFrequencyChange = (value) => {
     setFrequency(value);
   };
@@ -185,7 +186,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   };
 
   const inputStyle = {
-    height: "48px", 
+    height: "48px",
     borderRadius: "10px",
     padding: "8px 16px",
     backgroundColor: "#f8fafc",
@@ -409,7 +410,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',marginTop:"20px"  }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
           <Form.Item
             name="from_date"
             label="From"
@@ -446,7 +447,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           </Form.Item>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',marginTop:"20px"  }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
           <Form.Item
             name="to_date"
             label="To"
@@ -483,116 +484,113 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           </Form.Item>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',marginTop:"20px"  }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
 
-        <Form.Item
-          name="host"
-          label="Host"
-          rules={[{ required: true, message: 'Please select host' }]}
-        >
-          <Select
-            placeholder="Select host"
-            size="large"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px",
-            }}
+          <Form.Item
+            name="host"
+            label={<span style={formItemStyle}>Host</span>}
+            initialValue={currentUser?.username}
           >
-            <Option value="grewox">Grewox</Option>
-          </Select>
-        </Form.Item>
+            <Input
+              value={currentUser?.username}
+              disabled
+              style={{
+                ...inputStyle,
+                backgroundColor: '#f3f4f6'
+              }}
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="assigned_to"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Participants
-            </span>
-          }
-          rules={[{ required: true, message: 'Please select participants' }]}
-        >
-          <Select
-            mode="multiple"
-            showSearch
-            size="large"
-            placeholder="Select team members"
-            optionFilterProp="children"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px"
-            }}
-            listHeight={100}
-            dropdownStyle={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollBehavior: 'smooth'
-            }}
-            filterOption={(input, option) => {
-              const username = option?.username?.toLowerCase() || '';
-              const searchTerm = input.toLowerCase();
-              return username.includes(searchTerm);
-            }}
-            defaultOpen={false}
+          <Form.Item
+            name="assigned_to"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Participants
+              </span>
+            }
+            rules={[{ required: true, message: 'Please select participants' }]}
           >
-            {users.map((user) => {
-              const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-              const roleStyle = getRoleStyle(userRole?.role_name);
+            <Select
+              mode="multiple"
+              showSearch
+              size="large"
+              placeholder="Select team members"
+              optionFilterProp="children"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px"
+              }}
+              listHeight={100}
+              dropdownStyle={{
+                maxHeight: '120px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
+              filterOption={(input, option) => {
+                const username = option?.username?.toLowerCase() || '';
+                const searchTerm = input.toLowerCase();
+                return username.includes(searchTerm);
+              }}
+              defaultOpen={false}
+            >
+              {users.map((user) => {
+                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                const roleStyle = getRoleStyle(userRole?.role_name);
 
-              return (
-                <Option
-                  key={user.id}
-                  value={user.id}
-                  username={user.username}
-                >
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%'
-                  }}>
+                return (
+                  <Option
+                    key={user.id}
+                    value={user.id}
+                    username={user.username}
+                  >
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '8px'
+                      justifyContent: 'space-between',
+                      width: '100%'
                     }}>
-                      <Avatar
-                        size="small"
-                        style={{
-                          backgroundColor: user.color || '#1890ff',
-                          fontSize: '12px'
-                        }}
-                      >
-                        {user.username?.[0]?.toUpperCase() || '?'}
-                      </Avatar>
-                      <Text strong>{user.username}</Text>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <Avatar
+                          size="small"
+                          style={{
+                            backgroundColor: user.color || '#1890ff',
+                            fontSize: '12px'
+                          }}
+                        >
+                          {user.username?.[0]?.toUpperCase() || '?'}
+                        </Avatar>
+                        <Text strong>{user.username}</Text>
+                      </div>
+                      <Tag style={{
+                        margin: 0,
+                        background: roleStyle.bg,
+                        color: roleStyle.color,
+                        border: `1px solid ${roleStyle.border}`,
+                        fontSize: '12px',
+                        borderRadius: '16px',
+                        padding: '2px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        {roleStyle.icon}
+                        {userRole?.role_name || 'User'}
+                      </Tag>
                     </div>
-                    <Tag style={{
-                      margin: 0,
-                      background: roleStyle.bg,
-                      color: roleStyle.color,
-                      border: `1px solid ${roleStyle.border}`,
-                      fontSize: '12px',
-                      borderRadius: '16px',
-                      padding: '2px 10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      {roleStyle.icon}
-                      {userRole?.role_name || 'User'}
-                    </Tag>
-                  </div>
-                </Option>
-              );
-            })}
-          </Select>
-        </Form.Item>
+                  </Option>
+                );
+              })}
+            </Select>
+          </Form.Item>
         </div>
 
-        
+
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -636,8 +634,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
-            <Switch 
-              checked={repeatType !== 'none'} 
+            <Switch
+              checked={repeatType !== 'none'}
               onChange={handleRepeatToggle}
             />
           </div>
@@ -664,10 +662,10 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
               </Form.Item>
 
               {repeatType === 'custom' && (
-                <div style={{ 
-                  marginTop: '16px', 
-                  padding: '16px', 
-                  border: '1px solid #f0f0f0', 
+                <div style={{
+                  marginTop: '16px',
+                  padding: '16px',
+                  border: '1px solid #f0f0f0',
                   borderRadius: '8px',
                   backgroundColor: '#f8fafc'
                 }}>
@@ -675,8 +673,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                     name="repeat_frequency"
                     label={<span style={formItemStyle}>Frequency</span>}
                   >
-                    <Select 
-                      defaultValue="weekly" 
+                    <Select
+                      defaultValue="weekly"
                       style={selectStyle}
                       onChange={(value) => setCustomFrequency(value)}
                       suffixIcon={<FiChevronDown size={14} />}
@@ -689,21 +687,21 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
 
                   <Form.Item label={<span style={formItemStyle}>Repeat Every</span>}>
                     <Input.Group compact>
-                      <Input 
-                        type="number" 
-                        min={1} 
+                      <Input
+                        type="number"
+                        min={1}
                         value={customRepeatInterval}
                         onChange={(e) => setCustomRepeatInterval(e.target.value)}
-                        style={{ 
-                          width: '20%', 
+                        style={{
+                          width: '20%',
                           ...inputStyle,
                           borderTopRightRadius: 0,
                           borderBottomRightRadius: 0
                         }}
                       />
-                      <div style={{ 
-                        lineHeight: '48px', 
-                        padding: '0 16px', 
+                      <div style={{
+                        lineHeight: '48px',
+                        padding: '0 16px',
                         backgroundColor: '#f3f4f6',
                         border: '1px solid #e6e8eb',
                         borderLeft: 'none',
@@ -817,7 +815,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                   label={<span style={formItemStyle}>Ends</span>}
                   style={{ marginBottom: '16px' }}
                 >
-                  <Radio.Group 
+                  <Radio.Group
                     value={repeatEndType}
                     onChange={(e) => setRepeatEndType(e.target.value)}
                   >
@@ -831,7 +829,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                             min={1}
                             value={repeatTimes}
                             onChange={(e) => setRepeatTimes(e.target.value)}
-                            style={{ 
+                            style={{
                               width: '60px',
                               ...inputStyle,
                               height: '32px'
@@ -845,6 +843,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                         <Space align="center">
                           On{' '}
                           <DatePicker
+                            value={repeatEndDate}
+                            onChange={(date) => setRepeatEndDate(date)}
                             disabled={repeatEndType !== 'on'}
                             format="DD/MM/YYYY"
                             style={{
@@ -865,7 +865,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         <Form.Item
           name="participants_reminder"
           label="Participants Reminder"
-          style={{marginTop:"20px"}}
+          style={{ marginTop: "20px" }}
         >
           <Select
             placeholder="Select reminder option"
@@ -889,7 +889,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           </Select>
         </Form.Item>
 
-       
+
 
         <div style={{
           display: "flex",

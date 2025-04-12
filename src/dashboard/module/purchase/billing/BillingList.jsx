@@ -1,16 +1,18 @@
-import React from 'react';
-import { Table, Button, Dropdown, Menu, Tag } from 'antd';
+import React, { useState } from 'react';
+import { Table, Button, Dropdown, Menu, Tag, Modal } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
 import { useGetVendorsQuery } from './services/billingApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
-const BillingList = ({ billings, onEdit, onDelete, onView, searchText, loading }) => {
+import ViewBilling from './ViewBilling';
+
+const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
     // Fetch vendors data
     const { data: vendorsData } = useGetVendorsQuery();
 
     const { data: currenciesData } = useGetAllCurrenciesQuery({});
 
-
-
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedBill, setSelectedBill] = useState(null);
 
     // Create a map of vendor IDs to vendor names
     const vendorMap = React.useMemo(() => {
@@ -100,16 +102,16 @@ const BillingList = ({ billings, onEdit, onDelete, onView, searchText, loading }
                             <Menu.Item 
                                 key="view" 
                                 icon={<FiEye />}
-                                onClick={() => onView(record)}
+                                onClick={() => handleViewBilling(record)}
                             >
-                                View
+                                View Billing
                             </Menu.Item>
                             <Menu.Item 
                                 key="edit" 
                                 icon={<FiEdit2 />}
                                 onClick={() => onEdit(record)}
                             >
-                                Edit
+                                Edit Billing
                             </Menu.Item>
                             <Menu.Item 
                                 key="delete" 
@@ -117,7 +119,7 @@ const BillingList = ({ billings, onEdit, onDelete, onView, searchText, loading }
                                 danger
                                 onClick={() => onDelete(record)}
                             >
-                                Delete
+                                Delete Billing
                             </Menu.Item>
                         </Menu>
                     }
@@ -140,19 +142,37 @@ const BillingList = ({ billings, onEdit, onDelete, onView, searchText, loading }
         vendorMap[bill.vendor]?.toLowerCase().includes(searchText.toLowerCase())
     );
 
+    const handleViewBilling = (record) => {
+        setSelectedBill(record);
+        setIsModalVisible(true);
+    };
+
     return (
-        <Table
-            columns={columns}
-            dataSource={filteredBillings}
-            rowKey="id"
-            scroll={{ x: 1300 }}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} items`,
-            }}
-            // style={{ marginTop: 16 }}
-        />
+        <>
+            <Table
+                columns={columns}
+                dataSource={filteredBillings}
+                rowKey="id"
+                scroll={{ x: 1300 }}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+            />
+
+            <Modal
+                open={isModalVisible}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    setSelectedBill(null);
+                }}
+                width={800}
+                footer={null}
+            >
+                {selectedBill && <ViewBilling data={selectedBill} />}
+            </Modal>
+        </>
     );
 };
 

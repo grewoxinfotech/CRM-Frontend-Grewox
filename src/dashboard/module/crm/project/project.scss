@@ -383,3 +383,19 @@
         }
     }
 }
+
+.search-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .ant-input-affix-wrapper {
+        border-radius: 6px;
+    }
+
+    .ant-select {
+        .ant-select-selector {
+            border-radius: 6px;
+        }
+    }
+}

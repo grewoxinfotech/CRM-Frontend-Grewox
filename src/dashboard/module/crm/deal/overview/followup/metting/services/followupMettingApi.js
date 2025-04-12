@@ -10,7 +10,10 @@ export const followupMeetingApi = createApi({
       query: (id) => `/followup-meetings/${id}`,
       providesTags: ["FollowupMeetings"],
     }),
-  
+    getFollowupMeetingById: builder.query({
+      query: (id) => `/followup-meetings/${id}`,
+      providesTags: ["FollowupMeetings"],
+    }),
     createFollowupMeeting: builder.mutation({
       query: ({id, data}) => ({
         url: `followup-meetings/${id}`,
@@ -39,7 +42,7 @@ export const followupMeetingApi = createApi({
 
 export const {
   useGetFollowupMeetingsQuery,
-
+  useGetFollowupMeetingByIdQuery,
   useCreateFollowupMeetingMutation,
   useUpdateFollowupMeetingMutation,
   useDeleteFollowupMeetingMutation,

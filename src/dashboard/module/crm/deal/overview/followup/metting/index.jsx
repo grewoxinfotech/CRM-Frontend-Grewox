@@ -1,24 +1,42 @@
-import React from 'react';
-import { Table, Tag, Space, Button, Avatar, Tooltip, Dropdown } from 'antd';
-import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
+import React, { useState } from 'react';
+import { Table, Tag, Space, Button, Avatar, Tooltip, Dropdown, Modal, message } from 'antd';
+import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical, FiAlertCircle } from 'react-icons/fi';
 
 import dayjs from 'dayjs';
 import './followupmetting.scss';
-import { useGetFollowupMeetingsQuery } from './services/followupMettingApi';
+import { useGetFollowupMeetingsQuery, useDeleteFollowupMeetingMutation } from './services/followupMettingApi';
+import EditFollowupMeeting from './EditfollowupMeeting';
 
 
 
 const FollowupMeetingList = ({ dealId, users }) => {
-    const { data: followupMeeting, isLoading: followupMeetingLoading } = useGetFollowupMeetingsQuery(dealId);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [selectedMeetingId, setSelectedMeetingId] = useState(null);
 
-    const handleEdit = (record) => {
-        // Handle edit
-        console.log('Edit:', record);
+    const { data: followupMeeting, isLoading: followupMeetingLoading } = useGetFollowupMeetingsQuery(dealId);
+    const [deleteFollowupMeeting] = useDeleteFollowupMeetingMutation();
+
+    const handleEdit = (meetingId) => {
+        setSelectedMeetingId(meetingId);
+        setEditModalVisible(true);
     };
 
     const handleDelete = (id) => {
-        // Handle delete
-        console.log('Delete:', id);
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this task?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteFollowupMeeting(id).unwrap();
+                    message.success('Meeting deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete meeting');
+                }
+            },
+        });
     };
 
     const columns = [
@@ -173,12 +191,13 @@ const FollowupMeetingList = ({ dealId, users }) => {
                                     key: 'edit',
                                     label: 'Edit',
                                     icon: <FiEdit2 />,
-                                    onClick: () => handleEdit(record)
+                                    onClick: () => handleEdit(record.id)
                                 },
                                 {
                                     key: 'delete',
                                     label: 'Delete',
-                                    icon: <FiTrash2 />,
+                                    icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
+                                    danger: true,
                                     onClick: () => handleDelete(record.id)
                                 }
                             ]
@@ -197,18 +216,34 @@ const FollowupMeetingList = ({ dealId, users }) => {
     ];
 
     return (
-        <Table
-            dataSource={followupMeeting?.data || []}
-            columns={columns}
-            rowKey="id"
-            loading={followupMeetingLoading}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} meetings`
-            }}
-            className="followup-table"
-        />
+        <>
+            <Table
+                dataSource={followupMeeting?.data || []}
+                columns={columns}
+                rowKey="id"
+                loading={followupMeetingLoading}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} meetings`
+                }}
+                className="followup-table"
+            />
+            {editModalVisible && (
+                <EditFollowupMeeting
+                    open={editModalVisible}
+                    meetingId={selectedMeetingId}
+                    onCancel={() => {
+                        setEditModalVisible(false);
+                        setSelectedMeetingId(null);
+                    }}
+                    onSubmit={() => {
+                        setEditModalVisible(false);
+                        setSelectedMeetingId(null);
+                    }}
+                />
+            )}
+        </>
     );
 };
 

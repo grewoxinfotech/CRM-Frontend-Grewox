@@ -13,7 +13,8 @@ import {
     Tag,
     Dropdown,
     Menu,
-    DatePicker
+    DatePicker,
+    Select
 } from 'antd';
 import {
     FiPlus,
@@ -37,11 +38,14 @@ import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 const Project = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [searchText, setSearchText] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedStatus, setSelectedStatus] = useState('all');
 
     const { data: projects, isLoading } = useGetAllProjectsQuery();
     const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
@@ -147,6 +151,32 @@ const Project = () => {
         </Menu>
     );
 
+    // Filter projects based on search, category and status
+    const filterProjects = () => {
+        if (!projects?.data) return [];
+
+        return projects.data.filter(project => {
+            const matchesSearch = project.project_name.toLowerCase().includes(searchText.toLowerCase());
+            const matchesCategory = selectedCategory === 'all' || project.category === selectedCategory;
+            const matchesStatus = selectedStatus === 'all' || project.status === selectedStatus;
+            return matchesSearch && matchesCategory && matchesStatus;
+        });
+    };
+
+    // Get unique categories from projects
+    const getCategories = () => {
+        if (!projects?.data) return [];
+        const categories = [...new Set(projects.data.map(project => project.category))];
+        return categories.filter(Boolean); // Remove null/undefined values
+    };
+
+    // Get unique statuses from projects
+    const getStatuses = () => {
+        if (!projects?.data) return [];
+        const statuses = [...new Set(projects.data.map(project => project.status))];
+        return statuses.filter(Boolean); // Remove null/undefined values
+    };
+
     return (
         <div className="project-page">
             <div className="page-breadcrumb">
@@ -168,13 +198,40 @@ const Project = () => {
                     <p className="subtitle">Manage all projects in the system</p>
                 </div>
                 <div className="header-right">
-                    <Input
-                        prefix={<FiSearch />}
-                        placeholder="Search projects..."
-                        allowClear
-                        className="search-input"
-                        onChange={(e) => setSearchText(e.target.value)}
-                    />
+                    <div className="search-filter-group">
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                            placeholder="Search projects..."
+                            allowClear
+                            onChange={(e) => setSearchText(e.target.value)}
+                            value={searchText}
+                            style={{ width: 200 }}
+                        />
+
+                        <Select
+                            defaultValue="all"
+                            style={{ width: 150 }}
+                            onChange={(value) => setSelectedCategory(value)}
+                            className="category-select"
+                        >
+                            <Option value="all">All Categories</Option>
+                            <Option value="web">Web Development</Option>
+                            <Option value="mobile">Mobile App</Option>
+                            <Option value="design">Design</Option>
+                        </Select>
+
+                        <Select
+                            defaultValue="all"
+                            style={{ width: 150 }}
+                            onChange={(value) => setSelectedStatus(value)}
+                            className="status-select"
+                        >
+                            <Option value="all">All Status</Option>
+                            {getStatuses().map(status => (
+                                <Option key={status} value={status}>{status}</Option>
+                            ))}
+                        </Select>
+                    </div>
                     <Dropdown overlay={exportMenu} trigger={['click']}>
                         <Button>
                             <FiDownload /> Export <FiChevronDown />
@@ -188,7 +245,7 @@ const Project = () => {
 
             <Card className="project-content">
                 <ProjectCard
-                    projects={projects?.data}
+                    projects={filterProjects()}
                     loading={isLoading}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
