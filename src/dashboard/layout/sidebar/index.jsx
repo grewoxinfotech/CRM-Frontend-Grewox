@@ -582,7 +582,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
       initial={false}
     >
       <div className="sidebar-header">
-        <div className="logo">{!isCollapsed && <span>CRM System</span>}</div>
+        <div className="logo">{!isCollapsed && <span>Grewox CRM</span>}</div>
         <button className="collapse-btn" onClick={handleToggleCollapse}>
           {isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
         </button>

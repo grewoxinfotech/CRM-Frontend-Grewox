@@ -15,13 +15,10 @@ const NotificationsComponent = () => {
     const loggedInUser = useSelector(selectCurrentUser);
 
 
-// console.log("loggedInUser",loggedInUser)
-
     const notifications = notificationsData?.data || [];
     const normalNotifications = notifications.filter(n => n.notification_type === 'normal');
     const reminders = notifications.filter(n => n.notification_type === 'reminder');
 
-// console.log("notifications",notifications)
 
     const handleMarkAsRead = async (id) => {
         try {

@@ -24,8 +24,6 @@ import {
   FiGrid,
   FiList,
   FiHome,
-  FiLink,
-  FiCopy,
 } from "react-icons/fi";
 import "./Lead.scss";
 import CreateLead from "./CreateLead";
@@ -60,10 +58,6 @@ const Lead = () => {
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
-  const [isGenerateLinkModalOpen, setIsGenerateLinkModalOpen] = useState(false);
-  const [selectedPipeline, setSelectedPipeline] = useState(null);
-  const [selectedStage, setSelectedStage] = useState(null);
-  const [generatedLink, setGeneratedLink] = useState("");
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -127,39 +121,6 @@ const Lead = () => {
     </Menu>
   );
 
-  const filteredStages = React.useMemo(() => {
-    if (!stagesData) return [];
-    return stagesData.filter(
-      stage => stage.stageType === "lead" && stage.pipeline === selectedPipeline
-    );
-  }, [stagesData, selectedPipeline]);
-
-  const handleGenerateLink = () => {
-    if (!selectedPipeline || !selectedStage) {
-      message.error("Please select both pipeline and stage");
-      return;
-    }
-
-    const baseUrl = window.location.origin;
-    const formUrl = new URL("/lead-form", baseUrl);
-    formUrl.searchParams.set("pipeline", selectedPipeline);
-    formUrl.searchParams.set("stage", selectedStage);
-    formUrl.searchParams.set("source", "web-form");
-    
-    setGeneratedLink(formUrl.toString());
-  };
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(generatedLink);
-    message.success("Link copied to clipboard!");
-  };
-
-  const handleOpenForm = () => {
-    if (generatedLink) {
-      window.open(generatedLink, '_blank');
-    }
-  };
-
   return (
     <div className="lead-page">
       <div className="page-breadcrumb">
@@ -210,19 +171,6 @@ const Lead = () => {
                     <FiChevronDown size={14} />
                   </Button>
                 </Dropdown>
-                <Button
-                  icon={<FiLink size={16} />}
-                  onClick={() => setIsGenerateLinkModalOpen(true)}
-                  className="generate-link-button"
-                  style={{
-                    marginRight: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  Generate Link
-                </Button>
                 <Button
                   type="primary"
                   icon={<FiPlus size={16} />}
@@ -282,145 +230,6 @@ const Lead = () => {
         initialValues={selectedLead}
         key={selectedLead?.id}
       />
-
-      <Modal
-        title="Generate Lead Form Link"
-        open={isGenerateLinkModalOpen}
-        onCancel={() => setIsGenerateLinkModalOpen(false)}
-        footer={null}
-        width={600}
-        destroyOnClose
-        className="generate-link-modal"
-      >
-        <div style={{ marginBottom: '24px' }}>
-          <Text type="secondary">
-            Select a pipeline and stage to generate a shareable lead form link.
-          </Text>
-        </div>
-
-        <Form layout="vertical">
-          <Form.Item
-            label="Select Pipeline"
-            required
-            style={{ marginBottom: '16px' }}
-          >
-            <Select
-              placeholder="Choose a pipeline"
-              value={selectedPipeline}
-              onChange={(value) => {
-                setSelectedPipeline(value);
-                setSelectedStage(null);
-              }}
-              style={{ width: '100%' }}
-            >
-              {pipelines.map((pipeline) => (
-                <Option key={pipeline.id} value={pipeline.id}>
-                  {pipeline.pipeline_name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            label="Select Stage"
-            required
-            style={{ marginBottom: '24px' }}
-          >
-            <Select
-              placeholder={selectedPipeline ? "Choose a stage" : "Select pipeline first"}
-              value={selectedStage}
-              onChange={setSelectedStage}
-              disabled={!selectedPipeline}
-              style={{ width: '100%' }}
-            >
-              {filteredStages.map((stage) => (
-                <Option key={stage.id} value={stage.id}>
-                  {stage.stageName}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <Button
-              type="primary"
-              onClick={handleGenerateLink}
-              style={{ flex: 1 }}
-              disabled={!selectedPipeline || !selectedStage}
-            >
-              Generate Link
-            </Button>
-          </div>
-
-          {generatedLink && (
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '16px',
-                background: '#f5f5f5',
-                borderRadius: '8px',
-              }}
-            >
-              <div style={{ marginBottom: '16px' }}>
-                <Text strong>Generated Link:</Text>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '8px',
-                  alignItems: 'center',
-                }}
-              >
-                <Input
-                  value={generatedLink}
-                  readOnly
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  icon={<FiCopy size={16} />}
-                  onClick={handleCopyLink}
-                  tooltip="Copy to clipboard"
-                >
-                  Copy
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={handleOpenForm}
-                >
-                  Open Form
-                </Button>
-              </div>
-            </div>
-          )}
-        </Form>
-      </Modal>
-
-      <style jsx global>{`
-        .generate-link-modal {
-          .ant-modal-content {
-            border-radius: 12px;
-            overflow: hidden;
-          }
-          
-          .ant-modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #f0f0f0;
-          }
-
-          .ant-modal-body {
-            padding: 24px;
-          }
-
-          .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
-            border-color: #40a9ff;
-          }
-
-          .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
-            border-color: #1890ff;
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-          }
-        }
-      `}</style>
     </div>
   );
 };
