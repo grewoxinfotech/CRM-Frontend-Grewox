@@ -16,7 +16,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import moment from 'moment';
-import { useGetDebitNotesQuery, useCreateDebitNoteMutation } from './services/debitnoteApi';
+import { useGetDebitNotesQuery, useCreateDebitNoteMutation, useDeleteDebitNoteMutation } from './services/debitnoteApi';
 import { useSelector } from 'react-redux';
 
 const { Title, Text } = Typography;
@@ -40,6 +40,7 @@ const DebitNote = () => {
     const [loading, setLoading] = useState(false);
     const [createModalVisible, setCreateModalVisible] = useState(false);
     const [createDebitNote] = useCreateDebitNoteMutation();
+    const [deleteDebitNote] = useDeleteDebitNoteMutation();
 
 
     const { data: debitNotes, isLoading, isError, refetch } = useGetDebitNotesQuery(companyId); 
@@ -60,21 +61,46 @@ const DebitNote = () => {
         console.log('View debit note:', record);
     };
 
-   
+    const handleDelete = async (record) => {
+        try {
+            Modal.confirm({
+                title: 'Are you sure you want to delete this debit note?',
+                content: 'This action cannot be undone.',
+                okText: 'Yes',
+                okType: 'danger',
+                cancelText: 'No',
+                onOk: async () => {
+                    try {
+                        const response = await deleteDebitNote(record._id).unwrap();
+                        
+                        if (response.success) {
+                            message.success('Debit note deleted successfully');
+                            refetch();
+                        } else {
+                            message.error(response.message);
+                        }
+                    } catch (error) {
+                        console.error('Delete Error:', error);
+                        message.error(error.message);
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Delete Error:', error);
+            message.error(error.message);
+        }
+    };
 
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = debitNotes.map(note => ({
-                'Note Number': note.noteNumber,
-                'Due Date': note.dueDate,
-                'Amount': note.amount,
-                'Status': note.status,
-                'Description': note.description,
-                'Vendor': note.vendor,
-                'Reference': note.reference,
-                'Notes': note.notes
-            }));
+            const data = debitNotes?.data?.map(note => ({
+                'Bill Number': note.billNumber || note.bill_number || note.bill,
+                'Date': note.date || note.createdAt,
+                'Amount': note.amount || note.total,
+                'Description': note.description || note.discription,
+                
+            })) || [];
 
             switch (type) {
                 case 'csv':
@@ -255,9 +281,9 @@ const DebitNote = () => {
 
             <Card className="debitnote-table-card">
                 <DebitNoteList
-                    data={debitNotes|| []}
-                    
-                   
+                    data={debitNotes}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
                     onView={handleView}
                     searchText={searchText}
                     loading={isLoading}

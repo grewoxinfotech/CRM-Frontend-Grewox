@@ -6,8 +6,11 @@ import {
   FiEye,
   FiMoreVertical,
   FiDollarSign,
+  FiFileText
 } from "react-icons/fi";
 import dayjs from "dayjs";
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import {
   useGetSalaryQuery,
   useDeleteSalaryMutation,
@@ -130,6 +133,74 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     }
   };
 
+  const generatePayslip = (record) => {
+    try {
+      const doc = new jsPDF();
+      const employeeName = employeeMap[record.employeeId] || "Unknown Employee";
+      // const currencyIcon = getCurrencyIcon(record.currency);
+
+      // Add Header
+      doc.setFillColor(41, 128, 185);
+      doc.rect(0, 0, doc.internal.pageSize.width, 30, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20); 
+      doc.text('PAYSLIP', 105, 20, { align: 'center' });
+      
+      // Reset color
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      
+      // Employee Details
+      doc.setFillColor(240, 240, 240);
+      doc.rect(10, 40, doc.internal.pageSize.width - 20, 35, 'F');
+      
+      doc.setFont(undefined, 'bold');
+      doc.text('Employee Details:', 20, 50);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Name: ${employeeName}`, 20, 60);
+      doc.text(`Date: ${dayjs(record.paymentDate).format('DD-MM-YYYY')}`, 20, 70);
+      doc.text(`Bank Account: ${record.bankAccount || 'N/A'}`, 120, 60);
+      doc.text(`Type: ${record.payslipType}`, 120, 70);
+
+      // Create salary table
+      const tableData = [
+        [{ content: 'Salary Details', colSpan: 2, styles: { fillColor: [41, 128, 185], textColor: [255, 255, 255], halign: 'center' } }],
+        ['Basic Salary', ` ${Number(record.salary || 0).toFixed(2)}`],
+        ['Allowances', ` ${Number(record.allowances || 0).toFixed(2)}`],
+        ['Deductions', ` ${Number(record.deductions || 0).toFixed(2)}`],
+        [{ content: 'Net Salary', styles: { fontStyle: 'bold' } }, 
+         { content: ` ${Number(record.netSalary || 0).toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+      ];
+
+      doc.autoTable({
+        startY: 85,
+        body: tableData,
+        theme: 'grid',
+        styles: {
+          fontSize: 10,
+          cellPadding: 6,
+        },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 80, halign: 'center' }
+        },
+        margin: { left: 20, right: 20 }
+      });
+
+      // Footer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFontSize(8);
+      doc.text('This is a computer-generated document.', 105, pageHeight - 10, { align: 'center' });
+
+      // Save PDF
+      doc.save(`Payslip-${employeeName}-${dayjs(record.paymentDate).format('MMM-YYYY')}.pdf`);
+      message.success('Payslip generated successfully!');
+    } catch (error) {
+      console.error('Error generating payslip:', error);
+      message.error('Failed to generate payslip');
+    }
+  };
+
   const getDropdownItems = (record) => ({
     items: [
       {
@@ -137,6 +208,12 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         icon: <FiEye />,
         label: "View Details",
         onClick: () => onView?.(record),
+      },
+      {
+        key: "generatePayslip",
+        icon: <FiFileText />,
+        label: "Generate Payslip",
+        onClick: () => generatePayslip(record),
       },
       {
         key: "edit",

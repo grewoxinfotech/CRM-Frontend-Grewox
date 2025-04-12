@@ -288,8 +288,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
       const payload = {
         customer: values.customer,
-        issueDate: values.issueDate?.format("YYYY-MM-DD"),
-        dueDate: values.dueDate?.format("YYYY-MM-DD"),         
+        issueDate: values.issueDate?.format("DD-MM-YYYY"),
+        dueDate: values.dueDate?.format("DD-MM-YYYY"),         
         currency: values.currency,
         items: formattedItems,
         subtotal: Number(values.subtotal) || 0,

@@ -19,20 +19,37 @@ const AttendanceList = ({ searchText, filters }) => {
     const { data: holidayData, isLoading: isLoadingHolidays } = useGetAllHolidaysQuery();
     const { data: leaveData, isLoading: isLoadingLeaves } = useGetLeaveQuery(); // Added leave data query
 
-    // Transform employee data
-    const employees = React.useMemo(() => {
-        if (!employeeData) return [];
-        const data = Array.isArray(employeeData) ? employeeData : employeeData.data || [];
+    // Transform employee data with search filtering
+    const filteredEmployees = React.useMemo(() => {
+        if (!employeeData?.data) return [];
+        const data = employeeData.data;
 
-        return data.map(emp => ({
+        let filtered = data;
+        
+        // Apply search text filter
+        if (searchText) {
+            const searchLower = searchText.toLowerCase();
+            filtered = data.filter(emp => {
+                const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.toLowerCase();
+                const employeeCode = emp.employee_code?.toLowerCase() || '';
+                const department = emp.department?.toLowerCase() || '';
+                
+                return (
+                    fullName.includes(searchLower) ||
+                    employeeCode.includes(searchLower) ||
+                    department.includes(searchLower)
+                );
+            });
+        }
+
+        return filtered.map(emp => ({
             id: emp.id,
             name: emp.firstName && emp.lastName
                 ? `${emp.firstName} ${emp.lastName}`
                 : emp.username,
-            code: emp.employee_code || '-',
             avatar: emp.avatar
         }));
-    }, [employeeData]);
+    }, [employeeData?.data, searchText]);
 
     // Transform holiday data
     const holidays = React.useMemo(() => {
@@ -149,11 +166,11 @@ const AttendanceList = ({ searchText, filters }) => {
     // Update the columns definition
     const columns = [
         {
-            title: 'Employee Name',
+            title: 'Employee Details',
             dataIndex: 'name',
             key: 'name',
             fixed: 'left',
-            width: 250,
+            width: 280,
             render: (text, record) => {
                 const attendance = calculateAttendanceRatio(record);
                 return (
@@ -162,11 +179,13 @@ const AttendanceList = ({ searchText, filters }) => {
                             {record.avatar ? (
                                 <img src={record.avatar} alt={text} />
                             ) : (
-                                <FiUser />
+                                <FiUser size={24} />
                             )}
                         </div>
                         <div className="employee-details">
                             <span className="employee-name">{text}</span>
+                            <span className="employee-code">{record.code}</span>
+                            <span className="employee-department">{record.department}</span>
                             <span className="attendance-ratio" style={{
                                 color: attendance.percentage >= 70 ? '#52c41a' : 
                                        attendance.percentage >= 50 ? '#faad14' : '#ff4d4f',
@@ -220,63 +239,44 @@ const AttendanceList = ({ searchText, filters }) => {
             ? attendanceData
             : (attendanceData?.data || []);
 
-        return employees.map(emp => {
+        return filteredEmployees.map(emp => {
             const rowData = {
                 key: emp.id,
                 name: emp.name,
-                avatar: emp.avatar
+                avatar: emp.avatar,
+                department: emp.department,
+                code: emp.code
             };
 
             days.forEach(day => {
                 // Find attendance for this employee on this specific day
-                const attendance = attendances.find(att => {
-                    // Check if the attendance record matches the employee and date
-                    return att.employee === emp.id &&
-                        dayjs(att.date).format('YYYY-MM-DD') === day.fullDate;
-                });
+                const attendance = attendances.find(att => 
+                    att.employee === emp.id && 
+                    dayjs(att.date).format('YYYY-MM-DD') === day.fullDate
+                );
 
-                // Check if it's a holiday
-                const holiday = holidays instanceof Map ? holidays.get(day.fullDate) : null;
-
-                // Check if it's a leave day
+                const holiday = holidays.get(day.fullDate);
                 const leaveKey = `${emp.id}_${day.fullDate}`;
-                const leave = leaves instanceof Map ? leaves.get(leaveKey) : null;
-
-                // Check if it's a weekend
-                const isWeekend = ['Sun'].includes(day.day);
+                const leave = leaves.get(leaveKey);
+                const isWeekend = ['Sun', 'Sat'].includes(day.day);
 
                 if (leave) {
-                    // If it's a leave day
-                    if (leave.isHalfDay) {
-                        rowData[`day${day.date}`] = 'H'; // Half day
-                    } else {
-                        rowData[`day${day.date}`] = 'L'; // Full day leave
-                    }
+                    rowData[`day${day.date}`] = leave.isHalfDay ? 'H' : 'L';
                 } else if (holiday) {
-                    if (holiday.leave_type === 'paid') {
-                        rowData[`day${day.date}`] = 'PH'; // Paid Holiday
-                    } else {
-                        rowData[`day${day.date}`] = 'UNP'; // Unpaid Holiday
-                    }
+                    rowData[`day${day.date}`] = holiday.leave_type === 'paid' ? 'PH' : 'UNP';
                 } else if (isWeekend) {
                     rowData[`day${day.date}`] = 'WK';
                 } else if (attendance) {
-                    // If attendance record exists
-                    if (attendance.halfDay) {
-                        rowData[`day${day.date}`] = 'H'; // Half day
-                    } else if (attendance.late) {
-                        rowData[`day${day.date}`] = 'L'; // Late
-                    } else {
-                        rowData[`day${day.date}`] = 'P'; // Present
-                    }
+                    rowData[`day${day.date}`] = attendance.halfDay ? 'H' : 
+                                               attendance.late ? 'L' : 'P';
                 } else {
-                    rowData[`day${day.date}`] = 'A'; // Absent
+                    rowData[`day${day.date}`] = 'A';
                 }
             });
 
             return rowData;
         });
-    }, [employees, attendanceData, days, holidays, leaves]);
+    }, [filteredEmployees, attendanceData?.data, days, holidays, leaves]);
 
     return (
         <div className="attendance-list-container">

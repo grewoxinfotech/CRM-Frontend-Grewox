@@ -24,10 +24,11 @@ import "jspdf-autotable";
 import ContactList from "./ContactList";
 import CreateContact from "./CreateContact";
 import EditContact from "./EditContact";
-import { useGetContactsQuery } from "./services/contactApi";
+import { useGetContactsQuery, useDeleteContactMutation } from "./services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+
 
 const { Title, Text } = Typography;
 
@@ -37,11 +38,11 @@ const Contact = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleteContact, { isLoading: isDeleteLoading }] = useDeleteContactMutation();
+
   const { data: contactsResponse, isLoading, error } = useGetContactsQuery();
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
   const loggedInUser = useSelector(selectCurrentUser);
-
-
 
   const handleCreate = () => {
     setSelectedContact(null);
@@ -57,25 +58,27 @@ const Contact = () => {
     console.log("View contact:", record);
   };
 
-  const handleDelete = (record) => {
-    Modal.confirm({
-      title: 'Delete Contact',
-      content: 'Are you sure you want to delete this contact?',
-      okText: 'Yes',
-      okType: 'danger',
-      cancelText: 'No',
-      bodyStyle: {
-        padding: '20px',
-      },
-      onOk: async () => {
-        try {
-          message.success('Contact deleted successfully');
-        } catch (error) {
-          message.error('Failed to delete contact');
-        }
-      },
-    });
-  };
+  // const handleDelete = (id) => {
+  //   Modal.confirm({
+  //     title: 'Delete Contact',
+  //     content: 'Are you sure you want to delete this contact?',
+  //     okText: 'Yes',
+  //     okType: 'danger',
+  //     cancelText: 'No',
+  //     bodyStyle: {
+  //       padding: '20px',
+  //     },
+  //     onOk: async () => {
+  //       try {
+  //         await deleteContact(id).unwrap();
+  //         message.success('Contact deleted successfully');
+  //       } catch (error) {
+  //         console.error("Delete Error:", error);
+  //         message.error(error?.data?.message || 'Failed to delete contact');
+  //       }
+  //     },
+  //   });
+  // };
 
   const handleCreateSubmit = async (values) => {
     try {
@@ -273,7 +276,7 @@ const Contact = () => {
         <ContactList
           onEdit={handleEdit}
           onView={handleView}
-          onDelete={handleDelete}
+          // onDelete={handleDelete}
           searchText={searchText}
           isLoading={isLoading}
           loggedInUser={loggedInUser}
@@ -301,6 +304,7 @@ const Contact = () => {
         contactData={selectedContact}
         isLoading={isLoading}
         loggedInUser={loggedInUser}
+
         contactsResponse={contactsResponse}
         companyAccountsResponse={companyAccountsResponse}
         isCompanyAccountsLoading={isCompanyAccountsLoading}

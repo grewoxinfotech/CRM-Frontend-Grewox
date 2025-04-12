@@ -197,7 +197,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         >
           <Select
             placeholder="Select invoice"
-            style={{ width: "100%" }}
+            style={{ width: "100%",height:"40px" }}
             onChange={handleInvoiceChange}
           >
             {invoicesData.map((invoice) => (
@@ -211,14 +211,14 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         <Form.Item
           name="paidOn"
           label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+            <span style={{ fontSize: "14px", fontWeight: "500" ,marginTop:"10px"}}>
               <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
               Paid On
             </span>
           }
         >
           <DatePicker
-            style={{ width: "100%" }}
+            style={{ width: "100%",height:"50px" }}
             format="YYYY-MM-DD"
           />
         </Form.Item>
@@ -233,7 +233,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
           }
         >
           <InputNumber
-            style={{ width: "100%" }}
+            style={{ width: "100%",height:"40px"   }}
             placeholder="Enter amount"
             formatter={(value) => {
               const selectedInvoice = form.getFieldValue('invoice');
@@ -270,7 +270,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         <Form.Item
           name="paymentMethod"
           label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+            <span style={{ fontSize: "14px", fontWeight: "500" ,marginTop:"10px"}}>
               <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
               Payment Method
             </span>
@@ -299,7 +299,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         <Form.Item
           name="remark"
           label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+            <span style={{ fontSize: "14px", fontWeight: "500" ,marginTop:"10px"}}>
               <FiMessageSquare style={{ marginRight: "8px", color: "#1890ff" }} />
               Remark
             </span>

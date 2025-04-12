@@ -194,13 +194,13 @@ const Billing = () => {
 
     const exportMenu = (
         <Menu>
-            <Menu.Item
+            {/* <Menu.Item
                 key="csv"
                 icon={<FiDownload />}
                 onClick={() => handleExport('csv')}
             >
                 Export as CSV
-            </Menu.Item>
+            </Menu.Item> */}
             <Menu.Item
                 key="excel"
                 icon={<FiDownload />}
@@ -279,12 +279,13 @@ const Billing = () => {
                     </div>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button
+                        <Button
                                 className="export-button"
-                                icon={<FiChevronDown size={16} />}
+                                icon={<FiDownload size={16} />}
                                 loading={loading}
                             >
                                 Export
+                                <FiChevronDown size={16} />
                             </Button>
                         </Dropdown>
                         <Button

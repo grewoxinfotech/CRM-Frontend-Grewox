@@ -30,6 +30,8 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./companyaccount.scss";
+import { useGetUsersQuery } from "../../user-management/users/services/userApi";
+import { useUpdateCompanyAccountMutation } from "./services/companyAccountApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -38,16 +40,29 @@ const { TextArea } = Input;
 const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
   const [form] = Form.useForm();
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
+  const { data: usersData } = useGetUsersQuery();
+  const [updateCompanyAccount, { isLoading }] = useUpdateCompanyAccountMutation();
 
   React.useEffect(() => {
     if (companyData) {
+      console.log("companyData", companyData);
+      
+      // Find the account owner's name from users data
+      let accountOwnerName = companyData?.account_owner;
+      if (usersData?.data) {
+        const owner = usersData.data.find(user => user.id === companyData?.account_owner);
+        if (owner) {
+          accountOwnerName = owner.username;
+        }
+      }
+      
       form.setFieldsValue({
         ...companyData,
-        account_owner: loggedInUser?.username,
+        account_owner: accountOwnerName,
         registrationDate: companyData.registrationDate ? dayjs(companyData.registrationDate) : null
       });
     }
-  }, [companyData, form, loggedInUser]);
+  }, [companyData, form, usersData]);
 
   const handleCopyBillingToShipping = (checked) => {
     setCopyBillingToShipping(checked);
@@ -72,13 +87,26 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
 
   const handleSubmit = async (values) => {
     try {
+      // Find the account owner ID from the username
+      let accountOwnerId = companyData?.account_owner;
+      if (usersData?.data) {
+        const owner = usersData.data.find(user => user.username === values.account_owner);
+        if (owner) {
+          accountOwnerId = owner.id;
+        }
+      }
+      
       const updatedCompanyData = {
-        id: companyData.id,
-        ...values
+        ...values,
+        account_owner: accountOwnerId,
+        registrationDate: values.registrationDate ? values.registrationDate.format('YYYY-MM-DD') : null
       };
 
-      // Mock API call
-      console.log("Updated Company Data:", updatedCompanyData);
+      await updateCompanyAccount({ 
+        id: companyData.id, 
+        data: updatedCompanyData 
+      }).unwrap();
+      
       message.success("Company account updated successfully");
       onCancel();
     } catch (error) {
@@ -144,6 +172,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                     Account Owner <span className="required">*</span>
                   </span>
                 }
+                
                 rules={[{ required: true, message: "Please enter account owner" }]}
               >
                 <Input
@@ -634,6 +663,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
             type="primary"
             htmlType="submit"
             className="submit-button"
+            loading={isLoading}
           >
             Update Company Account
           </Button>

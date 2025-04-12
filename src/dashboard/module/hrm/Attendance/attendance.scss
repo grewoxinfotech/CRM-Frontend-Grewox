@@ -307,18 +307,20 @@ $border-radius: 6px;
 
                         .employee-info {
                             display: flex;
-                            align-items: center;
+                            align-items: flex-start;
                             gap: 12px;
+                            padding: 8px 0;
 
                             .employee-avatar {
-                                width: 32px;
-                                height: 32px;
+                                width: 40px;
+                                height: 40px;
                                 border-radius: 50%;
                                 overflow: hidden;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                background: #f0f2f5;
+                                background-color: #f0f2f5;
+                                flex-shrink: 0;
 
                                 img {
                                     width: 100%;
@@ -327,7 +329,6 @@ $border-radius: 6px;
                                 }
 
                                 svg {
-                                    font-size: 18px;
                                     color: #8c8c8c;
                                 }
                             }
@@ -335,38 +336,51 @@ $border-radius: 6px;
                             .employee-details {
                                 display: flex;
                                 flex-direction: column;
-                                gap: 4px;
+                                gap: 2px;
 
                                 .employee-name {
+                                    font-size: 14px;
                                     font-weight: 500;
                                     color: #262626;
-                                    font-size: 14px;
+                                    line-height: 1.2;
+                                }
+
+                                .employee-code {
+                                    font-size: 12px;
+                                    color: #8c8c8c;
+                                    line-height: 1.2;
+                                }
+
+                                .employee-department {
+                                    font-size: 12px;
+                                    color: #595959;
+                                    line-height: 1.2;
+                                    font-weight: 500;
                                 }
 
                                 .attendance-ratio {
-                                    display: flex;
-                                    align-items: center;
-                                    gap: 4px;
+                                    margin-top: 2px;
                                     font-size: 12px;
-                                    
-                                    &::before {
-                                        content: '•';
-                                        margin-right: 4px;
-                                    }
+                                    line-height: 1.2;
                                 }
                             }
                         }
 
                         .attendance-status {
-                            padding: 2px 8px;
+                            min-width: 32px !important;
+                            height: 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 0 4px;
                             border-radius: 4px;
-                            font-weight: 500;
                             font-size: 12px;
-                            transition: all 0.3s ease;
+                            font-weight: 500;
+                            cursor: default;
+                            transition: all 0.3s;
 
                             &:hover {
-                                transform: translateY(-1px);
-                                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                                transform: scale(1.05);
                             }
                         }
                     }

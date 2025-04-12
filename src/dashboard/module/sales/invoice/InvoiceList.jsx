@@ -19,7 +19,7 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 
 const { Text } = Typography;
 
-const InvoiceList = () => {
+const InvoiceList = ({ searchText = "" }) => {
   const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [deleteInvoice] = useDeleteInvoiceMutation();
@@ -29,9 +29,24 @@ const InvoiceList = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const invoices = invoicesdata?.data || [];
 
+  // Filter invoices based on search text
+  const filteredInvoices = React.useMemo(() => {
+    return invoices?.filter((invoice) => {
+      const searchLower = searchText.toLowerCase();
+      const invoiceNumber = invoice?.salesInvoiceNumber?.toLowerCase() || "";
+      const customerName = invoice?.customerName?.toLowerCase() || "";
+      const total = invoice?.total?.toString().toLowerCase() || "";
+      const status = invoice?.payment_status?.toLowerCase() || "";
 
- // Sample invoice data
- 
+      return (
+        !searchText ||
+        invoiceNumber.includes(searchLower) ||
+        customerName.includes(searchLower) ||
+        total.includes(searchLower) ||
+        status.includes(searchLower)
+      );
+    });
+  }, [invoices, searchText]);
 
   const getStatusTag = (status) => {
     const statusColors = {
@@ -107,11 +122,42 @@ const InvoiceList = () => {
   const handleView = (record) => {
     // Ensure we have valid data
     if (record) {
-        setSelectedInvoice({
-            ...record,
-            items: Array.isArray(record.items) ? record.items : []
-        });
-        setIsViewModalOpen(true);
+      let items = [];
+      try {
+        // Parse items if it's a string
+        if (typeof record.items === 'string') {
+          items = JSON.parse(record.items);
+        } else if (Array.isArray(record.items)) {
+          items = record.items;
+        }
+
+        // Format items to ensure consistent structure
+        items = items.map(item => ({
+          item_name: item.item_name || item.name || item.description,
+          quantity: Number(item.quantity) || 0,
+          unit_price: Number(item.unit_price || item.rate) || 0,
+          description: item.description || item.item_name || item.name,
+        }));
+
+      } catch (error) {
+        console.error('Error parsing invoice items:', error);
+        items = [];
+      }
+
+      // Format the invoice data
+      const formattedInvoice = {
+        ...record,
+        items,
+        subtotal: Number(record.subtotal) || 0,
+        tax: Number(record.tax) || 0,
+        discount: Number(record.discount) || 0,
+        total: Number(record.total) || 0,
+        issueDate: record.issueDate || new Date(),
+        dueDate: record.dueDate || new Date(),
+      };
+
+      setSelectedInvoice(formattedInvoice);
+      setIsViewModalOpen(true);
     }
   };
 
@@ -120,25 +166,25 @@ const InvoiceList = () => {
       {
         key: "view",
         icon: <FiEye style={{ fontSize: '14px' }} />,
-        label: "View",
+        label: "View Invoice",
         onClick: () => handleView(record),
       },
       {
         key: "edit",
         icon: <FiEdit2 style={{ fontSize: '14px' }} />,
-        label: "Edit",
+        label: "Edit Invoice",
         onClick: () => handleEdit(record),
       },
       {
         key: "download",
         icon: <FiDownload />,
-        label: "Download PDF",
-        onClick: () => console.log("Download PDF:", record.invoice_number),
+        label: "Download Invoice",
+        onClick: () => console.log("Download Invoice:", record.invoice_number),
       },
       {
         key: "delete",
         icon: <FiTrash2 />,
-        label: "Delete",
+        label: "Delete Invoice",
         onClick: () => handleDelete(record.id),
         danger: true,
       },
@@ -247,28 +293,31 @@ const InvoiceList = () => {
   ];
 
   return (
-    <div className="invoice-list">
-      <Table
-        columns={columns}
-        dataSource={invoices}
-        rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
-        }}
-        className="invoice-table"
-      />
+    <>
+      <div className="invoice-list">
+        <Table
+          columns={columns}
+          dataSource={filteredInvoices}
+          rowKey="id"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} invoices`,
+          }}
+          className="invoice-table"
+          loading={isLoading}
+        />
+      </div>
+
       <EditInvoice
         open={editModalVisible}
-        
         onCancel={() => {
           setEditModalVisible(false);
           setSelectedInvoice(null);
         }}
-        onSubmit={handleEditSubmit}
         initialValues={selectedInvoice}
       />
+
       <ViewInvoice
         open={isViewModalOpen}
         onCancel={() => {
@@ -277,7 +326,7 @@ const InvoiceList = () => {
         }}
         invoice={selectedInvoice}
       />
-    </div>
+    </>
   );
 };
 

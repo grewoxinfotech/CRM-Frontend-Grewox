@@ -33,7 +33,7 @@ import CompanyList from "./NotesList";
 import {
   useGetAllNotesQuery,
   useDeleteNotesMutation,
-} from "./services/notesApi";
+} from "./services/NotesApi";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
@@ -85,23 +85,14 @@ const Notes = () => {
     if (searchText) {
       result = result.filter(
         (company) =>
-          company.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          company.email.toLowerCase().includes(searchText.toLowerCase()) ||
-          company.phone.includes(searchText) ||
-          (company.firstName &&
-            company.firstName
-              .toLowerCase()
-              .includes(searchText.toLowerCase())) ||
-          (company.lastName &&
-            company.lastName
-              .toLowerCase()
-              .includes(searchText.toLowerCase())) ||
-          (company.city &&
-            company.city.toLowerCase().includes(searchText.toLowerCase())) ||
-          (company.state &&
-            company.state.toLowerCase().includes(searchText.toLowerCase())) ||
-          (company.gstIn &&
-            company.gstIn.toLowerCase().includes(searchText.toLowerCase()))
+          (company.name?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (company.email?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (company.phone || '').includes(searchText) ||
+          (company.firstName?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (company.lastName?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (company.city?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (company.state?.toLowerCase() || '').includes(searchText.toLowerCase()) ||
+          (company.gstIn?.toLowerCase() || '').includes(searchText.toLowerCase())
       );
     }
     setFilteredCompanies(result);
@@ -191,23 +182,24 @@ const Notes = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = companies.map((company) => ({
-        "Company Name": company.name,
-        Email: company.email,
-        Phone: company.phone,
-        Status: company.status,
-        "Created Date": moment(company.created_at).format("YYYY-MM-DD"),
+      const data = companies.map((note) => ({
+        "Note Title": note.title || 'N/A',
+        "Note Type": note.type || 'N/A',
+        "Description": note.description || 'N/A',
+        "Employees": Array.isArray(note.employees) ? note.employees.join(', ') : note.employees || 'N/A',
+        "Created Date": moment(note.created_at).format("DD-MM-YYYY") || 'N/A',
+       
       }));
 
       switch (type) {
         case "csv":
-          exportToCSV(data, "companies_export");
+          exportToCSV(data, "notes_export");
           break;
         case "excel":
-          exportToExcel(data, "companies_export");
+          exportToExcel(data, "notes_export");
           break;
         case "pdf":
-          exportToPDF(data, "companies_export");
+          exportToPDF(data, "notes_export");
           break;
         default:
           break;
@@ -245,7 +237,7 @@ const Notes = () => {
   const exportToExcel = (data, filename) => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Companies");
+    XLSX.utils.book_append_sheet(wb, ws, "Notes");
     XLSX.writeFile(wb, `${filename}.xlsx`);
   };
 
@@ -256,6 +248,7 @@ const Notes = () => {
       body: data.map((item) => Object.values(item)),
       margin: { top: 20 },
       styles: { fontSize: 8 },
+      theme: 'grid'
     });
     doc.save(`${filename}.pdf`);
   };

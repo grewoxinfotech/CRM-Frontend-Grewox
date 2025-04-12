@@ -77,7 +77,7 @@ const PolicyList = ({
       title: "Created Date",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => (date ? moment(date).format("YYYY-MM-DD") : "N/A"),
+      render: (date) => (date ? moment(date).format("DD-MM-YYYY") : "N/A"),
       sorter: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
     },
     {

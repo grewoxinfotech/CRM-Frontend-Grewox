@@ -3,8 +3,9 @@ import { Table, Space, Button, Tooltip, Modal, message, Tag, Dropdown } from 'an
 import { FiEdit2, FiTrash2, FiLink, FiEye, FiMoreVertical } from 'react-icons/fi';
 import { useGetAllTrainingsQuery, useDeleteTrainingMutation } from './services/trainingApi';
 import dayjs from 'dayjs';
+import moment from 'moment';
 
-const TrainingList = ({ onView, onEdit, searchText = '', filters = {} }) => {
+const TrainingList = ({ trainings, loading, onEdit, onDelete, onView, searchText }) => {
     const { data: trainingsData, isLoading } = useGetAllTrainingsQuery();
     const [deleteTraining] = useDeleteTrainingMutation();
 
@@ -27,119 +28,113 @@ const TrainingList = ({ onView, onEdit, searchText = '', filters = {} }) => {
         });
     };
 
-    // Transform and filter trainings data with safe checks
-    const trainings = useMemo(() => {
-        let filteredData = [];
+    // Filter trainings based on search text
+    const filteredTrainings = useMemo(() => {
+        if (!trainings) return [];
         
-        // Safely extract data array
-        if (trainingsData?.data) {
-            filteredData = trainingsData.data;
-        } else if (Array.isArray(trainingsData)) {
-            filteredData = trainingsData;
-        }
+        if (!searchText) return trainings;
 
-        // Apply filters with safe checks
-        return filteredData.filter(training => {
-            if (!training) return false;
-
-            // Safe search text check
-            const searchLower = (searchText || '').toLowerCase();
-            const categoryLower = (training.category || '').toLowerCase();
-
-            const matchesSearch = !searchText || categoryLower.includes(searchLower);
-
-            // Safe date range check
-            const matchesDateRange = !filters?.dateRange?.length || (
-                training.created_at && 
-                dayjs(training.created_at).isValid() && 
-                dayjs(training.created_at).isAfter(filters.dateRange[0]) &&
-                dayjs(training.created_at).isBefore(filters.dateRange[1])
-            );
-
-            return matchesSearch && matchesDateRange;
+        const searchLower = searchText.toLowerCase();
+        return trainings.filter(training => {
+            const title = training.title?.toLowerCase() || '';
+            return title.includes(searchLower);
         });
-    }, [trainingsData, searchText, filters]);
-
-    const getDropdownItems = (record) => ({
-        items: [
-            {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => onView(record),
-            },
-            {
-                key: 'edit',
-                icon: <FiEdit2 />,
-                label: 'Edit',
-                onClick: () => onEdit(record),
-            },
-            {
-                key: 'delete',
-                icon: <FiTrash2 />,
-                label: 'Delete',
-                onClick: () => handleDelete(record.id),
-                danger: true,
-            },
-        ],
-    });
+    }, [trainings, searchText]);
 
     const columns = [
         {
             title: 'Title',
             dataIndex: 'title',
             key: 'title',
+            sorter: (a, b) => a.title.localeCompare(b.title),
+            render: (title) => (
+                <span className="text-base" style={{ 
+                    color: searchText && title.toLowerCase().includes(searchText.toLowerCase()) 
+                        ? '#1890ff' 
+                        : 'inherit' 
+                }}>
+                    {title}
+                </span>
+            ),
         },
         {
-            title: 'Category',
-            dataIndex: 'category',
-            key: 'category',
-            render: (text) => <span className="text-base">{text || '-'}</span>,
-            sorter: (a, b) => (a?.category || '').localeCompare(b?.category || ''),
+            title: 'Type',
+            dataIndex: 'type',
+            key: 'type',
+            sorter: (a, b) => a.type.localeCompare(b.type),
+            render: (type) => <Tag color="blue">{type}</Tag>,
         },
         {
-            title: 'Links',
-            dataIndex: 'links',
-            key: 'links',
-            ellipsis: true,
-            render: (links) => {
-                try {
-                    const linksObj = typeof links === 'string' ? JSON.parse(links) : links;
-                    return linksObj?.url ? (
-                        <Tooltip title={linksObj.url}>
-                            <Button
-                                type="link"
-                                icon={<FiLink />}
-                                onClick={() => window.open(linksObj.url, '_blank')}
-                            >
-                                {linksObj.url}
-                            </Button>
-                        </Tooltip>
-                    ) : '-';
-                } catch (error) {
-                    return '-';
-                }
-            },
+            title: 'Trainer',
+            dataIndex: 'trainer',
+            key: 'trainer',
+            render: (trainer) => <span className="text-base">{trainer}</span>,
+        },
+        {
+            title: 'Start Date',
+            dataIndex: 'start_date',
+            key: 'start_date',
+            sorter: (a, b) => moment(a.start_date).unix() - moment(b.start_date).unix(),
+            render: (date) => (
+                <span className="text-base">
+                    {moment(date).format('DD-MM-YYYY')}
+                </span>
+            ),
+        },
+        {
+            title: 'End Date',
+            dataIndex: 'end_date',
+            key: 'end_date',
+            sorter: (a, b) => moment(a.end_date).unix() - moment(b.end_date).unix(),
+            render: (date) => (
+                <span className="text-base">
+                    {moment(date).format('DD-MM-YYYY')}
+                </span>
+            ),
         },
         {
             title: 'Actions',
             key: 'actions',
-            align: 'center',
-            render: (_, record) => (
-                <Dropdown
-                    menu={getDropdownItems(record)}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayClassName="training-actions-dropdown"
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                        onClick={(e) => e.preventDefault()}
-                    />
-                </Dropdown>
-            ),
+            width: 80,
+            render: (_, record) => {
+                const items = [
+                    {
+                        key: 'view',
+                        icon: <FiEye style={{ fontSize: '14px' }} />,
+                        label: 'View',
+                        onClick: () => onView(record),
+                    },
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
+                        label: 'Edit',
+                        onClick: () => onEdit(record),
+                    },
+                    {
+                        key: 'delete',
+                        icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => onDelete(record),
+                    },
+                ];
+
+                return (
+                    <Dropdown
+                        menu={{ items }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="training-actions-dropdown"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical />}
+                            className="action-dropdown-button"
+                            onClick={(e) => e.preventDefault()}
+                        />
+                    </Dropdown>
+                );
+            },
         },
     ];
 
@@ -147,7 +142,8 @@ const TrainingList = ({ onView, onEdit, searchText = '', filters = {} }) => {
         <div className="training-list">
             <Table
                 columns={columns}
-                dataSource={trainings}
+                dataSource={filteredTrainings}
+                loading={loading}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,

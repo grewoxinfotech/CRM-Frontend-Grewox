@@ -6,18 +6,17 @@ import moment from 'moment'; // Import moment for date formatting
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllCompaniesQuery, useRemovePlanMutation } from '../company/services/companyApi';
 
-const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
-    const { data: subscribedUsersData } = useGetAllSubscribedUsersQuery();
+const SubscribedUserList = ({ data, loading }) => {
     const { data: companiesData } = useGetAllCompaniesQuery();
     const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
     const { data: plansData } = useGetAllPlansQuery(filters);
     const [removePlan] = useRemovePlanMutation();
 
-    // Ensure we have an array of users, even if empty
+    // Use the passed data instead of making a new query
     const users = React.useMemo(() => {
-        if (!subscribedUsersData) return [];
-        return Array.isArray(subscribedUsersData) ? subscribedUsersData : subscribedUsersData.data || [];
-    }, [subscribedUsersData]);
+        if (!data) return [];
+        return Array.isArray(data) ? data : [];
+    }, [data]);
 
     // Memoized function to get plan name with null check
     const getPlanName = useCallback((planId) => {
@@ -162,11 +161,11 @@ const SubscribedUserList = ({ onEdit, onDelete, onView }) => {
         }));
     }, [users]);
 
-    // Add loading state to table
     return (
         <Table
             columns={columns}
             dataSource={tableData}
+            loading={loading}
             pagination={{
                 pageSize: 10,
                 showSizeChanger: true,

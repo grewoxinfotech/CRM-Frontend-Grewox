@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Row,
     Col,
@@ -23,6 +23,10 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
+import moment from 'moment';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import './plans.scss';
 
 import {
@@ -45,6 +49,11 @@ const Plans = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [idd, setIdd] = useState(null);
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const searchInputRef = useRef(null);
+    const [exportLoading, setExportLoading] = useState(false);
 
     const {
         data: plansData,
@@ -54,6 +63,17 @@ const Plans = () => {
 
     const [deletePlan] = useDeletePlanMutation();
     const [updatePlan] = useUpdatePlanMutation();
+
+    const filteredPlans = React.useMemo(() => {
+        if (!plansData?.data) return [];
+        
+        const searchTerm = filters.search.toLowerCase().trim();
+        if (!searchTerm) return plansData.data;
+        
+        return plansData.data.filter(plan => 
+            plan.name?.toLowerCase().includes(searchTerm)
+        );
+    }, [plansData, filters.search]);
 
     const handleSearch = (value) => {
         setFilters(prev => ({ ...prev, search: value, page: 1 }));
@@ -155,33 +175,50 @@ const Plans = () => {
         </Menu>
     );
 
-    const handleExport = (type) => {
+    const handleExport = async (type) => {
         try {
-            const headers = ['Name', 'Type', 'Price', 'Status', 'Created At'];
-            const data = plansData?.data.map(plan => ({
-                'Name': plan.name,
-                'Type': plan.type,
-                'Price': `$${Number(plan.price).toFixed(2)}`,
-                'Status': plan.status,
-                'Created At': dayjs(plan.createdAt).format('YYYY-MM-DD')
+            setExportLoading(true);
+            
+            if (!plansData?.data || plansData.data.length === 0) {
+                message.warning('No data available to export');
+                return;
+            }
+
+            const data = plansData.data.map(plan => ({
+                'Plan Name': plan.name || 'N/A',
+                'Price': `${plan.currency || '$'}${Number(plan.price || 0).toFixed(2)}`,
+                'Duration': `${plan.duration || 0} ${plan.duration_unit || 'Days'}`,
+                'Trial Period': `${plan.trial_period || 0} Days`,
+                'Storage Limit': `${plan.storage_limit || 0} GB`,
+                'Max Users': plan.max_users || 0,
+                'Max Clients': plan.max_clients || 0,
+                'Max Vendors': plan.max_vendors || 0,
+                'Max Customers': plan.max_customers || 0,
+                'Status': plan.status?.charAt(0).toUpperCase() + plan.status?.slice(1) || 'Inactive',
+                'Created At': moment(plan.created_at).format('YYYY-MM-DD')
             }));
+
+            const timestamp = moment().format('YYYY-MM-DD_HH-mm');
+            const filename = `plans_export_${timestamp}`;
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'plans_export');
+                    exportToCSV(data, filename);
                     break;
                 case 'excel':
-                    exportToExcel(data, 'plans_export');
+                    exportToExcel(data, filename);
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'plans_export');
+                    exportToPDF(data, filename);
                     break;
                 default:
                     break;
             }
             message.success(`Successfully exported as ${type.toUpperCase()}`);
         } catch (error) {
-            message.error('Failed to export plans');
+            message.error(`Failed to export: ${error.message}`);
+        } finally {
+            setExportLoading(false);
         }
     };
 
@@ -194,14 +231,34 @@ const Plans = () => {
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${filename}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${filename}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    const exportToExcel = (data, filename) => {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Plans');
+        XLSX.writeFile(wb, `${filename}.xlsx`);
+    };
+
+    const exportToPDF = (data, filename) => {
+        const doc = new jsPDF('l', 'pt', 'a4');
+        doc.autoTable({
+            head: [Object.keys(data[0])],
+            body: data.map(item => Object.values(item)),
+            margin: { top: 20 },
+            styles: { fontSize: 8, cellPadding: 2 },
+            theme: 'grid'
+        });
+        doc.save(`${filename}.pdf`);
     };
 
     const handlePageChange = (page, pageSize) => {
@@ -265,9 +322,16 @@ const Plans = () => {
                                         onClick={() => setViewMode('card')}
                                     />
                                 </Button.Group>
-                                <Dropdown overlay={exportMenu} trigger={['click']}>
-                                    <Button className="export-button">
-                                        <FiDownload size={16} />
+                                <Dropdown 
+                                    overlay={exportMenu} 
+                                    trigger={['click']}
+                                    disabled={isLoading || isFetching || exportLoading}
+                                >
+                                    <Button 
+                                        className="export-button"
+                                        loading={exportLoading}
+                                    >
+                                        {!exportLoading && <FiDownload size={16} />}
                                         <span>Export</span>
                                         <FiChevronDown size={14} />
                                     </Button>
@@ -289,7 +353,7 @@ const Plans = () => {
             <Card className="plans-table-card">
                 {viewMode === 'table' ? (
                     <PlanList
-                        plans={plansData?.data}
+                        plans={filteredPlans}
                         loading={isLoading || isFetching}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
@@ -300,6 +364,7 @@ const Plans = () => {
                             total: plansData?.total || 0
                         }}
                         onPageChange={handlePageChange}
+                        searchText={filters.search}
                     />
                 ) : (
                     renderCardView()

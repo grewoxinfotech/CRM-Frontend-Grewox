@@ -90,63 +90,81 @@ const Leave = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = leaveData.map((leave) => ({
-        "Employee Name": leave.employeeName,
-        "Leave Type": leave.leaveType,
-        "Start Date": moment(leave.startDate).format("MMM DD, YYYY"),
-        "End Date": moment(leave.endDate).format("MMM DD, YYYY"),
-        Status: leave.status,
-        Reason: leave.reason,
-      }));
+      const data = leaveData?.data?.map((leave) => ({
+        'Employee Name': leave.employeeName || '-',
+        'Leave Type': leave.leaveType || '-',
+        'Start Date': leave.startDate ? moment(leave.startDate).format('DD-MM-YYYY') : '-',
+        'End Date': leave.endDate ? moment(leave.endDate).format('DD-MM-YYYY') : '-',
+        'Status': leave.status || '-',
+        'Reason': leave.reason || '-',
+        'Created At': leave.created_at ? moment(leave.created_at).format('DD-MM-YYYY') : '-',
+        'Department': leave.department || '-',
+        'Total Days': leave.totalDays || '-'
+      })) || [];
+
+      if (data.length === 0) {
+        message.warning('No data available to export');
+        return;
+      }
+
+      const fileName = `leave_requests_${moment().format('DD-MM-YYYY')}`;
 
       switch (type) {
-        case "csv":
-          exportToCSV(data, "leave_requests.csv");
+        case 'csv':
+          const csvContent = [
+            Object.keys(data[0]).join(','),
+            ...data.map(item => 
+              Object.values(item)
+                .map(value => `"${value?.toString().replace(/"/g, '""')}"`)
+                .join(',')
+            )
+          ].join('\n');
+
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', `${fileName}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          message.success('Successfully exported as CSV');
           break;
-        case "excel":
-          exportToExcel(data, "leave_requests.xlsx");
+
+        case 'excel':
+          const ws = XLSX.utils.json_to_sheet(data);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Leave Requests');
+          XLSX.writeFile(wb, `${fileName}.xlsx`);
+          message.success('Successfully exported as Excel');
           break;
-        case "pdf":
-          exportToPDF(data, "leave_requests.pdf");
+
+        case 'pdf':
+          const doc = new jsPDF('l', 'pt', 'a4');
+          doc.autoTable({
+            head: [Object.keys(data[0])],
+            body: data.map(item => Object.values(item)),
+            margin: { top: 20 },
+            styles: { 
+              fontSize: 8,
+              cellPadding: 2
+            },
+            theme: 'grid'
+          });
+          doc.save(`${fileName}.pdf`);
+          message.success('Successfully exported as PDF');
           break;
+
         default:
           break;
       }
     } catch (error) {
-      message.error("Failed to export data");
+      console.error('Export error:', error);
+      message.error('Failed to export data');
     } finally {
       setLoading(false);
     }
-  };
-
-  const exportToCSV = (data, filename) => {
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      data.map((row) => Object.values(row).join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const exportToExcel = (data, filename) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Leave Requests");
-    XLSX.writeFile(wb, filename);
-  };
-
-  const exportToPDF = (data, filename) => {
-    const doc = new jsPDF();
-    doc.autoTable({
-      head: [Object.keys(data[0])],
-      body: data.map((row) => Object.values(row)),
-      theme: "grid",
-    });
-    doc.save(filename);
   };
 
   return (
@@ -183,24 +201,35 @@ const Leave = () => {
               prefix={<FiSearch />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: 300 }}
             />
           </div>
           <div className="action-buttons">
             <Dropdown
-              overlay={
-                <Menu>
-                  <Menu.Item key="csv" onClick={() => handleExport("csv")}>
-                    Export as CSV
-                  </Menu.Item>
-                  <Menu.Item key="excel" onClick={() => handleExport("excel")}>
-                    Export as Excel
-                  </Menu.Item>
-                  <Menu.Item key="pdf" onClick={() => handleExport("pdf")}>
-                    Export as PDF
-                  </Menu.Item>
-                </Menu>
-              }
-              trigger={["click"]}
+              menu={{
+                items: [
+                  {
+                    key: 'csv',
+                    label: 'Export as CSV',
+                    icon: <FiDownload />,
+                    onClick: () => handleExport('csv')
+                  },
+                  {
+                    key: 'excel',
+                    label: 'Export as Excel',
+                    icon: <FiDownload />,
+                    onClick: () => handleExport('excel')
+                  },
+                  {
+                    key: 'pdf',
+                    label: 'Export as PDF',
+                    icon: <FiDownload />,
+                    onClick: () => handleExport('pdf')
+                  }
+                ]
+              }}
+              trigger={['click']}
+              placement="bottomRight"
             >
               <Button className="export-button" loading={loading}>
                 <FiDownload /> Export <FiChevronDown />

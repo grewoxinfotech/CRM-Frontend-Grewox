@@ -28,6 +28,7 @@ const Job = () => {
     const [selectedJob, setSelectedJob] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [exportLoading, setExportLoading] = useState(false);
     const searchInputRef = useRef(null);
 
     const { data: jobsData, isLoading, error } = useGetAllJobsQuery();
@@ -36,17 +37,12 @@ const Job = () => {
     const filteredJobs = React.useMemo(() => {
         if (!jobsData?.data) return [];
         
-        return jobsData.data.filter(job => {
-            if (!searchText) return true;
-            
-            const searchTerm = searchText.toLowerCase();
-            return (
-                job.title?.toLowerCase().includes(searchTerm) ||
-                job.category?.toLowerCase().includes(searchTerm) ||
-                job.job_location?.toLowerCase().includes(searchTerm) ||
-                job.status?.toLowerCase().includes(searchTerm)
-            );
-        });
+        const searchTerm = searchText.toLowerCase().trim();
+        if (!searchTerm) return jobsData.data;
+        
+        return jobsData.data.filter(job => 
+            job.title?.toLowerCase().includes(searchTerm)
+        );
     }, [jobsData, searchText]);
 
     const handleAddJob = () => {
@@ -140,28 +136,34 @@ const Job = () => {
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
-            const data = jobsData.data.map(job => ({
-                'Job Title': job.title,
-                'Department': job.department,
-                'Location': job.location,
-                'Type': job.type,
-                'Experience': job.experience,
-                'Minimum Salary': `$${job.salaryMin.toLocaleString()}`,
-                'Maximum Salary': `$${job.salaryMax.toLocaleString()}`,
-                'Status': job.status,
+            setExportLoading(true);
+            const data = jobsData?.data?.map(job => ({
+                'Title': job.title || 'N/A',
+                'Department': job.category || 'N/A',
+                'Location': job.location || 'N/A',
+                'Experience': job.workExperience || 'N/A',
+                'Salary': `${job.currency || ''} ${job.expectedSalary || 'N/A'}`,
+                'Status': job.status || 'N/A',
                 'Created Date': moment(job.created_at).format('YYYY-MM-DD')
-            }));
+            })) || [];
+
+            if (data.length === 0) {
+                message.warning('No data available to export');
+                return;
+            }
+
+            const timestamp = moment().format('YYYY-MM-DD_HH-mm');
+            const filename = `jobs_export_${timestamp}`;
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'jobs_export');
+                    exportToCSV(data, filename);
                     break;
                 case 'excel':
-                    exportToExcel(data, 'jobs_export');
+                    exportToExcel(data, filename);
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'jobs_export');
+                    exportToPDF(data, filename);
                     break;
                 default:
                     break;
@@ -170,7 +172,7 @@ const Job = () => {
         } catch (error) {
             message.error(`Failed to export: ${error.message}`);
         } finally {
-            setLoading(false);
+            setExportLoading(false);
         }
     };
 
@@ -245,9 +247,16 @@ const Job = () => {
                         className="search-input"
                     />
                     <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
+                        <Dropdown 
+                            overlay={exportMenu} 
+                            trigger={['click']}
+                            disabled={isLoading || exportLoading}
+                        >
+                            <Button 
+                                className="export-button"
+                                loading={exportLoading}
+                            >
+                                {!exportLoading && <FiDownload size={16} />}
                                 <span>Export</span>
                                 <FiChevronDown size={14} />
                             </Button>

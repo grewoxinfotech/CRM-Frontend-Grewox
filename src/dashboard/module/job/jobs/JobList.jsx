@@ -1,18 +1,9 @@
 import React from 'react';
 import { Table, Button, Tag, Dropdown } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
-import { useGetAllJobsQuery } from './services/jobApi';
 import moment from 'moment';
 
-const JobList = ({ onEdit, onDelete, onView }) => {
-    const { data: jobsData, isLoading } = useGetAllJobsQuery();
-
-    // Ensure we have an array of jobs, even if empty
-    const jobs = React.useMemo(() => {
-        if (!jobsData) return [];
-        return Array.isArray(jobsData) ? jobsData : jobsData.data || [];
-    }, [jobsData]);
-
+const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
     // Define action items for dropdown
     const getActionItems = (record) => [
         {

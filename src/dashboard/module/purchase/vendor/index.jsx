@@ -80,18 +80,16 @@ const Vendor = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = vendors.map(vendor => ({
-                'Vendor Code': vendor.vendor_code,
-                'Registration Date': vendor.registration_date,
-                'Company Name': vendor.company_name,
-                'Contact Person': vendor.contact_person,
+            const data = vendors?.data?.map(vendor => ({
+                'Name': vendor.name,
+                'Contact': vendor.contact,
                 'Email': vendor.email,
-                'Phone': vendor.phone,
                 'Address': vendor.address,
-                'Tax ID': vendor.tax_id,
-                'Payment Terms': vendor.payment_terms,
-                'Vendor Type': vendor.vendor_type
-            }));
+                'City': vendor.city,
+                'State': vendor.state,
+                'Country': vendor.country,
+                'Status': vendor.status || 'Active'
+            })) || [];
 
             switch (type) {
                 case 'csv':
@@ -207,7 +205,7 @@ const Vendor = () => {
                     <Text type="secondary">Manage all vendors in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
+                <div className="search-filter-group">
                         <Input
                             prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
                             placeholder="Search vendors..."
@@ -243,11 +241,10 @@ const Vendor = () => {
 
             <Card className="vendor-table-card">
                 <VendorList
-                    vendors={vendors}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
-
                     onView={handleView}
+                    loading={isLoading}
                     searchText={searchText}
                 />
             </Card>

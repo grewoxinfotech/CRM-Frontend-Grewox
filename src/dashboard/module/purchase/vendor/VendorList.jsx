@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Tooltip, Typography, Modal, Spin, Alert } from 'antd';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Modal, Spin, Alert, Menu } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiUser, FiPhone } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetVendorsQuery, useDeleteVendorMutation } from './services/vendorApi';
@@ -8,7 +8,7 @@ import EditVendor from './EditVendor';
 
 const { Text } = Typography;
 
-const VendorList = ({  onEdit, onDelete, onView, loading }) => {
+const VendorList = ({ onEdit, onDelete, onView, loading, searchText }) => {
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [selectedVendorId, setSelectedVendorId] = useState(null);
     const [selectedVendor, setSelectedVendor] = useState(null);
@@ -17,17 +17,9 @@ const VendorList = ({  onEdit, onDelete, onView, loading }) => {
 
     const vendors = data?.data || [];
 
- 
-
     if (isError) {
         return <Alert type="error" message="Failed to fetch vendors" />;
     }
-
-    // const handleEdit = (record) => {
-    //     setSelectedVendorId(record.id);
-    //     setSelectedVendor(record);
-    //     setIsEditModalVisible(true);
-    // };
 
     const handleCancel = () => {
         setIsEditModalVisible(false);
@@ -35,34 +27,13 @@ const VendorList = ({  onEdit, onDelete, onView, loading }) => {
         setSelectedVendor(null);
     };
 
-    // const handleDelete = async (record) => {
-    //     Modal.confirm({
-    //         title: 'Delete Vendor',
-    //         content: 'Are you sure you want to delete this vendor?',
-    //         okText: 'Yes',
-    //         okType: 'danger',
-    //         cancelText: 'No',
-    //         bodyStyle: {
-    //             padding: '20px',
-    //         },
-    //         onOk: async () => {
-    //             try {
-    //                 await deleteVendor(record.id).unwrap();
-    //                 message.success('Vendor deleted successfully');
-    //             } catch (error) {
-    //                 message.error('Failed to delete vendor');
-    //             }
-    //         },
-    //     });
-    // };
-
     const getDropdownItems = (record) => ({
         items: [
             {
                 key: 'view',
                 icon: <FiEye />,
                 label: 'View Details',
-                onClick: () => console.log('View', record._id),
+                onClick: () => onView(record),
             },
             {
                 key: 'edit',
@@ -158,13 +129,25 @@ const VendorList = ({  onEdit, onDelete, onView, loading }) => {
         },
     ];
 
+    // Filter vendors based on search text
+    const filteredVendors = vendors.filter(vendor => 
+        vendor.name?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        vendor.contact?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        vendor.email?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        vendor.address?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        vendor.city?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        vendor.state?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        vendor.country?.toLowerCase().includes(searchText?.toLowerCase())
+    );
+
     return (
         <>
             <div className="vendor-list">
                 <Table
                     columns={columns}
-                    dataSource={vendors}
+                    dataSource={filteredVendors}
                     rowKey="_id"
+                    loading={loading}
                     pagination={{
                         defaultPageSize: 10,
                         showSizeChanger: true,

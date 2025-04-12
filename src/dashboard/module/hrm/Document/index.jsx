@@ -150,105 +150,83 @@ const Document = () => {
     }
   };
 
-  const exportToCSV = (data, filename) => {
-    const csvContent = [
-      Object.keys(data[0]).join(","),
-      ...data.map((item) =>
-        Object.values(item)
-          .map((value) => `"${value?.toString().replace(/"/g, '""')}"`)
-          .join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `${filename}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-  const exportToExcel = (data, filename) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Documents");
-    XLSX.writeFile(wb, `${filename}.xlsx`);
-  };
-
-  const exportToPDF = (data, filename) => {
-    const doc = new jsPDF("l", "pt", "a4");
-    doc.autoTable({
-      head: [Object.keys(data[0])],
-      body: data.map((item) => Object.values(item)),
-      margin: { top: 20 },
-      styles: { fontSize: 8 },
-    });
-    doc.save(`${filename}.pdf`);
-  };
-
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = documents.map((document) => ({
-        Category: document.category,
-        "Document Items": document.documentItems
-          .map((item) => item.title)
-          .join(", "),
-        Status: document.status,
-        "Created By": document.created_by,
-        "Created Date": moment(document.created_at).format("YYYY-MM-DD"),
+      // Format data for export
+      const formattedData = documents.map(doc => ({
+        'Name': doc.name || '-',
+        'Role': doc.role || '-',
+        'Description': doc.description || '-',
+        'Created By': doc.created_by || '-',
+        'Created Date': doc.created_at ? moment(doc.created_at).format('DD-MM-YYYY') : '-',
+        'Status': doc.status || '-'
       }));
 
+      if (formattedData.length === 0) {
+        message.warning('No data available to export');
+        return;
+      }
+
+      const fileName = `documents_${moment().format('DD-MM-YYYY')}`;
+
       switch (type) {
-        case "csv":
-          exportToCSV(data, "documents_export");
+        case 'csv':
+          const csvContent = [
+            Object.keys(formattedData[0]).join(','),
+            ...formattedData.map(item => 
+              Object.values(item)
+                .map(value => `"${value?.toString().replace(/"/g, '""')}"`)
+                .join(',')
+            )
+          ].join('\n');
+
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', `${fileName}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          message.success('Successfully exported as CSV');
           break;
-        case "excel":
-          exportToExcel(data, "documents_export");
+
+        case 'excel':
+          const ws = XLSX.utils.json_to_sheet(formattedData);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Documents');
+          XLSX.writeFile(wb, `${fileName}.xlsx`);
+          message.success('Successfully exported as Excel');
           break;
-        case "pdf":
-          exportToPDF(data, "documents_export");
+
+        case 'pdf':
+          const doc = new jsPDF('l', 'pt', 'a4');
+          doc.autoTable({
+            head: [Object.keys(formattedData[0])],
+            body: formattedData.map(item => Object.values(item)),
+            margin: { top: 20 },
+            styles: { 
+              fontSize: 8,
+              cellPadding: 2
+            },
+            theme: 'grid'
+          });
+          doc.save(`${fileName}.pdf`);
+          message.success('Successfully exported as PDF');
           break;
+
         default:
           break;
       }
-      message.success(`Successfully exported as ${type.toUpperCase()}`);
     } catch (error) {
-      message.error(`Failed to export: ${error.message}`);
+      console.error('Export error:', error);
+      message.error('Failed to export data');
     } finally {
       setLoading(false);
     }
   };
-
-  const exportMenu = (
-    <Menu>
-      <Menu.Item
-        key="csv"
-        icon={<FiDownload />}
-        onClick={() => handleExport("csv")}
-      >
-        Export as CSV
-      </Menu.Item>
-      <Menu.Item
-        key="excel"
-        icon={<FiDownload />}
-        onClick={() => handleExport("excel")}
-      >
-        Export as Excel
-      </Menu.Item>
-      <Menu.Item
-        key="pdf"
-        icon={<FiDownload />}
-        onClick={() => handleExport("pdf")}
-      >
-        Export as PDF
-      </Menu.Item>
-    </Menu>
-  );
 
   return (
     <div className="document-page">
@@ -273,26 +251,50 @@ const Document = () => {
           <Text type="secondary">Manage all documents in the organization</Text>
         </div>
         <div className="header-actions">
-          <Input
-            prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-            placeholder="Search documents..."
-            allowClear
-            onChange={(e) => handleSearch(e.target.value)}
-            value={searchText}
-            ref={searchInputRef}
-            className="search-input"
-          />
+          <div className="search-input">
+            <Input
+              placeholder="Search by document name..."
+              prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              style={{ width: 360 }}
+              allowClear
+            />
+          </div>
           <div className="action-buttons">
-            <Dropdown overlay={exportMenu} trigger={["click"]}>
-              <Button className="export-button">
-                <FiDownload size={16} />
-                <span>Export</span>
-                <FiChevronDown size={14} />
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'excel',
+                    label: 'Export as Excel',
+                    icon: <FiDownload />,
+                    onClick: () => handleExport('excel')
+                  },
+                  {
+                    key: 'pdf',
+                    label: 'Export as PDF',
+                    icon: <FiDownload />,
+                    onClick: () => handleExport('pdf')
+                  },
+                  {
+                    key: 'csv',
+                    label: 'Export as CSV',
+                    icon: <FiDownload />,
+                    onClick: () => handleExport('csv')
+                  }
+                ]
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <Button className="export-button" loading={loading}>
+                <FiDownload /> Export <FiChevronDown />
               </Button>
             </Dropdown>
             <Button
               type="primary"
-              icon={<FiPlus size={16} />}
+              icon={<FiPlus />}
               onClick={handleAddDocument}
               className="add-button"
             >
@@ -304,10 +306,11 @@ const Document = () => {
 
       <Card className="document-table-card">
         <DocumentList
-          documents={filteredDocuments}
+          documents={documents}
           loading={loading}
           onEdit={handleEditDocument}
           onDelete={handleDeleteConfirm}
+          searchText={searchText}
         />
       </Card>
 

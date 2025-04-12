@@ -1,222 +1,339 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    Modal,
-    Typography,
-    Button,
-    Table,
-    Row,
-    Col,
-    Card,
-    Divider,
-    Image
+  Modal,
+  Typography,
+  Button,
+  Table,
+  Row,
+  Col,
+  Card,
+  Divider,
+  Image,
+  Space,
+  message
 } from 'antd';
-import { FiX, FiDownload, FiPrinter, FiMail, FiClock } from 'react-icons/fi';
+import { FiX, FiDownload, FiPrinter, FiMail } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import styled from 'styled-components';
+import { useGetCustomersQuery } from '../customer/services/custApi';
 
 const { Text, Title } = Typography;
 
+// Styled components
+const StyledCard = styled(Card)`
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  
+  .ant-card-body {
+    padding: 0;
+  }
+`;
+
+const Header = styled.div`
+  background: linear-gradient(135deg, #3f51b5, #5c6bc0);
+  color: white;
+  padding: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Section = styled.div`
+  padding: 30px;
+  border-bottom: 1px solid #eee;
+`;
+
+const InfoSection = styled.div`
+  h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #444;
+  }
+  
+  p {
+    margin: 0;
+    line-height: 1.6;
+    color: #666;
+  }
+`;
+
+const QRSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 40px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 10px;
+`;
+
+const Footer = styled.div`
+  padding: 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #888;
+  background: #fafafa;
+  
+  .powered {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #777;
+    
+    span {
+      font-weight: 600;
+      color: #3f51b5;
+    }
+  }
+`;
+
 const ViewInvoice = ({ open, onCancel, invoice }) => {
-    if (!invoice) return null;
+  const [customerData, setCustomerData] = useState(null);
+  const { data: customers, isLoading, error } = useGetCustomersQuery();
 
-    const items = Array.isArray(invoice.items) ? invoice.items : [];
+  useEffect(() => {
+    if (customers?.data && invoice?.customer) {
+      const customer = customers.data.find(c => c.id === invoice.customer);
+      if (customer) {
+        setCustomerData(customer);
+      }
+    }
+  }, [customers, invoice]);
 
-    const columns = [
-        {
-            title: '#',
-            dataIndex: 'index',
-            key: 'index',
-            width: 70,
-            render: (_, __, index) => index + 1,
-        },
-        {
-            title: 'Description',
-            dataIndex: 'item_name',
-            key: 'item_name',
-        },
-        {
-            title: 'Qty',
-            dataIndex: 'quantity',
-            key: 'quantity',
-            align: 'center',
-            width: 100,
-        },
-        {
-            title: 'Unit Price',
-            dataIndex: 'rate',
-            key: 'rate',
-            align: 'right',
-            width: 150,
-            render: (rate) => `$${Number(rate).toFixed(2)}`,
-        },
-        {
-            title: 'Amount',
-            dataIndex: 'amount',
-            key: 'amount',
-            align: 'right',
-            width: 150,
-            render: (amount) => `$${Number(amount).toFixed(2)}`,
-        },
-    ];
+  if (!invoice) return null;
 
-    const subtotal = items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const taxRate = Number(invoice.tax_rate) || 0;
-    const taxAmount = subtotal * (taxRate / 100);
-    const total = subtotal + taxAmount;
+  // const renderBillingAddress = () => {
+  //   if (!customerData?.billing_address) return null;
+  //   try {
+  //     const address = JSON.parse(customerData.billing_address);
+  //     return (
+  //       <>
+  //         {address.street}<br />
+  //         {address.city}, {address.state}<br />
+  //         {address.country} - {address.postal_code}
+  //       </>
+  //     );
+  //   } catch (error) {
+  //     return null;
+  //   }
+  // };
 
-    return (
-        
-        <Modal
-            title={null}
-            open={open}
-            onCancel={onCancel}
-            footer={null}
-            width={900}
-            destroyOnClose={true}
-            centered
-            closeIcon={null}
-            className="invoice-view-modal"
-        >
-            <Card className="invoice-card">
-                <div className="invoice-header">
-                    <Button
-                        type="text"
-                        onClick={onCancel}
-                        className="close-button"
-                        icon={<FiX />}
-                    />
+  const styles = {
+    invoiceBox: {
+      width: '100%',
+      height: '100%',
+      margin: 'auto',
+      padding: 30,
+      background: 'white',
+      borderRadius: 12,
+      boxShadow: '0 0 14px rgba(0,0,0,0.08)',
+      borderTop: '5px solid #0066ff'
+    },
+    topHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
+    },
+    logo: {
+      height: 50
+    },
+    companyInfo: {
+      textAlign: 'right'
+    },
+    companyInfoTitle: {
+      margin: 0,
+      color: '#0066ff'
+    },
+    details: {
+      margin: '30px 0 20px 0',
+      display: 'flex',
+      justifyContent: 'space-between',
+      fontSize: 14
+    },
+    detailsColumn: {
+      width: '45%'
+    },
+    table: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      marginBottom: 20
+    },
+    th: {
+      borderBottom: '1px solid #eaeaea',
+      padding: 10,
+      textAlign: 'left',
+      background: '#f0f4fa'
+    },
+    td: {
+      borderBottom: '1px solid #eaeaea',
+      padding: 10,
+      textAlign: 'left'
+    },
+    tdRight: {
+      borderBottom: '1px solid #eaeaea',
+      padding: 10,
+      textAlign: 'right'
+    },
+    totals: {
+      textAlign: 'right',
+      fontSize: 16,
+      marginTop: 10
+    },
+    qrSection: {
+      textAlign: 'center',
+      marginTop: 30
+    },
+    qrImage: {
+      height: 90
+    },
+    footer: {
+      textAlign: 'center',
+      fontSize: 12,
+      color: '#777',
+      marginTop: 40
+    },
+    powered: {
+      marginTop: 5,
+      fontSize: 11,
+      color: '#555'
+    }
+  };
 
-                    
-                    
-                    <Row justify="space-between" align="top" gutter={24}>
-                        <Col xs={24} sm={12}>
-                            <div className="company-info">
-                                <div className="company-logo">
-                                    <Image
-                                        preview={false}
-                                        src="/path/to/your/logo.png"
-                                        fallback="data:image/png;base64,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"
-                                        alt="Company Logo"
-                                        width={80}
-                                        height={80}
-                                    />
-                                </div>
-                                <Text className="company-name">Your Company Name</Text>
-                                <Text className="company-website">www.yourcompany.com</Text>
-                                <Text className="company-phone">(123) 456 7890</Text>
-                            </div>
-                        </Col>
-                        <Col xs={24} sm={12}>
-                            <div className="invoice-title">
-                                <div className="invoice-status">
-                                    <FiClock className="status-icon" />
-                                    <Text>Due in 15 days</Text>
-                                </div>
-                                <Text className="title-text">INVOICE</Text>
-                                <Text className="invoice-number">#{invoice.invoice_number || 'N/A'}</Text>
-                            </div>
-                        </Col>
-                    </Row>
-                </div>
+  // Parse items if it's a string
+  let invoiceItems = [];
+  try {
+    if (typeof invoice.items === 'string') {
+      invoiceItems = JSON.parse(invoice.items);
+    } else if (Array.isArray(invoice.items)) {
+      invoiceItems = invoice.items;
+    }
+  } catch (error) {
+    console.error('Error parsing invoice items:', error);
+  }
 
-                <div className="invoice-body">
-                    <Row gutter={[24, 24]} className="invoice-info">
-                        <Col xs={24} md={12}>
-                            <div className="info-section bill-to">
-                                <Title level={5}>Bill To</Title>
-                                <Text className="client-name">{invoice.client_name || 'N/A'}</Text>
-                                <Text className="client-address">{invoice.client_address || 'N/A'}</Text>
-                                <Text className="client-phone">{invoice.client_phone || 'N/A'}</Text>
-                            </div>
-                        </Col>
-                        <Col xs={24} md={12}>
-                            <div className="info-section invoice-details">
-                                <Row>
-                                    <Col span={12}>
-                                        <Text type="secondary">Invoice Date:</Text>
-                                        <Text strong>
-                                            {invoice.invoice_date ? dayjs(invoice.invoice_date).format('MMM DD, YYYY') : 'N/A'}
-                                        </Text>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Text type="secondary">Due Date:</Text>
-                                        <Text strong>
-                                            {invoice.due_date ? dayjs(invoice.due_date).format('MMM DD, YYYY') : 'N/A'}
-                                        </Text>
-                                    </Col>
-                                </Row>
-                            </div>
-                        </Col>
-                    </Row>
+  return (
+    <Modal
+      title={null}
+      open={open}
+      onCancel={onCancel}
+      footer={null}
+      width={800}
+      destroyOnClose={true}
+      centered
+      styles={{
+        body: {
+          marginTop: '15px',
+          padding: '40px',
+          height: '90vh',
+          width: '100%',
+          fontFamily: "'Segoe UI', sans-serif"
+        }
+      }}
+    >
+      <div style={styles.invoiceBox}>
+        <div style={styles.topHeader}>
+          <img
+            src="https://grewox.com/assets/logo.png"
+            alt="Grewox Logo"
+            style={styles.logo}
+          />
+          <div style={styles.companyInfo}>
+            <h2 style={styles.companyInfoTitle}>Grewox CRM</h2>
+            <p>www.grewox.com<br />contact@grewox.com</p>
+          </div>
+        </div>
 
-                    <div className="invoice-items">
-                        <Table
-                            dataSource={items}
-                            columns={columns}
-                            pagination={false}
-                            rowKey={(record, index) => index}
-                            summary={() => (
-                                <Table.Summary>
-                                    <Table.Summary.Row className="subtotal-row">
-                                        <Table.Summary.Cell colSpan={4} align="right">
-                                            <Text>Subtotal</Text>
-                                        </Table.Summary.Cell>
-                                        <Table.Summary.Cell align="right">
-                                            <Text>${subtotal.toFixed(2)}</Text>
-                                        </Table.Summary.Cell>
-                                    </Table.Summary.Row>
-                                    <Table.Summary.Row className="tax-row">
-                                        <Table.Summary.Cell colSpan={4} align="right">
-                                            <Text>Tax ({taxRate}%)</Text>
-                                        </Table.Summary.Cell>
-                                        <Table.Summary.Cell align="right">
-                                            <Text>${taxAmount.toFixed(2)}</Text>
-                                        </Table.Summary.Cell>
-                                    </Table.Summary.Row>
-                                    <Table.Summary.Row className="total-row">
-                                        <Table.Summary.Cell colSpan={4} align="right">
-                                            <Text strong>Total Amount</Text>
-                                        </Table.Summary.Cell>
-                                        <Table.Summary.Cell align="right">
-                                            <Text strong className="total-amount">
-                                                ${total.toFixed(2)}
-                                            </Text>
-                                        </Table.Summary.Cell>
-                                    </Table.Summary.Row>
-                                </Table.Summary>
-                            )}
-                        />
-                    </div>
+        <div style={styles.details}>
+          <div style={styles.detailsColumn}>
+            <strong>Billed To:</strong><br />
+            {customerData ? (
+              <>
+                {customerData.name}<br />
+                {customerData.email && `Email: ${customerData.email}`}<br />
+                {customerData.contact && `Phone: ${customerData.contact}`}<br />
+                {/* {renderBillingAddress()} */}
+              </>
+            ) : (
+              'Loading customer details...'
+            )}
+          </div>
+          <div style={styles.detailsColumn}>
+            <strong>Invoice Details:</strong><br />
+            Invoice No: {invoice.salesInvoiceNumber}<br />
+            Date: {dayjs(invoice.issueDate).format('DD MMMM YYYY')}<br />
+            Due Date: {dayjs(invoice.dueDate).format('DD MMMM YYYY')}
+          </div>
+        </div>
 
-                    <Divider />
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Description</th>
+              <th style={{ ...styles.th, textAlign: 'center' }}>Qty</th>
+              <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>
+              <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoiceItems.map((item, index) => {
+              const quantity = Number(item.quantity) || 0;
+              const rate = Number(item.unit_price || item.rate) || 0;
+              const amount = quantity * rate;
+              
+              return (
+                <tr key={index}>
+                  <td style={styles.td}>{item.item_name || item.name || item.description}</td>
+                  <td style={{ ...styles.td, textAlign: 'center' }}>{quantity}</td>
+                  <td style={styles.tdRight}>₹{rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td style={styles.tdRight}>₹{amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                </tr>
+              );
+            })}
 
-                    <div className="invoice-footer">
-                        <Row gutter={24}>
-                            <Col xs={24} md={12}>
-                                <div className="terms-section">
-                                    <Title level={5}>Terms & Conditions</Title>
-                                    <Text>1. Payment is due within 15 days</Text>
-                                    <Text>2. Please include invoice number on your payment</Text>
-                                    <Text>3. Late payments are subject to fees</Text>
-                                </div>
-                            </Col>
-                            <Col xs={24} md={12}>
-                                <div className="payment-section">
-                                    <Title level={5}>Payment Methods</Title>
-                                    <div className="payment-options">
-                                        <Button className="payment-method">Bank Transfer</Button>
-                                        <Button className="payment-method">Credit Card</Button>
-                                        <Button className="payment-method">PayPal</Button>
-                                    </div>
-                                </div>
-                            </Col>
-                        </Row>
-                    </div>
-                </div>
 
-               
-            </Card>
-        </Modal>
-    );
+            {/* <tr>
+              <td colSpan="3" style={styles.tdRight}><strong>Subtotal</strong></td>
+              <td style={styles.tdRight}>₹{Number(invoice.subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            </tr> */}
+
+            {Number(invoice.tax) > 0 && (
+              <tr>
+                <td colSpan="3" style={styles.tdRight}>GST</td>
+                <td style={styles.tdRight}>₹{Number(invoice.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+              </tr>
+            )} 
+
+            {Number(invoice.discount) > 0 && (
+              <tr>
+                <td colSpan="3" style={styles.tdRight}>Discount</td>
+                <td style={styles.tdRight}>₹{Number(invoice.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+              </tr>
+            )}
+
+            <tr>
+              <td colSpan="3" style={styles.tdRight}><strong>Total</strong></td>
+              <td style={styles.tdRight}><strong>₹{Number(invoice.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style={styles.qrSection}>
+          <img
+            src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://grewox.com/pay-now"
+            alt="QR Code"
+            style={styles.qrImage}
+          />
+          <p style={{ fontSize: 11 }}>Scan to Pay or View Online</p>
+        </div>
+
+        <div style={styles.footer}>
+          Thank you for doing business with us!<br />
+          <div style={styles.powered}>Powered by Grewox CRM | www.grewox.com</div>
+        </div>
+      </div>
+    </Modal>
+  );
 };
 
 export default ViewInvoice;

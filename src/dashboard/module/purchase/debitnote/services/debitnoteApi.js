@@ -23,11 +23,20 @@ export const debitNoteApi = createApi({
             invalidatesTags: ["DebitNotes"],
         }),
 
+        // Delete debit note
+        deleteDebitNote: builder.mutation({
+            query: (id) => ({
+                url: `/bill-debits/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ["DebitNotes"],
+        }),
+
     }),
 });
 
 export const {
     useGetDebitNotesQuery,
     useCreateDebitNoteMutation,
-   
+    useDeleteDebitNoteMutation,
 } = debitNoteApi;

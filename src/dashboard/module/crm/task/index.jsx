@@ -94,7 +94,7 @@ const Task = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = tasks.map(task => ({
+            const data = tasksData.map(task => ({
                 'Task Name': task.taskName,
                 'Category': task.category,
                 'Status': task.status,

@@ -37,6 +37,34 @@ const Training = () => {
     const [deleteTraining] = useDeleteTrainingMutation();
 
     useEffect(() => {
+        fetchTrainings();
+    }, []);
+
+    const fetchTrainings = async () => {
+        try {
+            setLoading(true);
+            // TODO: Replace with actual API call
+            const mockData = [
+                {
+                    id: 1,
+                    title: "React Training",
+                    type: "Technical",
+                    trainer: "John Doe",
+                    start_date: "2024-03-21",
+                    end_date: "2024-03-25",
+                    status: "active",
+                    created_at: new Date().toISOString()
+                }
+            ];
+            setTrainings(mockData);
+        } catch (error) {
+            message.error("Failed to fetch trainings");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         let result = [...trainings];
         if (searchText) {
             result = result.filter(training =>
@@ -109,32 +137,6 @@ const Training = () => {
     const handleSearch = (value) => {
         setSearchText(value);
     };
-
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
 
     const handleExport = async (type) => {
         try {
@@ -231,26 +233,50 @@ const Training = () => {
                     <Text type="secondary">Manage all trainings in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search trainings..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <div className="search-input">
+                        <Input
+                            placeholder="Search by training title..."
+                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                            style={{ width: 360 }}
+                            allowClear
+                        />
+                    </div>
                     <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                        <Dropdown
+                            menu={{
+                                items: [
+                                    {
+                                        key: 'csv',
+                                        label: 'Export as CSV',
+                                        icon: <FiDownload />,
+                                        onClick: () => handleExport('csv')
+                                    },
+                                    {
+                                        key: 'excel',
+                                        label: 'Export as Excel',
+                                        icon: <FiDownload />,
+                                        onClick: () => handleExport('excel')
+                                    },
+                                    {
+                                        key: 'pdf',
+                                        label: 'Export as PDF',
+                                        icon: <FiDownload />,
+                                        onClick: () => handleExport('pdf')
+                                    }
+                                ]
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button className="export-button" loading={loading}>
+                                <FiDownload /> Export <FiChevronDown />
                             </Button>
                         </Dropdown>
                         <Button
                             type="primary"
-                            icon={<FiPlus size={16} />}
+                            icon={<FiPlus />}
                             onClick={handleAddTraining}
                             className="add-button"
                         >
@@ -267,6 +293,7 @@ const Training = () => {
                     onEdit={handleEditTraining}
                     onDelete={handleDeleteConfirm}
                     onView={handleViewTraining}
+                    searchText={searchText}
                 />
             </Card>
 

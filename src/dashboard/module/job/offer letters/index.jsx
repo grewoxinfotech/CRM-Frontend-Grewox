@@ -30,7 +30,7 @@ const OfferLetters = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [selectedLetter, setSelectedLetter] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filteredLetters, setFilteredLetters] = useState([]);
     const searchInputRef = useRef(null);
@@ -150,27 +150,38 @@ const OfferLetters = () => {
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
-            const data = offerLetters.map(letter => ({
-                ' job': letter.job,
-                'Position': letter.position,
-                'Department': letter.department,
-                'Salary': letter.salary,
-                'Joining Date': letter.joining_date,
-                'Offer Date': letter.offer_date,
-                'Expiry Date': letter.expiry_date,
-                'Status': letter.status,
+            setExportLoading(true);
+
+            if (!offerLettersData?.data || offerLettersData.data.length === 0) {
+                message.warning('No data available to export');
+                return;
+            }
+
+            const data = offerLettersData.data.map(letter => ({
+                'Job Title': getJobTitle(letter.job),
+                'Applicant Name': applicationMap[letter.job_applicant] || 'N/A',
+                'Position': letter.position || 'N/A',
+                'Department': letter.department || 'N/A',
+                'Salary': letter.salary ? `${letter.currency || ''} ${letter.salary}` : 'N/A',
+                'Expected Joining Date': letter.expected_joining_date ? moment(letter.expected_joining_date).format('DD MMM YYYY') : 'N/A',
+                'Offer Date': letter.offer_date ? moment(letter.offer_date).format('DD MMM YYYY') : 'N/A',
+                'Offer Expiry': letter.offer_expiry ? moment(letter.offer_expiry).format('DD MMM YYYY') : 'N/A',
+                'Status': letter.status || 'N/A',
+                'Created Date': letter.created_at ? moment(letter.created_at).format('DD MMM YYYY') : 'N/A'
             }));
+
+            const timestamp = moment().format('YYYY-MM-DD_HH-mm');
+            const filename = `offer_letters_export_${timestamp}`;
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'offer_letters_export');
+                    exportToCSV(data, filename);
                     break;
                 case 'excel':
-                    exportToExcel(data, 'offer_letters_export');
+                    exportToExcel(data, filename);
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'offer_letters_export');
+                    exportToPDF(data, filename);
                     break;
                 default:
                     break;
@@ -179,7 +190,7 @@ const OfferLetters = () => {
         } catch (error) {
             message.error(`Failed to export: ${error.message}`);
         } finally {
-            setLoading(false);
+            setExportLoading(false);
         }
     };
 
@@ -264,9 +275,16 @@ const OfferLetters = () => {
                         }}
                     />
                     <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
+                        <Dropdown 
+                            overlay={exportMenu} 
+                            trigger={['click']}
+                            disabled={isLoading || exportLoading}
+                        >
+                            <Button 
+                                className="export-button"
+                                loading={exportLoading}
+                            >
+                                {!exportLoading && <FiDownload size={16} />}
                                 <span>Export</span>
                                 <FiChevronDown size={14} />
                             </Button>
@@ -299,7 +317,7 @@ const OfferLetters = () => {
                     onCancel={handleEditModalClose}
                     isEditing={isEditing}
                     initialValues={selectedLetter}
-                    loading={loading}
+                    loading={exportLoading}
                 />
             ) : (
                 <CreateOfferLetter
@@ -309,7 +327,7 @@ const OfferLetters = () => {
                         setSelectedLetter(null);
                     }}
                     initialValues={selectedLetter}
-                    loading={loading}
+                    loading={exportLoading}
                 />
             )}
         </div>

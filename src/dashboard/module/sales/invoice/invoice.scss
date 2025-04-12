@@ -91,110 +91,103 @@ $border-radius: 6px;
             }
         }
 
-        .header-actions-wrapper {
+        .header-actions {
             display: flex;
+            align-items: center;
             justify-content: flex-end;
-            flex: 1;
-            margin: 0;
+            gap: 16px;
+            width: 100%;
+            max-width: 800px;
 
-            .header-actions {
+            .search-filter-group {
+                flex: 1;
+                max-width: 360px;
+                min-width: 200px;
+
+                .ant-input-affix-wrapper {
+                    border-radius: 40px;
+                    height: 40px;
+                    padding: 4px 16px;
+                    transition: all 0.3s ease;
+                    border: 1px solid $border-color;
+                    width: 100%;
+
+                    .anticon {
+                        color: $text-color-light;
+                        margin-right: 8px;
+                        font-size: 16px;
+                    }
+
+                    .ant-input {
+                        font-size: 14px;
+                        background: transparent;
+                        border: none;
+                        padding: 0;
+                        margin: 0 4px;
+
+                        &::placeholder {
+                            color: rgba($text-color, 0.45);
+                        }
+                    }
+
+                    &:hover,
+                    &:focus,
+                    &-focused {
+                        border-color: #1677ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+                }
+            }
+
+            .action-buttons {
                 display: flex;
                 align-items: center;
-                justify-content: flex-end;
-                gap: 16px;
-                width: 100%;
-                max-width: 800px;
+                gap: 12px;
+                flex-shrink: 0;
 
-                .search-input {
-                    flex: 1;
-                    max-width: 360px;
-                    min-width: 200px;
+                .export-button,
+                .add-button {
+                    height: 40px;
+                    padding: 0 20px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
 
-                    .ant-input-affix-wrapper {
-                        border-radius: 40px;
-                        height: 40px;
-                        padding: 4px 16px;
-                        transition: all 0.3s ease;
-                        border: 1px solid $border-color;
-                        width: 100%;
-
-                        .anticon {
-                            color: $text-color-light;
-                            margin-right: 8px;
-                            font-size: 16px;
-                        }
-
-                        .ant-input {
-                            font-size: 14px;
-                            background: transparent;
-                            border: none;
-                            padding: 0;
-                            margin: 0 4px;
-
-                            &::placeholder {
-                                color: rgba($text-color, 0.45);
-                            }
-                        }
-
-                        &:hover,
-                        &:focus,
-                        &-focused {
-                            border-color: #1677ff;
-                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                        }
+                    svg {
+                        font-size: 16px;
                     }
                 }
 
-                .action-buttons {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    flex-shrink: 0;
+                .export-button {
+                    border: 1px solid $border-color;
+                    background: white;
 
-                    .export-button,
-                    .add-button {
-                        height: 40px;
-                        padding: 0 20px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        border-radius: 8px;
-                        font-weight: 500;
-                        transition: all 0.3s ease;
-
-                        svg {
-                            font-size: 16px;
-                        }
+                    &:hover {
+                        color: #1677ff;
+                        border-color: #1677ff;
+                        transform: translateY(-2px);
                     }
+                }
 
-                    .export-button {
-                        border: 1px solid $border-color;
-                        background: white;
+                .add-button {
+                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                    border: none;
+                    color: white;
 
-                        &:hover {
-                            color: #1677ff;
-                            border-color: #1677ff;
-                            transform: translateY(-2px);
-                        }
-                    }
-
-                    .add-button {
-                        background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                        border: none;
-                        color: white;
-
-                        &:hover {
-                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                            transform: translateY(-2px);
-                        }
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                        transform: translateY(-2px);
                     }
                 }
             }
         }
     }
 
-    .inquiry-table-card {
+    .invoice-table-card {
         @include hover-shadow;
         background: white;
         border-radius: 12px;
@@ -208,7 +201,7 @@ $border-radius: 6px;
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead>tr>th {
+                .ant-table-thead > tr > th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -220,7 +213,7 @@ $border-radius: 6px;
                     }
                 }
 
-                .ant-table-tbody>tr>td {
+                .ant-table-tbody > tr > td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -233,7 +226,7 @@ $border-radius: 6px;
                     transition: all 0.3s ease;
 
                     &:hover {
-                        background: #fafafa;
+                        background: $primary-light;
                     }
                 }
             }
@@ -415,11 +408,11 @@ $border-radius: 6px;
             flex-direction: column;
             padding: 16px;
 
-            .header-actions-wrapper {
+            .header-actions {
                 flex-direction: column;
                 width: 100%;
 
-                .search-input {
+                .search-filter-group {
                     max-width: 100%;
                 }
 
@@ -430,7 +423,7 @@ $border-radius: 6px;
             }
         }
 
-        .inquiry-table-card {
+        .invoice-table-card {
             .ant-table {
 
                 .ant-table-thead>tr>th,

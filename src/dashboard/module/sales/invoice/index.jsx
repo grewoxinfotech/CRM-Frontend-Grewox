@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Card,
   Typography,
@@ -8,8 +8,6 @@ import {
   Menu,
   Breadcrumb,
   message,
-  Row,
-  Col,
 } from "antd";
 import {
   FiPlus,
@@ -26,8 +24,8 @@ import "./invoice.scss";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-import moment from "moment";
-import { useGetProductsQuery } from "../product&services/services/productApi";
+import dayjs from "dayjs";
+import { useGetInvoicesQuery } from "./services/invoiceApi";
 
 const { Title, Text } = Typography;
 
@@ -37,101 +35,21 @@ const Invoice = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [invoices, setInvoices] = useState([]);
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
 
-
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  const fetchInvoices = async () => {
-    try {
-      setLoading(true);
-      // TODO: Implement API call to fetch invoices
-      const response = await fetch("/api/invoices");
-      const data = await response.json();
-      setInvoices(data);
-    } catch (error) {
-      console.error("Fetch Error:", error);
-      // message.error('Failed to fetch invoices');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreate = async (formData) => {
-    try {
-      setLoading(true);
-      // TODO: Implement API call to create invoice
-      await fetch("/api/invoices", {
-        method: "POST",
-        body: formData,
-      });
-      message.success("Invoice created successfully");
-      setCreateModalVisible(false);
-      fetchInvoices();
-    } catch (error) {
-      console.error("Create Error:", error);
-      message.error("Failed to create invoice");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEdit = async (formData) => {
-    try {
-      setLoading(true);
-      // TODO: Implement API call to update invoice
-      await fetch(`/api/invoices/${selectedInvoice.id}`, {
-        method: "PUT",
-        body: formData,
-      });
-      message.success("Invoice updated successfully");
-      setEditModalVisible(false);
-      setSelectedInvoice(null);
-      fetchInvoices();
-    } catch (error) {
-      console.error("Edit Error:", error);
-      message.error("Failed to update invoice");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      setLoading(true);
-      // TODO: Implement API call to delete invoice
-      await fetch(`/api/invoices/${id}`, {
-        method: "DELETE",
-      });
-      message.success("Invoice deleted successfully");
-      fetchInvoices();
-    } catch (error) {
-      console.error("Delete Error:", error);
-      message.error("Failed to delete invoice");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleView = (invoice) => {
-    // TODO: Implement view invoice functionality
-    console.log("View invoice:", invoice);
-  };
+  const { data: invoicesData, isLoading } = useGetInvoicesQuery();
+  const invoices = invoicesData?.data || [];
 
   const handleExport = async (type) => {
     try {
       setLoading(true);
       const data = invoices.map((invoice) => ({
-        "Invoice Number": invoice.invoice_number,
-        Customer: invoice.customer_name,
-        Date: moment(invoice.date).format("YYYY-MM-DD"),
-        "Due Date": moment(invoice.due_date).format("YYYY-MM-DD"),
-        Status: invoice.status,
-        Total: invoice.total,
-        "Created Date": moment(invoice.created_at).format("YYYY-MM-DD"),
+        "Invoice Number": invoice.salesInvoiceNumber,
+        "Issue Date": dayjs(invoice.issueDate).format("DD/MM/YYYY"),
+        "Due Date": dayjs(invoice.dueDate).format("DD/MM/YYYY"),
+        "Customer Name": invoice.customerName,
+        "Total": invoice.total,
+        "Amount": invoice.amount,
+        "Status": invoice.payment_status,
       }));
 
       switch (type) {
@@ -227,13 +145,10 @@ const Invoice = () => {
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
-              <FiHome style={{ marginRight: "4px" }} />
-              Home
+              <FiHome /> Home
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/dashboard/sales">Sales</Link>
-          </Breadcrumb.Item>
+          <Breadcrumb.Item>Sales</Breadcrumb.Item>
           <Breadcrumb.Item>Invoices</Breadcrumb.Item>
         </Breadcrumb>
       </div>
@@ -243,60 +158,46 @@ const Invoice = () => {
           <Title level={2}>Invoices</Title>
           <Text type="secondary">Manage all invoices in the organization</Text>
         </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-            <div className="header-actions">
-              <Input
-                prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                placeholder="Search invoices..."
-                allowClear
-                onChange={(e) => setSearchText(e.target.value)}
-                value={searchText}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Dropdown menu={exportMenu} trigger={["click"]}>
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={() => setCreateModalVisible(true)}
-                  className="add-button"
-                >
-                  Create Invoice
-                </Button>
-              </div>
-            </div>
-          </Col>
-        </Row>
+        <div className="header-actions">
+          <div className="search-filter-group">
+            <Input
+              prefix={<FiSearch />}
+              placeholder="Search invoices..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <div className="action-buttons">
+            <Dropdown menu={exportMenu} trigger={["click"]}>
+              <Button className="export-button">
+                <FiDownload />
+                <span>Export</span>
+                <FiChevronDown />
+              </Button>
+            </Dropdown>
+            <Button
+              type="primary"
+              icon={<FiPlus />}
+              onClick={() => setCreateModalVisible(true)}
+              className="add-button"
+            >
+              Create Invoice
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Card className="inquiry-table-card">
+      <Card className="invoice-table-card">
         <InvoiceList
-          loading={loading}
-          invoices={invoices}
           searchText={searchText}
-          onEdit={(invoice) => {
-            setSelectedInvoice(invoice);
-            setEditModalVisible(true);
-          }}
-          onDelete={handleDelete}
-          onView={handleView}
+          loading={isLoading}
         />
       </Card>
 
       <CreateInvoice
         open={createModalVisible}
         onCancel={() => setCreateModalVisible(false)}
-        onSubmit={handleCreate}
-        productsData={productsData}
-        productsLoading={productsLoading}
-        setCreateModalVisible={setCreateModalVisible}
       />
 
       <EditInvoice
@@ -305,9 +206,6 @@ const Invoice = () => {
           setEditModalVisible(false);
           setSelectedInvoice(null);
         }}
-        onSubmit={handleEdit}
-        productsData={productsData}
-        productsLoading={productsLoading}
         initialValues={selectedInvoice}
       />
     </div>

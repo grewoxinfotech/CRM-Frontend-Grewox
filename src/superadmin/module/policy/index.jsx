@@ -238,11 +238,10 @@ const Policy = () => {
     try {
       setLoading(true);
       const data = policies.map((policy) => ({
-        Branch: policy.branch,
+      
         Title: policy.title,
         Description: policy.description,
-        "Created By": policy.created_by,
-        "Created Date": moment(policy.createdAt).format("YYYY-MM-DD"),
+        "Created Date": moment(policy.createdAt).format("DD-MM-YYYY"),
       }));
 
       switch (type) {

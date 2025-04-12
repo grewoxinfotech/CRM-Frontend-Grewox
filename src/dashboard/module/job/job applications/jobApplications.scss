@@ -116,7 +116,14 @@
                         &::placeholder {
                             color: rgba($text-color, 0.45);
                         }
-                    } 
+                    }
+
+                    &:hover,
+                    &:focus,
+                    &-focused {
+                        border-color: #1677ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
                 }
             }
 

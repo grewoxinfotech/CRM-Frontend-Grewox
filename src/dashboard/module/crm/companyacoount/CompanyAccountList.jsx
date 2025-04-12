@@ -83,19 +83,26 @@ const CompanyAccountList = ({ onEdit, onDelete, onView, searchText = "", company
         key: "view",
         icon: <FiEye />,
         label: "View Details",
-        onClick: () => handleView(record),
+        onClick: () => {
+          handleView(record);
+        },
       },
       {
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
-        onClick: () => onEdit(record),
+        onClick: () => {
+          setSelectedCompany(record);
+          setEditModalVisible(true);
+        },
       },
       {
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
-        onClick: () => onDelete(record.id),
+        onClick: () => {
+          onDelete(record.id);
+        },
         danger: true,
       },
     ],
@@ -146,28 +153,33 @@ const CompanyAccountList = ({ onEdit, onDelete, onView, searchText = "", company
       width: 80,
       align: "center", 
       render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="company-actions-dropdown"
-        >
-          <Button
-            type="text"
-            icon={
-              <FiMoreVertical style={{ fontSize: "18px", color: "#8c8c8c" }} />
-            }
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              padding: "4px",
-              borderRadius: "4px",
-              "&:hover": {
-                background: "#f5f5f5",
-              },
-            }}
-          />
-        </Dropdown>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            menu={getDropdownItems(record)}
+            trigger={["click"]}
+            placement="bottomRight"
+            overlayClassName="company-actions-dropdown"
+          >
+            <Button
+              type="text"
+              icon={
+                <FiMoreVertical style={{ fontSize: "18px", color: "#8c8c8c" }} />
+              }
+              className="action-dropdown-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              style={{
+                padding: "4px",
+                borderRadius: "4px",
+                "&:hover": {
+                  background: "#f5f5f5",
+                },
+              }}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];

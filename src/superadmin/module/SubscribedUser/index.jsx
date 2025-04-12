@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
@@ -23,6 +22,7 @@ const { confirm } = Modal;
 
 const SubscribedUser = () => {
     const [searchText, setSearchText] = useState('');
+    const [loading, setLoading] = useState(false);
     const searchInputRef = useRef(null);
 
     const { data: subscribedUsersData, isLoading, error } = useGetAllSubscribedUsersQuery();
@@ -30,54 +30,65 @@ const SubscribedUser = () => {
     const filteredUsers = React.useMemo(() => {
         if (!subscribedUsersData?.data) return [];
         
-        return subscribedUsersData.data.filter(user => {
-            if (!searchText) return true;
-            
-            const searchTerm = searchText.toLowerCase();
-            return (
-                user.name?.toLowerCase().includes(searchTerm) ||
-                user.email?.toLowerCase().includes(searchTerm)
-            );
-        });
-    }, [subscribedUsersData, searchText]);
-
+        const searchTerm = searchText.toLowerCase().trim();
+        if (!searchTerm) return subscribedUsersData.data;
+        
+        return subscribedUsersData.data.filter(user => 
+            (user.client_name?.toLowerCase() || '').includes(searchTerm) ||
+            (user.plan_name?.toLowerCase() || '').includes(searchTerm) ||
+            String(user.current_clients_count || '').includes(searchTerm) ||
+            String(user.current_storage_used || '').includes(searchTerm) ||
+            String(user.current_users_count || '').includes(searchTerm) ||
+            (user.payment_status?.toLowerCase() || '').includes(searchTerm) ||
+            (user.status?.toLowerCase() || '').includes(searchTerm)
+        );
+    }, [subscribedUsersData?.data, searchText]);
 
     const handleSearch = (value) => {
         setSearchText(value);
     };
 
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
+    const exportMenu = {
+        items: [
+            {
+                key: 'csv',
+                icon: <FiDownload />,
+                label: 'Export as CSV',
+                onClick: () => handleExport('csv')
+            },
+            {
+                key: 'excel',
+                icon: <FiDownload />,
+                label: 'Export as Excel',
+                onClick: () => handleExport('excel')
+            },
+            {
+                key: 'pdf',
+                icon: <FiDownload />,
+                label: 'Export as PDF',
+                onClick: () => handleExport('pdf')
+            }
+        ]
+    };
 
     const handleExport = async (type) => {
         try {
+            setLoading(true);
+            if (!subscribedUsersData?.data || subscribedUsersData.data.length === 0) {
+                message.warning('No data to export');
+                return;
+            }
+
             const data = subscribedUsersData.data.map(user => ({
-                'Name': user.name,
-                'Email': user.email,
-                'Created Date': moment(user.created_at).format('YYYY-MM-DD')
+                'Client Name': user.client_name,
+                'Plan Name': user.plan_name,
+                'Total Client Count': user.current_clients_count,
+                'Total Storage Used': `${user.current_storage_used} GB`,
+                'Total Users Count': user.current_users_count,
+                'Payment Status': user.payment_status,
+                'Status': user.status,
+                'Start Date': moment(user.start_date).format('DD-MM-YYYY'),
+                'End Date': moment(user.end_date).format('DD-MM-YYYY')
             }));
 
             switch (type) {
@@ -95,14 +106,17 @@ const SubscribedUser = () => {
             }
             message.success(`Successfully exported as ${type.toUpperCase()}`);
         } catch (error) {
+            console.error('Export error:', error);
             message.error(`Failed to export: ${error.message}`);
+        } finally {
+            setLoading(false);
         }
     };
 
     const exportToCSV = (data, filename) => {
         const csvContent = [
             Object.keys(data[0]).join(','),
-            ...data.map(item => Object.values(item).map(value =>
+            ...data.map(item => Object.values(item).map(value => 
                 `"${value?.toString().replace(/"/g, '""')}"`
             ).join(','))
         ].join('\n');
@@ -162,7 +176,7 @@ const SubscribedUser = () => {
                 <div className="header-actions">
                     <Input
                         prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search users..."
+                        placeholder="Search by client name, plan, status..."
                         allowClear
                         onChange={(e) => handleSearch(e.target.value)}
                         value={searchText}
@@ -170,8 +184,12 @@ const SubscribedUser = () => {
                         className="search-input"
                     />
                     <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
+                        <Dropdown 
+                            menu={exportMenu} 
+                            trigger={['click']}
+                            disabled={loading || !subscribedUsersData?.data?.length}
+                        >
+                            <Button className="export-button" loading={loading}>
                                 <FiDownload size={16} />
                                 <span>Export</span>
                                 <FiChevronDown size={14} />
@@ -182,7 +200,10 @@ const SubscribedUser = () => {
             </div>
 
             <Card className="user-table-card">
-                <SubscribedUserList />
+                <SubscribedUserList 
+                    data={filteredUsers}
+                    loading={isLoading}
+                />
             </Card>
         </div>
     );

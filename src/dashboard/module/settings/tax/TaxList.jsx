@@ -1,17 +1,8 @@
 import React from 'react';
 import { Table, Button, Tag, Dropdown } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
-import { useGetAllTaxesQuery } from './services/taxApi';
 
-const TaxList = ({ onEdit, onDelete, onView }) => {
-    const { data: taxesData, isLoading } = useGetAllTaxesQuery();
-
-    // Ensure we have an array of taxes, even if empty
-    const taxes = React.useMemo(() => {
-        if (!taxesData) return [];
-        return Array.isArray(taxesData) ? taxesData : taxesData.data || [];
-    }, [taxesData]);
-
+const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
     // Define action items for dropdown
     const getActionItems = (record) => [
         {
@@ -29,12 +20,31 @@ const TaxList = ({ onEdit, onDelete, onView }) => {
         }
     ];
 
+    const highlightText = (text, highlight) => {
+        if (!highlight.trim() || !text) return text;
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        return (
+            <span>
+                {parts.map((part, i) =>
+                    part.toLowerCase() === highlight.toLowerCase() ? (
+                        <span key={i} style={{ backgroundColor: '#bae7ff' }}>
+                            {part}
+                        </span>
+                    ) : (
+                        part
+                    )
+                )}
+            </span>
+        );
+    };
+
     const columns = [
         {
             title: 'GST Name',
             dataIndex: 'gstName',
             key: 'gstName',
-            sorter: (a, b) => (a.gstName || '').localeCompare(b.gstName || '')
+            sorter: (a, b) => (a.gstName || '').localeCompare(b.gstName || ''),
+            render: (text) => highlightText(text, searchText)
         },
         {
             title: 'GST Percentage',
@@ -65,19 +75,11 @@ const TaxList = ({ onEdit, onDelete, onView }) => {
         },
     ];
 
-    // Transform the taxes data to ensure each row has a unique key
-    const tableData = React.useMemo(() => {
-        return taxes.map(tax => ({
-            ...tax,
-            key: tax.id
-        }));
-    }, [taxes]);
-
     return (
         <Table
             columns={columns}
-            dataSource={tableData}
-            loading={isLoading}
+            dataSource={taxes}
+            loading={loading}
             pagination={{
                 pageSize: 10,
                 showSizeChanger: false,

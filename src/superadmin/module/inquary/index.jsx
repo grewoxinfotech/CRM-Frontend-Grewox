@@ -15,6 +15,9 @@ import { Link } from 'react-router-dom';
 import CreateInquaryModal from './CreateInquaryModal';
 import { useGetAllInquiriesQuery, useDeleteInquiryMutation } from './services/inquaryApi';
 import moment from 'moment';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const { Title, Text } = Typography;
 
@@ -27,6 +30,7 @@ const Inquiry = () => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedInquiry, setSelectedInquiry] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const { data: inquiriesData, isLoading, refetch } = useGetAllInquiriesQuery();
     const [deleteInquiryMutation, { isLoading: isDeleting }] = useDeleteInquiryMutation();
@@ -202,28 +206,105 @@ const Inquiry = () => {
         }
     ];
 
-    const exportMenu = (
-        <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-            >
-                Export as PDF
-            </Menu.Item>
-        </Menu>
-    );
+    const exportMenuItems = {
+        items: [
+            {
+                key: 'csv',
+                icon: <FiDownload />,
+                label: 'Export as CSV',
+                onClick: () => handleExport('csv')
+            },
+            {
+                key: 'excel',
+                icon: <FiDownload />,
+                label: 'Export as Excel',
+                onClick: () => handleExport('excel')
+            },
+            {
+                key: 'pdf',
+                icon: <FiDownload />,
+                label: 'Export as PDF',
+                onClick: () => handleExport('pdf')
+            }
+        ]
+    };
+
+    const handleExport = async (type) => {
+        try {
+            setLoading(true);
+            if (!filteredInquiries || filteredInquiries.length === 0) {
+                message.warning('No data to export');
+                return;
+            }
+
+            const data = filteredInquiries.map(inquiry => ({
+                'Name': inquiry.name || 'N/A',
+                'Email': inquiry.email || 'N/A',
+                'Phone': inquiry.phone || 'N/A',
+                'Subject': inquiry.subject || 'N/A',
+                'Message': inquiry.message || 'N/A',
+                'Created Date': moment(inquiry.createdAt).format('DD-MM-YYYY') || 'N/A'
+            }));
+
+            switch (type) {
+                case 'csv':
+                    exportToCSV(data, 'inquiries_export');
+                    break;
+                case 'excel':
+                    exportToExcel(data, 'inquiries_export');
+                    break;
+                case 'pdf':
+                    exportToPDF(data, 'inquiries_export');
+                    break;
+                default:
+                    break;
+            }
+            message.success(`Successfully exported as ${type.toUpperCase()}`);
+        } catch (error) {
+            console.error('Export error:', error);
+            message.error(`Failed to export: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const exportToCSV = (data, filename) => {
+        const csvContent = [
+            Object.keys(data[0]).join(','),
+            ...data.map(item => Object.values(item).map(value => 
+                `"${value?.toString().replace(/"/g, '""')}"`
+            ).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${filename}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    const exportToExcel = (data, filename) => {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
+        XLSX.writeFile(wb, `${filename}.xlsx`);
+    };
+
+    const exportToPDF = (data, filename) => {
+        const doc = new jsPDF('l', 'pt', 'a4');
+        doc.autoTable({
+            head: [Object.keys(data[0])],
+            body: data.map(item => Object.values(item)),
+            margin: { top: 20 },
+            styles: { fontSize: 8 }
+        });
+        doc.save(`${filename}.pdf`);
+    };
 
     return (
         <div className="inquiry-page">
@@ -256,8 +337,12 @@ const Inquiry = () => {
                                 className="search-input"
                             />
                             <div className="action-buttons">
-                                <Dropdown menu={exportMenu} trigger={['click']}>
-                                    <Button className="export-button">
+                                <Dropdown 
+                                    menu={exportMenuItems}
+                                    trigger={['click']}
+                                    disabled={loading || !filteredInquiries?.length}
+                                >
+                                    <Button className="export-button" loading={loading}>
                                         <FiDownload size={16} />
                                         <span>Export</span>
                                         <FiChevronDown size={14} />

@@ -12,8 +12,9 @@ import {
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
+import moment from 'moment';
 
-const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPageChange }) => {
+const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText }) => {
     const { data: currencies } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
@@ -22,6 +23,24 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
     const getCurrencyIcon = (currencyId) => {
         const currency = currencies?.find(c => c.id === currencyId);
         return currency?.currencyIcon || '$';
+    };
+
+    const highlightText = (text, highlight) => {
+        if (!highlight.trim() || !text) return text;
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        return (
+            <span>
+                {parts.map((part, i) =>
+                    part.toLowerCase() === highlight.toLowerCase() ? (
+                        <span key={i} style={{ backgroundColor: '#bae7ff' }}>
+                            {part}
+                        </span>
+                    ) : (
+                        part
+                    )
+                )}
+            </span>
+        );
     };
 
     const getDropdownItems = (record) => ({
@@ -48,15 +67,46 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         ]
     });
 
+    const getActionItems = (record) => [
+        {
+            key: 'edit',
+            icon: <FiEdit2 />,
+            label: 'Edit Plan',
+            onClick: () => onEdit(record)
+        },
+        {
+            key: 'delete',
+            icon: <FiTrash2 />,
+            label: 'Delete Plan',
+            danger: true,
+            onClick: () => onDelete(record)
+        }
+    ];
+
     const columns = [
         {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
             sorter: (a, b) => (a.name || '').localeCompare(b.name || ''),
-            render: (text) => (
-                <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>
-            ),
+            render: (text) => {
+                if (!searchText?.trim() || !text) return <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>;
+                
+                const parts = text.split(new RegExp(`(${searchText})`, 'gi'));
+                return (
+                    <div style={{ fontWeight: 500 }}>
+                        {parts.map((part, i) =>
+                            part.toLowerCase() === searchText.toLowerCase() ? (
+                                <span key={i} style={{ backgroundColor: '#bae7ff' }}>
+                                    {part}
+                                </span>
+                            ) : (
+                                part
+                            )
+                        )}
+                    </div>
+                );
+            },
             width: '15%',
             fixed: 'left'
         },
@@ -145,7 +195,9 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             align: 'center',
             render: (_, record) => (
                 <Dropdown
-                    menu={getDropdownItems(record)}
+                    menu={{ 
+                        items: getActionItems(record)
+                    }}
                     trigger={['click']}
                     placement="bottomRight"
                     overlayClassName="plan-actions-dropdown"
@@ -172,6 +224,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             scroll={{ x: 1200 }}
             pagination={pagination}
             onChange={(pagination) => onPageChange?.(pagination.current, pagination.pageSize)}
+            className="custom-table"
+            style={{
+                background: '#ffffff',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+            }}
         />
     );
 };

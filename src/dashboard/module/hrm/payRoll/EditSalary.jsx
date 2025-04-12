@@ -326,7 +326,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
                   Salary <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please enter salary" }]}
+              // rules={[{ required: true, message: "Please enter salary" }]}
             style={{ flex: 1 }}
           >
             <Input.Group compact className="price-input-group" style={{
@@ -404,7 +404,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
                 Net Salary <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
-            rules={[{ required: true, message: "Please enter net salary" }]}
+            // rules={[{ required: true, message: "Please enter net salary" }]}
             style={{ flex: 1 }}
           >
             <Input.Group compact className="price-input-group" style={{

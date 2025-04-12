@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Dropdown, Typography, Spin, Alert } from 'antd';
+import { Table, Button, Dropdown, Typography, Spin, Alert, Menu } from 'antd';
 import { FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiFileText, FiCalendar, FiDollarSign } from 'react-icons/fi';
 import { useGetDebitNotesQuery } from './services/debitnoteApi';
 import { useSelector } from 'react-redux';
@@ -13,7 +13,7 @@ const getCompanyId = (state) => {
     return user?.companyId || user?.company_id || user?.id;
 };
 
-const DebitNoteList = ({ onEdit, onDelete, onView, data }) => {
+const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText, loading }) => {
     const companyId = useSelector(getCompanyId);
     const { data: billings, isLoading } = useGetBillingsQuery(companyId);
     const { data: currenciesData } = useGetAllCurrenciesQuery();
@@ -77,14 +77,23 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data }) => {
             ellipsis: true,
             sorter: (a, b) => a.description.localeCompare(b.description),
         },
+       
     ];
+
+    // Filter debit notes based on search text
+    const filteredDebitNotes = data?.data?.filter(note => 
+        getBillNumber(note.bill)?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        note.description?.toLowerCase().includes(searchText?.toLowerCase()) ||
+        note.amount?.toString().includes(searchText)
+    ) || [];
 
     return (
         <div className="debitnote-list">
             <Table
                 columns={columns}
-                dataSource={data?.data || []}
+                dataSource={filteredDebitNotes}
                 rowKey="_id"
+                loading={loading}
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,

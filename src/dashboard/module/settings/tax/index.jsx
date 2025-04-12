@@ -37,16 +37,12 @@ const Tax = () => {
     const filteredTaxes = React.useMemo(() => {
         if (!taxesData?.data) return [];
         
-        return taxesData.data.filter(tax => {
-            if (!searchText) return true;
-            
-            const searchTerm = searchText.toLowerCase();
-            return (
-                tax.gstName?.toLowerCase().includes(searchTerm) ||
-                tax.gstPercentage?.toString().includes(searchTerm) ||
-                tax.status?.toLowerCase().includes(searchTerm)
-            );
-        });
+        const searchTerm = searchText.toLowerCase().trim();
+        if (!searchTerm) return taxesData.data;
+        
+        return taxesData.data.filter(tax => 
+            tax.gstName?.toLowerCase().includes(searchTerm)
+        );
     }, [taxesData, searchText]);
 
     const handleAddTax = () => {
@@ -227,12 +223,13 @@ const Tax = () => {
                 </div>
                 <div className="header-actions">
                     <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search taxes..."
+                        prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                        placeholder="Search by GST name..."
                         allowClear
                         onChange={(e) => handleSearch(e.target.value)}
                         value={searchText}
                         ref={searchInputRef}
+                        style={{ width: '360px' }}
                         className="search-input"
                     />
                     <div className="action-buttons">
@@ -262,6 +259,7 @@ const Tax = () => {
                     onEdit={handleEditTax}
                     onDelete={handleDelete}
                     onView={handleViewTax}
+                    searchText={searchText}
                 />
             </Card>
 

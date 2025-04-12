@@ -22,7 +22,7 @@ import CreateContact from "./CreateContact";
 
 const { Text } = Typography;
 
-const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoading, companyAccountsResponse, isCompanyAccountsLoading, loggedInUser }) => {
+const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoading, companyAccountsResponse, isCompanyAccountsLoading, loggedInUser, onDelete }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
@@ -95,16 +95,22 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
 
   const handleDelete = (id) => {
     Modal.confirm({
-      title: "Delete Contact",
-      content: "Are you sure you want to delete this contact?",
-      okText: "Yes",
-      okType: "danger",
-      cancelText: "No",
+      title: 'Delete Contact',
+      content: 'Are you sure you want to delete this contact?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
       bodyStyle: {
-        padding: "20px",
+        padding: '20px',
       },
-      onOk: () => {
-        message.success("Contact deleted successfully");
+      onOk: async () => {
+        try {
+          await deleteContact(id).unwrap();
+          message.success('Contact deleted successfully');
+        } catch (error) {
+          console.error("Delete Error:", error);
+          message.error(error?.data?.message || 'Failed to delete contact');
+        }
       },
     });
   };
@@ -168,6 +174,7 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
       title: "Phone",
       dataIndex: "phone",
       key: "phone",
+      sorter: (a, b) => a.phone.localeCompare(b.phone),
     },
     {
       title: "Company",
@@ -179,6 +186,7 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
       title: "Contact Owner",
       dataIndex: "contact_owner",
       key: "contact_owner",
+      sorter: (a, b) => a.contact_owner.localeCompare(b.contact_owner),
       render: (ownerId) => {
         if (ownerId === loggedInUser?.id) {
           return <Text>{loggedInUser?.username}</Text>;
@@ -199,28 +207,33 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
       width: 80,
       align: "center",
       render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="contact-actions-dropdown"
-        >
-          <Button
-            type="text"
-            icon={
-              <FiMoreVertical style={{ fontSize: "18px", color: "#8c8c8c" }} />
-            }
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
-            style={{
-              padding: "4px",
-              borderRadius: "4px",
-              "&:hover": {
-                background: "#f5f5f5",
-              },
-            }}
-          />
-        </Dropdown>
+        <div onClick={(e) => e.stopPropagation()}>
+          <Dropdown
+            menu={getDropdownItems(record)}
+            trigger={["click"]}
+            placement="bottomRight"
+            overlayClassName="contact-actions-dropdown"
+          >
+            <Button
+              type="text"
+              icon={
+                <FiMoreVertical style={{ fontSize: "18px", color: "#8c8c8c" }} />
+              }
+              className="action-dropdown-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              style={{
+                padding: "4px",
+                borderRadius: "4px",
+                "&:hover": {
+                  background: "#f5f5f5",
+                },
+              }}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];

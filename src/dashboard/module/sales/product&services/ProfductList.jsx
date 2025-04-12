@@ -40,17 +40,25 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 const { Text } = Typography;
 const { Search } = Input;
 
-const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
+const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null, currenciesData }) => {
   const { data: productsData = [], isLoading } = useGetProductsQuery();
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [searchValue, setSearchValue] = useState("");
 
   const currentUser = useSelector(selectCurrentUser);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
+
+  // Create a map of category IDs to category names
+  const categoryMap = React.useMemo(() => {
+    if (!categories) return {};
+    return categories.reduce((acc, category) => {
+      acc[category.id] = category.name;
+      return acc;
+    }, {});
+  }, [categories]);
 
   // Function to get currency details
   const getCurrencyDetails = (currencyId) => {
@@ -65,23 +73,27 @@ const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
     return `${currencyIcon} ${amount?.toLocaleString() || 0}`;
   };
 
+  // Filter products based on search text and category
   const filteredProducts = React.useMemo(() => {
-    return products?.filter((product) => {
-      const searchLower = searchValue.toLowerCase();
+    if (!products) return [];
+    return products.filter(product => {
+      const searchLower = searchText.toLowerCase();
       const name = product?.name?.toLowerCase() || "";
-      const category = product?.category?.toLowerCase() || "";
+      const category = categoryMap[product?.category]?.toLowerCase() || "";
       const sku = product?.sku?.toLowerCase() || "";
       const description = product?.description?.toLowerCase() || "";
 
-      return (
-        !searchValue ||
+      const matchesSearch = 
         name.includes(searchLower) ||
         category.includes(searchLower) ||
         sku.includes(searchLower) ||
-        description.includes(searchLower)
-      );
+        description.includes(searchLower);
+
+      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
     });
-  }, [products, searchValue]);
+  }, [products, searchText, categoryMap, selectedCategory]);
 
   const handleDelete = async (id) => {
     Modal.confirm({
@@ -160,12 +172,12 @@ const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
             />
           )}
           <div>
-            <Text strong style={{ display: "block", fontSize: "14px" }}>{name}</Text>
-            {record.sku && (
+            <Text strong style={{ display: "block", fontSize: "14px",marginTop:"10px" }}>{name}</Text>
+            {/* {record.sku && (
               <Text type="secondary" style={{ fontSize: "12px" }}>
                 SKU: {record.sku}
               </Text>
-            )}
+            )} */}
           </div>
         </div>
       ),
@@ -204,7 +216,7 @@ const ProductList = ({ onEdit, onView, searchText = "", currenciesData }) => {
       render: (_, record) => (
         <div>
           <Text strong style={{ display: "block", color: "#52c41a" }}>
-            <FiDollarSign style={{ marginRight: "4px" }} />
+            {/* <FiDollarSign style={{ marginRight: "4px" }} /> */}
             Selling: {formatPrice(record.selling_price, record.currency)}
           </Text>
           <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>

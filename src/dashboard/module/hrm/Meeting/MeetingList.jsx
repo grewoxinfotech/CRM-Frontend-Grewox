@@ -6,22 +6,21 @@ import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi'
 import dayjs from 'dayjs';
 import CreateMeeting from './CreateMeeting';
 
-const MeetingList = () => {
+const MeetingList = ({ searchText }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMeeting, setEditingMeeting] = useState(null);
 
-    // API call for getting all meetings
+    // API calls
     const { data: meetings, isLoading } = useGetMeetingsQuery();
     const { data: departmentsData } = useGetAllDepartmentsQuery();
     const [updateMeeting] = useUpdateMeetingMutation();
     const [deleteMeeting] = useDeleteMeetingMutation();
 
-    
     // Create a map of department IDs to names
     const departmentMap = useMemo(() => {
         const map = {};
-        if (departmentsData) {
-            departmentsData.forEach(dept => {
+        if (departmentsData?.data) {
+            departmentsData.data.forEach(dept => {
                 if (dept && dept.id) {
                     map[dept.id] = dept.department_name;
                 }
@@ -29,6 +28,28 @@ const MeetingList = () => {
         }
         return map;
     }, [departmentsData]);
+
+    // Filter meetings based on search text
+    const filteredMeetings = useMemo(() => {
+        if (!meetings?.data) return [];
+        
+        if (!searchText) return meetings.data;
+
+        const searchLower = searchText.toLowerCase();
+        return meetings.data.filter(meeting => {
+            const title = meeting.title?.toLowerCase() || '';
+            const description = meeting.description?.toLowerCase() || '';
+            const department = departmentMap[meeting.department]?.toLowerCase() || '';
+            const location = meeting.location?.toLowerCase() || '';
+            
+            return (
+                title.includes(searchLower) ||
+                description.includes(searchLower) ||
+                department.includes(searchLower) ||
+                location.includes(searchLower)
+            );
+        });
+    }, [meetings?.data, searchText, departmentMap]);
 
     // Handle edit
     const handleEdit = (record) => {
@@ -190,16 +211,14 @@ const MeetingList = () => {
 
     return (
         <div style={{ padding: '24px' }}>
-            
-
             <Table 
                 columns={columns}
-                dataSource={meetings?.data || []}
+                dataSource={filteredMeetings}
                 loading={isLoading}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,
-                    total: meetings?.total,
+                    total: filteredMeetings?.length,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} meetings`,
                     showQuickJumper: true,
