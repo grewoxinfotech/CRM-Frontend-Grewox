@@ -78,10 +78,6 @@ const CompanyAccount = () => {
     });
   };
 
- 
-
-  
-
   const handleExport = async (type) => {
     try {
       setLoading(true);

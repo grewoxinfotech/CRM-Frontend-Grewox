@@ -972,7 +972,7 @@ const CreateProjectModal = ({ visible, onCancel, onSubmit, loading }) => {
 
                     .ant-select-selection-item {
                         color: white !important;
-                        font-weight: 500 !important;
+                        // font-weight: 500 !important;
                         display: flex;
                         align-items: center;
                         height: 46px !important;

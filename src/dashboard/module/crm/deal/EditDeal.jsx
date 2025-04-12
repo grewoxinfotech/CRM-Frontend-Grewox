@@ -87,8 +87,6 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const labels = labelsData?.data || [];
   const products = productsData?.data || [];
 
-
-
   // Get pipeline name by ID
   const getPipelineName = (pipelineId) => {
     const pipeline = pipelines.find(p => p.id === pipelineId);

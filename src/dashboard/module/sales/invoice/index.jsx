@@ -8,6 +8,8 @@ import {
   Menu,
   Breadcrumb,
   message,
+  Row,
+  Col,
 } from "antd";
 import {
   FiPlus,
@@ -26,6 +28,8 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import dayjs from "dayjs";
 import { useGetInvoicesQuery } from "./services/invoiceApi";
+import moment from "moment";
+import { useGetProductsQuery } from "../product&services/services/productApi";
 
 const { Title, Text } = Typography;
 
@@ -38,6 +42,7 @@ const Invoice = () => {
 
   const { data: invoicesData, isLoading } = useGetInvoicesQuery();
   const invoices = invoicesData?.data || [];
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
 
   const handleExport = async (type) => {
     try {
@@ -73,6 +78,67 @@ const Invoice = () => {
     }
   };
 
+  const handleCreate = async (formData) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call to create invoice
+      await fetch("/api/invoices", {
+        method: "POST",
+        body: formData,
+      });
+      message.success("Invoice created successfully");
+      setCreateModalVisible(false);
+      fetchInvoices();
+    } catch (error) {
+      console.error("Create Error:", error);
+      message.error("Failed to create invoice");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = async (formData) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call to update invoice
+      await fetch(`/api/invoices/${selectedInvoice.id}`, {
+        method: "PUT",
+        body: formData,
+      });
+      message.success("Invoice updated successfully");
+      setEditModalVisible(false);
+      setSelectedInvoice(null);
+      fetchInvoices();
+    } catch (error) {
+      console.error("Edit Error:", error);
+      message.error("Failed to update invoice");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call to delete invoice
+      await fetch(`/api/invoices/${id}`, {
+        method: "DELETE",
+      });
+      message.success("Invoice deleted successfully");
+      fetchInvoices();
+    } catch (error) {
+      console.error("Delete Error:", error);
+      message.error("Failed to delete invoice");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleView = (invoice) => {
+    // TODO: Implement view invoice functionality
+    console.log("View invoice:", invoice);
+  };
+  
   const exportToCSV = (data, filename) => {
     const csvContent = [
       Object.keys(data[0]).join(","),
@@ -190,13 +256,24 @@ const Invoice = () => {
 
       <Card className="invoice-table-card">
         <InvoiceList
+          loading={loading}
+          invoices={invoices}
           searchText={searchText}
-          loading={isLoading}
+          onEdit={(invoice) => {
+            setSelectedInvoice(invoice);
+            setEditModalVisible(true);
+          }}
+          onDelete={handleDelete}
+          onView={handleView}
         />
       </Card>
 
       <CreateInvoice
         open={createModalVisible}
+        onSubmit={handleCreate}
+        productsData={productsData}
+        productsLoading={productsLoading}
+        setCreateModalVisible={setCreateModalVisible}
         onCancel={() => setCreateModalVisible(false)}
       />
 
@@ -206,6 +283,9 @@ const Invoice = () => {
           setEditModalVisible(false);
           setSelectedInvoice(null);
         }}
+        onSubmit={handleEdit}
+        productsData={productsData}
+        productsLoading={productsLoading}
         initialValues={selectedInvoice}
       />
     </div>

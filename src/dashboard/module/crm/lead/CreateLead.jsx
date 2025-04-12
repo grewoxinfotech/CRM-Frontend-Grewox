@@ -1041,7 +1041,7 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
 
             .ant-select-selection-item {
               padding-right: 20px !important;
-              font-weight: 500 !important;
+              // font-weight: 500 !important;
               color: #fff !important;
             }
 

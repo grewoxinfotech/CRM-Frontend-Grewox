@@ -6,6 +6,8 @@ import {
   FiEye,
   FiMoreVertical,
   FiDownload,
+  FiPlus,
+  FiSearch,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -16,6 +18,9 @@ import {
 import EditInvoice from "./EditInvoice";
 import ViewInvoice from './ViewInvoice';
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
+import { useGetCustomersQuery } from "../customer/services/custApi";
+import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
 
 const { Text } = Typography;
 
@@ -28,6 +33,9 @@ const InvoiceList = ({ searchText = "" }) => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const invoices = invoicesdata?.data || [];
+  const { data: customersData } = useGetCustomersQuery();
+  const { data: contactsData } = useGetContactsQuery();
+  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
   // Filter invoices based on search text
   const filteredInvoices = React.useMemo(() => {
@@ -53,14 +61,16 @@ const InvoiceList = ({ searchText = "" }) => {
       draft: "#d97706",
       pending: "#2563eb",
       paid: "#059669",
-      overdue: "#dc2626",
+      unpaid: "#dc2626",
+      partially_paid: "#7c3aed"
     };
 
     const statusBgColors = {
       draft: "#fef3c7",
       pending: "#dbeafe",
       paid: "#d1fae5",
-      overdue: "#fee2e2",
+      unpaid: "#fee2e2",
+      partially_paid: "#ede9fe"
     };
 
     return (
@@ -191,6 +201,33 @@ const InvoiceList = ({ searchText = "" }) => {
     ],
   });
 
+  const getCustomerName = (customerId, category) => {
+    if (!customerId) return "N/A";
+
+    switch (category) {
+      case 'customer':
+        const customer = customersData?.data?.find(c => c.id === customerId);
+        return customer?.name || "N/A";
+      
+      case 'contact':
+        const contact = contactsData?.data?.find(c => c.id === customerId);
+        return contact?.name || 
+          `${contact?.first_name || ''} ${contact?.last_name || ''}`.trim() ||
+          contact?.contact_name ||
+          "N/A";
+      
+      case 'company_account':
+        const company = companyAccountsData?.data?.find(c => c.id === customerId);
+        return company?.company_name ||
+          company?.name ||
+          company?.account_name ||
+          "N/A";
+      
+      default:
+        return "N/A";
+    }
+  };
+
   const columns = [
     {
       title: "Invoice Number",
@@ -199,19 +236,28 @@ const InvoiceList = ({ searchText = "" }) => {
       sorter: (a, b) =>
         a.salesInvoiceNumber.localeCompare(b.salesInvoiceNumber),
       render: (text, record) => (
-        <Text
-          strong
-          style={{ cursor: "pointer" }}
-          onClick={() =>
-            console.log("View invoice:", record.salesInvoiceNumber)
-          }
-        >
+        <Text strong style={{ color: '#1890ff', cursor: 'pointer' }} onClick={() => handleView(record)}>
           {text}
         </Text>
       ),
     },
     {
-      title: "Date",
+      title: "Customer",
+      dataIndex: "customer",
+      key: "customer",
+      render: (customerId, record) => (
+        <Text>
+          {getCustomerName(customerId, record.category)}
+        </Text>
+      ),
+      sorter: (a, b) => {
+        const nameA = getCustomerName(a.customer, a.category);
+        const nameB = getCustomerName(b.customer, b.category);
+        return nameA.localeCompare(nameB);
+      },
+    },
+    {
+      title: "Issue Date",
       dataIndex: "issueDate",
       key: "issueDate",
       render: (date) => dayjs(date).format("DD/MM/YYYY"),

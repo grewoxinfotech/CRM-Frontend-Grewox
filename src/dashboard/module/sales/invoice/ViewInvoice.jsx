@@ -16,6 +16,9 @@ import { FiX, FiDownload, FiPrinter, FiMail } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import styled from 'styled-components';
 import { useGetCustomersQuery } from '../customer/services/custApi';
+import { useGetContactsQuery } from '../../crm/contact/services/contactApi';
+import { useGetCompanyAccountsQuery } from '../../crm/companyacoount/services/companyAccountApi';
+import { QRCodeSVG } from 'qrcode.react';
 
 const { Text, Title } = Typography;
 
@@ -89,35 +92,108 @@ const Footer = styled.div`
 `;
 
 const ViewInvoice = ({ open, onCancel, invoice }) => {
-  const [customerData, setCustomerData] = useState(null);
-  const { data: customers, isLoading, error } = useGetCustomersQuery();
+  const [billingData, setBillingData] = useState(null);
+  const { data: customersData } = useGetCustomersQuery();
+  const { data: contactsData } = useGetContactsQuery();
+  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+
+  console.log("invoice",invoice);
 
   useEffect(() => {
-    if (customers?.data && invoice?.customer) {
-      const customer = customers.data.find(c => c.id === invoice.customer);
-      if (customer) {
-        setCustomerData(customer);
+    if (invoice?.customer && invoice?.category) {
+      let data = null;
+
+      switch (invoice.category) {
+        case 'customer':
+          data = customersData?.data?.find(c => c.id === invoice.customer);
+          if (data) {
+            setBillingData({
+              name: data.name,
+              email: data.email,
+              contact: data.contact,
+              address: data.billing_address
+            });
+          }
+          break;
+
+        case 'contact':
+          data = contactsData?.data?.find(c => c.id === invoice.customer);
+          if (data) {
+            setBillingData({
+              name: data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.contact_name,
+              email: data.email,
+              contact: data.phone || data.mobile,
+              address: data.address
+            });
+          }
+          break;
+
+        case 'company_account':
+          data = companyAccountsData?.data?.find(c => c.id === invoice.customer);
+          if (data) {
+            setBillingData({
+              name: data.company_name || data.name || data.account_name,
+              email: data.email,
+              contact: data.phone || data.contact_number,
+              address: data.address
+            });
+          }
+          break;
+
+        default:
+          setBillingData(null);
       }
     }
-  }, [customers, invoice]);
+  }, [invoice, customersData, contactsData, companyAccountsData]);
+
+  const renderBillingDetails = () => {
+    if (!billingData) {
+      return 'Loading details...';
+    }
+
+    return (
+      <>
+        {`Name: ${billingData.name}`}<br />
+        {billingData.email && `Email: ${billingData.email}`}<br />
+        {billingData.contact && `Phone: ${billingData.contact}`}<br />
+        {billingData.address && (
+          <>
+            Address:<br />
+            {typeof billingData.address === 'string' ? 
+              billingData.address : 
+              tryParseAddress(billingData.address)
+            }
+          </>
+        )}
+      </>
+    );
+  };
+
+  const tryParseAddress = (address) => {
+    try {
+      if (typeof address === 'string') {
+        const parsed = JSON.parse(address);
+        return (
+          <>
+            {parsed.street && `${parsed.street},`}<br />
+            {parsed.city && `${parsed.city},`} {parsed.state}<br />
+            {parsed.country} {parsed.postal_code}
+          </>
+        );
+      }
+      return address;
+    } catch (error) {
+      return address;
+    }
+  };
+
+  // Add getPaymentUrl function
+  const getPaymentUrl = () => {
+    if (!invoice) return '';
+    return invoice.upiLink || `https://grewox.com/invoice/${invoice.salesInvoiceNumber}`;
+  };
 
   if (!invoice) return null;
-
-  // const renderBillingAddress = () => {
-  //   if (!customerData?.billing_address) return null;
-  //   try {
-  //     const address = JSON.parse(customerData.billing_address);
-  //     return (
-  //       <>
-  //         {address.street}<br />
-  //         {address.city}, {address.state}<br />
-  //         {address.country} - {address.postal_code}
-  //       </>
-  //     );
-  //   } catch (error) {
-  //     return null;
-  //   }
-  // };
 
   const styles = {
     invoiceBox: {
@@ -182,10 +258,13 @@ const ViewInvoice = ({ open, onCancel, invoice }) => {
     },
     qrSection: {
       textAlign: 'center',
-      marginTop: 30
-    },
-    qrImage: {
-      height: 90
+      marginTop: 30,
+      padding: '20px',
+      background: '#f8fafc',
+      borderRadius: '12px',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
     },
     footer: {
       textAlign: 'center',
@@ -247,22 +326,18 @@ const ViewInvoice = ({ open, onCancel, invoice }) => {
         <div style={styles.details}>
           <div style={styles.detailsColumn}>
             <strong>Billed To:</strong><br />
-            {customerData ? (
-              <>
-                {customerData.name}<br />
-                {customerData.email && `Email: ${customerData.email}`}<br />
-                {customerData.contact && `Phone: ${customerData.contact}`}<br />
-                {/* {renderBillingAddress()} */}
-              </>
-            ) : (
-              'Loading customer details...'
-            )}
+            {renderBillingDetails()}
           </div>
           <div style={styles.detailsColumn}>
             <strong>Invoice Details:</strong><br />
             Invoice No: {invoice.salesInvoiceNumber}<br />
             Date: {dayjs(invoice.issueDate).format('DD MMMM YYYY')}<br />
-            Due Date: {dayjs(invoice.dueDate).format('DD MMMM YYYY')}
+            Due Date: {dayjs(invoice.dueDate).format('DD MMMM YYYY')}<br />
+            Category: {invoice.category ? (
+              <span style={{ textTransform: 'capitalize' }}>
+                {invoice.category.replace('_', ' ')}
+              </span>
+            ) : 'N/A'}
           </div>
         </div>
 
@@ -319,12 +394,44 @@ const ViewInvoice = ({ open, onCancel, invoice }) => {
         </table>
 
         <div style={styles.qrSection}>
-          <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://grewox.com/pay-now"
-            alt="QR Code"
-            style={styles.qrImage}
-          />
-          <p style={{ fontSize: 11 }}>Scan to Pay or View Online</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ 
+              background: 'white', 
+              padding: '12px',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <QRCodeSVG
+                value={getPaymentUrl()}
+                size={120}
+                level="H"
+                includeMargin={true}
+              />
+            </div>
+            <div style={{ 
+              marginTop: '12px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <p style={{ 
+                fontSize: '13px', 
+                fontWeight: '500',
+                color: '#4b5563',
+                margin: 0
+              }}>
+                Scan to Pay
+              </p>
+              <p style={{ 
+                fontSize: '12px',
+                color: '#6b7280',
+                margin: 0
+              }}>
+                Amount: ₹{Number(invoice.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div style={styles.footer}>

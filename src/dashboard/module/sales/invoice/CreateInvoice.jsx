@@ -33,10 +33,12 @@ import {
 import dayjs from "dayjs";
 import "./invoice.scss";
 import { useCreateInvoiceMutation } from "./services/invoiceApi";
-import { useGetCustomersQuery,useCreateCustomerMutation } from "../customer/services/custApi";
+import { useGetCustomersQuery, useCreateCustomerMutation } from "../customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
 import { useGetProductsQuery } from "../product&services/services/productApi";
+import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -57,6 +59,12 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
+  const [selectedCategory, setSelectedCategory] = useState('customer');
+  const { data: contactsData } = useGetContactsQuery();
+  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+
+  const contacts = contactsData?.data;
+  const companyAccounts = companyAccountsData?.data;
 
   useEffect(() => {
     // Set default currency to INR when component mounts
@@ -79,7 +87,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
     const quantity = Number(item.quantity) || 0;
     const price = Number(item.unit_price) || 0;
     const itemAmount = quantity * price;
-    
+
     // Calculate discount
     const itemDiscount = Number(item.discount || 0);
     const itemDiscountType = item.discount_type || 'percentage';
@@ -135,7 +143,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.unit_price) || 0;
       const itemAmount = quantity * price;
-      
+
       // Calculate item discount
       const itemDiscount = Number(item.discount || 0);
       const itemDiscountType = item.discount_type || 'percentage';
@@ -149,7 +157,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
 
       totalDiscount += itemDiscountAmount;
       subTotal += itemAmount;
-      
+
       if (isTaxEnabled) {
         totalTax += calculateItemTaxAmount(item);
       }
@@ -196,9 +204,10 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
       }));
 
       const payload = {
+        category: values.category,
         customer: values.customer,
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
-        dueDate: values.dueDate?.format("YYYY-MM-DD"),         
+        dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: values.currency,
         items: formattedItems,
         subtotal: Number(values.subtotal) || 0,
@@ -226,11 +235,11 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         name: values.name,
         contact: values.contact,
       }).unwrap();
-      
+
       message.success('Customer created successfully');
       setIsCustomerModalOpen(false);
       customerForm.resetFields();
-      
+
       // Automatically select the newly created customer
       form.setFieldValue('customer', result.data.id);
     } catch (error) {
@@ -238,70 +247,40 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
     }
   };
 
-  const customerSelect = (
-    <Form.Item
-      name="customer"
-      label={
-        <span style={{ fontSize: "14px", fontWeight: "500" }}>
-          <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-          Customer <span style={{ color: "#ff4d4f" }}>*</span>
-        </span>
-      }
-      rules={[{ required: true, message: "Please select customer" }]}
-    >
-      <Select
-       listHeight={100}
-       dropdownStyle={{
-         Height: '100px',
-         overflowY: 'auto',
-         scrollbarWidth: 'thin',
-         scrollBehavior: 'smooth'
-       }}
-        placeholder="Select Customer"
-        showSearch
-        optionFilterProp="children"
-        size="large"
-        style={{
-          width: "100%",
-          borderRadius: "10px",
-        }}
-        dropdownRender={(menu) => (
-          <>
-            {menu}
-            <Divider style={{ margin: '8px 0' }} />
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Button
-                          type="primary"
-                          icon={<FiPlus />}
-                          onClick={() => setIsCustomerModalOpen(true)}
-                          style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            height: '40px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                            fontWeight: '500',
-                          }}
-                        >
-                          Add Customer
-                        </Button>
-            </div>
-          </>
-        )}
-      >
-        {customers?.map((customer) => (
-          <Option key={customer.id} value={customer.id}>
-            {customer.name}
-          </Option>
-        ))}
-      </Select>
-    </Form.Item>
-  );
+  const getOptionsBasedOnCategory = () => {
+    switch (selectedCategory) {
+      case 'customer':
+        return customers?.map((customer) => ({
+          label: customer.name,
+          value: customer.id
+        })) || [];
+      case 'contact':
+        return contacts?.map((contact) => ({
+          label: contact.name ||
+            `${contact.first_name || ''} ${contact.last_name || ''}`.trim() ||
+            contact.contact_name ||
+            'Unnamed Contact',
+          value: contact.id
+        })) || [];
+      case 'company_account':
+        return companyAccounts?.map((account) => ({
+          label: account.company_name ||
+            account.name ||
+            account.account_name ||
+            'Unnamed Company',
+          value: account.id
+        })) || [];
+      default:
+        return [];
+    }
+  };
+
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    form.setFieldsValue({ customer: undefined }); // Clear selected customer when category changes
+  };
+
+
 
   const customerModal = (
     <Modal
@@ -420,7 +399,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
           padding: "24px",
         }}
       >
-            <Form.Item
+        <Form.Item
           name="name"
           label="Customer Name"
           rules={[{ required: true, message: 'Please enter customer name' }]}
@@ -496,7 +475,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
     if (currency) {
       setSelectedCurrency(currency.currencyIcon);
       setSelectedCurrencyId(value);
-      
+
       // Update all prices with new currency
       const items = form.getFieldValue('items') || [];
       const updatedItems = items.map(item => ({
@@ -534,7 +513,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         profilePic: selectedProduct.image,
         currency: selectedProduct.currency
       };
-      form.setFieldsValue({ 
+      form.setFieldsValue({
         items: newItems,
         currency: selectedProduct.currency
       });
@@ -656,14 +635,119 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
           padding: "24px",
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          {customerSelect}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            <Form.Item
+              name="category"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Invoice Type <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select category" }]}
+              initialValue="customer"
+            >
+              <Select
+                placeholder="Select Category"
+                onChange={handleCategoryChange}
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+              >
+                <Option value="customer">Customer</Option>
+                <Option value="contact">Contact</Option>
+                <Option value="company_account">Company Account</Option>
+              </Select>
+            </Form.Item>
+
+            <Form.Item
+              name="customer"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+                  {selectedCategory === 'customer' ? 'Customer' :
+                    selectedCategory === 'contact' ? 'Contact' :
+                      'Company Account'} <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: `Please select ${selectedCategory}` }]}
+            >
+              <Select
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
+                placeholder={`Select ${selectedCategory === 'customer' ? 'Customer' :
+                  selectedCategory === 'contact' ? 'Contact' :
+                    'Company Account'}`}
+                showSearch
+                optionFilterProp="children"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    {selectedCategory === 'customer' && ( // Only show Add button for customer category
+                      <>
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div style={{ display: 'flex', justifyContent: 'center' }}>
+                          <Button
+                            type="primary"
+                            icon={<FiPlus />}
+                            onClick={() => setIsCustomerModalOpen(true)}
+                            style={{
+                              width: '100%',
+                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                              border: 'none',
+                              height: '40px',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                              fontWeight: '500',
+                            }}
+                          >
+                            Add Customer
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              >
+                {getOptionsBasedOnCategory().map((option) => (
+                  <Option key={option.value} value={option.value}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '4px 0'
+                    }}>
+                      {selectedCategory === 'customer' ? <FiUser style={{ color: '#1890ff' }} /> :
+                        selectedCategory === 'contact' ? <FiPhone style={{ color: '#1890ff' }} /> :
+                          <FiCreditCard style={{ color: '#1890ff' }} />}
+                      <span>{option.label}</span>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+         
             <Form.Item
               name="currency"
               label={
-              <span className="form-label">
-                Currency <span className="required"></span>
+                <span className="form-label">
+                  Currency <span className="required"></span>
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
@@ -675,7 +759,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 onChange={handleCurrencyChange}
                 disabled={true}
                 style={{
-                  width: "450px",
+                  // width: "450px",
                   borderRadius: "10px",
                 }}
               >
@@ -690,74 +774,73 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 ))}
               </Select>
             </Form.Item>
-        </div>
-        </div>
+          </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-            <Form.Item
-              name="issueDate"
-              label={
+          <Form.Item
+            name="issueDate"
+            label={
               <span className="form-label">
                 Issue Date <span className="required"></span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select issue date" }]}
-            >
-              <DatePicker
-                format="DD-MM-YYYY"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-            <Form.Item
-              name="dueDate"
-              label={
+              </span>
+            }
+            rules={[{ required: true, message: "Please select issue date" }]}
+          >
+            <DatePicker
+              format="DD-MM-YYYY"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+              }}
+              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+            />
+          </Form.Item>
+          <Form.Item
+            name="dueDate"
+            label={
               <span className="form-label">
                 Due Date <span className="required"></span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select due date" }]}
+              </span>
+            }
+            rules={[{ required: true, message: "Please select due date" }]}
+          >
+            <DatePicker
+              format="DD-MM-YYYY"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+              }}
+              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+            />
+          </Form.Item>
+          <Form.Item
+            name="status"
+            label={
+              <span className="form-label">
+                Payment Status <span className="required"></span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please select payment status" }]}
+          >
+            <Select
+              placeholder="Select Status"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+              }}
             >
-              <DatePicker
-                format="DD-MM-YYYY"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-            <Form.Item
-              name="status"
-              label={
-                <span className="form-label">
-                  Payment Status <span className="required"></span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select payment status" }]}
-            >
-              <Select
-                placeholder="Select Status"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                <Option value="paid">Paid</Option>
-                <Option value="unpaid">Unpaid</Option>
-                <Option value="partially_paid">Partially Paid</Option>
-              </Select>
-            </Form.Item>
+              <Option value="paid">Paid</Option>
+              <Option value="unpaid">Unpaid</Option>
+              <Option value="partially_paid">Partially Paid</Option>
+            </Select>
+          </Form.Item>
         </div>
 
         <div className="table-style-container">
@@ -765,7 +848,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
             <span style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937' }}>
               <FiPackage style={{ marginRight: '8px', color: '#1890ff' }} />
               Items & Services
-          </span>
+            </span>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <Text style={{ marginRight: '8px' }}>Enable Tax</Text>
               <Switch
@@ -1001,24 +1084,24 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 </table>
 
                 <div className="add-item-container">
-              <Button
+                  <Button
                     type="primary"
-                icon={<FiPlus />}
+                    icon={<FiPlus />}
                     onClick={() => add()}
                     className="add-item-btn"
                   >
                     Add Items
-              </Button>
+                  </Button>
                 </div>
-            </>
-          )}
-        </Form.List>
+              </>
+            )}
+          </Form.List>
         </div>
 
         <div className="summary-card">
           <div className="summary-content">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <Text style={{marginTop:'10px'}}>Sub Total</Text>
+              <Text style={{ marginTop: '10px' }}>Sub Total</Text>
               <Form.Item name="subtotal" style={{ margin: 0 }}>
                 <InputNumber
                   disabled

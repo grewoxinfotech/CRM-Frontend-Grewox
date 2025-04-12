@@ -35,6 +35,8 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useUpdateInvoiceMutation } from "./services/invoiceApi";
+import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -59,14 +61,62 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('customer');
+  const { data: contactsData } = useGetContactsQuery();
+  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+
+  const contacts = contactsData?.data;
+  const companyAccounts = companyAccountsData?.data;
+
+  const getOptionsBasedOnCategory = () => {
+    switch (selectedCategory) {
+      case 'customer':
+        return customers?.map((customer) => ({
+          label: customer.name,
+          value: customer.id
+        })) || [];
+      case 'contact':
+        return contacts?.map((contact) => ({
+          label: contact.name ||
+            `${contact.first_name || ''} ${contact.last_name || ''}`.trim() ||
+            contact.contact_name ||
+            'Unnamed Contact',
+          value: contact.id
+        })) || [];
+      case 'company_account':
+        return companyAccounts?.map((account) => ({
+          label: account.company_name ||
+            account.name ||
+            account.account_name ||
+            'Unnamed Company',
+          value: account.id
+        })) || [];
+      default:
+        return [];
+    }
+  };
+
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    form.setFieldsValue({ 
+      customer: undefined,
+      customerName: ''
+    });
+  };
+
+  const handleCustomerChange = (value) => {
+    const entityName = getEntityNameById(selectedCategory, value);
+    form.setFieldsValue({
+      customer: value,
+      customerName: entityName
+    });
+  };
 
   useEffect(() => {
     if (initialValues) {
       let items = [];
       try {
-        // Parse the items string into an array
         items = JSON.parse(initialValues.items);
-        // If items is an object, convert it to array
         if (!Array.isArray(items)) {
           items = [items];
         }
@@ -75,13 +125,44 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         items = [];
       }
 
-      // Check if any item has tax to enable tax switch
       const hasTax = items?.some(item => item.tax_rate > 0);
       setIsTaxEnabled(hasTax);
 
+      // Set initial category
+      setSelectedCategory(initialValues.category || 'customer');
+
+      // Find the selected entity and its name based on category
+      let selectedEntity;
+      let entityName = '';
+
+      switch (initialValues.category) {
+        case 'customer':
+          selectedEntity = customers?.find(c => c.id === initialValues.customer);
+          entityName = selectedEntity?.name || '';
+          break;
+        case 'contact':
+          selectedEntity = contacts?.find(c => c.id === initialValues.customer);
+          entityName = selectedEntity?.name || 
+            `${selectedEntity?.first_name || ''} ${selectedEntity?.last_name || ''}`.trim() ||
+            selectedEntity?.contact_name ||
+            '';
+          break;
+        case 'company_account':
+          selectedEntity = companyAccounts?.find(c => c.id === initialValues.customer);
+          entityName = selectedEntity?.company_name ||
+            selectedEntity?.name ||
+            selectedEntity?.account_name ||
+            '';
+          break;
+        default:
+          break;
+      }
+
       // Format initial values for the form
       const formattedValues = {
+        category: initialValues.category,
         customer: initialValues.customer,
+        customerName: entityName,
         issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate) : null,
         dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : null,
         referenceNumber: initialValues.salesInvoiceNumber,
@@ -119,8 +200,29 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
       // Calculate initial totals
       calculateTotals(formattedValues.items);
+
+      // Set initial category
+      setSelectedCategory(initialValues.category || 'customer');
+
+      // Set initial product if exists
+      if (items.length > 0) {
+        const firstItem = items[0];
+        form.setFieldValue('product_id', firstItem.product_id);
+        
+        // Find and set product currency if exists
+        const selectedProduct = productsData?.data?.find(product => product.id === firstItem.product_id);
+        if (selectedProduct) {
+          const productCurrency = currenciesData?.data?.find(c => c.id === selectedProduct.currency);
+          if (productCurrency) {
+            setSelectedProductCurrency(productCurrency);
+            setSelectedCurrency(productCurrency.currencyIcon);
+            setSelectedCurrencyId(productCurrency.id);
+            setIsCurrencyDisabled(true);
+          }
+        }
+      }
     }
-  }, [initialValues, form, currenciesData]);
+  }, [initialValues, form, currenciesData, customers, contacts, companyAccounts, productsData]);
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
@@ -287,6 +389,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       }));
 
       const payload = {
+        category: selectedCategory,
         customer: values.customer,
         issueDate: values.issueDate?.format("DD-MM-YYYY"),
         dueDate: values.dueDate?.format("DD-MM-YYYY"),         
@@ -335,70 +438,9 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     onCancel();
   };
 
-  const customerSelect = (
-    <Form.Item
-      name="customer"
-      label={
-        <span style={{ fontSize: "14px", fontWeight: "500" }}>
-          <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-          Customer <span style={{ color: "#ff4d4f" }}>*</span>
-        </span>
-      }
-      rules={[{ required: true, message: "Please select customer" }]}
-    >
-      <Select
-      listHeight={100}
-      dropdownStyle={{
-        Height: '100px',
-        overflowY: 'auto',
-        scrollbarWidth: 'thin',
-        scrollBehavior: 'smooth'
-      }}
-        placeholder="Select Customer"
-        showSearch
-        optionFilterProp="children"
-        size="large"
-        style={{
-          width: "100%",
-          borderRadius: "10px",
-        }}
-        dropdownRender={(menu) => (
-          <>
-            {menu}
-            <Divider style={{ margin: '8px 0' }} />
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Button
-                          type="primary"
-                          icon={<FiPlus />}
-                          onClick={() => setIsCustomerModalOpen(true)}
-                          style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            height: '40px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                            fontWeight: '500',
-                          }}
-                        >
-                          Add Customer
-                        </Button>
-            </div>
-          </>
-        )}
-      >
-        {customers?.map((customer) => (
-          <Option key={customer.id} value={customer.id}>
-            {customer.name}
-          </Option>
-        ))}
-      </Select>
-    </Form.Item>
-  );
+ 
+      
+
 
   const customerModal = (
     <Modal
@@ -590,6 +632,29 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     </Modal>
   );
 
+  // Add this function to get entity name based on ID
+  const getEntityNameById = (category, id) => {
+    switch (category) {
+      case 'customer':
+        const customer = customers?.find(c => c.id === id);
+        return customer?.name || '';
+      case 'contact':
+        const contact = contacts?.find(c => c.id === id);
+        return contact?.name || 
+          `${contact?.first_name || ''} ${contact?.last_name || ''}`.trim() ||
+          contact?.contact_name ||
+          '';
+      case 'company_account':
+        const account = companyAccounts?.find(c => c.id === id);
+        return account?.company_name ||
+          account?.name ||
+          account?.account_name ||
+          '';
+      default:
+        return '';
+    }
+  };
+
   return (
     <Modal
       title={null}
@@ -700,9 +765,114 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           padding: "24px",
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          {customerSelect}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+        <Form.Item
+        name="category"
+        label={
+          <span style={{ fontSize: "14px", fontWeight: "500" }}>
+            <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+            Invoice Type <span style={{ color: "#ff4d4f" }}>*</span>
+          </span>
+        }
+        rules={[{ required: true, message: "Please select category" }]}
+        initialValue={initialValues?.category || "customer"}
+      >
+        <Select
+          placeholder="Select Category"
+          onChange={handleCategoryChange}
+          size="large"
+          style={{
+            width: "100%",
+            borderRadius: "10px",
+          }}
+        >
+          <Option value="customer">Customer</Option>
+          <Option value="contact">Contact</Option>
+          <Option value="company_account">Company Account</Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="customer"
+        label={
+          <span style={{ fontSize: "14px", fontWeight: "500" }}>
+            <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+            {selectedCategory === 'customer' ? 'Customer' :
+              selectedCategory === 'contact' ? 'Contact' :
+                'Company Account'} <span style={{ color: "#ff4d4f" }}>*</span>
+          </span>
+        }
+        rules={[{ required: true, message: `Please select ${selectedCategory}` }]}
+      >
+        <Select
+          listHeight={100}
+          dropdownStyle={{
+            Height: '100px',
+            overflowY: 'auto',
+            scrollbarWidth: 'thin',
+            scrollBehavior: 'smooth'
+          }}
+          placeholder={`Select ${selectedCategory === 'customer' ? 'Customer' :
+            selectedCategory === 'contact' ? 'Contact' :
+              'Company Account'}`}
+          showSearch
+          optionFilterProp="children"
+          size="large"
+          style={{
+            width: "100%",
+            borderRadius: "10px",
+          }}
+          onChange={handleCustomerChange}
+          dropdownRender={(menu) => (
+            <>
+              {menu}
+              {selectedCategory === 'customer' && (
+                <>
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Button
+                      type="primary"
+                      icon={<FiPlus />}
+                      onClick={() => setIsCustomerModalOpen(true)}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Add Customer
+                    </Button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        >
+          {getOptionsBasedOnCategory().map((option) => (
+            <Option key={option.value} value={option.value}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '4px 0'
+              }}>
+                {selectedCategory === 'customer' ? <FiUser style={{ color: '#1890ff' }} /> :
+                  selectedCategory === 'contact' ? <FiPhone style={{ color: '#1890ff' }} /> :
+                    <FiCreditCard style={{ color: '#1890ff' }} />}
+                <span>{option.label}</span>
+              </div>
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
             <Form.Item
               name="currency"
               label={
@@ -719,7 +889,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 onChange={handleCurrencyChange}
                 disabled={isCurrencyDisabled}
                 style={{
-                  width: "450px",
+                  width: "100%",
                   borderRadius: "10px",
                 }}
               >
@@ -735,7 +905,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               </Select>
             </Form.Item>
           </div>
-        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <Form.Item
@@ -847,7 +1016,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 marginBottom: '16px',
                 borderRadius: '10px',
               }}
-              value={form.getFieldValue('items')?.[0]?.item_name}
+              value={form.getFieldValue('product_id')}
               onChange={handleProductSelect}
             >
               {productsData?.data?.map(product => (
