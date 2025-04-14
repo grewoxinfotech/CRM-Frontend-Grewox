@@ -663,8 +663,8 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 }}
               >
                 <Option value="customer">Customer</Option>
-                <Option value="contact">Contact</Option>
-                <Option value="company_account">Company Account</Option>
+                {/* <Option value="contact">Contact</Option>
+                <Option value="company_account">Company Account</Option> */}
               </Select>
             </Form.Item>
 

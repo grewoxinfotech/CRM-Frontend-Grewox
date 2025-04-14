@@ -17,7 +17,7 @@ import {
   FiHome,
   FiChevronDown,
 } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CustomerList from "./CustomerList";
 import CreateCustomer from "./CreateCustomer";
 import EditCustomer from "./EditCustomer";
@@ -29,32 +29,27 @@ import moment from "moment";
 import {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
+  useGetCustomersQuery,
 } from "./services/custApi";
 
 const { Title, Text } = Typography;
 
 const Customer = () => {
+
+  const { data: custdata, isLoading, error } = useGetCustomersQuery();
+  const customersData = custdata?.data;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [createCustomer] = useCreateCustomerMutation();
+  const navigate = useNavigate();
+
   const [updateCustomer] = useUpdateCustomerMutation();
 
   // Dummy data for demonstration
-  const customersData = [
-    {
-      id: 1,
-      customer_number: "1234567890",
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "+1234567890",
-      alternate_number: "+1234567890",
-      text_number: "+1234567890",
-    },
-    // Add more dummy data as needed
-  ];
+ 
 
   const handleCreate = () => {
     setSelectedCustomer(null);
@@ -82,6 +77,16 @@ const Customer = () => {
   const handleView = (record) => {
     console.log("View customer:", record);
   };
+
+  const handleCustomerClick = (customer) => {
+    navigate(`/dashboard/crm/customers/${customer.id}`);
+};
+
+const handleCustomerRevenueClick = (customer) => {
+  navigate(`/dashboard/sales/revenue`, { 
+    state: { selectedCustomer: customer } 
+  });
+};
 
   const handleDelete = (record) => {
     Modal.confirm({
@@ -289,11 +294,13 @@ const Customer = () => {
 
       <Card className="customer-table-card">
         <CustomerList
-          customers={customersData}
+          custdata={custdata}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
           searchText={searchText}
+          onCustomerClick={handleCustomerClick}
+          onCustomerRevenueClick={handleCustomerRevenueClick}
         />
       </Card>
 

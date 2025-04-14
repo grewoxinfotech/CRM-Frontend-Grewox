@@ -40,7 +40,7 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 const { Text } = Typography;
 const { Search } = Input;
 
-const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null, currenciesData }) => {
+const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,onProductRevenueClick, currenciesData }) => {
   const { data: productsData = [], isLoading } = useGetProductsQuery();
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
@@ -350,6 +350,10 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
             showSizeChanger: true,
             showTotal: (total) => `Total ${total} products`,
           }}
+          onRow={(record) => ({
+            onClick: () => onProductRevenueClick(record),
+            style: { cursor: 'pointer' }
+          })}
           className="product-table"
           scroll={{ x: true }}
         />

@@ -31,10 +31,13 @@ const CustomerList = ({
   onEdit,
   onDelete,
   onView,
+  onCustomerClick,
+  onCustomerRevenueClick, 
+  custdata,
   searchText = "",
   //   customers = [],
 }) => {
-  const { data: custdata, isLoading, error } = useGetCustomersQuery();
+  // const { data: custdata, isLoading, error } = useGetCustomersQuery();
   const customers = custdata?.data;
   const [deleteCustomer] = useDeleteCustomerMutation();
   const filteredCustomers = React.useMemo(() => {
@@ -137,7 +140,7 @@ const CustomerList = ({
         <Text
           strong
           style={{ cursor: "pointer" }}
-          onClick={() => onView?.(record)}
+          // onClick={() => onView?.(record)}
         >
           {text}
         </Text>
@@ -241,6 +244,10 @@ const CustomerList = ({
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} items`,
         }}
+        onRow={(record) => ({
+          onClick: () => onCustomerRevenueClick(record),
+          style: { cursor: 'pointer' }
+        })}
         className="customer-table"
       />
     </div>

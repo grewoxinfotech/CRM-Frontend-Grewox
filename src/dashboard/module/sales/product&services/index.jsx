@@ -19,7 +19,7 @@ import {
   FiHome,
   FiChevronDown,
 } from "react-icons/fi";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CreateProduct from "./CreateProduct";
 import ProductList from "./ProfductList";
 import EditProduct from "./EditProduct";
@@ -39,6 +39,7 @@ const ProductServices = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const navigate = useNavigate();
 
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,14 @@ const ProductServices = () => {
       setLoading(false);
     }
   };
+
+
+  const handleProductRevenueClick = (product) => {
+    navigate(`/dashboard/sales/revenue`, { 
+      state: { selectedProduct: product } 
+    });
+  };
+  
 
   // const handleEdit = (record) => {
   //   setSelectedProduct(record);
@@ -266,6 +275,7 @@ const ProductServices = () => {
           data={productsData}
           loading={isLoading}
           onEdit={handleEdit}
+          onProductRevenueClick={handleProductRevenueClick}
           onView={handleView}
           currenciesData={currenciesData}
           searchText={searchText}

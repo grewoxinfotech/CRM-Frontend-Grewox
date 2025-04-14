@@ -163,8 +163,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         category: initialValues.category,
         customer: initialValues.customer,
         customerName: entityName,
-        issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate) : null,
-        dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : null,
+        issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate, "YYYY-MM-DD") : null,
+        dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate, "YYYY-MM-DD") : null,
         referenceNumber: initialValues.salesInvoiceNumber,
         currency: initialValues.currency,
         status: initialValues.payment_status,
@@ -374,27 +374,30 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     try {
       setLoading(true);
 
-      // Format items for backend
-      const formattedItems = values.items?.map(item => ({
-        product_id: item.id,
-        name: item.item_name,
-        quantity: Number(item.quantity) || 0,
-        unit_price: Number(item.unit_price) || 0,
-        tax_rate: Number(item.tax) || 0,
-        discount: Number(item.discount) || 0,
-        discount_type: item.discount_type || 'percentage',
-        hsn_sac: item.hsn_sac || '',
-        tax_amount: calculateItemTaxAmount(item),
-        amount: calculateItemTotal(item)
-      }));
+      // Format dates using dayjs
+      const formatDate = (dateStr) => {
+        if (!dateStr) return null;
+        return dayjs(dateStr, "DD-MM-YYYY").format("YYYY-MM-DD");
+      };
 
       const payload = {
         category: selectedCategory,
         customer: values.customer,
-        issueDate: values.issueDate?.format("DD-MM-YYYY"),
-        dueDate: values.dueDate?.format("DD-MM-YYYY"),         
+        issueDate: values.issueDate?.format("YYYY-MM-DD"),
+        dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: values.currency,
-        items: formattedItems,
+        items: values.items?.map(item => ({
+          product_id: item.id,
+          name: item.item_name,
+          quantity: Number(item.quantity) || 0,
+          unit_price: Number(item.unit_price) || 0,
+          tax_rate: Number(item.tax) || 0,
+          discount: Number(item.discount) || 0,
+          discount_type: item.discount_type || 'percentage',
+          hsn_sac: item.hsn_sac || '',
+          tax_amount: calculateItemTaxAmount(item),
+          amount: calculateItemTotal(item)
+        })),
         subtotal: Number(values.subtotal) || 0,
         tax: Number(values.total_tax) || 0,
         discount: Number(values.total_discount) || 0,
@@ -402,6 +405,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         payment_status: values.status || "unpaid",
         additional_notes: values.additionalNotes
       };
+
+      console.log("Submitting payload:", payload); // Add this for debugging
 
       await updateInvoice({ id: initialValues.id, data: payload }).unwrap();
       message.success("Invoice updated successfully");
@@ -787,8 +792,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           }}
         >
           <Option value="customer">Customer</Option>
-          <Option value="contact">Contact</Option>
-          <Option value="company_account">Company Account</Option>
+          {/* <Option value="contact">Contact</Option>
+          <Option value="company_account">Company Account</Option> */}
         </Select>
       </Form.Item>
 
@@ -909,44 +914,20 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <Form.Item
             name="issueDate"
-            label={
-              <span className="form-label">
-                Issue Date <span className="required"></span>
-              </span>
-            }
-            rules={[{ required: true, message: "Please select issue date" }]}
+            rules={[{ required: true, message: 'Please select issue date' }]}
           >
             <DatePicker
-              format="DD-MM-YYYY"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-              }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              format="YYYY-MM-DD"
+              style={{ width: '100%' }}
             />
           </Form.Item>
           <Form.Item
             name="dueDate"
-            label={
-              <span className="form-label">
-                Due Date <span className="required"></span>
-              </span>
-            }
-            rules={[{ required: true, message: "Please select due date" }]}
+            rules={[{ required: true, message: 'Please select due date' }]}
           >
             <DatePicker
-              format="DD-MM-YYYY"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-              }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              format="YYYY-MM-DD"
+              style={{ width: '100%' }}
             />
           </Form.Item>
           <Form.Item

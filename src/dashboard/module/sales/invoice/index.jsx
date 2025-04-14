@@ -43,8 +43,10 @@ const Invoice = () => {
   const [searchText, setSearchText] = useState("");
   const loggedInUser = useSelector(selectCurrentUser);
   const id = loggedInUser?.id;
-  const { data: invoicesData, isLoading } = useGetInvoicesQuery(id);
-  const invoices = invoicesData?.data || [];
+  const { data: invoicesData, isLoading } = useGetInvoicesQuery();
+  const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
+
+  
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
 
   const handleExport = async (type) => {

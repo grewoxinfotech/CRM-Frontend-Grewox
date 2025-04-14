@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   Button,
@@ -36,6 +36,7 @@ import {
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -48,6 +49,22 @@ const RevenueList = ({
 }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get customer from location state if coming from customer list
+  const customerFromList = location.state?.selectedCustomer;
+  const productFromList = location.state?.selectedProduct;
+
+  // Set initial customer if coming from customer list
+  useEffect(() => {
+    if (customerFromList) {
+      setSelectedCustomer(customerFromList.id);
+    }
+    if (productFromList) {
+      setSelectedProduct(productFromList.id);
+    }
+  }, [customerFromList, productFromList]);
 
   const { data: revenueData, isLoading } = useGetRevenueQuery();
   const { data: productsData } = useGetProductsQuery();
@@ -343,8 +360,33 @@ const RevenueList = ({
     }), { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 });
   }, [filteredRevenue]);
 
+  const clearCustomerFilter = () => {
+    setSelectedCustomer(null);
+    navigate('/dashboard/sales/revenue', { replace: true });
+  };
+
+  const clearProductFilter = () => {
+    setSelectedProduct(null);
+    navigate('/dashboard/sales/revenue', { replace: true });
+  };
+
   return (
     <div className="revenue-container">
+      {/* {selectedCustomer && (
+        <div style={{ marginBottom: 16 }}>
+          <Tag color="blue" closable onClose={clearCustomerFilter}>
+            Filtered by Customer: {customers.find(c => c.id === selectedCustomer)?.name}
+          </Tag>  
+        </div>
+      )}
+      {selectedProduct && (
+        <div style={{ marginBottom: 16 }}>
+          <Tag color="blue" closable onClose={clearProductFilter}>
+            Filtered by Product: {products.find(p => p.id === selectedProduct)?.name}
+          </Tag>
+        </div>
+      )} */}
+      
       <Row gutter={[16, 16]} className="revenue-filters">
         <Col xs={24} sm={12} md={8} lg={6}>
           <Select

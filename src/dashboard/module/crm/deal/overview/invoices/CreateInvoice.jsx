@@ -218,7 +218,7 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid"
       };
-
+      
       const result = await createInvoice({id:dealId, data:payload}).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
@@ -644,24 +644,20 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Invoice Type <span style={{ color: "#ff4d4f" }}>*</span>
+                  Category <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select category" }]}
               initialValue="customer"
             >
               <Select
-                placeholder="Select Category"
-                onChange={handleCategoryChange}
+                placeholder="Select category"
                 size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
+                style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+                disabled={true}
+                value="customer"
               >
                 <Option value="customer">Customer</Option>
-                <Option value="contact">Contact</Option>
-                <Option value="company_account">Company Account</Option>
               </Select>
             </Form.Item>
 

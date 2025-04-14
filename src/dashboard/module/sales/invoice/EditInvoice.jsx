@@ -163,8 +163,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         category: initialValues.category,
         customer: initialValues.customer,
         customerName: entityName,
-        issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate) : null,
-        dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : null,
+        issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate, "YYYY-MM-DD") : null,
+        dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate, "YYYY-MM-DD") : null,
         referenceNumber: initialValues.salesInvoiceNumber,
         currency: initialValues.currency,
         status: initialValues.payment_status,
@@ -391,8 +391,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       const payload = {
         category: selectedCategory,
         customer: values.customer,
-        issueDate: values.issueDate?.format("DD-MM-YYYY"),
-        dueDate: values.dueDate?.format("DD-MM-YYYY"),         
+        issueDate: values.issueDate?.format("YYYY-MM-DD"),
+        dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: values.currency,
         items: formattedItems,
         subtotal: Number(values.subtotal) || 0,
@@ -787,8 +787,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           }}
         >
           <Option value="customer">Customer</Option>
-          <Option value="contact">Contact</Option>
-          <Option value="company_account">Company Account</Option>
+          {/* <Option value="contact">Contact</Option>
+          <Option value="company_account">Company Account</Option> */}
         </Select>
       </Form.Item>
 

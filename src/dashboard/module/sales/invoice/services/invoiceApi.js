@@ -7,7 +7,7 @@ export const invoiceApi = createApi({
   tagTypes: ["Invoices"],
   endpoints: (builder) => ({
     getInvoices: builder.query({  
-      query: (id) => `/sales-invoices/${id}`,
+      query: () => `/sales-invoices/`,
       providesTags: ["Invoices"],
     }),
     createInvoice: builder.mutation({
