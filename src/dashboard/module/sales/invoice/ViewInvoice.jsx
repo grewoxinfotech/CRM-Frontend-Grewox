@@ -10,7 +10,8 @@ import {
   Divider,
   Image,
   Space,
-  message
+  message,
+  Tag
 } from 'antd';
 import { FiX, FiDownload, FiPrinter, FiMail } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -156,7 +157,7 @@ const ViewInvoice = ({ open, onCancel, invoice }) => {
         {`Name: ${billingData.name}`}<br />
         {billingData.email && `Email: ${billingData.email}`}<br />
         {billingData.contact && `Phone: ${billingData.contact}`}<br />
-        {billingData.address && (
+        {/* {billingData.address && (
           <>
             Address:<br />
             {typeof billingData.address === 'string' ? 
@@ -164,7 +165,7 @@ const ViewInvoice = ({ open, onCancel, invoice }) => {
               tryParseAddress(billingData.address)
             }
           </>
-        )}
+        )} */}
       </>
     );
   };
@@ -333,11 +334,28 @@ const ViewInvoice = ({ open, onCancel, invoice }) => {
             Invoice No: {invoice.salesInvoiceNumber}<br />
             Date: {dayjs(invoice.issueDate).format('DD MMMM YYYY')}<br />
             Due Date: {dayjs(invoice.dueDate).format('DD MMMM YYYY')}<br />
-            Category: {invoice.category ? (
-              <span style={{ textTransform: 'capitalize' }}>
-                {invoice.category.replace('_', ' ')}
-              </span>
-            ) : 'N/A'}
+            Status: {invoice.payment_status && (
+              <Tag
+                style={{
+                  textTransform: 'capitalize',
+                  padding: '4px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  color: invoice.payment_status === 'paid' ? '#059669' :
+                         invoice.payment_status === 'unpaid' ? '#dc2626' :
+                         invoice.payment_status === 'partial' ? '#7c3aed' :
+                         invoice.payment_status === 'draft' ? '#d97706' :
+                         invoice.payment_status === 'pending' ? '#2563eb' : '#374151',
+                  backgroundColor: invoice.payment_status === 'paid' ? '#d1fae5' :
+                                 invoice.payment_status === 'unpaid' ? '#fee2e2' :
+                                 invoice.payment_status === 'partial' ? '#ede9fe' :
+                                 invoice.payment_status === 'draft' ? '#fef3c7' :
+                                 invoice.payment_status === 'pending' ? '#dbeafe' : '#f3f4f6'
+                }}
+              >
+                {invoice.payment_status}
+              </Tag>
+            )}
           </div>
         </div>
 

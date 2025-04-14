@@ -201,7 +201,7 @@ const Tax = () => {
 
     return (
         <div className="tax-page">
-            <div className="page-breadcrumb">
+            <div className="page-breadcrumb">   
                 <Breadcrumb>
                     <Breadcrumb.Item>
                         <Link to="/dashboard">

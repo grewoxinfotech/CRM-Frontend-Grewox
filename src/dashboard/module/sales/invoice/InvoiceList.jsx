@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Space, Input } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -38,6 +38,8 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
   const { data: customersData } = useGetCustomersQuery();
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+
+  
 
   // Filter invoices based on search text
   const filteredInvoices = React.useMemo(() => {
@@ -236,8 +238,34 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       title: "Invoice Number",
       dataIndex: "salesInvoiceNumber",
       key: "salesInvoiceNumber",
-      sorter: (a, b) =>
-        a.salesInvoiceNumber.localeCompare(b.salesInvoiceNumber),
+      
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search invoice number"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.salesInvoiceNumber.toLowerCase().includes(value.toLowerCase()) ||
+        record.customerName?.toLowerCase().includes(value.toLowerCase()),
       render: (text, record) => (
         <Text strong style={{ color: '#1890ff', cursor: 'pointer' }} onClick={() => handleView(record)}>
           {text}
@@ -253,11 +281,33 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
           {getCustomerName(customerId, record.category)}
         </Text>
       ),
-      sorter: (a, b) => {
-        const nameA = getCustomerName(a.customer, a.category);
-        const nameB = getCustomerName(b.customer, b.category);
-        return nameA.localeCompare(nameB);
-      },
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search customer"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.customerName.toLowerCase().includes(value.toLowerCase()) ||
+        record.company_name?.toLowerCase().includes(value.toLowerCase()),
     },
     {
       title: "Issue Date",
@@ -314,9 +364,12 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       title: "Status",
       dataIndex: "payment_status",
       key: "payment_status",
-      sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
-      render: (payment_status) => getStatusTag(payment_status),
-    
+      filters: statuses.map(status => ({
+        text: status.name,
+        value: status.id
+      })),
+      onFilter: (value, record) => record.payment_status === value,
+      render: (status) => getStatusTag(status)
     },
     {
       title: "Action",

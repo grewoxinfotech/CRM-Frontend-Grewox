@@ -462,11 +462,11 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           icon: <FiSliders />,
           path: '/dashboard/settings/general'
         },
-        // {
-        //   title: 'Payment',
-        //   icon: <FiDollarSign />,
-        //   path: '/dashboard/settings/payment'
-        // },
+        {
+          title: 'Payment',
+          icon: <FiDollarSign />,
+          path: '/dashboard/settings/payment'
+        },
         {
           title: 'Countries',
           icon: <FiGlobe />,
