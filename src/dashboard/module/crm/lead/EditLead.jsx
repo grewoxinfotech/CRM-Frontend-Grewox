@@ -1096,7 +1096,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
 
             .ant-select-selection-item {
               padding-right: 20px !important;
-              font-weight: 500 !important;
+              // font-weight: 500 !important;
             }
 
             .ant-select-selection-placeholder {

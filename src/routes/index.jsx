@@ -75,6 +75,7 @@ import Contact from "../dashboard/module/crm/contact/index.jsx";
 import CompanyAccountDetails from "../dashboard/module/crm/companyacoount/CompanyAccountDetails.jsx";
 import ContactDetailsOverview from "../dashboard/module/crm/contact/ContactDetails.jsx";
 import FormSubmissions from "../dashboard/module/crm/generate-link/FormSubmissions.jsx";
+import GeneralSettings from "../superadmin/module/settings/general/index.jsx";
 
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
@@ -407,6 +408,10 @@ const routes = createBrowserRouter([
             element: <Tickets />,
           },
         ],
+      },
+      {
+        path: "settings/general",
+        element: <GeneralSettings />,
       },
       {
         path: "settings/currencies",

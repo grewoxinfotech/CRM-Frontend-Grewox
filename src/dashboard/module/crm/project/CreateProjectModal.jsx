@@ -889,7 +889,7 @@ const CreateProjectModal = ({ visible, onCancel, onSubmit, loading }) => {
 
                 .currency-select .ant-select-selection-item {
                     color: white !important;
-                    font-weight: 500 !important;
+                    // font-weight: 500 !important;
                     display: flex;
                     align-items: center;
                     gap: 4px;

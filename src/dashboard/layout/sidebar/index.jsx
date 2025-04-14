@@ -40,6 +40,7 @@ import {
   FiPercent,
   FiCreditCard,
   FiTruck,
+  FiSliders,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
@@ -456,11 +457,11 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
       icon: <FiSettings />,
       isDropdown: true,
       subItems: [
-        // {
-        //   title: 'General',
-        //   icon: <FiSettings />,
-        //   path: '/dashboard/settings/general'
-        // },
+        {
+          title: 'General',
+          icon: <FiSliders />,
+          path: '/dashboard/settings/general'
+        },
         // {
         //   title: 'Payment',
         //   icon: <FiDollarSign />,

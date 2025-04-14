@@ -904,7 +904,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 ))}
               </Select>
             </Form.Item>
-          </div>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <Form.Item
