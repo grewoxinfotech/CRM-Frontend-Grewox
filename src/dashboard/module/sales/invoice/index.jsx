@@ -30,6 +30,8 @@ import dayjs from "dayjs";
 import { useGetInvoicesQuery } from "./services/invoiceApi";
 import moment from "moment";
 import { useGetProductsQuery } from "../product&services/services/productApi";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -39,8 +41,9 @@ const Invoice = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
-
-  const { data: invoicesData, isLoading } = useGetInvoicesQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
+  const id = loggedInUser?.id;
+  const { data: invoicesData, isLoading } = useGetInvoicesQuery(id);
   const invoices = invoicesData?.data || [];
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
 

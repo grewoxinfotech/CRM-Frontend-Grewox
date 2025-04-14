@@ -1,28 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, Typography, Button, Badge, Empty, Dropdown } from 'antd';
 import { BiBell, BiCalendarEvent } from 'react-icons/bi';
 import { useGetAllNotificationsQuery, useMarkAsReadMutation, useClearAllNotificationsMutation } from './services/notificationApi';
 import './notifications.scss';
 import { selectCurrentUser } from '../../auth/services/authSlice';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useGetFollowuppCallQuery } from '../../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi';
 
 const { Title } = Typography;
 
 const NotificationsComponent = () => {
+    const navigate = useNavigate();
     const { data: notificationsData, isLoading } = useGetAllNotificationsQuery();
     const [markAsRead] = useMarkAsReadMutation();
     const [clearAll] = useClearAllNotificationsMutation();
     const loggedInUser = useSelector(selectCurrentUser);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
-
-    const notifications = notificationsData?.data || [];
+    const notifications = notificationsData?.data?.filter(n => !n.read) || [];
     const normalNotifications = notifications.filter(n => n.notification_type === 'normal');
     const reminders = notifications.filter(n => n.notification_type === 'reminder');
+   
 
+    // console.log("notifications", notifications);
 
-    const handleMarkAsRead = async (id) => {
+// console.log("followupCallczxzxc", followupCall.data);
+
+    const handleMarkAsRead = async (id, notification) => {
         try {
             await markAsRead(id);
+            if (notification.related_id) {
+                navigate(`/dashboard/crm/deals/${notification.related_id}`);
+            }
         } catch (error) {
             console.error('Error marking notification as read:', error);
         }
@@ -31,6 +41,7 @@ const NotificationsComponent = () => {
     const handleClearAll = async () => {
         try {
             await clearAll();
+            setDropdownOpen(false);
         } catch (error) {
             console.error('Error clearing notifications:', error);
         }
@@ -51,7 +62,7 @@ const NotificationsComponent = () => {
                             <div
                                 key={notification.id}
                                 className={`notification-item ${!notification.read ? 'unread' : ''}`}
-                                onClick={() => handleMarkAsRead(notification.id)}
+                                onClick={() => handleMarkAsRead(notification.id, notification)}
                             >
                                 <div className="notification-content">
                                     <div className="notification-icon-wrapper">
@@ -87,7 +98,7 @@ const NotificationsComponent = () => {
                             <div
                                 key={reminder.id}
                                 className={`notification-item ${!reminder.read ? 'unread' : ''}`}
-                                onClick={() => handleMarkAsRead(reminder.id)}
+                                onClick={() => handleMarkAsRead(reminder.id, reminder)}
                             >
                                 <div className="notification-content">
                                     <div className="notification-icon-wrapper">
@@ -125,7 +136,7 @@ const NotificationsComponent = () => {
                 className="notification-tabs"
             />
             <div className="notifications-footer">
-                <Button type="primary" block>
+                <Button type="primary" block onClick={() => navigate('/dashboard/analytics')}>
                     View Analytics
                 </Button>
             </div>
@@ -140,6 +151,8 @@ const NotificationsComponent = () => {
             trigger={['click']}
             placement="bottomRight"
             overlayClassName="notification-dropdown-overlay"
+            open={dropdownOpen}
+            onOpenChange={(visible) => setDropdownOpen(visible)}
         >
             <Badge count={totalUnread} className="notification-badge">
                 <Button type="text" className="notification-button">

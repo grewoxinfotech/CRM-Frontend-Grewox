@@ -13,6 +13,7 @@ import CreateLog from './call/CreatefollowupLog';
 import FollowupTaskList from './task';
 import FollowupMeetingList from './metting';
 import { useParams } from 'react-router-dom';
+import FollowupCallList from './call';
 const { Title, Text } = Typography;
 
 
@@ -113,7 +114,7 @@ const DealFollowup = ({ deal }) => {
                     <FiPhoneCall /> Calls
                 </span>
             ),
-            children: 'Call list component will go here'
+            children: <FollowupCallList dealId={id} users={users} />
         }
     ];
 
@@ -210,6 +211,7 @@ const DealFollowup = ({ deal }) => {
             <CreateLog
                 open={isLogModalVisible}
                 onCancel={() => setIsLogModalVisible(false)}
+                dealId={id}
             />
         </div>
     );

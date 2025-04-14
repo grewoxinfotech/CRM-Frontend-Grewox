@@ -103,12 +103,6 @@ const FollowupMeetingList = ({ dealId, users }) => {
             }
         },
         {
-            title: 'Host',
-            dataIndex: 'host',
-            key: 'host',
-            render: (host) => host || '-'
-        },
-        {
             title: 'Assigned To',
             dataIndex: 'assigned_to',
             key: 'assigned_to',

@@ -24,15 +24,17 @@ import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/co
 
 const { Text } = Typography;
 
-const InvoiceList = ({ searchText = "" }) => {
-  const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
+const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
+ 
+
+  // const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery(id);
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [deleteInvoice] = useDeleteInvoiceMutation();
   const [updateInvoice] = useUpdateInvoiceMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const invoices = invoicesdata?.data || [];
+  // const invoices = invoicesdata?.data || [];
   const { data: customersData } = useGetCustomersQuery();
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
@@ -45,6 +47,7 @@ const InvoiceList = ({ searchText = "" }) => {
       const customerName = invoice?.customerName?.toLowerCase() || "";
       const total = invoice?.total?.toString().toLowerCase() || "";
       const status = invoice?.payment_status?.toLowerCase() || "";
+
 
       return (
         !searchText ||

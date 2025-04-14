@@ -26,6 +26,8 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
   const [customFrequency, setCustomFrequency] = useState('weekly');
+  
+  
   const [monthlyPattern, setMonthlyPattern] = useState('day');
   const [yearlyPattern, setYearlyPattern] = useState('date');
   const [repeatEndDate, setRepeatEndDate] = useState(null);
@@ -57,6 +59,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     height: '48px'
   };
 
+
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
@@ -69,6 +72,8 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     user?.created_by === currentUser?.username &&
     user?.role_id !== subclientRoleId
   ) || [];
+
+  console.log("users",currentUser);
 
   // Get role colors and icons
   const getRoleStyle = (roleName) => {
@@ -113,15 +118,48 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     if (!date) {
       setRepeatType('none');
     }
+    // Reset reminder date if it's after new due date
+    const reminderDate = form.getFieldValue('reminder_date');
+    if (reminderDate && date && reminderDate.isAfter(date)) {
+      form.setFieldValue('reminder_date', null);
+    }
+    // Reset repeat end date if it's before new due date
+    const repeatEndDate = form.getFieldValue('repeat_end_date');
+    if (repeatEndDate && date && repeatEndDate.isBefore(date)) {
+      form.setFieldValue('repeat_end_date', null);
+    }
   };
 
-  // Handle repeat toggle when no due date is selected
+  // Update handleRepeatToggle to check for reminder
   const handleRepeatToggle = (checked) => {
-    if (!showRepeat && checked) {
-      message.info('Select a due date to set recurring');
+    if (!showReminder) {
+      message.info('Please set a reminder first before setting repeat');
       return;
     }
     setRepeatType(checked ? 'daily' : 'none');
+  };
+
+  // Add effect to reset repeat when reminder is turned off
+  useEffect(() => {
+    if (!showReminder) {
+      setRepeatType('none');
+    }
+  }, [showReminder]);
+
+  // Add disabledDate functions
+  const disableReminderDate = (current) => {
+    const dueDate = form.getFieldValue('due_date');
+    return current && (current.isAfter(dueDate) || current.isSame(dueDate));
+  };
+
+  const disableRepeatEndDate = (current) => {
+    const dueDate = form.getFieldValue('due_date');
+    return current && (current.isAfter(dueDate) || current.isSame(dueDate));
+  };
+
+  // Add this new function to disable past dates
+  const disablePastDates = (current) => {
+    return current && current.isBefore(dayjs(), 'day');
   };
 
   const handleSubmit = async (values) => {
@@ -136,31 +174,32 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
       const repeatData = repeatType !== 'none' ? {
         repeat_type: repeatType,
         repeat_end_type: repeatEndType,
-        repeat_times: parseInt(repeatTimes) || 1,
-        repeat_end_date: repeatEndType === 'on' ? repeatEndDate?.format('YYYY-MM-DD') : null,
-        custom_repeat_interval: parseInt(customRepeatInterval) || 1,
-        custom_repeat_days: customRepeatDays,
-        custom_repeat_frequency: customFrequency,
+        repeat_times: repeatEndType === 'after' ? repeatTimes : null,
+        repeat_end_date: values.repeat_end_date ? values.repeat_end_date.format('YYYY-MM-DD') : null,
+        repeat_start_date: values.repeat_start_date ? values.repeat_start_date.format('YYYY-MM-DD') : null,
+        repeat_start_time: values.repeat_start_time ? values.repeat_start_time.format('HH:mm:ss') : null,
+        custom_repeat_interval: repeatType === 'custom' ? customRepeatInterval : null,
+        custom_repeat_days: repeatType === 'custom' && customFrequency === 'weekly' ? customRepeatDays : null,
+        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
       } : null;
+
+      // If no assignee is selected, assign to current user
+      const assignedTo = values.assigned_to && values.assigned_to.length > 0 
+        ? values.assigned_to 
+        : [currentUser?.id];
 
       // Format the final payload
       const formattedValues = {
         subject: values.subject,
         due_date: values.due_date?.format('YYYY-MM-DD'),
         priority: values.priority,
-        task_reporter: currentUser?.username,
-        assigned_to: {
-          assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to]
-        },
+        assigned_to: { assigned_to: assignedTo },
         status: values.status,
         description: values.description || null,
         reminder: reminderData,
         repeat: repeatData,
-        created_by: currentUser?.username,
-        updated_by: currentUser?.username
       };
 
-  
       // Make API call to create task
       await createFollowupTask({id: dealId, data: formattedValues}).unwrap();
       
@@ -304,6 +343,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                 }}
                 suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 onChange={handleDueDateChange}
+                disabledDate={disablePastDates}
               />
             </Form.Item>
 
@@ -343,21 +383,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                 </Option>
               </Select>
             </Form.Item>
-
-            <Form.Item
-              name="task_reporter"
-              label={<span style={formItemStyle}>Task Reporter</span>}
-              initialValue={currentUser?.username}
-            >
-              <Input
-                value={currentUser?.username}
-                disabled
-                style={{
-                  ...inputStyle,
-                  backgroundColor: '#f3f4f6'
-                }}
-              />
-            </Form.Item>
           </div>
         </div>
 
@@ -365,16 +390,20 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Assignment</Text>
           <Form.Item
             name="assigned_to"
-            label={<span style={formItemStyle}>Assign To</span>}
-            rules={[{ required: true, message: 'Please select assignee' }]}
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Participants
+            </span>}
           >
             <Select
               mode="multiple"
               showSearch
               placeholder="Select team members"
               optionFilterProp="children"
-              style={selectStyle}
-              suffixIcon={<FiChevronDown size={14} />}
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px"
+              }}
               filterOption={(input, option) => {
                 const username = option?.username?.toLowerCase() || '';
                 const searchTerm = input.toLowerCase();
@@ -493,6 +522,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                     ...inputStyle,
                     width: '100%'
                   }}
+                  disabledDate={disableReminderDate}
                   suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 />
               </Form.Item>
@@ -514,17 +544,51 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           )}
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '24px', opacity: showReminder ? 1 : 0.5, pointerEvents: showReminder ? 'auto' : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
             <Switch 
               checked={repeatType !== 'none'} 
               onChange={handleRepeatToggle}
+              disabled={!showReminder}
             />
           </div>
 
           {repeatType !== 'none' && (
             <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <Form.Item
+                  name="repeat_start_date"
+                  label={<span style={formItemStyle}>Start Date</span>}
+                  rules={[{ required: true, message: 'Please select start date' }]}
+                >
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    style={{
+                      ...inputStyle,
+                      width: '100%'
+                    }}
+                    disabledDate={disablePastDates}
+                    suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="repeat_start_time"
+                  label={<span style={formItemStyle}>Start Time</span>}
+                  rules={[{ required: true, message: 'Please select start time' }]}
+                >
+                  <TimePicker
+                    format="hh:mm A"
+                    style={{
+                      ...inputStyle,
+                      width: '100%'
+                    }}
+                    use12Hours
+                  />
+                </Form.Item>
+              </div>
+
               <Form.Item
                 name="repeat"
                 label={<span style={formItemStyle}>Repeat Type</span>}
@@ -533,7 +597,15 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                   placeholder="Select repeat option"
                   style={selectStyle}
                   value={repeatType}
-                  onChange={(value) => setRepeatType(value)}
+                  onChange={(value) => {
+                    setRepeatType(value);
+                    // Reset custom values when switching repeat types
+                    if (value !== 'custom') {
+                      setCustomRepeatInterval(1);
+                      setCustomRepeatDays([]);
+                      setCustomFrequency('weekly');
+                    }
+                  }}
                   suffixIcon={<FiChevronDown size={14} />}
                 >
                   <Option value="daily">Daily</Option>
@@ -559,7 +631,12 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                     <Select 
                       defaultValue="weekly" 
                       style={selectStyle}
-                      onChange={(value) => setCustomFrequency(value)}
+                      onChange={(value) => {
+                        setCustomFrequency(value);
+                        // Reset custom values when changing frequency
+                        setCustomRepeatInterval(1);
+                        setCustomRepeatDays([]);
+                      }}
                       suffixIcon={<FiChevronDown size={14} />}
                     >
                       <Option value="weekly">Weekly</Option>
@@ -597,7 +674,17 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                   </Form.Item>
 
                   {customFrequency === 'weekly' && (
-                    <Form.Item label={<span style={formItemStyle}>On These Days</span>}>
+                    <Form.Item 
+                      label={<span style={formItemStyle}>On These Days</span>}
+                      rules={[{ 
+                        validator: (_, value) => {
+                          if (!customRepeatDays.length) {
+                            return Promise.reject('Please select at least one day');
+                          }
+                          return Promise.resolve();
+                        }
+                      }]}
+                    >
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                           <Button
@@ -627,61 +714,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                           </Button>
                         ))}
                       </div>
-                    </Form.Item>
-                  )}
-
-                  {customFrequency === 'monthly' && (
-                    <Form.Item label={<span style={formItemStyle}>On</span>}>
-                      <Space>
-                        <Select style={{ width: 120 }} defaultValue="first">
-                          <Option value="first">First</Option>
-                          <Option value="second">Second</Option>
-                          <Option value="third">Third</Option>
-                          <Option value="fourth">Fourth</Option>
-                          <Option value="last">Last</Option>
-                        </Select>
-                        <Select style={{ width: 120 }} defaultValue="monday">
-                          <Option value="sunday">Sunday</Option>
-                          <Option value="monday">Monday</Option>
-                          <Option value="tuesday">Tuesday</Option>
-                          <Option value="wednesday">Wednesday</Option>
-                          <Option value="thursday">Thursday</Option>
-                          <Option value="friday">Friday</Option>
-                          <Option value="saturday">Saturday</Option>
-                        </Select>
-                      </Space>
-                    </Form.Item>
-                  )}
-
-                  {customFrequency === 'yearly' && (
-                    <Form.Item label={<span style={formItemStyle}>On</span>}>
-                      <Space direction="vertical">
-                        <Space>
-                          <Select style={{ width: 120 }} defaultValue="1">
-                            {Array.from({ length: 12 }, (_, i) => (
-                              <Option key={i + 1} value={i + 1}>
-                                {new Date(2024, i, 1).toLocaleString('default', { month: 'long' })}
-                              </Option>
-                            ))}
-                          </Select>
-                          <Select style={{ width: 120 }} defaultValue="first">
-                            <Option value="first">First</Option>
-                            <Option value="second">Second</Option>
-                            <Option value="third">Third</Option>
-                            <Option value="fourth">Fourth</Option>
-                            <Option value="last">Last</Option>
-                          </Select>
-                          <Select style={{ width: 120 }} defaultValue="monday">
-                            <Option value="sunday">Sunday</Option>
-                            <Option value="monday">Monday</Option>
-                            <Option value="tuesday">Tuesday</Option>
-                            <Option value="wednesday">Wednesday</Option>
-                            <Option value="thursday">Thursday</Option>
-                            <Option value="friday">Friday</Option>
-                            <Option value="saturday">Saturday</Option>
-                          </Select>
-                        </Space>
-                      </Space>
                     </Form.Item>
                   )}
                 </div>
@@ -734,6 +766,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                               ...inputStyle,
                               height: '32px'
                             }}
+                            disabledDate={disableRepeatEndDate}
                           />
                         </Space>
                       </Radio>

@@ -6,13 +6,13 @@ export const invoiceApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Invoices"],
   endpoints: (builder) => ({
-    getInvoices: builder.query({
-      query: () => "/sales-invoices",
+    getInvoices: builder.query({  
+      query: (id) => `/sales-invoices/${id}`,
       providesTags: ["Invoices"],
     }),
     createInvoice: builder.mutation({
-      query: (data) => ({
-        url: "sales-invoices",
+      query: ({id, data}) => ({
+        url: `sales-invoices/${id}`,
         method: "POST",
         body: data,
       }),

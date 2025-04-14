@@ -39,11 +39,14 @@ import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 const { Option } = Select;
 
 const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, productsData, productsLoading }) => {
+  
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [createInvoice, { isLoading }] = useCreateInvoiceMutation();
@@ -61,7 +64,10 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
   const [selectedCategory, setSelectedCategory] = useState('customer');
   const { data: contactsData } = useGetContactsQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+
+  const id = loggedInUser?.id;
 
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
@@ -216,7 +222,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         payment_status: values.status || "unpaid"
       };
 
-      const result = await createInvoice(payload).unwrap();
+      const result = await createInvoice({id:id, data:payload}).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
       setCreateModalVisible(false);

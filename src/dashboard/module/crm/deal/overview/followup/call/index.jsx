@@ -1,24 +1,35 @@
 import React from 'react';
 import { Table, Tag, Space, Button, Avatar, Tooltip, Dropdown } from 'antd';
-import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical } from 'react-icons/fi';
-
+import { FiCheckSquare, FiCalendar, FiEdit2, FiTrash2, FiMoreVertical, FiPhone } from 'react-icons/fi';
+import { useGetFollowupCallsQuery } from './services/followupCallApi';
 import dayjs from 'dayjs';
-import './followupmetting.scss';
-import { useGetFollowupTaskByIdQuery } from '../task/services/followupTaskApi';
+import './followupcall.scss';
 
-
-
-const FollowupMeetingList = ({ dealId, users }) => {
-    const { data: followupTask, isLoading: followupTaskLoading } = useGetFollowupTaskByIdQuery(dealId);
+const FollowupCallList = ({ dealId, users }) => {
+    const { data: followupCall, isLoading: followupCallLoading } = useGetFollowupCallsQuery(dealId);
 
     const handleEdit = (record) => {
-        // Handle edit
         console.log('Edit:', record);
     };
 
     const handleDelete = (id) => {
-        // Handle delete
         console.log('Delete:', id);
+    };
+
+    const getStatusTag = (status) => {
+        const statusConfig = {
+            not_started: { color: 'default', text: 'Not Started' },
+            in_progress: { color: 'processing', text: 'In Progress' },
+            completed: { color: 'success', text: 'Completed' },
+            cancelled: { color: 'error', text: 'Cancelled' },
+            no_answer: { color: 'warning', text: 'No Answer' },
+            busy: { color: 'orange', text: 'Busy' },
+            wrong_number: { color: 'red', text: 'Wrong Number' },
+            voicemail: { color: 'purple', text: 'Voicemail' }
+        };
+
+        const config = statusConfig[status] || statusConfig.not_started;
+        return <Tag color={config.color}>{config.text}</Tag>;
     };
 
     const columns = [
@@ -28,10 +39,48 @@ const FollowupMeetingList = ({ dealId, users }) => {
             key: 'subject',
             render: (text, record) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FiCheckSquare style={{ color: '#1890ff' }} />
-                    <span>{text}</span>
+                    <FiPhone style={{ color: '#1890ff' }} />
+                    <span>{text || '-'}</span>
                 </div>
             )
+        },
+        {
+            title: 'Status',
+            dataIndex: 'call_status',
+            key: 'call_status',
+            render: (status) => getStatusTag(status)
+        },
+        {
+            title: 'Date & Time',
+            key: 'datetime',
+            render: (_, record) => {
+                try {
+                    if (!record.call_start_date || !record.call_start_time) return '-';
+                    
+                    const dateTime = dayjs(`${record.call_start_date} ${record.call_start_time}`);
+                    
+                    return (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FiCalendar style={{ color: '#1890ff' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span>{dateTime.format('DD MMM YYYY')}</span>
+                                <span style={{ fontSize: '12px', color: '#6B7280' }}>
+                                    {dateTime.format('hh:mm A')}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                } catch (error) {
+                    console.error('Error formatting date time:', error);
+                    return '-';
+                }
+            }
+        },
+        {
+            title: 'Purpose',
+            dataIndex: 'call_purpose',
+            key: 'call_purpose',
+            render: (purpose) => purpose || '-'
         },
         {
             title: 'Assigned To',
@@ -39,11 +88,15 @@ const FollowupMeetingList = ({ dealId, users }) => {
             key: 'assigned_to',
             render: (assignedTo) => {
                 try {
-                    const parsedAssignees = JSON.parse(assignedTo);
+                    if (!assignedTo) return '-';
+                    const parsedAssignees = typeof assignedTo === 'string' ? JSON.parse(assignedTo) : assignedTo;
+                    
+                    if (!parsedAssignees?.assigned_to?.length) return '-';
+
                     return (
                         <Avatar.Group maxCount={2} maxStyle={{ color: '#f56a00', backgroundColor: '#fde3cf' }}>
                             {parsedAssignees.assigned_to.map((userId) => {
-                                const user = users.find(u => u.id === userId);
+                                const user = users?.find(u => u.id === userId);
                                 return (
                                     <Tooltip title={user?.username} key={userId}>
                                         <Avatar
@@ -59,86 +112,48 @@ const FollowupMeetingList = ({ dealId, users }) => {
                         </Avatar.Group>
                     );
                 } catch (e) {
+                    console.error('Error parsing assignedTo:', e);
                     return '-';
                 }
             }
         },
         {
-            title: 'Due Date',
-            dataIndex: 'due_date',
-            key: 'due_date',
-            render: (date) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FiCalendar style={{ color: '#1890ff' }} />
-                    <span>{dayjs(date).format('DD MMM YYYY')}</span>
-                </div>
-            )
-        },
-        {
-            title: 'Priority',
-            dataIndex: 'priority',
-            key: 'priority',
-            render: (priority) => {
-                const priorityColors = {
-                    highest: { color: '#ff4d4f', bg: '#fff1f0' },
-                    high: { color: '#faad14', bg: '#fff7e6' },
-                    medium: { color: '#1890ff', bg: '#e6f7ff' },
-                    low: { color: '#52c41a', bg: '#f6ffed' }
+            title: 'Reminder',
+            dataIndex: 'call_reminder',
+            key: 'call_reminder',
+            render: (reminder) => {
+                const reminderMap = {
+                    '5_min': '5 minutes before',
+                    '10_min': '10 minutes before',
+                    '15_min': '15 minutes before',
+                    '30_min': '30 minutes before',
+                    '1_hour': '1 hour before'
                 };
-                const style = priorityColors[priority] || priorityColors.medium;
-                
-                return (
-                    <Tag style={{
-                        color: style.color,
-                        backgroundColor: style.bg,
-                        border: 'none',
-                        borderRadius: '12px',
-                        padding: '2px 12px'
-                    }}>
-                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                    </Tag>
-                );
+                return reminderMap[reminder] || '-';
             }
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            render: (status) => {
-                const statusColors = {
-                    not_started: { color: '#8c8c8c', bg: '#f5f5f5' },
-                    in_progress: { color: '#1890ff', bg: '#e6f7ff' },
-                    completed: { color: '#52c41a', bg: '#f6ffed' },
-                    on_hold: { color: '#faad14', bg: '#fff7e6' },
-                    cancelled: { color: '#ff4d4f', bg: '#fff1f0' }
-                };
-                const style = statusColors[status] || statusColors.not_started;
-                
-                return (
-                    <Tag style={{
-                        color: style.color,
-                        backgroundColor: style.bg,
-                        border: 'none',
-                        borderRadius: '12px',
-                        padding: '2px 12px'
-                    }}>
-                        {status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                    </Tag>
-                );
-            }
+            title: 'Notes',
+            dataIndex: 'call_notes',
+            key: 'call_notes',
+            render: (notes) => notes || '-',
+            ellipsis: true
         },
         {
             title: 'Created By',
             dataIndex: 'created_by',
             key: 'created_by',
-            render: (creator) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Avatar size="small" style={{ backgroundColor: '#1890ff' }}>
-                        {creator?.[0]?.toUpperCase() || '?'}
-                    </Avatar>
-                    <span>{creator}</span>
-                </div>
-            )
+            render: (creator) => {
+                if (!creator) return '-';
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Avatar size="small" style={{ backgroundColor: '#1890ff' }}>
+                            {creator[0]?.toUpperCase() || '?'}
+                        </Avatar>
+                        <span>{creator}</span>
+                    </div>
+                );
+            }
         },
         {
             title: 'Actions',
@@ -177,18 +192,18 @@ const FollowupMeetingList = ({ dealId, users }) => {
 
     return (
         <Table
-            dataSource={followupTask?.data || []}
+            dataSource={followupCall?.data || []}
             columns={columns}
             rowKey="id"
-            loading={followupTaskLoading}
+            loading={followupCallLoading}
             pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total) => `Total ${total} tasks`
+                showTotal: (total) => `Total ${total} calls`
             }}
             className="followup-table"
         />
     );
 };
 
-export default FollowupMeetingList;
+export default FollowupCallList;

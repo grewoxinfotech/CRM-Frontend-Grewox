@@ -66,6 +66,7 @@ import { customFormApi } from "../dashboard/module/crm/generate-link/services/cu
 
 import { followupTaskApi } from "../dashboard/module/crm/deal/overview/followup/task/services/followupTaskApi";
 import { followupMeetingApi } from "../dashboard/module/crm/deal/overview/followup/metting/services/followupMettingApi";
+import { followupCallApi } from "../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi";
 const persistConfig = {
   key: "root",
   storage,
@@ -138,6 +139,7 @@ const rootReducer = combineReducers({
   [customFormApi.reducerPath]: customFormApi.reducer,
   [followupTaskApi.reducerPath]: followupTaskApi.reducer,
   [followupMeetingApi.reducerPath]: followupMeetingApi.reducer,
+  [followupCallApi.reducerPath]: followupCallApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -211,6 +213,7 @@ export const store = configureStore({
       .concat(customFormApi.middleware)
       .concat(followupTaskApi.middleware)
       .concat(followupMeetingApi.middleware)
+      .concat(followupCallApi.middleware)
 });
 
 export const persistor = persistStore(store);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Empty, Checkbox, Radio, Space, Avatar, Switch } from 'antd';
 import { FiX, FiCalendar, FiMapPin, FiUsers, FiPlus, FiSearch, FiRepeat, FiUser, FiShield, FiBriefcase, FiChevronDown, FiLink } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -22,6 +22,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
   const [repeatTimes, setRepeatTimes] = useState(1);
+  // const [venueType, setVenueType] = useState(null);
+  // const [showReminder, setShowReminder] = useState(false);
   const [showRepeat, setShowRepeat] = useState(false);
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
@@ -79,6 +81,73 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
     return roleColors[roleName?.toLowerCase()] || roleColors.default;
   };
 
+  // Watch from_date field to enable repeat option
+  useEffect(() => {
+    const fromDate = form.getFieldValue('from_date');
+    setShowRepeat(!!fromDate);
+  }, [form.getFieldValue('from_date')]);
+
+  // Update repeat availability when from date changes
+  const handleFromDateChange = (date) => {
+    setShowRepeat(!!date);
+    if (!date) {
+      setRepeatType('none');
+    }
+    // Reset reminder date if it's after new from date
+    const reminderDate = form.getFieldValue('reminder_date');
+    if (reminderDate && date && reminderDate.isAfter(date)) {
+      form.setFieldValue('reminder_date', null);
+    }
+    // Reset repeat end date if it's before new from date
+    const repeatEndDate = form.getFieldValue('repeat_end_date');
+    if (repeatEndDate && date && repeatEndDate.isBefore(date)) {
+      form.setFieldValue('repeat_end_date', null);
+    }
+    // Reset to_date if it's before the new from_date
+    const toDate = form.getFieldValue('to_date');
+    if (toDate && date && toDate.isBefore(date)) {
+      form.setFieldValue('to_date', date);
+    }
+  };
+
+  // Update handleRepeatToggle to check for reminder
+  const handleRepeatToggle = (checked) => {
+    if (!showReminder) {
+      message.info('Please set a reminder first before setting repeat');
+      return;
+    }
+    setRepeatType(checked ? 'daily' : 'none');
+  };
+
+  // Add effect to reset repeat when reminder is turned off
+  useEffect(() => {
+    if (!showReminder) {
+      setRepeatType('none');
+    }
+  }, [showReminder]);
+
+  // Update disableReminderDate function
+  const disableReminderDate = (current) => {
+    const toDate = form.getFieldValue('to_date');
+    return current && current.isAfter(toDate);
+  };
+
+  const disableRepeatEndDate = (current) => {
+    const fromDate = form.getFieldValue('from_date');
+    return current && current.isBefore(fromDate);
+  };
+
+  // Add this new function to disable past dates
+  const disablePastDates = (current) => {
+    return current && current.isBefore(dayjs(), 'day');
+  };
+
+  // Add this new function to disable dates before from_date for to_date
+  const disableToDate = (current) => {
+    const fromDate = form.getFieldValue('from_date');
+    return current && current.isBefore(fromDate, 'day');
+  };
+
   const handleSubmit = async (values) => {
     try {
       // Organize reminder fields
@@ -91,11 +160,13 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
       const repeatData = repeatType !== 'none' ? {
         repeat_type: repeatType,
         repeat_end_type: repeatEndType,
-        repeat_times: repeatEndType === 'after' ? parseInt(repeatTimes) : (repeatEndType === 'never' ? null : 1),
-        repeat_end_date: repeatEndType === 'on' ? repeatEndDate?.format('YYYY-MM-DD') : null,
-        custom_repeat_interval: repeatType === 'custom' ? parseInt(customRepeatInterval) : 1,
-        custom_repeat_days: repeatType === 'custom' ? customRepeatDays : [],
-        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : 'weekly'
+        repeat_times: repeatEndType === 'after' ? repeatTimes : null,
+        repeat_end_date: values.repeat_end_date ? values.repeat_end_date.format('YYYY-MM-DD') : null,
+        repeat_start_date: values.repeat_start_date ? values.repeat_start_date.format('YYYY-MM-DD') : null,
+        repeat_start_time: values.repeat_start_time ? values.repeat_start_time.format('HH:mm:ss') : null,
+        custom_repeat_interval: repeatType === 'custom' ? customRepeatInterval : null,
+        custom_repeat_days: repeatType === 'custom' && customFrequency === 'weekly' ? customRepeatDays : null,
+        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
       } : null;
 
       // Ensure assigned_to is always an array
@@ -112,7 +183,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         from_time: values.from_time.format('HH:mm:ss'),
         to_date: values.to_date.format('YYYY-MM-DD'),
         to_time: values.to_time.format('HH:mm:ss'),
-        host: values.host,
+        meeting_status: values.meeting_status,
         assigned_to: {
           assigned_to: assignedToArray
         },
@@ -172,11 +243,6 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   ];
 
   const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  // Update handleRepeatToggle to work independently
-  const handleRepeatToggle = (checked) => {
-    setRepeatType(checked ? 'daily' : 'none');
-  };
 
   // Add formItemStyle constant
   const formItemStyle = {
@@ -413,8 +479,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
           <Form.Item
             name="from_date"
-            label="From"
-            rules={[{ required: true, message: 'Please select start date' }]}
+            label="Meeting Start Date"
+            rules={[{ required: true, message: 'Please select meeting start date' }]}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -425,13 +491,14 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                 height: "48px",
               }}
               suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              onChange={handleFromDateChange}
             />
           </Form.Item>
 
           <Form.Item
             name="from_time"
-            label="From Time"
-            rules={[{ required: true, message: 'Please select start time' }]}
+            label="Meeting Start Time"
+            rules={[{ required: true, message: 'Please select meeting start time' }]}
           >
             <TimePicker
               format="hh:mm A"
@@ -450,8 +517,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
           <Form.Item
             name="to_date"
-            label="To"
-            rules={[{ required: true, message: 'Please select end date' }]}
+            label="Meeting End Date"
+            rules={[{ required: true, message: 'Please select meeting end date' }]}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -462,13 +529,22 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                 height: "48px",
               }}
               suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              disabledDate={disableToDate}
+              onChange={(date) => {
+                // When end date changes, set the same date for reminder
+                if (date) {
+                  form.setFieldsValue({
+                    reminder_date: date
+                  });
+                }
+              }}
             />
           </Form.Item>
 
           <Form.Item
             name="to_time"
-            label="To Time"
-            rules={[{ required: true, message: 'Please select end time' }]}
+            label="Meeting End Time"
+            rules={[{ required: true, message: 'Please select meeting end time' }]}
           >
             <TimePicker
               format="hh:mm A"
@@ -486,29 +562,39 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
 
-          <Form.Item
-            name="host"
-            label={<span style={formItemStyle}>Host</span>}
-            initialValue={currentUser?.username}
-          >
-            <Input
-              value={currentUser?.username}
-              disabled
-              style={{
-                ...inputStyle,
-                backgroundColor: '#f3f4f6'
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="assigned_to"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Participants
-              </span>
-            }
-            rules={[{ required: true, message: 'Please select participants' }]}
+        <Form.Item
+          name="assigned_to"
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Participants
+            </span>
+          }
+          rules={[{ required: true, message: 'Please select participants' }]}
+        >
+          <Select
+            mode="multiple"
+            showSearch
+            size="large"
+            placeholder="Select team members"
+            optionFilterProp="children"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              height: "48px"
+            }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
+            filterOption={(input, option) => {
+              const username = option?.username?.toLowerCase() || '';
+              const searchTerm = input.toLowerCase();
+              return username.includes(searchTerm);
+            }}
+            defaultOpen={false}
           >
             <Select
               mode="multiple"
@@ -545,6 +631,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                     value={user.id}
                     username={user.username}
                   >
+                  <div>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -583,11 +670,61 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                         {userRole?.role_name || 'User'}
                       </Tag>
                     </div>
-                  </Option>
-                );
-              })}
-            </Select>
-          </Form.Item>
+                    <Tag style={{
+                      margin: 0,
+                      background: roleStyle.bg,
+                      color: roleStyle.color,
+                      border: `1px solid ${roleStyle.border}`,
+                      fontSize: '12px',
+                      borderRadius: '16px',
+                      padding: '2px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      {roleStyle.icon}
+                      {userRole?.role_name || 'User'}
+                    </Tag>
+                  </div>
+                </Option>
+              );
+            })}
+          </Select>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="meeting_status"
+          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Meeting Status</span>}
+          rules={[{ required: true, message: 'Please select meeting status' }]}
+          initialValue="scheduled"
+        >
+          <Select
+            placeholder="Select status"
+            size="large"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              height: "48px"
+            }}
+          >
+            <Option value="scheduled">
+              <Tag color="processing">Scheduled</Tag>
+            </Option>
+            <Option value="in_progress">
+              <Tag color="warning">In Progress</Tag>
+            </Option>
+            <Option value="completed">
+              <Tag color="success">Completed</Tag>
+            </Option>
+            <Option value="cancelled">
+              <Tag color="error">Cancelled</Tag>
+            </Option>
+            <Option value="postponed">
+              <Tag color="default">Postponed</Tag>
+            </Option>
+          </Select>
+        </Form.Item>
         </div>
 
 
@@ -610,6 +747,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                     ...inputStyle,
                     width: '100%'
                   }}
+                  disabledDate={disableReminderDate}
                   suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 />
               </Form.Item>
@@ -631,17 +769,51 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           )}
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '24px', opacity: showReminder ? 1 : 0.5, pointerEvents: showReminder ? 'auto' : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
             <Switch
               checked={repeatType !== 'none'}
               onChange={handleRepeatToggle}
+              disabled={!showReminder}
             />
           </div>
 
           {repeatType !== 'none' && (
             <div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                <Form.Item
+                  name="repeat_start_date"
+                  label={<span style={formItemStyle}>Start Date</span>}
+
+                >
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    style={{
+                      ...inputStyle,
+                      width: '100%'
+                    }}
+                    disabledDate={disablePastDates}
+                    suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="repeat_start_time"
+                  label={<span style={formItemStyle}>Start Time</span>}
+
+                >
+                  <TimePicker
+                    format="hh:mm A"
+                    style={{
+                      ...inputStyle,
+                      width: '100%'
+                    }}
+                    use12Hours
+                  />
+                </Form.Item>
+              </div>
+
               <Form.Item
                 name="repeat"
                 label={<span style={formItemStyle}>Repeat Type</span>}
@@ -650,7 +822,14 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                   placeholder="Select repeat option"
                   style={selectStyle}
                   value={repeatType}
-                  onChange={(value) => setRepeatType(value)}
+                  onChange={(value) => {
+                    setRepeatType(value);
+                    if (value !== 'custom') {
+                      setCustomRepeatInterval(1);
+                      setCustomRepeatDays([]);
+                      setCustomFrequency('weekly');
+                    }
+                  }}
                   suffixIcon={<FiChevronDown size={14} />}
                 >
                   <Option value="daily">Daily</Option>
@@ -676,7 +855,11 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                     <Select
                       defaultValue="weekly"
                       style={selectStyle}
-                      onChange={(value) => setCustomFrequency(value)}
+                      onChange={(value) => {
+                        setCustomFrequency(value);
+                        setCustomRepeatInterval(1);
+                        setCustomRepeatDays([]);
+                      }}
                       suffixIcon={<FiChevronDown size={14} />}
                     >
                       <Option value="weekly">Weekly</Option>
@@ -714,7 +897,17 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                   </Form.Item>
 
                   {customFrequency === 'weekly' && (
-                    <Form.Item label={<span style={formItemStyle}>On These Days</span>}>
+                    <Form.Item 
+                      label={<span style={formItemStyle}>On These Days</span>}
+                      rules={[{ 
+                        validator: (_, value) => {
+                          if (!customRepeatDays.length) {
+                            return Promise.reject('Please select at least one day');
+                          }
+                          return Promise.resolve();
+                        }
+                      }]}
+                    >
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                           <Button
@@ -744,61 +937,6 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                           </Button>
                         ))}
                       </div>
-                    </Form.Item>
-                  )}
-
-                  {customFrequency === 'monthly' && (
-                    <Form.Item label={<span style={formItemStyle}>On</span>}>
-                      <Space>
-                        <Select style={{ width: 120 }} defaultValue="first">
-                          <Option value="first">First</Option>
-                          <Option value="second">Second</Option>
-                          <Option value="third">Third</Option>
-                          <Option value="fourth">Fourth</Option>
-                          <Option value="last">Last</Option>
-                        </Select>
-                        <Select style={{ width: 120 }} defaultValue="monday">
-                          <Option value="sunday">Sunday</Option>
-                          <Option value="monday">Monday</Option>
-                          <Option value="tuesday">Tuesday</Option>
-                          <Option value="wednesday">Wednesday</Option>
-                          <Option value="thursday">Thursday</Option>
-                          <Option value="friday">Friday</Option>
-                          <Option value="saturday">Saturday</Option>
-                        </Select>
-                      </Space>
-                    </Form.Item>
-                  )}
-
-                  {customFrequency === 'yearly' && (
-                    <Form.Item label={<span style={formItemStyle}>On</span>}>
-                      <Space direction="vertical">
-                        <Space>
-                          <Select style={{ width: 120 }} defaultValue="1">
-                            {Array.from({ length: 12 }, (_, i) => (
-                              <Option key={i + 1} value={i + 1}>
-                                {new Date(2024, i, 1).toLocaleString('default', { month: 'long' })}
-                              </Option>
-                            ))}
-                          </Select>
-                          <Select style={{ width: 120 }} defaultValue="first">
-                            <Option value="first">First</Option>
-                            <Option value="second">Second</Option>
-                            <Option value="third">Third</Option>
-                            <Option value="fourth">Fourth</Option>
-                            <Option value="last">Last</Option>
-                          </Select>
-                          <Select style={{ width: 120 }} defaultValue="monday">
-                            <Option value="sunday">Sunday</Option>
-                            <Option value="monday">Monday</Option>
-                            <Option value="tuesday">Tuesday</Option>
-                            <Option value="wednesday">Wednesday</Option>
-                            <Option value="thursday">Thursday</Option>
-                            <Option value="friday">Friday</Option>
-                            <Option value="saturday">Saturday</Option>
-                          </Select>
-                        </Space>
-                      </Space>
                     </Form.Item>
                   )}
                 </div>
@@ -851,6 +989,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                               ...inputStyle,
                               height: '32px'
                             }}
+                            disabledDate={disableRepeatEndDate}
                           />
                         </Space>
                       </Radio>
@@ -879,7 +1018,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
             }}
           >
             <Option value="none">None</Option>
-            <Option value="at_time_of_meeting">At time of meeting</Option>
+      
             <Option value="15_min">15 minutes before</Option>
             <Option value="30_min">30 minutes before</Option>
             <Option value="1_hour">1 hour before</Option>

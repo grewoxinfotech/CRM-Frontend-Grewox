@@ -1,252 +1,378 @@
-import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Select } from "antd";
+import React, { useState } from "react";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message } from "antd";
 import {
   FiEdit2,
   FiTrash2,
   FiEye,
   FiMoreVertical,
-  FiFileText,
+  FiDownload,
+  FiPlus,
+  FiSearch,
 } from "react-icons/fi";
-import { useDeleteDealInvoiceMutation, useGetInvoiceByIdQuery, useUpdateDealInvoiceMutation } from "./services/dealinvoiceApi";
 import dayjs from "dayjs";
-import { useSelector } from "react-redux";
-import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import {
+ 
+  useDeleteInvoiceMutation,
+  useUpdateInvoiceMutation,
+} from "../../../../sales/invoice/services/invoiceApi";
+import EditInvoice from "./EditInvoice";
+import ViewInvoice from '../../../../sales/invoice/ViewInvoice';
+import { useGetAllCurrenciesQuery } from "../../../../../../superadmin/module/settings/services/settingsApi";
+import { useGetCustomersQuery } from "../../../../sales/customer/services/custApi";
+import { useGetContactsQuery } from "../../../../crm/contact/services/contactApi";
+import { useGetCompanyAccountsQuery } from "../../../../crm/companyacoount/services/companyAccountApi";
 
 const { Text } = Typography;
-const { Option } = Select;
 
-const InvoiceList = ({ deal, onEdit, onView, currencies }) => {
+const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
+ 
+  const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const [deleteInvoice] = useDeleteInvoiceMutation();
+  const [updateInvoice] = useUpdateInvoiceMutation();
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  // const invoices = invoicesdata?.data || [];
+  const { data: customersData } = useGetCustomersQuery();
+  const { data: contactsData } = useGetContactsQuery();
+  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
-  const dealId = deal?.deal?.id;
-  const loggedInUser = useSelector(selectCurrentUser);
-  const { data: invoice, isLoading, error } = useGetInvoiceByIdQuery(dealId);
-  const [deleteInvoice, { isLoading: isDeleting }] = useDeleteDealInvoiceMutation();
-  const [updateInvoice] = useUpdateDealInvoiceMutation();
+  // Filter invoices based on search text
+  const filteredInvoices = React.useMemo(() => {
+    return invoices?.filter((invoice) => {
+      const searchLower = searchText.toLowerCase();
+      const invoiceNumber = invoice?.salesInvoiceNumber?.toLowerCase() || "";
+      const customerName = invoice?.customerName?.toLowerCase() || "";
+      const total = invoice?.total?.toString().toLowerCase() || "";
+      const status = invoice?.payment_status?.toLowerCase() || "";
 
-  // Ensure invoices is always an array
-  const invoices = React.useMemo(() => {
-    if (!invoice?.data) return [];
-    if (Array.isArray(invoice.data)) return invoice.data;
-    if (invoice.data && typeof invoice.data === 'object') return [invoice.data];
-    return [];
-  }, [invoice]);
-
-
-  const handleDelete = async (record) => {
-    try {
-      await deleteInvoice(record.id).unwrap();
-      message.success("Invoice deleted successfully");
-    } catch (error) {
-      message.error(
-        "Failed to delete invoice: " + (error.data?.message || "Unknown error")
+      return (
+        !searchText ||
+        invoiceNumber.includes(searchLower) ||
+        customerName.includes(searchLower) ||
+        total.includes(searchLower) ||
+        status.includes(searchLower)
       );
-    }
-  };
-
-  const handleStatusChange = async (record, newStatus) => {
-    try {
-      // Parse items if it's a string
-      let items = record.items;
-      try {
-        if (typeof record.items === 'string') {
-          items = JSON.parse(record.items);
-        }
-      } catch (e) {
-        console.error('Error parsing items:', e);
-        items = {};
-      }
-
-      // Prepare the data for update
-      const updateData = {
-        ...record,
-        status: newStatus,
-        items: items // Send parsed items object
-      };
-
-      // Remove fields that might cause issues
-      delete updateData.createdAt;
-      delete updateData.updatedAt;
-      delete updateData.created_by;
-      delete updateData.updated_by;
-
-      await updateInvoice({
-        id: record.id,
-        data: updateData
-      }).unwrap();
-      
-      message.success("Invoice status updated successfully");
-    } catch (error) {
-      console.error('Update error:', error);
-      message.error("Failed to update invoice status: " + (error.data?.message || "Unknown error"));
-    }
-  };
+    });
+  }, [invoices, searchText]);
 
   const getStatusTag = (status) => {
-    let color = "";
-    switch (status?.toLowerCase()) {
-      case "paid":
-        color = "success";
-        break;
-      case "pending":
-        color = "warning";
-        break;
-      case "overdue":
-        color = "error";
-        break;
-      case "draft":
-        color = "default";
-        break;
-      default:
-        color = "default";
+    const statusColors = {
+      draft: "#d97706",
+      pending: "#2563eb",
+      paid: "#059669",
+      unpaid: "#dc2626",
+      partially_paid: "#7c3aed"
+    };
+
+    const statusBgColors = {
+      draft: "#fef3c7",
+      pending: "#dbeafe",
+      paid: "#d1fae5",
+      unpaid: "#fee2e2",
+      partially_paid: "#ede9fe"
+    };
+
+    return (
+      <Tag
+        className={`status-tag ${status}`}
+        style={{
+          color: statusColors[status],
+          backgroundColor: statusBgColors[status],
+          border: "none",
+          textTransform: "capitalize",
+          borderRadius: "6px",
+          padding: "4px 8px",
+        }}
+      >
+        {status}
+      </Tag>
+    );
+  };
+
+  const handleDelete = (id) => {
+    Modal.confirm({
+      title: "Delete Invoice",
+      content: "Are you sure you want to delete this invoice?",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      bodyStyle: {
+        padding: "20px",
+      },
+      onOk: async () => {
+        try {
+          await deleteInvoice(id).unwrap();
+          message.success("Invoice deleted successfully");
+        } catch (error) {
+          message.error(error?.data?.message || "Failed to delete invoice");
+        }
+      },
+    });
+  };
+
+  const handleEdit = (record) => {
+    setSelectedInvoice(record);
+    setEditModalVisible(true);
+  };
+
+  const handleEditSubmit = async (formData) => {
+    try {
+      await updateInvoice({
+        id: selectedInvoice.id,
+        data: formData,
+      }).unwrap();
+      setEditModalVisible(false);
+      setSelectedInvoice(null);
+    } catch (error) {
+      message.error(error?.data?.message || "Failed to update invoice");
     }
-    return <Tag color={color}>{status || "Unknown"}</Tag>;
+  };
+
+  const handleView = (record) => {
+    // Ensure we have valid data
+    if (record) {
+      let items = [];
+      try {
+        // Parse items if it's a string
+        if (typeof record.items === 'string') {
+          items = JSON.parse(record.items);
+        } else if (Array.isArray(record.items)) {
+          items = record.items;
+        }
+
+        // Format items to ensure consistent structure
+        items = items.map(item => ({
+          item_name: item.item_name || item.name || item.description,
+          quantity: Number(item.quantity) || 0,
+          unit_price: Number(item.unit_price || item.rate) || 0,
+          description: item.description || item.item_name || item.name,
+        }));
+
+      } catch (error) {
+        console.error('Error parsing invoice items:', error);
+        items = [];
+      }
+
+      // Format the invoice data
+      const formattedInvoice = {
+        ...record,
+        items,
+        subtotal: Number(record.subtotal) || 0,
+        tax: Number(record.tax) || 0,
+        discount: Number(record.discount) || 0,
+        total: Number(record.total) || 0,
+        issueDate: record.issueDate || new Date(),
+        dueDate: record.dueDate || new Date(),
+      };
+
+      setSelectedInvoice(formattedInvoice);
+      setIsViewModalOpen(true);
+    }
   };
 
   const getDropdownItems = (record) => ({
     items: [
       {
         key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onView(record),
+        icon: <FiEye style={{ fontSize: '14px' }} />,
+        label: "View Invoice",
+        onClick: () => handleView(record),
       },
       {
         key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => onEdit(record),
+        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
+        label: "Edit Invoice",
+        onClick: () => handleEdit(record),
+      },
+      {
+        key: "download",
+        icon: <FiDownload />,
+        label: "Download Invoice",
+        onClick: () => console.log("Download Invoice:", record.invoice_number),
       },
       {
         key: "delete",
         icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => handleDelete(record),
+        label: "Delete Invoice",
+        onClick: () => handleDelete(record.id),
         danger: true,
-        disabled: isDeleting,
       },
     ],
   });
 
+  const getCustomerName = (customerId, category) => {
+    if (!customerId) return "N/A";
+
+    switch (category) {
+      case 'customer':
+        const customer = customersData?.data?.find(c => c.id === customerId);
+        return customer?.name || "N/A";
+      
+      case 'contact':
+        const contact = contactsData?.data?.find(c => c.id === customerId);
+        return contact?.name || 
+          `${contact?.first_name || ''} ${contact?.last_name || ''}`.trim() ||
+          contact?.contact_name ||
+          "N/A";
+      
+      case 'company_account':
+        const company = companyAccountsData?.data?.find(c => c.id === customerId);
+        return company?.company_name ||
+          company?.name ||
+          company?.account_name ||
+          "N/A";
+      
+      default:
+        return "N/A";
+    }
+  };
+
   const columns = [
     {
       title: "Invoice Number",
-      dataIndex: "invoiceNumber",
-      key: "invoiceNumber",
-      sorter: (a, b) => (a.invoiceNumber || "").localeCompare(b.invoiceNumber || ""),
+      dataIndex: "salesInvoiceNumber",
+      key: "salesInvoiceNumber",
+      sorter: (a, b) =>
+        a.salesInvoiceNumber.localeCompare(b.salesInvoiceNumber),
       render: (text, record) => (
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Avatar 
-            icon={<FiFileText />} 
-            style={{ 
-              backgroundColor: "#e6f7ff", 
-              color: "#1890ff",
-              marginRight: "12px" 
-            }} 
-          />
-          <div>
-            <Text strong>{text || "-"}</Text>
-            {/* <div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                {record.description || "-"}
-              </Text>
-            </div> */}
-          </div>
-        </div>
+        <Text strong style={{ color: '#1890ff', cursor: 'pointer' }} onClick={() => handleView(record)}>
+          {text}
+        </Text>
       ),
     },
     {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: 150,
-      render: (status, record) => (
-        <Select
-          value={status || "draft"}
-          style={{ width: "100%" }}
-          onChange={(value) => handleStatusChange(record, value)}
-          bordered={false}
-          dropdownMatchSelectWidth={false}
-        >
-          <Option value="draft">
-            <Tag color="default">Draft</Tag>
-          </Option>
-          <Option value="pending">
-            <Tag color="warning">Pending</Tag>
-          </Option>
-          <Option value="paid">
-            <Tag color="success">Paid</Tag>
-          </Option>
-          <Option value="overdue">
-            <Tag color="error">Overdue</Tag>
-          </Option>
-        </Select>
+      title: "Customer",
+      dataIndex: "customer",
+      key: "customer",
+      render: (customerId, record) => (
+        <Text>
+          {getCustomerName(customerId, record.category)}
+        </Text>
       ),
+      sorter: (a, b) => {
+        const nameA = getCustomerName(a.customer, a.category);
+        const nameB = getCustomerName(b.customer, b.category);
+        return nameA.localeCompare(nameB);
+      },
+    },
+    {
+      title: "Issue Date",
+      dataIndex: "issueDate",
+      key: "issueDate",
+      render: (date) => dayjs(date).format("DD/MM/YYYY"),
+      sorter: (a, b) => new Date(a.issueDate) - new Date(b.issueDate),
     },
     {
       title: "Due Date",
       dataIndex: "dueDate",
       key: "dueDate",
-      sorter: (a, b) => {
-        const dateA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
-        const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
-        return dateA - dateB;
+      render: (date) => dayjs(date).format("DD/MM/YYYY"),
+      sorter: (a, b) => new Date(a.dueDate) - new Date(b.dueDate),
+    },
+    {
+      title: "Total",
+      dataIndex: "total",
+      key: "total",
+      render: (amount, record) => {
+        // Get currency details from the record
+        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
+        const currencyIcon = currencyDetails?.currencyIcon || '₹';
+        
+        return (
+          <Text strong>
+            {currencyIcon}
+            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </Text>
+        );
       },
-      render: (date) => (date ? dayjs(date).format("DD-MM-YYYY") : "-"),
+      sorter: (a, b) => a.total - b.total,
     },
     {
       title: "Amount",
+      dataIndex: "amount",
       key: "amount",
-      render: (_, record) => {
-        const currencyDetails = currencies?.find(c => c.id === record.currency);
+      render: (amount, record) => {
+        // Get currency details from the record
+        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
+        const currencyIcon = currencyDetails?.currencyIcon || '₹';
         
         return (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <Text strong>
-              {currencyDetails?.currencyIcon || '₹'} {record.total ? `${record.total}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "-"}
-            </Text>
-          </div>
+          <Text strong>
+            {currencyIcon}
+            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </Text>
         );
       },
+      sorter: (a, b) => a.total - b.total,
+    },
+
+    {
+      title: "Status",
+      dataIndex: "payment_status",
+      key: "payment_status",
+      sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
+      render: (payment_status) => getStatusTag(payment_status),
+    
     },
     {
-      title: "Actions",
+      title: "Action",
       key: "actions",
       width: 80,
+      align: "center",
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
           trigger={["click"]}
           placement="bottomRight"
+          overlayClassName="invoice-actions-dropdown"
         >
           <Button
             type="text"
             icon={<FiMoreVertical />}
-            className="action-button"
+            className="action-dropdown-button"
+            onClick={(e) => e.preventDefault()}
           />
         </Dropdown>
       ),
     },
   ];
 
-  if (error) {
-    return <div>Error loading invoices: {error.message}</div>;
-  }
-
   return (
-    <div className="invoice-content">
-      <Table
-        columns={columns}
-        dataSource={invoices}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} invoices`,
+    <>
+      <div className="invoice-list">
+        <Table
+          columns={columns}
+          dataSource={filteredInvoices}
+          rowKey="id"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} invoices`,
+          }}
+          className="invoice-table"
+          loading={isLoading}
+        />
+      </div>
+
+      <EditInvoice
+        open={editModalVisible}
+        onCancel={() => {
+          setEditModalVisible(false);
+          setSelectedInvoice(null);
         }}
-        className="invoice-table"
+        initialValues={selectedInvoice}
       />
-    </div>
+
+      <ViewInvoice
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setSelectedInvoice(null);
+        }}
+        invoice={selectedInvoice}
+      />
+    </>
   );
 };
 

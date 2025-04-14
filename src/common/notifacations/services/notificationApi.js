@@ -29,8 +29,9 @@ export const notificationApi = createApi({
 
         markAsRead: builder.mutation({
             query: (id) => ({
-                url: `/notifications/${id}/read`,
-                method: 'PUT'
+                url: `/notifications/${id}`,
+                method: 'PUT',
+                body: { read: true }
             }),
             invalidatesTags: ['Notifications']
         }),
