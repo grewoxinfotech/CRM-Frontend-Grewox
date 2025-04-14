@@ -39,7 +39,12 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
-  
+  const statuses = [
+    { id: 'paid', name: 'Paid' },
+    { id: 'unpaid', name: 'Unpaid' },
+    { id: 'partial', name: 'Partial' },
+   
+  ];
 
   // Filter invoices based on search text
   const filteredInvoices = React.useMemo(() => {
