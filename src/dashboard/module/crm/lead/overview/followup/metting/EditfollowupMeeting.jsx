@@ -15,6 +15,11 @@ const { Option } = Select;
 const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData }) => {
     // Use the same state variables as CreateFollowupMeeting
     const [form] = Form.useForm();
+    const [showParticipantsSection, setShowParticipantsSection] = useState(false);
+    const [selectedParticipants, setSelectedParticipants] = useState([]);
+    const [searchText, setSearchText] = useState('');
+    const [filterType, setFilterType] = useState('Contacts');
+    const [showContactsWithoutEmail, setShowContactsWithoutEmail] = useState(false);
     const [repeatType, setRepeatType] = useState('none');
     const [repeatEndType, setRepeatEndType] = useState('never');
     const [repeatTimes, setRepeatTimes] = useState(1);
@@ -25,13 +30,19 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
     const [repeatEndDate, setRepeatEndDate] = useState(null);
     const [venueType, setVenueType] = useState(null);
     const [showReminder, setShowReminder] = useState(false);
+    const [monthlyPattern, setMonthlyPattern] = useState('day');
+    const [yearlyPattern, setYearlyPattern] = useState('date');
     const [meetingType, setMeetingType] = useState(null);
 
     // Add queries and mutations
+    const { data: meetingDataFromApi, isLoading: isMeetingLoading } = useGetFollowupMeetingByIdQuery(meetingId);
     const [updateFollowupMeeting] = useUpdateFollowupMeetingMutation();
     const currentUser = useSelector(selectCurrentUser);
     const { data: usersResponse } = useGetUsersQuery();
     const { data: rolesData } = useGetRolesQuery();
+
+    // Use meetingData from props if available, otherwise use data from API
+    const meeting = meetingData || (meetingDataFromApi?.data?.find(m => m.id === meetingId));
 
     // Filter users (same as create component)
     const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
@@ -42,84 +53,99 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
 
     // Add useEffect to set initial form values when meeting data is loaded
     useEffect(() => {
-        if (meetingData) {
-            try {
-                // Parse assigned_to (participants)
-                let assignedTo = meetingData.assigned_to;
-                if (typeof assignedTo === 'string') {
-                    try {
-                        assignedTo = JSON.parse(assignedTo);
-                    } catch (e) {
-                        assignedTo = { assigned_to: [] };
-                    }
+        if (meeting) {
+
+            // Parse assigned_to (participants)
+            let assignedTo = { assigned_to: [] };
+            if (meeting.assigned_to) {
+                try {
+                    assignedTo = typeof meeting.assigned_to === 'string' ? 
+                        JSON.parse(meeting.assigned_to) : meeting.assigned_to;
+                } catch (e) {
+                    console.error('Error parsing assigned_to:', e);
                 }
-
-                // Parse reminder data
-                let reminderData = meetingData.reminder;
-                if (typeof reminderData === 'string') {
-                    try {
-                        reminderData = JSON.parse(reminderData);
-                        setShowReminder(!!reminderData);
-                    } catch (e) {
-                        reminderData = null;
-                    }
-                }
-
-                // Parse repeat data
-                let repeatData = meetingData.repeat;
-                if (typeof repeatData === 'string') {
-                    try {
-                        repeatData = JSON.parse(repeatData);
-                        if (repeatData) {
-                            setRepeatType(repeatData.repeat_type || 'none');
-                            setRepeatEndType(repeatData.repeat_end_type || 'never');
-                            setRepeatTimes(repeatData.repeat_times || 1);
-                            setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
-                            setCustomRepeatDays(repeatData.custom_repeat_days || []);
-                            setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
-                            setRepeatEndDate(repeatData.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null);
-                            setShowRepeat(true);
-                        }
-                    } catch (e) {
-                        console.error('Error parsing repeat data:', e);
-                    }
-                }
-
-                // Set meeting type and venue
-                if (meetingData.meeting_type) {
-                    setMeetingType(meetingData.meeting_type);
-                    if (meetingData.meeting_type === 'offline') {
-                        setVenueType(meetingData.venue);
-                    }
-                }
-
-                // Set form values
-                form.setFieldsValue({
-                    title: meetingData.title || '',
-                    meeting_type: meetingData.meeting_type || undefined,
-                    venue: meetingData.venue || undefined,
-                    location: meetingData.location || undefined,
-                    meeting_link: meetingData.meeting_link || undefined,
-                    from_date: meetingData.from_date ? dayjs(meetingData.from_date) : null,
-                    from_time: meetingData.from_time ? dayjs(meetingData.from_time, 'HH:mm:ss') : null,
-                    to_date: meetingData.to_date ? dayjs(meetingData.to_date) : null,
-                    to_time: meetingData.to_time ? dayjs(meetingData.to_time, 'HH:mm:ss') : null,
-                    host: meetingData.host || undefined,
-                    assigned_to: assignedTo?.assigned_to || [], // Set parsed participants
-                    participants_reminder: meetingData.participants_reminder || undefined,
-                    reminder_date: reminderData ? dayjs(reminderData.reminder_date) : null,
-                    reminder_time: reminderData ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null,
-                    repeat: repeatData?.repeat_type || 'none' // Set repeat type in form
-                });
-
-            } catch (error) {
-                console.error('Error setting form values:', error);
-                message.error('Error loading meeting data');
             }
-        }
-    }, [meetingData, form]);
 
-    // Update handleSubmit for editing
+            // Parse reminder data
+            let reminderData = null;
+            if (meeting.reminder) {
+                try {
+                    reminderData = typeof meeting.reminder === 'string' ? 
+                        JSON.parse(meeting.reminder) : meeting.reminder;
+                    setShowReminder(true);
+                } catch (e) {
+                    console.error('Error parsing reminder:', e);
+                }
+            } else {
+                setShowReminder(false);
+            }
+
+            // Parse repeat data
+            let repeatData = null;
+            if (meeting.repeat) {
+                try {
+                    repeatData = typeof meeting.repeat === 'string' ? 
+                        JSON.parse(meeting.repeat) : meeting.repeat;
+                    if (repeatData) {
+                        setRepeatType(repeatData.repeat_type || 'none');
+                        setRepeatEndType(repeatData.repeat_end_type || 'never');
+                        setRepeatTimes(repeatData.repeat_times || 1);
+                        setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
+                        setCustomRepeatDays(repeatData.custom_repeat_days || []);
+                        setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
+                        setRepeatEndDate(repeatData.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null);
+                        setShowRepeat(true);
+                    }
+                } catch (e) {
+                    console.error('Error parsing repeat data:', e);
+                }
+            } else {
+                setShowRepeat(false);
+                setRepeatType('none');
+            }
+
+            // Set meeting type and venue
+            if (meeting.meeting_type) {
+                setMeetingType(meeting.meeting_type);
+                if (meeting.meeting_type === 'offline') {
+                    setVenueType(meeting.venue);
+                }
+            }
+
+            // Set form values
+            const formValues = {
+                title: meeting.title || '',
+                meeting_type: meeting.meeting_type || undefined,
+                venue: meeting.venue || undefined,
+                location: meeting.location || undefined,
+                meeting_link: meeting.meeting_link || undefined,
+                from_date: meeting.from_date ? dayjs(meeting.from_date) : null,
+                from_time: meeting.from_time ? dayjs(meeting.from_time, 'HH:mm:ss') : null,
+                to_date: meeting.to_date ? dayjs(meeting.to_date) : null,
+                to_time: meeting.to_time ? dayjs(meeting.to_time, 'HH:mm:ss') : null,
+                host: meeting.host || undefined,
+                assigned_to: assignedTo.assigned_to || [],
+                participants_reminder: meeting.participants_reminder || undefined,
+                meeting_status: meeting.meeting_status || 'scheduled'
+            };
+
+            // Add reminder values if exists
+            if (reminderData) {
+                formValues.reminder_date = reminderData.reminder_date ? dayjs(reminderData.reminder_date) : null;
+                formValues.reminder_time = reminderData.reminder_time ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null;
+            }
+
+            // Add repeat values if exists
+            if (repeatData) {
+                formValues.repeat = repeatData.repeat_type;
+            }
+
+            form.setFieldsValue(formValues);
+        } else {
+            message.error('Failed to load meeting data');
+        }
+    }, [meeting, form, currentUser]);
+
     const handleSubmit = async (values) => {
         try {
             // Prepare reminder data
@@ -139,17 +165,17 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                 custom_repeat_frequency: repeatType === 'custom' ? customFrequency : 'weekly'
             } : null;
 
-            // Format the final payload
-            const formattedValues = {
+            // Format the update payload
+            const updateData = {
                 title: values.title,
                 meeting_type: values.meeting_type,
                 venue: values.venue,
                 location: values.location,
                 meeting_link: values.meeting_link,
-                from_date: values.from_date.format('YYYY-MM-DD'),
-                from_time: values.from_time.format('HH:mm:ss'),
-                to_date: values.to_date.format('YYYY-MM-DD'),
-                to_time: values.to_time.format('HH:mm:ss'),
+                from_date: values.from_date?.format('YYYY-MM-DD'),
+                from_time: values.from_time?.format('HH:mm:ss'),
+                to_date: values.to_date?.format('YYYY-MM-DD'),
+                to_time: values.to_time?.format('HH:mm:ss'),
                 host: values.host,
                 assigned_to: {
                     assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to]
@@ -157,20 +183,23 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                 reminder: reminderData,
                 repeat: repeatData,
                 participants_reminder: values.participants_reminder,
-                updated_by: currentUser?.username
+                meeting_status: values.meeting_status,
+                updated_by: currentUser?.username,
+                client_id: meeting?.client_id
             };
 
-            // Make API call to update meeting
-            await updateFollowupMeeting({ id: meetingId, data: formattedValues }).unwrap();
-            message.success('Meeting updated successfully');
-            onCancel();
 
-            if (onSubmit) {
-                onSubmit(formattedValues);
+            // Make the update API call
+            const result = await updateFollowupMeeting({ id: meetingId, data: updateData }).unwrap();
+
+            if (result.success) {
+                message.success('Meeting updated successfully');
+                onCancel();
+                if (onSubmit) onSubmit();
             }
         } catch (error) {
             console.error('Error updating meeting:', error);
-            message.error('Failed to update meeting');
+            message.error(error?.data?.message || 'Failed to update meeting');
         }
     };
 
@@ -216,6 +245,28 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
     const handleRepeatToggle = (checked) => {
         setRepeatType(checked ? 'daily' : 'none');
     };
+
+    const handleFrequencyChange = (value) => {
+        setFrequency(value);
+    };
+
+    const repeatOptions = [
+        { value: 'none', label: 'None' },
+        { value: 'daily', label: 'Daily' },
+        { value: 'weekly', label: 'Weekly' },
+        { value: 'monthly', label: 'Monthly' },
+        { value: 'yearly', label: 'Yearly' },
+        { value: 'custom', label: 'Custom...' }
+    ];
+
+    const frequencyOptions = [
+        { value: 'daily', label: 'Daily' },
+        { value: 'weekly', label: 'Weekly' },
+        { value: 'monthly', label: 'Monthly' },
+        { value: 'yearly', label: 'Yearly' }
+    ];
+
+    const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     // Copy all the style constants
     const formItemStyle = {
@@ -338,7 +389,6 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                     <Form.Item
                         name="title"
                         label="Title"
-
                     >
                         <Input
                             placeholder="Enter meeting title"
@@ -443,7 +493,7 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                     <Form.Item
                         name="from_date"
-                        label="Meeting Start Date"
+                        label="From Date"
                     >
                         <DatePicker
                             format="DD/MM/YYYY"
@@ -458,7 +508,7 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
 
                     <Form.Item
                         name="from_time"
-                        label="Meeting Start Time"
+                        label="From Time"
                     >
                         <TimePicker
                             format="hh:mm A"
@@ -475,7 +525,7 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                     <Form.Item
                         name="to_date"
-                        label="Meeting End Date"
+                        label="To Date"
                     >
                         <DatePicker
                             format="DD/MM/YYYY"
@@ -490,7 +540,7 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
 
                     <Form.Item
                         name="to_time"
-                        label="Meeting End Time"
+                        label="To Time"
                     >
                         <TimePicker
                             format="hh:mm A"
@@ -606,6 +656,7 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                             })}
                         </Select>
                     </Form.Item>
+
                     <Form.Item
           name="meeting_status"
           label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Meeting Status</span>}
@@ -933,11 +984,8 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                         <Option value="1_hour">1 hour before</Option>
                         <Option value="1_day">1 day before</Option>
                         <Option value="2_days">2 days before</Option>
-
                     </Select>
                 </Form.Item>
-
-
 
                 <div style={{
                     display: "flex",

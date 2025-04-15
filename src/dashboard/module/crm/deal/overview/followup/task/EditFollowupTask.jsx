@@ -13,13 +13,13 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const EditFollowupTask = ({ open, onCancel, taskId, onSubmit }) => {
+const EditFollowupTask = ({ open, taskId, taskData, onCancel, onSubmit }) => {
   const idd = useParams();
   const dealId = idd.dealId;
 
   const [form] = Form.useForm();
   const [updateFollowupTask] = useUpdateFollowupTaskMutation();
-  const { data: taskData, isLoading } = useGetFollowupTaskByIdQuery(taskId);
+  const { data: taskDataFromApi, isLoading } = useGetFollowupTaskByIdQuery(taskId);
 
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
@@ -129,84 +129,92 @@ const EditFollowupTask = ({ open, onCancel, taskId, onSubmit }) => {
 
   // Initialize form with task data
   useEffect(() => {
-    if (taskData?.data) {
-      const task = taskData.data.find(t => t.id === taskId);
-      
-      if (!task) {
-        console.error('Task not found');
-        return;
-      }
+    const task = taskData || taskDataFromApi?.data;
 
-      // Parse assigned_to
-      let assignedTo = task.assigned_to;
-      if (typeof assignedTo === 'string') {
-        try {
-          assignedTo = JSON.parse(assignedTo);
-        } catch (e) {
-          assignedTo = { assigned_to: [] };
-        }
-      }
-
-      // Parse reminder
-      let reminderData = task.reminder;
-      if (typeof reminderData === 'string') {
-        try {
-          reminderData = JSON.parse(reminderData);
-        } catch (e) {
-          reminderData = null;
-        }
-      }
-
-      // Parse repeat data
-      let repeatData = task.repeat;
-      if (typeof repeatData === 'string') {
-        try {
-          repeatData = JSON.parse(repeatData);
-          // Set repeat states
-          if (repeatData) {
-            setRepeatType(repeatData.repeat_type || 'none');
-            setRepeatEndType(repeatData.repeat_end_type || 'never');
-            setRepeatTimes(repeatData.repeat_times || 1);
-            setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
-            setCustomRepeatDays(repeatData.custom_repeat_days || []);
-            setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
-            // Set repeat end date if it exists
-            setRepeatEndDate(repeatData.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null);
-            setShowRepeat(true);
-          }
-        } catch (e) {
-        }
-      }
-
-      // Set form values
-      const formValues = {
-        subject: task.subject || '',
-        due_date: task.due_date ? dayjs(task.due_date) : null,
-        priority: task.priority || '',
-        task_reporter: task.task_reporter || '',
-        assigned_to: assignedTo?.assigned_to || [],
-        status: task.status || '',
-        description: task.description || '',
-        created_by: task.created_by || currentUser?.username,
-        repeat_end_date: repeatData?.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null,
-      };
-
-      // Add reminder values if exists
-      if (reminderData) {
-        setShowReminder(true);
-        formValues.reminder_date = reminderData.reminder_date ? dayjs(reminderData.reminder_date) : null;
-        formValues.reminder_time = reminderData.reminder_time ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null;
-      }
-
-      // Add repeat values if exists
-      if (repeatData) {
-        formValues.repeat = repeatData.repeat_type;
-      }
-
-      // Set form values
-      form.setFieldsValue(formValues);
+    if (!task) {
+      console.error('Task not found:', taskId);
+      return;
     }
-  }, [taskData, form, currentUser, taskId]);
+
+    console.log('Task data:', task);
+
+    // Parse assigned_to
+    let assignedTo = [];
+    try {
+      if (task.assigned_to) {
+        const parsedAssignedTo = typeof task.assigned_to === 'string' 
+          ? JSON.parse(task.assigned_to) 
+          : task.assigned_to;
+        assignedTo = parsedAssignedTo.assigned_to || [];
+      }
+    } catch (error) {
+      console.error('Error parsing assigned_to:', error);
+    }
+
+    // Parse reminder
+    let reminderData = null;
+    try {
+      if (task.reminder) {
+        reminderData = typeof task.reminder === 'string' 
+          ? JSON.parse(task.reminder) 
+          : task.reminder;
+      }
+    } catch (error) {
+      console.error('Error parsing reminder:', error);
+    }
+
+    // Parse repeat data
+    let repeatData = null;
+    try {
+      if (task.repeat) {
+        repeatData = typeof task.repeat === 'string' 
+          ? JSON.parse(task.repeat) 
+          : task.repeat;
+      }
+    } catch (error) {
+      console.error('Error parsing repeat:', error);
+    }
+
+    console.log('Parsed data:', {
+      assignedTo,
+      reminderData,
+      repeatData
+    });
+
+    // Set form values
+    form.setFieldsValue({
+      subject: task.subject,
+      due_date: task.due_date ? dayjs(task.due_date) : null,
+      priority: task.priority,
+      task_reporter: task.task_reporter,
+      assigned_to: assignedTo,
+      status: task.status,
+      description: task.description,
+      created_by: task.created_by
+    });
+
+    // Set reminder state
+    if (reminderData) {
+      setShowReminder(true);
+      form.setFieldsValue({
+        reminder_date: reminderData.reminder_date ? dayjs(reminderData.reminder_date) : null,
+        reminder_time: reminderData.reminder_time ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null
+      });
+    }
+
+    // Set repeat state
+    if (repeatData) {
+      setShowRepeat(true);
+      setRepeatType(repeatData.repeat_type || 'none');
+      setRepeatEndType(repeatData.repeat_end_type || 'never');
+      setRepeatTimes(repeatData.repeat_times || 1);
+      setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
+      setCustomRepeatDays(repeatData.custom_repeat_days || []);
+      setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
+      setRepeatEndDate(repeatData.repeat_end_date ? dayjs(repeatData.repeat_end_date) : null);
+    }
+
+  }, [taskData, taskDataFromApi, form, taskId]);
 
   const handleSubmit = async (values) => {
     try {
@@ -228,7 +236,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, onSubmit }) => {
       } : null;
 
       // Format the update payload
-      const updateData = {        
+      const updateData = {
         subject: values.subject,
         due_date: values.due_date?.format('YYYY-MM-DD'),
         priority: values.priority,
@@ -419,19 +427,6 @@ const EditFollowupTask = ({ open, onCancel, taskId, onSubmit }) => {
               </Select>
             </Form.Item>
 
-            <Form.Item
-              name="created_by"
-              label={<span style={formItemStyle}>Task Reporter</span>}
-            >
-              <Input
-                value={currentUser?.username}
-                disabled
-                style={{
-                  ...inputStyle,
-                  backgroundColor: '#f3f4f6'
-                }}
-              />
-            </Form.Item>
           </div>
         </div>
 

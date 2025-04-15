@@ -6,8 +6,8 @@ import dayjs from 'dayjs';
 import './followuptask.scss';
 import EditFollowupTask from './EditFollowupTask';
 
-const FollowupTaskList = ({ dealId, users }) => {
-    const { data: followupTask, isLoading: followupTaskLoading } = useGetFollowupTaskByIdQuery(dealId);
+const FollowupTaskList = ({ leadId, users }) => {
+    const { data: followupTask, isLoading: followupTaskLoading } = useGetFollowupTaskByIdQuery(leadId);
     const [deleteFollowupTask] = useDeleteFollowupTaskMutation();
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState(null);
@@ -16,12 +16,6 @@ const FollowupTaskList = ({ dealId, users }) => {
         setSelectedTaskId(taskId);
         setEditModalVisible(true);
     };
-
-
-    console.log(followupTask, 'followupTask');
-    console.log(selectedTaskId, 'selectedTaskId');
-    console.log(dealId, 'dealId');
-    
 
     const handleDelete = (id) => {
         Modal.confirm({
@@ -195,6 +189,7 @@ const FollowupTaskList = ({ dealId, users }) => {
             )
         }
     ];
+    
 
     return (
         <>

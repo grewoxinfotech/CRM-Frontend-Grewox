@@ -7,7 +7,7 @@ $secondary-color: #7356f1;
 $border-color: #e8e8e8;
 $text-color: #333333;
 $text-light: #666666;
-// $background-color: #f5f7fa;
+$background-color: #f5f7fa;
 $success-color: #52c41a;
 $error-color: #ff4d4f;
 $warning-color: #faad14;
@@ -20,6 +20,326 @@ $border-radius: 6px;
     &:hover {
         transform: translateY(-2px);
     }
+}
+
+// View Invoice Styles
+.view-billing-container {
+  padding: 24px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.view-billing-content {
+  .bill-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border-top: 4px solid #0066ff;
+  }
+
+  .bill-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .company-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .company-logo {
+        height: 90px;
+        width: 90px;
+        border-radius: 50%;
+        padding: 8px;
+        background: #f9fafb;
+      }
+
+      .company-details {
+        h3 {
+          margin: 0;
+          font-size: 20px;
+          font-weight: 600;
+          color: #0066ff;
+        }
+
+        p {
+          margin: 4px 0 0;
+          font-size: 13px;
+          color: #6b7280;
+        }
+      }
+    }
+  }
+
+  .bill-details {
+    padding: 24px 32px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .bill-section {
+      display: flex;
+      justify-content: space-between;
+      gap: 32px;
+
+      .bill-to, .bill-info {
+        flex: 1;
+      }
+
+      .bill-to {
+        h4 {
+          margin: 0 0 12px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        .vendor-info {
+          h5 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #1f2937;
+          }
+
+          p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+          }
+        }
+      }
+
+      .bill-info {
+        .info-row {
+          display: flex;
+          margin-bottom: 8px;
+
+          .label {
+            width: 80px;
+            font-weight: 500;
+            color: #4b5563;
+          }
+
+          .value {
+            color: #1f2937;
+          }
+
+          .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: capitalize;
+
+            &.paid {
+              background-color: #ecfdf5;
+              color: #059669;
+              border: 1px solid #a7f3d0;
+            }
+
+            &.pending {
+              background-color: #fff7ed;
+              color: #ea580c;
+              border: 1px solid #fed7aa;
+            }
+
+            &.overdue {
+              background-color: #fef2f2;
+              color: #dc2626;
+              border: 1px solid #fecaca;
+            }
+
+            &.cancelled {
+              background-color: #f3f4f6;
+              color: #6b7280;
+              border: 1px solid #d1d5db;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .bill-items {
+    padding: 0 32px 24px;
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+
+      th, td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 14px;
+      }
+
+      td {
+        color: #1f2937;
+        font-size: 14px;
+      }
+
+      .text-right {
+        text-align: right;
+      }
+
+      .summary-row {
+        font-weight: 500;
+        background-color: #f9fafb;
+      }
+
+      .total-row {
+        font-weight: 600;
+        background-color: #f3f4f6;
+        font-size: 16px;
+
+        .total-amount {
+          color: #0066ff;
+          font-size: 18px;
+        }
+      }
+    }
+  }
+
+  .bill-footer {
+    padding: 24px 32px;
+    background-color: #f9fafb;
+    border-top: 1px solid #f0f0f0;
+
+    .payment-section {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 24px;
+
+      .qr-code {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f0f0f0;
+
+        .qr-info {
+          margin-top: 12px;
+          text-align: center;
+
+          p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #4b5563;
+
+            &.amount {
+              font-weight: 600;
+              color: #0066ff;
+              font-size: 16px;
+            }
+          }
+        }
+      }
+
+      .payment-info {
+        flex: 1;
+        background: white;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f0f0f0;
+
+        h4 {
+          margin: 0 0 12px;
+          font-size: 16px;
+          font-weight: 600;
+          color: #374151;
+        }
+
+        p {
+          margin: 8px 0;
+          font-size: 14px;
+          color: #6b7280;
+          line-height: 1.5;
+        }
+
+        .bank-details {
+          margin-top: 16px;
+          padding: 12px;
+          background-color: #f9fafb;
+          border-radius: 8px;
+          border: 1px solid #f0f0f0;
+
+          p {
+            margin: 4px 0;
+            color: #4b5563;
+
+            strong {
+              color: #374151;
+            }
+          }
+        }
+      }
+    }
+
+    .bill-notes {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
+
+      h4 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      p {
+        margin: 8px 0;
+        font-size: 14px;
+        color: #6b7280;
+        line-height: 1.5;
+      }
+
+      .powered-by {
+        margin-top: 16px;
+        font-size: 12px;
+        color: #9ca3af;
+        text-align: center;
+      }
+    }
+  }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+  .view-billing-content {
+    .bill-details {
+      .bill-section {
+        flex-direction: column;
+        gap: 24px;
+      }
+    }
+
+    .bill-footer {
+      .payment-section {
+        flex-direction: column;
+      }
+    }
+  }
 }
 
 .invoice-page {

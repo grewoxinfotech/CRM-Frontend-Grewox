@@ -65,7 +65,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     ? items.map(item => ({
                         item_name: item.itemName,
                         quantity: item.quantity,
-                        unit_price: item.unitPrice,
+                        unitPrice: Number(item.selling_price || item.unit_price),
                         hsn_sac: item.hsnSac,
                         taxId: item.taxId,
                         tax: item.tax,
@@ -123,7 +123,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 items: values.items?.map(item => ({
                     itemName: item.item_name,
                     quantity: Number(item.quantity),
-                    unitPrice: Number(item.unit_price),
+                    unitPrice: Number(item.selling_price || item.unit_price),
                     hsnSac: item.hsn_sac || '',
                     discount: Number(item.discount || 0),
                     tax: Number(item.tax || 0),
@@ -524,7 +524,8 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                 newItems[lastIndex] = {
                                     ...newItems[lastIndex],
                                     item_name: option.label,
-                                    unit_price: option.price,
+                                    unit_price: option.selling_price,
+                                    selling_price: option.selling_price,
                                     hsn_sac: option.hsn_sac,
                                     profilePic: option.image
                                 };
@@ -537,7 +538,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                     key={product.id}
                                     value={product.id}
                                     label={product.name}
-                                    price={product.price}
+                                    selling_price={product.selling_price}
                                     hsn_sac={product.hsn_sac}
                                     profilePic={product.image}
                                 >

@@ -12,7 +12,7 @@ import { useCreateFollowupMeetingMutation } from './services/followupMettingApi'
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
+const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId }) => {
   const [form] = Form.useForm();
   const [showParticipantsSection, setShowParticipantsSection] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState([]);
@@ -192,7 +192,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         participants_reminder: values.participants_reminder
       };
 
-      await createFollowupMeeting({ id: dealId, data: formattedValues }).unwrap();
+      await createFollowupMeeting({ id: leadId, data: formattedValues }).unwrap();
       message.success('Meeting created successfully');
       form.resetFields();
       onCancel();
@@ -215,7 +215,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   };
 
   const handleFrequencyChange = (value) => {
-    setFrequency(value);
+    setCustomFrequency(value);
   };
 
   const handleVenueChange = (value) => {
@@ -563,31 +563,50 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
 
         <Form.Item
-            name="assigned_to"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Assign To</span>}
-            rules={[{ required: true, message: 'Please select assignee' }]}
+          name="assigned_to"
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Participants
+            </span>
+          }
+          rules={[{ required: true, message: 'Please select participants' }]}
+        >
+          <Select
+            mode="multiple"
+            showSearch
+            size="large"
+            placeholder="Select team members"
+            optionFilterProp="children"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              height: "48px"
+            }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
+            filterOption={(input, option) => {
+              const username = option?.username?.toLowerCase() || '';
+              const searchTerm = input.toLowerCase();
+              return username.includes(searchTerm);
+            }}
+            defaultOpen={false}
           >
-            <Select
-              showSearch
-              placeholder="Select team member"
-              optionFilterProp="children"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px"
-              }}
-              filterOption={(input, option) => {
-                const username = option?.username?.toLowerCase() || '';
-                const searchTerm = input.toLowerCase();
-                return username.includes(searchTerm);
-              }}
-            >
-              {users.map((user) => {
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleStyle(userRole?.role_name);
+            {users.map((user) => {
+              const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+              const roleStyle = getRoleStyle(userRole?.role_name);
 
-                return (
-                  <Option key={user.id} value={user.id} username={user.username}>
+              return (
+                <Option
+                  key={user.id}
+                  value={user.id}
+                  username={user.username}
+                >
+                  <div>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -599,10 +618,13 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                         alignItems: 'center',
                         gap: '8px'
                       }}>
-                        <Avatar size="small" style={{
-                          backgroundColor: user.color || '#1890ff',
-                          fontSize: '12px'
-                        }}>
+                        <Avatar
+                          size="small"
+                          style={{
+                            backgroundColor: user.color || '#1890ff',
+                            fontSize: '12px'
+                          }}
+                        >
                           {user.username?.[0]?.toUpperCase() || '?'}
                         </Avatar>
                         <Text strong>{user.username}</Text>
@@ -623,11 +645,12 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                         {userRole?.role_name || 'User'}
                       </Tag>
                     </div>
-                  </Option>
-                );
-              })}
-            </Select>
-          </Form.Item>
+                  </div>
+                </Option>
+              );
+            })}
+          </Select>
+        </Form.Item>
 
         <Form.Item
           name="meeting_status"

@@ -57,7 +57,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                 items: values.items?.map(item => ({
                     itemName: item.item_name,
                     quantity: Number(item.quantity),
-                    unitPrice: Number(item.unit_price),
+                    unitPrice: Number(item.selling_price || item.unit_price),
                     hsnSac: item.hsn_sac || '',
                     discount: Number(item.discount || 0),
                     tax: Number(item.tax || 0),
@@ -442,7 +442,8 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                 newItems[lastIndex] = {
                                     ...newItems[lastIndex],
                                     item_name: option.label,
-                                    unit_price: option.price,
+                                    unit_price: option.selling_price,
+                                    selling_price: option.selling_price,
                                     hsn_sac: option.hsn_sac,
                                     profilePic: option.image
                                 };
@@ -455,7 +456,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                     key={product.id}
                                     value={product.id}
                                     label={product.name}
-                                    price={product.price}
+                                    selling_price={product.selling_price}
                                     hsn_sac={product.hsn_sac}
                                     profilePic={product.image}
                                 >
@@ -475,11 +476,11 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                             <div>
                                                 <span style={{ fontWeight: 400 }}>{product.name}</span>
                                             </div>
-                                            {/* <div>
+                                            <div>
                                                 <span style={{ fontSize: '12px', color: '#666' }}>
-                                                    {product.price}
+                                                    {product.selling_price}
                                                 </span>
-                                            </div> */}
+                                            </div>
                                         </div>
                                     </div>
                                 </Option>

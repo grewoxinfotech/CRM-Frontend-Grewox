@@ -1082,8 +1082,8 @@ background: $background-color;
             object-fit: contain;
             background: #f8fafc;
             padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            // border: 1px solid #e2e8f0;
+            // border-radius: 8px;
           }
 
           .no-image {
@@ -1110,6 +1110,17 @@ background: $background-color;
               &:last-child {
                 margin-bottom: 0;
               }
+            }
+          }
+
+          .logo-container {
+            
+            .fixed-size-logo {
+              border-radius: 50% !important;
+              padding: 10px !important;
+              background-color: #fff !important;
+              width: 150px !important;
+              height: 150px !important;
             }
           }
         }

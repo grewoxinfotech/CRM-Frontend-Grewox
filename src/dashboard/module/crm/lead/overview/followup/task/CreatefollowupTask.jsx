@@ -1,42 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Empty, Checkbox, Radio, Space, Avatar, Switch } from 'antd';
-import { FiX, FiCalendar, FiMapPin, FiUsers, FiPlus, FiSearch, FiRepeat, FiUser, FiShield, FiBriefcase, FiChevronDown, FiLink } from 'react-icons/fi';
+import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Checkbox, Space, Avatar, Radio, Switch, message } from 'antd';
+import { FiX, FiCalendar, FiCheckSquare, FiUser, FiShield, FiBriefcase, FiChevronDown } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
-import { message } from 'antd';
-import { useCreateFollowupMeetingMutation } from './services/followupMettingApi';
-
+import { useCreateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
+import { useParams } from 'react-router-dom';
 const { Text } = Typography;
 const { Option } = Select;
+const { TextArea } = Input;
 
-const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
+const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId }) => {
+
+  const [createFollowupTask, { isLoading: followupTaskResponseLoading }] = useCreateFollowupTaskMutation();
   const [form] = Form.useForm();
-  const [showParticipantsSection, setShowParticipantsSection] = useState(false);
-  const [selectedParticipants, setSelectedParticipants] = useState([]);
-  const [searchText, setSearchText] = useState('');
-  const [filterType, setFilterType] = useState('Contacts');
-  const [showContactsWithoutEmail, setShowContactsWithoutEmail] = useState(false);
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
   const [repeatTimes, setRepeatTimes] = useState(1);
-  // const [venueType, setVenueType] = useState(null);
-  // const [showReminder, setShowReminder] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
   const [showRepeat, setShowRepeat] = useState(false);
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
   const [customFrequency, setCustomFrequency] = useState('weekly');
-  const [repeatEndDate, setRepeatEndDate] = useState(null);
-  const [venueType, setVenueType] = useState(null);
-  const [showReminder, setShowReminder] = useState(false);
+  
   const [monthlyPattern, setMonthlyPattern] = useState('day');
   const [yearlyPattern, setYearlyPattern] = useState('date');
-  const [meetingType, setMeetingType] = useState(null);
+  const [repeatEndDate, setRepeatEndDate] = useState(null);
 
+  // Add formItemStyle constant
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#1f2937"
+  };
 
-  const [createFollowupMeeting, { isLoading: isCreating }] = useCreateFollowupMeetingMutation();
+  const inputStyle = {
+    height: "48px", 
+    borderRadius: "10px",
+    padding: "8px 16px",
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e6e8eb",
+    transition: "all 0.3s ease"
+  };
+
+  const prefixIconStyle = {
+    color: "#1890ff",
+    fontSize: "16px",
+    marginRight: "8px"
+  };
+
+  const selectStyle = {
+    width: '100%',
+    height: '48px'
+  };
+
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
@@ -55,14 +74,14 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
     const roleColors = {
       'employee': {
         color: '#D46B08',
-        bg: '#FFF7E6',
+        bg: '#FFF7E6', 
         border: '#FFD591',
         icon: <FiUser style={{ fontSize: '14px' }} />
       },
       'admin': {
         color: '#096DD9',
         bg: '#E6F7FF',
-        border: '#91D5FF',
+        border: '#91D5FF', 
         icon: <FiShield style={{ fontSize: '14px' }} />
       },
       'manager': {
@@ -81,32 +100,27 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
     return roleColors[roleName?.toLowerCase()] || roleColors.default;
   };
 
-  // Watch from_date field to enable repeat option
+  // Watch due_date field to enable repeat option
   useEffect(() => {
-    const fromDate = form.getFieldValue('from_date');
-    setShowRepeat(!!fromDate);
-  }, [form.getFieldValue('from_date')]);
+    const dueDate = form.getFieldValue('due_date');
+    setShowRepeat(!!dueDate);
+  }, [form.getFieldValue('due_date')]);
 
-  // Update repeat availability when from date changes
-  const handleFromDateChange = (date) => {
+  // Update repeat availability when due date changes
+  const handleDueDateChange = (date) => {
     setShowRepeat(!!date);
     if (!date) {
       setRepeatType('none');
     }
-    // Reset reminder date if it's after new from date
+    // Reset reminder date if it's after new due date
     const reminderDate = form.getFieldValue('reminder_date');
     if (reminderDate && date && reminderDate.isAfter(date)) {
       form.setFieldValue('reminder_date', null);
     }
-    // Reset repeat end date if it's before new from date
+    // Reset repeat end date if it's before new due date
     const repeatEndDate = form.getFieldValue('repeat_end_date');
     if (repeatEndDate && date && repeatEndDate.isBefore(date)) {
       form.setFieldValue('repeat_end_date', null);
-    }
-    // Reset to_date if it's before the new from_date
-    const toDate = form.getFieldValue('to_date');
-    if (toDate && date && toDate.isBefore(date)) {
-      form.setFieldValue('to_date', date);
     }
   };
 
@@ -126,15 +140,15 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
     }
   }, [showReminder]);
 
-  // Update disableReminderDate function
+  // Add disabledDate functions
   const disableReminderDate = (current) => {
-    const toDate = form.getFieldValue('to_date');
-    return current && current.isAfter(toDate);
+    const dueDate = form.getFieldValue('due_date');
+    return current && (current.isAfter(dueDate) || current.isSame(dueDate));
   };
 
   const disableRepeatEndDate = (current) => {
-    const fromDate = form.getFieldValue('from_date');
-    return current && current.isBefore(fromDate);
+    const dueDate = form.getFieldValue('due_date');
+    return current && (current.isAfter(dueDate) || current.isSame(dueDate));
   };
 
   // Add this new function to disable past dates
@@ -142,21 +156,15 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
     return current && current.isBefore(dayjs(), 'day');
   };
 
-  // Add this new function to disable dates before from_date for to_date
-  const disableToDate = (current) => {
-    const fromDate = form.getFieldValue('from_date');
-    return current && current.isBefore(fromDate, 'day');
-  };
-
   const handleSubmit = async (values) => {
     try {
-      // Organize reminder fields
+      // Prepare reminder data
       const reminderData = showReminder ? {
-        reminder_date: values.reminder_date ? values.reminder_date.format('YYYY-MM-DD') : null,
-        reminder_time: values.reminder_time ? values.reminder_time.format('HH:mm:ss') : null,
+        reminder_date: values.reminder_date?.format('YYYY-MM-DD'),
+        reminder_time: values.reminder_time?.format('HH:mm:ss'),
       } : null;
 
-      // Update repeat data format to match task payload
+      // Prepare repeat data
       const repeatData = repeatType !== 'none' ? {
         repeat_type: repeatType,
         repeat_end_type: repeatEndType,
@@ -169,31 +177,27 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
       } : null;
 
-      // Ensure assigned_to is always an array
-      const assignedToArray = Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to].filter(Boolean);
+      // If no assignee is selected, assign to current user
+      const assignedTo = values.assigned_to && values.assigned_to.length > 0 
+        ? values.assigned_to 
+        : [currentUser?.id];
 
       // Format the final payload
       const formattedValues = {
-        title: values.title,
-        meeting_type: values.meeting_type,
-        venue: values.venue,
-        location: values.location,
-        meeting_link: values.meeting_link,
-        from_date: values.from_date.format('YYYY-MM-DD'),
-        from_time: values.from_time.format('HH:mm:ss'),
-        to_date: values.to_date.format('YYYY-MM-DD'),
-        to_time: values.to_time.format('HH:mm:ss'),
-        meeting_status: values.meeting_status,
-        assigned_to: {
-          assigned_to: assignedToArray
-        },
+        subject: values.subject,
+        due_date: values.due_date?.format('YYYY-MM-DD'),
+        priority: values.priority,
+        assigned_to: { assigned_to: assignedTo },
+        status: values.status,
+        description: values.description || null,
         reminder: reminderData,
         repeat: repeatData,
-        participants_reminder: values.participants_reminder
       };
 
-      await createFollowupMeeting({ id: dealId, data: formattedValues }).unwrap();
-      message.success('Meeting created successfully');
+      // Make API call to create task
+      await createFollowupTask({id: leadId, data: formattedValues}).unwrap();
+      
+      message.success('Task created successfully');
       form.resetFields();
       onCancel();
 
@@ -201,68 +205,9 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         onSubmit(formattedValues);
       }
     } catch (error) {
-      console.error('Error creating meeting:', error);
-      message.error('Failed to create meeting');
+      console.error('Error creating task:', error);
+      message.error('Failed to create task');
     }
-  };
-
-  const removeParticipant = (id) => {
-    setSelectedParticipants(prevParticipants => prevParticipants.filter(p => p.id !== id));
-  };
-
-  const handleRepeatChange = (value) => {
-    setRepeatType(value);
-  };
-
-  const handleFrequencyChange = (value) => {
-    setFrequency(value);
-  };
-
-  const handleVenueChange = (value) => {
-    setVenueType(value);
-    // If venue is online, clear the location field
-    if (value === 'online') {
-      form.setFieldsValue({ location: undefined });
-    }
-  };
-
-  const repeatOptions = [
-    { value: 'none', label: 'None' },
-    { value: 'daily', label: 'Daily' },
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' },
-    { value: 'custom', label: 'Custom...' }
-  ];
-
-  const frequencyOptions = [
-    { value: 'daily', label: 'Daily' },
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' }
-  ];
-
-  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  // Add formItemStyle constant
-  const formItemStyle = {
-    fontSize: "14px",
-    fontWeight: "500",
-    color: "#1f2937"
-  };
-
-  const inputStyle = {
-    height: "48px",
-    borderRadius: "10px",
-    padding: "8px 16px",
-    backgroundColor: "#f8fafc",
-    border: "1px solid #e6e8eb",
-    transition: "all 0.3s ease"
-  };
-
-  const selectStyle = {
-    width: '100%',
-    height: '48px'
   };
 
   return (
@@ -333,7 +278,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
             alignItems: "center",
             justifyContent: "center",
           }}>
-            <FiUsers style={{ fontSize: "24px", color: "#ffffff" }} />
+            <FiCheckSquare style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
           <div>
             <h2 style={{
@@ -342,13 +287,13 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
               fontWeight: "600",
               color: "#ffffff",
             }}>
-              Create Meeting
+              Create Task
             </h2>
             <Text style={{
               fontSize: "14px",
               color: "rgba(255, 255, 255, 0.85)",
             }}>
-              Schedule a new meeting
+              Add a new task to your lead
             </Text>
           </div>
         </div>
@@ -359,217 +304,94 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         layout="vertical"
         onFinish={handleSubmit}
         initialValues={{
-          from_date: initialDate,
-          from_time: initialTime,
-          to_date: initialDate,
-          to_time: initialTime,
+          due_date: initialDate,
+          due_time: initialTime,
+          created_by: currentUser?.username,
         }}
         style={{ padding: "24px" }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <Form.Item
-            name="title"
-            label="Title"
-            rules={[{ required: true, message: 'Please enter meeting title' }]}
-          >
-            <Input
-              placeholder="Enter meeting title"
-              size="large"
-              style={{
-                borderRadius: "10px",
-                height: "48px",
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="meeting_type"
-            label="Meeting Type"
-            rules={[{ required: true, message: 'Please select meeting type' }]}
-          >
-            <Select
-              placeholder="Select meeting type"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              onChange={(value) => {
-                setMeetingType(value);
-                // Reset venue and location when meeting type changes
-                form.setFieldsValue({
-                  venue: undefined,
-                  location: undefined
-                });
-                setVenueType(null);
-              }}
-            >
-              <Option value="online">Online Meeting</Option>
-              <Option value="offline">Offline Meeting</Option>
-            </Select>
-          </Form.Item>
-        </div>
-
-        {meetingType && (
+        <div style={{ marginBottom: '24px' }}>
+          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Task Details</Text>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            {meetingType === 'offline' && (
-              <>
-                <Form.Item
-                  name="venue"
-                  label="Meeting Venue"
-                  rules={[{ required: true, message: 'Please select meeting venue' }]}
-                >
-                  <Select
-                    placeholder="Select venue"
-                    size="large"
-                    style={{
-                      width: "100%",
-                      borderRadius: "10px",
-                      height: "48px",
-                    }}
-                    onChange={handleVenueChange}
-                  >
-                    <Option value="client_location">Client Location</Option>
-                    <Option value="office">In-Office</Option>
-                  </Select>
-                </Form.Item>
+            <Form.Item
+              name="subject"
+              label={<span style={formItemStyle}>Subject</span>}
+              rules={[{ required: true, message: 'Please enter subject' }]}
+            >
+              <Input
+                placeholder="Enter subject"
+                style={inputStyle}
+              />
+            </Form.Item>
 
-                {venueType && (
-                  <Form.Item
-                    name="location"
-                    label="Location"
-                    rules={[{ required: true, message: 'Please enter location details' }]}
-                  >
-                    <Input
-                      placeholder="Enter location details"
-                      size="large"
-                      style={{
-                        borderRadius: "10px",
-                        height: "48px",
-                      }}
-                      prefix={<FiMapPin style={{ color: "#1890ff" }} />}
-                    />
-                  </Form.Item>
-                )}
-              </>
-            )}
+            <Form.Item
+              name="due_date"
+              label={<span style={formItemStyle}>Due Date</span>}
+              rules={[{ required: true, message: 'Please select due date' }]}
+            >
+              <DatePicker
+                format="DD-MM-YYYY"
+                style={{
+                  ...inputStyle,
+                  width: '100%'
+                }}
+                suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
+                onChange={handleDueDateChange}
+                disabledDate={disablePastDates}
+              />
+            </Form.Item>
 
-            {meetingType === 'online' && (
-              <Form.Item
-                name="meeting_link"
-                label="Meeting Link"
-                rules={[{ required: true, message: 'Please enter meeting link' }]}
-                style={{ gridColumn: '1 / -1' }}
+            <Form.Item
+              name="priority"
+              label={<span style={formItemStyle}>Priority</span>}
+              rules={[{ required: true, message: "Please select priority" }]}
+            >
+              <Select
+                placeholder="Select priority"
+                style={selectStyle}
+                suffixIcon={<FiChevronDown size={14} />}
               >
-                <Input
-                  placeholder="Enter meeting link (e.g., Zoom, Google Meet)"
-                  size="large"
-                  style={{
-                    borderRadius: "10px",
-                    height: "48px",
-                  }}
-                  prefix={<FiLink style={{ color: "#1890ff" }} />}
-                />
-              </Form.Item>
-            )}
+                <Option value="highest">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                    Highest - Urgent and Critical
+                  </div>
+                </Option>
+                <Option value="high">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                    High - Important
+                  </div>
+                </Option>
+                <Option value="medium">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                    Medium - Normal
+                  </div>
+                </Option>
+                <Option value="low">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                    Low - Can Wait
+                  </div>
+                </Option>
+              </Select>
+            </Form.Item>
           </div>
-        )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
-          <Form.Item
-            name="from_date"
-            label="Meeting Start Date"
-            rules={[{ required: true, message: 'Please select meeting start date' }]}
-          >
-            <DatePicker
-              format="DD-MM-YYYY"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              onChange={handleFromDateChange}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="from_time"
-            label="Meeting Start Time"
-            rules={[{ required: true, message: 'Please select meeting start time' }]}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              minuteStep={15}
-              use12Hours
-            />
-          </Form.Item>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
+        <div style={{ marginBottom: '24px' }}>
+          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Assignment</Text>
           <Form.Item
-            name="to_date"
-            label="Meeting End Date"
-            rules={[{ required: true, message: 'Please select meeting end date' }]}
-          >
-            <DatePicker
-              format="DD-MM-YYYY"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              disabledDate={disableToDate}
-              onChange={(date) => {
-                // When end date changes, set the same date for reminder
-                if (date) {
-                  form.setFieldsValue({
-                    reminder_date: date
-                  });
-                }
-              }}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="to_time"
-            label="Meeting End Time"
-            rules={[{ required: true, message: 'Please select meeting end time' }]}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px",
-              }}
-              minuteStep={15}
-              use12Hours
-            />
-          </Form.Item>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
-
-        <Form.Item
             name="assigned_to"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Assign To</span>}
-            rules={[{ required: true, message: 'Please select assignee' }]}
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Participants
+            </span>}
           >
             <Select
+              mode="multiple"
               showSearch
-              placeholder="Select team member"
+              placeholder="Select team members"
               optionFilterProp="children"
               style={{
                 width: "100%",
@@ -628,42 +450,53 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
               })}
             </Select>
           </Form.Item>
-
-        <Form.Item
-          name="meeting_status"
-          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Meeting Status</span>}
-          rules={[{ required: true, message: 'Please select meeting status' }]}
-          initialValue="scheduled"
-        >
-          <Select
-            placeholder="Select status"
-            size="large"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px"
-            }}
-          >
-            <Option value="scheduled">
-              <Tag color="processing">Scheduled</Tag>
-            </Option>
-            <Option value="in_progress">
-              <Tag color="warning">In Progress</Tag>
-            </Option>
-            <Option value="completed">
-              <Tag color="success">Completed</Tag>
-            </Option>
-            <Option value="cancelled">
-              <Tag color="error">Cancelled</Tag>
-            </Option>
-            <Option value="postponed">
-              <Tag color="default">Postponed</Tag>
-            </Option>
-          </Select>
-        </Form.Item>
         </div>
 
-
+        <div style={{ marginBottom: '24px' }}>
+          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Task Status</Text>
+          <Form.Item
+            name="status"
+            label={<span style={formItemStyle}>Status</span>}
+            rules={[{ required: true, message: "Please select status" }]}
+          >
+            <Select
+              placeholder="Select status"
+              style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
+            >
+              <Option value="not_started">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#d9d9d9' }} />
+                  Not Started
+                </div>
+              </Option>
+              <Option value="in_progress">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  In Progress
+                </div>
+              </Option>
+              <Option value="completed">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  Completed
+                </div>
+              </Option>
+              <Option value="on_hold">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  On Hold
+                </div>
+              </Option>
+              <Option value="cancelled">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  Cancelled
+                </div>
+              </Option>
+            </Select>
+          </Form.Item>
+        </div>
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -708,8 +541,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         <div style={{ marginBottom: '24px', opacity: showReminder ? 1 : 0.5, pointerEvents: showReminder ? 'auto' : 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
-            <Switch
-              checked={repeatType !== 'none'}
+            <Switch 
+              checked={repeatType !== 'none'} 
               onChange={handleRepeatToggle}
               disabled={!showReminder}
             />
@@ -721,7 +554,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                 <Form.Item
                   name="repeat_start_date"
                   label={<span style={formItemStyle}>Start Date</span>}
-
+                  rules={[{ required: true, message: 'Please select start date' }]}
                 >
                   <DatePicker
                     format="DD/MM/YYYY"
@@ -737,7 +570,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                 <Form.Item
                   name="repeat_start_time"
                   label={<span style={formItemStyle}>Start Time</span>}
-
+                  rules={[{ required: true, message: 'Please select start time' }]}
                 >
                   <TimePicker
                     format="hh:mm A"
@@ -760,6 +593,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                   value={repeatType}
                   onChange={(value) => {
                     setRepeatType(value);
+                    // Reset custom values when switching repeat types
                     if (value !== 'custom') {
                       setCustomRepeatInterval(1);
                       setCustomRepeatDays([]);
@@ -777,10 +611,10 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
               </Form.Item>
 
               {repeatType === 'custom' && (
-                <div style={{
-                  marginTop: '16px',
-                  padding: '16px',
-                  border: '1px solid #f0f0f0',
+                <div style={{ 
+                  marginTop: '16px', 
+                  padding: '16px', 
+                  border: '1px solid #f0f0f0', 
                   borderRadius: '8px',
                   backgroundColor: '#f8fafc'
                 }}>
@@ -788,11 +622,12 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                     name="repeat_frequency"
                     label={<span style={formItemStyle}>Frequency</span>}
                   >
-                    <Select
-                      defaultValue="weekly"
+                    <Select 
+                      defaultValue="weekly" 
                       style={selectStyle}
                       onChange={(value) => {
                         setCustomFrequency(value);
+                        // Reset custom values when changing frequency
                         setCustomRepeatInterval(1);
                         setCustomRepeatDays([]);
                       }}
@@ -806,21 +641,21 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
 
                   <Form.Item label={<span style={formItemStyle}>Repeat Every</span>}>
                     <Input.Group compact>
-                      <Input
-                        type="number"
-                        min={1}
+                      <Input 
+                        type="number" 
+                        min={1} 
                         value={customRepeatInterval}
                         onChange={(e) => setCustomRepeatInterval(e.target.value)}
-                        style={{
-                          width: '20%',
+                        style={{ 
+                          width: '20%', 
                           ...inputStyle,
                           borderTopRightRadius: 0,
                           borderBottomRightRadius: 0
                         }}
                       />
-                      <div style={{
-                        lineHeight: '48px',
-                        padding: '0 16px',
+                      <div style={{ 
+                        lineHeight: '48px', 
+                        padding: '0 16px', 
                         backgroundColor: '#f3f4f6',
                         border: '1px solid #e6e8eb',
                         borderLeft: 'none',
@@ -889,7 +724,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                   label={<span style={formItemStyle}>Ends</span>}
                   style={{ marginBottom: '16px' }}
                 >
-                  <Radio.Group
+                  <Radio.Group 
                     value={repeatEndType}
                     onChange={(e) => setRepeatEndType(e.target.value)}
                   >
@@ -903,7 +738,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
                             min={1}
                             value={repeatTimes}
                             onChange={(e) => setRepeatTimes(e.target.value)}
-                            style={{
+                            style={{ 
                               width: '60px',
                               ...inputStyle,
                               height: '32px'
@@ -938,33 +773,19 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         </div>
 
         <Form.Item
-          name="participants_reminder"
-          label="Participants Reminder"
-          style={{ marginTop: "20px" }}
+          name="description"
+          label={<span style={formItemStyle}>Description</span>}
         >
-          <Select
-            placeholder="Select reminder option"
-            size="large"
-            listHeight={100}
-            virtual={true}
+          <TextArea
+            placeholder="Enter task description"
+            rows={4}
             style={{
-              width: "100%",
               borderRadius: "10px",
-              height: "48px",
+              backgroundColor: "#f8fafc",
+              border: "1px solid #e6e8eb"
             }}
-          >
-            <Option value="none">None</Option>
-      
-            <Option value="15_min">15 minutes before</Option>
-            <Option value="30_min">30 minutes before</Option>
-            <Option value="1_hour">1 hour before</Option>
-            <Option value="1_day">1 day before</Option>
-            <Option value="2_days">2 days before</Option>
-
-          </Select>
+          />
         </Form.Item>
-
-
 
         <div style={{
           display: "flex",
@@ -992,10 +813,10 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
               padding: "8px 32px",
               height: "44px",
               borderRadius: "10px",
-              background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+              background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
             }}
           >
-            Create Meeting
+            Create Task
           </Button>
         </div>
       </Form>
@@ -1003,4 +824,4 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
   );
 };
 
-export default CreateMeeting;
+export default CreatefollowupTask;

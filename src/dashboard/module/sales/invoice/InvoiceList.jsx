@@ -46,6 +46,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
     { id: 'partial', name: 'Partial' },
    
   ];
+  
 
   // Filter invoices based on search text and date range
   const filteredInvoices = React.useMemo(() => {

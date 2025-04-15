@@ -23,78 +23,10 @@ import { useGetCustomersQuery } from '../customer/services/custApi';
 import { useGetContactsQuery } from '../../crm/contact/services/contactApi';
 import { useGetCompanyAccountsQuery } from '../../crm/companyacoount/services/companyAccountApi';
 import { useGetCreditNotesQuery } from '../creditnotes/services/creditNoteApi';
+import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
 import { QRCodeSVG } from 'qrcode.react';
+import './invoice.scss';
 
-const { Text, Title } = Typography;
-
-// Styled components
-const StyledCard = styled(Card)`
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  
-  .ant-card-body {
-    padding: 0;
-  }
-`;
-
-const Header = styled.div`
-  background: linear-gradient(135deg, #3f51b5, #5c6bc0);
-  color: white;
-  padding: 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const Section = styled.div`
-  padding: 30px;
-  border-bottom: 1px solid #eee;
-`;
-
-const InfoSection = styled.div`
-  h3 {
-    margin: 0 0 10px;
-    font-size: 16px;
-    font-weight: 600;
-    color: #444;
-  }
-  
-  p {
-    margin: 0;
-    line-height: 1.6;
-    color: #666;
-  }
-`;
-
-const QRSection = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 40px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 10px;
-`;
-
-const Footer = styled.div`
-  padding: 20px;
-  text-align: center;
-  font-size: 13px;
-  color: #888;
-  background: #fafafa;
-  
-  .powered {
-    margin-top: 5px;
-    font-size: 12px;
-    color: #777;
-    
-    span {
-      font-weight: 600;
-      color: #3f51b5;
-    }
-  }
-`;
 
 const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   const [billingData, setBillingData] = useState(null);
@@ -108,6 +40,40 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     skip: !invoice?.id
   });
 
+  const { data: settingsData } = useGetAllSettingsQuery();
+  
+  // State for company information
+  const [companyLogo, setCompanyLogo] = useState(null);
+  const [companyName, setCompanyName] = useState('Grewox CRM');
+  const [companyEmail, setCompanyEmail] = useState('contact@grewox.com');
+  const [companyWebsite, setCompanyWebsite] = useState('www.grewox.com');
+
+  // Get company settings from general settings
+  useEffect(() => {
+    if (settingsData?.success && settingsData?.data && settingsData.data.length > 0) {
+      const settings = settingsData.data[0];
+      
+      // Set company logo if available
+      if (settings.companylogo) {
+        setCompanyLogo(settings.companylogo);
+      }
+      
+      // Set company name if available - note the correct property name is companyName
+      if (settings.companyName) {
+        setCompanyName(settings.companyName);
+      } 
+      
+      // Set company email if available
+      if (settings.email) {
+        setCompanyEmail(settings.email);
+      }
+      
+      // Set company website if available
+      if (settings.website) {
+        setCompanyWebsite(settings.website);
+      }
+    } 
+  }, [settingsData]);
 
   useEffect(() => {
     if (invoice?.customer && invoice?.category) {
@@ -488,102 +454,6 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
   if (!invoice) return null;
 
-  const styles = {
-    invoiceBox: {
-      width: '100%',
-      height: '100%',
-      margin: 'auto',
-      padding: 30,
-      background: 'white',
-      borderRadius: 12,
-      boxShadow: '0 0 14px rgba(0,0,0,0.08)',
-      borderTop: '5px solid #0066ff'
-    },
-    topHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    },
-    logo: {
-      height: 50
-    },
-    companyInfo: {
-      textAlign: 'right'
-    },
-    companyInfoTitle: {
-      margin: 0,
-      color: '#0066ff'
-    },
-    details: {
-      margin: '30px 0 20px 0',
-      display: 'flex',
-      justifyContent: 'space-between',
-      fontSize: 14
-    },
-    detailsColumn: {
-      width: '45%'
-    },
-    table: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      marginBottom: 20
-    },
-    th: {
-      borderBottom: '1px solid #eaeaea',
-      padding: 10,
-      textAlign: 'left',
-      background: '#f0f4fa'
-    },
-    td: {
-      borderBottom: '1px solid #eaeaea',
-      padding: 10,
-      textAlign: 'left'
-    },
-    tdRight: {
-      borderBottom: '1px solid #eaeaea',
-      padding: 10,
-      textAlign: 'right'
-    },
-    totals: {
-      textAlign: 'right',
-      fontSize: 16,
-      marginTop: 10
-    },
-    qrSection: {
-      textAlign: 'center',
-      marginTop: 30,
-      padding: '20px',
-      background: '#f8fafc',
-      borderRadius: '12px',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    footer: {
-      textAlign: 'center',
-      fontSize: 12,
-      color: '#777',
-      marginTop: 40
-    },
-    powered: {
-      marginTop: 5,
-      fontSize: 11,
-      color: '#555'
-    }
-  };
-
-  // Parse items if it's a string
-  let invoiceItems = [];
-  try {
-    if (typeof invoice.items === 'string') {
-      invoiceItems = JSON.parse(invoice.items);
-    } else if (Array.isArray(invoice.items)) {
-      invoiceItems = invoice.items;
-    }
-  } catch (error) {
-    console.error('Error parsing invoice items:', error);
-  }
-
   return (
     <Modal
       title={null}
@@ -616,188 +486,156 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         body: {
           marginTop: '15px',
           padding: '40px',
-          height: '100vh',
+          height: '100%',
           width: '100%',
           fontFamily: "'Segoe UI', sans-serif"
         }
       }}
     >
-      <div id="invoice-content" ref={printRef} style={{...styles.invoiceBox, margin: 0}}>
-        <div style={styles.topHeader}>
-          <img
-            src="https://grewox.com/assets/logo.png"
-            alt="Grewox Logo"
-            style={styles.logo}
-          />
-          <div style={styles.companyInfo}>
-            <h2 style={styles.companyInfoTitle}>Grewox CRM</h2>
-            <p>www.grewox.com<br />contact@grewox.com</p>
-          </div>
-        </div>
-
-        <div style={styles.details}>
-          <div style={styles.detailsColumn}>
-            <strong>Billed To:</strong><br />
-            {renderBillingDetails()}
-          </div>
-          <div style={styles.detailsColumn}>
-            <strong>Invoice Details:</strong><br />
-            Invoice No: {invoice.salesInvoiceNumber}<br />
-            Date: {dayjs(invoice.issueDate).format('DD-MM-YYYY')}<br />
-            Due Date: {dayjs(invoice.dueDate).format('DD-MM-YYYY')}<br />
-            Status: {invoice.payment_status && (
-              <Tag
-                style={{
-                  textTransform: 'capitalize',
-                  padding: '4px 12px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  color: invoice.payment_status === 'paid' ? '#059669' :
-                         invoice.payment_status === 'unpaid' ? '#dc2626' :
-                         invoice.payment_status === 'partial' ? '#7c3aed' :
-                         invoice.payment_status === 'draft' ? '#d97706' :
-                         invoice.payment_status === 'pending' ? '#2563eb' : '#374151',
-                  backgroundColor: invoice.payment_status === 'paid' ? '#d1fae5' :
-                                 invoice.payment_status === 'unpaid' ? '#fee2e2' :
-                                 invoice.payment_status === 'partial' ? '#ede9fe' :
-                                 invoice.payment_status === 'draft' ? '#fef3c7' :
-                                 invoice.payment_status === 'pending' ? '#dbeafe' : '#f3f4f6'
-                }}
-              >
-                {invoice.payment_status}
-              </Tag>
-            )}
-          </div>
-        </div>
-
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>Description</th>
-              <th style={{ ...styles.th, textAlign: 'center' }}>Qty</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Rate</th>
-              <th style={{ ...styles.th, textAlign: 'right' }}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoiceItems.map((item, index) => {
-              const quantity = Number(item.quantity) || 0;
-              const rate = Number(item.unit_price || item.rate) || 0;
-              const amount = quantity * rate;
-              
-              return (
-                <tr key={index}>
-                  <td style={styles.td}>{item.item_name || item.name || item.description}</td>
-                  <td style={{ ...styles.td, textAlign: 'center' }}>{quantity}</td>
-                  <td style={styles.tdRight}>₹{rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                  <td style={styles.tdRight}>₹{amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                </tr>
-              );
-            })}
-
-
-            {/* <tr>
-              <td colSpan="3" style={styles.tdRight}><strong>Subtotal</strong></td>
-              <td style={styles.tdRight}>₹{Number(invoice.subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-            </tr> */}
-
-            {Number(invoice.tax) > 0 && (
-              <tr>
-                <td colSpan="3" style={styles.tdRight}>GST</td>
-                <td style={styles.tdRight}>₹{Number(invoice.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-              </tr>
-            )} 
-
-            {Number(invoice.discount) > 0 && (
-              <tr>
-                <td colSpan="3" style={styles.tdRight}>Discount</td>
-                <td style={styles.tdRight}>₹{Number(invoice.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-              </tr>
-            )}
-
-            <tr>
-              <td colSpan="3" style={styles.tdRight}><strong>Total</strong></td>
-              <td style={styles.tdRight}><strong>₹{Number(invoice.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></td>
-            </tr>
-
-            {creditNoteAmount > 0 && (
-              <tr>
-                <td colSpan="3" style={styles.tdRight}>
-                  <span >Credit Note Amount</span>
-                </td>
-                <td style={styles.tdRight}>
-                  <span style={{ color: '#dc2626' }}>
-                    ₹{creditNoteAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                  </span>
-                </td>
-              </tr>
-            )}
-
-            <tr style={{ backgroundColor: '#f8fafc' }}>
-              <td colSpan="3" style={{ ...styles.tdRight, paddingTop: '16px', paddingBottom: '16px' }}>
-                <strong style={{ fontSize: '16px' }}>Amount Due</strong>
-              </td>
-              <td style={{ ...styles.tdRight, paddingTop: '16px', paddingBottom: '16px' }}>
-                <strong style={{ 
-                  fontSize: '16px', 
-                  color: creditNoteAmount > 0 ? '' : undefined 
-                }}>
-                  ₹{(Number(invoice.total || 0) - creditNoteAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </strong>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div style={styles.qrSection}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ 
-              background: 'white', 
-              padding: '12px',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <QRCodeSVG
-                value={getPaymentUrl()}
-                size={120}
-                level="H"
-                includeMargin={true}
-              />
-            </div>
-            <div style={{ 
-              marginTop: '12px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <p style={{ 
-                fontSize: '13px', 
-                fontWeight: '500',
-                color: '#4b5563',
-                margin: 0
-              }}>
-                Scan to Pay
-              </p>
-              <p style={{ 
-                fontSize: '12px',
-                color: '#6b7280',
-                margin: 0
-              }}>
-                Amount: ₹{(Number(invoice.total || 0) - creditNoteAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                {creditNoteAmount > 0 && (
-                  <span style={{ display: 'block', color: '#dc2626', fontSize: '11px' }}>
-                    {/* (Credit Note: -₹{creditNoteAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}) */}
-                  </span>
+      <div className="view-billing-container">
+        <div className="view-billing-content">
+          <div className="bill-card">
+            <div className="bill-header">
+              <div className="company-info">
+                {companyLogo ? (
+                  <img 
+                    src={companyLogo} 
+                    alt={`${companyName} Logo`} 
+                    className="company-logo"
+                  />
+                ) : (
+                  <img 
+                    src="https://grewox.com/assets/logo.png" 
+                    alt="Grewox Logo" 
+                    className="company-logo"
+                  />
                 )}
-              </p>
+                <div className="company-details">
+                  <h3>{companyName}</h3>
+                  <p>{companyWebsite} | {companyEmail}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bill-details">
+              <div className="bill-section">
+                <div className="bill-to">
+                  <h4>Invoice To:</h4>
+                  <div className="vendor-info">
+                    <h5>Name: <span>{billingData?.name || 'N/A'}</span></h5>
+                    {/* <p>{billingData?.address || ''}</p> */}
+                    {/* {billingData?.email && <p>Email: {billingData.email}</p>} */}
+                    {billingData?.contact && <p>Contact: {billingData.contact}</p>}
+                  </div>
+                </div>
+                <div className="bill-info">
+                  <div className="info-row">
+                    <span className="label">Invoice No:</span>
+                    <span className="value">{invoice?.salesInvoiceNumber}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="label">Date:</span>
+                    <span className="value">{invoice?.issueDate ? dayjs(invoice.issueDate).format('DD MMMM YYYY') : ''}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="label">Due Date:</span>
+                    <span className="value">{invoice?.dueDate ? dayjs(invoice.dueDate).format('DD MMMM YYYY') : ''}</span>
+                  </div>
+                  <div className="info-row">
+                    <span className="label">Status:</span>
+                    <span className={`status-badge ${invoice?.payment_status?.toLowerCase()}`}>
+                      {invoice?.payment_status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bill-items">
+              <table className="items-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th className="text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(invoice.items) && invoice.items.map((item, index) => {
+                    const quantity = Number(item.quantity) || 0;
+                    const rate = Number(item.unit_price || item.rate) || 0;
+                    const amount = quantity * rate;
+                    
+                    return (
+                      <tr key={index}>
+                        <td>{item.item_name || item.name || item.description}</td>
+                        <td>{quantity}</td>
+                        <td>₹{rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                        <td className="text-right">
+                          ₹{amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {Number(invoice?.tax) > 0 && (
+                    <tr className="summary-row">
+                      <td colSpan="3">GST</td>
+                      <td className="text-right">
+                        ₹{Number(invoice.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  )}
+                  {Number(invoice?.discount) > 0 && (
+                    <tr className="summary-row">
+                      <td colSpan="3">Discount</td>
+                      <td className="text-right">
+                        ₹{Number(invoice.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  )}
+                  <tr className="total-row">
+                    <td colSpan="3">Total Amount</td>
+                    <td className="text-right total-amount">
+                      ₹{Number(invoice?.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bill-footer">
+              <div className="payment-section">
+                <div className="qr-code">
+                  <QRCodeSVG
+                    value={getPaymentUrl()}
+                    size={120}
+                    level="H"
+                    includeMargin={true}
+                  />
+                  <div className="qr-info">
+                    <p>Scan to Pay</p>
+                    <p className="amount">₹{Number(invoice?.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                </div>
+                <div className="payment-info">
+                  <h4>Payment Information</h4>
+                  <p>Thank you for your business!</p>
+                  <p>Please make payment to the following account:</p>
+                  <div className="bank-details">
+                    <p><strong>Bank:</strong> Example Bank</p>
+                    <p><strong>Account:</strong> 1234567890</p>
+                    <p><strong>IFSC:</strong> EXAMPLE123</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bill-notes">
+                <h4>Notes</h4>
+                <p>{invoice?.note || 'Thank you for your payment!'}</p>
+                <p className="powered-by">Powered by {companyName} | {companyWebsite}</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div style={styles.footer}>
-          Thank you for doing business with us!<br />
-          <div style={styles.powered}>Powered by Grewox CRM | www.grewox.com</div>
         </div>
       </div>
     </Modal>

@@ -63,7 +63,7 @@ import { companyAccountApi } from "../dashboard/module/crm/companyacoount/servic
 import { contactApi } from "../dashboard/module/crm/contact/services/contactApi";
 import { companyInquiryApi } from "../dashboard/module/crm/company-inquiry/services/companyInquiryApi";
 import { customFormApi } from "../dashboard/module/crm/generate-link/services/customFormApi";
-
+import { settingApi } from "../superadmin/module/settings/general/services/settingApi";
 import { followupTaskApi } from "../dashboard/module/crm/deal/overview/followup/task/services/followupTaskApi";
 import { followupMeetingApi } from "../dashboard/module/crm/deal/overview/followup/metting/services/followupMettingApi";
 import { followupCallApi } from "../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi";
@@ -140,6 +140,7 @@ const rootReducer = combineReducers({
   [followupTaskApi.reducerPath]: followupTaskApi.reducer,
   [followupMeetingApi.reducerPath]: followupMeetingApi.reducer,
   [followupCallApi.reducerPath]: followupCallApi.reducer,
+  [settingApi.reducerPath]: settingApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -214,6 +215,7 @@ export const store = configureStore({
       .concat(followupTaskApi.middleware)
       .concat(followupMeetingApi.middleware)
       .concat(followupCallApi.middleware)
+      .concat(settingApi.middleware)
 });
 
 export const persistor = persistStore(store);

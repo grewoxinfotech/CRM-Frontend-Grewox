@@ -7,13 +7,11 @@ import './followupmetting.scss';
 import { useGetFollowupMeetingsQuery, useDeleteFollowupMeetingMutation } from './services/followupMettingApi';
 import EditFollowupMeeting from './EditfollowupMeeting';
 
-
-
-const FollowupMeetingList = ({ dealId, users }) => {
+const FollowupMeetingList = ({ leadId, users }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedMeetingId, setSelectedMeetingId] = useState(null);
 
-    const { data: followupMeeting, isLoading: followupMeetingLoading } = useGetFollowupMeetingsQuery(dealId);
+    const { data: followupMeeting, isLoading: followupMeetingLoading } = useGetFollowupMeetingsQuery(leadId);
     const [deleteFollowupMeeting] = useDeleteFollowupMeetingMutation();
 
     const handleEdit = (meetingId) => {

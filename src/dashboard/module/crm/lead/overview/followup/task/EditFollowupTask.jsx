@@ -6,18 +6,24 @@ import { useGetUsersQuery } from '../../../../../user-management/users/services/
 import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
-import { useCreateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
+import { useUpdateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
 import { useParams } from 'react-router-dom';
+
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
+const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
+  const idd = useParams();
+  const leadId = idd.leadId;
 
-
- 
-  const [createFollowupTask, { isLoading: followupTaskResponseLoading }] = useCreateFollowupTaskMutation();
   const [form] = Form.useForm();
+  const [updateFollowupTask] = useUpdateFollowupTaskMutation();
+  const { data: taskDataFromApi, isLoading } = useGetFollowupTaskByIdQuery(taskId);
+
+  // Use taskData from props if available, otherwise use data from API
+  const task = taskData || (taskDataFromApi?.data?.find(t => t.id === taskId));
+
   const [repeatType, setRepeatType] = useState('none');
   const [repeatEndType, setRepeatEndType] = useState('never');
   const [repeatTimes, setRepeatTimes] = useState(1);
@@ -26,8 +32,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
   const [customFrequency, setCustomFrequency] = useState('weekly');
-  
-  
   const [monthlyPattern, setMonthlyPattern] = useState('day');
   const [yearlyPattern, setYearlyPattern] = useState('date');
   const [repeatEndDate, setRepeatEndDate] = useState(null);
@@ -59,7 +63,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     height: '48px'
   };
 
-
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
@@ -72,7 +75,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     user?.created_by === currentUser?.username &&
     user?.role_id !== subclientRoleId
   ) || [];
-
 
   // Get role colors and icons
   const getRoleStyle = (roleName) => {
@@ -117,49 +119,95 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
     if (!date) {
       setRepeatType('none');
     }
-    // Reset reminder date if it's after new due date
-    const reminderDate = form.getFieldValue('reminder_date');
-    if (reminderDate && date && reminderDate.isAfter(date)) {
-      form.setFieldValue('reminder_date', null);
-    }
-    // Reset repeat end date if it's before new due date
-    const repeatEndDate = form.getFieldValue('repeat_end_date');
-    if (repeatEndDate && date && repeatEndDate.isBefore(date)) {
-      form.setFieldValue('repeat_end_date', null);
-    }
   };
 
-  // Update handleRepeatToggle to check for reminder
+  // Handle repeat toggle when no due date is selected
   const handleRepeatToggle = (checked) => {
-    if (!showReminder) {
-      message.info('Please set a reminder first before setting repeat');
+    if (!showRepeat && checked) {
+      message.info('Select a due date to set recurring');
       return;
     }
     setRepeatType(checked ? 'daily' : 'none');
   };
 
-  // Add effect to reset repeat when reminder is turned off
+  // Initialize form with task data
   useEffect(() => {
-    if (!showReminder) {
-      setRepeatType('none');
+    if (task) {
+
+      // Parse assigned_to
+      let assignedTo = { assigned_to: [] };
+      if (task.assigned_to) {
+        try {
+          assignedTo = JSON.parse(task.assigned_to);
+        } catch (e) {
+          console.error('Error parsing assigned_to:', e);
+        }
+      }
+
+      // Parse reminder
+      let reminderData = null;
+      if (task.reminder) {
+        try {
+          reminderData = JSON.parse(task.reminder);
+          setShowReminder(true);
+        } catch (e) {
+          console.error('Error parsing reminder:', e);
+        }
+      } else {
+        setShowReminder(false);
+      }
+
+      // Parse repeat data
+      let repeatData = null;
+      if (task.repeat) {
+        try {
+          repeatData = JSON.parse(task.repeat);
+          setShowRepeat(true);
+          setRepeatType(repeatData.repeat_type || 'none');
+          setRepeatEndType(repeatData.repeat_end_type || 'never');
+          setRepeatTimes(repeatData.repeat_times || 1);
+          setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
+          setCustomRepeatDays(repeatData.custom_repeat_days || []);
+          setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
+          if (repeatData.repeat_end_date) {
+            setRepeatEndDate(dayjs(repeatData.repeat_end_date));
+          }
+        } catch (e) {
+          console.error('Error parsing repeat data:', e);
+        }
+      } else {
+        setShowRepeat(false);
+        setRepeatType('none');
+      }
+
+      // Set form values
+      const formValues = {
+        subject: task.subject || '',
+        due_date: task.due_date ? dayjs(task.due_date) : null,
+        priority: task.priority || '',
+        task_reporter: task.task_reporter || '',
+        assigned_to: assignedTo.assigned_to || [],
+        status: task.status || '',
+        description: task.description || '',
+        created_by: task.created_by || currentUser?.username,
+      };
+
+      // Add reminder values if exists
+      if (reminderData) {
+        formValues.reminder_date = reminderData.reminder_date ? dayjs(reminderData.reminder_date) : null;
+        formValues.reminder_time = reminderData.reminder_time ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null;
+      }
+
+      // Add repeat values if exists
+      if (repeatData) {
+        formValues.repeat = repeatData.repeat_type;
+      }
+      form.setFieldsValue(formValues);
+    } else {
+      console.error('No task data available');
+      message.error('Failed to load task data');
     }
-  }, [showReminder]);
-
-  // Add disabledDate functions
-  const disableReminderDate = (current) => {
-    const dueDate = form.getFieldValue('due_date');
-    return current && (current.isAfter(dueDate) || current.isSame(dueDate));
-  };
-
-  const disableRepeatEndDate = (current) => {
-    const dueDate = form.getFieldValue('due_date');
-    return current && (current.isAfter(dueDate) || current.isSame(dueDate));
-  };
-
-  // Add this new function to disable past dates
-  const disablePastDates = (current) => {
-    return current && current.isBefore(dayjs(), 'day');
-  };
+  }, [task, form, currentUser]);
 
   const handleSubmit = async (values) => {
     try {
@@ -170,48 +218,46 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
       } : null;
 
       // Prepare repeat data
-      const repeatData = repeatType !== 'none' ? {
+      const repeatData = showRepeat && repeatType !== 'none' ? {
         repeat_type: repeatType,
         repeat_end_type: repeatEndType,
-        repeat_times: repeatEndType === 'after' ? repeatTimes : null,
-        repeat_end_date: values.repeat_end_date ? values.repeat_end_date.format('YYYY-MM-DD') : null,
-        repeat_start_date: values.repeat_start_date ? values.repeat_start_date.format('YYYY-MM-DD') : null,
-        repeat_start_time: values.repeat_start_time ? values.repeat_start_time.format('HH:mm:ss') : null,
-        custom_repeat_interval: repeatType === 'custom' ? customRepeatInterval : null,
-        custom_repeat_days: repeatType === 'custom' && customFrequency === 'weekly' ? customRepeatDays : null,
-        custom_repeat_frequency: repeatType === 'custom' ? customFrequency : null,
+        repeat_times: repeatTimes,
+        repeat_end_date: repeatEndType === 'on' ? repeatEndDate?.format('YYYY-MM-DD') : null,
+        custom_repeat_interval: customRepeatInterval,
+        custom_repeat_days: customRepeatDays,
+        custom_repeat_frequency: customFrequency,
       } : null;
 
-      // If no assignee is selected, assign to current user
-      const assignedTo = values.assigned_to && values.assigned_to.length > 0 
-        ? values.assigned_to 
-        : [currentUser?.id];
-
-      // Format the final payload
-      const formattedValues = {
+      // Format the update payload
+      const updateData = {
         subject: values.subject,
         due_date: values.due_date?.format('YYYY-MM-DD'),
         priority: values.priority,
-        assigned_to: { assigned_to: assignedTo },
+        task_reporter: values.task_reporter,
+        assigned_to: {
+          assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to]
+        },
         status: values.status,
-        description: values.description || null,
+        description: values.description,
         reminder: reminderData,
         repeat: repeatData,
+        client_id: taskData?.data?.client_id,
+        updated_by: currentUser?.username
       };
 
-      // Make API call to create task
-      await createFollowupTask({id: dealId, data: formattedValues}).unwrap();
-      
-      message.success('Task created successfully');
-      form.resetFields();
-      onCancel();
+      const data = updateData;
 
-      if (onSubmit) {
-        onSubmit(formattedValues);
+      // Make the update API call
+      const result = await updateFollowupTask({ id: taskId, data: updateData }).unwrap();
+
+      if (result.success) {
+        message.success('Task updated successfully');
+        onCancel();
+        if (onSubmit) onSubmit();
       }
     } catch (error) {
-      console.error('Error creating task:', error);
-      message.error('Failed to create task');
+      console.error('Error updating task:', error);
+      message.error(error?.data?.message || 'Failed to update task');
     }
   };
 
@@ -292,13 +338,13 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
               fontWeight: "600",
               color: "#ffffff",
             }}>
-              Create Task
+              Edit Task
             </h2>
             <Text style={{
               fontSize: "14px",
               color: "rgba(255, 255, 255, 0.85)",
             }}>
-              Add a new task to your deal
+              Update task details
             </Text>
           </div>
         </div>
@@ -308,11 +354,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        initialValues={{
-          due_date: initialDate,
-          due_time: initialTime,
-          created_by: currentUser?.username,
-        }}
         style={{ padding: "24px" }}
       >
         <div style={{ marginBottom: '24px' }}>
@@ -321,7 +362,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             <Form.Item
               name="subject"
               label={<span style={formItemStyle}>Subject</span>}
-              rules={[{ required: true, message: 'Please enter subject' }]}
             >
               <Input
                 placeholder="Enter subject"
@@ -332,7 +372,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             <Form.Item
               name="due_date"
               label={<span style={formItemStyle}>Due Date</span>}
-              rules={[{ required: true, message: 'Please select due date' }]}
             >
               <DatePicker
                 format="DD-MM-YYYY"
@@ -342,14 +381,12 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                 }}
                 suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 onChange={handleDueDateChange}
-                disabledDate={disablePastDates}
               />
             </Form.Item>
 
             <Form.Item
               name="priority"
               label={<span style={formItemStyle}>Priority</span>}
-              rules={[{ required: true, message: "Please select priority" }]}
             >
               <Select
                 placeholder="Select priority"
@@ -382,6 +419,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                 </Option>
               </Select>
             </Form.Item>
+
           </div>
         </div>
 
@@ -389,20 +427,15 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Assignment</Text>
           <Form.Item
             name="assigned_to"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Participants
-            </span>}
+            label={<span style={formItemStyle}>Assign To</span>}
           >
             <Select
               mode="multiple"
               showSearch
               placeholder="Select team members"
               optionFilterProp="children"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px"
-              }}
+              style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
               filterOption={(input, option) => {
                 const username = option?.username?.toLowerCase() || '';
                 const searchTerm = input.toLowerCase();
@@ -462,7 +495,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           <Form.Item
             name="status"
             label={<span style={formItemStyle}>Status</span>}
-            rules={[{ required: true, message: "Please select status" }]}
           >
             <Select
               placeholder="Select status"
@@ -521,7 +553,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                     ...inputStyle,
                     width: '100%'
                   }}
-                  disabledDate={disableReminderDate}
                   suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 />
               </Form.Item>
@@ -543,51 +574,17 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           )}
         </div>
 
-        <div style={{ marginBottom: '24px', opacity: showReminder ? 1 : 0.5, pointerEvents: showReminder ? 'auto' : 'none' }}>
+        <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
             <Switch 
               checked={repeatType !== 'none'} 
               onChange={handleRepeatToggle}
-              disabled={!showReminder}
             />
           </div>
 
           {repeatType !== 'none' && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                <Form.Item
-                  name="repeat_start_date"
-                  label={<span style={formItemStyle}>Start Date</span>}
-                  rules={[{ required: true, message: 'Please select start date' }]}
-                >
-                  <DatePicker
-                    format="DD/MM/YYYY"
-                    style={{
-                      ...inputStyle,
-                      width: '100%'
-                    }}
-                    disabledDate={disablePastDates}
-                    suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="repeat_start_time"
-                  label={<span style={formItemStyle}>Start Time</span>}
-                  rules={[{ required: true, message: 'Please select start time' }]}
-                >
-                  <TimePicker
-                    format="hh:mm A"
-                    style={{
-                      ...inputStyle,
-                      width: '100%'
-                    }}
-                    use12Hours
-                  />
-                </Form.Item>
-              </div>
-
               <Form.Item
                 name="repeat"
                 label={<span style={formItemStyle}>Repeat Type</span>}
@@ -596,15 +593,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                   placeholder="Select repeat option"
                   style={selectStyle}
                   value={repeatType}
-                  onChange={(value) => {
-                    setRepeatType(value);
-                    // Reset custom values when switching repeat types
-                    if (value !== 'custom') {
-                      setCustomRepeatInterval(1);
-                      setCustomRepeatDays([]);
-                      setCustomFrequency('weekly');
-                    }
-                  }}
+                  onChange={(value) => setRepeatType(value)}
                   suffixIcon={<FiChevronDown size={14} />}
                 >
                   <Option value="daily">Daily</Option>
@@ -630,12 +619,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                     <Select 
                       defaultValue="weekly" 
                       style={selectStyle}
-                      onChange={(value) => {
-                        setCustomFrequency(value);
-                        // Reset custom values when changing frequency
-                        setCustomRepeatInterval(1);
-                        setCustomRepeatDays([]);
-                      }}
+                      onChange={(value) => setCustomFrequency(value)}
                       suffixIcon={<FiChevronDown size={14} />}
                     >
                       <Option value="weekly">Weekly</Option>
@@ -673,17 +657,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                   </Form.Item>
 
                   {customFrequency === 'weekly' && (
-                    <Form.Item 
-                      label={<span style={formItemStyle}>On These Days</span>}
-                      rules={[{ 
-                        validator: (_, value) => {
-                          if (!customRepeatDays.length) {
-                            return Promise.reject('Please select at least one day');
-                          }
-                          return Promise.resolve();
-                        }
-                      }]}
-                    >
+                    <Form.Item label={<span style={formItemStyle}>On These Days</span>}>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
                           <Button
@@ -713,6 +687,61 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                           </Button>
                         ))}
                       </div>
+                    </Form.Item>
+                  )}
+
+                  {customFrequency === 'monthly' && (
+                    <Form.Item label={<span style={formItemStyle}>On</span>}>
+                      <Space>
+                        <Select style={{ width: 120 }} defaultValue="first">
+                          <Option value="first">First</Option>
+                          <Option value="second">Second</Option>
+                          <Option value="third">Third</Option>
+                          <Option value="fourth">Fourth</Option>
+                          <Option value="last">Last</Option>
+                        </Select>
+                        <Select style={{ width: 120 }} defaultValue="monday">
+                          <Option value="sunday">Sunday</Option>
+                          <Option value="monday">Monday</Option>
+                          <Option value="tuesday">Tuesday</Option>
+                          <Option value="wednesday">Wednesday</Option>
+                          <Option value="thursday">Thursday</Option>
+                          <Option value="friday">Friday</Option>
+                          <Option value="saturday">Saturday</Option>
+                        </Select>
+                      </Space>
+                    </Form.Item>
+                  )}
+
+                  {customFrequency === 'yearly' && (
+                    <Form.Item label={<span style={formItemStyle}>On</span>}>
+                      <Space direction="vertical">
+                        <Space>
+                          <Select style={{ width: 120 }} defaultValue="1">
+                            {Array.from({ length: 12 }, (_, i) => (
+                              <Option key={i + 1} value={i + 1}>
+                                {new Date(2024, i, 1).toLocaleString('default', { month: 'long' })}
+                              </Option>
+                            ))}
+                          </Select>
+                          <Select style={{ width: 120 }} defaultValue="first">
+                            <Option value="first">First</Option>
+                            <Option value="second">Second</Option>
+                            <Option value="third">Third</Option>
+                            <Option value="fourth">Fourth</Option>
+                            <Option value="last">Last</Option>
+                          </Select>
+                          <Select style={{ width: 120 }} defaultValue="monday">
+                            <Option value="sunday">Sunday</Option>
+                            <Option value="monday">Monday</Option>
+                            <Option value="tuesday">Tuesday</Option>
+                            <Option value="wednesday">Wednesday</Option>
+                            <Option value="thursday">Thursday</Option>
+                            <Option value="friday">Friday</Option>
+                            <Option value="saturday">Saturday</Option>
+                          </Select>
+                        </Space>
+                      </Space>
                     </Form.Item>
                   )}
                 </div>
@@ -765,7 +794,6 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
                               ...inputStyle,
                               height: '32px'
                             }}
-                            disabledDate={disableRepeatEndDate}
                           />
                         </Space>
                       </Radio>
@@ -791,37 +819,10 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
             }}
           />
         </Form.Item>
-
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "12px",
-          marginTop: "24px"
-        }}>
-          <Button
-            size="large"
-            onClick={onCancel}
-            style={{
-              padding: "8px 24px",
-              height: "44px",
-              borderRadius: "10px",
-              border: "1px solid #e6e8eb",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
-            style={{
-              padding: "8px 32px",
-              height: "44px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
-            }}
-          >
-            Create Task
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button type="primary" htmlType="submit">
+            Update Task
           </Button>
         </div>
       </Form>
@@ -829,4 +830,4 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   );
 };
 
-export default CreatefollowupTask;
+export default EditFollowupTask; 
