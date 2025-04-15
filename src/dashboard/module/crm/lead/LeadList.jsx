@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Input } from "antd";
 import {
   FiEdit2,
@@ -19,7 +19,7 @@ import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStage
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -28,10 +28,11 @@ const adjustColor = (color, amount) => {
   return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
 };
 
-const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
+const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Fetch all required data
   const { data: stagesData } = useGetLeadStagesQuery();
@@ -43,6 +44,20 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
   const sources = sourcesData?.data || [];
   const statuses = statusesData?.data || [];
+
+  // Handle automatic form opening
+  useEffect(() => {
+    if (location.state?.openCreateForm) {
+      // Call the create lead handler with the initial data
+      onCreateLead?.(location.state.initialFormData);
+
+      // Clear the state after handling
+      navigate(location.pathname, {
+        replace: true,
+        state: {}
+      });
+    }
+  }, [location.state, onCreateLead, navigate]);
 
   const handleDelete = async (record) => {
     try {
@@ -67,7 +82,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick }) => {
         ),
         onClick: () => onLeadClick(record),
       },
-      ...(!record.is_converted ? [
+      ...(!record.inquiry_id ? [
         {
           key: "edit",
           icon: <FiEdit2 style={{ color: '#52c41a' }} />,

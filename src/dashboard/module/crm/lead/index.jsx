@@ -29,7 +29,7 @@ import "./Lead.scss";
 import CreateLead from "./CreateLead";
 import LeadCard from "./LeadCard";
 import LeadList from "./LeadList";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import EditLead from "./EditLead";
 import { useGetLeadsQuery } from "./services/LeadApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
@@ -44,6 +44,7 @@ const { Option } = Select;
 
 const Lead = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
@@ -58,6 +59,36 @@ const Lead = () => {
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
+  const [initialFormData, setInitialFormData] = useState(null);
+
+  // Handle automatic form opening
+  useEffect(() => {
+    if (location.state?.openCreateForm) {
+      // Only set the inquiry_id from the submission
+      const formData = {
+        inquiry_id: location.state.formSubmissionId
+      };
+
+      // Get the first available status if not provided
+      if (statusesData?.data?.length > 0) {
+        formData.status = statusesData.data[0].id;
+      }
+
+      // Get the first available currency if not provided
+      if (currencies?.length > 0) {
+        formData.currency = currencies[0].id;
+      }
+
+      setInitialFormData(formData);
+      setIsModalOpen(true);
+
+      // Clear the state
+      navigate(location.pathname, {
+        replace: true,
+        state: {}
+      });
+    }
+  }, [location.state, navigate, statusesData, currencies]);
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -83,6 +114,7 @@ const Lead = () => {
 
   const handleCreate = () => {
     setSelectedLead(null);
+    setInitialFormData(null); // Reset form data
     setIsModalOpen(true);
   };
 
@@ -120,6 +152,11 @@ const Lead = () => {
       <Menu.Item key="pdf">Export as PDF</Menu.Item>
     </Menu>
   );
+
+  // Add debug log for initialFormData changes
+  useEffect(() => {
+    console.log('Initial form data updated:', initialFormData);
+  }, [initialFormData]);
 
   return (
     <div className="lead-page">
@@ -211,13 +248,20 @@ const Lead = () => {
         )}
       </Card>
 
-      <CreateLead open={isModalOpen} pipelines={pipelines}
+      <CreateLead
+        open={isModalOpen}
+        pipelines={pipelines}
         currencies={currencies}
         countries={countries}
         sourcesData={sourcesData}
         statusesData={statusesData}
         categoriesData={categoriesData}
-        onCancel={() => setIsModalOpen(false)} />
+        onCancel={() => {
+          setIsModalOpen(false);
+          setInitialFormData(null);
+        }}
+        initialValues={initialFormData}
+      />
       <EditLead
         open={isEditModalOpen}
         pipelines={pipelines}

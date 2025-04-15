@@ -4,12 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     useGetFormSubmissionsQuery,
     useDeleteFormSubmissionMutation,
-    useGetCustomFormByIdQuery
+    useGetCustomFormByIdQuery,
 } from './services/customFormApi';
 import dayjs from 'dayjs';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiArrowLeft } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiArrowLeft, FiUserPlus, FiCheck } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import './CustomForm.scss';
+import { useGetLeadsQuery } from '../lead/services/LeadApi';
 
 const { Title, Text } = Typography;
 
@@ -112,6 +113,7 @@ const FormSubmissions = () => {
     const { data: submissionsData, isLoading } = useGetFormSubmissionsQuery(formId);
     const { data: formData } = useGetCustomFormByIdQuery(formId);
     const [deleteSubmission] = useDeleteFormSubmissionMutation();
+    const { data: leads } = useGetLeadsQuery();
 
     const handleDelete = async (id) => {
         try {
@@ -165,23 +167,59 @@ const FormSubmissions = () => {
         return String(value);
     };
 
-    const getDropdownItems = (record) => ({
-        items: [
-            {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => console.log('View', record),
-            },
-            {
-                key: 'delete',
-                icon: <FiTrash2 />,
-                label: 'Delete',
-                onClick: () => handleDelete(record.id),
-                danger: true,
-            },
-        ],
-    });
+    const handleConvertToLead = (submission) => {
+        if (!submission) {
+            message.error('No submission data available');
+            return;
+        }
+
+        // Navigate to lead page with only the submission ID
+        navigate('/dashboard/crm/lead', {
+            state: {
+                openCreateForm: true,
+                formSubmissionId: submission.id
+            }
+        });
+
+        message.success('Opening lead creation form...');
+    };
+
+    const getDropdownItems = (record) => {
+        console.log('Leads data:', leads?.data);
+        console.log('Record ID:', record.id);
+        // Check if this submission is already converted to a lead
+        const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
+
+        return {
+            items: [
+                {
+                    key: 'view',
+                    icon: <FiEye />,
+                    label: 'View Details',
+                    onClick: () => console.log('View', record),
+                },
+                {
+                    key: 'convert',
+                    icon: <FiUserPlus style={{ color: isConverted ? '#8c8c8c' : '#52c41a' }} />,
+                    label: (
+                        <Text style={{ color: isConverted ? '#8c8c8c' : '#52c41a' }}>
+                            {isConverted ? 'Already Converted' : 'Convert to Lead'}
+                        </Text>
+                    ),
+                    onClick: () => !isConverted && handleConvertToLead(record),
+                    disabled: isConverted
+                },
+                {
+                    key: 'delete',
+                    icon: <FiTrash2 />,
+                    label: 'Delete',
+                    onClick: () => handleDelete(record.id),
+                    danger: true,
+                    disabled: isConverted
+                },
+            ],
+        }
+    };
 
     const getColumnWidth = (fieldName) => COLUMN_WIDTHS[fieldName] || COLUMN_WIDTHS.default;
 
@@ -222,6 +260,31 @@ const FormSubmissions = () => {
         return [
             ...dynamicColumns,
             {
+                title: 'Status',
+                key: 'status',
+                width: 120,
+                render: (_, record) => {
+                    const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
+                    return (
+                        <Tag color={isConverted ? 'success' : 'default'} style={{
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px'
+                        }}>
+                            {isConverted ? (
+                                <>
+                                    <FiCheck style={{ fontSize: '14px' }} />
+                                    Converted to Lead
+                                </>
+                            ) : 'Not Converted'}
+                        </Tag>
+                    );
+                }
+            },
+            {
                 title: 'Submission Date',
                 dataIndex: 'createdAt',
                 key: 'createdAt',
@@ -234,22 +297,27 @@ const FormSubmissions = () => {
                 fixed: 'right',
                 width: 80,
                 align: 'center',
-                render: (_, record) => (
-                    <Dropdown
-                        menu={getDropdownItems(record)}
-                        trigger={['click']}
-                        placement="bottomRight"
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical />}
-                            onClick={(e) => e.preventDefault()}
-                        />
-                    </Dropdown>
-                ),
+                render: (_, record) => {
+                    const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
+                    return (
+                        <Dropdown
+                            menu={getDropdownItems(record)}
+                            trigger={['click']}
+                            placement="bottomRight"
+                            disabled={isConverted}
+                        >
+                            <Button
+                                type="text"
+                                icon={<FiMoreVertical />}
+                                onClick={(e) => e.preventDefault()}
+                                style={{ color: isConverted ? '#8c8c8c' : undefined }}
+                            />
+                        </Dropdown>
+                    );
+                },
             }
         ];
-    }, [submissionsData?.data]);
+    }, [submissionsData?.data, leads?.data]);
 
     const exportToExcel = () => {
         try {
@@ -303,12 +371,17 @@ const FormSubmissions = () => {
                     </Space>
 
                     <Button
-                        type="primary"
+                        type="default"
                         icon={<FiDownload />}
                         onClick={exportToExcel}
                         disabled={!submissionsData?.data?.length}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
                     >
-                        Export to Excel
+                        Export
                     </Button>
                 </Space>
 

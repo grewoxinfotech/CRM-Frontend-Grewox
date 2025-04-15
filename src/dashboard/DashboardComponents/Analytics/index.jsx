@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Card, Tabs } from 'antd';
-import { FiBarChart2, FiTarget, FiFileText, FiCalendar, FiCheckSquare } from 'react-icons/fi';
+import { FiBarChart2, FiTarget } from 'react-icons/fi';
 import DealsAnalytics from './DealsAnalytics';
 import LeadsAnalytics from './LeadsAnalytics';
-import TasksAnalytics from './TasksAnalytics';
-import MeetingsAnalytics from './MeetingsAnalytics';
 
-const Analytics = ({ deals, leads, tasks, meetings }) => {
+const Analytics = ({ deals, leads }) => {
     const [activeTab, setActiveTab] = useState('1');
 
     const items = [
@@ -29,26 +27,6 @@ const Analytics = ({ deals, leads, tasks, meetings }) => {
                 </span>
             ),
             children: <LeadsAnalytics leads={leads} />
-        },
-        {
-            key: '3',
-            label: (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FiCheckSquare />
-                    Tasks Analytics
-                </span>
-            ),
-            children: <TasksAnalytics tasks={tasks} />
-        },
-        {
-            key: '4',
-            label: (
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FiCalendar />
-                    Meetings Analytics
-                </span>
-            ),
-            children: <MeetingsAnalytics meetings={meetings} />
         }
     ];
 
@@ -75,4 +53,4 @@ const Analytics = ({ deals, leads, tasks, meetings }) => {
     );
 };
 
-export default Analytics; 
+export { Analytics as default }; 

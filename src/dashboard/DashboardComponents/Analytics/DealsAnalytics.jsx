@@ -1,156 +1,355 @@
-import React from 'react';
-import { Card, Row, Col, Typography, Statistic } from 'antd';
+import React, { useState, useMemo } from 'react';
+import { Typography, Row, Col, Radio, Space, Card, Spin, Button, Select } from 'antd';
 import {
     AreaChart, Area,
     PieChart, Pie, Cell,
     BarChart, Bar,
     XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer,
-    RadialBarChart, RadialBar,
-    Legend
+    Legend,
+    LineChart, Line
 } from 'recharts';
+import { TeamOutlined, FundOutlined, CheckCircleOutlined, DollarOutlined } from '@ant-design/icons';
+import { FiTarget } from 'react-icons/fi';
 import { useGetSourcesQuery } from '../../module/crm/crmsystem/souce/services/SourceApi';
+import { useGetDealStagesQuery } from '../../module/crm/crmsystem/dealstage/services/dealStageApi';
 import { useSelector } from 'react-redux';
-import { useGetLeadStagesQuery } from '../../module/crm/crmsystem/leadstage/services/leadStageApi';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
-import { DollarOutlined, TeamOutlined, FundOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
-// Modern color palette matching dashboard stats exactly
+// Theme colors matching the module
 const COLORS = {
-    companies: { main: '#7c3aed', light: '#a78bfa' },
-    leads: { main: '#eb2f96', light: '#ff85c0' },
-    deals: { main: '#1890ff', light: '#69c0ff' },
-    revenue: { main: '#52c41a', light: '#95de64' }
+    primary: {
+        main: '#1890ff',
+        light: '#40a9ff',
+        dark: '#096dd9',
+        gradient: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)'
+    },
+    secondary: {
+        main: '#595959',
+        light: '#8c8c8c',
+        dark: '#434343',
+        gradient: 'linear-gradient(135deg, #8c8c8c 0%, #595959 100%)'
+    },
+    text: {
+        primary: '#1890ff',
+        secondary: '#595959',
+        light: '#8c8c8c'
+    },
+    chart: {
+        dealCount: {
+            main: '#1890ff',
+            light: '#40a9ff',
+            gradient: 'url(#colorDeals)',
+            hover: '#096dd9'
+        },
+        dealValue: {
+            main: '#595959',
+            light: '#8c8c8c',
+            gradient: 'url(#colorValue)',
+            hover: '#434343'
+        },
+        pie: ['#1890ff', '#595959', '#40a9ff', '#8c8c8c', '#096dd9', '#434343']
+    },
+    border: '#e6e8eb',
+    background: '#f8fafc'
 };
 
-// Lighter colors for bottom charts
-const BOTTOM_CHART_COLORS = [
-    '#9333EA',  // Light purple
-    '#EC4899',  // Light pink
-    '#3B82F6',  // Light blue
-    '#10B981'   // Light green
-];
-
-const CHART_COLORS = [
-    COLORS.companies.main,
-    COLORS.leads.main,
-    COLORS.deals.main,
-    COLORS.revenue.main
-];
-
-const GRADIENTS = {
-    deals: {
-        start: COLORS.deals.main,
-        end: COLORS.deals.light
-    },
-    value: {
-        start: COLORS.revenue.main,
-        end: COLORS.revenue.light
-    },
-    won: {
-        start: COLORS.leads.main,
-        end: COLORS.leads.light
-    },
-    conversion: {
-        start: COLORS.companies.main,
-        end: COLORS.companies.light
-    }
+const TIME_FILTERS = {
+    TODAY: { value: 'today', label: 'Today' },
+    WEEK: { value: 'week', label: 'This Week' },
+    MONTH: { value: 'month', label: 'This Month' },
+    YEAR: { value: 'year', label: 'This Year' }
 };
 
-const DealsAnalytics = ({ deals }) => {
+const chartTitleStyle = {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#1890ff',
+    marginBottom: '24px'
+};
+
+const chartLabelStyle = {
+    fontSize: '15px',
+    fontWeight: '600',
+    fill: '#1890ff'
+};
+
+const DealsAnalytics = ({ deals = [] }) => {
+    const [timeFilter, setTimeFilter] = useState(TIME_FILTERS.WEEK.value);
+    const [selectedPipeline, setSelectedPipeline] = useState("95QsEzSA7EGnxrlRqnDShFw");
     const loggedInUser = useSelector(selectCurrentUser);
-    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-    const { data: stagesData } = useGetLeadStagesQuery();
+    const { data: sourcesData, isLoading: isSourcesLoading } = useGetSourcesQuery(loggedInUser?.id);
+    const { data: stagesData, isLoading: isStagesLoading } = useGetDealStagesQuery();
 
     const sources = sourcesData?.data || [];
-    const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
 
-    // Calculate total value and other metrics
-    const totalValue = deals?.reduce((sum, deal) => sum + (deal.value || 0), 0) || 0;
-    const totalDeals = deals?.length || 0;
-    const wonDeals = deals?.filter(deal => deal.status === 'won').length || 0;
-    const conversionRate = totalDeals ? ((wonDeals / totalDeals) * 100).toFixed(1) : 0;
+    // Filter stages by pipeline and type
+    const stages = useMemo(() => {
+        if (!stagesData) return [];
+        return (stagesData || []).filter(stage =>
+            stage?.stageType === 'deal' &&
+            stage?.pipeline === selectedPipeline
+        );
+    }, [stagesData, selectedPipeline]);
 
-    // Process deals data for status distribution
-    const statusData = deals?.reduce((acc, deal) => {
-        const status = deal.status || 'Unknown';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-    }, {});
+    // Pipeline options
+    const pipelines = [
+        { id: "95QsEzSA7EGnxrlRqnDShFw", name: "Marketing" },
+        { id: "cFaSfTBNfdMnnvSNxQmql0w", name: "Sales" }
+    ];
 
-    const statusPieData = Object.entries(statusData || {}).map(([status, count]) => ({
-        name: status.charAt(0).toUpperCase() + status.slice(1),
-        value: count
-    }));
+    // Filter deals based on pipeline and time period
+    const filteredDeals = useMemo(() => {
+        if (!deals || !Array.isArray(deals)) return [];
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    // Process deals data for source distribution
-    const sourceData = deals?.reduce((acc, deal) => {
-        const source = sources.find(s => s.id === deal.source)?.name || 'Unknown';
-        const value = deal.value || 0;
-        acc[source] = (acc[source] || 0) + value;
-        return acc;
-    }, {});
+        return deals.filter(deal => {
+            if (!deal) return false;
+            // First filter by pipeline
+            if (deal.pipeline !== selectedPipeline) return false;
 
-    const sourceBarData = Object.entries(sourceData || {}).map(([source, value]) => ({
-        name: source,
-        value: value
-    })).sort((a, b) => b.value - a.value);
+            // Then filter by time
+            const dealDate = new Date(deal.createdAt);
+            if (isNaN(dealDate.getTime())) return false; // Skip invalid dates
 
-    // Process deals data for weekly trend
-    const getWeekData = () => {
-        const weekData = deals?.reduce((acc, deal) => {
+            switch (timeFilter) {
+                case TIME_FILTERS.TODAY.value:
+                    return dealDate >= today;
+                case TIME_FILTERS.WEEK.value:
+                    const weekAgo = new Date(today);
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    return dealDate >= weekAgo;
+                case TIME_FILTERS.MONTH.value:
+                    const monthAgo = new Date(today);
+                    monthAgo.setMonth(monthAgo.getMonth() - 1);
+                    return dealDate >= monthAgo;
+                case TIME_FILTERS.YEAR.value:
+                    const yearAgo = new Date(today);
+                    yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                    return dealDate >= yearAgo;
+                default:
+                    return true;
+            }
+        });
+    }, [deals, timeFilter, selectedPipeline]);
+
+    // Weekly performance data with error handling
+    const weeklyData = useMemo(() => {
+        if (!filteredDeals || !Array.isArray(filteredDeals)) return [];
+
+        const weekData = filteredDeals.reduce((acc, deal) => {
+            if (!deal?.createdAt) return acc;
             const date = new Date(deal.createdAt);
+            if (isNaN(date.getTime())) return acc;
+
             const weekDay = date.toLocaleDateString('en-US', { weekday: 'short' });
             if (!acc[weekDay]) acc[weekDay] = { total: 0, value: 0 };
             acc[weekDay].total++;
-            acc[weekDay].value += deal.value || 0;
+            acc[weekDay].value += parseFloat(deal.value) || 0;
             return acc;
         }, {});
 
         return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => ({
             name: day,
-            deals: weekData?.[day]?.total || 0,
-            value: weekData?.[day]?.value || 0
+            deals: weekData[day]?.total || 0,
+            value: weekData[day]?.value || 0
         }));
+    }, [filteredDeals]);
+
+    // Format currency with rupee symbol and shortened numbers
+    const formatCurrency = (value) => {
+        if (!value && value !== 0) return '₹0';
+        if (value >= 10000000) return `₹${(value / 10000000).toFixed(1)}Cr`;
+        if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
+        if (value >= 1000) return `₹${(value / 1000).toFixed(0)}k`;
+        return `₹${Math.round(value)}`;
     };
 
-    const weeklyData = getWeekData();
-
-    const cardStyle = {
-        borderRadius: '15px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-        background: '#ffffff',
-        border: 'none'
+    // Format numbers to be shorter and always whole numbers
+    const formatNumber = (value) => {
+        if (!value && value !== 0) return '0';
+        if (value >= 1000) return `${Math.round(value / 1000)}k`;
+        return Math.round(value).toString();
     };
+
+    // Format percentage with proper intervals
+    const formatPercentage = (value) => {
+        return `${Math.round(value * 100)}%`;
+    };
+
+    // Format axis ticks for counts
+    const formatCountTick = (value) => {
+        if (value === 0) return '0';
+        if (value % 1 !== 0) return '';
+        return value.toString();
+    };
+
+    // Format axis ticks for values with proper intervals
+    const formatValueTick = (value) => {
+        if (value === 0) return '0';
+        if (value >= 10000000) return `${(value / 10000000).toFixed(1)}Cr`;
+        if (value >= 100000) return `${(value / 100000).toFixed(1)}L`;
+        if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+        return value.toString();
+    };
+
+    // Calculate metrics
+    const totalValue = filteredDeals.reduce((sum, deal) => sum + (parseFloat(deal.value) || 0), 0);
+    const totalDeals = filteredDeals.length;
+    const wonDeals = filteredDeals.filter(deal => deal.is_won)?.length || 0;
+    const winRate = totalDeals ? ((wonDeals / totalDeals) * 100).toFixed(1) : 0;
+
+    // Process source distribution with error handling
+    const sourceChartData = useMemo(() => {
+        if (!filteredDeals || !Array.isArray(filteredDeals)) return [];
+
+        const sourceData = filteredDeals.reduce((acc, deal) => {
+            if (!deal) return acc;
+            const source = sources.find(s => s?.id === deal?.source)?.name || 'Unknown';
+            const value = parseFloat(deal.value) || 0;
+            if (!acc[source]) acc[source] = { count: 0, value: 0 };
+            acc[source].count++;
+            acc[source].value += value;
+            return acc;
+        }, {});
+
+        return Object.entries(sourceData).map(([name, data]) => ({
+            name,
+            count: data.count || 0,
+            value: data.value || 0
+        }));
+    }, [filteredDeals, sources]);
+
+    // Process status distribution with error handling
+    const statusChartData = useMemo(() => {
+        if (!filteredDeals || !Array.isArray(filteredDeals)) return [];
+
+        const statusData = filteredDeals.reduce((acc, deal) => {
+            if (!deal) return acc;
+            const status = deal.is_won ? 'Won' : 'Pending';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const data = Object.entries(statusData).map(([status, count]) => ({
+            name: status,
+            value: count || 0
+        }));
+
+        // Return empty array if no data to prevent undefined access
+        return data.length > 0 ? data : [];
+    }, [filteredDeals]);
+
+    // Process pipeline data with stage names and handle undefined stages
+    const pipelineData = useMemo(() => {
+        if (!stages || stages.length === 0) return [];
+
+        // First, organize all stages by pipeline
+        const pipelineStages = stages.reduce((acc, stage) => {
+            if (!stage || !stage.pipelineId) return acc;
+            if (!acc[stage.pipelineId]) {
+                acc[stage.pipelineId] = [];
+            }
+            acc[stage.pipelineId].push(stage);
+            return acc;
+        }, {});
+
+        // Sort stages within each pipeline by order
+        Object.values(pipelineStages).forEach(stageList => {
+            stageList.sort((a, b) => (a.order || 0) - (b.order || 0));
+        });
+
+        // Create a map of all stages with initial values
+        const allStagesMap = stages.reduce((acc, stage) => {
+            if (!stage || !stage.id) return acc;
+            acc[stage.id] = {
+                name: stage.stageName || 'Unnamed Stage',
+                count: 0,
+                value: 0,
+                order: stage.order || 0,
+                pipelineId: stage.pipelineId
+            };
+            return acc;
+        }, {});
+
+        // Count deals in each stage
+        if (filteredDeals && filteredDeals.length > 0) {
+            filteredDeals.forEach(deal => {
+                if (deal?.stage && allStagesMap[deal.stage]) {
+                    allStagesMap[deal.stage].count++;
+                    allStagesMap[deal.stage].value += parseFloat(deal.value) || 0;
+                }
+            });
+        }
+
+        // Convert to array and sort by pipeline and order
+        return Object.entries(allStagesMap)
+            .map(([id, data]) => ({
+                id,
+                name: data.name || 'Unnamed',
+                fullName: data.name || 'Unnamed Stage',
+                displayName: data.name ? data.name.toUpperCase() : 'UNNAMED STAGE',
+                count: data.count || 0,
+                value: data.value || 0,
+                order: data.order || 0,
+                pipelineId: data.pipelineId
+            }))
+            .sort((a, b) => {
+                if (a.pipelineId === b.pipelineId) {
+                    return (a.order || 0) - (b.order || 0);
+                }
+                return (a.pipelineId || '').localeCompare(b.pipelineId || '');
+            });
+    }, [stages, filteredDeals]);
 
     const chartCardStyle = {
-        ...cardStyle,
-        background: 'linear-gradient(145deg, #ffffff, #f6f8ff)',
-    };
-
-    const titleStyle = {
-        fontSize: '18px',
-        fontWeight: 600,
-        margin: 0,
-        color: '#1a1a1a',
+        borderRadius: '15px',
+        boxShadow: '0 4px 20px rgba(24, 144, 255, 0.1)',
+        background: 'linear-gradient(145deg, #ffffff, #f0f7ff)',
+        border: 'none',
+        padding: '24px'
     };
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
                 <div style={{
-                    background: '#fff',
-                    padding: '12px',
-                    border: '1px solid #f0f0f0',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    padding: '12px 16px',
+                    border: '1px solid #40a9ff',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 25px rgba(0,0,0,0.1)',
+                    backdropFilter: 'blur(6px)',
+                    transition: 'all 0.3s ease',
+                    color: '#1890ff'
                 }}>
-                    <p style={{ margin: 0, fontWeight: 600 }}>{label}</p>
+                    <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#333', fontSize: '14px' }}>{label}</p>
                     {payload.map((entry, index) => (
-                        <p key={index} style={{ margin: '4px 0', color: entry.color }}>
-                            {entry.name}: {entry.value.toLocaleString()}
+                        <p key={index} style={{
+                            margin: '4px 0',
+                            color: entry.color,
+                            fontSize: '13px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <span style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                background: entry.color,
+                                display: 'inline-block'
+                            }}></span>
+                            {entry.name}: {
+                                entry.dataKey === 'value' || entry.name === 'Deal Value'
+                                    ? formatCurrency(entry.value)
+                                    : typeof entry.value === 'number'
+                                        ? entry.value.toLocaleString()
+                                        : entry.value
+                            }
                         </p>
                     ))}
                 </div>
@@ -159,189 +358,808 @@ const DealsAnalytics = ({ deals }) => {
         return null;
     };
 
-    // Format currency with rupee symbol and shortened numbers
-    const formatCurrency = (value) => {
-        if (value >= 10000000) { // 1 Cr+
-            return `₹${(value / 10000000).toFixed(1)}Cr`;
-        } else if (value >= 100000) { // 1 Lakh+
-            return `₹${(value / 100000).toFixed(1)}L`;
-        } else if (value >= 1000) { // 1k+
-            return `₹${(value / 1000).toFixed(1)}k`;
-        }
-        return `₹${value}`;
-    };
+    if (isStagesLoading || isSourcesLoading) {
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '400px'
+            }}>
+                <Spin size="large" />
+            </div>
+        );
+    }
 
-    // Format numbers to be shorter (for non-currency values)
-    const formatNumber = (value) => {
-        if (value >= 1000) {
-            return `${(value / 1000).toFixed(1)}k`;
-        }
-        return value.toString();
-    };
-
-    const statStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        padding: '16px 24px',
-        background: 'linear-gradient(145deg, #ffffff, #f6f8ff)',
-        borderRadius: '12px',
-        gap: '4px'
-    };
-
-    const statTitleStyle = {
-        fontSize: '14px',
-        color: '#666',
-        margin: 0
-    };
-
-    const statValueStyle = {
-        fontSize: '24px',
-        fontWeight: '600',
-        margin: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px'
-    };
-
-    const statRowStyle = {
-        display: 'flex',
-        gap: '24px',
-        flexWrap: 'wrap',
-        marginBottom: '24px'
-    };
+    // Add error handling for empty data
+    if (!deals || !Array.isArray(deals) || deals.length === 0) {
+        return (
+            <div style={{
+                textAlign: 'center',
+                padding: '40px',
+                background: '#fff',
+                borderRadius: '8px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+                <Title level={4} style={{ color: '#666' }}>No deals data available</Title>
+                <p style={{ color: '#999' }}>Please add some deals to see analytics</p>
+            </div>
+        );
+    }
 
     return (
         <div>
-            <div style={statRowStyle}>
-                <div style={statStyle}>
-                    <p style={statTitleStyle}>Total Value</p>
-                    <p style={{ ...statValueStyle, color: COLORS.deals.main }}>
-                        <DollarOutlined /> {formatCurrency(totalValue)}
-                    </p>
+            {/* Pipeline and Time Filter Controls */}
+            <div style={{
+                marginBottom: '24px',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '16px',
+                alignItems: 'center'
+            }}>
+                {/* Pipeline Selection */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <Typography.Text style={{
+                        fontSize: '13px',
+                        color: '#374151',
+                        fontWeight: 500
+                    }}>
+                        Pipeline:
+                    </Typography.Text>
+                    <Select
+                        value={selectedPipeline}
+                        onChange={setSelectedPipeline}
+                        style={{
+                            width: 140,
+                            fontSize: '13px'
+                        }}
+                        options={pipelines.map(pipeline => ({
+                            value: pipeline.id,
+                            label: (
+                                <Space>
+                                    <FiTarget style={{ fontSize: '13px' }} />
+                                    {pipeline.name}
+                                </Space>
+                            )
+                        }))}
+                        dropdownStyle={{
+                            padding: '4px',
+                            borderRadius: '6px'
+                        }}
+                        popupMatchSelectWidth={false}
+                        bordered={false}
+                        className="filter-select"
+                    />
                 </div>
-                <div style={statStyle}>
-                    <p style={statTitleStyle}>Total Deals</p>
-                    <p style={{ ...statValueStyle, color: COLORS.revenue.main }}>
-                        <TeamOutlined /> {formatNumber(totalDeals)}
-                    </p>
-                </div>
-                <div style={statStyle}>
-                    <p style={statTitleStyle}>Won Deals</p>
-                    <p style={{ ...statValueStyle, color: COLORS.leads.main }}>
-                        <CheckCircleOutlined /> {formatNumber(wonDeals)}
-                    </p>
-                </div>
-                <div style={statStyle}>
-                    <p style={statTitleStyle}>Conversion Rate</p>
-                    <p style={{ ...statValueStyle, color: COLORS.companies.main }}>
-                        <FundOutlined /> {conversionRate}%
-                    </p>
+
+                {/* Time Filter */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <Typography.Text style={{
+                        fontSize: '13px',
+                        color: '#374151',
+                        fontWeight: 500
+                    }}>
+                        Period:
+                    </Typography.Text>
+                    <Select
+                        value={timeFilter}
+                        onChange={value => setTimeFilter(value)}
+                        style={{
+                            width: 120,
+                            fontSize: '13px'
+                        }}
+                        options={[
+                            { value: TIME_FILTERS.TODAY.value, label: TIME_FILTERS.TODAY.label },
+                            { value: TIME_FILTERS.WEEK.value, label: TIME_FILTERS.WEEK.label },
+                            { value: TIME_FILTERS.MONTH.value, label: TIME_FILTERS.MONTH.label },
+                            { value: TIME_FILTERS.YEAR.value, label: TIME_FILTERS.YEAR.label }
+                        ]}
+                        dropdownStyle={{
+                            padding: '4px',
+                            borderRadius: '6px'
+                        }}
+                        popupMatchSelectWidth={false}
+                        bordered={false}
+                        className="filter-select"
+                    />
                 </div>
             </div>
 
+            {/* Add this CSS style block at the top of your file */}
+            <style>
+                {`
+                    .filter-select .ant-select-selector {
+                        background-color: #f0f7ff !important;
+                        border-radius: 6px !important;
+                        border: 1px solid #91caff !important;
+                        padding: 0 8px !important;
+                        height: 32px !important;
+                        box-shadow: none !important;
+                    }
+                    .filter-select .ant-select-selection-item {
+                        line-height: 30px !important;
+                        font-weight: 500 !important;
+                        color: #1890ff !important;
+                    }
+                    .filter-select .ant-select-arrow {
+                        color: #1890ff !important;
+                    }
+                    .filter-select:hover .ant-select-selector {
+                        border-color: #40a9ff !important;
+                    }
+                    .filter-select.ant-select-focused .ant-select-selector {
+                        border-color: #1890ff !important;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                    }
+                `}
+            </style>
+
+            {/* Stats Cards */}
+            <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
+                <Col xs={24} sm={12} lg={6}>
+                    <Card bordered={false} style={{
+                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.15)'
+                        }
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '16px',
+                            padding: '4px'
+                        }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                borderRadius: '10px',
+                                padding: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <DollarOutlined style={{ color: '#ffffff', fontSize: '24px' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{
+                                    color: '#1890ff',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    marginBottom: '4px',
+                                    opacity: 0.9
+                                }}>
+                                    Total Value
+                                </div>
+                                <div style={{
+                                    color: '#595959',
+                                    fontSize: '28px',
+                                    fontWeight: '700',
+                                    letterSpacing: '-0.5px'
+                                }}>
+                                    {formatCurrency(totalValue)}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                    <Card bordered={false} style={{
+                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.15)'
+                        }
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '16px',
+                            padding: '4px'
+                        }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                borderRadius: '10px',
+                                padding: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <TeamOutlined style={{ color: '#ffffff', fontSize: '24px' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{
+                                    color: '#1890ff',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    marginBottom: '4px',
+                                    opacity: 0.9
+                                }}>
+                                    Total Deals
+                                </div>
+                                <div style={{
+                                    color: '#595959',
+                                    fontSize: '24px',
+                                    fontWeight: '700',
+                                    letterSpacing: '-0.5px'
+                                }}>
+                                    {formatNumber(totalDeals)}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                    <Card bordered={false} style={{
+                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.15)'
+                        }
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '16px',
+                            padding: '4px'
+                        }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                borderRadius: '10px',
+                                padding: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <CheckCircleOutlined style={{ color: '#ffffff', fontSize: '24px' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{
+                                    color: '#1890ff',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    marginBottom: '4px',
+                                    opacity: 0.9
+                                }}>
+                                    Won Deals
+                                </div>
+                                <div style={{
+                                    color: '#595959',
+                                    fontSize: '24px',
+                                    fontWeight: '700',
+                                    letterSpacing: '-0.5px'
+                                }}>
+                                    {formatNumber(wonDeals)}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} lg={6}>
+                    <Card bordered={false} style={{
+                        background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.1)',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.15)'
+                        }
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '16px',
+                            padding: '4px'
+                        }}>
+                            <div style={{
+                                background: 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)',
+                                borderRadius: '10px',
+                                padding: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <FundOutlined style={{ color: '#ffffff', fontSize: '24px' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{
+                                    color: '#1890ff',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    marginBottom: '4px',
+                                    opacity: 0.9
+                                }}>
+                                    Win Rate
+                                </div>
+                                <div style={{
+                                    color: '#595959',
+                                    fontSize: '24px',
+                                    fontWeight: '700',
+                                    letterSpacing: '-0.5px'
+                                }}>
+                                    {winRate}%
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+            </Row>
+
             <Row gutter={[24, 24]}>
+                {/* Weekly Performance Chart */}
                 <Col span={24}>
-                    <Card
-                        title={<Title level={5} style={titleStyle}>Weekly Deals Performance</Title>}
-                        style={chartCardStyle}
-                        bodyStyle={{ padding: '24px' }}
-                    >
+                    <div style={chartCardStyle}>
+                        <Title level={5} style={chartTitleStyle}>Weekly Performance</Title>
                         <ResponsiveContainer width="100%" height={300}>
                             <AreaChart data={weeklyData}
                                 margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorDeals" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={COLORS.deals.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={COLORS.deals.light} stopOpacity={0.2} />
+                                        <stop offset="5%" stopColor={COLORS.chart.dealCount.main} stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor={COLORS.chart.dealCount.light} stopOpacity={0.2} />
                                     </linearGradient>
                                     <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={COLORS.revenue.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={COLORS.revenue.light} stopOpacity={0.2} />
+                                        <stop offset="5%" stopColor={COLORS.chart.dealValue.main} stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor={COLORS.chart.dealValue.light} stopOpacity={0.2} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="name" stroke="#666" />
-                                <YAxis yAxisId="left" stroke="#666" />
-                                <YAxis yAxisId="right" orientation="right" stroke="#666" />
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="#1890ff"
+                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                />
+                                <YAxis
+                                    yAxisId="left"
+                                    stroke="#1890ff"
+                                    tickFormatter={formatCountTick}
+                                    interval={0}
+                                    allowDecimals={false}
+                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                />
+                                <YAxis
+                                    yAxisId="right"
+                                    orientation="right"
+                                    stroke="#595959"
+                                    tickFormatter={formatValueTick}
+                                    tick={{ fill: '#595959', fontSize: 12, fontWeight: 500 }}
+                                />
                                 <Tooltip content={<CustomTooltip />} />
-                                <Legend />
-                                <Area yAxisId="left" type="monotone" dataKey="deals" stroke={COLORS.deals.main} fillOpacity={1} fill="url(#colorDeals)" />
-                                <Area yAxisId="right" type="monotone" dataKey="value" stroke={COLORS.revenue.main} fillOpacity={1} fill="url(#colorValue)" />
+                                <Legend
+                                    formatter={(value, entry) => (
+                                        <span style={{
+                                            color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
+                                            fontWeight: 500
+                                        }}>
+                                            {value}
+                                        </span>
+                                    )}
+                                />
+                                <Area
+                                    yAxisId="left"
+                                    type="monotone"
+                                    dataKey="deals"
+                                    name="Deal Count"
+                                    stroke={COLORS.chart.dealCount.main}
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                    fill={COLORS.chart.dealCount.gradient}
+                                    activeDot={{
+                                        r: 6,
+                                        strokeWidth: 2,
+                                        stroke: '#fff',
+                                        fill: COLORS.chart.dealCount.hover
+                                    }}
+                                />
+                                <Area
+                                    yAxisId="right"
+                                    type="monotone"
+                                    dataKey="value"
+                                    name="Deal Value"
+                                    stroke={COLORS.chart.dealValue.main}
+                                    strokeWidth={2}
+                                    fillOpacity={1}
+                                    fill={COLORS.chart.dealValue.gradient}
+                                    activeDot={{
+                                        r: 6,
+                                        strokeWidth: 2,
+                                        stroke: '#fff',
+                                        fill: COLORS.chart.dealValue.hover
+                                    }}
+                                />
                             </AreaChart>
                         </ResponsiveContainer>
-                    </Card>
+                    </div>
                 </Col>
 
+                {/* Source Distribution */}
+                <Col xs={24} lg={12}>
+                    <div style={chartCardStyle}>
+                        <Title level={5} style={chartTitleStyle}>Source Distribution</Title>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={sourceChartData} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis
+                                    type="number"
+                                    tickFormatter={formatCountTick}
+                                    allowDecimals={false}
+                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                />
+                                <YAxis
+                                    dataKey="name"
+                                    type="category"
+                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend
+                                    formatter={(value, entry) => (
+                                        <span style={{
+                                            color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
+                                            fontWeight: 500
+                                        }}>
+                                            {value}
+                                        </span>
+                                    )}
+                                />
+                                <Bar
+                                    dataKey="count"
+                                    name="Deal Count"
+                                    fill={COLORS.chart.dealCount.main}
+                                    radius={[4, 4, 4, 4]}
+                                    activeBar={{ fill: COLORS.chart.dealCount.hover }}
+                                />
+                                <Bar
+                                    dataKey="value"
+                                    name="Deal Value"
+                                    fill={COLORS.chart.dealValue.main}
+                                    radius={[4, 4, 4, 4]}
+                                    activeBar={{ fill: COLORS.chart.dealValue.hover }}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Col>
+
+                {/* Status Distribution */}
                 <Col xs={24} lg={12}>
                     <Card
-                        title={<Title level={5} style={titleStyle}>Deal Status Distribution</Title>}
-                        style={chartCardStyle}
+                        style={{
+                            borderRadius: '12px',
+                            border: 'none',
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                        }}
                         bodyStyle={{ padding: '24px' }}
                     >
+                        <Title level={5} style={chartTitleStyle}>
+                            Status Distribution
+                        </Title>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
-                                <defs>
-                                    {['companies', 'leads', 'deals', 'revenue'].map((key, index) => (
-                                        <linearGradient key={key} id={`color${key}`} x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={COLORS[key].main} stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor={COLORS[key].light} stopOpacity={0.8} />
-                                        </linearGradient>
-                                    ))}
-                                </defs>
                                 <Pie
-                                    data={statusPieData}
+                                    data={statusChartData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    paddingAngle={5}
+                                    innerRadius={70}
+                                    outerRadius={90}
+                                    startAngle={90}
+                                    endAngle={-270}
+                                    paddingAngle={8}
                                     dataKey="value"
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, name, percent }) => {
+                                        const RADIAN = Math.PI / 180;
+                                        const radius = outerRadius + 30;
+                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                                        return (
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                fill={COLORS.chart.dealCount.main}
+                                                textAnchor={x > cx ? 'start' : 'end'}
+                                                dominantBaseline="central"
+                                                style={{
+                                                    fontSize: '15px',
+                                                    fontWeight: 600,
+                                                    letterSpacing: '0.2px'
+                                                }}
+                                            >
+                                                {`${name} ${(percent * 100).toFixed(0)}%`}
+                                            </text>
+                                        );
+                                    }}
                                 >
-                                    {statusPieData.map((entry, index) => {
-                                        const key = ['companies', 'leads', 'deals', 'revenue'][index % 4];
-                                        return <Cell key={`cell-${index}`} fill={`url(#color${key})`} />;
-                                    })}
+                                    {statusChartData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={COLORS.chart.pie[index % COLORS.chart.pie.length]}
+                                            stroke="#ffffff"
+                                            strokeWidth={2}
+                                        />
+                                    ))}
                                 </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend />
+                                <Legend
+                                    verticalAlign="bottom"
+                                    align="center"
+                                    layout="horizontal"
+                                    formatter={(value, entry) => (
+                                        <span style={{
+                                            color: '#262626',
+                                            fontSize: '14px',
+                                            fontWeight: 600
+                                        }}>
+                                            {value}
+                                        </span>
+                                    )}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </Card>
                 </Col>
 
-                <Col xs={24} lg={12}>
-                    <Card
-                        title={<Title level={5} style={titleStyle}>Deal Value by Source</Title>}
-                        style={chartCardStyle}
-                        bodyStyle={{ padding: '24px' }}
-                    >
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={sourceBarData} layout="vertical">
-                                <defs>
-                                    {['companies', 'leads', 'deals', 'revenue'].map((key, index) => (
-                                        <linearGradient key={key} id={`colorBar${key}`} x1="0" y1="0" x2="1" y2="0">
-                                            <stop offset="5%" stopColor={COLORS[key].main} stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor={COLORS[key].light} stopOpacity={0.8} />
-                                        </linearGradient>
-                                    ))}
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis type="number" stroke="#666" />
-                                <YAxis dataKey="name" type="category" stroke="#666" />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Bar dataKey="value" radius={[4, 4, 4, 4]}>
-                                    {sourceBarData.map((entry, index) => {
-                                        const key = ['companies', 'leads', 'deals', 'revenue'][index % 4];
-                                        return <Cell key={`cell-${index}`} fill={`url(#colorBar${key})`} />;
-                                    })}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </Card>
-                </Col>
+                {/* Pipeline Progress and Stage Analysis */}
+                {pipelineData.length > 0 ? (
+                    <>
+                        {/* Pipeline Progress */}
+                        <Col xs={24} lg={24}>
+                            <div style={chartCardStyle}>
+                                <Title level={5} style={chartTitleStyle}>Pipeline Progress</Title>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <LineChart
+                                        data={pipelineData}
+                                        margin={{ top: 20, right: 50, left: 30, bottom: 60 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                        <XAxis
+                                            dataKey="name"
+                                            interval={0}
+                                            height={80}
+                                            tick={{
+                                                fontSize: 16,
+                                                fontWeight: 700,
+                                                fill: '#262626'
+                                            }}
+                                            tickMargin={20}
+                                        />
+                                        <YAxis
+                                            yAxisId="left"
+                                            orientation="left"
+                                            tickFormatter={formatCountTick}
+                                            allowDecimals={false}
+                                            interval={0}
+                                            tick={{
+                                                fontSize: 14,
+                                                fill: '#262626',
+                                                fontWeight: 600
+                                            }}
+                                            tickMargin={12}
+                                            width={80}
+                                            label={{
+                                                value: 'Deal Count',
+                                                angle: -90,
+                                                position: 'insideLeft',
+                                                offset: -5,
+                                                style: {
+                                                    fill: '#262626',
+                                                    fontWeight: 600,
+                                                    fontSize: 14
+                                                }
+                                            }}
+                                        />
+                                        <YAxis
+                                            yAxisId="right"
+                                            orientation="right"
+                                            tickFormatter={formatValueTick}
+                                            tick={{
+                                                fontSize: 14,
+                                                fill: '#262626',
+                                                fontWeight: 600
+                                            }}
+                                            tickMargin={12}
+                                            width={80}
+                                            label={{
+                                                value: 'Deal Value',
+                                                angle: 90,
+                                                position: 'insideRight',
+                                                offset: 5,
+                                                style: {
+                                                    fill: '#262626',
+                                                    fontWeight: 600,
+                                                    fontSize: 14
+                                                }
+                                            }}
+                                        />
+                                        <Tooltip
+                                            content={<CustomTooltip />}
+                                            cursor={{ strokeDasharray: '3 3' }}
+                                        />
+                                        <Legend
+                                            verticalAlign="top"
+                                            height={36}
+                                        />
+                                        <Line
+                                            yAxisId="left"
+                                            type="monotone"
+                                            dataKey="count"
+                                            name="Deal Count"
+                                            stroke={COLORS.chart.dealCount.main}
+                                            strokeWidth={2}
+                                            dot={{
+                                                r: 4,
+                                                fill: COLORS.chart.dealCount.main,
+                                                stroke: '#fff',
+                                                strokeWidth: 2
+                                            }}
+                                            activeDot={{
+                                                r: 6,
+                                                fill: COLORS.chart.dealCount.hover,
+                                                stroke: '#fff',
+                                                strokeWidth: 2
+                                            }}
+                                        />
+                                        <Line
+                                            yAxisId="right"
+                                            type="monotone"
+                                            dataKey="value"
+                                            name="Deal Value"
+                                            stroke={COLORS.chart.dealValue.main}
+                                            strokeWidth={2}
+                                            dot={{
+                                                r: 4,
+                                                fill: COLORS.chart.dealValue.main,
+                                                stroke: '#fff',
+                                                strokeWidth: 2
+                                            }}
+                                            activeDot={{
+                                                r: 6,
+                                                fill: COLORS.chart.dealValue.hover,
+                                                stroke: '#fff',
+                                                strokeWidth: 2
+                                            }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Col>
+
+                        {/* Stage Analysis */}
+                        <Col xs={24} lg={24}>
+                            <div style={chartCardStyle}>
+                                <Title level={5} style={chartTitleStyle}>Stage Analysis</Title>
+                                <ResponsiveContainer width="100%" height={400}>
+                                    <BarChart
+                                        data={pipelineData}
+                                        margin={{ top: 20, right: 50, left: 30, bottom: 60 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                        <XAxis
+                                            dataKey="name"
+                                            interval={0}
+                                            height={80}
+                                            tick={{
+                                                fontSize: 16,
+                                                fontWeight: 700,
+                                                fill: '#262626'
+                                            }}
+                                            tickMargin={20}
+                                        />
+                                        <YAxis
+                                            yAxisId="left"
+                                            orientation="left"
+                                            tickFormatter={formatCountTick}
+                                            allowDecimals={false}
+                                            interval={0}
+                                            tick={{
+                                                fontSize: 14,
+                                                fill: '#262626',
+                                                fontWeight: 600
+                                            }}
+                                            tickMargin={12}
+                                            width={80}
+                                            label={{
+                                                value: 'Deal Count',
+                                                angle: -90,
+                                                position: 'insideLeft',
+                                                offset: -5,
+                                                style: {
+                                                    fill: '#262626',
+                                                    fontWeight: 600,
+                                                    fontSize: 14
+                                                }
+                                            }}
+                                        />
+                                        <YAxis
+                                            yAxisId="right"
+                                            orientation="right"
+                                            tickFormatter={formatValueTick}
+                                            tick={{
+                                                fontSize: 14,
+                                                fill: '#262626',
+                                                fontWeight: 600
+                                            }}
+                                            tickMargin={12}
+                                            width={80}
+                                            label={{
+                                                value: 'Deal Value',
+                                                angle: 90,
+                                                position: 'insideRight',
+                                                offset: 5,
+                                                style: {
+                                                    fill: '#262626',
+                                                    fontWeight: 600,
+                                                    fontSize: 14
+                                                }
+                                            }}
+                                        />
+                                        <Tooltip
+                                            content={<CustomTooltip />}
+                                            cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                                        />
+                                        <Legend
+                                            formatter={(value, entry) => (
+                                                <span style={{
+                                                    color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
+                                                    fontWeight: 500
+                                                }}>
+                                                    {value}
+                                                </span>
+                                            )}
+                                        />
+                                        <Bar
+                                            yAxisId="left"
+                                            dataKey="count"
+                                            name="Deal Count"
+                                            fill={COLORS.chart.dealCount.main}
+                                            radius={[4, 4, 0, 0]}
+                                            maxBarSize={50}
+                                        />
+                                        <Bar
+                                            yAxisId="right"
+                                            dataKey="value"
+                                            name="Deal Value"
+                                            fill={COLORS.chart.dealValue.main}
+                                            radius={[4, 4, 0, 0]}
+                                            maxBarSize={50}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </Col>
+                    </>
+                ) : (
+                    <Col span={24}>
+                        <div style={chartCardStyle}>
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '40px 20px',
+                                color: '#666'
+                            }}>
+                                No pipeline data available
+                            </div>
+                        </div>
+                    </Col>
+                )}
             </Row>
         </div>
     );

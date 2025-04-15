@@ -40,7 +40,7 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 const { Text } = Typography;
 const { Search } = Input;
 
-const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,onProductRevenueClick, currenciesData }) => {
+const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null, onProductRevenueClick, currenciesData }) => {
   const { data: productsData = [], isLoading } = useGetProductsQuery();
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
@@ -79,8 +79,8 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
     { id: 'out_of_stock', name: 'Out of Stock' },
   ];
 
-    const categoriess = categories;
-  
+  const categoriess = categories;
+
   // Filter products based on search text and category
   const filteredProducts = React.useMemo(() => {
     if (!products) return [];
@@ -91,7 +91,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       const sku = product?.sku?.toLowerCase() || "";
       const description = product?.description?.toLowerCase() || "";
 
-      const matchesSearch = 
+      const matchesSearch =
         name.includes(searchLower) ||
         category.includes(searchLower) ||
         sku.includes(searchLower) ||
@@ -140,19 +140,28 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
         key: 'view',
         icon: <FiEye />,
         label: 'View Details',
-        onClick: () => onView(record),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          onView(record);
+        },
       },
       {
         key: 'edit',
         icon: <FiEdit2 />,
         label: 'Edit',
-        onClick: () => handleEdit(record),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          handleEdit(record);
+        },
       },
       {
         key: 'delete',
         icon: <FiTrash2 />,
         label: 'Delete',
-        onClick: () => handleDelete(record.id),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          handleDelete(record.id);
+        },
         danger: true,
       },
     ],
@@ -190,23 +199,23 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       ),
       onFilter: (value, record) =>
         record.name.toLowerCase().includes(value.toLowerCase()) ||
-        record.category?.toLowerCase().includes(value.toLowerCase()), 
+        record.category?.toLowerCase().includes(value.toLowerCase()),
       render: (name, record) => (
         <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
           {record.image && (
-            <img 
-              src={record.image} 
-              alt={name} 
-              style={{ 
-                width: "40px", 
-                height: "40px", 
-                objectFit: "cover", 
-                borderRadius: "4px" 
-              }} 
+            <img
+              src={record.image}
+              alt={name}
+              style={{
+                width: "40px",
+                height: "40px",
+                objectFit: "cover",
+                borderRadius: "4px"
+              }}
             />
           )}
           <div>
-            <Text strong style={{ display: "block", fontSize: "14px",marginTop:"10px" }}>{name}</Text>
+            <Text strong style={{ display: "block", fontSize: "14px", marginTop: "10px" }}>{name}</Text>
             {/* {record.sku && (
               <Text type="secondary" style={{ fontSize: "12px" }}>
                 SKU: {record.sku}
@@ -230,10 +239,10 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
           <div style={{ marginBottom: "4px" }}>
             <Tag color={
               record.stock_status === 'in_stock' ? 'success' :
-              record.stock_status === 'low_stock' ? 'warning' : 'error'
+                record.stock_status === 'low_stock' ? 'warning' : 'error'
             }>
               {record.stock_status === 'in_stock' ? 'In Stock' :
-               record.stock_status === 'low_stock' ? 'Low Stock' : 'Out of Stock'}
+                record.stock_status === 'low_stock' ? 'Low Stock' : 'Out of Stock'}
             </Tag>
           </div>
           <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
@@ -276,7 +285,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       render: (_, record) => {
         const profit_margin = record.selling_price - record.buying_price;
         const profit_percentage = record.buying_price > 0 ? ((profit_margin / record.buying_price) * 100).toFixed(2) : 0;
-        
+
         return (
           <div>
             <Text strong style={{ display: "block", color: "#1890ff" }}>
@@ -330,7 +339,10 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
             type="text"
             icon={<FiMoreVertical />}
             className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
           />
         </Dropdown>
       ),
@@ -339,11 +351,10 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
 
   return (
     <>
-      <div className="product-list">
+      <div className="product-list" onClick={(e) => e.stopPropagation()}>
         <Table
           columns={columns}
           dataSource={filteredProducts}
-          // loading={isLoading}
           rowKey="id"
           pagination={{
             pageSize: 10,
@@ -351,7 +362,11 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
             showTotal: (total) => `Total ${total} products`,
           }}
           onRow={(record) => ({
-            onClick: () => onProductRevenueClick(record),
+            onClick: (e) => {
+              if (!e.target.closest('.ant-dropdown-menu') && !e.target.closest('.action-dropdown-button')) {
+                onProductRevenueClick(record);
+              }
+            },
             style: { cursor: 'pointer' }
           })}
           className="product-table"

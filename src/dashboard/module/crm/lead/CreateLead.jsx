@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -53,7 +53,17 @@ const findIndianDefaults = (currencies, countries) => {
   };
 };
 
-const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categoriesData, sourcesData, statusesData }) => {
+const CreateLead = ({
+  open,
+  onCancel,
+  pipelines,
+  currencies,
+  countries,
+  sourcesData,
+  statusesData,
+  categoriesData,
+  initialValues
+}) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);
   const dispatch = useDispatch();
@@ -64,9 +74,6 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const selectRef = React.useRef(null);
-
-
-
 
   // Add state to track selected pipeline
   const [selectedPipeline, setSelectedPipeline] = useState(null);
@@ -101,8 +108,6 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
     { value: "medium", label: "Medium Interest", color: "#faad14" },
     { value: "low", label: "Low Interest", color: "#ff4d4f" },
   ];
-
-
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
@@ -151,8 +156,23 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
     setIsAddPipelineVisible(true);
   };
 
+  // Handle initial values when form opens
+  useEffect(() => {
+    if (open && initialValues) {
+      console.log('Setting initial form values:', initialValues); // Debug log
+      form.setFieldsValue(initialValues);
+
+      // Double check if inquiry_id is set
+      const formValues = form.getFieldsValue();
+      console.log('Form values after setting:', formValues); // Debug log
+    }
+  }, [open, initialValues, form]);
+
   const handleSubmit = async (values) => {
     try {
+      console.log('Form values on submit:', values); // Debug log
+      console.log('Initial values reference:', initialValues); // Debug log
+
       // Get the selected country's phone code
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
 
@@ -163,31 +183,28 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
 
       const formData = {
         ...values,
+        inquiry_id: values.inquiry_id || initialValues?.inquiry_id || null, // Ensure inquiry_id is preserved
         telephone: formattedPhone,
-        // Map stage to leadStage for backend compatibility
-        leadStage: values.stage, // Convert stage to leadStage
-        // Convert lead_members array to nested object like project_members
+        leadStage: values.stage,
         lead_members: {
           lead_members: values.lead_members || []
         },
-        // Make sure other null fields have default values
         assigned: values.assigned || [],
         files: values.files || [],
-        tag: values.tag || [],
         status: values.status || 'active',
         source: values.source || 'website',
-        pipeline: values.pipeline, // Add pipeline field
-        client_id: loggedInUser?.client_id,
-        created_by: loggedInUser?.username
+        pipeline: values.pipeline
       };
 
-      await createLead(formData).unwrap();
+      console.log('Submitting lead with data:', formData); // Debug log
+
+      const response = await createLead(formData).unwrap();
       message.success("Lead created successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to create lead");
-      console.error("Create Lead Error:", error);
+      console.error('Error creating lead:', error);
+      message.error(error.data?.message || "Failed to create lead");
     }
   };
 
@@ -381,6 +398,14 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
         className="lead-form custom-form"
         style={{ padding: "24px" }}
       >
+        {/* Hidden field for inquiry_id */}
+        <Form.Item
+          name="inquiry_id"
+          hidden={true}
+        >
+          <Input type="hidden" />
+        </Form.Item>
+
         {/* Lead Details - Moved to top */}
         <div className="section-title" style={{ marginBottom: '16px' }}>
           <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Lead Details</Text>
@@ -605,7 +630,7 @@ const CreateLead = ({ open, onCancel, pipelines, currencies, countries, categori
               popupClassName="custom-select-dropdown"
               listHeight={100}
               dropdownStyle={{
-                maxHeight: '120px', 
+                maxHeight: '120px',
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollBehavior: 'smooth'

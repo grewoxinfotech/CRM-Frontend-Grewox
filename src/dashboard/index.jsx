@@ -19,7 +19,7 @@ import LeadsTable from "./DashboardComponents/LeadsTable";
 import DealsTable from "./DashboardComponents/DealsTable";
 import TasksTable from "./DashboardComponents/TasksTable";
 import MeetingsTable from './DashboardComponents/MeetingsTable';
-import Analytics from './DashboardComponents/Analytics';
+import Analytics from "./DashboardComponents/Analytics/index.jsx";
 
 const { Text } = Typography;
 
