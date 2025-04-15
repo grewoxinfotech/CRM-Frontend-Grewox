@@ -106,6 +106,7 @@ export default function OTPVerification() {
     return (
         <div className="otp-container">
             <div className="otp-split">
+                
                 <motion.div
                     className="illustration-side"
                     initial={{ opacity: 0, x: -20 }}
@@ -168,7 +169,7 @@ export default function OTPVerification() {
 
                         <Button
                             type="primary"
-                            onClick={onFinish}
+                            onClick={() => navigate('/reset-password')}
                             loading={loading}
                             className="verify-button"
                             block

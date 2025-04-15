@@ -9,7 +9,7 @@ import superadminProfileReducer from "../superadmin/module/profile/services/supe
 import { settingsApi } from "../superadmin/module/settings/services/settingsApi.js";
 import { planApi } from "../superadmin/module/plans/services/planApi.js";
 import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
-import { notesApi } from "../superadmin/module/notes/services/NotesApi.js";
+import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
 import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
 import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
 import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
@@ -64,9 +64,12 @@ import { contactApi } from "../dashboard/module/crm/contact/services/contactApi"
 import { companyInquiryApi } from "../dashboard/module/crm/company-inquiry/services/companyInquiryApi";
 import { customFormApi } from "../dashboard/module/crm/generate-link/services/customFormApi";
 import { settingApi } from "../superadmin/module/settings/general/services/settingApi";
+import { activityApi } from "../dashboard/module/crm/lead/overview/activity/services/activityApi";
 import { followupTaskApi } from "../dashboard/module/crm/deal/overview/followup/task/services/followupTaskApi";
 import { followupMeetingApi } from "../dashboard/module/crm/deal/overview/followup/metting/services/followupMettingApi";
 import { followupCallApi } from "../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi";
+import { forgotPasswordApi } from "../auth/forgot-password/services/forgot-passwordApi";
+
 const persistConfig = {
   key: "root",
   storage,
@@ -141,6 +144,8 @@ const rootReducer = combineReducers({
   [followupMeetingApi.reducerPath]: followupMeetingApi.reducer,
   [followupCallApi.reducerPath]: followupCallApi.reducer,
   [settingApi.reducerPath]: settingApi.reducer,
+  [activityApi.reducerPath]: activityApi.reducer,
+  [forgotPasswordApi.reducerPath]: forgotPasswordApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -216,6 +221,8 @@ export const store = configureStore({
       .concat(followupMeetingApi.middleware)
       .concat(followupCallApi.middleware)
       .concat(settingApi.middleware)
+      .concat(activityApi.middleware)
+      .concat(forgotPasswordApi.middleware)
 });
 
 export const persistor = persistStore(store);

@@ -1,120 +1,108 @@
 import React from 'react';
-import { Card, Timeline, Tag, Avatar, Tooltip } from 'antd';
+import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty } from 'antd';
 import {
     FiPlus, FiEdit2, FiTrash2, FiFileText, FiDollarSign,
     FiFlag, FiCheckSquare, FiMessageSquare, FiUser, FiClock
 } from 'react-icons/fi';
 import './activity.scss';
+import { useGetActivitiesQuery } from '../../../lead/overview/activity/services/activityApi';
+import moment from 'moment';
 
 const DealActivity = ({ deal }) => {
-    // Dummy data for demonstration
-    const activities = [
-        {
-            id: 1,
-            type: 'task',
-            action: 'created',
-            title: 'Design System Implementation',
-            user: {
-                name: 'John Doe',
-                avatar: 'https://randomuser.me/api/portraits/men/1.jpg'
-            },
-            timestamp: '2024-03-17T09:15:00',
-            icon: <FiCheckSquare />,
-            color: '#1890ff'
-        },
-        {
-            id: 2,
-            type: 'milestone',
-            action: 'completed',
-            title: 'Project Planning Phase',
-            user: {
-                name: 'Jane Smith',
-                avatar: 'https://randomuser.me/api/portraits/women/1.jpg'
-            },
-            timestamp: '2024-03-16T14:20:00',
-            icon: <FiFlag />,
-            color: '#52c41a'
-        },
-        {
-            id: 3,
-            type: 'note',
-            action: 'added',
-            title: 'Client Meeting Notes',
-            user: {
-                name: 'Mike Johnson',
-                avatar: 'https://randomuser.me/api/portraits/men/2.jpg'
-            },
-            timestamp: '2024-03-15T10:30:00',
-            icon: <FiMessageSquare />,
-            color: '#722ed1'
-        },
-        {
-            id: 4,
-            type: 'payment',
-            action: 'received',
-            title: '$5,000 Payment',
-            user: {
-                name: 'Sarah Wilson',
-                avatar: 'https://randomuser.me/api/portraits/women/2.jpg'
-            },
-            timestamp: '2024-03-14T16:45:00',
-            icon: <FiDollarSign />,
-            color: '#52c41a'
-        },
-        {
-            id: 5,
-            type: 'file',
-            action: 'uploaded',
-            title: 'Project Requirements Document',
-            user: {
-                name: 'Tom Brown',
-                avatar: 'https://randomuser.me/api/portraits/men/3.jpg'
-            },
-            timestamp: '2024-03-13T11:20:00',
-            icon: <FiFileText />,
-            color: '#faad14'
-        }
-    ];
+    const { data: response, isLoading, error } = useGetActivitiesQuery(deal.id, {
+        skip: !deal.id // Skip the query if deal.id is not available
+    });
 
     const getActionColor = (action) => {
-        switch (action) {
+        switch (action?.toLowerCase()) {
             case 'created':
                 return '#1890ff';
             case 'completed':
                 return '#52c41a';
             case 'added':
                 return '#722ed1';
-            case 'received':
+            case 'updated':
                 return '#52c41a';
             case 'uploaded':
                 return '#faad14';
+            case 'deleted':
+                return '#ff4d4f';
             default:
                 return '#1890ff';
         }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    const getActivityIcon = (activityFrom) => {
+        switch (activityFrom?.toLowerCase()) {
+            case 'task':
+                return <FiCheckSquare />;
+            case 'milestone':
+                return <FiFlag />;
+            case 'note':
+                return <FiMessageSquare />;
+            case 'status':
+                return <FiDollarSign />;
+            case 'file':
+                return <FiFileText />;
+            case 'meeting':
+                return <FiUser />;
+            default:
+                return <FiMessageSquare />;
+        }
     };
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        return moment(dateString).format('DD MMM YYYY, hh:mm A');
+    };
+
+    if (isLoading) {
+        return (
+            <div className="deal-activity">
+                <Card title="Deal Activity">
+                    <div style={{ textAlign: 'center', padding: '20px' }}>
+                        <Spin size="large" />
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="deal-activity">
+                <Card title="Deal Activity">
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                        Error loading activities
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
+    const activities = response?.data || [];
+
+    if (activities.length === 0) {
+        return (
+            <div className="deal-activity">
+                <Card title="Deal Activity">
+                    <Empty description="No activities found for this deal" />
+                </Card>
+            </div>
+        );
+    }
+
     return (
-        <div className="project-activity">
-            <Card title="Project Activity">
+        <div className="deal-activity">
+            <Card title="Deal Activity">
                 <Timeline
                     items={activities.map(activity => ({
                         dot: (
                             <div
                                 className="timeline-dot"
-                                style={{ color: activity.color }}
+                                style={{ color: getActionColor(activity.action) }}
                             >
-                                {activity.icon}
+                                {getActivityIcon(activity.activity_from)}
                             </div>
                         ),
                         children: (
@@ -122,21 +110,28 @@ const DealActivity = ({ deal }) => {
                                 <div className="activity-content">
                                     <div className="activity-header">
                                         <Tag color={getActionColor(activity.action)}>
-                                            {activity.action.charAt(0).toUpperCase() + activity.action.slice(1)}
+                                            {activity.action?.charAt(0)?.toUpperCase() + activity.action?.slice(1)}
                                         </Tag>
-                                        <h4>{activity.title}</h4>
+                                        <h4>{activity.activity_message || 'Untitled Activity'}</h4>
                                     </div>
                                     <div className="activity-meta">
                                         <span className="user-info">
                                             <FiUser />
-                                            <Avatar src={activity.user.avatar} size="small" />
-                                            {activity.user.name}
+                                            <Avatar size="small">
+                                                {activity.performed_by?.charAt(0)?.toUpperCase()}
+                                            </Avatar>
+                                            {activity.performed_by || 'Unknown User'}
                                         </span>
                                         <span className="timestamp">
                                             <FiClock />
-                                            {formatDate(activity.timestamp)}
+                                            {formatDate(activity.createdAt)}
                                         </span>
                                     </div>
+                                    {activity.activity_message && (
+                                        <div className="activity-description">
+                                            {activity.activity_message}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )

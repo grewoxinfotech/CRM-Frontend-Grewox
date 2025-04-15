@@ -8,7 +8,7 @@ import {
     useUpdateNotesMutation,
     useDeleteNotesMutation,
     useGetAllNotesQuery
-} from '../../../../../../superadmin/module/notes/services/NotesApi';
+} from '../../../../../../superadmin/module/notes/services/notesApi';
 import './notes.scss';
 
 const { TextArea } = Input;
@@ -349,7 +349,7 @@ const DealNotes = ({ deal }) => {
                 );
                 message.success('Note updated successfully');
             } else {
-                const response = await createNote({ id: leadId, data: payload }).unwrap();
+                const response = await createNote({ id: dealId, data: payload }).unwrap();
                 setLocalNotes(prevNotes => [...prevNotes, response.data]);
                 message.success('Note created successfully');
             }

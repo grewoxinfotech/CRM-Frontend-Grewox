@@ -1,59 +1,40 @@
-import { fetchBaseQuery } from "@reduxjs/toolkit/query";
-import { logout } from "../auth/services/authSlice";
+import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_URL,
-  prepareHeaders: (headers, { getState, endpoint }) => {
-    const token = getState().auth.token;
-
-    // Don't add auth token for verify-signup and resend-otp
-    if (
-      endpoint !== "verifySignup" &&
-      endpoint !== "resendSignupOtp" &&
-      token
-    ) {
-      headers.set("authorization", `Bearer ${token}`);
-    }
-
-    // Set default headers for better API compatibility
-    headers.set("Accept", "application/json");
-
-    return headers;
-  },
+    baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    credentials: 'include',
+    prepareHeaders: (headers, { getState }) => {
+        const token = getState()?.auth?.token;
+        if (token) {
+            headers.set('authorization', `Bearer ${token}`);
+        }
+        return headers;
+    },
 });
 
 export const baseQueryWithReauth = async (args, api, extraOptions) => {
-  try {
-    const result = await baseQuery(args, api, extraOptions);
+    let result = await baseQuery(args, api, extraOptions);
 
-    // Handle 401 Unauthorized
-    if (
-      result.error &&
-      result.error.status === 401 &&
-      !args.url.includes("verify-signup") &&
-      !args.url.includes("resend-signup-otp")
-    ) {
-      api.dispatch(logout());
-    }
+    // Handle 401 errors and token refresh if needed
+    if (result.error && result.error.status === 401) {
+        // Try to refresh token
+        const refreshResult = await baseQuery(
+            { url: '/auth/refresh-token', method: 'POST' },
+            api,
+            extraOptions
+        );
 
-    // Log any errors for debugging
-    if (result.error) {
-      console.error("API Error:", {
-        url: args.url,
-        status: result.error.status,
-        data: result.error.data,
-      });
+        if (refreshResult.data) {
+            // Store the new token
+            api.dispatch({ type: 'auth/setToken', payload: refreshResult.data.token });
+
+            // Retry the original request
+            result = await baseQuery(args, api, extraOptions);
+        } else {
+            // If refresh fails, logout user
+            api.dispatch({ type: 'auth/logout' });
+        }
     }
 
     return result;
-  } catch (error) {
-    console.error("API Request Failed:", error);
-    return {
-      error: {
-        status: "FETCH_ERROR",
-        error: "API request failed",
-        data: error.message,
-      },
-    };
-  }
 };

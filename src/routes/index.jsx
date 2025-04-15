@@ -19,6 +19,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ForgotPassword from "../auth/forgot-password";
 import Branch from "../dashboard/module/hrm/Branch";
 import OTPVerification from "../auth/otp";
+import ResetPassword from "../auth/resend";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
@@ -104,6 +105,10 @@ const routes = createBrowserRouter([
   {
     path: "/otp",
     element: <OTPVerification />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPassword />,
   },
   {
     path: "/auth-redirect",

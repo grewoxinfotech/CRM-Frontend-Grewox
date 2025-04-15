@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Form, Input, Button, message } from 'antd';
 import { motion } from 'framer-motion';
-import { FiMail, FiBox, FiArrowLeft } from 'react-icons/fi';
+import { FiMail, FiBox, FiArrowLeft, FiLock } from 'react-icons/fi';
 import * as yup from 'yup';
 import form_graphic from '../../assets/auth/form_grapihc.png';
 import { Link } from 'react-router-dom';
+import { useSendResetEmailMutation } from './services/forgot-passwordApi';
 import './forgot-password.scss';
 
 const validationSchema = yup.object().shape({
@@ -17,49 +18,87 @@ const validationSchema = yup.object().shape({
 
 export default function ForgotPassword() {
     const [loading, setLoading] = useState(false);
-    const [emailSent, setEmailSent] = useState(false);
+    const [showOtpVerification, setShowOtpVerification] = useState(false);
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [timer, setTimer] = useState(30);
+    const inputRefs = useRef([]);
     const [form] = Form.useForm();
+    const [userEmail, setUserEmail] = useState('');
 
-    const validateForm = async (values) => {
-        try {
-            await validationSchema.validate(values, { abortEarly: false });
-            return true;
-        } catch (err) {
-            const errors = {};
-            err.inner.forEach((error) => {
-                errors[error.path] = error.message;
-            });
-            form.setFields(
-                Object.keys(errors).map((key) => ({
-                    name: key,
-                    errors: [errors[key]]
-                }))
-            );
-            return false;
+    // RTK Query hooks
+    const [sendResetEmail] = useSendResetEmailMutation();
+
+    React.useEffect(() => {
+        let interval;
+        if (timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [timer]);
+
+    const handleOtpChange = (value, index) => {
+        if (value.length > 1) {
+            value = value[value.length - 1];
+        }
+
+        const newOtp = [...otp];
+        newOtp[index] = value;
+        setOtp(newOtp);
+
+        // Move to next input if value is entered
+        if (value !== '' && index < 5) {
+            inputRefs.current[index + 1].focus();
+        }
+    };
+
+    const handleKeyDown = (e, index) => {
+        // Move to previous input on backspace if current input is empty
+        if (e.key === 'Backspace' && index > 0 && otp[index] === '') {
+            inputRefs.current[index - 1].focus();
+        }
+    };
+
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const pastedData = e.clipboardData.getData('text').slice(0, 6);
+        const newOtp = [...otp];
+
+        for (let i = 0; i < pastedData.length; i++) {
+            if (i < 6) {
+                newOtp[i] = pastedData[i];
+            }
+        }
+
+        setOtp(newOtp);
+        if (newOtp[5]) {
+            inputRefs.current[5].focus();
         }
     };
 
     const onFinish = async (values) => {
         try {
-            const isValid = await validateForm(values);
+            const isValid = await validationSchema.validate(values, { abortEarly: false });
             if (!isValid) return;
 
             setLoading(true);
-            // Add your password reset logic here
-            console.log('Reset password for:', values.email);
+            setUserEmail(values.email);
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            setEmailSent(true);
+            // Call the sendResetEmail API
+            const response = await sendResetEmail({ email: values.email }).unwrap();
+            
             message.success({
-                content: 'Reset instructions sent to your email!',
+                content: response.message || 'Verification code sent to your email!',
                 icon: <span className="success-icon">✓</span>
             });
+            
+            setShowOtpVerification(true);
+            setTimer(30);
         } catch (error) {
             console.error('Reset password error:', error);
             message.error({
-                content: error?.response?.data?.message || 'Failed to send reset instructions. Please try again.',
+                content: error?.data?.message || 'Failed to send verification code. Please try again.',
                 icon: <span className="error-icon">×</span>
             });
         } finally {
@@ -67,9 +106,49 @@ export default function ForgotPassword() {
         }
     };
 
+    const handleVerifyCode = () => {
+        const otpString = otp.join('');
+        if (otpString.length !== 6) {
+            message.error({
+                content: 'Please enter complete verification code',
+                icon: <span className="error-icon">×</span>
+            });
+            return;
+        }
+
+        setLoading(true);
+        // Simulate API verification
+        setTimeout(() => {
+            setLoading(false);
+            // Navigate to reset password page after verification
+            window.location.href = '/reset-password';
+        }, 1500);
+    };
+
+    const resendOTP = () => {
+        if (timer > 0) return;
+        setTimer(30);
+        // Call the sendResetEmail API again
+        sendResetEmail({ email: userEmail })
+            .unwrap()
+            .then(() => {
+                message.success({
+                    content: 'New verification code sent!',
+                    icon: <span className="success-icon">✓</span>
+                });
+            })
+            .catch(() => {
+                message.error({
+                    content: 'Failed to send new code',
+                    icon: <span className="error-icon">×</span>
+                });
+            });
+    };
+
     return (
         <div className="forgot-password-container">
             <div className="forgot-password-split">
+               
                 <motion.div
                     className="illustration-side"
                     initial={{ opacity: 0, x: -20 }}
@@ -93,8 +172,8 @@ export default function ForgotPassword() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.3, duration: 0.6 }}
                     >
-                        <h2>Reset Password</h2>
-                        <p>We'll help you get back into your account</p>
+                        <h2>{showOtpVerification ? 'Verify Your Email' : 'Reset Password'}</h2>
+                        <p>{showOtpVerification ? 'Enter the code we sent to your email' : "We'll help you get back into your account"}</p>
                     </motion.div>
                 </motion.div>
 
@@ -105,77 +184,100 @@ export default function ForgotPassword() {
                     transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 >
                     <Link to="/login" className="back-link">
-                        <FiArrowLeft /> Back to Login
+                        <FiArrowLeft /> Back
                     </Link>
 
-                    <div className="forgot-password-header">
-                        <h1>Forgot Password?</h1>
-                        <p>Enter your email address and we'll send you instructions to reset your password.</p>
-                    </div>
+                    {showOtpVerification ? (
+                        <div className="otp-verification">
+                            <div className="otp-header">
+                                <h1>Enter Verification Code</h1>
+                                <p>We've sent a 6-digit code to your email address. Enter the code below to verify.</p>
+                            </div>
 
-                    {emailSent ? (
-                        <motion.div
-                            className="success-message"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            <div className="success-icon-large">✓</div>
-                            <h2>Check Your Email</h2>
-                            <p>We've sent password reset instructions to your email address. Please check your inbox.</p>
-                            <Button
-                                type="primary"
-                                onClick={() => form.resetFields()}
-                                className="send-again-button"
-                            >
-                                Send Again
-                            </Button>
-                        </motion.div>
-                    ) : (
-                        <Form
-                            form={form}
-                            name="forgot-password"
-                            className="forgot-password-form"
-                            onFinish={onFinish}
-                            layout="vertical"
-                            validateTrigger={['onBlur', 'onChange']}
-                        >
-                            <Form.Item
-                                label="Email Address"
-                                name="email"
-                                validateTrigger={['onBlur', 'onChange']}
-                                rules={[
-                                    {
-                                        validator: async (_, value) => {
-                                            if (!value) return Promise.reject('Email is required');
-                                            try {
-                                                await yup.string().email('Please enter a valid email address').validate(value);
-                                                return Promise.resolve();
-                                            } catch (err) {
-                                                return Promise.reject(err.message);
-                                            }
-                                        }
-                                    }
-                                ]}
-                            >
-                                <Input
-                                    prefix={<FiMail className="site-form-item-icon" />}
-                                    placeholder="Enter your email"
-                                    size="large"
-                                />
-                            </Form.Item>
+                            <div className="otp-form">
+                                <div className="otp-inputs">
+                                    {otp.map((digit, index) => (
+                                        <Input
+                                            key={index}
+                                            ref={el => inputRefs.current[index] = el}
+                                            value={digit}
+                                            onChange={e => handleOtpChange(e.target.value, index)}
+                                            onKeyDown={e => handleKeyDown(e, index)}
+                                            onPaste={handlePaste}
+                                            maxLength={1}
+                                            className="otp-input"
+                                            size="large"
+                                        />
+                                    ))}
+                                </div>
 
-                            <Form.Item>
                                 <Button
                                     type="primary"
-                                    htmlType="submit"
+                                    onClick={handleVerifyCode}
                                     loading={loading}
-                                    className="submit-button"
+                                    className="verify-button"
                                     block
                                 >
-                                    {loading ? 'Sending Instructions...' : 'Send Reset Instructions'}
+                                    {loading ? 'Verifying...' : 'Verify Code'}
                                 </Button>
-                            </Form.Item>
-                        </Form>
+
+                                <div className="resend-section">
+                                    <p>Didn't receive the code?</p>
+                                    <Button
+                                        type="link"
+                                        onClick={resendOTP}
+                                        disabled={timer > 0}
+                                        className="resend-button"
+                                    >
+                                        {timer > 0 ? `Resend in ${timer}s` : 'Resend Code'}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="forgot-password-header">
+                                <div className="header-icon">
+                                    <FiLock />
+                                </div>
+                                <h1>Forgot Password?</h1>
+                                <p>Enter your email address and we'll send you instructions to reset your password.</p>
+                            </div>
+
+                            <Form
+                                form={form}
+                                name="forgot-password"
+                                className="forgot-password-form"
+                                onFinish={onFinish}
+                                layout="vertical"
+                            >
+                                <Form.Item
+                                    name="email"
+                                    rules={[
+                                        { required: true, message: 'Please enter your email address' },
+                                        { type: 'email', message: 'Please enter a valid email address' }
+                                    ]}
+                                >
+                                    <Input
+                                        prefix={<FiMail className="site-form-item-icon" />}
+                                        placeholder="Enter your email"
+                                        size="large"
+                                    />
+                                </Form.Item>
+
+                                <Form.Item>
+                                    <Button
+                                        type="primary"
+                                        htmlType="submit"
+                                        className="submit-button"
+                                        loading={loading}
+                                        block
+                                    >
+                                        {loading ? 'Sending...' : 'Send Reset Instructions'}
+                                    </Button>
+                                </Form.Item>
+                            </Form>
+                        </>
                     )}
                 </motion.div>
             </div>
