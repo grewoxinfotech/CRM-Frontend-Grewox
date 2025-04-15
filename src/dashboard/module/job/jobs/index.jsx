@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, DatePicker
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiCalendar
 } from 'react-icons/fi';
 import './job.scss';
 import moment from 'moment';
@@ -21,6 +21,7 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
+const { RangePicker } = DatePicker;
 
 const Job = () => {
     const [isFormVisible, setIsFormVisible] = useState(false);
@@ -28,6 +29,7 @@ const Job = () => {
     const [selectedJob, setSelectedJob] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [dateRange, setDateRange] = useState([]);
     const [exportLoading, setExportLoading] = useState(false);
     const searchInputRef = useRef(null);
 
@@ -38,12 +40,19 @@ const Job = () => {
         if (!jobsData?.data) return [];
         
         const searchTerm = searchText.toLowerCase().trim();
-        if (!searchTerm) return jobsData.data;
         
-        return jobsData.data.filter(job => 
-            job.title?.toLowerCase().includes(searchTerm)
-        );
-    }, [jobsData, searchText]);
+        return jobsData.data.filter(job => {
+            const matchesSearch = !searchTerm || 
+                job.title?.toLowerCase().includes(searchTerm);
+            
+            const matchesDateRange = !dateRange?.length || (
+                moment(job.startDate).isSameOrAfter(dateRange[0], 'day') &&
+                moment(job.endDate).isSameOrBefore(dateRange[1], 'day')
+            );
+            
+            return matchesSearch && matchesDateRange;
+        });
+    }, [jobsData, searchText, dateRange]);
 
     const handleAddJob = () => {
         setSelectedJob(null);
@@ -237,15 +246,26 @@ const Job = () => {
                     <Text type="secondary">Manage all jobs in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search jobs..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search jobs..."
+                            allowClear
+                            onChange={(e) => handleSearch(e.target.value)}
+                            value={searchText}
+                            ref={searchInputRef}
+                            className="search-input"
+                            style={{ width: '300px' }}
+                        />
+                        <RangePicker
+                            suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            onChange={(dates) => setDateRange(dates)}
+                            value={dateRange}
+                            allowClear
+                            style={{ width: '300px', height: '40px' }}
+                            placeholder={['Start Date', 'End Date']}
+                        />
+                    </div>
                     <div className="action-buttons">
                         <Dropdown 
                             overlay={exportMenu} 

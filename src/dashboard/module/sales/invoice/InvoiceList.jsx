@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message, Space, Input } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Space, Input, DatePicker } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -23,8 +23,9 @@ import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
 
 const { Text } = Typography;
+const { RangePicker } = DatePicker;
 
-const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
+const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
  
 
   // const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery(id);
@@ -46,7 +47,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
    
   ];
 
-  // Filter invoices based on search text
+  // Filter invoices based on search text and date range
   const filteredInvoices = React.useMemo(() => {
     return invoices?.filter((invoice) => {
       const searchLower = searchText.toLowerCase();
@@ -55,16 +56,19 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       const total = invoice?.total?.toString().toLowerCase() || "";
       const status = invoice?.payment_status?.toLowerCase() || "";
 
-
-      return (
-        !searchText ||
+      const matchesSearch = !searchText ||
         invoiceNumber.includes(searchLower) ||
         customerName.includes(searchLower) ||
         total.includes(searchLower) ||
-        status.includes(searchLower)
-      );
+        status.includes(searchLower);
+
+      const matchesDateRange = !filters.dateRange?.length ||
+        (dayjs(invoice?.issueDate).isAfter(filters.dateRange[0]) &&
+          dayjs(invoice?.dueDate).isBefore(filters.dateRange[1]));
+
+      return matchesSearch && matchesDateRange;
     });
-  }, [invoices, searchText]);
+  }, [invoices, searchText, filters]);
 
   const getStatusTag = (status) => {
     const statusColors = {
@@ -195,12 +199,15 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
         label: "Edit Invoice",
         onClick: () => handleEdit(record),
       },
-      {
-        key: "download",
-        icon: <FiDownload />,
-        label: "Download Invoice",
-        onClick: () => console.log("Download Invoice:", record.invoice_number),
-      },
+      // {
+      //   key: "download",
+      //   icon: <FiDownload />,
+      //   label: "Download Invoice",
+      //   onClick: () => {
+      //     setSelectedInvoice(record);
+      //     setIsViewModalOpen(true);
+      //   },
+      // },
       {
         key: "delete",
         icon: <FiTrash2 />,
@@ -243,7 +250,6 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       title: "Invoice Number",
       dataIndex: "salesInvoiceNumber",
       key: "salesInvoiceNumber",
-      
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -268,9 +274,12 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
           </Space>
         </div>
       ),
-      onFilter: (value, record) =>
-        record.salesInvoiceNumber.toLowerCase().includes(value.toLowerCase()) ||
-        record.customerName?.toLowerCase().includes(value.toLowerCase()),
+      onFilter: (value, record) => {
+        const invoiceNumber = record?.salesInvoiceNumber?.toLowerCase() || '';
+        const customerName = record?.customerName?.toLowerCase() || '';
+        return invoiceNumber.includes(value.toLowerCase()) || 
+               customerName.includes(value.toLowerCase());
+      },
       render: (text, record) => (
         <Text strong style={{ color: '#1890ff', cursor: 'pointer' }} onClick={() => handleView(record)}>
           {text}
@@ -310,22 +319,23 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
           </Space>
         </div>
       ),
-      onFilter: (value, record) =>
-        record.customerName.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
+      onFilter: (value, record) => {
+        const customerName = getCustomerName(record?.customer, record?.category)?.toLowerCase() || '';
+        return customerName.includes(value.toLowerCase());
+      },
     },
     {
       title: "Issue Date",
       dataIndex: "issueDate",
       key: "issueDate",
-      render: (date) => dayjs(date).format("DD/MM/YYYY"),
+      render: (date) => dayjs(date).format("DD-MM-YYYY"),
       sorter: (a, b) => new Date(a.issueDate) - new Date(b.issueDate),
     },
     {
       title: "Due Date",
       dataIndex: "dueDate",
       key: "dueDate",
-      render: (date) => dayjs(date).format("DD/MM/YYYY"),
+      render: (date) => dayjs(date).format("DD-MM-YYYY"),
       sorter: (a, b) => new Date(a.dueDate) - new Date(b.dueDate),
     },
     {

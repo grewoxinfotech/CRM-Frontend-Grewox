@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip, Menu, Input, Select } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip, Menu, Input, Select, DatePicker } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -19,7 +19,8 @@ import {
   FiSearch,
   FiTag,
   FiLayers,
-  FiStar
+  FiStar,
+  FiCalendar
 } from "react-icons/fi";
 import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
@@ -31,7 +32,8 @@ import { useNavigate } from "react-router-dom";
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
 import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
-
+import moment from 'moment';
+import dayjs from 'dayjs';
 const { Text } = Typography;
 
 const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
@@ -243,6 +245,48 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
           </Tag>
         );
       },
+    },
+    {
+      title: "Expected Date",
+      dataIndex: "closedDate",
+      key: "closedDate", 
+      render: (date) => dayjs(date).format('DD-MM-YYYY'),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+          <div style={{ padding: 8 }}>
+              <DatePicker
+                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+                  onChange={(date) => {
+                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
+                      setSelectedKeys(dateStr ? [dateStr] : []);
+                  }}
+                  style={{ marginBottom: 8, display: 'block' }}
+              />
+              <Space>
+                  <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                  >
+                      Filter
+                  </Button>
+                  <Button
+                      onClick={() => clearFilters()}
+                      size="small"
+                      style={{ width: 90 }}
+                  >
+                      Reset
+                  </Button>
+              </Space>
+          </div>
+      ),
+      onFilter: (value, record) => {
+          if (!value || !record.closedDate) return false;
+          return dayjs(record.closedDate).format('YYYY-MM-DD') === value;
+      },
+      filterIcon: filtered => (
+          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+      )
     },
     {
       title: "Value",

@@ -80,13 +80,7 @@ const Customer = () => {
 
   const handleCustomerClick = (customer) => {
     navigate(`/dashboard/crm/customers/${customer.id}`);
-};
-
-const handleCustomerRevenueClick = (customer) => {
-  navigate(`/dashboard/sales/revenue`, { 
-    state: { selectedCustomer: customer } 
-  });
-};
+  };
 
   const handleDelete = (record) => {
     Modal.confirm({
@@ -122,10 +116,10 @@ const handleCustomerRevenueClick = (customer) => {
       const data = customersData.map((customer) => ({
         Name: customer.name,
         Email: customer.email,
-        Phone: customer.phone,
-        Company: customer.company,
-        Address: customer.address,
-        Status: customer.status,
+        Phone: customer.contact,
+        // Company: customer.company,
+        // Address: customer.address,
+        // Status: customer.status,
         "Created Date": moment(customer.created_at).format("YYYY-MM-DD"),
       }));
 
@@ -294,13 +288,13 @@ const handleCustomerRevenueClick = (customer) => {
 
       <Card className="customer-table-card">
         <CustomerList
+          loading={isLoading}
           custdata={custdata}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
-          searchText={searchText}
           onCustomerClick={handleCustomerClick}
-          onCustomerRevenueClick={handleCustomerRevenueClick}
+          searchText={searchText}
         />
       </Card>
 

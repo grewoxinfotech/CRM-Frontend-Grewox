@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, DatePicker
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiCalendar
 } from 'react-icons/fi';
 import './offerLetters.scss';
 import moment from 'moment';
@@ -22,6 +22,7 @@ import { useGetAllJobsQuery } from '../jobs/services/jobApi';
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const OfferLetters = () => {
     const { data: offerLettersData, isLoading } = useGetAllOfferLettersQuery();
@@ -32,6 +33,7 @@ const OfferLetters = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
+    const [dateRange, setDateRange] = useState([]);
     const [filteredLetters, setFilteredLetters] = useState([]);
     const searchInputRef = useRef(null);
 
@@ -54,11 +56,6 @@ const OfferLetters = () => {
 
     useEffect(() => {
         if (offerLettersData?.data) {
-            if (!searchText) {
-                setFilteredLetters(offerLettersData.data);
-                return;
-            }
-
             const searchLower = searchText.toLowerCase();
             const filtered = offerLettersData.data.filter(letter => {
                 // Search in job details
@@ -76,12 +73,18 @@ const OfferLetters = () => {
                     (letter.expected_joining_date && moment(letter.expected_joining_date).format('DD MMM YYYY').toLowerCase().includes(searchLower))
                 );
 
-                return jobMatch || applicantMatch || otherFieldsMatch;
+                // Date range filtering
+                const matchesDateRange = !dateRange?.length || (
+                    moment(letter.expected_joining_date).isSameOrAfter(dateRange[0], 'day') &&
+                    moment(letter.offer_expiry).isSameOrBefore(dateRange[1], 'day')
+                );
+
+                return (jobMatch || applicantMatch || otherFieldsMatch) && matchesDateRange;
             });
 
             setFilteredLetters(filtered);
         }
-    }, [offerLettersData, searchText, applicationMap, jobs]);
+    }, [offerLettersData, searchText, applicationMap, jobs, dateRange]);
 
     const handleAddLetter = () => {
         setSelectedLetter(null);
@@ -261,19 +264,26 @@ const OfferLetters = () => {
                     <Text type="secondary">Manage all offer letters</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search by job, applicant, salary, dates..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                        style={{
-                            width: '300px',
-                            marginRight: '16px'
-                        }}
-                    />
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search by job, applicant, salary, dates..."
+                            allowClear
+                            onChange={(e) => handleSearch(e.target.value)}
+                            value={searchText}
+                            ref={searchInputRef}
+                            className="search-input"
+                            style={{ width: '300px' }}
+                        />
+                        <RangePicker
+                            suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            onChange={(dates) => setDateRange(dates)}
+                            value={dateRange}
+                            allowClear
+                            style={{ width: '300px', height: '40px' }}
+                            placeholder={['Expected Joining Date', 'Offer Expiry Date']}
+                        />
+                    </div>
                     <div className="action-buttons">
                         <Dropdown 
                             overlay={exportMenu} 

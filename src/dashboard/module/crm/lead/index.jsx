@@ -38,6 +38,10 @@ import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from "../../setting
 import { useGetCategoriesQuery, useGetSourcesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import moment from "moment";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -145,11 +149,122 @@ const Lead = () => {
     setSelectedLead(lead);
   };
 
+  const handleExport = async (type) => {
+    try {
+      setLoading(true);
+      const data = leads.data.map((lead) => ({
+        "Lead Title": lead.leadTitle,
+        "Company": lead.company_name,
+        "Source": sourcesData?.data?.find(s => s.id === lead.source)?.name || lead.source,
+        "Status": statusesData?.data?.find(s => s.id === lead.status)?.name || lead.status,
+        "Interest Level": lead.interest_level,
+        "Lead Value": `${currencies?.find(c => c.id === lead.currency)?.currencyIcon || ''} ${lead.leadValue || 0}`,
+        "Created Date": moment(lead.createdAt).format("DD-MM-YYYY")
+      }));
+
+      switch (type) {
+        case "csv":
+          exportToCSV(data, "leads_export");
+          break;
+        case "excel":
+          exportToExcel(data, "leads_export");
+          break;
+        case "pdf":
+          exportToPDF(data, "leads_export");
+          break;
+        default:
+          break;
+      }
+      message.success(`Successfully exported as ${type.toUpperCase()}`);
+    } catch (error) {
+      message.error(`Failed to export: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportToCSV = (data, filename) => {
+    const csvContent = [
+      Object.keys(data[0]).join(","),
+      ...data.map((item) =>
+        Object.values(item)
+          .map((value) => `"${value?.toString().replace(/"/g, '""')}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${filename}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const exportToExcel = (data, filename) => {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leads");
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  };
+
+  const exportToPDF = (data, filename) => {
+    const doc = new jsPDF("l", "pt", "a4");
+    doc.autoTable({
+      head: [Object.keys(data[0])],
+      body: data.map((item) => Object.values(item)),
+      margin: { top: 20 },
+      styles: { 
+        fontSize: 8,
+        cellPadding: 3,
+        overflow: 'linebreak'
+      },
+      columnStyles: {
+        0: { cellWidth: 100 }, // Lead Title
+        1: { cellWidth: 120 }, // Company
+        2: { cellWidth: 80 },  // Source
+        3: { cellWidth: 80 },  // Status
+        4: { cellWidth: 100 }, // Interest Level
+        5: { cellWidth: 80 },  // Lead Value
+        6: { cellWidth: 80 }   // Created Date
+      },
+      headStyles: {
+        fillColor: [63, 81, 181],
+        textColor: 255,
+        fontSize: 9,
+        fontStyle: 'bold'
+      }
+    });
+    doc.save(`${filename}.pdf`);
+  };
+
   const exportMenu = (
     <Menu>
-      <Menu.Item key="csv">Export as CSV</Menu.Item>
-      <Menu.Item key="excel">Export as Excel</Menu.Item>
-      <Menu.Item key="pdf">Export as PDF</Menu.Item>
+      <Menu.Item
+        key="csv"
+        icon={<FiDownload />}
+        onClick={() => handleExport("csv")}
+      >
+        Export as CSV
+      </Menu.Item>
+      <Menu.Item
+        key="excel"
+        icon={<FiDownload />}
+        onClick={() => handleExport("excel")}
+      >
+        Export as Excel
+      </Menu.Item>
+      <Menu.Item
+        key="pdf"
+        icon={<FiDownload />}
+        onClick={() => handleExport("pdf")}
+      >
+        Export as PDF
+      </Menu.Item>
     </Menu>
   );
 

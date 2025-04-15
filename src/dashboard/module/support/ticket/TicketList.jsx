@@ -10,7 +10,18 @@ const TicketList = ({ tickets, onEdit, onDelete, onView, loading }) => {
     
     // Fetch employees data to display their names
     const { data: employeesData, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
-    
+    const priorityes = [
+        { id: 'low', name: 'Low' },
+        { id: 'medium', name: 'Medium' },
+        { id: 'high', name: 'High' },
+        { id: 'urgent', name: 'Urgent' }
+      ];
+    const statuses = [
+        { id: 'open', name: 'Open' },
+        { id: 'in_progress', name: 'In Progress' },
+        { id: 'resolved', name: 'Resolved' },
+        { id: 'closed', name: 'Closed' }
+      ];
     // Process employees data for easier lookup
     const employeesMap = React.useMemo(() => {
         if (!employeesData) return {};
@@ -87,6 +98,11 @@ const TicketList = ({ tickets, onEdit, onDelete, onView, loading }) => {
             title: 'Priority',
             dataIndex: 'priority',
             key: 'priority',
+            filters: priorityes.map(priority => ({
+                text: priority.name,
+                value: priority.id
+              })),
+              onFilter: (value, record) => record.priority === value,
             render: (priority) => {
                 let color;
                 switch (priority?.toLowerCase()) {
@@ -107,6 +123,11 @@ const TicketList = ({ tickets, onEdit, onDelete, onView, loading }) => {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
+            filters: statuses.map(status => ({
+                text: status.name,
+                value: status.id
+              })),
+              onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color;
                 switch (status?.toLowerCase()) {
@@ -127,6 +148,7 @@ const TicketList = ({ tickets, onEdit, onDelete, onView, loading }) => {
             title: 'Agent',
             dataIndex: 'agent',
             key: 'agent',
+            sorter: (a, b) => a.agent.localeCompare(b.agent),
             render: (agent) => agent || 'N/A'
         },
         {

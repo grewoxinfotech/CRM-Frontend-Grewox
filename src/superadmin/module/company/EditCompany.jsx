@@ -224,7 +224,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}>
-                        <FiBriefcase style={{ fontSize: '24px', color: '#ffffff' }} />
+                        {/* <FiBriefcase style={{ fontSize: '24px', color: '#ffffff' }} /> */}
                     </div>
                     <div>
                         <h2 style={{

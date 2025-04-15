@@ -327,7 +327,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}>
-                        <FiBriefcase style={{ fontSize: '24px', color: '#ffffff' }} />
+                        <FiUser style={{ fontSize: '24px', color: '#ffffff' }} />
                     </div>
                     <div>
                         <h2 style={{
@@ -336,13 +336,13 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                             fontWeight: '600',
                             color: '#ffffff',
                         }}>
-                            {isEditing ? 'Edit Company' : 'Create New Company'}
+                            Create New Company
                         </h2>
                         <Text style={{
                             fontSize: '14px',
                             color: 'rgba(255, 255, 255, 0.85)'
                         }}>
-                            {isEditing ? 'Update company information' : 'Fill in the information to create company'}
+                           Fill in the information to create company
                         </Text>
                     </div>
                 </div>

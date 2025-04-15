@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Table, Button, Dropdown, Menu, Tag, Modal, Input, Space } from 'antd';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import { Table, Button, Dropdown, Menu, Tag, Modal, Input, Space, DatePicker } from 'antd';
+import { FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiCalendar } from 'react-icons/fi';
 import { useGetVendorsQuery } from './services/billingApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 import ViewBilling from './ViewBilling';
+import dayjs from 'dayjs';
 
 const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
     // Fetch vendors data
@@ -114,8 +115,43 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
             title: 'Bill Date',
             dataIndex: 'billDate',
             key: 'billDate',
-            sorter: (a, b) => new Date(a.billDate) - new Date(b.billDate),
-            render: (date) => new Date(date).toLocaleDateString(),
+            render: (date) => dayjs(date).format('DD-MM-YYYY'),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                    <DatePicker
+                        value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+                        onChange={(date) => {
+                            const dateStr = date ? date.format('YYYY-MM-DD') : null;
+                            setSelectedKeys(dateStr ? [dateStr] : []);
+                        }}
+                        style={{ marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button
+                            onClick={() => clearFilters()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Reset
+                        </Button>
+                    </Space>
+                </div>
+            ),
+            onFilter: (value, record) => {
+                if (!value || !record.billDate) return false;
+                return dayjs(record.billDate).format('YYYY-MM-DD') === value;
+            },
+            filterIcon: filtered => (
+                <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+            )
         },
         {
             title: 'Total',

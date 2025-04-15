@@ -51,7 +51,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 task?.status === filters.status;
 
             const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(task?.dueDate).isAfter(filters.dateRange[0]) &&
+                (dayjs(task?.startDate).isAfter(filters.dateRange[0]) &&
                     dayjs(task?.dueDate).isBefore(filters.dateRange[1]));
 
             return matchesSearch && matchesPriority && matchesStatus && matchesDateRange;

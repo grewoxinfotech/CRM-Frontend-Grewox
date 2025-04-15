@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, DatePicker } from "antd";
 import {
   FiEdit2,
   FiTrash2,
   FiEye,
   FiMoreVertical,
   FiDollarSign,
-  FiFileText
+  FiFileText,
+  FiCalendar
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import jsPDF from 'jspdf';
@@ -295,13 +296,43 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Payment Date",
       dataIndex: "paymentDate",
       key: "paymentDate",
-      sorter: (a, b) =>
-        dayjs(a.paymentDate).unix() - dayjs(b.paymentDate).unix(),
-      render: (paymentDate) => (
-        <Text style={{ color: "#262626" }}>
-          {dayjs(paymentDate).format("DD-MM-YYYY")}
-        </Text>
+      render: (date) => dayjs(date).format('DD-MM-YYYY'),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+          <div style={{ padding: 8 }}>
+              <DatePicker
+                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+                  onChange={(date) => {
+                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
+                      setSelectedKeys(dateStr ? [dateStr] : []);
+                  }}
+                  style={{ marginBottom: 8, display: 'block' }}
+              />
+              <Space>
+                  <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                  >
+                      Filter
+                  </Button>
+                  <Button
+                      onClick={() => clearFilters()}
+                      size="small"
+                      style={{ width: 90 }}
+                  >
+                      Reset
+                  </Button>
+              </Space>
+          </div>
       ),
+      onFilter: (value, record) => {
+          if (!value || !record.paymentDate) return false;
+          return dayjs(record.paymentDate).format('YYYY-MM-DD') === value;
+      },
+      filterIcon: filtered => (
+          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+      )
     },
     {
       title: "Payslip Type",

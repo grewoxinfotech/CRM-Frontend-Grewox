@@ -14,7 +14,8 @@ import {
   Tag,
   Tooltip,
   Input,
-  Space
+  Space,
+  DatePicker
 } from "antd";
 import {
   FiEdit2,
@@ -205,22 +206,47 @@ const RevenueList = ({
 
   const columns = [
     {
-      title: "Date ",
+      title: "Date",
+      dataIndex: "date", // Added dataIndex which was missing
       key: "date",
       width: '25%',
-      sorter: (a, b) => new Date(a.date) - new Date(b.date),
-      render: (_, record) => (
-        <div>
-          <Text strong style={{ display: "block" }}>
-            <FiCalendar style={{ marginRight: "8px" }} />
-            {dayjs(record.date).format("DD-MM-YYYY")}
-          </Text>
-          {/* <Text type="secondary" style={{ fontSize: "12px" }}>
-            {record.description}
-          </Text> */}
-          {/* <Tag color="blue" style={{ marginTop: "4px" }}>{record.category}</Tag> */}
-        </div>
+      render: (date) => dayjs(date).format('DD-MM-YYYY'),
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+          <div style={{ padding: 8 }}>
+              <DatePicker
+                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+                  onChange={(date) => {
+                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
+                      setSelectedKeys(dateStr ? [dateStr] : []);
+                  }}
+                  style={{ marginBottom: 8, display: 'block' }}
+              />
+              <Space>
+                  <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                  >
+                      Filter
+                  </Button>
+                  <Button
+                      onClick={() => clearFilters()}
+                      size="small"
+                      style={{ width: 90 }}
+                  >
+                      Reset
+                  </Button>
+              </Space>
+          </div>
       ),
+      onFilter: (value, record) => {
+          if (!value || !record.date) return false;
+          return dayjs(record.date).format('YYYY-MM-DD') === value;
+      },
+      filterIcon: filtered => (
+          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+      )
     },
     {
       title: "Products",

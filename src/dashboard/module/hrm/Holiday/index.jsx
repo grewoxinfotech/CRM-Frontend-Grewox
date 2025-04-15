@@ -214,7 +214,7 @@ const Holiday = () => {
                     <Text type="secondary">Manage all holidays in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
+                    <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <Input
                             prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
                             placeholder="Search by holiday name..."
@@ -223,6 +223,13 @@ const Holiday = () => {
                             value={searchText}
                             className="search-input"
                             style={{ width: 300 }}
+                        />
+                        <RangePicker
+                            onChange={(dates) => handleFilterChange('dateRange', dates)}
+                            value={filters.dateRange}
+                            allowClear
+                            style={{ width: 300 , height: 40}}
+                            placeholder={['Start Date', 'End Date']}
                         />
                     </div>
                     <div className="action-buttons">
@@ -245,49 +252,6 @@ const Holiday = () => {
                     </div>
                 </div>
             </div>
-
-            {showFilters && (
-                <Card className="filter-card" style={{ marginBottom: '1rem' }}>
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} sm={12} md={6}>
-                            <Select
-                                placeholder="Select Holiday Type"
-                                style={{ width: '100%' }}
-                                allowClear
-                                value={filters.leave_type}
-                                onChange={(value) => handleFilterChange('leave_type', value)}
-                            >
-                                <Option value="paid">Paid</Option>
-                                <Option value="unpaid">Unpaid</Option>
-                            </Select>
-                        </Col>
-                        <Col xs={24} sm={12} md={6}>
-                            <RangePicker
-                                style={{ width: '100%' }}
-                                value={filters.dateRange}
-                                onChange={(dates) => handleFilterChange('dateRange', dates)}
-                            />
-                        </Col>
-                        <Col xs={24} sm={12} md={6}>
-                            <Select
-                                placeholder="Select Status"
-                                style={{ width: '100%' }}
-                                allowClear
-                                value={filters.status}
-                                onChange={(value) => handleFilterChange('status', value)}
-                            >
-                                <Option value="active">Active</Option>
-                                <Option value="inactive">Inactive</Option>
-                            </Select>
-                        </Col>
-                        <Col xs={24} sm={12} md={6}>
-                            <Button type="primary" onClick={clearFilters} block>
-                                Clear Filters
-                            </Button>
-                        </Col>
-                    </Row>
-                </Card>
-            )}
 
             <Card className="holiday-table-card">
                 <HolidayList 

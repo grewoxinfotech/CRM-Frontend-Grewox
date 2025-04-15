@@ -28,6 +28,7 @@ import { useGetContactsQuery, useDeleteContactMutation } from "./services/contac
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import moment from "moment";
 
 
 const { Title, Text } = Typography;
@@ -108,28 +109,14 @@ const Contact = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = [
-        {
-          "First Name": "John",
-          "Last Name": "Doe",
-          "Email": "john.doe@example.com",
-          "Phone": "+1234567890",
-          "Company": "ABC Corp",
-          "Job Title": "Sales Manager",
-          "Status": "Active",
-          "Created Date": "2023-01-01"
-        },
-        {
-          "First Name": "Jane",
-          "Last Name": "Smith",
-          "Email": "jane.smith@example.com",
-          "Phone": "+0987654321", 
-          "Company": "XYZ Ltd",
-          "Job Title": "Marketing Director",
-          "Status": "Inactive",
-          "Created Date": "2023-02-01"
-        }
-      ];
+      const data = contactsResponse.data.map((contact) => ({
+        "Name": `${contact.first_name} ${contact.last_name}`,
+        "Email": contact.email,
+        "Phone": contact.phone,
+        "Company": contact.company_display_name || contact.company_name,
+        "Contact Owner": contact.contact_owner === loggedInUser?.id ? loggedInUser?.username : contact.contact_owner,
+        "Created Date": moment(contact.createdAt).format("DD-MM-YYYY")
+      }));
 
       switch (type) {
         case "csv":

@@ -10,6 +10,9 @@ import {
   message,
   Row,
   Col,
+  Modal,
+  DatePicker,
+  Space,
 } from "antd";
 import {
   FiPlus,
@@ -32,8 +35,13 @@ import moment from "moment";
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import {
+  useCreateInvoiceMutation,
+  useUpdateInvoiceMutation,
+} from "./services/invoiceApi";
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const Invoice = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -43,11 +51,26 @@ const Invoice = () => {
   const [searchText, setSearchText] = useState("");
   const loggedInUser = useSelector(selectCurrentUser);
   const id = loggedInUser?.id;
-  const { data: invoicesData, isLoading } = useGetInvoicesQuery();
+  const { data: invoicesData, isLoading, error } = useGetInvoicesQuery();
   const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
 
   
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    dateRange: [],
+  });
+  const [createInvoice] = useCreateInvoiceMutation();
+  const [updateInvoice] = useUpdateInvoiceMutation();
+
+  const handleDateRangeChange = (dates) => {
+    setFilters(prev => ({
+      ...prev,
+      dateRange: dates ? [dates[0].startOf('day'), dates[1].endOf('day')] : []
+    }));
+  };
 
   const handleExport = async (type) => {
     try {
@@ -216,10 +239,13 @@ const Invoice = () => {
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
-              <FiHome /> Home
+              <FiHome style={{ marginRight: "4px" }} />
+              Home
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>Sales</Breadcrumb.Item>
+          <Breadcrumb.Item>
+            <Link to="/dashboard/sales">Sales</Link>
+          </Breadcrumb.Item>
           <Breadcrumb.Item>Invoices</Breadcrumb.Item>
         </Breadcrumb>
       </div>
@@ -230,26 +256,38 @@ const Invoice = () => {
           <Text type="secondary">Manage all invoices in the organization</Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
+          <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Input
-              prefix={<FiSearch />}
+              prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
               placeholder="Search invoices..."
-              value={searchText}
+              allowClear
               onChange={(e) => setSearchText(e.target.value)}
+              value={searchText}
               className="search-input"
+              style={{ width: 400 }}
+            />
+            <RangePicker
+              onChange={handleDateRangeChange}
+              value={filters.dateRange}
+              allowClear
+              style={{ width: 400 }}
+              placeholder={['Start Date', 'End Date']}
             />
           </div>
           <div className="action-buttons">
-            <Dropdown menu={exportMenu} trigger={["click"]}>
-              <Button className="export-button">
-                <FiDownload />
-                <span>Export</span>
-                <FiChevronDown />
+            <Dropdown overlay={exportMenu} trigger={["click"]}>
+              <Button
+                className="export-button"
+                icon={<FiDownload size={16} />}
+                loading={loading}
+              >
+                Export
+                <FiChevronDown size={16} />
               </Button>
             </Dropdown>
             <Button
               type="primary"
-              icon={<FiPlus />}
+              icon={<FiPlus size={16} />}
               onClick={() => setCreateModalVisible(true)}
               className="add-button"
             >
@@ -261,7 +299,7 @@ const Invoice = () => {
 
       <Card className="invoice-table-card">
         <InvoiceList
-          loading={loading}
+          loading={isLoading}
           invoices={invoices}
           searchText={searchText}
           onEdit={(invoice) => {
@@ -270,6 +308,7 @@ const Invoice = () => {
           }}
           onDelete={handleDelete}
           onView={handleView}
+          filters={filters}
         />
       </Card>
 

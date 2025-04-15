@@ -12,6 +12,8 @@ import {
   Row,
   Col,
   Tabs,
+  DatePicker,
+  Space,
 } from "antd";
 import {
   FiPlus,
@@ -32,9 +34,11 @@ import "jspdf-autotable";
 import moment from "moment";
 import { useGetLeaveQuery } from "./services/LeaveApi";
 import "./leave.scss";
+import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
+const { RangePicker } = DatePicker;
 
 const Leave = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -43,6 +47,9 @@ const Leave = () => {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [viewType, setViewType] = useState("list"); // 'list' or 'grid'
+  const [filters, setFilters] = useState({
+    dateRange: [],
+  });
   const { data: leaveData = [], isLoading } = useGetLeaveQuery();
 
   const handleCreate = () => {
@@ -85,6 +92,13 @@ const Leave = () => {
         message.success("Leave request deleted successfully");
       },
     });
+  };
+
+  const handleDateRangeChange = (dates) => {
+    setFilters(prev => ({
+      ...prev,
+      dateRange: dates ? [dates[0].startOf('day'), dates[1].endOf('day')] : []
+    }));
   };
 
   const handleExport = async (type) => {
@@ -195,13 +209,20 @@ const Leave = () => {
           <Text type="secondary">Manage employee leave requests</Text>
         </div>
         <div className="header-actions">
-          <div className="search-input">
+          <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Input
               placeholder="Search leave requests..."
               prefix={<FiSearch />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{ width: 300 }}
+            />
+            <RangePicker
+              onChange={handleDateRangeChange}
+              value={filters.dateRange}
+              allowClear
+              style={{ width: 300, height: 40 }}
+              placeholder={['Start Date', 'End Date']}
             />
           </div>
           <div className="action-buttons">
@@ -242,12 +263,12 @@ const Leave = () => {
         </div>
       </div>
 
-     
-            <LeaveList
-              onEdit={handleEdit}
-              onView={handleView}
-              searchText={searchText}
-            />
+      <LeaveList
+        onEdit={handleEdit}
+        onView={handleView}
+        searchText={searchText}
+        filters={filters}
+      />
 
       {isCreateModalOpen && (
         <CreateLeave

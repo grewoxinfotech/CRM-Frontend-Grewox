@@ -19,7 +19,7 @@ import EditLeave from "./Editleave";
 
 const { Text } = Typography;
 
-const LeaveList = ({ onEdit, onView, searchText = "" }) => {
+const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
   const { data: leavedata = [], isLoading } = useGetLeaveQuery();
   const { data: employeesData } = useGetEmployeesQuery();
   const leaves = leavedata.data || [];
@@ -61,15 +61,19 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       const status = leave?.status?.toLowerCase() || "";
       const reason = leave?.reason?.toLowerCase() || "";
 
-      return (
-        !searchText ||
+      const matchesSearch = !searchText ||
         employeeName.includes(searchLower) ||
         leaveType.includes(searchLower) ||
         status.includes(searchLower) ||
-        reason.includes(searchLower)
-      );
+        reason.includes(searchLower);
+
+      const matchesDateRange = !filters.dateRange?.length ||
+        (dayjs(leave?.startDate).isAfter(filters.dateRange[0]) &&
+          dayjs(leave?.endDate).isBefore(filters.dateRange[1]));
+
+      return matchesSearch && matchesDateRange;
     });
-  }, [leaves, searchText, employeeMap]);
+  }, [leaves, searchText, employeeMap, filters]);
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -228,7 +232,7 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       render: (startDate) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiCalendar style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{dayjs(startDate).format("MMM DD, YYYY")}</Text>
+          <Text>{dayjs(startDate).format("DD-MM-YYYY")}</Text>
         </div>
       ),
     },
@@ -240,7 +244,7 @@ const LeaveList = ({ onEdit, onView, searchText = "" }) => {
       render: (endDate) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiCalendar style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{dayjs(endDate).format("MMM DD, YYYY")}</Text>
+          <Text>{dayjs(endDate).format("DD-MM-YYYY")}</Text>
         </div>
       ),
     },

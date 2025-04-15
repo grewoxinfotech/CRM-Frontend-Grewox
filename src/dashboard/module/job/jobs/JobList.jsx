@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Button, Tag, Dropdown, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
 
@@ -98,10 +98,18 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
            
         },
         {
-            title: 'Location',
-            dataIndex: 'location',
-            key: 'location',
-            sorter: (a, b) => (a.location || '').localeCompare(b.location || '')
+            title: 'Start Date',
+            dataIndex: 'startDate',
+            key: 'startDate',
+            sorter: (a, b) => dayjs(a.startDate).unix() - dayjs(b.startDate).unix(),
+            render: (date) => date ? dayjs(date).format('DD-MM-YYYY') : 'N/A'
+        },
+        {
+            title: 'End Date', 
+            dataIndex: 'endDate',
+            key: 'endDate',
+            sorter: (a, b) => dayjs(a.endDate).unix() - dayjs(b.endDate).unix(),
+            render: (date) => date ? dayjs(date).format('DD-MM-YYYY') : 'N/A'
         },
         {
             title: 'Experience',

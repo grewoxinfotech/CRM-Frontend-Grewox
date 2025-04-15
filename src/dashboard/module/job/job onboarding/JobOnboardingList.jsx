@@ -1,7 +1,7 @@
 import React from 'react';
-import { Table, Tag, Dropdown, Button, Input, Space  } from 'antd';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
-import moment from 'moment';
+import { Table, Tag, Dropdown, Button, Input, Space, DatePicker  } from 'antd';
+import { FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiCalendar } from 'react-icons/fi';
+import dayjs from 'dayjs';
 
 const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) => {
     // Function to get menu items for each row
@@ -70,8 +70,43 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
             title: 'Joining Date',
             dataIndex: 'JoiningDate',
             key: 'JoiningDate',
-            sorter: (a, b) => a.JoiningDate.localeCompare(b.JoiningDate),
-            render: (date) => date ? moment(date).format('DD MMM YYYY') : 'N/A'
+            render: (date) => dayjs(date).format('DD-MM-YYYY'),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                    <DatePicker
+                        value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+                        onChange={(date) => {
+                            const dateStr = date ? date.format('YYYY-MM-DD') : null;
+                            setSelectedKeys(dateStr ? [dateStr] : []);
+                        }}
+                        style={{ marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button
+                            onClick={() => clearFilters()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Reset
+                        </Button>
+                    </Space>
+                </div>
+            ),
+            onFilter: (value, record) => {
+                if (!value || !record.JoiningDate) return false;
+                return dayjs(record.JoiningDate).format('YYYY-MM-DD') === value;
+            },
+            filterIcon: filtered => (
+                <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+            )
         },
         {
             title: 'Days of Week',

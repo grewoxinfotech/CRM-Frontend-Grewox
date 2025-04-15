@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, DatePicker
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiCalendar
 } from 'react-icons/fi';
 import './SubscribedUser.scss';
 import moment from 'moment';
@@ -19,9 +19,11 @@ import { useGetAllSubscribedUsersQuery } from './services/SubscribedUserApi';
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
+const { RangePicker } = DatePicker;
 
 const SubscribedUser = () => {
     const [searchText, setSearchText] = useState('');
+    const [dateRange, setDateRange] = useState([]);
     const [loading, setLoading] = useState(false);
     const searchInputRef = useRef(null);
 
@@ -31,18 +33,25 @@ const SubscribedUser = () => {
         if (!subscribedUsersData?.data) return [];
         
         const searchTerm = searchText.toLowerCase().trim();
-        if (!searchTerm) return subscribedUsersData.data;
         
-        return subscribedUsersData.data.filter(user => 
-            (user.client_name?.toLowerCase() || '').includes(searchTerm) ||
-            (user.plan_name?.toLowerCase() || '').includes(searchTerm) ||
-            String(user.current_clients_count || '').includes(searchTerm) ||
-            String(user.current_storage_used || '').includes(searchTerm) ||
-            String(user.current_users_count || '').includes(searchTerm) ||
-            (user.payment_status?.toLowerCase() || '').includes(searchTerm) ||
-            (user.status?.toLowerCase() || '').includes(searchTerm)
-        );
-    }, [subscribedUsersData?.data, searchText]);
+        return subscribedUsersData.data.filter(user => {
+            const matchesSearch = !searchTerm || 
+                (user.client_name?.toLowerCase() || '').includes(searchTerm) ||
+                (user.plan_name?.toLowerCase() || '').includes(searchTerm) ||
+                String(user.current_clients_count || '').includes(searchTerm) ||
+                String(user.current_storage_used || '').includes(searchTerm) ||
+                String(user.current_users_count || '').includes(searchTerm) ||
+                (user.payment_status?.toLowerCase() || '').includes(searchTerm) ||
+                (user.status?.toLowerCase() || '').includes(searchTerm);
+
+            const matchesDateRange = !dateRange?.length || (
+                moment(user.start_date).isSameOrAfter(dateRange[0], 'day') &&
+                moment(user.end_date).isSameOrBefore(dateRange[1], 'day')
+            );
+
+            return matchesSearch && matchesDateRange;
+        });
+    }, [subscribedUsersData?.data, searchText, dateRange]);
 
     const handleSearch = (value) => {
         setSearchText(value);
@@ -174,15 +183,26 @@ const SubscribedUser = () => {
                     <Text type="secondary">Manage all subscribed users</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search by client name, plan, status..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search by client name, plan, status..."
+                            allowClear
+                            onChange={(e) => handleSearch(e.target.value)}
+                            value={searchText}
+                            ref={searchInputRef}
+                            className="search-input"
+                            style={{ width: '300px' }}
+                        />
+                        <RangePicker
+                            suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            onChange={(dates) => setDateRange(dates)}
+                            value={dateRange}
+                            allowClear
+                            style={{ width: '300px' , height: '40px'}}
+                            placeholder={['Start Date', 'End Date']}
+                        />
+                    </div>
                     <div className="action-buttons">
                         <Dropdown 
                             menu={exportMenu} 

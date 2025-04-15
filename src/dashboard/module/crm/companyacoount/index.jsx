@@ -29,6 +29,7 @@ import { useCreateCompanyAccountMutation, useDeleteCompanyAccountMutation, useGe
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import CompanyAccountDetails from "./CompanyAccountDetails";
+import moment from "moment";
 
 const { Title, Text } = Typography;
 
@@ -112,22 +113,13 @@ const CompanyAccount = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = [
-        {
-          "Company Name": "ABC Corp",
-          "Email": "abc@example.com",
-          "Phone": "+1234567890",
-          "Status": "Active",
-          "Created Date": "2023-01-01"
-        },
-        {
-          "Company Name": "XYZ Ltd", 
-          "Email": "xyz@example.com",
-          "Phone": "+0987654321",
-          "Status": "Inactive",
-          "Created Date": "2023-02-01"
-        }
-      ];
+      const data = companyAccountsResponse.data.map((company) => ({
+        "Company Name": company.company_name,
+        // "Account Owner": company.account_owner,
+        "Phone": company.phone_number,
+        // "Status": company.status,
+        "Created Date": moment(company.created_at).format("YYYY-MM-DD")
+      }));
 
       switch (type) {
         case "csv":

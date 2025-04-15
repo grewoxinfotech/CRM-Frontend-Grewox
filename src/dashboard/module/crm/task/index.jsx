@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Breadcrumb
+    Dropdown, Menu, Breadcrumb, DatePicker, Space
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -23,6 +23,7 @@ import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useGetUsersQuery } from '../../../module/user-management/users/services/userApi';
 import { useDeleteTaskMutation } from './services/taskApi';
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const Task = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -190,7 +191,14 @@ const Task = () => {
         </Menu>
     );
 
-  return (
+    const handleDateRangeChange = (dates) => {
+        setFilters(prev => ({
+            ...prev,
+            dateRange: dates ? [dates[0].startOf('day'), dates[1].endOf('day')] : []
+        }));
+    };
+
+    return (
         <div className="task-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -214,15 +222,24 @@ const Task = () => {
                 </div>
                 <div className="header-actions">
                     <div className="search-filter-group">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search tasks..."
-                            allowClear
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
-                            className="search-input"
-                            style={{ width: 300 }}
-                        />
+                        <Space>
+                            <Input
+                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                                placeholder="Search tasks..."
+                                allowClear
+                                onChange={(e) => setSearchText(e.target.value)}
+                                value={searchText}
+                                className="search-input"
+                                style={{ width: 300 }}
+                            />
+                            <RangePicker
+                                onChange={handleDateRangeChange}
+                                value={filters.dateRange}
+                                allowClear
+                                style={{ width: 300, height: 40 }}
+                                placeholder={['Start Date', 'End Date']}
+                            />
+                        </Space>
                     </div>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>

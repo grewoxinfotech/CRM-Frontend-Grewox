@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Input,
-    Dropdown, Menu, Space, Breadcrumb, Modal
+    Dropdown, Menu, Space, Breadcrumb, Modal, message
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -17,6 +17,10 @@ import EditDeal from './EditDeal';
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDeleteDealMutation, useGetDealsQuery } from './services/dealApi';
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import moment from "moment";
 
 const { Title, Text } = Typography;
 
@@ -26,6 +30,7 @@ const Deal = () => {
     const [selectedDeal, setSelectedDeal] = useState(null);
     const [viewMode, setViewMode] = useState('table');
     const [searchText, setSearchText] = useState('');
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     // Fetch pipelines and deal stages
     const { data: pipelines = [] } = useGetPipelinesQuery();
@@ -77,21 +82,120 @@ const Deal = () => {
         setSelectedDeal(deal);
     };
 
+    const handleExport = async (type) => {
+        try {
+            setLoading(true);
+            const data = filteredDeals.map((deal) => ({
+                "Deal Name": deal.dealTitle,
+                "Company": deal.company_name,
+                "Source": sourcesData?.data?.find(s => s.id === deal.source)?.name || deal.source,
+                "Stage": dealStages?.find(s => s.id === deal.stage)?.stageName || deal.stage,
+                "Value": `${currencies?.find(c => c.id === deal.currency)?.currencyIcon || ''} ${deal.value || 0}`,
+                "Status": deal.is_won === true ? 'Won' : deal.is_won === false ? 'Lost' : 'Pending',
+                "Created Date": moment(deal.createdAt).format("DD-MM-YYYY")
+            }));
+
+            switch (type) {
+                case "csv":
+                    exportToCSV(data, "deals_export");
+                    break;
+                case "excel":
+                    exportToExcel(data, "deals_export");
+                    break;
+                case "pdf":
+                    exportToPDF(data, "deals_export");
+                    break;
+                default:
+                    break;
+            }
+            message.success(`Successfully exported as ${type.toUpperCase()}`);
+        } catch (error) {
+            message.error(`Failed to export: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const exportToCSV = (data, filename) => {
+        const csvContent = [
+            Object.keys(data[0]).join(","),
+            ...data.map((item) =>
+                Object.values(item)
+                    .map((value) => `"${value?.toString().replace(/"/g, '""')}"`)
+                    .join(",")
+            ),
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${filename}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    const exportToExcel = (data, filename) => {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Deals");
+        XLSX.writeFile(wb, `${filename}.xlsx`);
+    };
+
+    const exportToPDF = (data, filename) => {
+        const doc = new jsPDF("l", "pt", "a4");
+        doc.autoTable({
+            head: [Object.keys(data[0])],
+            body: data.map((item) => Object.values(item)),
+            margin: { top: 20 },
+            styles: { 
+                fontSize: 8,
+                cellPadding: 3,
+                overflow: 'linebreak'
+            },
+            columnStyles: {
+                0: { cellWidth: 100 }, // Deal Name
+                1: { cellWidth: 120 }, // Company
+                2: { cellWidth: 80 },  // Source
+                3: { cellWidth: 80 },  // Stage
+                4: { cellWidth: 80 },  // Value
+                5: { cellWidth: 60 },  // Status
+                6: { cellWidth: 80 }   // Created Date
+            },
+            headStyles: {
+                fillColor: [63, 81, 181],
+                textColor: 255,
+                fontSize: 9,
+                fontStyle: 'bold'
+            }
+        });
+        doc.save(`${filename}.pdf`);
+    };
+
     const exportMenu = {
         items: [
             {
                 key: 'csv',
                 label: 'Export as CSV',
+                icon: <FiDownload />,
+                onClick: () => handleExport('csv')
             },
             {
                 key: 'excel',
                 label: 'Export as Excel',
+                icon: <FiDownload />,
+                onClick: () => handleExport('excel')
             },
             {
                 key: 'pdf',
                 label: 'Export as PDF',
-            },
-        ],
+                icon: <FiDownload />,
+                onClick: () => handleExport('pdf')
+            }
+        ]
     };
 
     return (

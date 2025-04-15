@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Space, Button, Tag, message, Modal, Dropdown, Input } from 'antd';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from 'react-icons/fi';
+import { Table, Space, Button, Tag, message, Modal, Dropdown, Input, DatePicker } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiCalendar } from 'react-icons/fi';
 import { useGetMeetingsQuery, useUpdateMeetingMutation, useDeleteMeetingMutation } from './services/meetingApi';
 import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import dayjs from 'dayjs';
@@ -189,8 +189,43 @@ const MeetingList = ({ searchText }) => {
             title: 'Date',
             dataIndex: 'date',
             key: 'date',
-            render: (date) => dayjs(date).format('DD/MM/YYYY'),
-            sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix(),
+            render: (date) => dayjs(date).format('DD-MM-YYYY'),
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                    <DatePicker
+                        value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+                        onChange={(date) => {
+                            const dateStr = date ? date.format('YYYY-MM-DD') : null;
+                            setSelectedKeys(dateStr ? [dateStr] : []);
+                        }}
+                        style={{ marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button
+                            onClick={() => clearFilters()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Reset
+                        </Button>
+                    </Space>
+                </div>
+            ),
+            onFilter: (value, record) => {
+                if (!value || !record.date) return false;
+                return dayjs(record.date).format('YYYY-MM-DD') === value;
+            },
+            filterIcon: filtered => (
+                <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+            )
         },
         {
             title: 'Start Time',
