@@ -289,7 +289,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       sorter: (a, b) => a.total - b.total,
     },
     {
-      title: "Amount",
+      title: "Pending Amount",
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => {

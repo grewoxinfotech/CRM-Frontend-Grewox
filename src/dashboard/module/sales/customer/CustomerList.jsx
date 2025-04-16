@@ -146,38 +146,7 @@ const CustomerList = ({
         </Text>
       ),
     },
-    {
-      title: "Created By",
-      dataIndex: "created_by",
-      key: "created_by",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search created by"
-            value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) =>
-        record.created_by.toLowerCase().includes(value.toLowerCase()) ||
-        record.company?.toLowerCase().includes(value.toLowerCase()),
-    },
+   
     {
       title: "Email",
       dataIndex: "email",

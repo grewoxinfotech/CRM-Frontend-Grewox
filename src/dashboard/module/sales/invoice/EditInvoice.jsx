@@ -54,13 +54,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [createCustomer] = useCreateCustomerMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
-  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState('BEzBBPneRQq6rbGYiwYj45k'); // INR currency ID
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
   const [selectedCategory, setSelectedCategory] = useState('customer');
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
@@ -97,11 +97,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   };
 
   const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
-    form.setFieldsValue({ 
-      customer: undefined,
-      customerName: ''
-    });
+    // Category is locked to 'customer', so this function is not needed
+    return;
   };
 
   const handleCustomerChange = (value) => {
@@ -128,45 +125,25 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       const hasTax = items?.some(item => item.tax_rate > 0);
       setIsTaxEnabled(hasTax);
 
-      // Set initial category
-      setSelectedCategory(initialValues.category || 'customer');
+      // Set initial category to customer always
+      setSelectedCategory('customer');
 
       // Find the selected entity and its name based on category
       let selectedEntity;
       let entityName = '';
 
-      switch (initialValues.category) {
-        case 'customer':
-          selectedEntity = customers?.find(c => c.id === initialValues.customer);
-          entityName = selectedEntity?.name || '';
-          break;
-        case 'contact':
-          selectedEntity = contacts?.find(c => c.id === initialValues.customer);
-          entityName = selectedEntity?.name || 
-            `${selectedEntity?.first_name || ''} ${selectedEntity?.last_name || ''}`.trim() ||
-            selectedEntity?.contact_name ||
-            '';
-          break;
-        case 'company_account':
-          selectedEntity = companyAccounts?.find(c => c.id === initialValues.customer);
-          entityName = selectedEntity?.company_name ||
-            selectedEntity?.name ||
-            selectedEntity?.account_name ||
-            '';
-          break;
-        default:
-          break;
-      }
+      selectedEntity = customers?.find(c => c.id === initialValues.customer);
+      entityName = selectedEntity?.name || '';
 
       // Format initial values for the form
       const formattedValues = {
-        category: initialValues.category,
+        category: 'customer', // Always set to customer
         customer: initialValues.customer,
         customerName: entityName,
         issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate, "YYYY-MM-DD") : null,
         dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate, "YYYY-MM-DD") : null,
         referenceNumber: initialValues.salesInvoiceNumber,
-        currency: initialValues.currency,
+        currency: initialValues.currency || 'BEzBBPneRQq6rbGYiwYj45k', // Default to INR if not set
         status: initialValues.payment_status,
         items: items.map(item => ({
           product: item.product_id,
@@ -192,7 +169,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       form.setFieldsValue(formattedValues);
 
       // Set currency details
-      const selectedCurrency = currenciesData?.data?.find(c => c.id === initialValues.currency);
+      const selectedCurrency = currenciesData?.find(c => c.id === (initialValues.currency || 'BEzBBPneRQq6rbGYiwYj45k'));
       if (selectedCurrency) {
         setSelectedCurrency(selectedCurrency.currencyIcon);
         setSelectedCurrencyId(selectedCurrency.id);
@@ -200,9 +177,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
       // Calculate initial totals
       calculateTotals(formattedValues.items);
-
-      // Set initial category
-      setSelectedCategory(initialValues.category || 'customer');
 
       // Set initial product if exists
       if (items.length > 0) {
@@ -212,7 +186,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         // Find and set product currency if exists
         const selectedProduct = productsData?.data?.find(product => product.id === firstItem.product_id);
         if (selectedProduct) {
-          const productCurrency = currenciesData?.data?.find(c => c.id === selectedProduct.currency);
+          const productCurrency = currenciesData?.find(c => c.id === selectedProduct.currency);
           if (productCurrency) {
             setSelectedProductCurrency(productCurrency);
             setSelectedCurrency(productCurrency.currencyIcon);
@@ -321,22 +295,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   };
 
   const handleCurrencyChange = (value) => {
-    const currencyDetails = currenciesData?.find(curr => curr.id === value);
-    if (currencyDetails) {
-      setSelectedCurrency(currencyDetails.currencyIcon || '₹');
-      setSelectedCurrencyId(value);
-    }
-
-    // Update all existing items with new currency
-    const items = form.getFieldValue('items') || [];
-    const updatedItems = items.map(item => ({
-      ...item,
-      unit_price: item.unit_price || 0
-    }));
-    form.setFieldsValue({ items: updatedItems });
-
-    // Recalculate all amounts with new currency
-    calculateTotals(updatedItems);
+    // Currency is disabled, so this function is not needed
+    return;
   };
 
   const handleProductSelect = (value, option) => {
@@ -766,7 +726,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-        <Form.Item
+        {/* <Form.Item
         name="category"
         label={
           <span style={{ fontSize: "14px", fontWeight: "500" }}>
@@ -775,22 +735,21 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           </span>
         }
         rules={[{ required: true, message: "Please select category" }]}
-        initialValue={initialValues?.category || "customer"}
+        initialValue="customer"
       >
         <Select
           placeholder="Select Category"
           onChange={handleCategoryChange}
           size="large"
+          disabled={true}
           style={{
             width: "100%",
             borderRadius: "10px",
           }}
         >
           <Option value="customer">Customer</Option>
-          {/* <Option value="contact">Contact</Option>
-          <Option value="company_account">Company Account</Option> */}
         </Select>
-      </Form.Item>
+      </Form.Item> */}
 
       <Form.Item
         name="customer"
@@ -887,7 +846,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 size="large"
                 value={selectedProductCurrency?.id || selectedCurrencyId}
                 onChange={handleCurrencyChange}
-                disabled={isCurrencyDisabled}
+                disabled={true}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -968,7 +927,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
-              <Option value="partially_paid">Partially Paid</Option>
+              {/* <Option value="partially_paid">Partially Paid</Option> */}
             </Select>
           </Form.Item>
         </div>

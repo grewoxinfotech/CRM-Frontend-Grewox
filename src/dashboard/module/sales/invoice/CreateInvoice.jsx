@@ -635,14 +635,14 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         requiredMark={false}
         initialValues={{
           items: [{}],
-          status: "pending"
+          status: "unpaid"
         }}
         style={{
           padding: "24px",
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-            <Form.Item
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+            {/* <Form.Item
               name="category"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
@@ -665,8 +665,8 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 <Option value="customer">Customer</Option>
                 {/* <Option value="contact">Contact</Option>
                 <Option value="company_account">Company Account</Option> */}
-              </Select>
-            </Form.Item>
+              {/* </Select> */}
+            {/* </Form.Item> */} 
 
             <Form.Item
               name="customer"
@@ -780,7 +780,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 ))}
               </Select>
             </Form.Item>
-          </div>
+          </div> 
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <Form.Item
@@ -844,7 +844,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
-              <Option value="partially_paid">Partially Paid</Option>
+              {/* <Option value="partially_paid">Partially Paid</Option> */}
             </Select>
           </Form.Item>
         </div>
@@ -1045,6 +1045,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                               placeholder="Select Tax"
                               loading={taxesLoading}
                               disabled={!isTaxEnabled}
+                              allowClear
                               onChange={(value, option) => {
                                 const items = form.getFieldValue('items') || [];
                                 items[index].tax = option?.taxRate;

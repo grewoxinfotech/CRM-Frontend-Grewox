@@ -40,14 +40,21 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 const { Text } = Typography;
 const { Search } = Input;
 
-const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null, onProductRevenueClick, currenciesData }) => {
-  const { data: productsData = [], isLoading } = useGetProductsQuery();
+const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,onProductRevenueClick, currenciesData }) => {
+  // const loggedInUser = useSelector(selectCurrentUser);
+  // const id = loggedInUser?.id;
+  const currentUser = useSelector(selectCurrentUser);
+
+  const id = currentUser?.id;
+
+  const { data: productsData = [], isLoading } = useGetProductsQuery(id);
+
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const currentUser = useSelector(selectCurrentUser);
+ 
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
@@ -329,11 +336,12 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       width: '5%',
       align: "center",
       render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="product-actions-dropdown"
+        <div onClick={e => e.stopPropagation()}>
+          <Dropdown
+            menu={getDropdownItems(record)}
+            trigger={["click"]}
+            placement="bottomRight"
+            overlayClassName="product-actions-dropdown"
         >
           <Button
             type="text"
@@ -345,6 +353,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
             }}
           />
         </Dropdown>
+        </div>
       ),
     },
   ];

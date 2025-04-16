@@ -7,21 +7,18 @@ export const notificationApi = createApi({
     tagTypes: ['Notifications'],
     endpoints: (builder) => ({
         getAllNotifications: builder.query({
-            query: () => '/notifications',
+            query: (id) => `/notifications/${id}`,
             transformResponse: (response) => {
+                // If response is already in the correct format, return it
+                if (response?.success && Array.isArray(response?.data)) {
+                    return response;
+                }
+                // Otherwise, transform the response
                 const notifications = Array.isArray(response) ? response : response?.data || [];
                 return {
                     data: notifications,
                     total: notifications.length,
                     success: true
-                };
-            },
-            transformErrorResponse: (response) => {
-                return {
-                    data: [],
-                    total: 0,
-                    success: false,
-                    error: response.data?.message || 'Failed to fetch notifications'
                 };
             },
             providesTags: ['Notifications']
@@ -45,8 +42,8 @@ export const notificationApi = createApi({
         }),
 
         clearAllNotifications: builder.mutation({
-            query: () => ({
-                url: '/notifications/clear',
+            query: (userId) => ({
+                url: `/notification/clear/${userId}`,
                 method: 'DELETE'
             }),
             invalidatesTags: ['Notifications']

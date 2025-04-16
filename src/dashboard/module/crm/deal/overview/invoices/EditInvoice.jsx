@@ -771,7 +771,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         }}
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-        <Form.Item
+        {/* <Form.Item
         name="category"
         label={
           <span style={{ fontSize: "14px", fontWeight: "500" }}>
@@ -794,8 +794,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           <Option value="customer">Customer</Option>
           {/* <Option value="contact">Contact</Option>
           <Option value="company_account">Company Account</Option> */}
-        </Select>
-      </Form.Item>
+        {/* </Select> */}
+      {/* </Form.Item>  */}
 
       <Form.Item
         name="customer"
@@ -892,7 +892,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 size="large"
                 value={selectedProductCurrency?.id || selectedCurrencyId}
                 onChange={handleCurrencyChange}
-                disabled={isCurrencyDisabled}
+                disabled={true}
                 style={{
                   width: "100%",
                   borderRadius: "10px",

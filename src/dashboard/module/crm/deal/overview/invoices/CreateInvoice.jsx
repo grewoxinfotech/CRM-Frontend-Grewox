@@ -61,7 +61,6 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
-  const [selectedCategory, setSelectedCategory] = useState('customer');
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
@@ -192,22 +191,21 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
-
-      // Format items for backend
       const formattedItems = values.items?.map(item => ({
         product_id: item.id,
+        name: item.item_name,
         quantity: Number(item.quantity) || 0,
         unit_price: Number(item.unit_price) || 0,
         tax_rate: Number(item.tax) || 0,
         discount: Number(item.discount) || 0,
         discount_type: item.discount_type || 'percentage',
         hsn_sac: item.hsn_sac || '',
-        taxAmount: calculateItemTaxAmount(item),
+        tax_amount: calculateItemTaxAmount(item),
         amount: calculateItemTotal(item)
       }));
 
       const payload = {
-        category: values.category,
+        category: 'customer',
         customer: values.customer,
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
@@ -249,229 +247,6 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
       message.error('Failed to create customer: ' + error.message);
     }
   };
-
-  const getOptionsBasedOnCategory = () => {
-    switch (selectedCategory) {
-      case 'customer':
-        return customers?.map((customer) => ({
-          label: customer.name,
-          value: customer.id
-        })) || [];
-      case 'contact':
-        return contacts?.map((contact) => ({
-          label: contact.name ||
-            `${contact.first_name || ''} ${contact.last_name || ''}`.trim() ||
-            contact.contact_name ||
-            'Unnamed Contact',
-          value: contact.id
-        })) || [];
-      case 'company_account':
-        return companyAccounts?.map((account) => ({
-          label: account.company_name ||
-            account.name ||
-            account.account_name ||
-            'Unnamed Company',
-          value: account.id
-        })) || [];
-      default:
-        return [];
-    }
-  };
-
-  const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
-    form.setFieldsValue({ customer: undefined }); // Clear selected customer when category changes
-  };
-
-
-
-  const customerModal = (
-    <Modal
-      title={null}
-      open={isCustomerModalOpen}
-      onCancel={() => {
-        setIsCustomerModalOpen(false);
-        customerForm.resetFields();
-      }}
-      footer={null}
-      width={500}
-      destroyOnClose={true}
-      centered
-      closeIcon={null}
-      className="pro-modal custom-modal"
-      styles={{
-        body: {
-          padding: 0,
-          borderRadius: "8px",
-          overflow: "hidden",
-        },
-      }}
-    >
-      {/* Modal Header */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
-          padding: "24px",
-          color: "#ffffff",
-          position: "relative",
-        }}
-      >
-        <Button
-          type="text"
-          onClick={() => {
-            setIsCustomerModalOpen(false);
-            customerForm.resetFields();
-          }}
-          style={{
-            position: "absolute",
-            top: "16px",
-            right: "16px",
-            color: "#ffffff",
-            width: "32px",
-            height: "32px",
-            padding: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(255, 255, 255, 0.2)",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-          }}
-        >
-          <FiX style={{ fontSize: "20px" }} />
-        </Button>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
-          }}
-        >
-          <div
-            style={{
-              width: "48px",
-              height: "48px",
-              borderRadius: "12px",
-              background: "rgba(255, 255, 255, 0.2)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <FiUser style={{ fontSize: "24px", color: "#ffffff" }} />
-          </div>
-          <div>
-            <h2
-              style={{
-                margin: "0",
-                fontSize: "24px",
-                fontWeight: "600",
-                color: "#ffffff",
-              }}
-            >
-              Create New Customer
-            </h2>
-            <Text
-              style={{
-                fontSize: "14px",
-                color: "rgba(255, 255, 255, 0.85)",
-              }}
-            >
-              Add a new customer to the system
-            </Text>
-          </div>
-        </div>
-      </div>
-
-      {/* Form Content */}
-      <Form
-        form={customerForm}
-        layout="vertical"
-        onFinish={handleCreateCustomer}
-        requiredMark={false}
-        style={{
-          padding: "24px",
-        }}
-      >
-        <Form.Item
-          name="name"
-          label="Customer Name"
-          rules={[{ required: true, message: 'Please enter customer name' }]}
-        >
-          <Input
-            prefix={<FiUser style={{ color: '#1890ff' }} />}
-            placeholder="Enter customer name"
-            size="large"
-            style={{ borderRadius: '8px' }}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="contact"
-          label="Phone Number"
-          rules={[
-            { required: true, message: 'Please enter phone number' },
-            { pattern: /^\d{10}$/, message: 'Please enter a valid 10-digit phone number' }
-          ]}
-        >
-          <Input
-            prefix={<FiPhone style={{ color: '#1890ff' }} />}
-            placeholder="Enter phone number"
-            size="large"
-            style={{ borderRadius: '8px' }}
-          />
-        </Form.Item>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: "12px",
-            marginTop: "24px",
-          }}
-        >
-          <Button
-            size="large"
-            onClick={() => {
-              setIsCustomerModalOpen(false);
-              customerForm.resetFields();
-            }}
-            style={{
-              padding: "8px 24px",
-              height: "44px",
-              borderRadius: "8px",
-              border: "1px solid #e6e8eb",
-              fontWeight: "500",
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
-            style={{
-              padding: '8px 24px',
-              height: '44px',
-              borderRadius: '8px',
-              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-            }}
-          >
-            Create Customer
-          </Button>
-        </div>
-      </Form>
-    </Modal>
-  );
 
   const handleCurrencyChange = (value, option) => {
     const currency = currenciesData?.find(c => c.id === value);
@@ -632,7 +407,7 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
         requiredMark={false}
         initialValues={{
           items: [{}],
-          status: "pending"
+          status: "unpaid"
         }}
         style={{
           padding: "24px",
@@ -640,108 +415,62 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <Form.Item
-              name="category"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Category <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select category" }]}
-              initialValue="customer"
-            >
-              <Select
-                placeholder="Select category"
-                size="large"
-                style={{ width: "100%", borderRadius: "10px", height: "48px" }}
-                disabled={true}
-                value="customer"
-              >
-                <Option value="customer">Customer</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
               name="customer"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                  {selectedCategory === 'customer' ? 'Customer' :
-                    selectedCategory === 'contact' ? 'Contact' :
-                      'Company Account'} <span style={{ color: "#ff4d4f" }}>*</span>
+                  Customer <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: `Please select ${selectedCategory}` }]}
+              rules={[{ required: true, message: "Please select customer" }]}
             >
               <Select
-                listHeight={100}
-                dropdownStyle={{
-                  Height: '100px',
-                  overflowY: 'auto',
-                  scrollbarWidth: 'thin',
-                  scrollBehavior: 'smooth'
-                }}
-                placeholder={`Select ${selectedCategory === 'customer' ? 'Customer' :
-                  selectedCategory === 'contact' ? 'Contact' :
-                    'Company Account'}`}
                 showSearch
+                placeholder="Select Customer"
                 optionFilterProp="children"
                 size="large"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                  height: "48px"
                 }}
                 dropdownRender={(menu) => (
                   <>
                     {menu}
-                    {selectedCategory === 'customer' && ( // Only show Add button for customer category
-                      <>
-                        <Divider style={{ margin: '8px 0' }} />
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <Button
-                            type="primary"
-                            icon={<FiPlus />}
-                            onClick={() => setIsCustomerModalOpen(true)}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                              border: 'none',
-                              height: '40px',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add Customer
-                          </Button>
-                        </div>
-                      </>
-                    )}
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <Button
+                        type="primary"
+                        icon={<FiPlus />}
+                        onClick={() => setIsCustomerModalOpen(true)}
+                        style={{
+                          width: '100%',
+                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                          border: 'none',
+                          height: '40px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Add Customer
+                      </Button>
+                    </div>
                   </>
                 )}
               >
-                {getOptionsBasedOnCategory().map((option) => (
-                  <Option key={option.value} value={option.value}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '4px 0'
-                    }}>
-                      {selectedCategory === 'customer' ? <FiUser style={{ color: '#1890ff' }} /> :
-                        selectedCategory === 'contact' ? <FiPhone style={{ color: '#1890ff' }} /> :
-                          <FiCreditCard style={{ color: '#1890ff' }} />}
-                      <span>{option.label}</span>
-                    </div>
+                {customers?.map((customer) => (
+                  <Option key={customer.id} value={customer.id}>
+                    {customer.name}
                   </Option>
                 ))}
               </Select>
             </Form.Item>
-         
+
             <Form.Item
               name="currency"
               label={
@@ -837,7 +566,7 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
-              <Option value="partially_paid">Partially Paid</Option>
+              {/* <Option value="partially_paid">Partially Paid</Option> */}
             </Select>
           </Form.Item>
         </div>
@@ -1166,7 +895,191 @@ const CreateInvoice = ({ open, dealId, onCancel, onSubmit, setCreateModalVisible
         </div>
       </Form>
 
-      {customerModal}
+      <Modal
+        title={null}
+        open={isCustomerModalOpen}
+        onCancel={() => {
+          setIsCustomerModalOpen(false);
+          customerForm.resetFields();
+        }}
+        footer={null}
+        width={500}
+        destroyOnClose={true}
+        centered
+        closeIcon={null}
+        className="pro-modal custom-modal"
+        styles={{
+          body: {
+            padding: 0,
+            borderRadius: "8px",
+            overflow: "hidden",
+          },
+        }}
+      >
+        {/* Modal Header */}
+        <div
+          style={{
+            background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
+            padding: "24px",
+            color: "#ffffff",
+            position: "relative",
+          }}
+        >
+          <Button
+            type="text"
+            onClick={() => {
+              setIsCustomerModalOpen(false);
+              customerForm.resetFields();
+            }}
+            style={{
+              position: "absolute",
+              top: "16px",
+              right: "16px",
+              color: "#ffffff",
+              width: "32px",
+              height: "32px",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+            }}
+          >
+            <FiX style={{ fontSize: "20px" }} />
+          </Button>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.2)",
+                backdropFilter: "blur(8px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <FiUser style={{ fontSize: "24px", color: "#ffffff" }} />
+            </div>
+            <div>
+              <h2
+                style={{
+                  margin: "0",
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  color: "#ffffff",
+                }}
+              >
+                Create New Customer
+              </h2>
+              <Text
+                style={{
+                  fontSize: "14px",
+                  color: "rgba(255, 255, 255, 0.85)",
+                }}
+              >
+                Add a new customer to the system
+              </Text>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <Form
+          form={customerForm}
+          layout="vertical"
+          onFinish={handleCreateCustomer}
+          requiredMark={false}
+          style={{
+            padding: "24px",
+          }}
+        >
+          <Form.Item
+            name="name"
+            label="Customer Name"
+            rules={[{ required: true, message: 'Please enter customer name' }]}
+          >
+            <Input
+              prefix={<FiUser style={{ color: '#1890ff' }} />}
+              placeholder="Enter customer name"
+              size="large"
+              style={{ borderRadius: '8px' }}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="contact"
+            label="Phone Number"
+            rules={[
+              { required: true, message: 'Please enter phone number' },
+              { pattern: /^\d{10}$/, message: 'Please enter a valid 10-digit phone number' }
+            ]}
+          >
+            <Input
+              prefix={<FiPhone style={{ color: '#1890ff' }} />}
+              placeholder="Enter phone number"
+              size="large"
+              style={{ borderRadius: '8px' }}
+            />
+          </Form.Item>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "12px",
+              marginTop: "24px",
+            }}
+          >
+            <Button
+              size="large"
+              onClick={() => {
+                setIsCustomerModalOpen(false);
+                customerForm.resetFields();
+              }}
+              style={{
+                padding: "8px 24px",
+                height: "44px",
+                borderRadius: "8px",
+                border: "1px solid #e6e8eb",
+                fontWeight: "500",
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              size="large"
+              htmlType="submit"
+              style={{
+                padding: '8px 24px',
+                height: '44px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+              }}
+            >
+              Create Customer
+            </Button>
+          </div>
+        </Form>
+      </Modal>
     </Modal>
   );
 };

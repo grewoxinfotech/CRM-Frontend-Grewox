@@ -56,6 +56,29 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
   const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
 
+  // Watch for stock-related field changes
+  useEffect(() => {
+    const updateStockStatus = () => {
+      const stockQuantity = form.getFieldValue('stock_quantity') || 0;
+      const minStockLevel = form.getFieldValue('min_stock_level') || 0;
+      
+      let newStatus = 'in_stock';
+      if (stockQuantity <= 0) {
+        newStatus = 'out_of_stock';
+      } else if (stockQuantity <= minStockLevel) {
+        newStatus = 'low_stock';
+      }
+      
+      form.setFieldsValue({ stock_status: newStatus });
+    };
+
+    // Subscribe to field changes
+    const { stock_quantity, min_stock_level } = form.getFieldsValue();
+    if (stock_quantity !== undefined || min_stock_level !== undefined) {
+      updateStockStatus();
+    }
+  }, [form.getFieldValue('stock_quantity'), form.getFieldValue('min_stock_level')]);
+
   // Initialize form with INR currency
   useEffect(() => {
     if (currenciesData) {
@@ -150,6 +173,72 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
   const handleAddCategory = () => {
     setAddCategoryVisible(true);
+  };
+
+  // Add validation rules for stock quantities
+  const validateStockQuantities = {
+    max_stock_level: [
+      { required: false },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          const stockQuantity = getFieldValue('stock_quantity');
+          if (!value || !stockQuantity || value >= stockQuantity) {
+            return Promise.resolve();
+          }
+          return Promise.reject(new Error('Maximum stock level must be greater than current stock quantity'));
+        }
+      })
+    ],
+    stock_quantity: [
+      { required: true, message: "Please enter stock quantity" },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          const maxStock = getFieldValue('max_stock_level');
+          const minStock = getFieldValue('min_stock_level');
+          
+          if (maxStock && value > maxStock) {
+            return Promise.reject(new Error('Stock quantity cannot exceed maximum stock level'));
+          }
+          if (minStock && value < minStock) {
+            return Promise.reject(new Error('Stock quantity cannot be less than minimum stock level'));
+          }
+          return Promise.resolve();
+        }
+      })
+    ],
+    min_stock_level: [
+      { required: false },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          if (!value) return Promise.resolve();
+          
+          const stockQuantity = getFieldValue('stock_quantity');
+          const reorderQuantity = getFieldValue('reorder_quantity');
+          
+          if (value > stockQuantity) {
+            return Promise.reject(new Error('Minimum stock level cannot be greater than current stock quantity'));
+          }
+          if (reorderQuantity && value < reorderQuantity) {
+            return Promise.reject(new Error('Minimum stock level must be greater than reorder quantity'));
+          }
+          return Promise.resolve();
+        }
+      })
+    ],
+    reorder_quantity: [
+      { required: false },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          if (!value) return Promise.resolve();
+          
+          const minStock = getFieldValue('min_stock_level');
+          if (minStock && value > minStock) {
+            return Promise.reject(new Error('Reorder quantity must be less than minimum stock level'));
+          }
+          return Promise.resolve();
+        }
+      })
+    ]
   };
 
   return (
@@ -532,11 +621,12 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
                 <span style={{ color: '#374151', fontWeight: 500 }}>Stock Quantity</span>
               </div>
             }
-            rules={[{ required: true, message: "Please enter stock quantity" }]}
+            rules={validateStockQuantities.stock_quantity}
           >
             <InputNumber
               placeholder="Enter quantity"
               min={0}
+              onChange={() => form.validateFields(['min_stock_level', 'max_stock_level', 'reorder_quantity'])}
               style={{
                 width: '100%',
                 height: '48px',
@@ -551,10 +641,12 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           <Form.Item
             name="min_stock_level"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Minimum Stock Level</span>}
+            rules={validateStockQuantities.min_stock_level}
           >
             <InputNumber
               placeholder="Enter minimum stock level"
               min={0}
+              onChange={() => form.validateFields(['stock_quantity', 'reorder_quantity'])}
               style={{
                 width: '100%',
                 height: '48px',
@@ -569,10 +661,12 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           <Form.Item
             name="max_stock_level"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Maximum Stock Level</span>}
+            rules={validateStockQuantities.max_stock_level}
           >
             <InputNumber
               placeholder="Enter maximum stock level"
               min={0}
+              onChange={() => form.validateFields(['stock_quantity'])}
               style={{
                 width: '100%',
                 height: '48px',
@@ -587,10 +681,12 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           <Form.Item
             name="reorder_quantity"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Reorder Quantity</span>}
+            rules={validateStockQuantities.reorder_quantity}
           >
             <InputNumber
               placeholder="Enter reorder quantity"
               min={0}
+              onChange={() => form.validateFields(['min_stock_level'])}
               style={{
                 width: '100%',
                 height: '48px',

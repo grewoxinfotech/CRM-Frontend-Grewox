@@ -55,7 +55,7 @@ const Invoice = () => {
   const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
 
   
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(id);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

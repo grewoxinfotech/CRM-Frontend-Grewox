@@ -43,6 +43,9 @@ const CreateCreditNotes = ({ open, onCancel }) => {
   const { data: invdata } = useGetInvoicesQuery();
   const invoices = invdata?.data;
 
+
+ 
+
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
 
@@ -56,25 +59,38 @@ const CreateCreditNotes = ({ open, onCancel }) => {
   const handleInvoiceChange = (value) => {
     const selectedInvoice = invoices?.find(inv => inv.id === value);
     if (selectedInvoice) {
+      // Find customer name from customer data
+      const customerDetails = customers?.find(cust => cust.id === selectedInvoice.customer);
+      
       // Set amount from invoice total
       form.setFieldValue('amount', selectedInvoice.amount);
       
       // Set currency from invoice
       form.setFieldValue('currency', selectedInvoice.currency);
       
-      // Set customer from invoice
-      form.setFieldValue('customer', selectedInvoice.customer);
+      // Set customer name and ID
+      form.setFieldValue('customer', customerDetails?.name || '');
+      form.setFieldValue('customer_id', selectedInvoice.customer);
       
       // Update selected currency icon
       const currencyDetails = currenciesData?.find(curr => curr.id === selectedInvoice.currency);
       if (currencyDetails) {
         setSelectedCurrency(currencyDetails.currencyIcon || '₹');
       }
+
+      // Store selected invoice amount for validation
+      form.setFieldValue('max_amount', selectedInvoice.amount);
     }
   };
 
   const handleSubmit = async (values) => {
     try {
+      // Check if credit note amount exceeds invoice amount
+      if (parseFloat(values.amount) > parseFloat(values.max_amount)) {
+        message.error("Credit note amount cannot exceed invoice amount");
+        return;
+      }
+
       const creditNoteData = {
         invoice: values.invoice || "",
         customer: values.customer || "",
@@ -227,9 +243,9 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                   borderRadius: "10px",
                 }}
               >
-                {invoices?.map((invoice) => (
+                {invoices?.filter(invoice => invoice.payment_status !== 'paid').map((invoice) => (
                   <Option key={invoice.id} value={invoice.id}>
-                    {invoice.salesInvoiceNumber} - {invoice.amount}
+                    {invoice.salesInvoiceNumber}
                   </Option>
                 ))}
               </Select>
@@ -247,26 +263,27 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               }
               rules={[{ required: true, message: "Please select customer" }]}
             >
-              <Select
-                placeholder="Select Customer"
-                showSearch
-                optionFilterProp="children"
+              <Input
+                disabled
                 size="large"
-                disabled={form.getFieldValue('invoice')}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc"
                 }}
-              >
-                {customers?.map((customer) => (
-                  <Option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </Option>
-                ))}
-              </Select>
+              />
             </Form.Item>
           </Col>
         </Row>
+
+        {/* Hidden field to store customer_id */}
+        <Form.Item
+          name="customer_id"
+          hidden
+        >
+          <Input />
+        </Form.Item>
 
         <Row gutter={16}>
           <Col span={12}>
@@ -310,7 +327,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 size="large"
                 placeholder="Select currency"
                 onChange={handleCurrencyChange}
-                disabled={form.getFieldValue('invoice')}
+                disabled
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -334,7 +351,18 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                   Amount <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please enter amount" }]}
+              rules={[
+                { required: true, message: "Please enter amount" },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const maxAmount = getFieldValue('max_amount');
+                    if (!value || !maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Amount cannot exceed invoice amount'));
+                  },
+                }),
+              ]}
             >
               <Input
                 type="number"

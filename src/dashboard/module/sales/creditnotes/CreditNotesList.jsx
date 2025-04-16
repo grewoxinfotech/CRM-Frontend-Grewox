@@ -42,6 +42,10 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
   const { data: invdata } = useGetInvoicesQuery();
   const invoices = invdata?.data;
 
+console.log("invoices",invoices);
+
+  
+
 
   const getCurrencyIcon = (currencyId) => {
     const currency = currenciesData?.find(curr => curr.id === currencyId);

@@ -8,6 +8,7 @@ import {
   FiDownload,
   FiPlus,
   FiSearch,
+  FiSend
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -200,6 +201,12 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
         label: "Edit Invoice",
         onClick: () => handleEdit(record),
       },
+      {
+        key:"send_invoice",
+        icon:<FiSend style={{ fontSize: '14px' }} />,
+        label: "Send Invoice to Customer",
+        onClick: () => handleSendInvoice(record),
+      },
       // {
       //   key: "download",
       //   icon: <FiDownload />,
@@ -358,7 +365,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       sorter: (a, b) => a.total - b.total,
     },
     {
-      title: "Amount",
+      title: "Pending Amount",
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => {

@@ -26,13 +26,20 @@ import { useGetCreditNotesQuery } from '../creditnotes/services/creditNoteApi';
 import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
 import { QRCodeSVG } from 'qrcode.react';
 import './invoice.scss';
+import { useSendInvoiceEmailMutation } from './services/invoiceApi';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useSelector } from 'react-redux';
+// import { sendInvoiceEmail } from './services/invoiceApi';
 
 
 const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
+
   const [billingData, setBillingData] = useState(null);
   const [creditNoteAmount, setCreditNoteAmount] = useState(0);
   const printRef = useRef();
   
+  const loggedInUser = useSelector(selectCurrentUser);
+  const id = loggedInUser?.id;
   const { data: customersData } = useGetCustomersQuery();
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
@@ -40,13 +47,16 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     skip: !invoice?.id
   });
 
-  const { data: settingsData } = useGetAllSettingsQuery();
   
+  const { data: settingsData } = useGetAllSettingsQuery(id);
+
+  const [sendInvoiceEmail] = useSendInvoiceEmailMutation();
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
   const [companyName, setCompanyName] = useState('Grewox CRM');
   const [companyEmail, setCompanyEmail] = useState('contact@grewox.com');
   const [companyWebsite, setCompanyWebsite] = useState('www.grewox.com');
+  const [merchantUpiId, setMerchantUpiId] = useState('');
 
   // Get company settings from general settings
   useEffect(() => {
@@ -58,19 +68,20 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         setCompanyLogo(settings.companylogo);
       }
       
-      // Set company name if available - note the correct property name is companyName
+      // Set company name if available
       if (settings.companyName) {
         setCompanyName(settings.companyName);
       } 
       
-      // Set company email if available
-      if (settings.email) {
-        setCompanyEmail(settings.email);
+      // Set merchant name as email if available
+      if (settings.merchant_name) {
+        setCompanyEmail(settings.merchant_name);
       }
       
-      // Set company website if available
-      if (settings.website) {
-        setCompanyWebsite(settings.website);
+      // Set merchant UPI ID if available
+      if (settings.merchant_upi_id) {
+        setMerchantUpiId(settings.merchant_upi_id);
+        setCompanyWebsite(settings.merchant_upi_id);
       }
     } 
   }, [settingsData]);
@@ -92,30 +103,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           }
           break;
 
-        case 'contact':
-          data = contactsData?.data?.find(c => c.id === invoice.customer);
-          if (data) {
-            setBillingData({
-              name: data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || data.contact_name,
-              email: data.email,
-              contact: data.phone || data.mobile,
-              address: data.address
-            });
-          }
-          break;
-
-        case 'company_account':
-          data = companyAccountsData?.data?.find(c => c.id === invoice.customer);
-          if (data) {
-            setBillingData({
-              name: data.company_name || data.name || data.account_name,
-              email: data.email,
-              contact: data.phone || data.contact_number,
-              address: data.address
-            });
-          }
-          break;
-
+       
         default:
           setBillingData(null);
       }
@@ -172,10 +160,22 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     }
   };
 
-  // Add getPaymentUrl function
+  // Update getPaymentUrl function
   const getPaymentUrl = () => {
     if (!invoice) return '';
-    return invoice.upiLink || `https://grewox.com/invoice/${invoice.salesInvoiceNumber}`;
+    
+    // If there's a UPI ID, create a UPI payment URL
+    if (merchantUpiId) {
+      const amount = Number(invoice?.total || 0);
+      const tr = invoice?.salesInvoiceNumber || '';
+      const pn = companyName || 'Merchant';
+      
+      // Create UPI URL with parameters
+      return `upi://pay?pa=${merchantUpiId}&pn=${encodeURIComponent(pn)}&am=${amount}&tr=${tr}&tn=Invoice%20Payment`;
+    }
+    
+    // Fallback to invoice link if no UPI ID
+    return `${window.location.origin}/invoice/${invoice.salesInvoiceNumber}`;
   };
 
   const handleDownload = async () => {
@@ -185,13 +185,171 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
       message.loading({ content: 'Generating PDF...', key: 'download' });
 
+      // Add necessary styles before generating PDF
+      const styleContent = `
+        .bill-card.invoice-container {
+          padding: 40px;
+          background: white;
+          width: 100%;
+        }
+        .bill-header {
+          margin-bottom: 30px;
+        }
+        .company-info {
+          display: flex;
+          align-items: flex-start;
+          gap: 20px;
+        }
+        .company-logo {
+          max-height: 60px;
+          width: auto;
+          object-fit: contain;
+        }
+        .company-details {
+          flex: 1;
+        }
+        .company-details h3 {
+          margin: 0 0 5px 0;
+          font-size: 24px;
+          color: #333;
+        }
+        .company-details p {
+          margin: 0;
+          color: #666;
+        }
+        .bill-details {
+          margin: 30px 0;
+        }
+        .bill-section {
+          display: flex;
+          justify-content: space-between;
+          gap: 40px;
+        }
+        .bill-to, .bill-info {
+          flex: 1;
+        }
+        .bill-to h4, .bill-info h4 {
+          margin: 0 0 15px 0;
+          color: #333;
+        }
+        .vendor-info h5 {
+          margin: 0 0 10px 0;
+          font-weight: normal;
+        }
+        .info-row {
+          margin-bottom: 10px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        .items-table th {
+          background: #f8f9fa;
+          padding: 12px;
+          text-align: left;
+          border-bottom: 1px solid #ddd;
+        }
+        .items-table td {
+          padding: 12px;
+          border-bottom: 1px solid #ddd;
+        }
+        .text-right {
+          text-align: right;
+        }
+        .total-row {
+          font-weight: bold;
+          background: #f8f9fa;
+        }
+        .payment-section {
+          display: flex;
+          gap: 40px;
+          margin-top: 30px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 8px;
+        }
+        .qr-code {
+          text-align: center;
+        }
+        .qr-info {
+          margin-top: 10px;
+        }
+        .payment-info {
+          flex: 1;
+        }
+        .bank-details {
+          margin-top: 15px;
+        }
+        .bill-notes {
+          margin-top: 30px;
+        }
+        .powered-by {
+          margin-top: 20px;
+          text-align: center;
+          color: #666;
+          font-size: 12px;
+        }
+        .status-badge {
+          padding: 4px 12px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+        .status-badge.partially_paid {
+          background: #ede9fe;
+          color: #7c3aed;
+        }
+      `;
+
+      // Create a temporary style element
+      const style = document.createElement('style');
+      style.textContent = styleContent;
+      element.appendChild(style);
+
+      // Wait for all images to load
+      const images = element.getElementsByTagName('img');
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = () => {
+            if (img.classList.contains('company-logo')) {
+              img.src = 'https://grewox.com/assets/logo.png';
+              resolve();
+            } else {
+              reject();
+            }
+          };
+        });
+      }));
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById('invoice-content');
+          // Add the same styles to cloned element
+          const clonedStyle = document.createElement('style');
+          clonedStyle.textContent = styleContent;
+          clonedElement.appendChild(clonedStyle);
+          
+          // Ensure images are visible
+          const clonedImages = clonedElement.getElementsByTagName('img');
+          Array.from(clonedImages).forEach(img => {
+            img.style.display = 'block';
+            img.crossOrigin = 'anonymous';
+          });
+        }
       });
+
+      // Remove the temporary style element
+      element.removeChild(style);
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
@@ -420,23 +578,174 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     newWindow.document.close();
   };
 
+  const handleSendInvoice = async () => {
+    try {
+      const category = invoice.category || 'customer';
+      
+      let customerData = null;
+      customerData = customersData?.data?.find(c => c.id === invoice.customer);
+      
+      if (!customerData) {
+        if (category === 'contact') {
+          customerData = contactsData?.data?.find(c => c.id === invoice.customer);
+        } else if (category === 'company_account') {
+          customerData = companyAccountsData?.data?.find(c => c.id === invoice.customer);
+        }
+      }
+
+      if (!customerData) {
+        message.error('Customer data not found. Please make sure the customer exists.');
+        return;
+      }
+
+      if (!customerData.email) {
+        message.error('Please add email address for the customer before sending invoice');
+        return;
+      }
+
+      message.loading({ content: 'Sending invoice...', key: 'sendInvoice' });
+
+      const element = document.getElementById('invoice-content');
+      if (!element) {
+        message.error('Could not find invoice content. Please try again.');
+        return;
+      }
+
+      // Get the HTML content with styles
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              body {
+                margin: 0;
+                padding: 20px;
+                font-family: 'Segoe UI', sans-serif;
+                background: white;
+              }
+              .invoice-container {
+                width: 100%;
+                background: white;
+                padding: 20px;
+              }
+              .company-logo {
+                max-height: 60px;
+                width: auto;
+              }
+              .company-info {
+                margin-bottom: 30px;
+              }
+              .bill-details {
+                margin: 20px 0;
+              }
+              .bill-section {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 20px;
+              }
+              .bill-to, .bill-info {
+                flex: 1;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+              }
+              th, td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #eaeaea;
+              }
+              th {
+                background: #f0f4fa;
+              }
+              .text-right {
+                text-align: right;
+              }
+              .total-row {
+                font-weight: bold;
+                background: #f8fafc;
+              }
+              .status-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 6px;
+                font-size: 12px;
+              }
+              .status-paid { color: #059669; background: #d1fae5; }
+              .status-unpaid { color: #dc2626; background: #fee2e2; }
+              .status-partial { color: #7c3aed; background: #ede9fe; }
+              .qr-section {
+                text-align: center;
+                margin-top: 30px;
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 12px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-container">
+              ${element.innerHTML}
+            </div>
+          </body>
+        </html>
+      `;
+
+      const customer = {
+        name: customerData.name || customerData.company_name || `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim(),
+        email: customerData.email,
+        contact: customerData.contact || customerData.phone || customerData.mobile,
+        address: customerData.billing_address || customerData.address
+      };
+
+      // Clean up the invoice data
+      const cleanInvoice = {
+        ...invoice,
+        currency: 'INR',
+        items: invoice.items?.map(item => ({
+          ...item,
+          unit_price: Number(item.unit_price || item.rate || 0),
+          quantity: Number(item.quantity || 0),
+          amount: Number(item.amount || 0)
+        })) || [],
+        total: Number(invoice.total || 0),
+        tax: Number(invoice.tax || 0),
+        discount: Number(invoice.discount || 0),
+        subtotal: Number(invoice.subtotal || 0)
+      };
+
+      const payload = {
+        invoice: cleanInvoice,
+        customer: customer,
+        htmlContent: htmlContent
+      };
+
+      await sendInvoiceEmail({
+        id: invoice.id,
+        data: payload
+      });
+
+      message.success({ 
+        content: 'Invoice sent successfully!', 
+        key: 'sendInvoice' 
+      });
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      message.error({ 
+        content: error?.response?.data?.message || 'Failed to send invoice. Please try again.', 
+        key: 'sendInvoice' 
+      });
+    }
+  };
+
   const shareItems = {
     items: [
-      {
-        key: 'view',
-        icon: <FiEye />,
-        label: 'View Invoice',
-        onClick: openInvoiceInNewWindow
-      },
+     
       {
         key: 'email',
         icon: <FiMail />,
-        label: 'Share via Email',
-        onClick: () => {
-          const subject = `Invoice ${invoice?.salesInvoiceNumber} from Grewox CRM`;
-          const body = `Please find the invoice details below:\n\nInvoice Number: ${invoice?.salesInvoiceNumber}\nAmount: ₹${(Number(invoice?.total || 0) - creditNoteAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}\nDue Date: ${dayjs(invoice?.dueDate).format('DD-MM-YYYY')}`;
-          window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        }
+        label: 'Send to Customer',
+        onClick: handleSendInvoice
       },
       {
         key: 'copy',
@@ -494,7 +803,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     >
       <div className="view-billing-container">
         <div className="view-billing-content">
-          <div className="bill-card">
+          <div className="bill-card invoice-container" id="invoice-content">
             <div className="bill-header">
               <div className="company-info">
                 {companyLogo ? (

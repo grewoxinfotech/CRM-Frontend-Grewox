@@ -1,37 +1,97 @@
-import React, { useState } from 'react';
-import { Tabs, Typography, Button, Badge, Empty, Dropdown } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Tabs, Typography, Button, Badge, Empty, Dropdown, notification } from 'antd';
 import { BiBell, BiCalendarEvent } from 'react-icons/bi';
 import { useGetAllNotificationsQuery, useMarkAsReadMutation, useClearAllNotificationsMutation } from './services/notificationApi';
 import './notifications.scss';
 import { selectCurrentUser } from '../../auth/services/authSlice';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useGetFollowuppCallQuery } from '../../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi';
 
 const { Title } = Typography;
 
 const NotificationsComponent = () => {
     const navigate = useNavigate();
-    const { data: notificationsData, isLoading } = useGetAllNotificationsQuery();
+    const loggedInUser = useSelector(selectCurrentUser);
+    const id = loggedInUser?.id;
+    
+    const { data: notificationsData, isLoading, error, refetch } = useGetAllNotificationsQuery(id);
     const [markAsRead] = useMarkAsReadMutation();
     const [clearAll] = useClearAllNotificationsMutation();
-    const loggedInUser = useSelector(selectCurrentUser);
+    
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [processedNotifications] = useState(new Set());
 
-    const notifications = notificationsData?.data?.filter(n => !n.read) || [];
-    const normalNotifications = notifications.filter(n => n.notification_type === 'normal');
-    const reminders = notifications.filter(n => n.notification_type === 'reminder');
-   
+    // Poll for new notifications every 5 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            refetch();
+        }, 5000);
 
-    // console.log("notifications", notifications);
+        return () => clearInterval(interval);
+    }, [refetch]);
 
-// console.log("followupCallczxzxc", followupCall.data);
+    // Filter notifications
+    const notifications = notificationsData?.data || [];
+    const unreadNotifications = notifications.filter(n => !n.read);
+    const normalNotifications = unreadNotifications.filter(n => n.notification_type === 'normal');
+    const reminders = unreadNotifications.filter(n => n.notification_type === 'reminder');
+
+    // Show notifications directly from API
+    useEffect(() => {
+        console.log('Processing notifications:', {
+            total: notifications.length,
+            unread: unreadNotifications.length,
+            reminders: reminders.length
+        });
+
+        // Show all unread notifications
+        unreadNotifications.forEach(notif => {
+            if (!processedNotifications.has(notif.id)) {
+                const isReminder = notif.notification_type === 'reminder';
+                
+                notification.info({
+                    message: notif.title,
+                    description: notif.message,
+                    icon: isReminder ? <BiCalendarEvent style={{ color: '#7c3aed' }} /> : <BiBell style={{ color: '#7c3aed' }} />,
+                    placement: 'topRight',
+                    duration: 0,
+                    key: notif.id,
+                    onClick: () => handleMarkAsRead(notif.id, notif)
+                });
+
+                processedNotifications.add(notif.id);
+                console.log('Showing notification:', {
+                    id: notif.id,
+                    type: notif.notification_type,
+                    title: notif.title
+                });
+            }
+        });
+    }, [notifications, unreadNotifications, reminders]);
 
     const handleMarkAsRead = async (id, notification) => {
         try {
+            console.log('Marking as read:', {
+                id,
+                title: notification.title,
+                type: notification.notification_type
+            });
+
             await markAsRead(id);
+            notification.close(id);
+            
             if (notification.related_id) {
-                navigate(`/dashboard/crm/deals/${notification.related_id}`);
+                switch (notification.notification_type) {
+                    case 'reminder':
+                        if (notification.description?.includes('Task Due')) {
+                            navigate(`/dashboard/crm/tasks/${notification.related_id}`);
+                        } else {
+                            navigate(`/dashboard/crm/deals/${notification.related_id}`);
+                        }
+                        break;
+                    default:
+                        navigate(`/dashboard/crm/deals/${notification.related_id}`);
+                }
             }
         } catch (error) {
             console.error('Error marking notification as read:', error);
@@ -42,6 +102,7 @@ const NotificationsComponent = () => {
         try {
             await clearAll();
             setDropdownOpen(false);
+            unreadNotifications.forEach(n => notification.close(n.id));
         } catch (error) {
             console.error('Error clearing notifications:', error);
         }
@@ -71,6 +132,11 @@ const NotificationsComponent = () => {
                                     <div className="notification-details">
                                         <Typography.Text strong>{notification.title}</Typography.Text>
                                         <Typography.Text type="secondary">{notification.message}</Typography.Text>
+                                        {notification.description && (
+                                            <Typography.Text className="notification-description">
+                                                {notification.description}
+                                            </Typography.Text>
+                                        )}
                                         <span className="notification-time">
                                             {new Date(notification.createdAt).toLocaleString()}
                                         </span>
@@ -97,7 +163,7 @@ const NotificationsComponent = () => {
                         reminders.map((reminder) => (
                             <div
                                 key={reminder.id}
-                                className={`notification-item ${!reminder.read ? 'unread' : ''}`}
+                                className={`notification-item reminder-item ${!reminder.read ? 'unread' : ''}`}
                                 onClick={() => handleMarkAsRead(reminder.id, reminder)}
                             >
                                 <div className="notification-content">
@@ -107,6 +173,15 @@ const NotificationsComponent = () => {
                                     <div className="notification-details">
                                         <Typography.Text strong>{reminder.title}</Typography.Text>
                                         <Typography.Text type="secondary">{reminder.message}</Typography.Text>
+                                        {reminder.description && (
+                                            <Typography.Text className="notification-description">
+                                                {reminder.description}
+                                            </Typography.Text>
+                                        )}
+                                        <div className="reminder-time">
+                                            <span>Due: {new Date(reminder.date).toLocaleDateString()}</span>
+                                            <span>{reminder.time}</span>
+                                        </div>
                                         <span className="notification-time">
                                             {new Date(reminder.createdAt).toLocaleString()}
                                         </span>
@@ -126,24 +201,21 @@ const NotificationsComponent = () => {
         <div className="notifications-dropdown">
             <div className="notifications-header">
                 <Title level={5}>Notifications</Title>
-                <Button type="link" onClick={handleClearAll}>
-                    Clear all
-                </Button>
+                {unreadNotifications.length > 0 && (
+                    <Button type="link" onClick={handleClearAll}>
+                        Clear all
+                    </Button>
+                )}
             </div>
             <Tabs
                 defaultActiveKey="1"
                 items={items}
                 className="notification-tabs"
             />
-            <div className="notifications-footer">
-                <Button type="primary" block onClick={() => navigate('/dashboard/analytics')}>
-                    View Analytics
-                </Button>
-            </div>
         </div>
     );
 
-    const totalUnread = notifications.filter(n => !n.read).length;
+    const totalUnread = unreadNotifications.length;
 
     return (
         <Dropdown
@@ -155,7 +227,7 @@ const NotificationsComponent = () => {
             onOpenChange={(visible) => setDropdownOpen(visible)}
         >
             <Badge count={totalUnread} className="notification-badge">
-                <Button type="text" className="notification-button">
+                <Button type="text" className="notification-button" loading={isLoading}>
                     <BiBell className="notification-bell-icon" />
                 </Button>
             </Badge>

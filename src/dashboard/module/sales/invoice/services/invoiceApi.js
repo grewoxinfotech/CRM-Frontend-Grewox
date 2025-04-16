@@ -33,6 +33,14 @@ export const invoiceApi = createApi({
       }),
       invalidatesTags: ["Invoices"],
     }),
+    sendInvoiceEmail: builder.mutation({
+      query: ({id, data}) => ({
+        url: `sales-invoices/send-mail/${id}`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Invoices"],
+    }),
    
   }),
 });
@@ -42,4 +50,6 @@ export const {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
   useDeleteInvoiceMutation,
+  useSendInvoiceEmailMutation,
 } = invoiceApi;
+

@@ -44,7 +44,8 @@ const ProductServices = () => {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
-  const { data: productsData = [], isLoading, refetch } = useGetProductsQuery();
+  const id = currentUser?.id;
+  const { data: productsData = [], isLoading, refetch } = useGetProductsQuery(id);
   const [createProduct] = useCreateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
