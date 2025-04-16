@@ -26,7 +26,7 @@ import {
   FiCalendar,
   FiInfo,
 } from "react-icons/fi";
-import { useCreateDealMutation } from "./services/dealApi";
+import { useCreateDealMutation } from "./services/DealApi";
 import { PlusOutlined } from '@ant-design/icons';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";

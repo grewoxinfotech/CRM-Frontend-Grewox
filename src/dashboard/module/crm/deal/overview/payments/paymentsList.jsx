@@ -13,6 +13,7 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
 import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
+import { useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -28,7 +29,7 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
     page: 1,
     limit: 100
   });
-  const { data: dealinvoicedata } = useGetDealInvoicesQuery(dealId);
+  const { data: dealinvoicedata } = useGetInvoicesQuery(dealId);
 
   // Ensure payments is always an array and filter by related_id
   const payments = React.useMemo(() => {
@@ -173,7 +174,7 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
               }} 
             />
             <div>
-              <Text strong>{invoiceDetails?.invoiceNumber || text || "-"}</Text>
+              <Text strong>{invoiceDetails?.salesInvoiceNumber || text || "-"}</Text>
               <div>
                 <Text type="secondary" style={{ fontSize: "12px" }}>
                   {record.remark || "-"}

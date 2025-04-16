@@ -47,8 +47,8 @@ const Invoice = () => {
   const [searchText, setSearchText] = useState("");
   const { data: invoicesData, isLoading } = useGetInvoicesQuery();
   const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
-
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
 
   const handleExport = async (type) => {
     try {
@@ -213,7 +213,7 @@ const Invoice = () => {
 
   return (
     <div className="invoice-page">
-      <div className="page-breadcrumb">
+      {/* <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -223,7 +223,7 @@ const Invoice = () => {
           <Breadcrumb.Item>Sales</Breadcrumb.Item>
           <Breadcrumb.Item>Invoices</Breadcrumb.Item>
         </Breadcrumb>
-      </div>
+      </div> */}
 
       <div className="page-header">
         <div className="page-title">

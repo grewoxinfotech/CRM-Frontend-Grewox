@@ -4,6 +4,7 @@ import { FiDollarSign, FiX, FiCalendar, FiUser, FiHash, FiUpload, FiBriefcase, F
 import dayjs from 'dayjs';
 import './vendor.scss';
 import { useCreateVendorMutation } from './services/vendorApi';
+import { useGetAllCountriesQuery } from '../../settings/services/settingsApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -13,6 +14,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
     const [createVendor] = useCreateVendorMutation();
     const [form] = Form.useForm();
     const [fileList, setFileList] = useState([]);
+    const { data: countries = [] } = useGetAllCountriesQuery();
 
     const handleSubmit = async (values) => {
         try {

@@ -3,9 +3,12 @@ import { Modal, Form, Input, Button, Typography, Select, Row, Col, Divider, Inpu
 import { FiFileText, FiX, FiUser, FiCalendar, FiHash, FiDollarSign, FiPlus, FiTrash2, FiPackage } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './billing.scss';
-import { useGetVendorsQuery, useGetProductsQuery } from './services/billingApi';
+import { useGetVendorsQuery } from './services/billingApi';
+import { useGetProductsQuery } from '../../sales/product&services/services/productApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 import { useGetAllTaxesQuery } from '../../settings/tax/services/taxApi';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useSelector } from 'react-redux';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -15,7 +18,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
     const [loading, setLoading] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState('₹'); // Default to rupee symbol
     const [isTaxEnabled, setIsTaxEnabled] = useState(false);
-
+    const loggedInUser = useSelector(selectCurrentUser);
     // Add this to fetch vendors
     const { data: vendorsData, isLoading: vendorsLoading } = useGetVendorsQuery();
 
@@ -29,7 +32,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
     const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
 
     // Fetch products
-    const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+    const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
 
     // Handle currency change
     const handleCurrencyChange = (value, option) => {

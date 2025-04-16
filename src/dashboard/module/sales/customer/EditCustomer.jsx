@@ -22,6 +22,7 @@ import {
   FiHash,
   FiCopy,
 } from "react-icons/fi";
+import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -30,6 +31,19 @@ const { TextArea } = Input;
 const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const [selectedCountry, setSelectedCountry] = useState(null);
+
+  // Find India in countries array and set as default
+  useEffect(() => {
+    if (countries.length > 0) {
+      const india = countries.find(country => country.countryCode === 'IN');
+      if (india) {
+        setSelectedCountry(india);
+        form.setFieldValue('country', india.id);
+      }
+    }
+  }, [countries, form]);
 
   useEffect(() => {
     if (initialValues) {
@@ -67,6 +81,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         text_number: values.text_number || "",
         company: values.company || "",
         status: values.status || "active",
+        phonecode: selectedCountry?.phoneCode || "+91",
 
         // Address Information
         billing_address: values.billing_address || {},
@@ -90,6 +105,11 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
 
   const handleFileChange = ({ fileList: newFileList }) => {
     setFileList(newFileList);
+  };
+
+  const handleCountryChange = (value) => {
+    const country = countries.find(c => c.id === value);
+    setSelectedCountry(country);
   };
 
   const copyBillingToShipping = () => {
@@ -304,6 +324,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
               />
             </Form.Item>
           </Col>
+         
           <Col span={8}>
             <Form.Item
               name="contact"
@@ -566,8 +587,6 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
             </Col>
           </Row>
         </Col>
-
-
 
         <Divider style={{ margin: "24px 0" }} />
 

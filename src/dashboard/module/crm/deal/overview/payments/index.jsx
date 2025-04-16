@@ -78,7 +78,7 @@ const DealPayments = (deal) => {
 
   return (
     <div className="payment-page">
-      <div className="page-breadcrumb">
+      {/* <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -91,7 +91,7 @@ const DealPayments = (deal) => {
           </Breadcrumb.Item>
           <Breadcrumb.Item>Payments</Breadcrumb.Item>
         </Breadcrumb>
-      </div>
+      </div> */}
 
       <div className="page-header">
         <div className="header-left">

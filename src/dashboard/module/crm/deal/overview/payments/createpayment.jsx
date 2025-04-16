@@ -6,8 +6,10 @@ import {
   Button,
   Typography,
   Select,
+  Row,
+  Col,
   DatePicker,
-  InputNumber,
+  Divider,
   message,
 } from "antd";
 import {
@@ -17,16 +19,19 @@ import {
   FiCreditCard,
   FiMessageSquare,
   FiFileText,
+  FiHash,
 } from "react-icons/fi";
 import { useCreateDealPaymentMutation } from "./services/dealpaymentApi";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
 import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
 import dayjs from "dayjs";
+import { useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
 
 const { Text } = Typography;
 const { Option } = Select;
 
 const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
+
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [createPayment] = useCreateDealPaymentMutation();
@@ -34,25 +39,41 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
     page: 1,
     limit: 100
   });
-  const { data: invoicesResponse = { data: [] } } = useGetDealInvoicesQuery(dealId);
-  const invoicessData = invoicesResponse.data
+  const { data: invoicesResponse = { data: [] } } = useGetInvoicesQuery();
+  const invoicessData = invoicesResponse.data;
   const invoicesData = invoicessData.filter(invoice => invoice.related_id === dealId);
-
-
+  const [selectedCurrency, setSelectedCurrency] = useState('₹');
 
   const handleInvoiceChange = (value) => {
     const selectedInvoice = invoicesData.find(invoice => invoice.id === value);
     if (selectedInvoice) {
+      // Set amount from invoice total
       form.setFieldsValue({
         amount: selectedInvoice.total,
         currency: selectedInvoice.currency
       });
+
+      // Update selected currency icon
+      const currencyDetails = currencies.find(curr => curr.id === selectedInvoice.currency);
+      if (currencyDetails) {
+        setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+      }
+
+      // Store selected invoice amount for validation
+      form.setFieldValue('max_amount', selectedInvoice.total);
     }
   };
 
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
+
+      // Check if payment amount exceeds invoice amount
+      if (parseFloat(values.amount) > parseFloat(values.max_amount)) {
+        message.error("Payment amount cannot exceed invoice amount");
+        return;
+      }
+
       await createPayment({
         id: dealId,
         data: {
@@ -82,7 +103,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={600}
+      width={800}
       destroyOnClose={true}
       centered
       closeIcon={null}
@@ -171,7 +192,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
                 color: "rgba(255, 255, 255, 0.85)",
               }}
             >
-              Add payment details
+              Fill in the payment details
             </Text>
           </div>
         </div>
@@ -186,120 +207,174 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
           padding: "24px",
         }}
       >
-        <Form.Item
-          name="invoice"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiFileText style={{ marginRight: "8px", color: "#1890ff" }} />
-              Invoice
-            </span>
-          }
-        >
-          <Select
-            placeholder="Select invoice"
-            style={{ width: "100%",height:"40px" }}
-            onChange={handleInvoiceChange}
-          >
-            {invoicesData.map((invoice) => (
-              <Option key={invoice.id} value={invoice.id}>
-                {invoice.invoiceNumber} - {invoice.customer} ({invoice.total})
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="invoice"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Invoice <span style={{ color: '#ff4d4f' }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select invoice" }]}
+            >
+              <Select
+                placeholder="Select Invoice"
+                showSearch
+                optionFilterProp="children"
+                size="large"
+                onChange={handleInvoiceChange}
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+              >
+                {invoicesData?.filter(invoice => invoice.payment_status !== 'paid').map((invoice) => (
+                  <Option key={invoice.id} value={invoice.id}>
+                    {invoice.salesInvoiceNumber} 
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
 
-        <Form.Item
-          name="paidOn"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" ,marginTop:"10px"}}>
-              <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
-              Paid On
-            </span>
-          }
-        >
-          <DatePicker
-            style={{ width: "100%",height:"50px" }}
-            format="YYYY-MM-DD"
-          />
-        </Form.Item>
+          <Col span={12}>
+            <Form.Item
+              name="paidOn"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Paid On <span style={{ color: '#ff4d4f' }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select date" }]}
+            >
+              <DatePicker
+                size="large"
+                format="DD-MM-YYYY"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                }}
+                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <Form.Item
-          name="amount"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
-              Amount
-            </span>
-          }
-        >
-          <InputNumber
-            style={{ width: "100%",height:"40px"   }}
-            placeholder="Enter amount"
-            formatter={(value) => {
-              const selectedInvoice = form.getFieldValue('invoice');
-              const invoice = invoicesData.find(inv => inv.id === selectedInvoice);
-              const currencySymbol = invoice?.currency ? currencies.find(c => c.id === invoice.currency)?.currencyIcon || '₹' : '₹';
-              return `${currencySymbol} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            }}
-            parser={(value) => value.replace(/[^\d.]/g, "")}
-          />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="currency"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Currency <span style={{ color: '#ff4d4f' }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select currency" }]}
+            >
+              <Select
+                size="large"
+                placeholder="Select currency"
+                disabled
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+                suffixIcon={<FiCreditCard style={{ color: "#1890ff" }} />}
+              >
+                {currencies.map((currency) => (
+                  <Option key={currency.id} value={currency.id}>
+                    {currency.currencyName} ({currency.currencyIcon})
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
 
-        <Form.Item
-          name="currency"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
-              Currency
-            </span>
-          }
-        >
-          <Select
-            placeholder="Select currency"
-            style={{ width: "100%" }}
-            disabled
-          >
-            {currencies.map((currency) => (
-              <Option key={currency.id} value={currency.id}>
-                {currency.currencyIcon} - {currency.currencyName}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
+          <Col span={12}>
+            <Form.Item
+              name="amount"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Amount <span style={{ color: '#ff4d4f' }}>*</span>
+                </span>
+              }
+              rules={[
+                { required: true, message: "Please enter amount" },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const maxAmount = getFieldValue('max_amount');
+                    if (!value || !maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Amount cannot exceed invoice amount'));
+                  },
+                }),
+              ]}
+            >
+              <Input
+                type="number"
+                prefix={
+                  <span style={{ color: "#1890ff", fontSize: "16px" }}>
+                    {selectedCurrency}
+                  </span>
+                }
+                placeholder="Enter amount"
+                size="large"
+                style={{
+                  borderRadius: "10px",
+                  padding: "8px 16px",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #e6e8eb",
+                  transition: "all 0.3s ease",
+                }}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <Form.Item
-          name="paymentMethod"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" ,marginTop:"10px"}}>
-              <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
-              Payment Method
-            </span>
-          }
-        >
-          <Select
-            placeholder="Select payment method"
-            style={{ width: "100%" }}
-            listHeight={100}
-            dropdownStyle={{
-              maxHeight: '100px',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollBehavior: 'smooth'
-            }}
-          >
-            <Option value="cash">Cash</Option>
-            <Option value="bank_transfer">Bank Transfer</Option>
-            <Option value="credit_card">Credit Card</Option>
-            <Option value="debit_card">Debit Card</Option>
-            <Option value="upi">UPI</Option>
-            <Option value="cheque">Cheque</Option>
-          </Select>
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="paymentMethod"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Payment Method <span style={{ color: '#ff4d4f' }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select payment method" }]}
+            >
+              <Select
+                size="large"
+                placeholder="Select payment method"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+              >
+                <Option value="cash">Cash</Option>
+                <Option value="bank_transfer">Bank Transfer</Option>
+                <Option value="credit_card">Credit Card</Option>
+                <Option value="debit_card">Debit Card</Option>
+                <Option value="upi">UPI</Option>
+                <Option value="cheque">Cheque</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
         <Form.Item
           name="remark"
           label={
-            <span style={{ fontSize: "14px", fontWeight: "500" ,marginTop:"10px"}}>
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
               <FiMessageSquare style={{ marginRight: "8px", color: "#1890ff" }} />
               Remark
             </span>
@@ -307,20 +382,28 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         >
           <Input.TextArea
             placeholder="Enter remarks"
-            style={{
-              borderRadius: "8px",
-              backgroundColor: "#f8fafc",
-            }}
             rows={4}
+            style={{
+              borderRadius: "10px",
+              padding: "12px 16px",
+              backgroundColor: "#f8fafc",
+              border: "1px solid #e6e8eb",
+            }}
           />
         </Form.Item>
+
+        {/* Hidden field to store max_amount for validation */}
+        <Form.Item name="max_amount" hidden>
+          <Input />
+        </Form.Item>
+
+        <Divider style={{ margin: "24px 0" }} />
 
         <div
           style={{
             display: "flex",
             justifyContent: "flex-end",
             gap: "12px",
-            marginTop: "24px",
           }}
         >
           <Button
@@ -354,7 +437,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
             Create Payment
           </Button>
         </div>
-      </Form> 
+      </Form>
     </Modal>
   );
 };

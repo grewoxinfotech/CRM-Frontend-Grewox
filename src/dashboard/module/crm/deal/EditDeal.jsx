@@ -28,7 +28,7 @@ import {
   FiUserPlus,
   FiBox,
 } from "react-icons/fi";
-import { useUpdateDealMutation, useGetDealsQuery } from "./services/dealApi";
+import { useUpdateDealMutation, useGetDealsQuery } from "./services/DealApi";
 import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 import './Deal.scss';
 import dayjs from 'dayjs';

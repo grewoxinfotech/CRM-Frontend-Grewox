@@ -38,7 +38,8 @@ import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import { useLocation, useNavigate } from 'react-router-dom';
-
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -68,7 +69,8 @@ const RevenueList = ({
   }, [customerFromList, productFromList]);
 
   const { data: revenueData, isLoading } = useGetRevenueQuery();
-  const { data: productsData } = useGetProductsQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
+  const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
   const { data: customersData } = useGetCustomersQuery();
   const [deleteRevenue] = useDeleteRevenueMutation();
   const { data: currencies } = useGetAllCurrenciesQuery();

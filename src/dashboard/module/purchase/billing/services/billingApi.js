@@ -69,13 +69,13 @@ export const billingApi = createApi({
         }),
 
         // Add this new endpoint for products
-        getProducts: builder.query({
-            query: () => ({
-                url: '/products',
-                method: 'GET'
-            }),
-            providesTags: ['Products']
-        }),
+        // getProducts: builder.query({
+        //     query: () => ({
+        //         url: '/products',
+        //         method: 'GET'
+        //     }),
+        //     providesTags: ['Products']
+        // }),
     }),
 });
 
@@ -87,5 +87,5 @@ export const {
     useGetBillByIdQuery,
     useDownloadBillQuery,
     useGetVendorsQuery,
-    useGetProductsQuery,
+    // useGetProductsQuery,
 } = billingApi;

@@ -102,7 +102,6 @@ const NotificationsComponent = () => {
         try {
             await clearAll();
             setDropdownOpen(false);
-            unreadNotifications.forEach(n => notification.close(n.id));
         } catch (error) {
             console.error('Error clearing notifications:', error);
         }

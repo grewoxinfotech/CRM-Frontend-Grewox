@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Form,
@@ -23,6 +23,7 @@ import {
   FiHash,
   FiCopy,
 } from "react-icons/fi";
+import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -31,7 +32,22 @@ const { TextArea } = Input;
 const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const [selectedCountry, setSelectedCountry] = useState(null);
 
+  // Find India in countries array and set as default
+  useEffect(() => {
+    if (countries.length > 0) {
+      const india = countries.find(country => country.countryName === 'India');
+      if (india) {
+        setSelectedCountry(india);
+        form.setFieldValue('phonecode', india.phoneCode);
+      }
+    }
+  }, [countries]);
+
+
+  
   const handleSubmit = async (values) => {
     try {
       const customerData = {
@@ -44,6 +60,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
         text_number: values.text_number || "",
         company: values.company || "",
         status: values.status || "active",
+        phonecode: selectedCountry?.phoneCode || "+91",
 
         // Address Information - Send as objects directly
         billing_address: values.billing_address || null,
@@ -69,6 +86,11 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
 
   const handleFileChange = ({ fileList: newFileList }) => {
     setFileList(newFileList);
+  };
+
+  const handleCountryChange = (value) => {
+    const country = countries.find(c => c.id === value);
+    setSelectedCountry(country);
   };
 
   const copyBillingToShipping = () => {
@@ -253,7 +275,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={8}>
+          <Col span={12}>
             <Form.Item
               name="email"
               label={
@@ -278,7 +300,32 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={8}>
+          {/* <Col span={4}>
+            <Form.Item
+              name="country"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  Country Code
+                </span>
+              }
+            >
+              <Select
+                size="large"
+                onChange={handleCountryChange}
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+              >
+                {countries.map((country) => (
+                  <Option key={country.id} value={country.id}>
+                    {country.phoneCode} ({country.countryCode})
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col> */}
+          <Col span={12}>
             <Form.Item
               name="phone"
               label={
@@ -293,31 +340,6 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                   <FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />
                 }
                 placeholder="Enter phone number"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              name="alternate_number"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Alternate Number
-                </span>
-              }
-            >
-              <Input
-                prefix={
-                  <FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter alternate number"
                 size="large"
                 style={{
                   borderRadius: "10px",

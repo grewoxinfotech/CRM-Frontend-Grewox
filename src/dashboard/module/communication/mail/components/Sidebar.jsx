@@ -73,12 +73,12 @@ const Sidebar = ({
             {
               type: 'divider'
             },
-            {
-              key: 'settings',
-              icon: <FiSettings />,
-              label: 'Email Settings',
-              onClick: () => setSettingsVisible(true)
-            }
+            // {
+            //   key: 'settings',
+            //   icon: <FiSettings />,
+            //   label: 'Email Settings',
+            //   onClick: () => setSettingsVisible(true)
+            // }
           ]}
         />
       </div>

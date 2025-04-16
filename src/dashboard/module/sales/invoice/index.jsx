@@ -53,8 +53,6 @@ const Invoice = () => {
   const id = loggedInUser?.id;
   const { data: invoicesData, isLoading, error } = useGetInvoicesQuery();
   const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
-
-  
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(id);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

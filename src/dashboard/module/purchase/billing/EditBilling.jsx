@@ -3,9 +3,12 @@ import { Modal, Form, Input, Button, Typography, Select, Row, Col, Divider, Inpu
 import { FiFileText, FiX, FiUser, FiCalendar, FiHash, FiDollarSign, FiPlus, FiTrash2, FiPackage } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './billing.scss';
-import { useGetVendorsQuery, useGetProductsQuery, useUpdateBillingMutation } from './services/billingApi';
+import { useGetVendorsQuery, useUpdateBillingMutation } from './services/billingApi';
+import { useGetProductsQuery } from '../../sales/product&services/services/productApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 import { useGetAllTaxesQuery } from '../../settings/tax/services/taxApi';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { useSelector } from 'react-redux';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -19,7 +22,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
 
     // Add this to fetch vendors
     const { data: vendorsData, isLoading: vendorsLoading } = useGetVendorsQuery();
-
+    const loggedInUser = useSelector(selectCurrentUser);
     // Fetch currencies
     const { data: currenciesData, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
         page: 1,
@@ -30,7 +33,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
     const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
 
     // Fetch products
-    const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+    const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
 
     useEffect(() => {
         if (initialData && currenciesData) {

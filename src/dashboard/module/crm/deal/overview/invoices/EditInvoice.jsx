@@ -37,6 +37,7 @@ import { useGetProductsQuery } from "../../../../sales/product&services/services
 import { useUpdateInvoiceMutation } from "../../../../sales/invoice/services/invoiceApi";
 import { useGetContactsQuery } from "../../../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../../../crm/companyacoount/services/companyAccountApi";
+import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -57,9 +58,9 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery();
+  const loggedInUser = useSelector(selectCurrentUser);
+  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
-  
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('customer');
   const { data: contactsData } = useGetContactsQuery();
