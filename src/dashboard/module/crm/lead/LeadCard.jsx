@@ -6,11 +6,8 @@ import {
   FiFlag,
   FiDatabase,
   FiTag,
-  FiLock,
-  FiMove,
   FiPlus
 } from "react-icons/fi";
-import CreateDeal from "../deal/CreateDeal";
 import { useGetLeadsQuery, useUpdateLeadMutation } from './services/LeadApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 import { useDispatch, useSelector } from "react-redux";
@@ -40,52 +37,35 @@ import { useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from '
 import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import { createPortal } from 'react-dom';
 import AddLeadStageModal from "../crmsystem/leadstage/AddLeadStageModal";
+import { formatCurrency } from '../../../utils/currencyUtils';
 const { Text } = Typography;
 
-// Currency formatting helper function
-const formatCurrency = (value, currencyCode) => {
-  if (!value) return '0';
-
-  try {
-    const numericValue = parseFloat(value);
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode || 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(numericValue);
-  } catch (error) {
-    console.error('Error formatting currency:', error);
-    return `${value} ${currencyCode || 'USD'}`;
-  }
+// Add this function near the top with other helper functions
+const getInterestLevel = (level) => {
+  const levels = {
+    "high": {
+      color: "#52c41a",
+      bg: "rgba(82, 196, 26, 0.1)",
+      border: "#b7eb8f",
+      text: "High Interest"
+    },
+    "medium": {
+      color: "#faad14",
+      bg: "rgba(250, 173, 20, 0.1)",
+      border: "#ffd591",
+      text: "Medium Interest"
+    },
+    "low": {
+      color: "#ff4d4f",
+      bg: "rgba(255, 77, 79, 0.1)",
+      border: "#ffa39e",
+      text: "Low Interest"
+    }
+  };
+  return levels[level] || levels.medium;
 };
 
-// Add this function near the top with other helper functions
-  const getInterestLevel = (level) => {
-    const levels = {
-      "high": {
-        color: "#52c41a",
-        bg: "rgba(82, 196, 26, 0.1)",
-        border: "#b7eb8f",
-      text: "High Interest"
-      },
-      "medium": {
-        color: "#faad14",
-        bg: "rgba(250, 173, 20, 0.1)",
-        border: "#ffd591",
-      text: "Medium Interest"
-      },
-      "low": {
-        color: "#ff4d4f",
-        bg: "rgba(255, 77, 79, 0.1)",
-        border: "#ffa39e",
-      text: "Low Interest"
-      }
-    };
-    return levels[level] || levels.medium;
-  };
-
-const DraggableCard = ({ lead, stage, onLeadClick }) => {
+const DraggableCard = ({ lead, stage, currencies = [], onLeadClick }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: lead.id,
     data: {
@@ -103,7 +83,6 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
 
   const { data: sourceData } = useGetSourcesQuery(lead.client_id);
   const { data: categoryData } = useGetCategoriesQuery(lead.client_id);
-  const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: statusesData } = useGetStatusesQuery(lead.client_id);
 
   const source = sourceData?.data?.find(s => s.id === lead.source);
@@ -111,23 +90,22 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
   const status = statusesData?.data?.find(s => s.id === lead.status);
 
   const cardContent = (
-      <Card
-        className="lead-card"
-        bordered={false}
-        onClick={handleCardClick}
-        style={{
-        marginBottom: '8px',
+    <Card
+      className="lead-card"
+      bordered={false}
+      onClick={handleCardClick}
+      style={{
         borderRadius: '8px',
         background: lead.is_converted ? '#f8fafc' : '#ffffff',
         cursor: lead.is_converted ? 'not-allowed' : isDragging ? 'grabbing' : 'grab',
         boxShadow: isDragging
           ? '0 12px 24px rgba(0, 0, 0, 0.12)'
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
-          position: 'relative',
+        position: 'relative',
         transition: isDragging ? 'none' : 'transform 0.2s ease, box-shadow 0.2s ease',
         transform: isDragging ? 'scale(1.02)' : 'scale(1)',
         zIndex: isDragging ? 1200 : 1,
-          overflow: 'hidden',
+        overflow: 'hidden',
         opacity: lead.is_converted ? 0.85 : 1
       }}
     >
@@ -143,7 +121,6 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
       }} />
 
       <div className="card-content" style={{
-        padding: '12px 14px 12px 16px',
         display: 'flex',
         flexDirection: 'column',
         gap: '12px'
@@ -203,7 +180,7 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
           gap: '8px'
         }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-              <Tooltip title={lead?.leadTitle}>
+            <Tooltip title={lead?.leadTitle}>
               <Text strong className="lead-title" style={{
                 fontSize: '14px',
                 lineHeight: '1.4',
@@ -213,9 +190,9 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
                 whiteSpace: 'nowrap',
                 color: '#1f2937'
               }}>
-                  {lead?.leadTitle}
-                </Text>
-              </Tooltip>
+                {lead?.leadTitle}
+              </Text>
+            </Tooltip>
             {lead?.company_name && (
               <Text className="company-name" style={{
                 fontSize: '12px',
@@ -246,10 +223,10 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
               color: '#16a34a',
               whiteSpace: 'nowrap'
             }}>
-                {formatCurrency(lead.leadValue, lead.currency)}
-              </span>
-            </div>
+              {formatCurrency(lead.leadValue, lead.currency, currencies)}
+            </span>
           </div>
+        </div>
 
         {/* Bottom Info Section */}
         <div style={{
@@ -340,10 +317,10 @@ const DraggableCard = ({ lead, stage, onLeadClick }) => {
                 </Tag>
               </Tooltip>
             )}
-            </div>
           </div>
         </div>
-      </Card>
+      </div>
+    </Card>
   );
 
   const draggableProps = lead.is_converted ? {} : { ...attributes, ...listeners };
@@ -396,13 +373,15 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
     id: stage.id,
   });
 
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+
   return (
     <div
       ref={setNodeRef}
       className="kanban-column-content"
       style={{
         padding: '8px',
-        height: 'calc(100vh - 240px)',
+        maxHeight: 'calc(100vh - 240px)',
         overflowY: 'auto',
         overflowX: 'hidden',
         backgroundColor: isOver ? 'rgba(240, 247, 255, 0.8)' : 'transparent',
@@ -420,6 +399,7 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
               key={lead.id}
               lead={lead}
               stage={stage}
+              currencies={currencies}
               onLeadClick={(lead) => {
                 console.log('Lead clicked:', lead);
               }}
@@ -451,6 +431,8 @@ const SortableColumn = ({ stage, leads, children, index }) => {
     }
   });
 
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
@@ -480,7 +462,7 @@ const SortableColumn = ({ stage, leads, children, index }) => {
           {...attributes}
           {...listeners}
           style={{
-            padding: '8px 12px',
+            padding: '16px 12px',
             borderBottom: '1px solid #f0f0f0',
             display: 'flex',
             justifyContent: 'space-between',
@@ -495,32 +477,48 @@ const SortableColumn = ({ stage, leads, children, index }) => {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '6px',
+            maxWidth: '60%'
           }}>
             <Tag color="blue" style={{
               fontSize: '10px',
               fontWeight: 'bold',
-              padding: '0 4px',
+              padding: '0 3px',
               height: '16px',
               lineHeight: '16px',
-              marginRight: '2px'
+              marginRight: '4px',
+              flexShrink: 0,
+              minWidth: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '3px'
             }}>
               {index + 1}
             </Tag>
             <FiMenu style={{
               fontSize: '14px',
-              color: '#6B7280'
+              color: '#6B7280',
+              flexShrink: 0,
+              marginRight: '4px'
             }} />
-            <Text strong style={{
-              fontSize: '13px',
-              margin: 0
-            }}>{stage.stageName}</Text>
+            <Tooltip title={stage.stageName}>
+              <Text strong style={{
+                fontSize: '13px',
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%'
+              }}>{stage.stageName}</Text>
+            </Tooltip>
           </div>
 
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '4px',
+            flexShrink: 0
           }}>
             <div style={{
               display: 'flex',
@@ -537,21 +535,28 @@ const SortableColumn = ({ stage, leads, children, index }) => {
                 color: '#16a34a',
                 whiteSpace: 'nowrap'
               }}>
-                {formatCurrency(
-                  leads.reduce((sum, lead) => sum + (parseFloat(lead.leadValue) || 0), 0),
-                  leads.length > 0 ? leads[0]?.currency : undefined
-                )}
+                {leads.reduce((sum, lead) => {
+                  const value = parseFloat(lead.leadValue) || 0;
+                  const currencyDetails = currencies?.find(c => c.id === lead.currency);
+                  return `${currencyDetails?.currencyIcon || '₹'}${value.toLocaleString('en-IN')}`;
+                }, '')}
               </span>
             </div>
             <Tag style={{
+              minWidth: '20px',
               marginLeft: '4px',
               fontSize: '11px',
-              padding: '0 4px'
+              padding: '0 4px',
+              background: '#f3f4f6',
+              color: '#4b5563',
+              border: '1px solid #e5e7eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
               {(leads || []).length}
             </Tag>
           </div>
-          
         </div>
         {children}
       </div>
@@ -582,13 +587,13 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     );
 
     if (savedStageOrder.length > 0 && leadStages.length > 0) {
-        const stageOrderMap = new Map(savedStageOrder.map((id, index) => [id, index]));
-        return [...leadStages].sort((a, b) => {
-            const indexA = stageOrderMap.has(a.id) ? stageOrderMap.get(a.id) : Infinity;
-            const indexB = stageOrderMap.has(b.id) ? stageOrderMap.get(b.id) : Infinity;
-            return indexA - indexB;
-        });
-     }
+      const stageOrderMap = new Map(savedStageOrder.map((id, index) => [id, index]));
+      return [...leadStages].sort((a, b) => {
+        const indexA = stageOrderMap.has(a.id) ? stageOrderMap.get(a.id) : Infinity;
+        const indexB = stageOrderMap.has(b.id) ? stageOrderMap.get(b.id) : Infinity;
+        return indexA - indexB;
+      });
+    }
 
     return leadStages;
   }, [stageQueryData, savedStageOrder, selectedPipeline]);
@@ -596,12 +601,12 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
   // Initialize ordered stages when stages derived from query data change
   useEffect(() => {
     if (stages.length > 0) {
-        setOrderedStages(stages);
-        if (savedStageOrder.length === 0) {
-            dispatch(setStageOrder(stages.map(stage => stage.id)));
-        }
+      setOrderedStages(stages);
+      if (savedStageOrder.length === 0) {
+        dispatch(setStageOrder(stages.map(stage => stage.id)));
+      }
     } else {
-        setOrderedStages([]);
+      setOrderedStages([]);
     }
   }, [stages, dispatch, savedStageOrder.length]);
 
@@ -661,7 +666,7 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         dispatch(setStageOrder(newOrder.map(stage => stage.id)));
       }
     } else if (isCard && over.id !== active.id) {
-    const draggedId = active.id;
+      const draggedId = active.id;
       const destinationId = over.id.toString().replace('column-', '');
 
       const draggedLead = leads.find(lead => lead.id === draggedId);
@@ -671,18 +676,18 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         return;
       }
 
-    try {
-      await updateLead({
-        id: draggedId,
-        data: {
-          leadStage: destinationId,
-          updated_by: loggedInUser?.username || ''
-        }
-      }).unwrap();
+      try {
+        await updateLead({
+          id: draggedId,
+          data: {
+            leadStage: destinationId,
+            updated_by: loggedInUser?.username || ''
+          }
+        }).unwrap();
 
-      message.success('Lead stage updated successfully');
-    } catch (error) {
-      message.error('Failed to update lead stage');
+        message.success('Lead stage updated successfully');
+      } catch (error) {
+        message.error('Failed to update lead stage');
       }
     }
   };
@@ -747,11 +752,11 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
         </div>
       </div>
 
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+        onDragEnd={handleDragEnd}
       >
         <div className="kanban-board-wrapper" style={{
           width: '100%',
@@ -787,58 +792,58 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
                     leads={leadsByStage[stage.id] || []}
                     index={index}
                   >
-            <DroppableColumn
-              stage={stage}
-              leads={leadsByStage[stage.id] || []}
+                    <DroppableColumn
+                      stage={stage}
+                      leads={leadsByStage[stage.id] || []}
                       isColumnDragging={activeId === `column-${stage.id}`}
-            />
+                    />
                   </SortableColumn>
                 </div>
               ))}
             </SortableContext>
-             <div style={{
-                width: '350px',
-                minWidth: '350px',
-                height: 'auto',
-                paddingTop: '0px'
-              }}>
-                <Button
-                  type="dashed"
-                  onClick={showStageModal}
-                  style={{
-                    width: '100%',
-                    height: '45px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    fontSize: '13px',
-                    fontWeight: '500',
-                    color: '#4b5563',
-                    background: '#f9fafb',
-                    border: '1px dashed #d1d5db',
-                    borderRadius: '8px',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
-                    disabled: isLoadingStages
-                  }}
-                  disabled={isLoadingStages}
-                >
-                  <FiPlus />
-                  Add Stage
-                </Button>
-              </div>
+            <div style={{
+              width: '350px',
+              minWidth: '350px',
+              height: 'auto',
+              paddingTop: '0px'
+            }}>
+              <Button
+                type="dashed"
+                onClick={showStageModal}
+                style={{
+                  width: '100%',
+                  height: '45px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#4b5563',
+                  background: '#f9fafb',
+                  border: '1px dashed #d1d5db',
+                  borderRadius: '8px',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  disabled: isLoadingStages
+                }}
+                disabled={isLoadingStages}
+              >
+                <FiPlus />
+                Add Stage
+              </Button>
+            </div>
           </div>
-      </div>
+        </div>
       </DndContext>
 
-       {/* Use AddLeadStageModal component directly */}
-       {isStageModalVisible && (
-         <AddLeadStageModal
-           isOpen={isStageModalVisible}
-           onClose={handleStageModalClose}
-           pipelineId={selectedPipeline}
-         />
-       )}
+      {/* Use AddLeadStageModal component directly */}
+      {isStageModalVisible && (
+        <AddLeadStageModal
+          isOpen={isStageModalVisible}
+          onClose={handleStageModalClose}
+          pipelineId={selectedPipeline}
+        />
+      )}
 
       <style jsx global>{`
         .kanban-board {

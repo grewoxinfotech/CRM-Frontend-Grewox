@@ -11,7 +11,8 @@ import {
     Divider,
     message,
     Dropdown,
-    Menu
+    Menu,
+    Space
 } from 'antd';
 import {
     FiUsers,
@@ -33,11 +34,31 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
     const [durationType, setDurationType] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(null);
-    
+    const [storageUnit, setStorageUnit] = useState('MB');
+
     const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
     });
+
+    // Find INR currency ID for default value
+    const getDefaultCurrencyId = () => {
+        if (currencies) {
+            const inrCurrency = currencies.find(c => c.currencyCode === 'INR');
+            return inrCurrency?.id;
+        }
+        return undefined;
+    };
+
+    // Set default values when currencies are loaded
+    React.useEffect(() => {
+        if (currencies) {
+            const defaultCurrencyId = getDefaultCurrencyId();
+            if (defaultCurrencyId) {
+                form.setFieldValue('currency', defaultCurrencyId);
+            }
+        }
+    }, [currencies, form]);
 
     const handleSubmit = async (values) => {
         try {
@@ -58,7 +79,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 max_clients: values.max_clients.toString(),
                 max_customers: values.max_customers.toString(),
                 max_vendors: values.max_vendors.toString(),
-                storage_limit: values.storage_limit.toString(),
+                storage_limit: form.getFieldValue('_storage_limit_mb') || values.storage_limit.toString(),
                 price: values.price.toString(),
                 currency: values.currency
             };
@@ -78,6 +99,26 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
             setSelectedMonth(null);
             setSelectedYear(null);
             form.setFieldValue('duration', 'Lifetime');
+        }
+    };
+
+    const handleStorageUnitChange = (value) => {
+        const currentStorage = form.getFieldValue('storage_limit');
+        if (currentStorage) {
+            if (value === 'GB' && storageUnit === 'MB') {
+                form.setFieldValue('storage_limit', (currentStorage / 1024).toFixed(2));
+            } else if (value === 'MB' && storageUnit === 'GB') {
+                form.setFieldValue('storage_limit', (currentStorage * 1024).toFixed(0));
+            }
+        }
+        setStorageUnit(value);
+    };
+
+    const handleStorageChange = (value) => {
+        if (value) {
+            // Convert to MB for storage
+            const storageInMB = storageUnit === 'GB' ? value * 1024 : value;
+            form.setFieldValue('_storage_limit_mb', storageInMB.toString());
         }
     };
 
@@ -144,8 +185,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                     <span className="option-description">Never expires</span>
                 </div>
             </Menu.Item>
-            <Menu.SubMenu 
-                key="Monthly" 
+            <Menu.SubMenu
+                key="Monthly"
                 title={
                     <div className="duration-option-content">
                         <span className="option-label">Monthly</span>
@@ -156,8 +197,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
             >
                 {monthlyMenu}
             </Menu.SubMenu>
-            <Menu.SubMenu 
-                key="Yearly" 
+            <Menu.SubMenu
+                key="Yearly"
                 title={
                     <div className="duration-option-content">
                         <span className="option-label">Yearly</span>
@@ -269,9 +310,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 layout="vertical"
                 onFinish={handleSubmit}
                 initialValues={{
-                    currency: 'INR',
-                    duration: 'Per Month',
                     status: true,
+                    duration: 'Per Month',
                     trial_period: '7',
                     max_users: '5',
                     max_clients: '10',
@@ -347,22 +387,24 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                     }}
                                     loading={currenciesLoading}
                                     className="currency-select"
-                                    defaultValue={currencies?.data?.find(c => c.currencyCode === 'INR')?.id}
+                                    defaultValue={getDefaultCurrencyId()}
                                     dropdownStyle={{
                                         padding: '8px',
                                         borderRadius: '10px',
                                     }}
                                     showSearch
                                     optionFilterProp="children"
-                                    filterOption={(input, option) =>
-                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                    }
+                                    filterOption={(input, option) => {
+                                        const currency = currencies?.find(c => c.id === option.value);
+                                        return currency?.currencyCode.toLowerCase().includes(input.toLowerCase()) ||
+                                            currency?.currencyIcon.toLowerCase().includes(input.toLowerCase());
+                                    }}
                                 >
                                     {currencies?.map(currency => (
                                         <Option key={currency.id} value={currency.id}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <span>{currency.currencyIcon}</span>
-                                                <span>{currency.currencyName}</span>
+                                                <span>{currency.currencyCode}</span>
                                             </div>
                                         </Option>
                                     ))}
@@ -463,25 +505,72 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Storage Limit (GB)
+                                Storage Limit
                             </span>
                         }
                         rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
-                        <InputNumber
-                            prefix={<FiHardDrive style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            min={1}
-                        />
+                        <Input.Group compact className="storage-input-group" style={{
+                            display: 'flex',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '10px',
+                            border: '1px solid #e6e8eb',
+                            overflow: 'hidden',
+                            marginBottom: 0
+                        }}>
+                            <InputNumber
+                                prefix={<FiHardDrive style={{ color: '#1890ff', fontSize: '16px' }} />}
+                                size="large"
+                                style={{
+                                    flex: 1,
+                                    width: 'calc(100% - 80px)',
+                                    border: 'none',
+                                    borderRadius: 0,
+                                    height: '48px',
+                                }}
+                                min={0.01}
+                                step={storageUnit === 'GB' ? 0.01 : 1}
+                                onChange={handleStorageChange}
+                                parser={value => value.replace(/[^0-9.]/g, '')}
+                                formatter={value => value ? `${value}` : ''}
+                                value={form.getFieldValue('storage_limit')}
+                                className="storage-input"
+                            />
+                            <Select
+                                value={storageUnit}
+                                onChange={handleStorageUnitChange}
+                                style={{
+                                    width: '120px',
+                                    height: '48px'
+                                }}
+                                className="storage-unit-select"
+                                dropdownStyle={{
+                                    padding: '8px',
+                                    borderRadius: '10px',
+                                }}
+                            >
+                                <Option value="MB">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FiHardDrive style={{ fontSize: '14px' }} />
+                                        <span>MB</span>
+                                    </div>
+                                </Option>
+                                <Option value="GB">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FiHardDrive style={{ fontSize: '14px' }} />
+                                        <span>GB</span>
+                                    </div>
+                                </Option>
+                            </Select>
+                        </Input.Group>
                     </Form.Item>
                 </div>
+
+                <Form.Item name="_storage_limit_mb" hidden>
+                    <Input />
+                </Form.Item>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <Form.Item
@@ -859,6 +948,101 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                         font-size: 12px;
                         color: rgba(0, 0, 0, 0.65);
                     }
+                }
+
+                .storage-input-group {
+                    margin-bottom: 0 !important;
+                    display: flex !important;
+                    width: 100% !important;
+                }
+
+                .storage-input {
+                    flex: 1 !important;
+                    background-color: transparent;
+                    
+                    &:hover, &:focus {
+                        border-color: transparent !important;
+                        box-shadow: none !important;
+                    }
+
+                    .ant-input-number-input-wrap {
+                        height: 46px !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        
+                        input {
+                            height: 46px !important;
+                            font-size: 14px;
+                            padding: 0 16px;
+                            line-height: 46px !important;
+                        }
+                    }
+
+                    .ant-input-number-handler-wrap {
+                        display: none;
+                    }
+                }
+
+                .storage-unit-select .ant-select-selector {
+                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+                    border: none !important;
+                    color: white !important;
+                    height: 48px !important;
+                    line-height: 46px !important;
+                    padding: 0 12px !important;
+                    display: flex;
+                    align-items: center;
+                    box-shadow: none !important;
+                }
+
+                .storage-unit-select .ant-select-selection-item {
+                    color: white !important;
+                    font-weight: 500 !important;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    height: 46px !important;
+                    line-height: 46px !important;
+                    font-size: 14px;
+                }
+
+                .storage-unit-select .ant-select-arrow {
+                    color: white !important;
+                }
+
+                .storage-unit-select .ant-select-dropdown {
+                    padding: 8px !important;
+                    border-radius: 10px !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+                }
+
+                .storage-unit-select .ant-select-item {
+                    padding: 8px 12px !important;
+                    border-radius: 6px !important;
+                    transition: all 0.3s ease !important;
+                }
+
+                .storage-unit-select .ant-select-item:hover {
+                    background: rgba(24, 144, 255, 0.06) !important;
+                }
+
+                .storage-unit-select .ant-select-item-option-selected {
+                    background-color: #e6f4ff !important;
+                    font-weight: 500 !important;
+                }
+
+                .storage-unit-select .ant-select-item-option-content {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                .storage-unit-select:not(.ant-select-disabled):hover .ant-select-selector {
+                    background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+                }
+
+                .storage-unit-select.ant-select-focused .ant-select-selector {
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
                 }
             `}</style>
         </Modal>

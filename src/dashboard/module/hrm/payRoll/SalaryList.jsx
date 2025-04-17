@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, DatePicker } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, Switch, Avatar } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -7,7 +7,8 @@ import {
   FiMoreVertical,
   FiDollarSign,
   FiFileText,
-  FiCalendar
+  FiCalendar,
+  FiUser
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import jsPDF from 'jspdf';
@@ -23,6 +24,48 @@ import EditSalary from "./EditSalary";
 
 const { Text } = Typography;
 
+const switchStyles = `
+  .status-switch.ant-switch {
+    min-width: 40px;
+    height: 22px;
+    background: #faad14;
+    padding: 0 2px;
+  }
+
+  .status-switch.ant-switch .ant-switch-handle {
+    width: 18px;
+    height: 18px;
+    top: 2px;
+    left: 2px;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .status-switch.ant-switch.ant-switch-checked .ant-switch-handle {
+    left: calc(100% - 20px);
+  }
+
+  .status-switch.ant-switch.paid {
+    background: #52c41a;
+  }
+
+  .status-switch.ant-switch:not(.ant-switch-disabled) {
+    background-color: #faad14;
+  }
+
+  .status-switch.ant-switch.paid:not(.ant-switch-disabled) {
+    background: #52c41a;
+  }
+
+  .status-switch.ant-switch:focus {
+    box-shadow: none;
+  }
+
+  .status-switch.ant-switch .ant-switch-handle::before {
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+`;
+
 const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const { data: salarydata = [], isLoading } = useGetSalaryQuery();
   const { data: employeesData } = useGetEmployeesQuery();
@@ -36,6 +79,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const [selectedSalary, setSelectedSalary] = useState(null);
   const [processingSalaryId, setProcessingSalaryId] = useState(null);
   const [processedSalary, setProcessedSalary] = useState(new Set());
+  const [loading, setLoading] = useState(false);
 
   // Define status options
   const statusOptions = [
@@ -68,7 +112,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     }, {});
   }, [currencies]);
 
-  
+
 
   const filteredSalary = React.useMemo(() => {
     return salary?.filter((salary) => {
@@ -152,17 +196,17 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       doc.setFillColor(41, 128, 185);
       doc.rect(0, 0, doc.internal.pageSize.width, 30, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(20); 
+      doc.setFontSize(20);
       doc.text('PAYSLIP', 105, 20, { align: 'center' });
-      
+
       // Reset color
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(12);
-      
+
       // Employee Details
       doc.setFillColor(240, 240, 240);
       doc.rect(10, 40, doc.internal.pageSize.width - 20, 35, 'F');
-      
+
       doc.setFont(undefined, 'bold');
       doc.text('Employee Details:', 20, 50);
       doc.setFont(undefined, 'normal');
@@ -177,8 +221,8 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         ['Basic Salary', ` ${Number(record.salary || 0).toFixed(2)}`],
         ['Allowances', ` ${Number(record.allowances || 0).toFixed(2)}`],
         ['Deductions', ` ${Number(record.deductions || 0).toFixed(2)}`],
-        [{ content: 'Net Salary', styles: { fontStyle: 'bold' } }, 
-         { content: ` ${Number(record.netSalary || 0).toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+        [{ content: 'Net Salary', styles: { fontStyle: 'bold' } },
+        { content: ` ${Number(record.netSalary || 0).toFixed(2)}`, styles: { fontStyle: 'bold' } }]
       ];
 
       doc.autoTable({
@@ -209,6 +253,34 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       console.error('Error generating payslip:', error);
       message.error('Failed to generate payslip');
     }
+  };
+
+  const handleStatusChange = async (checked, record) => {
+    try {
+      setLoading(true);
+      const response = await updateSalary({
+        id: record.id,
+        data: {
+          ...record,
+          status: checked ? 'paid' : 'unpaid',
+          salary: record.salary.toString(),
+          netSalary: record.netSalary.toString()
+        }
+      }).unwrap();
+
+      if (response.success) {
+        message.success(`Payment status updated to ${checked ? 'paid' : 'unpaid'}`);
+      }
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      message.error(error?.data?.message || 'Failed to update payment status');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getEmployeeDetails = (employeeId) => {
+    return employees.find(emp => emp.id === employeeId) || {};
   };
 
   const getDropdownItems = (record) => ({
@@ -283,14 +355,27 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
           </Space>
         </div>
       ),
-      onFilter: (value, record) =>
-        record.employeeId.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
-      render: (employeeId) => (
-        <Text style={{ color: "#262626" }}>
-          {employeeMap[employeeId] || "Unknown Employee"}
-        </Text>
-      ),
+      onFilter: (value, record) => {
+        const employee = getEmployeeDetails(record.employeeId);
+        const fullName = `${employee.firstName || ''} ${employee.lastName || ''}`.toLowerCase();
+        return fullName.includes(value.toLowerCase());
+      },
+      render: (employeeId) => {
+        const employee = getEmployeeDetails(employeeId);
+        return (
+          <Space>
+            <Avatar
+              src={employee.profilePic}
+              icon={!employee.profilePic && <FiUser />}
+              style={{ backgroundColor: !employee.profilePic ? '#1890FF' : 'transparent' }}
+            />
+            <div>
+              <div style={{ fontWeight: 500 }}>{`${employee.firstName || ''} ${employee.lastName || ''}`}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>{employee.email || ''}</div>
+            </div>
+          </Space>
+        );
+      },
     },
     {
       title: "Payment Date",
@@ -298,40 +383,40 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       key: "paymentDate",
       render: (date) => dayjs(date).format('DD-MM-YYYY'),
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-          <div style={{ padding: 8 }}>
-              <DatePicker
-                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-                  onChange={(date) => {
-                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
-                      setSelectedKeys(dateStr ? [dateStr] : []);
-                  }}
-                  style={{ marginBottom: 8, display: 'block' }}
-              />
-              <Space>
-                  <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Filter
-                  </Button>
-                  <Button
-                      onClick={() => clearFilters()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Reset
-                  </Button>
-              </Space>
-          </div>
+        <div style={{ padding: 8 }}>
+          <DatePicker
+            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+            onChange={(date) => {
+              const dateStr = date ? date.format('YYYY-MM-DD') : null;
+              setSelectedKeys(dateStr ? [dateStr] : []);
+            }}
+            style={{ marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
       ),
       onFilter: (value, record) => {
-          if (!value || !record.paymentDate) return false;
-          return dayjs(record.paymentDate).format('YYYY-MM-DD') === value;
+        if (!value || !record.paymentDate) return false;
+        return dayjs(record.paymentDate).format('YYYY-MM-DD') === value;
       },
       filterIcon: filtered => (
-          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+        <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
       )
     },
     {
@@ -349,62 +434,6 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         </Tag>
       ),
     },
-   
-  
-    {
-      title: "Salary",
-      dataIndex: "salary",
-      key: "salary",
-      sorter: (a, b) => a.salary - b.salary,
-      render: (salary, record) => {
-        const currencyIcon = getCurrencyIcon(record.currency);
-        return (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              color: "#1890ff",
-              // fontWeight: 500,
-            }}
-          >
-            <Text strong>
-              {currencyIcon}
-              {typeof salary === "number"
-                ? salary.toFixed(2)
-                : Number(salary).toFixed(2) || "0.00"}
-            </Text>
-          </div>
-        );
-      },
-    },
-   {
-      title: "Net Salary",
-      dataIndex: "netSalary",
-      key: "netSalary",
-      sorter: (a, b) => a.netSalary - b.netSalary,
-      render: (netSalary, record) => {
-        const currencyIcon = getCurrencyIcon(record.currency);
-        return (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              color: "#1890ff",
-              // fontWeight: 500,
-            }}
-          >
-            <Text strong>
-              {currencyIcon}
-              {typeof netSalary === "number"
-                ? netSalary.toFixed(2)
-                : Number(netSalary).toFixed(2) || "0.00"}
-            </Text>
-          </div>
-        );
-      },
-    },
     {
       title: "Bank Account",
       dataIndex: "bankAccount",
@@ -421,13 +450,41 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       key: "status",
       filters: statusOptions,
       onFilter: (value, record) => record.status?.toLowerCase() === value.toLowerCase(),
-      render: (status) => (
-        <Tag
-          color={getStatusColor(status)}
-          style={{ borderRadius: "4px", padding: "2px 8px", fontSize: "13px" }}
-        >
-          {status}
-        </Tag>
+      render: (status, record) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
+            <span style={{ color: '#52c41a', fontSize: '14px' }}>₹</span>
+            <span style={{ fontWeight: 500 }}>
+              {Number(record.salary || 0).toLocaleString('en-IN', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2
+              })}
+            </span>
+            <span style={{ color: '#8c8c8c', fontSize: '13px', marginLeft: '2px' }}>INR</span>
+          </div>
+          <Switch
+            size="small"
+            checked={status === 'paid'}
+            onChange={(checked) => handleStatusChange(checked, record)}
+            loading={loading}
+            className={`status-switch ${status === 'paid' ? 'paid' : ''}`}
+          />
+          <Tag
+            color={status === 'paid' ? 'success' : 'warning'}
+            style={{
+              margin: 0,
+              textTransform: 'capitalize',
+              borderRadius: '12px',
+              fontSize: '12px',
+              padding: '0 8px',
+              height: '22px',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            {status}
+          </Tag>
+        </div>
       ),
     },
     {
@@ -461,6 +518,17 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       ),
     },
   ];
+
+  // Add this useEffect for styles
+  React.useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = switchStyles;
+    document.head.appendChild(styleElement);
+
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   return (
     <div

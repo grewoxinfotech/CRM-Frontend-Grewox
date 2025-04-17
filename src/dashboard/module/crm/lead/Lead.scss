@@ -7,6 +7,11 @@
         margin-bottom: 16px;
     }
 
+    :where(.css-dev-only-do-not-override-240cud).ant-card .ant-card-body {
+        padding: 4px !important;
+        border-radius: 0 0 8px 8px;
+    }
+
     .page-header {
         display: flex;
         justify-content: space-between;

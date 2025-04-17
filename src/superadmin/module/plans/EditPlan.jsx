@@ -14,44 +14,86 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
     const [durationType, setDurationType] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(null);
+    const [storageUnit, setStorageUnit] = useState('MB');
     const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
     });
 
     React.useEffect(() => {
-        if (initialValues) {
-            form.setFieldsValue({
+        if (initialValues && currencies) {
+            console.log('Initial values received:', initialValues); // Debug log
+
+            // Convert storage limit to appropriate unit for display
+            const storageLimitMB = parseFloat(initialValues.storage_limit || 0);
+            let displayStorageLimit = storageLimitMB;
+            let displayStorageUnit = 'MB';
+
+            if (storageLimitMB >= 1024) {
+                displayStorageLimit = (storageLimitMB / 1024).toFixed(2);
+                displayStorageUnit = 'GB';
+            }
+
+            setStorageUnit(displayStorageUnit);
+
+            // Set form values immediately
+            const formValues = {
                 name: initialValues.name,
-                price: initialValues.price,
-                currency: initialValues.currency || 'INR',
-                duration: initialValues.duration?.toString(),
+                price_group: {
+                    currency: initialValues.currency,
+                    price: initialValues.price
+                },
+                storage_limit: displayStorageLimit?.toString(),
+                _storage_limit_mb: storageLimitMB?.toString(),
                 trial_period: initialValues.trial_period?.toString(),
-                storage_limit: initialValues.storage_limit?.toString(),
                 max_users: initialValues.max_users?.toString(),
                 max_clients: initialValues.max_clients?.toString(),
                 max_vendors: initialValues.max_vendors?.toString(),
                 max_customers: initialValues.max_customers?.toString(),
-                status: initialValues.status === 'active'
-            });
+                status: initialValues.status === 'active',
+                duration: initialValues.duration
+            };
 
+            console.log('Setting form values:', formValues); // Debug log
+            form.setFieldsValue(formValues);
+
+            // Set duration type and values
             const durationStr = initialValues.duration?.toString() || '';
             if (durationStr.includes('Month')) {
                 const months = parseInt(durationStr);
                 setDurationType('Monthly');
                 setSelectedMonth(months);
-                form.setFieldValue('duration', `${months} Month${months > 1 ? 's' : ''}`);
             } else if (durationStr.includes('Year')) {
                 const years = parseInt(durationStr);
                 setDurationType('Yearly');
                 setSelectedYear(years);
-                form.setFieldValue('duration', `${years} Year${years > 1 ? 's' : ''}`);
             } else if (durationStr === 'Lifetime') {
                 setDurationType('Lifetime');
-                form.setFieldValue('duration', 'Lifetime');
             }
         }
-    }, [initialValues, form]);
+    }, [initialValues, form, currencies]);
+
+    const handleStorageUnitChange = (value) => {
+        const currentStorage = parseFloat(form.getFieldValue('storage_limit') || 0);
+        if (currentStorage) {
+            let newValue;
+            if (value === 'GB' && storageUnit === 'MB') {
+                newValue = (currentStorage / 1024).toFixed(2);
+            } else if (value === 'MB' && storageUnit === 'GB') {
+                newValue = (currentStorage * 1024).toFixed(0);
+            }
+            form.setFieldValue('storage_limit', newValue);
+            form.setFieldValue('_storage_limit_mb', value === 'GB' ? (newValue * 1024).toString() : newValue.toString());
+        }
+        setStorageUnit(value);
+    };
+
+    const handleStorageChange = (value) => {
+        if (value) {
+            const storageInMB = storageUnit === 'GB' ? value * 1024 : value;
+            form.setFieldValue('_storage_limit_mb', storageInMB.toString());
+        }
+    };
 
     const handleSubmit = async (values) => {
         try {
@@ -62,13 +104,15 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 formattedDuration = `${selectedYear} Year${selectedYear > 1 ? 's' : ''}`;
             }
 
+            const priceGroup = form.getFieldValue('price_group') || {};
+
             const updateData = {
                 name: values.name,
-                price: values.price_group?.toString(),
-                currency: values.currency,
+                price: priceGroup.price?.toString(),
+                currency: priceGroup.currency, // Use currency ID directly
                 duration: formattedDuration,
                 trial_period: values.trial_period?.toString(),
-                storage_limit: values.storage_limit?.toString(),
+                storage_limit: form.getFieldValue('_storage_limit_mb') || values.storage_limit?.toString(),
                 max_users: values.max_users?.toString(),
                 max_clients: values.max_clients?.toString(),
                 max_vendors: values.max_vendors?.toString(),
@@ -76,6 +120,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 status: values.status ? 'active' : 'inactive'
             };
 
+            console.log('Update payload:', updateData); // For debugging
             await updatePlan({ idd, updateData }).unwrap();
             message.success('Plan updated successfully');
             onCancel();
@@ -150,8 +195,8 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                     <span className="option-description">Never expires</span>
                 </div>
             </Menu.Item>
-            <Menu.SubMenu 
-                key="Monthly" 
+            <Menu.SubMenu
+                key="Monthly"
                 title={
                     <div className="duration-option-content">
                         <span className="option-label">Monthly</span>
@@ -162,8 +207,8 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
             >
                 {monthlyMenu}
             </Menu.SubMenu>
-            <Menu.SubMenu 
-                key="Yearly" 
+            <Menu.SubMenu
+                key="Yearly"
                 title={
                     <div className="duration-option-content">
                         <span className="option-label">Yearly</span>
@@ -284,8 +329,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 onFinish={handleSubmit}
                 requiredMark={false}
                 initialValues={{
-                    currency: 'INR',
-                    duration: 'Per Month',
                     status: true,
                     trial_period: '7',
                     max_users: '5',
@@ -322,85 +365,90 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
 
                 <Row gutter={16}>
                     <Col span={12}>
-                     <Form.Item
-                        name="price_group"
-                        label={
-                            <span style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
+                        <Form.Item
+                            name="price_group"
+                            label={
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                }}>
+                                    Price
+                                </span>
+                            }
+                            style={{ flex: 1 }}
+                        >
+                            <Input.Group compact className="price-input-group" style={{
+                                display: 'flex',
+                                height: '48px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '10px',
+                                border: '1px solid #e6e8eb',
+                                overflow: 'hidden',
+                                marginBottom: 0
                             }}>
-                                Price
-                            </span>
-                        }
-                        style={{ flex: 1 }}
-                    >
-                        <Input.Group compact className="price-input-group" style={{
-                            display: 'flex',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            borderRadius: '10px',
-                            border: '1px solid #e6e8eb',
-                            overflow: 'hidden',
-                            marginBottom: 0
-                        }}>
-                            <Form.Item
-                                name="currency"
-                                noStyle
-                                rules={[{ required: true }]}
-                            >
-                                <Select
-                                    size="large"
-                                    style={{
-                                        width: '100px',
-                                        height: '48px'
-                                    }}
-                                    loading={currenciesLoading}
-                                    className="currency-select"
-                                    defaultValue={currencies?.data?.find(c => c.currencyCode === 'INR')?.id}
-                                    dropdownStyle={{
-                                        padding: '8px',
-                                        borderRadius: '10px',
-                                    }}
-                                    showSearch
-                                    optionFilterProp="children"
-                                    filterOption={(input, option) =>
-                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                    }
+                                <Form.Item
+                                    name={['price_group', 'currency']}
+                                    noStyle
+                                    rules={[{ required: true }]}
                                 >
-                                    {currencies?.map(currency => (
-                                        <Option key={currency.id} value={currency.id}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span>{currency.currencyIcon}</span>
-                                                <span>{currency.currencyName}</span>
-                                            </div>
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
-                            <Form.Item
-                                name="price"
-                                noStyle
-                                rules={[{ required: true, message: 'Please enter price' }]}
-                            >
-                                <InputNumber
-                                    placeholder="Enter price"
-                                    size="large"
-                                    style={{
-                                        flex: 1,
-                                        width: '100%',
-                                        border: 'none',
-                                        borderLeft: '1px solid #e6e8eb',
-                                        borderRadius: 0,
-                                        height: '48px',
-                                        padding: '0 16px',
-                                    }}
-                                    min={0}
-                                    precision={2}
-                                    className="price-input"
-                                />
-                            </Form.Item>
-                        </Input.Group>
-                    </Form.Item>
+                                    <Select
+                                        size="large"
+                                        style={{
+                                            width: '100px',
+                                            height: '48px'
+                                        }}
+                                        loading={currenciesLoading}
+                                        className="currency-select"
+                                        value={initialValues?.currency}
+                                        dropdownStyle={{
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                        }}
+                                        showSearch
+                                        optionFilterProp="children"
+                                        filterOption={(input, option) => {
+                                            const currency = currencies?.find(c => c.id === option.value);
+                                            return currency?.currencyCode?.toLowerCase().includes(input.toLowerCase()) ||
+                                                currency?.currencyIcon?.toLowerCase().includes(input.toLowerCase());
+                                        }}
+                                    >
+                                        {currencies?.map(currency => (
+                                            <Option
+                                                key={currency.id}
+                                                value={currency.id}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span>{currency.currencyIcon}</span>
+                                                    <span>{currency.currencyCode}</span>
+                                                </div>
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                                <Form.Item
+                                    name={['price_group', 'price']}
+                                    noStyle
+                                    rules={[{ required: true, message: 'Please enter price' }]}
+                                >
+                                    <InputNumber
+                                        placeholder="Enter price"
+                                        size="large"
+                                        style={{
+                                            flex: 1,
+                                            width: '100%',
+                                            border: 'none',
+                                            borderLeft: '1px solid #e6e8eb',
+                                            borderRadius: 0,
+                                            height: '48px',
+                                            padding: '0 16px',
+                                        }}
+                                        min={0}
+                                        precision={2}
+                                        className="price-input"
+                                    />
+                                </Form.Item>
+                            </Input.Group>
+                        </Form.Item>
                     </Col>
                     <Col span={12}>
                         <Form.Item
@@ -482,26 +530,72 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Storage Limit (GB)
+                                Storage Limit
                             </span>
                         }
                         rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
-                        <InputNumber
-                            prefix={<FiHardDrive style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            size="large"
-                            style={{
-                                width: '100%',
-                                borderRadius: '10px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                            }}
-                            min={1}
-                            onChange={(value) => form.setFieldsValue({ storage_limit: value?.toString() })}
-                        />
+                        <Input.Group compact className="storage-input-group" style={{
+                            display: 'flex',
+                            height: '48px',
+                            backgroundColor: '#f8fafc',
+                            borderRadius: '10px',
+                            border: '1px solid #e6e8eb',
+                            overflow: 'hidden',
+                            marginBottom: 0
+                        }}>
+                            <InputNumber
+                                prefix={<FiHardDrive style={{ color: '#1890ff', fontSize: '16px' }} />}
+                                size="large"
+                                style={{
+                                    flex: 1,
+                                    width: 'calc(100% - 80px)',
+                                    border: 'none',
+                                    borderRadius: 0,
+                                    height: '48px',
+                                }}
+                                min={0.01}
+                                step={storageUnit === 'GB' ? 0.01 : 1}
+                                onChange={handleStorageChange}
+                                parser={value => value.replace(/[^0-9.]/g, '')}
+                                formatter={value => value ? `${value}` : ''}
+                                value={form.getFieldValue('storage_limit')}
+                                className="storage-input"
+                            />
+                            <Select
+                                value={storageUnit}
+                                onChange={handleStorageUnitChange}
+                                style={{
+                                    width: '120px',
+                                    height: '48px'
+                                }}
+                                className="storage-unit-select"
+                                dropdownStyle={{
+                                    padding: '8px',
+                                    borderRadius: '10px',
+                                }}
+                            >
+                                <Option value="MB">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FiHardDrive style={{ fontSize: '14px' }} />
+                                        <span>MB</span>
+                                    </div>
+                                </Option>
+                                <Option value="GB">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FiHardDrive style={{ fontSize: '14px' }} />
+                                        <span>GB</span>
+                                    </div>
+                                </Option>
+                            </Select>
+                        </Input.Group>
                     </Form.Item>
                 </div>
+
+                <Form.Item name="_storage_limit_mb" hidden>
+                    <Input />
+                </Form.Item>
 
                 <div style={{ display: 'flex', gap: '16px' }}>
                     <Form.Item
@@ -872,6 +966,101 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         font-size: 12px;
                         color: rgba(0, 0, 0, 0.65);
                     }
+                }
+
+                .storage-input-group {
+                    margin-bottom: 0 !important;
+                    display: flex !important;
+                    width: 100% !important;
+                }
+
+                .storage-input {
+                    flex: 1 !important;
+                    background-color: transparent;
+                    
+                    &:hover, &:focus {
+                        border-color: transparent !important;
+                        box-shadow: none !important;
+                    }
+
+                    .ant-input-number-input-wrap {
+                        height: 46px !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        
+                        input {
+                            height: 46px !important;
+                            font-size: 14px;
+                            padding: 0 16px;
+                            line-height: 46px !important;
+                        }
+                    }
+
+                    .ant-input-number-handler-wrap {
+                        display: none;
+                    }
+                }
+
+                .storage-unit-select .ant-select-selector {
+                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+                    border: none !important;
+                    color: white !important;
+                    height: 48px !important;
+                    line-height: 46px !important;
+                    padding: 0 12px !important;
+                    display: flex;
+                    align-items: center;
+                    box-shadow: none !important;
+                }
+
+                .storage-unit-select .ant-select-selection-item {
+                    color: white !important;
+                    font-weight: 500 !important;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    height: 46px !important;
+                    line-height: 46px !important;
+                    font-size: 14px;
+                }
+
+                .storage-unit-select .ant-select-arrow {
+                    color: white !important;
+                }
+
+                .storage-unit-select .ant-select-dropdown {
+                    padding: 8px !important;
+                    border-radius: 10px !important;
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+                }
+
+                .storage-unit-select .ant-select-item {
+                    padding: 8px 12px !important;
+                    border-radius: 6px !important;
+                    transition: all 0.3s ease !important;
+                }
+
+                .storage-unit-select .ant-select-item:hover {
+                    background: rgba(24, 144, 255, 0.06) !important;
+                }
+
+                .storage-unit-select .ant-select-item-option-selected {
+                    background-color: #e6f4ff !important;
+                    font-weight: 500 !important;
+                }
+
+                .storage-unit-select .ant-select-item-option-content {
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 8px !important;
+                }
+
+                .storage-unit-select:not(.ant-select-disabled):hover .ant-select-selector {
+                    background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+                }
+
+                .storage-unit-select.ant-select-focused .ant-select-selector {
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
                 }
             `}</style>
         </Modal>

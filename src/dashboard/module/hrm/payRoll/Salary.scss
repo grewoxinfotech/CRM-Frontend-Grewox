@@ -189,7 +189,7 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -201,7 +201,7 @@
                     }
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -230,17 +230,17 @@
         border-radius: 16px;
         font-size: 12px;
         font-weight: 500;
-        
+
         &.pending {
             background-color: #e6f7ff;
             color: #1890ff;
         }
-        
+
         &.approved {
             background-color: #f6ffed;
             color: #52c41a;
         }
-        
+
         &.rejected {
             background-color: #fff1f0;
             color: #f5222d;
@@ -252,7 +252,7 @@
             padding: 0;
             height: auto;
             line-height: 1;
-            
+
             &:not(:last-child) {
                 margin-right: 16px;
             }
@@ -351,9 +351,114 @@
 
         .salary-table-card {
             .ant-table {
+
                 .ant-table-thead>tr>th,
                 .ant-table-tbody>tr>td {
                     padding: 12px 8px;
+                }
+            }
+        }
+    }
+}
+
+.salary-list {
+    .ant-table {
+        .ant-switch {
+            min-width: 55px;
+
+            &-checked {
+                background-color: #52c41a;
+            }
+
+            &:not(.ant-switch-checked) {
+                background-color: #faad14;
+            }
+
+            &-loading {
+                opacity: 0.7;
+            }
+        }
+
+        .ant-tag {
+            border-radius: 4px;
+            padding: 4px 8px;
+
+            .anticon {
+                margin-right: 4px;
+            }
+        }
+
+        .ant-space-vertical {
+            align-items: center;
+        }
+    }
+}
+
+.employee-list {
+    .ant-table {
+        .salary-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .ant-tag {
+                margin: 0;
+                padding: 4px 12px;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-weight: 500;
+                font-size: 13px;
+
+                &.ant-tag-success {
+                    color: #389e0d;
+                    background: #f6ffed;
+                    border-color: #b7eb8f;
+                }
+
+                &.ant-tag-warning {
+                    color: #d48806;
+                    background: #fff7e6;
+                    border-color: #ffd591;
+                }
+
+                &.ant-tag-default {
+                    color: #595959;
+                    background: #fafafa;
+                    border-color: #d9d9d9;
+                }
+
+                .anticon,
+                svg {
+                    font-size: 14px;
+                }
+            }
+
+            .ant-switch {
+                min-width: 60px;
+                height: 24px;
+
+                &-checked {
+                    background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+                }
+
+                &:not(.ant-switch-checked) {
+                    background: linear-gradient(135deg, #ffc53d 0%, #faad14 100%);
+                }
+
+                &-handle {
+                    width: 20px;
+                    height: 20px;
+                }
+
+                &-loading {
+                    opacity: 0.7;
+                }
+
+                &-inner {
+                    font-size: 12px;
+                    font-weight: 500;
                 }
             }
         }

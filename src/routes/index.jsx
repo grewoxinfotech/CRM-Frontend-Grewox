@@ -23,7 +23,7 @@ import ResetPassword from "../auth/resend";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
-import SubClient from "../dashboard/module/user-management/subclient/index.jsx";
+// import SubClient from "../dashboard/module/user-management/subclient/index.jsx";
 import Designation from "../dashboard/module/hrm/Designation";
 import Department from "../dashboard/module/hrm/Department";
 import Training from "../dashboard/module/hrm/Training";
@@ -132,10 +132,10 @@ const routes = createBrowserRouter([
         path: "",
         element: <Dashboard />,
       },
-      {
-        path: "/dashboard/clients",
-        element: <SubClient />,
-      },
+      // {
+      //   path: "/dashboard/clients",
+      //   element: <SubClient />,
+      // },
       {
         path: "/dashboard/profile",
         element: <Profiles />,
@@ -242,18 +242,44 @@ const routes = createBrowserRouter([
         path: "crm",
         children: [
           {
-            path: "project",
+            path: "lead",
             children: [
               {
                 path: "",
-                element: <Project />,
+                element: <Lead />,
               },
               {
-                path: ":projectId",
-                element: <ProjectDetail />,
+                path: ":leadId",
+                element: <LeadOverview />,
               },
             ],
           },
+          {
+            path: "deals",
+            children: [
+              {
+                path: "",
+                element: <Deal />,
+              },
+              {
+                path: ":dealId",
+                element: <DealDetail />,
+              },
+            ],
+          },
+          // {
+          //   path: "project",
+          //   children: [
+          //     {
+          //       path: "",
+          //       element: <Project />,
+          //     },
+          //     {
+          //       path: ":projectId",
+          //       element: <ProjectDetail />,
+          //     },
+          //   ],
+          // },
           {
             path: "company-account",
             children: [
@@ -280,10 +306,10 @@ const routes = createBrowserRouter([
               },
             ],
           },
-          {
-            path: "company-inquiry",
-            element: <CompanyInquiry />,
-          },
+          // {
+          //   path: "company-inquiry",
+          //   element: <CompanyInquiry />,
+          // },
           {
             path: "custom-form",
             children: [
@@ -294,32 +320,6 @@ const routes = createBrowserRouter([
               {
                 path: ":formId/submissions",
                 element: <FormSubmissions />,
-              },
-            ],
-          },
-          {
-            path: "lead",
-            children: [
-              {
-                path: "",
-                element: <Lead />,
-              },
-              {
-                path: ":leadId",
-                element: <LeadOverview />,
-              },
-            ],
-          },
-          {
-            path: "deals",
-            children: [
-              {
-                path: "",
-                element: <Deal />,
-              },
-              {
-                path: ":dealId",
-                element: <DealDetail />,
               },
             ],
           },

@@ -20,6 +20,7 @@ import { useGetAllCurrenciesQuery } from '../../../module/settings/services/sett
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useNavigate, useLocation } from "react-router-dom";
+import { formatCurrency } from '../../../utils/currencyUtils';
 
 const { Text } = Typography;
 const { Search } = Input;
@@ -269,10 +270,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       key: "leadValue",
       sorter: (a, b) => (a.leadValue || 0) - (b.leadValue || 0),
       render: (value, record) => {
-        const currency = currencies.find(c => c.id === record.currency);
         return (
           <Text strong style={{ fontSize: '14px', color: '#52c41a' }}>
-            {currency?.currencyIcon || ''} {(value || 0).toLocaleString()}
+            {formatCurrency(value || 0, record.currency, currencies)}
           </Text>
         );
       }

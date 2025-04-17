@@ -279,41 +279,36 @@ const DealsTable = ({
 
             <div style={responsiveStyles.tableWrapper}>
                 <Table
-                    dataSource={[...Array(5)].map((_, index) => {
-                        const filteredDeals = filterDealsByDate(deals) || [];
-                        return filteredDeals[index] || {
-                            id: `empty-${index}`,
-                            dealTitle: '',
-                            stage: '',
-                            value: '',
-                            status: '',
-                            isEmpty: true
-                        };
-                    })}
-                    columns={columns.map(col => ({
-                        ...col,
-                        render: (text, record) => {
-                            if (record.isEmpty) {
-                                return <div style={{ height: '24px' }}>&nbsp;</div>;
-                            }
-                            return col.render ? col.render(text, record) : text;
-                        }
-                    }))}
-                    rowKey="id"
-                    pagination={false}
-                    className="colorful-table fixed-height-table"
-                    onRow={(record) => ({
-                        onClick: !record.isEmpty ? () => navigate(`/dashboard/crm/deal/${record.id}`) : undefined,
-                        style: {
-                            cursor: !record.isEmpty ? 'pointer' : 'default',
-                            background: record.isEmpty ? '#fafafa' : undefined
-                        }
-                    })}
-                    scroll={{ x: true }}
+                    dataSource={filterDealsByDate(deals)}
+                    columns={columns}
                     loading={loading}
+                    rowKey="id"
+                    size="middle"
+                    pagination={{
+                        pageSize: 5,
+                        total: filterDealsByDate(deals)?.length,
+                        showTotal: (total) => `Total ${total} deals`,
+                        showSizeChanger: false,
+                        hideOnSinglePage: true,
+                        style: {
+                            marginTop: '12px',
+                            padding: '8px 16px',
+                            background: '#f8fafc',
+                            borderRadius: '0 0 8px 8px'
+                        }
+                    }}
+                    style={{
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                    }}
+                    onRow={(record) => ({
+                        onClick: () => navigate(`/dashboard/crm/deal/${record.id}`),
+                        style: { cursor: 'pointer' }
+                    })}
+                    scroll={{ x: 'max-content' }}
                     locale={{
                         emptyText: (
-                            <div style={{ 
+                            <div style={{
                                 padding: '24px',
                                 display: 'flex',
                                 flexDirection: 'column',

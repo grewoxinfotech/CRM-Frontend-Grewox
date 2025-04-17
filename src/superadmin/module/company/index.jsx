@@ -11,6 +11,8 @@ import {
     Col,
     Breadcrumb,
     Card,
+    Table,
+    Pagination
 } from 'antd';
 import {
     FiPlus,
@@ -317,7 +319,7 @@ const Company = () => {
                             ))}
                         {filteredCompanies.length > 10 && (
                             <Col span={24} style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-                                <Table.Pagination
+                                <Pagination
                                     current={currentPage}
                                     pageSize={10}
                                     total={filteredCompanies.length}

@@ -96,7 +96,15 @@ export const leadApi = createApi({
         method: "DELETE"
       }),
       invalidatesTags: ["Followup"]
-    })
+    }),
+    deleteLeadFile: builder.mutation({
+      query: ({ id, filename }) => ({
+        url: `/leads/files/${id}`,
+        method: 'DELETE',
+        body: { filename }
+      }),
+      invalidatesTags: ['Lead']
+    }),
   }),
 });
 
@@ -111,5 +119,6 @@ export const {
   useGetFollowupsQuery,
   useCreateFollowupMutation,
   useUpdateFollowupMutation,
-  useDeleteFollowupMutation
+  useDeleteFollowupMutation,
+  useDeleteLeadFileMutation,
 } = leadApi;

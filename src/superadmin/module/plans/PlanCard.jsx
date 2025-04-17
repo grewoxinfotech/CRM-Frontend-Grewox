@@ -50,19 +50,29 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
             key: 'edit',
             icon: <FiEdit2 />,
             label: 'Edit Plan',
-            onClick: () => onEdit?.(plan.id)
+            onClick: () => onEdit?.(plan)
         },
         {
             key: 'delete',
             icon: <FiTrash2 />,
             label: 'Delete Plan',
             danger: true,
-            onClick: () => onDelete?.(plan.id)
+            onClick: () => onDelete?.(plan)
         }
     ];
 
     const handleToggleStatus = (checked) => {
         onToggleStatus?.(plan.id, checked ? 'active' : 'inactive');
+    };
+
+    const formatStorageSize = (sizeInMB) => {
+        const size = parseFloat(sizeInMB);
+        if (size >= 1024) {
+            const gbValue = size / 1024;
+            // Remove decimals if it's a whole number
+            return `${Number.isInteger(gbValue) ? gbValue.toFixed(0) : gbValue.toFixed(2)} GB`;
+        }
+        return `${Math.round(size)} MB`;
     };
 
     return (
@@ -105,12 +115,12 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                     {plan.name}
                 </Title>
                 <div className="price-section">
-                <span className="icon">
-                    <small className="currency-icon">
-                        {getCurrencyIcon(plan.currency)}
-                    </small>
-                    {Number(plan.price || 0).toFixed(2)}
-                </span>
+                    <span className="icon">
+                        <small className="currency-icon">
+                            {getCurrencyIcon(plan.currency)}
+                        </small>
+                        {Number(plan.price || 0).toFixed(2)}
+                    </span>
                     <span className="amount">/{plan.duration.toLowerCase()}</span>
                 </div>
             </div>
@@ -147,7 +157,7 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                     <ul className="features-list">
                         <li>
                             <FiCheck className="check-icon" />
-                            <span><strong>{plan.storage_limit} GB</strong> Storage Space</span>
+                            <span><strong>{formatStorageSize(plan.storage_limit)}</strong> Storage Space</span>
                         </li>
                         <li>
                             <FiCheck className="check-icon" />

@@ -23,6 +23,13 @@ const Header = () => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase();
     };
 
+    const getUserFullName = (user) => {
+        if (user?.firstName && user?.lastName) {
+            return `${user.firstName} ${user.lastName}`;
+        }
+        return user?.username || 'User';
+    };
+
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
@@ -269,7 +276,7 @@ const Header = () => {
                         getPopupContainer={(triggerNode) => triggerNode.parentNode}
                     >
                         <div className="user-avatar">
-                            <Avatar>{user?.name ? getInitials(user.name) : 'U'}</Avatar>
+                            <Avatar>{getInitials(getUserFullName(user))}</Avatar>
                         </div>
                     </Dropdown>
                 </Space>

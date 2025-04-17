@@ -34,6 +34,8 @@ import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import moment from 'moment';
 import dayjs from 'dayjs';
+import { formatCurrency } from '../../../utils/currencyUtils';
+
 const { Text } = Typography;
 
 const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
@@ -43,7 +45,7 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
-  const { data: currencies = [] } = useGetAllCurrenciesQuery(); 
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: contactsResponse, isLoading: isContactsLoading, error: contactsError } = useGetContactsQuery();
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
 
@@ -62,39 +64,28 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
   const getStatusColor = (status, is_won) => {
     // First check is_won flag
     if (is_won === true) {
-        return { 
-            bg: '#dcfce7', 
-            color: '#15803d', 
-            icon: <FiTarget />,
-            text: 'Won'
-        };
+      return {
+        bg: '#dcfce7',
+        color: '#15803d',
+        icon: <FiTarget />,
+        text: 'Won'
+      };
     } else if (is_won === false) {
-        return { 
-            bg: '#fee2e2', 
-            color: '#b91c1c', 
-            icon: <FiTarget />,
-            text: 'Lost'
-        };
+      return {
+        bg: '#fee2e2',
+        color: '#b91c1c',
+        icon: <FiTarget />,
+        text: 'Lost'
+      };
     }
 
     // Default to pending if is_won is null
-    return { 
-        bg: '#dbeafe', 
-        color: '#1e40af', 
-        icon: <FiTarget />,
-        text: 'Pending'
+    return {
+      bg: '#dbeafe',
+      color: '#1e40af',
+      icon: <FiTarget />,
+      text: 'Pending'
     };
-  };
-
-  const formatCurrency = (value, currencyId) => {
-    const currencyDetails = currencies.find(c => c.id === currencyId);
-    if (!currencyDetails) return `${value}`;
-
-    return new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
   };
 
   const getDropdownItems = (record) => ({
@@ -249,55 +240,53 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
     {
       title: "Expected Date",
       dataIndex: "closedDate",
-      key: "closedDate", 
+      key: "closedDate",
       render: (date) => dayjs(date).format('DD-MM-YYYY'),
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-          <div style={{ padding: 8 }}>
-              <DatePicker
-                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-                  onChange={(date) => {
-                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
-                      setSelectedKeys(dateStr ? [dateStr] : []);
-                  }}
-                  style={{ marginBottom: 8, display: 'block' }}
-              />
-              <Space>
-                  <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Filter
-                  </Button>
-                  <Button
-                      onClick={() => clearFilters()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Reset
-                  </Button>
-              </Space>
-          </div>
+        <div style={{ padding: 8 }}>
+          <DatePicker
+            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+            onChange={(date) => {
+              const dateStr = date ? date.format('YYYY-MM-DD') : null;
+              setSelectedKeys(dateStr ? [dateStr] : []);
+            }}
+            style={{ marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
       ),
       onFilter: (value, record) => {
-          if (!value || !record.closedDate) return false;
-          return dayjs(record.closedDate).format('YYYY-MM-DD') === value;
+        if (!value || !record.closedDate) return false;
+        return dayjs(record.closedDate).format('YYYY-MM-DD') === value;
       },
       filterIcon: filtered => (
-          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
+        <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
       )
     },
     {
       title: "Value",
+      dataIndex: "value",
       key: "value",
-      sorter: (a, b) => a.value - b.value,
-      render: (_, record) => (
-        <Text strong style={{
-          fontSize: '14px',
-          color: '#52c41a'
-        }}>
-          {formatCurrency(record.value || 0, record.currency)}
+      sorter: (a, b) => (a.value || 0) - (b.value || 0),
+      render: (value, record) => (
+        <Text strong style={{ fontSize: '14px', color: '#52c41a' }}>
+          {formatCurrency(value || 0, record.currency, currencies)}
         </Text>
       ),
     },

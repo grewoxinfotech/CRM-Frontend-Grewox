@@ -119,7 +119,7 @@ const PersonalInfo = ({ user }) => {
 
 const AdditionalInfo = ({ user, userRole }) => {
     const infoItems = [
-      
+
         {
             icon: FiMapPin,
             label: 'Address',

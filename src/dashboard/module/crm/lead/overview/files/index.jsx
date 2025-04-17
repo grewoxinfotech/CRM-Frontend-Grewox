@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Button, Space, message, Modal, Upload, Empty, Divider } from 'antd';
 import { FiPlus, FiTrash2, FiX, FiUpload, FiDownload, FiFile, FiFileText, FiImage } from 'react-icons/fi';
-import { useGetLeadQuery, useUploadLeadFilesMutation } from '../../services/LeadApi';
+import { useGetLeadQuery, useUploadLeadFilesMutation, useDeleteLeadFileMutation } from '../../services/LeadApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
 import './files.scss';
 
 const { Text, Title } = Typography;
 const { Dragger } = Upload;
+const { confirm } = Modal;
 
 const LeadFiles = ({ leadId }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -18,6 +19,7 @@ const LeadFiles = ({ leadId }) => {
     const user = useSelector(selectCurrentUser);
     const { data: leadData } = useGetLeadQuery(leadId);
     const [uploadLeadFiles] = useUploadLeadFilesMutation();
+    const [deleteLeadFile] = useDeleteLeadFileMutation();
 
     useEffect(() => {
         if (leadData?.data?.files) {
@@ -66,6 +68,26 @@ const LeadFiles = ({ leadId }) => {
         }
 
         setUploading(false);
+    };
+
+    const handleDelete = (filename) => {
+        confirm({
+            title: 'Delete File',
+            content: `Are you sure you want to delete "${filename}"?`,
+            okText: 'Yes',
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteLeadFile({
+                        id: leadId,
+                        filename
+                    }).unwrap();
+                    message.success('File deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete file');
+                }
+            },
+        });
     };
 
     const uploadProps = {
@@ -144,6 +166,7 @@ const LeadFiles = ({ leadId }) => {
                                         <Button
                                             type="link"
                                             icon={<FiTrash2 />}
+                                            onClick={() => handleDelete(file.filename)}
                                             className="action-btn delete"
                                         />
                                     </div>

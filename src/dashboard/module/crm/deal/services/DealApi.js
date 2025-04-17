@@ -28,7 +28,7 @@ export const dealApi = createApi({
       },
       providesTags: ["Deal"],
     }),
-    
+
     getDeal: builder.query({
       query: (id) => ({
         url: `/deals/${id}`,
@@ -37,7 +37,7 @@ export const dealApi = createApi({
       transformResponse: (response) => response?.data || response,
       providesTags: (result, error, id) => [{ type: "Deal", id }],
     }),
-    
+
     createDeal: builder.mutation({
       query: (deal) => ({
         url: "/deals",
@@ -47,8 +47,8 @@ export const dealApi = createApi({
       transformResponse: (response) => response?.data || response,
       invalidatesTags: ["Deal"],
     }),
-    
-    
+
+
     updateDeal: builder.mutation({
       query: ({ id, ...deal }) => ({
         url: `/deals/${id}`,
@@ -59,8 +59,8 @@ export const dealApi = createApi({
       transformResponse: (response) => response?.data || response,
       invalidatesTags: (result, error, { id }) => [{ type: "Deal", id }],
     }),
-    
-    
+
+
     deleteDeal: builder.mutation({
       query: (id) => ({
         url: `/deals/${id}`,
@@ -82,6 +82,19 @@ export const dealApi = createApi({
         "Deal",
       ],
     }),
+
+    deleteDealFile: builder.mutation({
+      query: ({ id, filename }) => ({
+        url: `/deals/files/${id}`,
+        method: "DELETE",
+        body: { filename }
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Deal", id },
+        "Deal"
+      ],
+    }),
+
     updateDealStage: builder.mutation({
       query: ({ id, stage }) => ({
         url: `/deals/${id}`,
@@ -102,4 +115,5 @@ export const {
   useDeleteDealMutation,
   useUpdateDealStageMutation,
   useUploadDealFilesMutation,
+  useDeleteDealFileMutation,
 } = dealApi;

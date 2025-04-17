@@ -36,59 +36,53 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
 
   const [form] = Form.useForm();
   const [updateSalary, { isLoading }] = useUpdateSalaryMutation();
-  const { data: employeesData, isLoading: isLoadingEmployees } =
-    useGetEmployeesQuery();
+  const { data: employeesData, isLoading: isLoadingEmployees } = useGetEmployeesQuery();
   const { data: currenciesData, isLoading: isLoadingCurrencies } = useGetAllCurrenciesQuery();
   const employees = employeesData?.data || [];
   const currencies = currenciesData || [];
 
-
-  const [selectedCurrency, setSelectedCurrency] = useState('$');
-
   React.useEffect(() => {
-    if (initialValues && currencies.length > 0) {
-      // Find the currency details for the initial currency ID
-      const currencyDetails = currencies.find(curr => curr.id === initialValues.currency);
-      if (currencyDetails) {
-        setSelectedCurrency(currencyDetails.currencyIcon);
-      }
-
-      // Set form values
+    if (initialValues) {
       form.setFieldsValue({
-        ...initialValues,
-        paymentDate: dayjs(initialValues.paymentDate)
+        employeeId: initialValues.employeeId,
+        employeeName: initialValues.employeeName,
+        payslipType: initialValues.payslipType,
+        currency: initialValues.currency,
+        salary: initialValues.salary,
+        netSalary: initialValues.netSalary,
+        bankAccount: initialValues.bankAccount,
+        paymentDate: dayjs(initialValues.paymentDate),
+        status: initialValues.status
       });
     }
-  }, [initialValues, form, currencies]);
+  }, [initialValues, form]);
 
   const handleSubmit = async (values) => {
     try {
       const payload = {
         id: initialValues.id,
-        employeeId: values.employeeId,
-        payslipType: values.payslipType,
-        currency: values.currency,
-        salary: values.salary.toString(),
-        netSalary: values.netSalary.toString(),
-        bankAccount: values.bankAccount,
-        paymentDate: values.paymentDate.format("YYYY-MM-DD"),
-        status: values.status,
+        data: {
+          employeeId: values.employeeId,
+          employeeName: values.employeeName,
+          payslipType: values.payslipType,
+          currency: values.currency,
+          salary: values.salary.toString(),
+          netSalary: values.netSalary.toString(),
+          bankAccount: values.bankAccount,
+          paymentDate: values.paymentDate.format("YYYY-MM-DD"),
+          status: values.status
+        }
       };
 
-      await updateSalary(payload).unwrap();
-      message.success("Salary record updated successfully");
-      form.resetFields();
-      onCancel();
+      const response = await updateSalary(payload).unwrap();
+
+      if (response.success) {
+        message.success("Salary record updated successfully");
+        onCancel();
+      }
     } catch (error) {
       console.error("Update Error:", error);
       message.error(error?.data?.message || "Failed to update salary record");
-    }
-  };
-
-  const handleCurrencyChange = (value) => {
-    const currencyDetails = currencies.find(curr => curr.id === value);
-    if (currencyDetails) {
-      setSelectedCurrency(currencyDetails.currencyIcon);
     }
   };
 
@@ -197,10 +191,9 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
+        initialValues={initialValues}
         requiredMark={false}
-        style={{
-          padding: "24px",
-        }}
+        style={{ padding: "24px" }}
       >
         <Row gutter={16}>
           <Col span={12}>
@@ -215,35 +208,22 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
               rules={[{ required: true, message: "Please select an employee" }]}
             >
               <Select
-              listHeight={100}
-              dropdownStyle={{
-                Height: '100px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
                 placeholder="Select Employee"
                 size="large"
                 loading={isLoadingEmployees}
-                showSearch
-                allowClear
+                disabled={true}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
                   height: "48px",
                   backgroundColor: "#f8fafc",
                 }}
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  option?.children?.toLowerCase().includes(input.toLowerCase())
-                }
               >
-                {Array.isArray(employees) &&
-                  employees.map((employee) => (
-                    <Option key={employee.id} value={employee.id}>
-                      {`${employee.firstName} ${employee.lastName}`}
-                    </Option>
-                  ))}
+                {employees.map((employee) => (
+                  <Option key={employee.id} value={employee.id}>
+                    {`${employee.firstName} ${employee.lastName}`}
+                  </Option>
+                ))}
               </Select>
             </Form.Item>
           </Col>
@@ -257,18 +237,9 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
                   Payslip Type <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[
-                { required: true, message: "Please select payslip type" },
-              ]}
+              rules={[{ required: true, message: "Please select payslip type" }]}
             >
               <Select
-              listHeight={100}
-              dropdownStyle={{
-                Height: '100px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
                 placeholder="Select Payslip Type"
                 size="large"
                 style={{
@@ -286,9 +257,83 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
         </Row>
 
         <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="salary"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Salary <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please enter salary" }]}
+            >
+              <Input
+                placeholder="Enter salary"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                }}
+              />
+            </Form.Item>
+          </Col>
 
+          <Col span={12}>
+            <Form.Item
+              name="netSalary"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Net Salary <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please enter net salary" }]}
+            >
+              <Input
+                placeholder="Enter net salary"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                  height: "48px",
+                }}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
 
-          <Col span={24}>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="currency"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
+                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select currency" }]}
+            >
+              <Select
+                placeholder="Select Currency"
+                size="large"
+                style={{
+                  width: "100%",
+                  borderRadius: "10px",
+                }}
+              >
+                {currencies.map(currency => (
+                  <Option key={currency.id} value={currency.id}>
+                    {currency.currencyIcon} {currency.currencyCode}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+
+          <Col span={12}>
             <Form.Item
               name="status"
               label={
@@ -311,165 +356,6 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
               </Select>
             </Form.Item>
           </Col>
-
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="salary_group"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiDollarSign
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
-                  Salary <span style={{ color: "#ff4d4f" }}>*</span>
-                </span>
-              }
-              // rules={[{ required: true, message: "Please enter salary" }]}
-            style={{ flex: 1 }}
-          >
-            <Input.Group compact className="price-input-group" style={{
-              display: 'flex',
-              height: '48px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '10px',
-              border: '1px solid #e6e8eb',
-              overflow: 'hidden',
-              marginBottom: 0
-            }}>
-              <Form.Item
-                name="currency"
-                noStyle
-                rules={[{ required: true }]}
-                initialValue={initialValues?.currency}
-              >
-                <Select
-                  size="large"
-                  style={{
-                    width: '100px',
-                    height: '48px'
-                  }}
-                  className="currency-select"
-                  dropdownStyle={{
-                    padding: '8px',
-                    borderRadius: '10px',
-                  }}
-                  showSearch
-                  optionFilterProp="children"
-                  onChange={handleCurrencyChange}
-                >
-                  {currencies?.map(currency => (
-                    <Option
-                      key={currency.id}
-                      value={currency.id}
-                    >
-                      {currency.currencyIcon}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="salary"
-                noStyle
-                rules={[{ required: true, message: 'Please enter salary' }]}
-              >
-                <Input
-                  placeholder="Enter salary"
-                  size="large"
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    border: 'none',
-                    borderLeft: '1px solid #e6e8eb',
-                    borderRadius: 0,
-                    height: '48px',
-                  }}
-                  min={0}
-                  precision={2}
-                  className="price-input"
-                />
-              </Form.Item>
-            </Input.Group>
-                  </Form.Item>
-            </Col>
-
-          <Form.Item
-            name="salary_group"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                <FiDollarSign
-                  style={{ marginRight: "8px", color: "#1890ff" }}
-                />
-                Net Salary <span style={{ color: "#ff4d4f" }}>*</span>
-              </span>
-            }
-            // rules={[{ required: true, message: "Please enter net salary" }]}
-            style={{ flex: 1 }}
-          >
-            <Input.Group compact className="price-input-group" style={{
-              display: 'flex',
-              height: '48px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '10px',
-              border: '1px solid #e6e8eb',
-              overflow: 'hidden',
-              marginBottom: 0
-            }}>
-              <Form.Item
-                name="currency"
-                noStyle
-                rules={[{ required: true }]}
-                initialValue={initialValues?.currency}
-              >
-                <Select
-                  size="large"
-                  style={{
-                    width: '100px',
-                    height: '48px'
-                  }}
-                  className="currency-select"
-                  dropdownStyle={{
-                    padding: '8px',
-                    borderRadius: '10px',
-                  }}
-                  showSearch
-                  optionFilterProp="children"
-                  onChange={handleCurrencyChange}
-                >
-                  {currencies?.map(currency => (
-                    <Option
-                      key={currency.id}
-                      value={currency.id}
-                    >
-                      {currency.currencyIcon}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="salary"
-                noStyle
-                rules={[{ required: true, message: 'Please enter salary' }]}
-              >
-                <Input
-                  placeholder="Enter salary"
-                  size="large"
-                  style={{
-                    flex: 1,
-                    width: '100%',
-                    border: 'none',
-                    borderLeft: '1px solid #e6e8eb',
-                    borderRadius: 0,
-                    height: '48px',
-                  }}
-                  min={0}
-                  precision={2}
-                  className="price-input"
-                />
-              </Form.Item>
-            </Input.Group>
-          </Form.Item>
         </Row>
 
         <Row gutter={16}>
@@ -478,9 +364,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
               name="bankAccount"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiFileText
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
+                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
                   Bank Account <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
@@ -503,15 +387,11 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
               name="paymentDate"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCalendar
-                    style={{ marginRight: "8px", color: "#1890ff" }}
-                  />
+                  <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
                   Payment Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[
-                { required: true, message: "Please select payment date" },
-              ]}
+              rules={[{ required: true, message: "Please select payment date" }]}
             >
               <DatePicker
                 style={{
@@ -521,7 +401,6 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
                 }}
                 size="large"
                 format="DD-MM-YYYY"
-                placeholder="Select payment date"
               />
             </Form.Item>
           </Col>
@@ -529,14 +408,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
 
         <Row>
           <Col span={24}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "16px",
-                marginTop: "24px",
-              }}
-            >
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px", marginTop: "24px" }}>
               <Button
                 onClick={onCancel}
                 size="large"
@@ -559,8 +431,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
                   borderRadius: "8px",
                   padding: "0 24px",
                   height: "48px",
-                  background:
-                    "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
+                  background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
                   border: "none",
                 }}
               >

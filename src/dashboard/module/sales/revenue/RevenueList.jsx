@@ -53,7 +53,7 @@ const RevenueList = ({
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get customer from location state if coming from customer list
   const customerFromList = location.state?.selectedCustomer;
   const productFromList = location.state?.selectedProduct;
@@ -84,8 +84,8 @@ const RevenueList = ({
     try {
       return (revdata || []).map(revenue => ({
         ...revenue,
-        parsedProducts: revenue?.products ? 
-          (typeof revenue.products === 'string' ? JSON.parse(revenue.products) : revenue.products) 
+        parsedProducts: revenue?.products ?
+          (typeof revenue.products === 'string' ? JSON.parse(revenue.products) : revenue.products)
           : []
       }));
     } catch (error) {
@@ -101,7 +101,7 @@ const RevenueList = ({
       (processedRevenue || []).forEach(revenue => {
         (revenue?.parsedProducts || []).forEach(product => {
           if (!product?.product_id) return;
-          
+
           const existing = revenueMap.get(product.product_id) || {
             total_revenue: 0,
             total_profit: 0,
@@ -133,7 +133,7 @@ const RevenueList = ({
       const revenueMap = new Map();
       (processedRevenue || []).forEach(revenue => {
         if (!revenue?.customer) return;
-        
+
         const customerId = revenue.customer;
         const existing = revenueMap.get(customerId) || {
           total_revenue: 0,
@@ -161,10 +161,10 @@ const RevenueList = ({
   // Filter revenue based on selected product and customer
   const filteredRevenue = useMemo(() => {
     return processedRevenue.filter(revenue => {
-      const matchesProduct = !selectedProduct || 
+      const matchesProduct = !selectedProduct ||
         revenue.parsedProducts.some(p => p.product_id === selectedProduct);
       const matchesCustomer = !selectedCustomer || revenue.customer === selectedCustomer;
-      const matchesSearch = !searchText || 
+      const matchesSearch = !searchText ||
         revenue.description?.toLowerCase().includes(searchText.toLowerCase()) ||
         revenue.category?.toLowerCase().includes(searchText.toLowerCase());
 
@@ -200,9 +200,9 @@ const RevenueList = ({
     if (amount === undefined || amount === null) return '₹ 0.00';
     const currency = getCurrencyDetails(currencyId);
     const numericAmount = Number(amount) || 0;
-    return `${currency.currencyIcon} ${numericAmount.toLocaleString('en-IN', { 
+    return `${currency.currencyIcon} ${numericAmount.toLocaleString('en-IN', {
       maximumFractionDigits: 2,
-      minimumFractionDigits: 2 
+      minimumFractionDigits: 2
     })}`;
   };
 
@@ -253,33 +253,33 @@ const RevenueList = ({
     {
       title: "Products",
       key: "products",
-        width: '30%',
-        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-          <div style={{ padding: 8 }}>
-            <Input
-              placeholder="Search product name"
-              value={selectedKeys[0]}
-              onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-              onPressEnter={() => confirm()}
-              style={{ width: 188, marginBottom: 8, display: 'block' }}
-            />
-            <Space>
-              <Button
-                type="primary"
-                onClick={() => confirm()}
-                size="small"
-                style={{ width: 90 }}
-              >
-                Filter
-              </Button>
-              <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                Reset
-              </Button>
-            </Space>
-          </div>
-        ),
-        onFilter: (value, record) =>
-          record.parsedProducts.some(p => p.name.toLowerCase().includes(value.toLowerCase())),  
+      width: '30%',
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search product name"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.parsedProducts.some(p => p.name.toLowerCase().includes(value.toLowerCase())),
       render: (_, record) => (
         <div>
           {record.parsedProducts.map((product, index) => (
@@ -323,12 +323,14 @@ const RevenueList = ({
       sorter: (a, b) => Number(a.profit) - Number(b.profit),
       render: (_, record) => (
         <div>
-          <Text strong style={{ color: "#1890ff", display: "block" }}>
+          <Text strong style={{
+            color: Number(record.profit || 0) < 0 ? '#ff4d4f' : '#1890ff',
+            display: "block"
+          }}>
             <FiTrendingUp style={{ marginRight: "4px" }} />
             {formatAmount(record.profit || 0, record.currency)}
           </Text>
           <Text type="secondary" style={{ fontSize: "12px" }}>
-            {/* <FiPercent style={{ marginRight: "4px" }} /> */}
             {(Number(record.profit_margin_percentage) || 0).toFixed(2)}% Margin
           </Text>
         </div>
@@ -342,27 +344,27 @@ const RevenueList = ({
       render: (_, record) => (
         <Dropdown
           menu={{
-    items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onView?.(record),
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => onEdit?.(record),
-      },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => handleDelete(record.id),
-        danger: true,
-      },
-    ],
+            items: [
+              {
+                key: "view",
+                icon: <FiEye />,
+                label: "View Details",
+                onClick: () => onView?.(record),
+              },
+              {
+                key: "edit",
+                icon: <FiEdit2 />,
+                label: "Edit",
+                onClick: () => onEdit?.(record),
+              },
+              {
+                key: "delete",
+                icon: <FiTrash2 />,
+                label: "Delete",
+                onClick: () => handleDelete(record.id),
+                danger: true,
+              },
+            ],
           }}
           trigger={["click"]}
           placement="bottomRight"
@@ -414,7 +416,7 @@ const RevenueList = ({
           </Tag>
         </div>
       )} */}
-      
+
       <Row gutter={[16, 16]} className="revenue-filters">
         <Col xs={24} sm={12} md={8} lg={6}>
           <Select
@@ -465,8 +467,12 @@ const RevenueList = ({
               title="Total Profit"
               value={stats.total_profit}
               precision={2}
-              valueStyle={{ color: '#3f8600' }}
-              formatter={(value) => `₹ ${(Number(value) || 0).toLocaleString('en-IN')}`}
+              valueStyle={{
+                color: stats.total_profit < 0 ? '#ff4d4f' : '#3f8600',
+                fontWeight: '600'
+              }}
+              prefix={stats.total_profit < 0 ? '-₹ ' : '₹ '}
+              formatter={(value) => `${Math.abs(Number(value) || 0).toLocaleString('en-IN')}`}
             />
           </Card>
         </Col>
@@ -477,25 +483,30 @@ const RevenueList = ({
               value={stats.count > 0 ? (stats.total_margin / stats.count) : 0}
               precision={2}
               suffix="%"
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{
+                color: (stats.count > 0 ? (stats.total_margin / stats.count) : 0) < 0 ? '#ff4d4f' : '#3f8600',
+                fontWeight: '600'
+              }}
+              prefix={(stats.count > 0 ? (stats.total_margin / stats.count) : 0) < 0 ? '-' : '+'}
+              formatter={(value) => `${Math.abs(Number(value) || 0).toFixed(2)}`}
             />
           </Card>
         </Col>
       </Row>
 
       <div className="revenue-tables">
-      <Table
-        columns={columns}
+        <Table
+          columns={columns}
           dataSource={filteredRevenue}
-        rowKey="id"
+          rowKey="id"
           loading={isLoading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
-        }}
-        className="revenue-table"
-      />
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} items`,
+          }}
+          className="revenue-table"
+        />
       </div>
     </div>
   );

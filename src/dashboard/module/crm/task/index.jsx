@@ -42,7 +42,19 @@ const Task = () => {
     // Fetch tasks using RTK Query
     const { data: tasks = [], isLoading: tasksLoading, refetch } = useGetAllTasksQuery(id);
     const tasksData = tasks?.data || [];
-    console.log("tasksData", tasksData)
+    console.log("Raw tasksData:", JSON.stringify(tasksData, null, 2));
+
+    // Log any tasks without taskName
+    useEffect(() => {
+        if (tasksData.length > 0) {
+            tasksData.forEach(task => {
+                if (!task.taskName) {
+                    console.warn('Task missing taskName in index:', task);
+                }
+            });
+        }
+    }, [tasksData]);
+
     // Fetch users for assignee selection
     const { data: usersData = [], isLoading: usersLoading } = useGetUsersQuery();
     const users = usersData?.data || [];
@@ -53,6 +65,7 @@ const Task = () => {
     };
 
     const handleEdit = (record) => {
+        console.log('Selected Task for Edit:', record);
         setSelectedTask(record);
         setIsEditModalOpen(true);
     };

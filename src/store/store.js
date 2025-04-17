@@ -69,17 +69,19 @@ import { followupTaskApi } from "../dashboard/module/crm/deal/overview/followup/
 import { followupMeetingApi } from "../dashboard/module/crm/deal/overview/followup/metting/services/followupMettingApi";
 import { followupCallApi } from "../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi";
 import { forgotPasswordApi } from "../auth/forgot-password/services/forgot-passwordApi";
+import dealStageReducer from "../dashboard/module/crm/deal/services/DealStageSlice";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth", "leadStage"],
+  whitelist: ["auth", "leadStage", "dealStage"],
 };
 
 const rootReducer = combineReducers({
   auth: authReducer,
   superadminProfile: superadminProfileReducer,
   leadStage: leadStageReducer,
+  dealStage: dealStageReducer,
   [authApi.reducerPath]: authApi.reducer,
   [documentApi.reducerPath]: documentApi.reducer,
   [companyApi.reducerPath]: companyApi.reducer,

@@ -72,10 +72,12 @@ const CreateUser = ({ visible, onCancel }) => {
     const handleResendOtp = async () => {
         try {
             const response = await resendSignupOtp({
-                token: sessionToken // Pass token in the request payload
+                token: sessionToken
             }).unwrap();
 
             if (response.success) {
+                // Update session token with new one from response
+                setSessionToken(response.data.sessionToken);
                 message.success('OTP resent successfully');
             } else {
                 message.error(response.message || 'Failed to resend OTP');

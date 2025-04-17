@@ -53,31 +53,31 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             key: 'title',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search job title"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search job title"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.title.toLowerCase().includes(value.toLowerCase()),
-           
+
         },
         {
             title: 'Category',
@@ -85,31 +85,31 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             key: 'category',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search category"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search category"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.category.toLowerCase().includes(value.toLowerCase()),
-           
+
         },
         {
             title: 'Start Date',
@@ -119,7 +119,7 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             render: (date) => date ? dayjs(date).format('DD-MM-YYYY') : 'N/A'
         },
         {
-            title: 'End Date', 
+            title: 'End Date',
             dataIndex: 'endDate',
             key: 'endDate',
             sorter: (a, b) => dayjs(a.endDate).unix() - dayjs(b.endDate).unix(),
@@ -152,8 +152,8 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             filters: statuses.map(status => ({
                 text: status.name,
                 value: status.id
-              })),
-              onFilter: (value, record) => record.status === value,
+            })),
+            onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color = 'blue';
                 switch (status?.toLowerCase()) {
@@ -182,7 +182,7 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             width: 80,
             render: (_, record) => (
                 <Dropdown
-                    menu={{ 
+                    menu={{
                         items: getActionItems(record)
                     }}
                     trigger={['click']}

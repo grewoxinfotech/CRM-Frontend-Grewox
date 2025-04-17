@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Typography, Button, Space, message, Modal, Upload, Empty, Divider } from 'antd';
 import { FiPlus, FiTrash2, FiX, FiUpload, FiDownload, FiFile, FiFileText, FiImage } from 'react-icons/fi';
-import { useGetDealQuery, useUploadDealFilesMutation } from '../../services/DealApi';
+import { useGetDealQuery, useUploadDealFilesMutation, useDeleteDealFileMutation } from '../../services/dealApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
 import './files.scss';
 
 const { Text, Title } = Typography;
 const { Dragger } = Upload;
+const { confirm } = Modal;
 
 const DealFiles = ({ deal }) => {
 
@@ -20,14 +21,14 @@ const DealFiles = ({ deal }) => {
     const user = useSelector(selectCurrentUser);
     const { data: dealData } = useGetDealQuery(dealId);
     const [uploadDealFiles] = useUploadDealFilesMutation();
-
+    const [deleteDealFile] = useDeleteDealFileMutation();
 
     useEffect(() => {
         if (dealData?.files) {
             try {
                 const parsedFiles = JSON.parse(dealData.files);
                 setFiles(Array.isArray(parsedFiles) ? parsedFiles : [parsedFiles]);
-            } catch (error) {   
+            } catch (error) {
                 console.error('Error parsing files:', error);
                 setFiles([]);
             }
@@ -55,7 +56,7 @@ const DealFiles = ({ deal }) => {
                 formData.append('deal_files', file.originFileObj || file);
             });
 
-                await uploadDealFiles({
+            await uploadDealFiles({
                 id: dealId,
                 data: formData
             }).unwrap();
@@ -69,6 +70,26 @@ const DealFiles = ({ deal }) => {
         }
 
         setUploading(false);
+    };
+
+    const handleDelete = (filename) => {
+        confirm({
+            title: 'Delete File',
+            content: `Are you sure you want to delete "${filename}"?`,
+            okText: 'Yes',
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteDealFile({
+                        id: dealId,
+                        filename
+                    }).unwrap();
+                    message.success('File deleted successfully');
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete file');
+                }
+            },
+        });
     };
 
     const uploadProps = {
@@ -147,6 +168,7 @@ const DealFiles = ({ deal }) => {
                                         <Button
                                             type="link"
                                             icon={<FiTrash2 />}
+                                            onClick={() => handleDelete(file.filename)}
                                             className="action-btn delete"
                                         />
                                     </div>
@@ -328,4 +350,4 @@ const DealFiles = ({ deal }) => {
     );
 };
 
-export default DealFiles; 
+export default DealFiles;

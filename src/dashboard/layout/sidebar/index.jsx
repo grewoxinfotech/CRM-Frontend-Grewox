@@ -145,11 +145,23 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
       permission: 'dashboards-crm',
       subItems: [
         {
-          title: "Project",
-          icon: <FiFolder />,
-          path: "/dashboard/crm/project",
-          permission: "dashboards-project-list"
+          title: "Leads",
+          icon: <FiTarget />,
+          path: "/dashboard/crm/lead",
+          permission: "dashboards-lead"
         },
+        {
+          title: "Deals",
+          icon: <FiShoppingBag />,
+          path: "/dashboard/crm/deals",
+          permission: "dashboards-deal"
+        },
+        // {
+        //   title: "Project",
+        //   icon: <FiFolder />,
+        //   path: "/dashboard/crm/project",
+        //   permission: "dashboards-project-list"
+        // },
         {
           title: "Company",
           icon: <FiBriefcase />,
@@ -168,24 +180,12 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           path: "/dashboard/crm/custom-form",
           permission: "dashboards-custom-form"
         },
-        {
-          title: "Inquiry",
-          icon: <FiMessageSquare />,
-          path: "/dashboard/crm/company-inquiry",
-          permission: "dashboards-inquiry"
-        },
-        {
-          title: "Leads",
-          icon: <FiTarget />,
-          path: "/dashboard/crm/lead",
-          permission: "dashboards-lead"
-        },
-        {
-          title: "Deals",
-          icon: <FiShoppingBag />,
-          path: "/dashboard/crm/deals",
-          permission: "dashboards-deal"
-        },
+        // {
+        //   title: "Inquiry",
+        //   icon: <FiMessageSquare />,
+        //   path: "/dashboard/crm/company-inquiry",
+        //   permission: "dashboards-inquiry"
+        // },
         {
           title: "Proposal",
           icon: <FiFileText />,
@@ -289,12 +289,12 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           path: "/dashboard/user-management/users",
           permission: "extra-users-list"
         },
-        {
-          title: "Clients",
-          icon: <FiBriefcase />,
-          path: "/dashboard/clients",
-          permission: "extra-users-client-list"
-        }
+        // {
+        //   title: "Clients",
+        //   icon: <FiBriefcase />,
+        //   path: "/dashboard/clients",
+        //   permission: "extra-users-client-list"
+        // }
       ].filter(item => shouldShowMenuItem(item)),
     },
     {

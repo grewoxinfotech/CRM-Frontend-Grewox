@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Row, Col,
-    Breadcrumb, message, Spin
+    Breadcrumb, message, Spin, Modal
 } from 'antd';
 import {
     FiHome, FiPlusCircle
@@ -52,22 +52,26 @@ const ESignature = () => {
         setSelectedSignature(null);
     };
 
-    const handleDeleteSignature = (id) => {
+    const handleDeleteSignature = async (id) => {
         Modal.confirm({
             title: 'Delete Signature',
             content: 'Are you sure you want to delete this signature? This action cannot be undone.',
             okText: 'Delete',
             okType: 'danger',
             cancelText: 'Cancel',
-            bodyStyle: { padding: '20px' },
+            centered: true,
+            maskClosable: false,
+            className: 'delete-signature-modal',
             onOk: async () => {
                 try {
-                    await deleteSignature(id).unwrap();
-                    setSignatures(prev => prev.filter(sig => sig.id !== id));
-                    message.success('Signature deleted successfully');
-                    refetch();
+                    const response = await deleteSignature(id).unwrap();
+                    if (response) {
+                        message.success('Signature deleted successfully');
+                        refetch(); // Refresh the signatures list
+                    }
                 } catch (error) {
-                    message.error(`Delete failed: ${error.message || 'Unknown error'}`);
+                    console.error('Delete error:', error);
+                    message.error(error?.data?.message || 'Failed to delete signature');
                 }
             }
         });

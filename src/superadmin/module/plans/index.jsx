@@ -66,11 +66,11 @@ const Plans = () => {
 
     const filteredPlans = React.useMemo(() => {
         if (!plansData?.data) return [];
-        
+
         const searchTerm = filters.search.toLowerCase().trim();
         if (!searchTerm) return plansData.data;
-        
-        return plansData.data.filter(plan => 
+
+        return plansData.data.filter(plan =>
             plan.name?.toLowerCase().includes(searchTerm)
         );
     }, [plansData, filters.search]);
@@ -83,6 +83,7 @@ const Plans = () => {
         const editData = {
             id: plan.id,
             name: plan.name,
+            currency: plan.currency,
             price: plan.price?.toString(),
             duration: plan.duration?.toString(),
             trial_period: plan.trial_period?.toString(),
@@ -93,6 +94,7 @@ const Plans = () => {
             max_customers: plan.max_customers?.toString(),
             status: plan.status
         };
+        console.log('Edit data being set:', editData);
         setIdd(plan.id);
         setSelectedPlan(editData);
         setIsEditModalOpen(true);
@@ -101,7 +103,7 @@ const Plans = () => {
     const handleDelete = (record) => {
         Modal.confirm({
             title: 'Delete Plan',
-            content: 'Are you sure you want to delete this plan?',
+            content: `Are you sure you want to delete "${record.name}"?`,
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
@@ -113,6 +115,7 @@ const Plans = () => {
                     await deletePlan(record.id).unwrap();
                     message.success('Plan deleted successfully');
                 } catch (error) {
+                    console.error('Delete error:', error);
                     message.error(error?.data?.message || 'Failed to delete plan');
                 }
             },
@@ -178,7 +181,7 @@ const Plans = () => {
     const handleExport = async (type) => {
         try {
             setExportLoading(true);
-            
+
             if (!plansData?.data || plansData.data.length === 0) {
                 message.warning('No data available to export');
                 return;
@@ -322,12 +325,12 @@ const Plans = () => {
                                         onClick={() => setViewMode('card')}
                                     />
                                 </Button.Group>
-                                <Dropdown 
-                                    overlay={exportMenu} 
+                                <Dropdown
+                                    overlay={exportMenu}
                                     trigger={['click']}
                                     disabled={isLoading || isFetching || exportLoading}
                                 >
-                                    <Button 
+                                    <Button
                                         className="export-button"
                                         loading={exportLoading}
                                     >

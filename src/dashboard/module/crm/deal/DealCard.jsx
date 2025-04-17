@@ -20,12 +20,13 @@ import {
   FiPlus
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation, useUpdateDealStageMutation } from "./services/dealApi";
+import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery, useUpdateLeadStageMutation } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLabelsQuery, useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { setStageOrder, selectDealStageOrder } from './services/DealStageSlice';
 import {
   DndContext,
   useDraggable,
@@ -35,7 +36,6 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
-  DragOverlay
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -48,26 +48,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import { createPortal } from 'react-dom';
+import AddLeadStageModal from "../crmsystem/leadstage/AddLeadStageModal";
 
 const { Text } = Typography;
-
-// Currency formatting helper function
-const formatCurrency = (value, currencyCode) => {
-  if (!value) return '0';
-
-  try {
-    const numericValue = parseFloat(value);
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode || 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2
-    }).format(numericValue);
-  } catch (error) {
-    console.error('Error formatting currency:', error);
-    return `${value} ${currencyCode || 'USD'}`;
-  }
-};
 
 // Add interest level helper
 const getInterestLevel = (level) => {
@@ -96,16 +79,13 @@ const getInterestLevel = (level) => {
 
 const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isOverlay }) => {
   const navigate = useNavigate();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: deal.id,
-    data: { type: 'card', deal, originalStageId: stage?.id }
+    data: {
+      type: 'card',
+      deal,
+      originalStageId: stage?.id
+    }
   });
 
   // Fetch necessary data (Status, Source, Category, Labels)
@@ -114,11 +94,46 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
   const { data: labelsData } = useGetLabelsQuery(clientId, { skip: !clientId });
   const { data: sourceData } = useGetSourcesQuery(clientId, { skip: !clientId });
   const { data: categoryData } = useGetCategoriesQuery(clientId, { skip: !clientId });
+  const { data: currencies } = useGetAllCurrenciesQuery();
 
   const status = statusesData?.data?.find(s => s.id === deal.status);
   const source = sourceData?.data?.find(s => s.id === deal.source);
   const category = categoryData?.data?.find(c => c.id === deal.category);
   const interestStyle = getInterestLevel(deal.interest_level);
+
+  // Determine display status
+  const dealDisplayStatus = deal.is_converted
+    ? { text: 'Converted', color: '#15803d', bg: '#dcfce7' }
+    : { text: 'Active', color: '#1e40af', bg: '#dbeafe' };
+
+  // Dropdown menu items
+  const getDropdownItems = (deal) => ({
+    items: [
+      {
+        key: "view",
+        icon: <FiEye />,
+        label: "View Details",
+        onClick: (e) => { e.stopPropagation(); onDealClick?.(deal); },
+      },
+      {
+        key: "edit",
+        icon: <FiEdit2 />,
+        label: "Edit",
+        onClick: (e) => { e.stopPropagation(); onEdit?.(deal); },
+      },
+      {
+        key: "delete",
+        icon: <FiTrash2 />,
+        label: "Delete",
+        onClick: (e) => { e.stopPropagation(); onDelete?.(deal); },
+        danger: true,
+      },
+    ],
+  });
+
+  const onDropdownClick = (e) => {
+    e.stopPropagation();
+  };
 
   // Assuming deal.labelIds is an array of label IDs
   const dealLabels = React.useMemo(() => {
@@ -126,66 +141,41 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
     return labelsData.data.filter(label => deal.labelIds.includes(label.id));
   }, [labelsData, deal.labelIds]);
 
-  // Combined styles for the wrapper div
-  const wrapperStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'none' : transition || 'transform 0.2s ease, box-shadow 0.2s ease',
-    zIndex: isDragging ? 1200 : 1,
-    position: 'relative',
-    marginBottom: '8px',
-    cursor: deal.is_converted ? 'not-allowed' : isDragging ? 'grabbing' : 'grab',
-    opacity: deal.is_converted ? 0.85 : 1,
+  // Update the currency formatting helper in DraggableCard
+  const formatDealValue = (value, currencyId) => {
+    const currencyDetails = currencies?.find(c => c.id === currencyId);
+    if (!currencyDetails) {
+      return `₹${(parseFloat(value) || 0).toLocaleString('en-IN')}`;
+    }
+    return `${currencyDetails.currencyIcon}${(parseFloat(value) || 0).toLocaleString('en-IN')}`;
   };
 
-  const getDropdownItems = (deal) => ({
-    items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: (e) => { e.stopPropagation(); onDealClick(deal); },
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: (e) => { e.stopPropagation(); onEdit(deal); },
-      },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: (e) => { e.stopPropagation(); onDelete(deal); },
-        danger: true,
-      },
-    ],
-  });
-
-  const onDropdownClick = (e) => e.stopPropagation();
   const handleCardClick = (e) => {
-    e.stopPropagation();
-    if (isDragging || isOverlay) return;
-    navigate(`/dashboard/crm/deals/${deal.id}`);
+    if (isDragging) return;
+    if (!isDragging && !isOverlay) {
+      e.stopPropagation();
+      navigate(`/dashboard/crm/deals/${deal.id}`);
+    }
   };
 
-  // Determine display status (like LeadCard's Converted/Active)
-  const dealDisplayStatus = deal.is_converted ? { text: 'Converted', color: '#15803d', bg: '#dcfce7' } : { text: 'Active', color: '#1e40af', bg: '#dbeafe' };
-
-  // Card component itself
   const cardContent = (
     <Card
+      className="deal-card"
       bordered={false}
+      onClick={handleCardClick}
       style={{
-        width: '100%',
         borderRadius: '8px',
         background: deal.is_converted ? '#f8fafc' : '#ffffff',
+        cursor: deal.is_converted ? 'not-allowed' : isDragging ? 'grabbing' : 'grab',
         boxShadow: isDragging
           ? '0 12px 24px rgba(0, 0, 0, 0.12)'
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
         position: 'relative',
-        overflow: 'hidden',
-        transform: isDragging ? 'scale(1.02)' : 'scale(1)',
         transition: isDragging ? 'none' : 'transform 0.2s ease, box-shadow 0.2s ease',
+        transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+        zIndex: isDragging ? 1200 : 1,
+        overflow: 'hidden',
+        opacity: deal.is_converted ? 0.85 : 1
       }}
     >
       {/* Interest Level Top Indicator */}
@@ -195,14 +185,14 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
       }} />
 
       {/* Dropdown Button - Positioned absolutely */}
-       <Dropdown menu={getDropdownItems(deal)} trigger={["click"]} placement="bottomRight">
-         <Button
-           type="text"
-           icon={<FiMoreVertical />}
-           style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, color: '#6b7280' }}
-           onClick={onDropdownClick}
-         />
-       </Dropdown>
+      <Dropdown menu={getDropdownItems(deal)} trigger={["click"]} placement="bottomRight">
+        <Button
+          type="text"
+          icon={<FiMoreVertical />}
+          style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10, color: '#6b7280' }}
+          onClick={onDropdownClick}
+        />
+      </Dropdown>
 
       {/* Card Content - Structure mirroring LeadCard */}
       <div style={{ padding: '12px 14px 12px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -250,10 +240,10 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
                 </Text>
               </Tooltip>
             )}
-             {/* Contact Name (Add if you have firstName/lastName on the deal object) */}
-             <Text className="contact-name" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '2px' }}>
-               {`${deal.firstName || ''} ${deal.lastName || ''}`.trim() || 'No Contact'}
-             </Text>
+            {/* Contact Name (Add if you have firstName/lastName on the deal object) */}
+            <Text className="contact-name" style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '2px' }}>
+              {`${deal.firstName || ''} ${deal.lastName || ''}`.trim() || 'No Contact'}
+            </Text>
           </div>
           {/* Value Tag */}
           <div style={{
@@ -261,7 +251,7 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
             borderRadius: '4px', border: '1px solid #dcfce7', height: '20px'
           }}>
             <span style={{ fontSize: '12px', fontWeight: '600', color: '#16a34a', whiteSpace: 'nowrap' }}>
-              {formatCurrency(deal.value, deal.currency)}
+              {formatDealValue(deal.value, deal.currency)}
             </span>
           </div>
         </div>
@@ -328,48 +318,96 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
     </Card>
   );
 
-  // Drag Overlay Rendering (No changes needed here if already correct)
-  if (isDragging && isOverlay) {
+  const draggableProps = deal.is_converted ? {} : { ...attributes, ...listeners };
+
+  if (isDragging) {
     return createPortal(
-      <div style={{ position: 'fixed', top: 0, left: 0, zIndex: 999999, width: '350px', /* ... other overlay styles */ }}>
+      <div
+        ref={setNodeRef}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: 999999,
+          width: '350px',
+          transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+          opacity: 0.95,
+          pointerEvents: 'none',
+          cursor: 'grabbing',
+          transformOrigin: '0 0',
+          willChange: 'transform',
+          transition: 'none'
+        }}
+        {...draggableProps}
+      >
         {cardContent}
       </div>,
       document.body
     );
   }
 
-  // Render the actual draggable card wrapper
-  // Apply listeners/attributes to the wrapper div for SortableContext
   return (
     <div
       ref={setNodeRef}
-      style={wrapperStyle}
-      {...attributes}
-      {...listeners}
-      onClick={handleCardClick}
+      style={{
+        position: 'relative',
+        transform: 'translate3d(0, 0, 0)',
+        touchAction: 'none',
+        transformStyle: 'preserve-3d',
+        backfaceVisibility: 'hidden'
+      }}
+      {...draggableProps}
     >
       {cardContent}
     </div>
   );
 };
 
-const DroppableStage = ({ stage, children, deals }) => {
+const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDealClick }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
-    data: { type: 'column', stage: stage }
   });
-  const dealIds = React.useMemo(() => deals?.map(d => d.id) || [], [deals]);
 
   return (
     <div
       ref={setNodeRef}
-      className="kanban-column-content-wrapper"
-      data-is-over={isOver}
+      className="kanban-column-content"
+      style={{
+        padding: '8px',
+        height: 'calc(100vh - 240px)',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        backgroundColor: isOver ? 'rgba(240, 247, 255, 0.8)' : 'transparent',
+        borderRadius: '0 0 8px 8px',
+        width: '350px',
+        position: 'relative',
+        transition: 'background-color 0.2s ease',
+        willChange: 'background-color'
+      }}
     >
-      <SortableContext items={dealIds} strategy={verticalListSortingStrategy}>
-      <div className="kanban-column-content">
-        {children}
-      </div>
+      <SortableContext items={deals.map(deal => deal.id)} strategy={verticalListSortingStrategy}>
+        {deals.length > 0 ? (
+          deals.map((deal) => (
+            <DraggableCard
+              key={deal.id}
+              deal={deal}
+              stage={stage}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onView={onView}
+              onDealClick={onDealClick}
+            />
+          ))
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="No deals"
+            style={{
+              padding: '40px 0',
+              opacity: 0.75
+            }}
+          />
+        )}
       </SortableContext>
     </div>
   );
@@ -381,60 +419,181 @@ const SortableColumn = ({ stage, dealsInStage, children, index }) => {
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({
     id: `column-${stage.id}`,
     data: {
       type: 'column',
-      stage: {
-        id: stage.id,
-        stageName: stage.stageName,
-        stageType: 'deal',
-        pipeline: stage.pipeline || "cFaSfTBNfdMnnvSNxQmql0w" // Add pipeline ID here
-      }
+      stage
     }
   });
 
-  // Use classes for styling primarily
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+
+  // Update the total value formatting helper
+  const formatTotalValue = (deals) => {
+    // Calculate total sum across all deals regardless of currency
+    const totalSum = deals.reduce((sum, deal) => {
+      return sum + (parseFloat(deal.value) || 0);
+    }, 0);
+
+    // Format the total with Indian number formatting
+    return totalSum > 0 ? `₹${totalSum.toLocaleString('en-IN')}` : '₹0';
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 0.2s ease',
-    // Height is handled by flex layout + parent
+    transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
+    zIndex: isDragging ? 999 : 1,
+    position: 'relative',
+    width: '350px',
+    minWidth: '350px',
+    willChange: 'transform'
   };
+
+  // Calculate total value and count
+  const totalValue = formatTotalValue(dealsInStage);
+  const dealsCount = dealsInStage.length;
 
   return (
     <div ref={setNodeRef} style={style} className={`kanban-column ${isDragging ? 'is-dragging' : ''}`}>
-      <div className="column-header-draggable" {...listeners} {...attributes}>
-         <div className="header-left-content">
-            <Tag className="index-tag">{index + 1}</Tag>
-            <FiMenu className="drag-handle-icon" />
-            <Text strong className="stage-title">{stage.stageName}</Text>
-         </div>
-         <div className="header-right-content">
-            <Tag className="value-sum-tag">
-            {formatCurrency(dealsInStage.reduce((sum, deal) => sum + (parseFloat(deal.value) || 0), 0), dealsInStage[0]?.currency)}
+      <div className="kanban-column-inner" style={{
+        background: '#ffffff',
+        borderRadius: '8px',
+        height: '100%',
+        width: '100%',
+        boxShadow: isDragging
+          ? '0 8px 16px rgba(0, 0, 0, 0.08)'
+          : '0 1px 3px rgba(0, 0, 0, 0.08)',
+        transition: 'box-shadow 0.2s ease',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div
+          className="column-header"
+          {...attributes}
+          {...listeners}
+          style={{
+            padding: '16px 12px',
+            borderBottom: '1px solid #f0f0f0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
+            background: '#ffffff',
+            userSelect: 'none',
+            pointerEvents: 'auto'
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            maxWidth: '60%'
+          }}>
+            <Tag color="blue" style={{
+              fontSize: '10px',
+              fontWeight: 'bold',
+              padding: '0 3px',
+              height: '16px',
+              lineHeight: '16px',
+              marginRight: '4px',
+              flexShrink: 0,
+              minWidth: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '3px'
+            }}>
+              {index + 1}
             </Tag>
-            <Tag className="count-tag">{dealsInStage.length}</Tag>
+            <FiMenu style={{
+              fontSize: '14px',
+              color: '#6B7280',
+              flexShrink: 0,
+              marginRight: '4px'
+            }} />
+            <Tooltip title={stage.stageName}>
+              <Text strong style={{
+                fontSize: '13px',
+                margin: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%'
+              }}>{stage.stageName}</Text>
+            </Tooltip>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            flexShrink: 0
+          }}>
+            {dealsInStage.length > 0 && totalValue !== '₹0' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#f0fdf4',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid #dcfce7'
+              }}>
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#16a34a'
+                }}>
+                  {formatTotalValue(dealsInStage)}
+                </span>
+              </div>
+            )}
+            <Tag style={{
+              minWidth: '20px',
+              marginLeft: '4px',
+              fontSize: '11px',
+              padding: '0 4px',
+              background: '#f3f4f6',
+              color: '#4b5563',
+              border: '1px solid #e5e7eb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {dealsInStage.length}
+            </Tag>
+          </div>
         </div>
+        {children}
       </div>
-      {children}
     </div>
   );
 };
 
 const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
   const [updateDeal] = useUpdateDealMutation();
-  const [updateDealStage] = useUpdateDealStageMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
   const { data: dealsData, isLoading: isLoadingDeals, error: dealsError } = useGetDealsQuery();
-  const { data: stageQueryData, isLoading: isLoadingStages } = useGetLeadStagesQuery();
+  const { data: stageQueryData, isLoading: isLoadingStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const currentUser = useSelector(selectCurrentUser);
+  const dispatch = useDispatch();
+  const savedStageOrder = useSelector(selectDealStageOrder);
 
   const [activeId, setActiveId] = useState(null);
-  const [activeDragItemData, setActiveDragItemData] = useState(null);
   const [orderedStages, setOrderedStages] = useState([]);
+  const [selectedPipeline, setSelectedPipeline] = useState("cFaSfTBNfdMnnvSNxQmql0w");
+  const [isStageModalVisible, setIsStageModalVisible] = useState(false);
   const [deals, setDeals] = useState([]);
+
+  // Pipeline options
+  const pipelines = [
+    { id: "95QsEzSA7EGnxrlRqnDShFw", name: "Marketing" },
+    { id: "cFaSfTBNfdMnnvSNxQmql0w", name: "Sales" }
+  ];
 
   useEffect(() => {
     if (dealsData) {
@@ -448,19 +607,38 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
     }
   }, [dealsData]);
 
-  useEffect(() => {
-    if (stageQueryData) {
-      const stages = Array.isArray(stageQueryData) 
-        ? stageQueryData 
-        : (stageQueryData.data || []);
-      
-      const dealStages = stages
-        .filter(stage => stage.stageType === 'deal')
-        .sort((a, b) => (a.position || 0) - (b.position || 0)); // Sort by position
-      
-      setOrderedStages(dealStages);
+  // Filter and order deal stages
+  const stages = React.useMemo(() => {
+    if (!stageQueryData) return [];
+    const actualStages = Array.isArray(stageQueryData) ? stageQueryData : (stageQueryData.data || []);
+
+    const dealStages = actualStages.filter(stage =>
+      stage.stageType === 'deal' &&
+      stage.pipeline === selectedPipeline
+    );
+
+    if (savedStageOrder.length > 0 && dealStages.length > 0) {
+      const stageOrderMap = new Map(savedStageOrder.map((id, index) => [id, index]));
+      return [...dealStages].sort((a, b) => {
+        const indexA = stageOrderMap.has(a.id) ? stageOrderMap.get(a.id) : Infinity;
+        const indexB = stageOrderMap.has(b.id) ? stageOrderMap.get(b.id) : Infinity;
+        return indexA - indexB;
+      });
     }
-  }, [stageQueryData]);
+
+    return dealStages;
+  }, [stageQueryData, savedStageOrder, selectedPipeline]);
+
+  useEffect(() => {
+    if (stages.length > 0) {
+      setOrderedStages(stages);
+      if (savedStageOrder.length === 0) {
+        dispatch(setStageOrder(stages.map(stage => stage.id)));
+      }
+    } else {
+      setOrderedStages([]);
+    }
+  }, [stages, dispatch, savedStageOrder.length]);
 
   const dealsByStage = React.useMemo(() => {
     return orderedStages.reduce((acc, stage) => {
@@ -469,258 +647,270 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
     }, {});
   }, [orderedStages, deals]);
 
+  // Update the sensors configuration
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        delay: 100,  
+        distance: 8, // Increased distance for better distinction between click and drag
+        delay: 0,
         tolerance: 5
-      }
+      },
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
+      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
   const handleDragStart = (event) => {
     const { active } = event;
     setActiveId(active.id);
-    setActiveDragItemData(active.data.current);
   };
 
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     setActiveId(null);
-    setActiveDragItemData(null);
 
-    if (!over) {
-        console.log("Dropped outside a target");
+    if (!over) return;
+
+    const isColumn = active.id.toString().startsWith('column-');
+    const isCard = active.data?.current?.type === 'card';
+
+    if (isColumn) {
+      const oldIndex = orderedStages.findIndex(
+        stage => `column-${stage.id}` === active.id
+      );
+      const newIndex = orderedStages.findIndex(
+        stage => `column-${stage.id}` === over.id
+      );
+
+      if (oldIndex !== newIndex) {
+        const newOrder = arrayMove(orderedStages, oldIndex, newIndex);
+        setOrderedStages(newOrder);
+        dispatch(setStageOrder(newOrder.map(stage => stage.id)));
+      }
+    } else if (isCard) {
+      const draggedDeal = active.data.current.deal;
+      const destinationStageId = over.id.toString().startsWith('column-')
+        ? over.id.toString().replace('column-', '')
+        : over.data.current.deal.stage;
+
+      if (draggedDeal?.is_converted) {
+        message.error("Cannot move a converted deal");
         return;
-    }
+      }
 
-    const activeId = active.id;
-    const overId = over.id;
-
-    // CASE 1: Stage Column Reordering
-    if (active.data.current?.type === 'column' && over.data.current?.type === 'column' && activeId !== overId) {
-        console.log("Reordering stage columns...");
+      // Only update if moving to a different stage
+      if (draggedDeal.stage !== destinationStageId) {
         try {
-            const oldIndex = orderedStages.findIndex(stage => `column-${stage.id}` === activeId);
-            const newIndex = orderedStages.findIndex(stage => `column-${stage.id}` === overId);
+          // Optimistically update the UI
+          setDeals(prevDeals =>
+            prevDeals.map(deal =>
+              deal.id === draggedDeal.id
+                ? { ...deal, stage: destinationStageId }
+                : deal
+            )
+          );
 
-            if (oldIndex !== -1 && newIndex !== -1) {
-                const newOrder = arrayMove(orderedStages, oldIndex, newIndex);
-                
-                // Update all stage positions
-                const updatePromises = newOrder.map(async (stage, index) => {
-                    const updatePayload = {
-                        id: stage.id,
-                        stageName: stage.stageName,
-                        position: index + 1,
-                        stageType: "deal",
-                          pipeline: stage.pipeline || "cFaSfTBNfdMnnvSNxQmql0w"
-                    };
-
-                    return updateLeadStage(updatePayload).unwrap();
-                });
-
-                // Wait for all updates to complete
-                await Promise.all(updatePromises);
-
-                // Update local state with new positions
-                const updatedStages = newOrder.map((stage, index) => ({
-                    ...stage,
-                    position: index + 1
-                }));
-                
-                setOrderedStages(updatedStages);
-                message.success('Stage order updated successfully');
+          // Make the API call
+          await updateDeal({
+            id: draggedDeal.id,
+            data: {
+              stage: destinationStageId,
+              updated_by: currentUser?.username || ''
             }
+          }).unwrap();
+
+          const destinationStage = orderedStages.find(stage => stage.id === destinationStageId);
+          message.success(`Deal moved to ${destinationStage?.stageName || 'new stage'}`);
         } catch (error) {
-            console.error('Failed to update stage order:', error);
-            message.error('Failed to update stage order');
-
-            // Revert optimistic update
-            if (stageQueryData) {
-                const stages = Array.isArray(stageQueryData)
-                    ? stageQueryData
-                    : (stageQueryData.data || []);
-                const dealStages = stages.filter(stage => stage.stageType === 'deal')
-                    .sort((a, b) => (a.position || 0) - (b.position || 0)); // Sort by position
-                setOrderedStages(dealStages);
-            }
+          // Revert the optimistic update on error
+          setDeals(prevDeals =>
+            prevDeals.map(deal =>
+              deal.id === draggedDeal.id
+                ? { ...deal, stage: draggedDeal.stage }
+                : deal
+            )
+          );
+          message.error('Failed to update deal stage');
         }
-        return;
+      }
     }
+  };
 
-    // CASE 2: Deal Card Movement
-    if (active.data.current?.type === 'card') {
-        const draggedDeal = active.data.current?.deal;
-        const originalStageId = draggedDeal?.stage;
+  const showStageModal = () => {
+    setIsStageModalVisible(true);
+  };
 
-        // Determine destination stage ID
-        let destinationStageId = null;
-        if (over.data.current?.type === 'column') {
-            destinationStageId = over.id.toString().replace('column-', '');
-        } else if (over.data.current?.type === 'card') {
-            destinationStageId = over.data.current?.deal?.stage;
-        }
-
-        if (!destinationStageId) {
-            console.error("Invalid destination stage");
-            return;
-        }
-
-        // Find destination stage details
-        const destinationStage = orderedStages.find(s => s.id === destinationStageId);
-        if (!destinationStage) {
-            console.error("Destination stage not found");
-            return;
-        }
-
-        // Moving to a different stage
-        if (originalStageId !== destinationStageId) {
-            console.log(`Moving deal ${draggedDeal.id} to stage ${destinationStageId}`);
-
-            try {
-                // First, update the local state optimistically
-                setDeals(prevDeals => 
-                    prevDeals.map(deal => 
-                        deal.id === draggedDeal.id 
-                            ? { ...deal, stage: destinationStageId }
-                            : deal
-                    )
-                );
-
-                // Then make the API call with the correct payload structure
-                await updateDeal({
-                    id: draggedDeal.id,
-                    stage: destinationStageId,  // Send stage ID directly
-                    stageName: destinationStage.stageName,  // Include stage name
-                    updated_by: currentUser?.username || ''
-                }).unwrap();
-
-                message.success(`Deal moved to ${destinationStage.stageName}`);
-            } catch (error) {
-                console.error('Failed to update deal stage:', error);
-                // Revert the optimistic update
-                setDeals(prevDeals => 
-                    prevDeals.map(deal => 
-                        deal.id === draggedDeal.id 
-                            ? { ...deal, stage: originalStageId }
-                            : deal
-                    )
-                );
-                message.error('Failed to update deal stage');
-            }
-        }
-        // Reordering within the same stage
-        else if (activeId !== overId) {
-            try {
-                const stageDeals = deals.filter(d => d.stage === originalStageId);
-                const oldIndex = stageDeals.findIndex(d => d.id === activeId);
-                const newIndex = stageDeals.findIndex(d => d.id === overId);
-
-                if (oldIndex !== -1 && newIndex !== -1) {
-                    const reorderedDeals = arrayMove(stageDeals, oldIndex, newIndex);
-                    
-                    // Update positions for all deals in the stage
-                    for (let i = 0; i < reorderedDeals.length; i++) {
-                        const deal = reorderedDeals[i];
-                        await updateDeal({
-                            id: deal.id,
-                            stage: originalStageId,
-                            stageName: destinationStage.stageName,
-                            position: i + 1,
-                            updated_by: currentUser?.username || ''
-                        }).unwrap();
-                    }
-
-                    message.success('Deal order updated successfully');
-                }
-            } catch (error) {
-                console.error('Failed to update deal order:', error);
-                message.error('Failed to update deal order');
-            }
-        }
+  const handleStageModalClose = (didAddStage = false) => {
+    setIsStageModalVisible(false);
+    if (didAddStage) {
+      refetchStages();
     }
   };
 
   if (isLoadingDeals || isLoadingStages) return <div>Loading...</div>;
-  if (dealsError) return <div>Error loading deals: {dealsError.message}</div>;
+  if (dealsError) return <div>Error loading data. Please try again.</div>;
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="kanban-board-wrapper">
-        <div className="kanban-board">
-          <SortableContext
-            items={orderedStages.map(stage => `column-${stage.id}`)}
-            strategy={horizontalListSortingStrategy}
-          >
-            {orderedStages.map((stage, index) => {
-              const stageDeals = dealsByStage[stage.id] || [];
-              return (
-                <SortableColumn
-                  key={stage.id}
-                  stage={stage}
-                  dealsInStage={stageDeals}
-                  index={index}
-                >
-                  <DroppableStage stage={stage} deals={stageDeals}>
-                    {stageDeals.length > 0 ? (
-                      stageDeals.map((deal) => (
-                        <DraggableCard
-                          key={deal.id}
-                          deal={deal}
-                          stage={stage}
-                          onEdit={onEdit}
-                          onDelete={onDelete}
-                          onView={onView}
-                          onDealClick={onDealClick}
-                        />
-                      ))
-                    ) : (
-                      <Empty className="empty-stage-placeholder" image={Empty.PRESENTED_IMAGE_SIMPLE} description="No Deals" />
-                    )}
-                  </DroppableStage>
-                </SortableColumn>
-              );
-            })}
-          </SortableContext>
-
-          <div className="add-stage-button-container">
-             <Button type="dashed" icon={<FiPlus />} className="add-stage-button">
-               Add Stage
-             </Button>
-          </div>
+    <div className="deal-kanban" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      height: '100vh',
+      overflow: 'hidden',
+      position: 'relative'
+    }}>
+      {/* Pipeline Filter */}
+      <div style={{
+        padding: '12px',
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center',
+        borderBottom: '1px solid #f0f0f0',
+        background: '#ffffff'
+      }}>
+        <Text strong style={{ fontSize: '13px', color: '#374151' }}>Pipeline:</Text>
+        <div style={{
+          display: 'flex',
+          gap: '6px',
+          flex: 1
+        }}>
+          {pipelines.map(pipeline => (
+            <Button
+              key={pipeline.id}
+              type={selectedPipeline === pipeline.id ? "primary" : "default"}
+              onClick={() => setSelectedPipeline(pipeline.id)}
+              style={{
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 10px',
+                height: '28px',
+                fontSize: '12px'
+              }}
+            >
+              <FiTarget style={{ fontSize: '12px' }} />
+              {pipeline.name}
+            </Button>
+          ))}
         </div>
       </div>
 
-      <DragOverlay>
-        {activeId && activeDragItemData ? (
-          activeDragItemData.type === 'column' ? (
-             <div className="kanban-column is-overlay">
-                <div className="column-header-draggable">
-                    <div className="header-left-content">
-                        <FiMenu className="drag-handle-icon" />
-                        <Text strong className="stage-title">{activeDragItemData.stage?.stageName}</Text>
-                    </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="kanban-board-wrapper" style={{
+          width: '100%',
+          height: 'calc(100vh - 180px)',
+          overflow: 'hidden',
+          position: 'relative',
+          isolation: 'isolate',
+          perspective: 1000,
+          transformStyle: 'preserve-3d'
+        }}>
+          <div className="kanban-board" style={{
+            display: 'flex',
+            gap: '16px',
+            padding: '12px',
+            width: 'max-content',
+            minWidth: '100%',
+            height: '100%',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            position: 'relative',
+            transformStyle: 'preserve-3d',
+            perspective: 1000,
+            alignItems: 'flex-start'
+          }}>
+            <SortableContext
+              items={orderedStages.map(stage => `column-${stage.id}`)}
+              strategy={horizontalListSortingStrategy}
+            >
+              {orderedStages.map((stage, index) => (
+                <div key={stage.id} style={{ transform: 'translateZ(0)' }}>
+                  <SortableColumn
+                    stage={stage}
+                    dealsInStage={dealsByStage[stage.id] || []}
+                    index={index}
+                  >
+                    <DroppableStage
+                      stage={stage}
+                      deals={dealsByStage[stage.id] || []}
+                      isColumnDragging={activeId === `column-${stage.id}`}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onView={onView}
+                      onDealClick={onDealClick}
+                    />
+                  </SortableColumn>
                 </div>
-             </div>
-          ) : activeDragItemData.type === 'card' ? (
-            <DraggableCard
-               deal={activeDragItemData.deal}
-               stage={orderedStages.find(s => s.id === activeDragItemData.deal.stage)}
-               isOverlay={true}
-            />
-          ) : null
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+              ))}
+            </SortableContext>
+
+            {/* Add Stage Button */}
+            <div style={{
+              width: '350px',
+              minWidth: '350px'
+            }}>
+              <Button
+                type="dashed"
+                onClick={showStageModal}
+                style={{
+                  width: '100%',
+                  height: '45px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  color: '#4b5563',
+                  background: '#f9fafb',
+                  border: '1px dashed #d1d5db',
+                  borderRadius: '8px',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+                }}
+                disabled={isLoadingStages}
+              >
+                <FiPlus />
+                Add Stage
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DndContext>
+
+      {/* Stage Modal */}
+      {isStageModalVisible && (
+        <AddLeadStageModal
+          isOpen={isStageModalVisible}
+          onClose={handleStageModalClose}
+          pipelineId={selectedPipeline}
+        />
+      )}
+
+      <style jsx global>{`
+        .kanban-board {
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .kanban-column-content {
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .deal-card {
+          backface-visibility: hidden;
+        }
+        
+        .kanban-column.is-dragging {
+          cursor: grabbing !important;
+        }
+      `}</style>
+    </div>
   );
 };
 

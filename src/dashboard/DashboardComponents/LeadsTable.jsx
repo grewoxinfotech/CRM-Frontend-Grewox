@@ -303,18 +303,34 @@ const LeadsTable = ({
                 <Table
                     dataSource={filterLeadsByDate(leads)}
                     columns={columns}
+                    loading={loading}
                     rowKey="id"
-                    pagination={false}
-                    className="colorful-table fixed-height-table"
+                    size="middle"
+                    pagination={{
+                        pageSize: 5,
+                        total: filterLeadsByDate(leads)?.length,
+                        showTotal: (total) => `Total ${total} leads`,
+                        showSizeChanger: false,
+                        hideOnSinglePage: true,
+                        style: {
+                            marginTop: '12px',
+                            padding: '8px 16px',
+                            background: '#f8fafc',
+                            borderRadius: '0 0 8px 8px'
+                        }
+                    }}
+                    style={{
+                        borderRadius: '8px',
+                        overflow: 'hidden'
+                    }}
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/crm/lead/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
                     scroll={{ x: 'max-content' }}
-                    // loading={loading}
                     locale={{
                         emptyText: (
-                            <div style={{ 
+                            <div style={{
                                 padding: '24px',
                                 display: 'flex',
                                 flexDirection: 'column',

@@ -89,6 +89,16 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         }
     ];
 
+    const formatStorageSize = (sizeInMB) => {
+        const size = parseFloat(sizeInMB);
+        if (size >= 1024) {
+            const gbValue = size / 1024;
+            // Remove decimals if it's a whole number
+            return `${Number.isInteger(gbValue) ? gbValue.toFixed(0) : gbValue.toFixed(2)} GB`;
+        }
+        return `${size} MB`;
+    };
+
     const columns = [
         {
             title: 'Name',
@@ -96,33 +106,33 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             key: 'name',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search plan name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search plan name"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => {
                 if (!searchText?.trim() || !text) return <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>;
-                
+
                 const parts = text.split(new RegExp(`(${searchText})`, 'gi'));
                 return (
                     <div style={{ fontWeight: 500 }}>
@@ -152,7 +162,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                         <small className="currency-duration">
                             {getCurrencyIcon(record.currency)}
                         </small>
-                         {Number(price || 0).toFixed(2)}
+                        {Number(price || 0).toFixed(2)}
                     </span>
                 </div>
             ),
@@ -195,12 +205,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: 'Storage & Trial',
             key: 'storage_trial',
-            sorter: (a, b) => (a.storage_limit || 0) - (b.storage_limit || 0),
+            sorter: (a, b) => (parseFloat(a.storage_limit) || 0) - (parseFloat(b.storage_limit) || 0),
             render: (_, record) => (
                 <div className="storage-trial-cell">
                     <Tooltip title="Storage Limit">
                         <Tag color="orange">
-                            <FiHardDrive /> {record.storage_limit || 0} GB
+                            <FiHardDrive /> {formatStorageSize(record.storage_limit)}
                         </Tag>
                     </Tooltip>
                     <Tooltip title="Trial Period">
@@ -231,7 +241,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             align: 'center',
             render: (_, record) => (
                 <Dropdown
-                    menu={{ 
+                    menu={{
                         items: getActionItems(record)
                     }}
                     trigger={['click']}

@@ -12,6 +12,7 @@ import {
   Divider,
   Upload,
   message,
+  Tag,
 } from "antd";
 import {
   FiCheckSquare,
@@ -377,12 +378,53 @@ const CreateTask = ({
             suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
             optionFilterProp="children"
             showSearch
+            maxTagCount={3}
+            maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
+            removeIcon={<FiX style={{ fontSize: '14px', color: '#ffffff' }} />}
+            tagRender={(props) => {
+              const { label, closable, onClose } = props;
+              return (
+                <Tag
+                  color="blue"
+                  closable={closable}
+                  onClose={onClose}
+                  style={{
+                    marginRight: 3,
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  {label}
+                </Tag>
+              );
+            }}
+            onDeselect={(value) => {
+              // Force dropdown to update when an option is deselected
+              const select = document.querySelector('.ant-select-selector');
+              if (select) {
+                const event = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window
+                });
+                select.dispatchEvent(event);
+              }
+            }}
           >
-            {users.map((user) => (
-              <Option key={user.id} value={user.id}>
-                {user.username || user.email}
-              </Option>
-            ))}
+            {users.map((user) => {
+              const value = form.getFieldValue('assignTo') || [];
+              const isSelected = value.includes(user.id);
+              return (
+                <Option
+                  key={user.id}
+                  value={user.id}
+                  style={isSelected ? { display: 'none' } : undefined}
+                >
+                  {user.username || user.email}
+                </Option>
+              );
+            })}
           </Select>
         </Form.Item>
 

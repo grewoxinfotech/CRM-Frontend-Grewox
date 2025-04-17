@@ -12,6 +12,7 @@ import {
   Divider,
   Upload,
   message,
+  Tag,
 } from "antd";
 import {
   FiCheckSquare,
@@ -21,8 +22,6 @@ import {
   FiMapPin,
   FiUser,
   FiUpload,
-  FiFolder,
-  FiGrid,
 } from "react-icons/fi";
 import moment from "moment";
 import { useUpdateTaskMutation } from "./services/taskApi";
@@ -38,17 +37,13 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
   const filterAssignTo = (assignTo) => {
     try {
-      // Handle string JSON case
       if (typeof assignTo === "string") {
         const parsed = JSON.parse(assignTo);
-        return parsed?.users || [];
+        return parsed?.assignedusers || [];
       }
-
-      // Handle object case
-      if (assignTo?.users) {
-        return assignTo.users;
+      if (assignTo?.assignedusers) {
+        return assignTo.assignedusers;
       }
-
       return [];
     } catch (error) {
       console.error("Error parsing assignTo:", error);
@@ -58,77 +53,83 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
   useEffect(() => {
     if (initialValues) {
-
+      console.log('Initial Values in EditTask:', initialValues);
       const formattedValues = {
-        taskName: initialValues.taskName || "",
-        category: initialValues.category || "",
-        project: initialValues.project || "",
-        startDate: initialValues.startDate
-          ? moment(initialValues.startDate)
-          : null,
+        taskName: initialValues.taskName || initialValues.task_name || "",
+        task_reporter: initialValues.task_reporter || "",
+        startDate: initialValues.startDate ? moment(initialValues.startDate) : null,
         dueDate: initialValues.dueDate ? moment(initialValues.dueDate) : null,
-        reminder_date: initialValues.reminder_date
-          ? moment(initialValues.reminder_date)
-          : null,
+        reminder_date: initialValues.reminder_date ? moment(initialValues.reminder_date) : null,
         priority: initialValues.priority || "",
         status: initialValues.status || "",
         description: initialValues.description || "",
         assignTo: filterAssignTo(initialValues.assignTo),
       };
-
-      console.log("Formatted Values:", formattedValues);
+      console.log('Formatted Values in EditTask:', formattedValues);
       form.setFieldsValue(formattedValues);
     }
   }, [initialValues, form]);
 
   const handleSubmit = async (values) => {
     try {
-      // Create the payload object matching the Postman structure
-      const payload = {
-        taskName: values.taskName || "",
-        category: values.category || "",
-        project: values.project || "",
-        startDate: values.startDate?.format("YYYY-MM-DD") || "",
-        dueDate: values.dueDate?.format("YYYY-MM-DD") || "",
-        reminder_date: values.reminder_date?.format("YYYY-MM-DD") || "",
-        priority: values.priority || "",
-        status: values.status || "",
-        description: values.description || "",
-        assignTo: {
-          users: Array.isArray(values.assignTo) ? values.assignTo : [],
-        },
-      };
-
-      // If there's a file, append it to FormData
-      if (fileList.length > 0 && fileList[0].originFileObj) {
-        const formData = new FormData();
-        formData.append("file", fileList[0].originFileObj);
-        // Append the JSON payload as a string
-        formData.append("data", JSON.stringify(payload));
-
-        const response = await updateTask({
-          id: initialValues.id,
-          data: formData,
-        }).unwrap();
-
-        message.success("Task updated successfully");
-        form.resetFields();
-        setFileList([]);
-        onSubmit?.(response);
-        onCancel();
-      } else {
-        // If no file, send just the JSON payload
-        const response = await updateTask({
-          id: initialValues.id,
-          data: payload,
-        }).unwrap();
-
-        message.success("Task updated successfully");
-        form.resetFields();
-        setFileList([]);
-        onSubmit?.(response);
-        onCancel();
+      console.log('Form Values before submission:', values);
+      if (!values.taskName) {
+        message.error('Task name is required');
+        return;
       }
+
+      const formData = new FormData();
+
+      formData.append("taskName", values.taskName || "");
+      formData.append("task_reporter", values.task_reporter || "");
+      formData.append(
+        "startDate",
+        values.startDate?.format("YYYY-MM-DD") || ""
+      );
+      formData.append("dueDate", values.dueDate?.format("YYYY-MM-DD") || "");
+      formData.append(
+        "reminder_date",
+        values.reminder_date?.format("YYYY-MM-DD") || ""
+      );
+      formData.append("priority", values.priority || "");
+      formData.append("status", values.status || "");
+      formData.append("description", values.description || "");
+
+      if (Array.isArray(values.assignTo) && values.assignTo.length > 0) {
+        values.assignTo.forEach((userId, index) => {
+          if (userId && userId.trim() !== "") {
+            formData.append(`assignTo[assignedusers][${index}]`, userId);
+          }
+        });
+      }
+
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        formData.append("file", fileList[0].originFileObj);
+      }
+
+      console.log('Form data being sent:', {
+        taskName: values.taskName,
+        task_reporter: values.task_reporter,
+        startDate: values.startDate?.format("YYYY-MM-DD"),
+        dueDate: values.dueDate?.format("YYYY-MM-DD"),
+        reminder_date: values.reminder_date?.format("YYYY-MM-DD"),
+        priority: values.priority,
+        status: values.status,
+        description: values.description,
+        assignTo: values.assignTo
+      });
+
+      // Send the update request
+      const response = await updateTask({
+        id: initialValues.id,
+        data: formData,
+      }).unwrap();
+
+      message.success("Task updated successfully");
+      form.resetFields();
+      setFileList([]);
+      onSubmit?.(response);
+      onCancel();
     } catch (error) {
       console.error("Update Error:", error);
       message.error(error?.data?.message || "Failed to update task");
@@ -222,9 +223,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             >
               Edit Task
             </h2>
-            <Text
-              style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.85)" }}
-            >
+            <Text style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.85)" }}>
               Update task information
             </Text>
           </div>
@@ -240,197 +239,35 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
       >
         <Form.Item
           name="taskName"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task Name
-            </span>
-          }
+          label="Task Name"
           rules={[
             { required: true, message: "Please enter task name" },
             { max: 100, message: "Task name cannot exceed 100 characters" },
           ]}
         >
           <Input
-            prefix={<FiMapPin style={{ color: "#1890ff", fontSize: "16px" }} />}
+            prefix={<FiMapPin style={{ color: "#1890ff" }} />}
             placeholder="Enter task name"
             size="large"
             style={{
               borderRadius: "10px",
-              padding: "8px 16px",
               height: "48px",
               backgroundColor: "#f8fafc",
-              border: "1px solid #e6e8eb",
             }}
           />
         </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="category"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Category
-                </span>
-              }
-              rules={[{ required: true, message: "Please select category" }]}
-            >
-              <Select
-                size="large"
-                placeholder="Select category"
-                style={{ width: "100%", borderRadius: "10px" }}
-                suffixIcon={<FiGrid style={{ color: "#1890ff" }} />}
-              >
-                <Option value="Development">Development</Option>
-                <Option value="Design">Design</Option>
-                <Option value="Marketing">Marketing</Option>
-                <Option value="Sales">Sales</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="project"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Project
-                </span>
-              }
-              rules={[{ required: true, message: "Please select project" }]}
-            >
-              <Select
-                size="large"
-                placeholder="Select project"
-                style={{ width: "100%", borderRadius: "10px" }}
-                suffixIcon={<FiFolder style={{ color: "#1890ff" }} />}
-              >
-                <Option value="Acme Corp Website">Acme Corp Website</Option>
-                <Option value="Mobile App">Mobile App</Option>
-                <Option value="Dashboard">Dashboard</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="startDate"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Start Date
-                </span>
-              }
-              rules={[{ required: true, message: "Please select start date" }]}
-            >
-              <DatePicker
-                size="large"
-                format="YYYY-MM-DD"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="dueDate"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Due Date
-                </span>
-              }
-              rules={[{ required: true, message: "Please select due date" }]}
-            >
-              <DatePicker
-                size="large"
-                format="YYYY-MM-DD"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
-                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-              />
-            </Form.Item>
-          </Col>
-        </Row>
-
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="priority"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Priority
-                </span>
-              }
-              rules={[{ required: true, message: "Please select priority" }]}
-            >
-              <Select
-                size="large"
-                placeholder="Select priority"
-                style={{ width: "100%", borderRadius: "10px" }}
-                suffixIcon={<FiFlag style={{ color: "#1890ff" }} />}
-              >
-                <Option value="High">High</Option>
-                <Option value="Medium">Medium</Option>
-                <Option value="Low">Low</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="status"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Status
-                </span>
-              }
-              rules={[{ required: true, message: "Please select status" }]}
-            >
-              <Select
-                size="large"
-                placeholder="Select status"
-                style={{ width: "100%", borderRadius: "10px" }}
-              >
-                <Option value="Todo">Todo</Option>
-                <Option value="In Progress">In Progress</Option>
-                <Option value="Completed">Completed</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
-
         <Form.Item
-          name="assignTo"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Assign To
-            </span>
-          }
-          rules={[{ required: true, message: "Please select assignees" }]}
+          name="task_reporter"
+          label="Task Reporter"
+          rules={[{ required: true, message: "Please select task reporter" }]}
         >
           <Select
-            mode="multiple"
-            placeholder="Select assignees"
-            size="large"
-            style={{ width: "100%", borderRadius: "10px" }}
-            suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
-            optionFilterProp="children"
             showSearch
-            listHeight={100}
-            dropdownStyle={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollBehavior: 'smooth'
-            }}
+            placeholder="Select task reporter"
+            size="large"
+            style={{ width: "100%" }}
+            optionFilterProp="children"
           >
             {users.map((user) => (
               <Option key={user.id} value={user.id}>
@@ -443,57 +280,28 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item
-              name="task_reporter"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Task Reporter
-                </span>
-              }
-              rules={[
-                { required: true, message: "Please select task reporter" },
-              ]}
-            >
-              <Select
-                showSearch
-                placeholder="Select task reporter"
-                size="large"
-                style={{ width: "100%", borderRadius: "10px" }}
-                suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
-                optionFilterProp="children"
-                listHeight={100}
-                dropdownStyle={{
-                  maxHeight: '120px',
-                  overflowY: 'auto',
-                  scrollbarWidth: 'thin',
-                  scrollBehavior: 'smooth'
-                }}
-              >
-                {users.map((user) => (
-                  <Option key={user.id} value={user.id}>
-                    {user.username || user.email}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="reminder_date"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Reminder Date
-                </span>
-              }
+              name="startDate"
+              label="Start Date"
+              rules={[{ required: true, message: "Please select start date" }]}
             >
               <DatePicker
                 size="large"
                 format="YYYY-MM-DD"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                }}
+                style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+                suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="dueDate"
+              label="Due Date"
+              rules={[{ required: true, message: "Please select due date" }]}
+            >
+              <DatePicker
+                size="large"
+                format="YYYY-MM-DD"
+                style={{ width: "100%", borderRadius: "10px", height: "48px" }}
                 suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
               />
             </Form.Item>
@@ -501,39 +309,145 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
         </Row>
 
         <Form.Item
+          name="reminder_date"
+          label="Reminder Date"
+        >
+          <DatePicker
+            size="large"
+            format="YYYY-MM-DD"
+            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+          />
+        </Form.Item>
+
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="priority"
+              label="Priority"
+              rules={[{ required: true, message: "Please select priority" }]}
+            >
+              <Select
+                size="large"
+                placeholder="Select priority"
+                style={{ width: "100%" }}
+                suffixIcon={<FiFlag style={{ color: "#1890ff" }} />}
+              >
+                <Option value="High">High</Option>
+                <Option value="Medium">Medium</Option>
+                <Option value="Low">Low</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item
+              name="status"
+              label="Status"
+              rules={[{ required: true, message: "Please select status" }]}
+            >
+              <Select
+                size="large"
+                placeholder="Select status"
+                style={{ width: "100%" }}
+              >
+                <Option value="Todo">Todo</Option>
+                <Option value="In Progress">In Progress</Option>
+                <Option value="Completed">Completed</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Form.Item
+          name="assignTo"
+          label="Assign To"
+          rules={[{ required: true, message: "Please select assignees" }]}
+        >
+          <Select
+            mode="multiple"
+            placeholder="Select assignees"
+            size="large"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+            }}
+            listHeight={100}
+            dropdownStyle={{
+              maxHeight: '120px',
+              overflowY: 'auto',
+              scrollbarWidth: 'thin',
+              scrollBehavior: 'smooth'
+            }}
+            suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
+            optionFilterProp="children"
+            showSearch
+            maxTagCount={3}
+            maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
+            removeIcon={<FiX style={{ fontSize: '14px', color: '#ffffff' }} />}
+            tagRender={(props) => {
+              const { label, closable, onClose } = props;
+              return (
+                <Tag
+                  color="blue"
+                  closable={closable}
+                  onClose={onClose}
+                  style={{
+                    marginRight: 3,
+                    padding: '4px 8px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                  }}
+                >
+                  {label}
+                </Tag>
+              );
+            }}
+            onDeselect={(value) => {
+              // Force dropdown to update when an option is deselected
+              const select = document.querySelector('.ant-select-selector');
+              if (select) {
+                const event = new MouseEvent('click', {
+                  bubbles: true,
+                  cancelable: true,
+                  view: window
+                });
+                select.dispatchEvent(event);
+              }
+            }}
+          >
+            {users.map((user) => {
+              const value = form.getFieldValue('assignTo') || [];
+              const isSelected = value.includes(user.id);
+              return (
+                <Option
+                  key={user.id}
+                  value={user.id}
+                  style={isSelected ? { display: 'none' } : undefined}
+                >
+                  {user.username || user.email}
+                </Option>
+              );
+            })}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
           name="description"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Description
-            </span>
-          }
+          label="Description"
         >
           <TextArea
             placeholder="Enter task description"
             rows={4}
             style={{
               borderRadius: "10px",
-              padding: "12px 16px",
               backgroundColor: "#f8fafc",
-              border: "1px solid #e6e8eb",
             }}
           />
         </Form.Item>
 
         <Form.Item
           name="file"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task File
-            </span>
-          }
-          valuePropName="fileList"
-          getValueFromEvent={(e) => {
-            if (Array.isArray(e)) {
-              return e;
-            }
-            return e?.fileList;
-          }}
+          label="Task File"
         >
           <Upload
             maxCount={1}
@@ -555,21 +469,17 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
                 message.error("File must be smaller than 5MB!");
                 return Upload.LIST_IGNORE;
               }
-
               return false;
             }}
-            customRequest={({ onSuccess }) => {
-              onSuccess("ok");
-            }}
+            customRequest={({ onSuccess }) => onSuccess("ok")}
           >
             <Button
-              icon={<FiUpload style={{ marginRight: "8px" }} />}
+              icon={<FiUpload />}
               style={{
                 width: "100%",
                 height: "48px",
                 borderRadius: "10px",
                 backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -582,9 +492,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
         <Divider style={{ margin: "24px 0" }} />
 
-        <div
-          style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}
-        >
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
           <Button
             size="large"
             onClick={onCancel}
@@ -592,7 +500,6 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               padding: "8px 24px",
               height: "44px",
               borderRadius: "10px",
-              border: "1px solid #e6e8eb",
               fontWeight: "500",
             }}
           >
@@ -602,6 +509,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             size="large"
             type="primary"
             htmlType="submit"
+            loading={isLoading}
             style={{
               padding: "8px 32px",
               height: "44px",
@@ -609,7 +517,6 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               fontWeight: "500",
               background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
               border: "none",
-              boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
             }}
           >
             Update Task
