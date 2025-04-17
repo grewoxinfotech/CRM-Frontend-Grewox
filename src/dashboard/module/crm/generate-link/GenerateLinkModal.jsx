@@ -1,21 +1,121 @@
-import React from 'react';
-import { Modal, Input, Button, Typography, message } from 'antd';
-import { FiCopy, FiLink } from 'react-icons/fi';
-
-const { Text } = Typography;
+import React, { useRef, useEffect } from 'react';
+import { Modal, Button, message } from 'antd';
+import { FiDownload } from 'react-icons/fi';
+import QRCode from 'qrcode';
+import dayjs from 'dayjs';
+import './GenerateLink.scss';
 
 const GenerateLinkModal = ({ open, onCancel, formData }) => {
+    const qrCanvasRef = useRef(null);
     const baseUrl = window.location.origin;
     const formUrl = `${baseUrl}/forms/${formData?.id}`;
+    const startDate = dayjs().format('MMM DD');
+    const endDate = dayjs().add(1, 'month').format('MMM DD, YYYY');
 
-    const handleCopy = () => {
-        navigator.clipboard.writeText(formUrl)
-            .then(() => {
-                message.success('Link copied to clipboard');
-            })
-            .catch(() => {
-                message.error('Failed to copy link');
+    useEffect(() => {
+        if (open && qrCanvasRef.current) {
+            generateQRCode();
+        }
+    }, [open, formUrl]);
+
+    const generateQRCode = async () => {
+        try {
+            const canvas = qrCanvasRef.current;
+            if (canvas) {
+                await QRCode.toCanvas(canvas, formUrl, {
+                    width: 200,
+                    margin: 2,
+                    color: {
+                        dark: '#000000',
+                        light: '#ffffff',
+                    },
+                    errorCorrectionLevel: 'H',
+                });
+            }
+        } catch (err) {
+            console.error('QR generation error:', err);
+        }
+    };
+
+    const handleDownloadQR = async () => {
+        const qrContainer = document.querySelector('.qr-preview-container');
+        if (!qrContainer) {
+            message.error('QR Code not ready');
+            return;
+        }
+
+        try {
+            const html2canvas = (await import('html2canvas')).default;
+
+            // Create a wrapper div
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.left = '-9999px';
+            wrapper.style.top = '0';
+            document.body.appendChild(wrapper);
+
+            // Clone the container
+            const clone = qrContainer.cloneNode(true);
+            clone.style.width = '450px';
+            clone.style.height = '700px';
+            clone.style.margin = '0';
+            clone.style.boxShadow = 'none';
+            clone.style.border = 'none';
+            wrapper.appendChild(clone);
+
+            // Create the canvas
+            const canvas = await html2canvas(clone, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#FFFFFF',
+                width: 450,
+                height: 700,
+                imageTimeout: 0,
+                onclone: (clonedDoc) => {
+                    const clonedWave = clonedDoc.querySelector('.wave-bg');
+                    if (clonedWave) {
+                        clonedWave.style.background = '#EBF3FF';
+                    }
+                }
             });
+
+            // Clean up
+            document.body.removeChild(wrapper);
+
+            // Convert to blob and download
+            canvas.toBlob(
+                (blob) => {
+                    if (!blob) {
+                        message.error('Failed to generate image');
+                        return;
+                    }
+
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${formData?.title || 'form'}-qr-code.png`;
+                    document.body.appendChild(link);
+                    link.click();
+
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                    }, 100);
+
+                    message.success({
+                        content: 'QR Code downloaded successfully!',
+                        className: 'custom-message-success',
+                        icon: <FiDownload style={{ color: '#ffffff' }} />
+                    });
+                },
+                'image/png',
+                1.0
+            );
+        } catch (err) {
+            console.error('Download error:', err);
+            message.error('Failed to download QR code');
+        }
     };
 
     return (
@@ -23,104 +123,53 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
             title={null}
             open={open}
             onCancel={onCancel}
-            footer={null}
-            width={600}
+            footer={[
+                <Button key="cancel" onClick={onCancel} className="close-button">
+                    Close
+                </Button>,
+                <Button
+                    key="download"
+                    type="primary"
+                    icon={<FiDownload />}
+                    onClick={handleDownloadQR}
+                    className="download-button"
+                >
+                    Download QR Code
+                </Button>
+            ]}
+            width={520}
             destroyOnClose={true}
             centered
-            closeIcon={null}
-            className="pro-modal custom-modal"
-            styles={{
-                body: {
-                    padding: 0,
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                },
-            }}
+            className="qr-share-modal"
         >
-            <div
-                className="modal-header"
-                style={{
-                    background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
-                    padding: "24px",
-                    color: "#ffffff",
-                    position: "relative",
-                }}
-            >
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "16px",
-                    }}
-                >
-                    <div
-                        style={{
-                            width: "48px",
-                            height: "48px",
-                            borderRadius: "12px",
-                            background: "rgba(255, 255, 255, 0.2)",
-                            backdropFilter: "blur(8px)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <FiLink style={{ fontSize: "24px", color: "#ffffff" }} />
+            <div className="qr-preview-container">
+                <div className="wave-bg" />
+                <div className="preview-header">
+                    <img src="/logo.png" alt="Grewox" className="header-logo" />
+                    <h2>{formData?.title || 'CRM Software Inquiry Session'}</h2>
+                    <div className="event-type">Online/Virtual Meeting</div>
+                    <div className="date-range">
+                        {startDate} - {endDate}
                     </div>
-                    <div>
-                        <h2
-                            style={{
-                                margin: "0",
-                                fontSize: "24px",
-                                fontWeight: "600",
-                                color: "#ffffff",
-                            }}
-                        >
-                            Form Link
-                        </h2>
-                        <Text
-                            style={{
-                                fontSize: "14px",
-                                color: "rgba(255, 255, 255, 0.85)",
-                            }}
-                        >
-                            Share this link to collect form responses
-                        </Text>
-                    </div>
+                </div>
+                <div className="qr-card">
+                    <canvas ref={qrCanvasRef} />
+                    <img src="/logo.png" alt="Grewox" className="qr-logo" />
+                </div>
+                <div className="scan-text">Scan to access form</div>
+                <div className="powered-by">
+                    Powered by <span className="grewox">Grewox CRM</span>
                 </div>
             </div>
 
-            <div style={{ padding: "24px" }}>
-                <div style={{ marginBottom: "16px" }}>
-                    <Text strong>Form Title:</Text>
-                    <Text> {formData?.title}</Text>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <Input
-                        value={formUrl}
-                        readOnly
-                        style={{
-                            borderRadius: "10px",
-                            padding: "8px 16px",
-                            backgroundColor: "#f8fafc",
-                            border: "1px solid #e6e8eb",
-                        }}
-                    />
-                    <Button
-                        type="primary"
-                        icon={<FiCopy />}
-                        onClick={handleCopy}
-                    >
-                        Copy
-                    </Button>
-                </div>
-
-                <div style={{ marginTop: "16px" }}>
-                    <Text type="secondary">
-                        This link will allow users to access and submit the form. The responses will be collected in your dashboard.
-                    </Text>
-                </div>
+            <div className="form-url">
+                {formUrl}
+                <Button type="text" className="copy-button" onClick={() => {
+                    navigator.clipboard.writeText(formUrl);
+                    message.success('Link copied to clipboard!');
+                }}>
+                    Copy
+                </Button>
             </div>
         </Modal>
     );

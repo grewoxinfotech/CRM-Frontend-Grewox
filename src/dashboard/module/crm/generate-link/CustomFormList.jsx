@@ -39,6 +39,7 @@ import {
     FileTextOutlined,
     QrcodeOutlined
 } from '@ant-design/icons';
+import { jsPDF } from 'jspdf';
 
 const { Title, Text } = Typography;
 
@@ -69,113 +70,175 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
     };
 
     const downloadQRCode = () => {
-        const canvas = document.getElementById('qr-code-canvas');
         const qrContainer = document.getElementById('qr-container');
 
         if (qrContainer) {
-            const newCanvas = document.createElement('canvas');
-            const ctx = newCanvas.getContext('2d');
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'in',
+                format: [5, 7],
+                hotfixes: ['px_scaling'],
+                compress: false
+            });
 
-            newCanvas.width = 450;
-            newCanvas.height = 700;
+            // Create a temporary canvas with 4x resolution for ultra-high quality
+            const tempCanvas = document.createElement('canvas');
+            const ctx = tempCanvas.getContext('2d');
+            tempCanvas.width = 1500;  // 5 inches * 300 DPI
+            tempCanvas.height = 2100; // 7 inches * 300 DPI
+            ctx.scale(3, 3); // Scale for 300 DPI
 
-            // Fill background
+            // Enable best quality rendering
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // Fill white background
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+            ctx.fillRect(0, 0, 500, 700);
 
-            // Draw curved background
+            // Draw top wave background
+            const gradient = ctx.createLinearGradient(0, 0, 0, 140);
+            gradient.addColorStop(0, '#f0f7ff');
+            gradient.addColorStop(1, '#e6f4ff');
+            ctx.fillStyle = gradient;
+
+            // Create wave path - more subtle curve
             ctx.beginPath();
-            ctx.fillStyle = 'rgba(240, 247, 255, 1)';
             ctx.moveTo(0, 0);
-            ctx.lineTo(newCanvas.width, 0);
-            ctx.lineTo(newCanvas.width, 160);
-            ctx.quadraticCurveTo(newCanvas.width / 2, 260, 0, 160);
+            ctx.lineTo(500, 0);
+            ctx.lineTo(500, 80);
+            ctx.bezierCurveTo(375, 140, 125, 140, 0, 80);
             ctx.closePath();
             ctx.fill();
 
             // Load and draw Grewox logo
             const logo = new Image();
-            logo.onload = () => {
+            const smallLogo = new Image();
+
+            Promise.all([
+                new Promise(resolve => {
+                    logo.onload = resolve;
+                    logo.src = '/src/assets/logo/Group 48096906.png';
+                }),
+                new Promise(resolve => {
+                    smallLogo.onload = resolve;
+                    smallLogo.src = '/src/assets/icons/icon-96x96.png';
+                })
+            ]).then(() => {
                 // Draw logo at the top
-                const logoHeight = 60;
+                const logoHeight = 80;
                 const logoWidth = (logo.width / logo.height) * logoHeight;
-                const logoX = (newCanvas.width - logoWidth) / 2;
-                ctx.drawImage(logo, logoX, 40, logoWidth, logoHeight);
+                const logoX = (500 - logoWidth) / 2;
+                ctx.drawImage(logo, logoX, 20, logoWidth, logoHeight);
 
-                // Add event details with improved typography
+                // Title text
                 ctx.textAlign = 'center';
-
-                // Event Name
-                ctx.font = 'bold 22px Poppins';
+                ctx.font = '600 24px "Poppins"';
                 ctx.fillStyle = '#1890ff';
-                ctx.fillText(selectedForm.event_name, newCanvas.width / 2, 160);
+                ctx.fillText(selectedForm.event_name, 250, 160);
 
-                // Location
-                ctx.font = '15px Poppins';
+                // Location text
+                ctx.font = '400 15px "Poppins"';
                 ctx.fillStyle = '#666666';
-                ctx.fillText(selectedForm.event_location, newCanvas.width / 2, 190);
+                ctx.fillText(selectedForm.event_location, 250, 190);
 
-                // Dates
+                // Date text
                 const dateText = `${dayjs(selectedForm.start_date).format('MMM D')} - ${dayjs(selectedForm.end_date).format('MMM D, YYYY')}`;
-                ctx.fillText(dateText, newCanvas.width / 2, 220);
+                ctx.fillText(dateText, 250, 215);
 
-                // Draw QR code with shadow
-                if (canvas) {
+                // Draw QR code container with enhanced quality
+                const qrCanvas = document.getElementById('qr-code-canvas');
+                if (qrCanvas) {
                     const qrSize = 280;
-                    const x = (newCanvas.width - qrSize) / 2;
-                    const y = 260;
+                    const x = (500 - qrSize) / 2;
+                    const y = 270;
 
-                    // Draw QR background with shadow
+                    // Draw card shadow and background
                     ctx.save();
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
-                    ctx.shadowBlur = 40;
-                    ctx.shadowOffsetY = 20;
+                    ctx.shadowBlur = 30;
+                    ctx.shadowOffsetY = 6;
                     ctx.fillStyle = '#FFFFFF';
-                    ctx.roundRect(x - 24, y - 24, qrSize + 48, qrSize + 48, 20);
+                    ctx.beginPath();
+                    ctx.roundRect(x - 20, y - 20, qrSize + 40, qrSize + 40, 16);
                     ctx.fill();
                     ctx.restore();
 
-                    // Add subtle blue border
+                    // Add subtle border
                     ctx.strokeStyle = 'rgba(24, 144, 255, 0.1)';
                     ctx.lineWidth = 1;
-                    ctx.roundRect(x - 24, y - 24, qrSize + 48, qrSize + 48, 20);
+                    ctx.beginPath();
+                    ctx.roundRect(x - 20, y - 20, qrSize + 40, qrSize + 40, 16);
                     ctx.stroke();
 
                     // Draw QR code
-                    ctx.drawImage(canvas, x, y, qrSize, qrSize);
+                    ctx.drawImage(qrCanvas, x, y, qrSize, qrSize);
+
+                    // Draw small Grewox logo in center of QR code
+                    const qrLogoSize = 45;
+                    const qrLogoX = x + (qrSize - qrLogoSize) / 2;
+                    const qrLogoY = y + (qrSize - qrLogoSize) / 2;
+
+                    // Draw white background for QR logo
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(qrLogoX - 3, qrLogoY - 3, qrLogoSize + 6, qrLogoSize + 6);
+
+                    // Draw the small logo
+                    ctx.drawImage(smallLogo, qrLogoX, qrLogoY, qrLogoSize, qrLogoSize);
                 }
 
-                // Add scan instructions
-                ctx.font = '500 15px Poppins';
+                // Bottom text
+                ctx.font = '500 15px "Poppins"';
                 ctx.fillStyle = '#666666';
-                ctx.fillText('Scan to access form', newCanvas.width / 2, 620);
+                ctx.textAlign = 'center';
+                ctx.fillText('Scan to access form', 250, 600);
 
-                // Add powered by text
-                ctx.font = '13px Poppins';
+                // Powered by text
+                ctx.font = '400 13px "Poppins"';
                 ctx.fillStyle = '#999999';
-                ctx.fillText('Powered by ', newCanvas.width / 2 - 30, 650);
+                ctx.textAlign = 'right';
+                ctx.fillText('Powered by', 235, 630);
 
-                // Add Grewox with gradient
-                ctx.font = '600 13px Poppins';
-                const gradient = ctx.createLinearGradient(
-                    newCanvas.width / 2 + 10, 650,
-                    newCanvas.width / 2 + 60, 650
-                );
+                // Grewox CRM text with gradient
+                const gradient = ctx.createLinearGradient(240, 630, 300, 630);
                 gradient.addColorStop(0, '#1890ff');
                 gradient.addColorStop(1, '#096dd9');
                 ctx.fillStyle = gradient;
-                ctx.fillText('Grewox', newCanvas.width / 2 + 30, 650);
+                ctx.font = '600 13px "Poppins"';
+                ctx.textAlign = 'left';
+                ctx.fillText('Grewox CRM', 245, 630);
 
-                // Download the canvas
-                const downloadLink = document.createElement('a');
-                downloadLink.href = newCanvas.toDataURL('image/png', 1.0);
-                const fileName = `${selectedForm.event_name.toLowerCase().replace(/\s+/g, '-')}-qr.png`;
-                downloadLink.download = fileName;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-            };
-            logo.src = '/src/assets/logo/Group 48096906.png';
+                // Convert to PDF with maximum quality
+                pdf.addImage(
+                    tempCanvas.toDataURL('image/jpeg', 1.0),
+                    'JPEG',
+                    0,
+                    0,
+                    5,
+                    7,
+                    undefined,
+                    'FAST'
+                );
+
+                // Download with better quality
+                const pdfOutput = pdf.output('blob');
+                const fileName = `${selectedForm.title || 'form'}-qr.pdf`;
+
+                // Use direct download
+                const url = window.URL.createObjectURL(pdfOutput);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+                message.success('QR Code downloaded successfully!');
+            });
         }
     };
 

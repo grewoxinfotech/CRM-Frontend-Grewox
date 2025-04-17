@@ -32,6 +32,8 @@ import { useGetLeadStagesQuery } from '../../crmsystem/leadstage/services/leadSt
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../auth/services/authSlice.js';
 import { selectStageOrder } from '../../crmsystem/leadstage/services/leadStageSlice';
+import dayjs from 'dayjs';
+import { useGetSourcesQuery, useGetStatusesQuery, useGetCategoriesQuery } from '../../crmsystem/souce/services/SourceApi.js';
 
 import LeadActivity from './activity';
 import LeadNotes from './notes';
@@ -42,14 +44,14 @@ import './LeadOverview.scss';
 
 const { Title, Text } = Typography;
 
-const LeadStageProgress = ({ stages = [], currentStageId, onStageClick, isConverted, isLoading }) => {
+const LeadStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, isLoading }) => {
     if (!stages || stages.length === 0) {
         return null;
     }
     const currentStageIndex = stages.findIndex(stage => stage.id === currentStageId);
 
     const handleItemClick = (stageId) => {
-        if (isLoading || stageId === currentStageId || isConverted || !onStageClick) {
+        if (isLoading || stageId === currentStageId || isWon || !onStageClick) {
             return;
         }
         onStageClick(stageId);
@@ -84,8 +86,22 @@ const LeadStageProgress = ({ stages = [], currentStageId, onStageClick, isConver
     );
 };
 
-const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdating }) => {
+const LeadOverviewContent = ({ leadData: initialLeadData, pipelineStages, onStageUpdate, isUpdating }) => {
+    const loggedInUser = useSelector(selectCurrentUser);
+    const [localLeadData, setLocalLeadData] = useState(initialLeadData);
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+    const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
+
+    const sources = sourcesData?.data || [];
+    const categories = categoriesData?.data || [];
+    const statuses = statusesData?.data || [];
+
+    // Update local state when prop changes
+    React.useEffect(() => {
+        setLocalLeadData(initialLeadData);
+    }, [initialLeadData]);
 
     const formatCurrencyValue = (value, currencyId) => {
         const currencyDetails = currencies?.find(c => c.id === currencyId || c.currencyCode === currencyId);
@@ -98,15 +114,42 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
         }).format(value).replace(/^/, currencyDetails.currencyIcon + ' ');
     };
 
+    const getSourceName = (sourceId) => {
+        const source = sources.find(s => s.id === sourceId);
+        return source?.name || 'N/A';
+    };
+
+    const getCategoryName = (categoryId) => {
+        const category = categories.find(c => c.id === categoryId);
+        return category?.name || 'N/A';
+    };
+
+    const getStatusName = (statusId) => {
+        const status = statuses.find(s => s.id === statusId);
+        return status?.name || 'Pending';
+    };
+
+    const handleLocalStageUpdate = async (newStageId) => {
+        // Optimistically update local state
+        setLocalLeadData(prev => ({
+            ...prev,
+            leadStage: newStageId
+        }));
+
+        // Call parent handler
+        onStageUpdate(newStageId);
+    };
+
     return (
         <div className="overview-content">
             <div className="stage-progress-card">
-                    <LeadStageProgress
-                        stages={pipelineStages}
-                        currentStageId={leadData?.leadStage}
-                        onStageClick={onStageUpdate}
-                        isConverted={leadData?.is_converted}
-                    />
+                <LeadStageProgress
+                    stages={pipelineStages}
+                    currentStageId={localLeadData?.leadStage}
+                    onStageClick={handleLocalStageUpdate}
+                    isWon={localLeadData?.is_converted}
+                    isLoading={isUpdating}
+                />
             </div>
 
             <Card className="info-card contact-card">
@@ -116,10 +159,10 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                             <FiUser size={24} />
                         </div>
                         <div className="profile-info">
-                            <h2 className="company-name">{leadData?.leadTitle || 'Company Name'}</h2>
+                            <h2 className="company-name">{localLeadData?.leadTitle || 'Company Name'}</h2>
                             <div className="contact-name">
                                 <FiBriefcase className="icon" />
-                                {leadData?.company_name || '-'} {leadData?.firstName && leadData?.lastName ? `(${leadData?.firstName} ${leadData?.lastName})` : ""}
+                                {localLeadData?.company_name || '-'} {localLeadData?.firstName && localLeadData?.lastName ? `(${localLeadData?.firstName} ${localLeadData?.lastName})` : ""}
                             </div>
                         </div>
                     </div>
@@ -131,8 +174,8 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Email Address</div>
-                            <a href={`mailto:${leadData?.email}`} className="stat-value">
-                                {leadData?.email || '-'}
+                            <a href={`mailto:${localLeadData?.email}`} className="stat-value">
+                                {localLeadData?.email || '-'}
                             </a>
                         </div>
                     </div>
@@ -142,8 +185,8 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Phone Number</div>
-                            <a href={`tel:${leadData?.telephone}`} className="stat-value">
-                                {leadData?.telephone || '-'}
+                            <a href={`tel:${localLeadData?.telephone}`} className="stat-value">
+                                {localLeadData?.telephone || '-'}
                             </a>
                         </div>
                     </div>
@@ -153,7 +196,7 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Location</div>
-                            <div className="stat-value">{leadData?.address || '-'}</div>
+                            <div className="stat-value">{localLeadData?.address || '-'}</div>
                         </div>
                     </div>
                 </div>
@@ -168,24 +211,24 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                         <div className="metric-content">
                             <div className="metric-label">Lead Value</div>
                             <div className="metric-value">
-                                {leadData?.leadValue ? formatCurrencyValue(leadData.leadValue, leadData.currency) : '-'}
+                                {localLeadData?.leadValue ? formatCurrencyValue(localLeadData.leadValue, localLeadData.currency) : '-'}
                             </div>
                         </div>
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className={`metric-card interest-level-card ${leadData?.interest_level || 'medium'}`}>
-                        <div className={`metric-icon ${leadData?.interest_level || 'medium'}`}>
+                    <Card className={`metric-card interest-level-card ${localLeadData?.interest_level || 'medium'}`}>
+                        <div className={`metric-icon ${localLeadData?.interest_level || 'medium'}`}>
                             <FiTarget />
                         </div>
                         <div className="metric-content">
-                            <div className={`metric-label ${leadData?.interest_level || 'medium'}`}>Interest Level</div>
+                            <div className={`metric-label ${localLeadData?.interest_level || 'medium'}`}>Interest Level</div>
                             <div className="metric-value">
-                                {leadData?.interest_level === 'high' ? (
+                                {localLeadData?.interest_level === 'high' ? (
                                     <span className="interest-text high">
                                         <FiTrendingUp className="icon" /> High Interest
                                     </span>
-                                ) : leadData?.interest_level === 'low' ? (
+                                ) : localLeadData?.interest_level === 'low' ? (
                                     <span className="interest-text low">
                                         <FiTrendingDown className="icon" /> Low Interest
                                     </span>
@@ -206,7 +249,7 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                         <div className="metric-content">
                             <div className="metric-label">Created</div>
                             <div className="metric-value">
-                                {leadData?.createdAt ? new Date(leadData.createdAt).toLocaleDateString() : '-'}
+                                {localLeadData?.createdAt ? new Date(localLeadData.createdAt).toLocaleDateString() : '-'}
                             </div>
                         </div>
                     </Card>
@@ -219,7 +262,7 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                         <div className="metric-content">
                             <div className="metric-label">Lead Members</div>
                             <div className="metric-value">
-                                {leadData?.lead_members ? JSON.parse(leadData.lead_members).lead_members.length : '0'}
+                                {localLeadData?.lead_members ? JSON.parse(localLeadData.lead_members).lead_members.length : '0'}
                             </div>
                         </div>
                     </Card>
@@ -236,7 +279,9 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                                 </div>
                                 <div className="detail-info">
                                     <div className="detail-label">Source</div>
-                                    <div className="detail-value">Phone</div>
+                                    <div className="detail-value">
+                                        {getSourceName(localLeadData?.source)}
+                                    </div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>
@@ -251,7 +296,9 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                                 </div>
                                 <div className="detail-info">
                                     <div className="detail-label">Stage</div>
-                                    <div className="detail-value">Qualified</div>
+                                    <div className="detail-value">
+                                        {pipelineStages.find(stage => stage.id === localLeadData?.leadStage)?.stageName || 'N/A'}
+                                    </div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>
@@ -266,7 +313,9 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                                 </div>
                                 <div className="detail-info">
                                     <div className="detail-label">Category</div>
-                                    <div className="detail-value">Manufacturing</div>
+                                    <div className="detail-value">
+                                        {getCategoryName(localLeadData?.category)}
+                                    </div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>
@@ -281,7 +330,9 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
                                 </div>
                                 <div className="detail-info">
                                     <div className="detail-label">Status</div>
-                                    <div className="detail-value">Cancelled</div>
+                                    <div className="detail-value">
+                                        {getStatusName(localLeadData?.status)}
+                                    </div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>
@@ -296,21 +347,26 @@ const LeadOverviewContent = ({ leadData, pipelineStages, onStageUpdate, isUpdati
 const LeadOverview = () => {
     const { leadId } = useParams();
     const navigate = useNavigate();
-    const { data: lead, isLoading: isLoadingLead, refetch: refetchLead } = useGetLeadQuery(leadId);
+    const { data: lead, isLoading: isLoadingLead } = useGetLeadQuery(leadId);
     const { data: pipelines = [] } = useGetPipelinesQuery();
     const { data: allStagesData, isLoading: isLoadingStages } = useGetLeadStagesQuery();
     const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
     const currentUser = useSelector(selectCurrentUser);
     const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
-    const leadData = lead?.data;
+    const [localLeadData, setLocalLeadData] = useState(lead?.data);
     const savedStageOrder = useSelector(selectStageOrder);
 
+    // Update local state when lead data changes
+    React.useEffect(() => {
+        setLocalLeadData(lead?.data);
+    }, [lead?.data]);
+
     const pipelineStages = useMemo(() => {
-        if (!leadData?.pipeline || !allStagesData) return [];
+        if (!localLeadData?.pipeline || !allStagesData) return [];
         const stagesArray = Array.isArray(allStagesData) ? allStagesData : (allStagesData.data || []);
 
         const filteredStages = stagesArray.filter(stage =>
-            stage.pipeline === leadData.pipeline && stage.stageType === 'lead'
+            stage.pipeline === localLeadData.pipeline && stage.stageType === 'lead'
         );
 
         if (savedStageOrder && savedStageOrder.length > 0) {
@@ -336,34 +392,34 @@ const LeadOverview = () => {
                 (a.order ?? 0) - (b.order ?? 0) || a.stageName.localeCompare(b.stageName)
             );
         }
-    }, [leadData?.pipeline, allStagesData, savedStageOrder]);
+    }, [localLeadData?.pipeline, allStagesData, savedStageOrder]);
 
     const formattedLeadData = useMemo(() => {
-        if (!leadData) return null;
-         return {
-            id: leadData.id,
-            leadTitle: leadData.leadTitle,
-            firstName: leadData.firstName,
-            lastName: leadData.lastName,
-            email: leadData.email,
-            phone: leadData.telephone?.split(' ')[1] || '',
-            phoneCode: leadData.phoneCode,
-            company: leadData.company_name,
-            source: leadData.source,
-            pipeline: leadData.pipeline,
-            stage: leadData.leadStage,
-            currency: leadData.currency,
-            value: leadData.leadValue,
-            category: leadData.category,
-            address: leadData.address,
-            status: leadData.status,
-            interest_level: leadData.interest_level,
-             lead_members: leadData.lead_members ? JSON.parse(leadData.lead_members).lead_members : []
+        if (!localLeadData) return null;
+        return {
+            id: localLeadData.id,
+            leadTitle: localLeadData.leadTitle,
+            firstName: localLeadData.firstName,
+            lastName: localLeadData.lastName,
+            email: localLeadData.email,
+            phone: localLeadData.telephone?.split(' ')[1] || '',
+            phoneCode: localLeadData.phoneCode,
+            company: localLeadData.company_name,
+            source: localLeadData.source,
+            pipeline: localLeadData.pipeline,
+            stage: localLeadData.leadStage,
+            currency: localLeadData.currency,
+            value: localLeadData.leadValue,
+            category: localLeadData.category,
+            address: localLeadData.address,
+            status: localLeadData.status,
+            interest_level: localLeadData.interest_level,
+            lead_members: localLeadData.lead_members ? JSON.parse(localLeadData.lead_members).lead_members : []
         };
-    }, [leadData]);
+    }, [localLeadData]);
 
     const handleConvertToDeal = () => {
-        if (leadData?.is_converted) {
+        if (localLeadData?.is_converted) {
             message.warning("This lead has already been converted to a deal");
             return;
         }
@@ -371,14 +427,17 @@ const LeadOverview = () => {
     };
 
     const handleStageUpdate = async (newStageId) => {
-        if (newStageId === leadData?.leadStage) {
-             console.log("Clicked current stage, no update needed.");
-             return;
+        if (newStageId === localLeadData?.leadStage) {
+            return;
         }
 
         if (isUpdatingLead) return;
 
-        console.log(`Attempting to update stage to: ${newStageId}`);
+        // Optimistically update local state
+        setLocalLeadData(prev => ({
+            ...prev,
+            leadStage: newStageId
+        }));
 
         try {
             await updateLead({
@@ -389,9 +448,12 @@ const LeadOverview = () => {
                 }
             }).unwrap();
             message.success('Lead stage updated successfully!');
-            refetchLead();
         } catch (error) {
-            console.error("Failed to update lead stage:", error);
+            // Revert optimistic update on error
+            setLocalLeadData(prev => ({
+                ...prev,
+                leadStage: prev.leadStage
+            }));
             message.error(error?.data?.message || 'Failed to update lead stage.');
         }
     };
@@ -405,7 +467,7 @@ const LeadOverview = () => {
                 </span>
             ),
             children: <LeadOverviewContent
-                leadData={leadData}
+                leadData={localLeadData}
                 pipelineStages={pipelineStages}
                 onStageUpdate={handleStageUpdate}
                 isUpdating={isUpdatingLead}
@@ -475,7 +537,7 @@ const LeadOverview = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        {leadData?.leadTitle || 'Lead Details'}
+                        {localLeadData?.leadTitle || 'Lead Details'}
                     </Breadcrumb.Item>
                 </Breadcrumb>
             </div>
@@ -486,7 +548,7 @@ const LeadOverview = () => {
                     <Text type="secondary" className="subtitle">
                         Manage lead details and activities
                     </Text>
-                    {leadData?.is_converted && (
+                    {localLeadData?.is_converted && (
                         <Tag color="success" style={{ marginLeft: '8px', fontSize: '14px' }}>
                             Converted to Deal
                         </Tag>
@@ -512,7 +574,7 @@ const LeadOverview = () => {
                         >
                             Back to Leads
                         </Button>
-                        {!leadData?.is_converted && (
+                        {!localLeadData?.is_converted && (
                             <Button
                                 type="primary"
                                 onClick={handleConvertToDeal}
