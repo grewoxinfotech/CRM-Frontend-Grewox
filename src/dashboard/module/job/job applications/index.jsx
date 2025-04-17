@@ -251,7 +251,7 @@ const JobApplications = () => {
                 </div>
                 <div className="header-actions">
                     <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                        prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
                         placeholder="Search by name, email, phone, location..."
                         allowClear
                         onChange={handleSearch}
@@ -259,7 +259,7 @@ const JobApplications = () => {
                         style={{
                             width: '300px',
                             marginRight: '16px',
-                            borderRadius: '6px'
+                            borderRadius: '20px'
                         }}
                     />
                     <div className="action-buttons">

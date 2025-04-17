@@ -168,12 +168,17 @@ const Attendance = () => {
                 <div className="header-actions">
                     <div className="search-filter-group">
                         <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
                             placeholder="Search employee..."
                             allowClear
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
                             className="search-input"
+                            style={{ 
+                                width: '300px', 
+                                borderRadius: '20px',
+                                height: '38px'
+                            }}
                         />
                     </div>
                     <div className="action-buttons">
@@ -197,7 +202,7 @@ const Attendance = () => {
             </div>
 
             {showFilters && (
-                <Card className="filter-card">
+                <Card className="filter-card" style={{ marginBottom: '1rem' }}>
                     <Row gutter={[16, 16]}>
                         <Col xs={24} sm={12} md={6}>
                             <Select

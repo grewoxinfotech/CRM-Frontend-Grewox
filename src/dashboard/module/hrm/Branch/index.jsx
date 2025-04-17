@@ -208,14 +208,18 @@ const Branch = () => {
                 <div className="header-actions">
                     <div className="search-filter-group">
                         <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search by name, designation type..."
+                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                            placeholder="Search branch..."
                             allowClear
                             onSearch={(value) => setSearchText(value)}
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
                             className="search-input"
-                            style={{ width: 300 }}
+                            style={{ 
+                                width: '300px', 
+                                borderRadius: '20px',
+                                height: '38px'
+                            }}
                         />
                     </div>
                     <div className="action-buttons">

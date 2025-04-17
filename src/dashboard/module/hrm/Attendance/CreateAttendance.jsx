@@ -50,7 +50,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
                 employee: values.employee,
                 date: values.date.format('YYYY-MM-DD'),
                 startTime: values.startTime.format('HH:mm:ss'),
-                end_time: values.endTime.format('HH:mm:ss'),
+                endTime: values.endTime.format('HH:mm:ss'),
                 comment: values.comment || '',
                 status: 'present',
             };

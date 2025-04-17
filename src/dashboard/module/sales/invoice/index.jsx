@@ -256,13 +256,17 @@ const Invoice = () => {
         <div className="header-actions">
           <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search invoices..."
               allowClear
               onChange={(e) => setSearchText(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ width: 400 }}
+              style={{ 
+                width: '300px', 
+                borderRadius: '20px',
+                height: '38px'
+              }}
             />
             <RangePicker
               onChange={handleDateRangeChange}

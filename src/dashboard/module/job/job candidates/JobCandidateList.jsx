@@ -12,6 +12,7 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
 
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
+        if (!jobs || !jobs.data) return 'N/A';
         const job = jobs.data.find(job => job.id === jobId);
         return job ? job.title : 'N/A';
     };
@@ -50,7 +51,8 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name',filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+            key: 'name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                   <Input
                     placeholder="Search candidate name"
@@ -75,45 +77,81 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 </div>
               ),
               onFilter: (value, record) =>
-                record.name.toLowerCase().includes(value.toLowerCase()),    
+                record.name?.toLowerCase().includes(value.toLowerCase()),
+              sorter: (a, b) => {
+                if (!a.name && !b.name) return 0;
+                if (!a.name) return -1;
+                if (!b.name) return 1;
+                return a.name.localeCompare(b.name);
+              },    
         },
         {
             title: 'Job',
             dataIndex: 'job',
             key: 'job',
-            sorter: (a, b) => a.job.localeCompare(b.job),
+            sorter: (a, b) => {
+                if (!a.job && !b.job) return 0;
+                if (!a.job) return -1;
+                if (!b.job) return 1;
+                return a.job.toString().localeCompare(b.job.toString());
+            },
             render: (jobId) => getJobTitle(jobId)
         },  
         {
             title: 'Notice Period',
             dataIndex: 'notice_period',
             key: 'notice_period',
-            sorter: (a, b) => a.notice_period.localeCompare(b.notice_period),
+            sorter: (a, b) => {
+                if (!a.notice_period && !b.notice_period) return 0;
+                if (!a.notice_period) return -1;
+                if (!b.notice_period) return 1;
+                return a.notice_period.localeCompare(b.notice_period);
+            },
         },
         {
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
-            sorter: (a, b) => a.phone.localeCompare(b.phone),
+            sorter: (a, b) => {
+                if (!a.phone && !b.phone) return 0;
+                if (!a.phone) return -1;
+                if (!b.phone) return 1;
+                return a.phone.localeCompare(b.phone);
+            },
         },
         {
             title: 'Experience',
             dataIndex: 'total_experience',
-                key: 'total_experience',
-            sorter: (a, b) => a.total_experience.localeCompare(b.total_experience),
+            key: 'total_experience',
+            sorter: (a, b) => {
+                if (!a.total_experience && !b.total_experience) return 0;
+                if (!a.total_experience) return -1;
+                if (!b.total_experience) return 1;
+                return a.total_experience.localeCompare(b.total_experience);
+            },
         },
         {
             title: 'Applied Source',
             dataIndex: 'applied_source',
             key: 'applied_source',
-            sorter: (a, b) => a.applied_source.localeCompare(b.applied_source),
+            sorter: (a, b) => {
+                if (!a.applied_source && !b.applied_source) return 0;
+                if (!a.applied_source) return -1;
+                if (!b.applied_source) return 1;
+                return a.applied_source.localeCompare(b.applied_source);
+            },
         },
         {
             title: 'Cover Letter',
             dataIndex: 'cover_letter',
             key: 'cover_letter',
-            render: (date) => date.slice(0, 10),
-            sorter: (a, b) => moment(a.cover_letter).unix() - moment(b.cover_letter).unix(),
+            render: (date) => date ? date.slice(0, 10) : 'N/A',
+            sorter: (a, b) => {
+                if (!a.cover_letter && !b.cover_letter) return 0;
+                if (!a.cover_letter) return -1;
+                if (!b.cover_letter) return 1;
+                return moment(a.cover_letter).unix() - moment(b.cover_letter).unix();
+            },
         },
         {
             title: 'Status',
@@ -125,8 +163,10 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
               })),
               onFilter: (value, record) => record.status === value,
             render: (status) => {
+                if (!status) return <Tag color="default">N/A</Tag>;
+                
                 let color;
-                switch (status?.toLowerCase()) {
+                switch (status.toLowerCase()) {
                     case 'pending': color = 'gold'; break;
                     case 'shortlisted': color = 'blue'; break;
                     case 'selected': color = 'green'; break;
@@ -135,7 +175,7 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 }
                 return (
                     <Tag color={color} style={{ textTransform: 'capitalize' }}>
-                        {status?.replace(/_/g, ' ') || 'N/A'}
+                        {status.replace(/_/g, ' ')}
                     </Tag>
                 );
             }
@@ -178,7 +218,7 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
     return (
         <Table
             columns={columns}
-            dataSource={applications}
+            dataSource={applications || []}
             rowKey="id"
             scroll={{ x: 1500 }}
             pagination={{

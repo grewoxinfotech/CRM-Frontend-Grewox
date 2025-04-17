@@ -216,7 +216,8 @@ const ViewBilling = ({ data }) => {
             </div>
             <div className="bill-notes">
               <h4>Notes</h4>
-              <p>{data?.note || 'Thank you for your payment!'}</p>
+              <p>{ 'Thank you for your payment!'}</p>
+              <p>Computer Generated E-signature</p>
               <p className="powered-by">Powered by {companyName} | {companyWebsite}</p>
             </div>
           </div>

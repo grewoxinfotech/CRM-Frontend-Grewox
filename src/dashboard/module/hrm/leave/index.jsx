@@ -212,10 +212,14 @@ const Leave = () => {
           <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Input
               placeholder="Search leave requests..."
-              prefix={<FiSearch />}
+              prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{ width: 300 }}
+              style={{ 
+                width: '300px', 
+                borderRadius: '20px',
+                height: '38px'
+              }}
             />
             <RangePicker
               onChange={handleDateRangeChange}

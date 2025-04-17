@@ -19,6 +19,26 @@ const AttendanceList = ({ searchText, filters }) => {
     const { data: holidayData, isLoading: isLoadingHolidays } = useGetAllHolidaysQuery();
     const { data: leaveData, isLoading: isLoadingLeaves } = useGetLeaveQuery(); // Added leave data query
 
+    // Function to calculate time duration between start and end time
+    const calculateDuration = (startTimeStr, endTimeStr) => {
+        try {
+            if (!endTimeStr) return 'In Progress';
+            
+            const startTime = dayjs(startTimeStr, 'HH:mm:ss');
+            const endTime = dayjs(endTimeStr, 'HH:mm:ss');
+            
+            if (startTime.isValid() && endTime.isValid()) {
+                const diffMinutes = endTime.diff(startTime, 'minute');
+                const hours = Math.floor(diffMinutes / 60);
+                const minutes = diffMinutes % 60;
+                return `${hours}h ${minutes}m`;
+            }
+        } catch (error) {
+            console.error('Error calculating duration:', error);
+        }
+        return 'N/A';
+    };
+
     // Transform employee data with search filtering
     const filteredEmployees = React.useMemo(() => {
         if (!employeeData?.data) return [];
@@ -163,6 +183,77 @@ const AttendanceList = ({ searchText, filters }) => {
         };
     };
 
+    // Create processed attendance data map for quick lookup
+    const processedAttendanceData = React.useMemo(() => {
+        const attendances = Array.isArray(attendanceData)
+            ? attendanceData
+            : (attendanceData?.data || []);
+        
+        // Create a map for quick lookup
+        const attendanceMap = new Map();
+        
+        attendances.forEach(att => {
+            const key = `${att.employee}_${dayjs(att.date).format('YYYY-MM-DD')}`;
+            attendanceMap.set(key, att);
+        });
+        
+        return attendanceMap;
+    }, [attendanceData]);
+
+    // Function to get end time from attendance record (handles API inconsistency)
+    const getEndTime = (attendance) => {
+        // Check both endTime (from response) and end_time (from payload)
+        return attendance.endTime !== undefined ? attendance.endTime : attendance.end_time;
+    };
+
+    // Render attendance details with start time, end time, and duration
+    const renderAttendanceDetails = (attendance, config, status) => {
+        if (!attendance || !attendance.startTime) return null;
+        
+        // Format start time
+        const startTime = dayjs(attendance.startTime, 'HH:mm:ss').format('HH:mm');
+        
+        // Handle end time which could be null
+        let endTimeDisplay = 'In Progress';
+        const endTime = getEndTime(attendance);
+        if (endTime) {
+            endTimeDisplay = dayjs(endTime, 'HH:mm:ss').format('HH:mm');
+        }
+        
+        // Calculate duration
+        const duration = calculateDuration(attendance.startTime, endTime);
+        
+        return (
+            <Tooltip title={
+                <div style={{ padding: '4px 0' }}>
+                    <div style={{ fontWeight: 600, marginBottom: '4px', textAlign: 'center' }}>{config.text}</div>
+                    <div>Start Time: {startTime}</div>
+                    <div>End Time: {endTimeDisplay}</div>
+                    <div>Duration: {duration}</div>
+                    {attendance.comment && (
+                        <div style={{ marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '4px' }}>
+                            <span style={{ fontStyle: 'italic' }}>Note: {attendance.comment}</span>
+                        </div>
+                    )}
+                </div>
+            }>
+                <Tag
+                    className="attendance-status"
+                    style={{
+                        color: config.color,
+                        backgroundColor: config.background,
+                        border: `1px solid ${config.color}`,
+                        margin: 0,
+                        minWidth: '32px',
+                        textAlign: 'center'
+                    }}
+                >
+                    {status}
+                </Tag>
+            </Tooltip>
+        );
+    };
+
     // Update the columns definition
     const columns = [
         {
@@ -210,8 +301,20 @@ const AttendanceList = ({ searchText, filters }) => {
             key: `day${day.date}`,
             width: 60,
             align: 'center',
-            render: (status = 'A') => {
+            render: (status = 'A', record) => {
                 const config = statusConfig[status] || statusConfig['A'];
+                
+                // If status is Present or Half day, show time details
+                if (status === 'P' || status === 'H') {
+                    // Get the attendance record
+                    const attendanceKey = `${record.key}_${day.fullDate}`;
+                    const attendance = processedAttendanceData.get(attendanceKey);
+                    
+                    if (attendance && attendance.startTime) {
+                        return renderAttendanceDetails(attendance, config, status);
+                    }
+                }
+                
                 return (
                     <Tooltip title={config.text}>
                         <Tag
@@ -233,7 +336,7 @@ const AttendanceList = ({ searchText, filters }) => {
         }))
     ];
 
-    // Update your data generation
+    // Update your data generation to store attendance data
     const data = React.useMemo(() => {
         const attendances = Array.isArray(attendanceData)
             ? attendanceData

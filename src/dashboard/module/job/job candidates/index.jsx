@@ -257,7 +257,7 @@ const JobCandidates = () => {
                         style={{
                             width: '300px',
                             marginRight: '16px',
-                            borderRadius: '6px'
+                            borderRadius: '20px'
                         }}
                     />
                     <div className="action-buttons">
