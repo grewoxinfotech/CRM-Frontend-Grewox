@@ -5,6 +5,94 @@ import dayjs from 'dayjs';
 
 const { Text, Paragraph } = Typography;
 
+// Add responsive styles object
+const responsiveStyles = {
+    tableWrapper: {
+        overflow: 'auto',
+        '@media (max-width: 768px)': {
+            margin: '0 -16px',
+        }
+    },
+    headerContainer: {
+        background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
+        borderBottom: '1px solid #f9f0ff',
+        padding: '16px',
+        borderRadius: '8px 8px 0 0',
+        '@media (max-width: 768px)': {
+            padding: '12px',
+        }
+    },
+    headerContent: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '12px',
+        flexWrap: 'wrap',
+        gap: '12px',
+        '@media (max-width: 576px)': {
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+        }
+    },
+    titleSection: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        flexWrap: 'wrap',
+        '@media (max-width: 576px)': {
+            width: '100%',
+        }
+    },
+    filterSection: {
+        '@media (max-width: 576px)': {
+            width: '100%',
+            '.ant-radio-group': {
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+            },
+            '.ant-radio-button-wrapper': {
+                flex: '1',
+                textAlign: 'center',
+                minWidth: 'calc(50% - 4px)',
+            }
+        }
+    },
+    iconContainer: {
+        background: '#722ed1',
+        width: '28px',
+        height: '28px',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+    },
+    titleText: {
+        fontSize: '18px',
+        color: '#1f2937',
+        background: 'linear-gradient(90deg, #722ed1, #b37feb)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        fontWeight: '600',
+        letterSpacing: '-0.02em',
+        '@media (max-width: 576px)': {
+            fontSize: '16px',
+        }
+    },
+    totalTag: {
+        marginLeft: '8px',
+        background: '#f9f0ff',
+        border: 'none',
+        color: '#722ed1',
+        fontWeight: '600',
+        fontSize: '13px',
+        '@media (max-width: 576px)': {
+            fontSize: '12px',
+        }
+    }
+};
+
 // Utility function moved outside components
 const getAssignedUsers = (assignTo) => {
     try {
@@ -283,7 +371,6 @@ const TasksTable = ({
             title: "Task Name",
             dataIndex: "taskName",
             key: "taskName",
-            width: '40%',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -291,7 +378,7 @@ const TasksTable = ({
                         value={selectedKeys[0]}
                         onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
                         onPressEnter={() => confirm()}
-                        style={{ width: 180, marginBottom: 8, display: 'block' }}
+                        style={{ width: '100%', marginBottom: 8, display: 'block' }}
                     />
                     <Space>
                         <Button type="primary" onClick={() => confirm()} size="small">Search</Button>
@@ -303,36 +390,36 @@ const TasksTable = ({
                 record.taskName?.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
                 <Tooltip title={text} mouseEnterDelay={0.5}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
                         <Avatar style={{
                             backgroundColor: '#722ed1',
                             flexShrink: 0
                         }}>
                             {text?.[0]?.toUpperCase() || 'T'}
                         </Avatar>
-                        <Text strong style={{ width: '100%' }} ellipsis>
+                        <Text strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {text || 'Untitled Task'}
                         </Text>
                     </div>
                 </Tooltip>
-            )
+            ),
+            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
         },
         {
             title: "Due Date",
             dataIndex: "dueDate",
             key: "dueDate",
-            width: '25%',
             render: (date) => (
                 <Tooltip title={dayjs(date).format('MMMM DD, YYYY, HH:mm')}>
-                    <Text>{dayjs(date).format('MMM DD, YYYY')}</Text>
+                    <Text style={{ whiteSpace: 'nowrap' }}>{dayjs(date).format('MMM DD, YYYY')}</Text>
                 </Tooltip>
-            )
+            ),
+            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
-            width: '20%',
             filters: [
                 { text: 'Completed', value: 'Completed' },
                 { text: 'In Progress', value: 'In Progress' },
@@ -343,16 +430,16 @@ const TasksTable = ({
                 <Tag color={
                     status === 'Completed' ? 'success' :
                         status === 'In Progress' ? 'processing' : 'warning'
-                }>
+                } style={{ whiteSpace: 'nowrap' }}>
                     {status || 'Todo'}
                 </Tag>
-            )
+            ),
+            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Priority",
             dataIndex: "priority",
             key: "priority",
-            width: '15%',
             filters: [
                 { text: 'High', value: 'High' },
                 { text: 'Medium', value: 'Medium' },
@@ -363,15 +450,13 @@ const TasksTable = ({
                 <Tag color={
                     priority === 'High' ? 'error' :
                         priority === 'Medium' ? 'warning' : 'success'
-                }>
+                } style={{ whiteSpace: 'nowrap' }}>
                     {priority || 'Low'}
                 </Tag>
-            )
+            ),
+            responsive: ['md', 'lg', 'xl']
         }
     ];
-
-    const filteredTasks = filterTasksByDate(tasks);
-    const displayTasks = filteredTasks.slice(0, 5); // Only take first 5 actual tasks
 
     return (
         <Card
@@ -379,85 +464,63 @@ const TasksTable = ({
             bodyStyle={{ padding: 0 }}
             style={{ height: '100%' }}
         >
-            <div className="table-header-wrapper" style={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
-                borderBottom: '1px solid #e6f4ff',
-                padding: '16px',
-                borderRadius: '8px 8px 0 0'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '12px'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                            background: '#722ed1',
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
+            <div style={responsiveStyles.headerContainer}>
+                <div style={responsiveStyles.headerContent}>
+                    <div style={responsiveStyles.titleSection}>
+                        <div style={responsiveStyles.iconContainer}>
                             <FiCheckSquare style={{ color: 'white', fontSize: '16px' }} />
                         </div>
-                        <Text strong style={{
-                            fontSize: '18px',
-                            color: '#1f2937',
-                            background: 'linear-gradient(90deg, #722ed1, #b37feb)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            fontWeight: '600',
-                            letterSpacing: '-0.02em'
-                        }}>
+                        <Text strong style={responsiveStyles.titleText}>
                             Task Data
                         </Text>
-                        <Tag style={{
-                            marginLeft: '8px',
-                            background: '#f9f0ff',
-                            border: 'none',
-                            color: '#722ed1',
-                            fontWeight: '600',
-                            fontSize: '13px'
-                        }}>
+                        <Tag style={responsiveStyles.totalTag}>
                             {tasks?.length || 0} Total
                         </Tag>
                     </div>
-                    <Radio.Group
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                        size="small"
-                        className="date-filter-radio-group"
-                    >
-                        <Radio.Button className="date-filter-radio-button" value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                        <Radio.Button className="date-filter-radio-button" value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                        <Radio.Button className="date-filter-radio-button" value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                        <Radio.Button className="date-filter-radio-button" value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
-                    </Radio.Group>
+                    <div style={responsiveStyles.filterSection}>
+                        <Radio.Group
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            size="small"
+                        >
+                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
+                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
+                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
+                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                        </Radio.Group>
+                    </div>
                 </div>
             </div>
 
-            <Table
-                dataSource={displayTasks}
-                columns={columns}
-                rowKey="id"
-                pagination={false}
-                className="colorful-table fixed-height-table"
-                onRow={(record) => ({
-                    onClick: () => handleRowClick(record),
-                    style: { cursor: 'pointer' }
-                })}
-                loading={loading}
-                locale={{
-                    emptyText: (
-                        <div style={{ padding: '24px 0' }}>
-                            <Text type="secondary">No tasks found</Text>
-                        </div>
-                    )
-                }}
-            />
+            <div style={responsiveStyles.tableWrapper}>
+                <Table
+                    dataSource={filterTasksByDate(tasks)}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={false}
+                    className="colorful-table fixed-height-table"
+                    onRow={(record) => ({
+                        onClick: () => handleRowClick(record),
+                        style: { cursor: 'pointer' }
+                    })}
+                    scroll={{ x: true }}
+                    loading={loading}
+                    locale={{
+                        emptyText: (
+                            <div style={{ 
+                                padding: '24px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                {/* <FiCheckSquare style={{ fontSize: '24px', color: '#8c8c8c' }} /> */}
+                                <Text type="secondary">No tasks found</Text>
+                            </div>
+                        )
+                    }}
+                />
+            </div>
 
             <TaskDetailCard
                 record={selectedTask}

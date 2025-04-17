@@ -25,17 +25,6 @@ const { Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
 
-const departments = [
-    'Engineering',
-    'Product',
-    'Marketing',
-    'Sales',
-    'Customer Support',
-    'Human Resources',
-    'Finance',
-    'Operations'
-];
-
 const statuses = [
     'pending',
     'in_progress',
@@ -75,7 +64,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
     useEffect(() => {
         if (currencies?.length && !isEditing) {
             const defaultCurrency = currencies.find(c => c.currencyCode === 'INR') || currencies[0];
-            form.setFieldValue('currency', defaultCurrency.currencyCode);
+            form.setFieldValue('currency', defaultCurrency.id);
         }
     }, [currencies, form, isEditing]);
 
@@ -88,7 +77,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                     joining_date: initialValues.JoiningDate ? dayjs(initialValues.JoiningDate) : undefined,
                     days_of_week: initialValues.DaysOfWeek,
                     salary: initialValues.Salary,
-                    currency: initialValues.Currency || 'INR',
+                    currency: initialValues.Currency?.id || initialValues.Currency,
                     salary_type: initialValues.SalaryType,
                     salary_duration: initialValues.SalaryDuration,
                     job_type: initialValues.JobType,
@@ -96,25 +85,28 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                 };
                 form.setFieldsValue(formattedValues);
             } else {
+                const defaultCurrency = currencies?.find(c => c.currencyCode === 'INR') || currencies?.[0];
                 form.setFieldsValue({
-                    currency: '₹',
+                    currency: defaultCurrency?.id,
                     status: 'pending',
                     salary_type: 'Monthly'
                 });
             }
         }
-    }, [open, isEditing, initialValues, form]);
+    }, [open, isEditing, initialValues, form, currencies]);
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
+            
+            const selectedCurrency = currencies?.find(c => c.id === values.currency);
             
             const formData = {
                 Interviewer: values.Interviewer,
                 JoiningDate: values.joining_date?.format('YYYY-MM-DD'),
                 DaysOfWeek: values.days_of_week,
                 Salary: values.salary,
-                Currency: values.currency,
+                Currency: values.currency.toString(),
                 SalaryType: values.salary_type,
                 SalaryDuration: values.salary_duration,
                 JobType: values.job_type,
@@ -149,6 +141,13 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
             const errorMessage = error?.data?.message || error?.error?.message || `Failed to ${isEditing ? 'update' : 'create'} job onboarding`;
             message.error(errorMessage);
         }
+    };
+
+    const getFieldRules = (fieldName) => {
+        if (!isEditing) {
+            return [{ required: true, message: `Please enter ${fieldName}` }];
+        }
+        return []; // No validation rules in edit mode
     };
 
     return (
@@ -262,7 +261,6 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                 layout="vertical"
                 onFinish={handleSubmit}
                 initialValues={{
-                    currency: 'INR',
                     status: 'pending',
                     salary_type: 'Monthly'
                 }}
@@ -276,10 +274,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="Interviewer"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Interviewer
+                                Interviewer {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter interviewer' }]}
+                        rules={getFieldRules('interviewer')}
                     >
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -300,10 +298,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="joining_date"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Joining Date
+                                Joining Date {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select joining date' }]}
+                        rules={getFieldRules('joining date')}
                     >
                         <DatePicker
                             prefix={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -326,10 +324,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="days_of_week"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Days of Week
+                                Days of Week {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter days of week' }]}
+                        rules={getFieldRules('days of week')}
                     >
                         <Input
                             prefix={<FiCalendar style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -350,11 +348,8 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                     <Form.Item
                         name="salary"
                         label={
-                            <span style={{
-                                fontSize: '14px',
-                                fontWeight: '500',
-                            }}>
-                                Expected Salary
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                Expected Salary {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
                         style={{ flex: 1 }}
@@ -368,43 +363,45 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                             overflow: 'hidden',
                             marginBottom: 0
                         }}>
-                            <Form.Item
-                                name="currency"
-                                noStyle
-                                rules={[{ required: true }]}
-                            >
-                                <Select
-                                    size="large"
-                                    style={{
-                                        width: '80px',
-                                        height: '48px'
-                                    }}
-                                    loading={currenciesLoading}
-                                    className="currency-select"
-                                    defaultValue="INR"
-                                    dropdownStyle={{
-                                        padding: '8px',
-                                        borderRadius: '10px',
-                                    }}
-                                    showSearch
-                                    optionFilterProp="children"
-                                    filterOption={(input, option) =>
-                                        option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                    }
-                                >
-                                    {currencies?.map(currency => (
-                                        <Option key={currency.currencyCode} value={currency.currencyCode}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span>{currency.currencyIcon}</span>
-                                            </div>
-                                        </Option>
-                                    ))}
-                                </Select>
-                            </Form.Item>
+                             <Form.Item
+                                        name="currency"
+                                        noStyle
+                                        rules={getFieldRules('currency')}
+                                    >
+                                        <Select
+                                            size="large"
+                                            style={{
+                                                width: '80px',
+                                                height: '48px'
+                                            }}
+                                            loading={currenciesLoading}
+                                            className="currency-select"
+                                            defaultValue={currencies?.find(c => c.currencyCode === 'INR')?.id}
+                                            showSearch
+                                            optionFilterProp="children"
+                                            filterOption={(input, option) => {
+                                                const currency = currencies?.find(c => c.id === option.value);
+                                                return currency?.currencyCode.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                            }}
+                                        >
+                                            {currencies?.map(currency => (
+                                                <Option 
+                                                    key={currency.id} 
+                                                    value={currency.id}
+                                                    selected={currency.currencyCode === 'INR'}
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span>{currency.currencyIcon}</span>
+                                                        <span>{currency.currencyCode}</span>
+                                                    </div>
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
                             <Form.Item
                                 name="salary"
                                 noStyle
-                                rules={[{ required: true, message: 'Please enter price' }]}
+                                rules={getFieldRules('salary')}
                             >
                                 <Input
                                     placeholder="Enter price"
@@ -429,10 +426,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="salary_type"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Salary Type
+                                Salary Type {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select salary type' }]}
+                        rules={getFieldRules('salary type')}
                     >
                         <Select
                             size="large"
@@ -451,12 +448,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="salary_duration"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Salary Duration
+                                Salary Duration {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[
-                            { required: true, message: 'Please select salary duration' }
-                        ]}
+                        rules={getFieldRules('salary duration')}
                     >
                         <Select
                             size="large"
@@ -475,10 +470,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="status"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Status
+                                Status {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select status' }]}
+                        rules={getFieldRules('status')}
                     >
                         <Select
                             size="large"
@@ -499,10 +494,10 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="job_type"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Job Type
+                                Job Type {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select job type' }]}
+                        rules={getFieldRules('job type')}
                     >
                         <Select
                             size="large"

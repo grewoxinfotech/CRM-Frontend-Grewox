@@ -5,6 +5,94 @@ import dayjs from 'dayjs';
 
 const { Text } = Typography;
 
+// Add responsive styles object
+const responsiveStyles = {
+    tableWrapper: {
+        overflow: 'auto',
+        '@media (max-width: 768px)': {
+            margin: '0 -16px',
+        }
+    },
+    headerContainer: {
+        background: 'linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%)',
+        borderBottom: '1px solid #e6f4ff',
+        padding: '16px',
+        borderRadius: '8px 8px 0 0',
+        '@media (max-width: 768px)': {
+            padding: '12px',
+        }
+    },
+    headerContent: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '12px',
+        flexWrap: 'wrap',
+        gap: '12px',
+        '@media (max-width: 576px)': {
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+        }
+    },
+    titleSection: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        flexWrap: 'wrap',
+        '@media (max-width: 576px)': {
+            width: '100%',
+        }
+    },
+    filterSection: {
+        '@media (max-width: 576px)': {
+            width: '100%',
+            '.ant-radio-group': {
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+            },
+            '.ant-radio-button-wrapper': {
+                flex: '1',
+                textAlign: 'center',
+                minWidth: 'calc(50% - 4px)',
+            }
+        }
+    },
+    iconContainer: {
+        background: '#1890ff',
+        width: '28px',
+        height: '28px',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+    },
+    titleText: {
+        fontSize: '18px',
+        color: '#1f2937',
+        background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        fontWeight: '600',
+        letterSpacing: '-0.02em',
+        '@media (max-width: 576px)': {
+            fontSize: '16px',
+        }
+    },
+    totalTag: {
+        marginLeft: '8px',
+        background: '#e6f7ff',
+        border: 'none',
+        color: '#1890ff',
+        fontWeight: '600',
+        fontSize: '13px',
+        '@media (max-width: 576px)': {
+            fontSize: '12px',
+        }
+    }
+};
+
 const MeetingsTable = ({
     meetings,
     loading,
@@ -39,7 +127,6 @@ const MeetingsTable = ({
             title: "Meeting Title",
             dataIndex: "title",
             key: "title",
-            width: '25%',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -47,7 +134,7 @@ const MeetingsTable = ({
                         value={selectedKeys[0]}
                         onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
                         onPressEnter={() => confirm()}
-                        style={{ width: 180, marginBottom: 8, display: 'block' }}
+                        style={{ width: '100%', marginBottom: 8, display: 'block' }}
                     />
                     <Space>
                         <Button type="primary" onClick={() => confirm()} size="small">Search</Button>
@@ -58,31 +145,34 @@ const MeetingsTable = ({
             onFilter: (value, record) =>
                 record.title?.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
                     <Avatar style={{
                         backgroundColor: record.meetingLink ? '#52c41a' : '#1890ff',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        flexShrink: 0
                     }}>
                         <FiVideo style={{ color: 'white' }} />
                     </Avatar>
-                    <div>
-                        <Text strong style={{ display: 'block' }}>{text}</Text>
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <div style={{ minWidth: 0 }}>
+                        <Text strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {text}
+                        </Text>
+                        <Text type="secondary" style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {record.description || 'No description'}
                         </Text>
                     </div>
                 </div>
             ),
+            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
         },
         {
             title: "Time",
             dataIndex: "startTime",
             key: "time",
-            width: '25%',
             render: (startTime, record) => (
-                <div>
+                <div style={{ whiteSpace: 'nowrap' }}>
                     <Text strong style={{ display: 'block' }}>
                         {dayjs(record.date).format('MMM DD, YYYY')}
                     </Text>
@@ -91,17 +181,17 @@ const MeetingsTable = ({
                         {dayjs(`2000-01-01T${record.endTime}`).format('hh:mm A')}
                     </Text>
                 </div>
-            )
+            ),
+            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Participants",
             dataIndex: "employee",
             key: "employee",
-            width: '25%',
             render: (employees) => {
                 const employeeArray = employees ? JSON.parse(employees) : [];
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
                         <Avatar.Group maxCount={3}>
                             {employeeArray.map((emp, index) => (
                                 <Avatar key={index} style={{ backgroundColor: '#1890ff' }}>
@@ -109,18 +199,18 @@ const MeetingsTable = ({
                                 </Avatar>
                             ))}
                         </Avatar.Group>
-                        <Text type="secondary" style={{ marginLeft: '8px', fontSize: '12px' }}>
+                        <Text type="secondary" style={{ fontSize: '12px', whiteSpace: 'nowrap' }}>
                             {employeeArray.length} {employeeArray.length === 1 ? 'participant' : 'participants'}
                         </Text>
                     </div>
                 );
-            }
+            },
+            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
-            width: '25%',
             render: (status) => {
                 const statusConfig = {
                     scheduled: {
@@ -145,17 +235,16 @@ const MeetingsTable = ({
                         backgroundColor: config.bg,
                         border: `1px solid ${config.color}`,
                         textTransform: 'capitalize',
-                        fontWeight: '500'
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap'
                     }}>
                         {status}
                     </Tag>
                 );
-            }
+            },
+            responsive: ['md', 'lg', 'xl']
         }
     ];
-
-    const filteredMeetings = filterMeetingsByDate(meetings);
-    const displayMeetings = filteredMeetings?.slice(0, 5) || [];
 
     return (
         <Card
@@ -163,84 +252,63 @@ const MeetingsTable = ({
             bodyStyle={{ padding: 0 }}
             style={{ height: '100%' }}
         >
-            <div className="table-header-wrapper" style={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%)',
-                borderBottom: '1px solid #e6f4ff',
-                padding: '16px',
-                borderRadius: '8px 8px 0 0'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '12px'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                            background: '#1890ff',
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
+            <div style={responsiveStyles.headerContainer}>
+                <div style={responsiveStyles.headerContent}>
+                    <div style={responsiveStyles.titleSection}>
+                        <div style={responsiveStyles.iconContainer}>
                             <FiVideo style={{ color: 'white', fontSize: '16px' }} />
                         </div>
-                        <Text strong style={{
-                            fontSize: '18px',
-                            color: '#1f2937',
-                            background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            fontWeight: '600',
-                            letterSpacing: '-0.02em'
-                        }}>
+                        <Text strong style={responsiveStyles.titleText}>
                             Meeting Data
                         </Text>
-                        <Tag style={{
-                            marginLeft: '8px',
-                            background: '#e6f7ff',
-                            border: 'none',
-                            color: '#1890ff',
-                            fontWeight: '600',
-                            fontSize: '13px'
-                        }}>
+                        <Tag style={responsiveStyles.totalTag}>
                             {meetings?.length || 0} Total
                         </Tag>
                     </div>
-                    <Radio.Group
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                        size="small"
-                    >
-                        <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                        <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                        <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                        <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
-                    </Radio.Group>
+                    <div style={responsiveStyles.filterSection}>
+                        <Radio.Group
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            size="small"
+                        >
+                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
+                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
+                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
+                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                        </Radio.Group>
+                    </div>
                 </div>
             </div>
 
-            <Table
-                dataSource={displayMeetings}
-                columns={columns}
-                rowKey="id"
-                pagination={false}
-                className="colorful-table fixed-height-table"
-                onRow={(record) => ({
-                    onClick: () => navigate(`/dashboard/hrm/meeting/${record.id}`),
-                    style: { cursor: 'pointer' }
-                })}
-                loading={loading}
-                locale={{
-                    emptyText: (
-                        <div style={{ padding: '24px 0' }}>
-                            <Text type="secondary">No meetings found</Text>
-                        </div>
-                    )
-                }}
-            />
+            <div style={responsiveStyles.tableWrapper}>
+                <Table
+                    dataSource={filterMeetingsByDate(meetings)}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={false}
+                    className="colorful-table fixed-height-table"
+                    onRow={(record) => ({
+                        onClick: () => navigate(`/dashboard/hrm/meeting/${record.id}`),
+                        style: { cursor: 'pointer' }
+                    })}
+                    scroll={{ x: true }}
+                    loading={loading}
+                    locale={{
+                        emptyText: (
+                            <div style={{ 
+                                padding: '24px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                {/* <FiVideo style={{ fontSize: '24px', color: '#8c8c8c' }} /> */}
+                                <Text type="secondary">No meetings found</Text>
+                            </div>
+                        )
+                    }}
+                />
+            </div>
         </Card>
     );
 };

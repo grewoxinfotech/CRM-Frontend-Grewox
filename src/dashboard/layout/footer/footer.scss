@@ -1,36 +1,134 @@
 @import '../../../styles/theme/theme.scss';
 
+// Mobile-first breakpoints
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
 .dashboard-footer {
     position: fixed;
     bottom: 0;
     right: 0;
     z-index: 1000;
-    width: calc(100% - 260px);
-    height: 60px;
+    width: 100%;
+    min-height: 60px;
     background: #FFFFFF;
-    padding: 0 24px;
+    padding: 12px 16px;
     box-shadow: 0 -1px 2px 0 rgba(0, 0, 0, 0.03);
-    transition: width 0.3s ease;
+    transition: all 0.3s ease;
+
+    @media screen and (min-width: 768px) {
+        width: calc(100% - 69px); // Account for sidebar width
+        padding: 0 24px;
+        height: 60px;
+    }
+
+    @media screen and (min-width: 992px) {
+        padding: 0 32px;
+    }
+
+    @media screen and (min-width: 1200px) {
+        padding: 0 40px;
+    }
 
     .footer-content {
-        height: 100%;
+        width: 100%;
+        min-height: 36px;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
+        gap: 12px;
         color: #64748B;
-        font-size: 14px;
+        font-size: 13px;
+        padding: 8px 0;
+
+        @media screen and (min-width: 576px) {
+            flex-direction: row;
+            justify-content: space-between;
+            font-size: 14px;
+            padding: 0;
+            height: 100%;
+            align-items: center;
+        }
+
+        @media screen and (min-width: 992px) {
+            font-size: 15px;
+        }
+
+        span {
+            text-align: center;
+            width: 100%;
+            
+            @media screen and (min-width: 576px) {
+                width: auto;
+                text-align: left;
+            }
+        }
 
         .footer-links {
             display: flex;
-            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            
+            @media screen and (min-width: 576px) {
+                width: auto;
+                gap: 16px;
+                justify-content: flex-end;
+            }
+
+            @media screen and (min-width: 768px) {
+                gap: 24px;
+            }
+
+            @media screen and (min-width: 992px) {
+                gap: 32px;
+            }
 
             a {
                 color: #64748B;
                 text-decoration: none;
-                transition: color 0.2s ease;
+                transition: all 0.2s ease;
+                font-size: 12px;
+                padding: 4px;
+                white-space: nowrap;
+
+                @media screen and (min-width: 576px) {
+                    font-size: 13px;
+                }
+
+                @media screen and (min-width: 768px) {
+                    font-size: 14px;
+                }
+
+                @media screen and (min-width: 992px) {
+                    font-size: 15px;
+                }
 
                 &:hover {
                     color: #3B82F6;
+                }
+
+                @media (hover: none) {
+                    padding: 8px;
+                }
+            }
+        }
+    }
+
+    @media screen and (max-width: 360px) {
+        padding: 8px;
+        
+        .footer-content {
+            gap: 8px;
+            
+            .footer-links {
+                gap: 8px;
+                
+                a {
+                    font-size: 11px;
                 }
             }
         }
@@ -38,6 +136,28 @@
 }
 
 // Adjust footer width when sidebar is collapsed
-.dashboard-sidebar.collapsed~.main-content .dashboard-footer {
-    width: calc(100% - 70px);
+.dashboard-sidebar.collapsed ~ .main-content .dashboard-footer {
+    @media screen and (min-width: 768px) {
+        width: calc(100% - 80px); // Account for collapsed sidebar width
+    }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+    .dashboard-footer {
+        background: #1F2937;
+        box-shadow: 0 -1px 2px 0 rgba(0, 0, 0, 0.1);
+
+        .footer-content {
+            color: #94A3B8;
+
+            .footer-links a {
+                color: #94A3B8;
+
+                &:hover {
+                    color: #60A5FA;
+                }
+            }
+        }
+    }
 }

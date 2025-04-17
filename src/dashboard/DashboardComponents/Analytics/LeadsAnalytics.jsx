@@ -76,6 +76,54 @@ const chartLabelStyle = {
     fill: '#1890ff'
 };
 
+// Add responsive styles for filter controls
+const filterControlsStyles = {
+    container: {
+        marginBottom: '24px',
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '24px',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        '@media (max-width: 576px)': {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: '16px'
+        }
+    },
+    filterGroup: {
+        display: 'flex',
+        alignItems: 'center',
+        '@media (max-width: 576px)': {
+            width: '100%',
+            justifyContent: 'space-between',
+            gap: '16px'
+        }
+    },
+    label: {
+        fontSize: '13px',
+        color: '#374151',
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '60px',
+        '@media (max-width: 576px)': {
+            fontSize: '12px',
+            minWidth: '50px'
+        }
+    },
+    select: {
+        width: '160px',
+        fontSize: '13px',
+        '@media (max-width: 576px)': {
+            width: '100%',
+            maxWidth: '200px'
+        }
+    }
+};
+
 const LeadsAnalytics = ({ leads }) => {
     const [timeFilter, setTimeFilter] = useState(TIME_FILTERS.WEEK.value);
     const [selectedPipeline, setSelectedPipeline] = useState(null);
@@ -330,33 +378,16 @@ const LeadsAnalytics = ({ leads }) => {
     return (
         <div>
             {/* Filter Controls */}
-            <div style={{
-                marginBottom: '24px',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '16px',
-                alignItems: 'center'
-            }}>
+            <div style={filterControlsStyles.container}>
                 {/* Pipeline Filter */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <Typography.Text style={{
-                        fontSize: '13px',
-                        color: '#374151',
-                        fontWeight: 'bold'
-                    }}>
-                        Pipeline:
+                <div style={filterControlsStyles.filterGroup}>
+                    <Typography.Text style={filterControlsStyles.label}>
+                        Pipeline
                     </Typography.Text>
                     <Select
                         value={selectedPipeline}
                         onChange={value => setSelectedPipeline(value)}
-                        style={{
-                            width: 140,
-                            fontSize: '13px'
-                        }}
+                        style={filterControlsStyles.select}
                         options={pipelines?.map(pipeline => ({
                             value: pipeline.id,
                             label: pipeline.pipeline_name
@@ -373,25 +404,14 @@ const LeadsAnalytics = ({ leads }) => {
                 </div>
 
                 {/* Time Filter */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <Typography.Text style={{
-                        fontSize: '13px',
-                        color: '#374151',
-                        fontWeight: 'bold'
-                    }}>
-                        Period:
+                <div style={filterControlsStyles.filterGroup}>
+                    <Typography.Text style={filterControlsStyles.label}>
+                        Period
                     </Typography.Text>
                     <Select
                         value={timeFilter}
                         onChange={value => setTimeFilter(value)}
-                        style={{
-                            width: 120,
-                            fontSize: '13px'
-                        }}
+                        style={filterControlsStyles.select}
                         options={[
                             { value: TIME_FILTERS.TODAY.value, label: TIME_FILTERS.TODAY.label },
                             { value: TIME_FILTERS.WEEK.value, label: TIME_FILTERS.WEEK.label },
@@ -422,7 +442,7 @@ const LeadsAnalytics = ({ leads }) => {
                     }
                     .filter-select .ant-select-selection-item {
                         line-height: 30px !important;
-                        font-weight: bold !important;
+                        font-weight: 500 !important;
                         color: #1890ff !important;
                     }
                     .filter-select .ant-select-arrow {
@@ -434,6 +454,15 @@ const LeadsAnalytics = ({ leads }) => {
                     .filter-select.ant-select-focused .ant-select-selector {
                         border-color: #1890ff !important;
                         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                    }
+                    @media (max-width: 576px) {
+                        .filter-select .ant-select-selector {
+                            height: 36px !important;
+                        }
+                        .filter-select .ant-select-selection-item {
+                            line-height: 34px !important;
+                            font-size: 14px !important;
+                        }
                     }
                 `}
             </style>
@@ -632,21 +661,35 @@ const LeadsAnalytics = ({ leads }) => {
 
             <Row gutter={[24, 24]}>
                 {/* Weekly Performance Chart */}
-                <Col span={24}>
+                <Col xs={24} sm={24} md={24} lg={24} xl={24}>
                     <Card
                         style={{
                             borderRadius: '12px',
                             border: 'none',
                             boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                         }}
-                        bodyStyle={{ padding: '24px' }}
+                        bodyStyle={{ 
+                            padding: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '20px' : '24px'
+                        }}
                     >
-                        <Title level={5} style={chartTitleStyle}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '18px' : '20px',
+                            marginBottom: window.innerWidth < 576 ? '16px' : '20px',
+                            textAlign: window.innerWidth < 576 ? 'center' : 'left'
+                        }}>
                             Weekly Performance
                         </Title>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={window.innerWidth < 576 ? 250 : 300}>
                             <AreaChart data={weeklyData}
-                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                margin={{ 
+                                    top: window.innerWidth < 576 ? 5 : 10, 
+                                    right: window.innerWidth < 576 ? 10 : 30, 
+                                    left: window.innerWidth < 576 ? 0 : 0, 
+                                    bottom: window.innerWidth < 576 ? 0 : 0 
+                                }}>
                                 <defs>
                                     <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor={COLORS.chart.leadCount.main} stopOpacity={0.8} />
@@ -661,7 +704,12 @@ const LeadsAnalytics = ({ leads }) => {
                                 <XAxis
                                     dataKey="name"
                                     stroke="#1890ff"
-                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                    tick={{ 
+                                        fill: '#1890ff', 
+                                        fontSize: window.innerWidth < 576 ? 10 : 12, 
+                                        fontWeight: 500,
+                                        angle: window.innerWidth < 576 ? -45 : 0
+                                    }}
                                 />
                                 <YAxis
                                     yAxisId="left"
@@ -670,20 +718,33 @@ const LeadsAnalytics = ({ leads }) => {
                                     domain={[0, dataMax => Math.ceil(dataMax)]}
                                     axisLine={false}
                                     tickLine={false}
-                                    tick={{ fontSize: 11, fill: COLORS.secondary.main }}
+                                    tick={{ 
+                                        fontSize: window.innerWidth < 576 ? 10 : 11, 
+                                        fill: COLORS.secondary.main 
+                                    }}
                                 />
                                 <YAxis
                                     yAxisId="right"
                                     orientation="right"
                                     tickFormatter={formatCurrency}
-                                    tick={{ fill: '#595959', fontSize: 12, fontWeight: 500 }}
+                                    tick={{ 
+                                        fill: '#595959', 
+                                        fontSize: window.innerWidth < 576 ? 10 : 12, 
+                                        fontWeight: 500 
+                                    }}
                                 />
-                                <Tooltip content={<CustomTooltip />} />
+                                <Tooltip 
+                                    content={<CustomTooltip />}
+                                    wrapperStyle={{
+                                        fontSize: window.innerWidth < 576 ? '12px' : '14px'
+                                    }}
+                                />
                                 <Legend
                                     formatter={(value, entry) => (
                                         <span style={{
                                             color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
+                                            fontSize: window.innerWidth < 576 ? '12px' : '14px'
                                         }}>
                                             {value}
                                         </span>
@@ -695,18 +756,18 @@ const LeadsAnalytics = ({ leads }) => {
                                     dataKey="leads"
                                     name="Lead Count"
                                     stroke={COLORS.chart.leadCount.main}
-                                    strokeWidth={2}
+                                    strokeWidth={window.innerWidth < 576 ? 1.5 : 2}
                                     fillOpacity={1}
                                     fill={COLORS.chart.leadCount.gradient}
                                     dot={{
-                                        r: 4,
-                                        strokeWidth: 2,
+                                        r: window.innerWidth < 576 ? 3 : 4,
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2,
                                         stroke: COLORS.chart.leadCount.main,
                                         fill: '#fff'
                                     }}
                                     activeDot={{
-                                        r: 6,
-                                        strokeWidth: 2,
+                                        r: window.innerWidth < 576 ? 5 : 6,
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2,
                                         stroke: '#fff',
                                         fill: COLORS.chart.leadCount.hover
                                     }}
@@ -717,18 +778,18 @@ const LeadsAnalytics = ({ leads }) => {
                                     dataKey="value"
                                     name="Lead Value"
                                     stroke={COLORS.chart.leadValue.main}
-                                    strokeWidth={2}
+                                    strokeWidth={window.innerWidth < 576 ? 1.5 : 2}
                                     fillOpacity={1}
                                     fill={COLORS.chart.leadValue.gradient}
                                     dot={{
-                                        r: 4,
-                                        strokeWidth: 2,
+                                        r: window.innerWidth < 576 ? 3 : 4,
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2,
                                         stroke: COLORS.chart.leadValue.main,
                                         fill: '#fff'
                                     }}
                                     activeDot={{
-                                        r: 6,
-                                        strokeWidth: 2,
+                                        r: window.innerWidth < 576 ? 5 : 6,
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2,
                                         stroke: '#fff',
                                         fill: COLORS.chart.leadValue.hover
                                     }}
@@ -739,37 +800,66 @@ const LeadsAnalytics = ({ leads }) => {
                 </Col>
 
                 {/* Source Distribution */}
-                <Col xs={24} lg={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12}>
                     <Card
                         style={{
                             borderRadius: '12px',
                             border: 'none',
                             boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                         }}
-                        bodyStyle={{ padding: '24px' }}
+                        bodyStyle={{ 
+                            padding: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '20px' : '24px'
+                        }}
                     >
-                        <Title level={5} style={chartTitleStyle}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '18px' : '20px',
+                            marginBottom: window.innerWidth < 576 ? '16px' : '20px',
+                            textAlign: window.innerWidth < 576 ? 'center' : 'left'
+                        }}>
                             Source Distribution
                         </Title>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={sourceChartData} layout="vertical">
+                        <ResponsiveContainer width="100%" height={window.innerWidth < 576 ? 250 : 300}>
+                            <BarChart data={sourceChartData} layout="vertical"
+                                margin={{ 
+                                    top: window.innerWidth < 576 ? 5 : 10, 
+                                    right: window.innerWidth < 576 ? 10 : 30, 
+                                    left: window.innerWidth < 576 ? 0 : 0, 
+                                    bottom: window.innerWidth < 576 ? 0 : 0 
+                                }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis
                                     type="number"
                                     tickFormatter={formatNumber}
-                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                    tick={{ 
+                                        fill: '#1890ff', 
+                                        fontSize: window.innerWidth < 576 ? 10 : 12, 
+                                        fontWeight: 500 
+                                    }}
                                 />
                                 <YAxis
                                     dataKey="name"
                                     type="category"
-                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
+                                    tick={{ 
+                                        fill: '#1890ff', 
+                                        fontSize: window.innerWidth < 576 ? 10 : 12, 
+                                        fontWeight: 500 
+                                    }}
                                 />
-                                <Tooltip content={<CustomTooltip />} />
+                                <Tooltip 
+                                    content={<CustomTooltip />}
+                                    wrapperStyle={{
+                                        fontSize: window.innerWidth < 576 ? '12px' : '14px'
+                                    }}
+                                />
                                 <Legend
                                     formatter={(value, entry) => (
                                         <span style={{
                                             color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
-                                            fontWeight: 500
+                                            fontWeight: 500,
+                                            fontSize: window.innerWidth < 576 ? '12px' : '14px'
                                         }}>
                                             {value}
                                         </span>
@@ -793,33 +883,42 @@ const LeadsAnalytics = ({ leads }) => {
                 </Col>
 
                 {/* Interest Level Distribution */}
-                <Col xs={24} lg={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12}>
                     <Card
                         style={{
                             borderRadius: '12px',
                             border: 'none',
                             boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                         }}
-                        bodyStyle={{ padding: '24px' }}
+                        bodyStyle={{ 
+                            padding: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '20px' : '24px'
+                        }}
                     >
-                        <Title level={5} style={chartTitleStyle}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '18px' : '20px',
+                            marginBottom: window.innerWidth < 576 ? '16px' : '20px',
+                            textAlign: window.innerWidth < 576 ? 'center' : 'left'
+                        }}>
                             Interest Level Distribution
                         </Title>
-                        <ResponsiveContainer width="100%" height={300}>
+                        <ResponsiveContainer width="100%" height={window.innerWidth < 576 ? 250 : 300}>
                             <PieChart>
                                 <Pie
                                     data={interestChartData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={70}
-                                    outerRadius={90}
+                                    innerRadius={window.innerWidth < 576 ? 50 : 70}
+                                    outerRadius={window.innerWidth < 576 ? 70 : 90}
                                     startAngle={90}
                                     endAngle={-270}
                                     paddingAngle={8}
                                     dataKey="value"
                                     label={({ cx, cy, midAngle, innerRadius, outerRadius, value, name, percent }) => {
                                         const RADIAN = Math.PI / 180;
-                                        const radius = outerRadius + 30;
+                                        const radius = outerRadius + (window.innerWidth < 576 ? 20 : 30);
                                         const x = cx + radius * Math.cos(-midAngle * RADIAN);
                                         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -831,7 +930,7 @@ const LeadsAnalytics = ({ leads }) => {
                                                 textAnchor={x > cx ? 'start' : 'end'}
                                                 dominantBaseline="central"
                                                 style={{
-                                                    fontSize: '15px',
+                                                    fontSize: window.innerWidth < 576 ? '12px' : '15px',
                                                     fontWeight: 600,
                                                     letterSpacing: '0.2px'
                                                 }}
@@ -857,7 +956,7 @@ const LeadsAnalytics = ({ leads }) => {
                                     formatter={(value, entry) => (
                                         <span style={{
                                             color: '#262626',
-                                            fontSize: '14px',
+                                            fontSize: window.innerWidth < 576 ? '12px' : '14px',
                                             fontWeight: 600
                                         }}>
                                             {value}
@@ -877,27 +976,44 @@ const LeadsAnalytics = ({ leads }) => {
                             border: 'none',
                             boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                         }}
-                        bodyStyle={{ padding: '24px' }}
+                        bodyStyle={{ 
+                            padding: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '20px' : '24px'
+                        }}
                     >
-                        <Title level={5} style={chartTitleStyle}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: window.innerWidth < 576 ? '16px' : 
+                                    window.innerWidth < 992 ? '18px' : '20px',
+                            marginBottom: window.innerWidth < 576 ? '16px' : '20px',
+                            textAlign: window.innerWidth < 576 ? 'center' : 'left'
+                        }}>
                             Pipeline Progress
                         </Title>
-                        <ResponsiveContainer width="100%" height={400}>
+                        <ResponsiveContainer width="100%" height={window.innerWidth < 576 ? 300 : 400}>
                             <LineChart
                                 data={pipelineData}
-                                margin={{ top: 20, right: 50, left: 30, bottom: 60 }}
+                                margin={{
+                                    top: window.innerWidth < 576 ? 10 : 20,
+                                    right: window.innerWidth < 576 ? 10 : 50,
+                                    left: window.innerWidth < 576 ? 10 : 30,
+                                    bottom: window.innerWidth < 576 ? 40 : 60
+                                }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis
                                     dataKey="name"
                                     interval={0}
-                                    height={80}
+                                    height={window.innerWidth < 576 ? 60 : 80}
                                     tick={{
-                                        fontSize: 16,
-                                        fontWeight: 700,
-                                        fill: '#262626'
+                                        fontSize: window.innerWidth < 576 ? 12 : 
+                                                window.innerWidth < 992 ? 14 : 16,
+                                        fontWeight: window.innerWidth < 576 ? 600 : 700,
+                                        fill: '#262626',
+                                        angle: -45,
+                                        textAnchor: 'end'
                                     }}
-                                    tickMargin={20}
+                                    tickMargin={window.innerWidth < 576 ? 10 : 20}
                                 />
                                 <YAxis
                                     yAxisId="left"
@@ -906,21 +1022,22 @@ const LeadsAnalytics = ({ leads }) => {
                                     allowDecimals={false}
                                     interval={0}
                                     tick={{
-                                        fontSize: 14,
+                                        fontSize: window.innerWidth < 576 ? 12 : 
+                                                window.innerWidth < 992 ? 13 : 14,
                                         fill: '#262626',
-                                        fontWeight: 600
+                                        fontWeight: window.innerWidth < 576 ? 500 : 600
                                     }}
-                                    tickMargin={12}
-                                    width={80}
+                                    tickMargin={window.innerWidth < 576 ? 8 : 12}
+                                    width={window.innerWidth < 576 ? 50 : 80}
                                     label={{
                                         value: 'Lead Count',
                                         angle: -90,
                                         position: 'insideLeft',
                                         offset: -5,
                                         style: {
-                                            fill: '#262626',
-                                            fontWeight: 600,
-                                            fontSize: 14
+                                            fontSize: window.innerWidth < 576 ? 12 : 14,
+                                            fontWeight: window.innerWidth < 576 ? 500 : 600,
+                                            fill: '#262626'
                                         }
                                     }}
                                 />
@@ -929,40 +1046,48 @@ const LeadsAnalytics = ({ leads }) => {
                                     orientation="right"
                                     tickFormatter={formatNumber}
                                     tick={{
-                                        fontSize: 14,
+                                        fontSize: window.innerWidth < 576 ? 12 : 
+                                                window.innerWidth < 992 ? 13 : 14,
                                         fill: '#262626',
-                                        fontWeight: 600
+                                        fontWeight: window.innerWidth < 576 ? 500 : 600
                                     }}
-                                    tickMargin={12}
-                                    width={80}
+                                    tickMargin={window.innerWidth < 576 ? 8 : 12}
+                                    width={window.innerWidth < 576 ? 50 : 80}
                                     label={{
                                         value: 'Lead Value',
                                         angle: 90,
                                         position: 'insideRight',
                                         offset: 5,
                                         style: {
-                                            fill: '#262626',
-                                            fontWeight: 600,
-                                            fontSize: 14
+                                            fontSize: window.innerWidth < 576 ? 12 : 14,
+                                            fontWeight: window.innerWidth < 576 ? 500 : 600,
+                                            fill: '#262626'
                                         }
                                     }}
                                 />
                                 <Tooltip
                                     content={<CustomTooltip />}
                                     cursor={{ strokeDasharray: '3 3' }}
+                                    wrapperStyle={{
+                                        fontSize: window.innerWidth < 576 ? '12px' : 
+                                                window.innerWidth < 992 ? '13px' : '14px'
+                                    }}
                                 />
                                 <Legend
                                     verticalAlign="top"
-                                    height={36}
+                                    height={window.innerWidth < 576 ? 30 : 36}
                                     formatter={(value, entry) => (
                                         <span style={{
                                             color: entry.color === COLORS.chart.leadCount.main ? '#1890ff' : '#595959',
-                                            fontWeight: 600,
-                                            fontSize: '14px'
+                                            fontWeight: window.innerWidth < 576 ? 500 : 600,
+                                            fontSize: window.innerWidth < 576 ? '12px' : '14px'
                                         }}>
                                             {value}
                                         </span>
                                     )}
+                                    wrapperStyle={{
+                                        paddingBottom: window.innerWidth < 576 ? '12px' : '16px'
+                                    }}
                                 />
                                 <Line
                                     yAxisId="left"
@@ -970,18 +1095,18 @@ const LeadsAnalytics = ({ leads }) => {
                                     dataKey="count"
                                     name="Lead Count"
                                     stroke={COLORS.chart.leadCount.main}
-                                    strokeWidth={2}
+                                    strokeWidth={window.innerWidth < 576 ? 1.5 : 2}
                                     dot={{
-                                        r: 4,
+                                        r: window.innerWidth < 576 ? 3 : 4,
                                         fill: COLORS.chart.leadCount.main,
                                         stroke: '#fff',
-                                        strokeWidth: 2
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2
                                     }}
                                     activeDot={{
-                                        r: 6,
+                                        r: window.innerWidth < 576 ? 5 : 6,
                                         fill: COLORS.chart.leadCount.hover,
                                         stroke: '#fff',
-                                        strokeWidth: 2
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2
                                     }}
                                 />
                                 <Line
@@ -990,18 +1115,18 @@ const LeadsAnalytics = ({ leads }) => {
                                     dataKey="value"
                                     name="Lead Value"
                                     stroke={COLORS.chart.leadValue.main}
-                                    strokeWidth={2}
+                                    strokeWidth={window.innerWidth < 576 ? 1.5 : 2}
                                     dot={{
-                                        r: 4,
+                                        r: window.innerWidth < 576 ? 3 : 4,
                                         fill: COLORS.chart.leadValue.main,
                                         stroke: '#fff',
-                                        strokeWidth: 2
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2
                                     }}
                                     activeDot={{
-                                        r: 6,
+                                        r: window.innerWidth < 576 ? 5 : 6,
                                         fill: COLORS.chart.leadValue.hover,
                                         stroke: '#fff',
-                                        strokeWidth: 2
+                                        strokeWidth: window.innerWidth < 576 ? 1.5 : 2
                                     }}
                                 />
                             </LineChart>

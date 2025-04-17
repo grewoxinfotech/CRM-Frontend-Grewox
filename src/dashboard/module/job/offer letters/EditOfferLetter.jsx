@@ -75,16 +75,15 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
 
             // Format and set form values
             const formattedValues = {
-                job: initialValues.job,  // Direct job ID
-                job_applicant: initialValues.job_applicant,  // Direct job_applicant ID
-                offer_expiry: dayjs(initialValues.offer_expiry),  // Convert to dayjs
-                expected_joining_date: dayjs(initialValues.expected_joining_date),  // Convert to dayjs
+                job: initialValues.job,
+                job_applicant: initialValues.job_applicant,
+                offer_expiry: dayjs(initialValues.offer_expiry),
+                expected_joining_date: dayjs(initialValues.expected_joining_date),
                 salary: initialValues.salary,
-                currency: initialValues.currency || '₹',
+                currency: initialValues.currency?.id || initialValues.currency,
                 description: initialValues.description,
                 status: initialValues.status
             };
-
 
             // Set form values
             form.setFieldsValue(formattedValues);
@@ -103,7 +102,7 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                 expected_joining_date: dayjs(values.expected_joining_date).format('YYYY-MM-DD'),
                 salary: values.salary,
                 description: values.description,
-                currency: values.currency || '₹',
+                currency: values.currency,
                 status: initialValues.status || 'pending',
                 client_id: localStorage.getItem('client_id'),
                 created_by: localStorage.getItem('user_id')
@@ -124,16 +123,16 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                 }).unwrap();
             } else {
                 response = await updateOfferLetter({
-                id: initialValues.id,
+                    id: initialValues.id,
                     data: payload
-            }).unwrap();
+                }).unwrap();
             }
 
             if (response.success) {
                 message.success('Offer letter updated successfully');
-                setFileList([]); // Clear file list
-                form.resetFields(); // Reset form
-                onCancel(); // Close modal
+                setFileList([]);
+                form.resetFields();
+                onCancel();
             } else {
                 message.error(response.message || 'Failed to update offer letter');
             }
@@ -411,21 +410,27 @@ const EditOfferLetter = ({ open, onCancel, initialValues, loading }) => {
                                         }}
                                         loading={currenciesLoading}
                                         className="currency-select"
-                                        defaultValue="USD"
+                                        defaultValue={currencies?.find(c => c.currencyCode === 'INR')?.id}
                                         dropdownStyle={{
                                             padding: '8px',
                                             borderRadius: '10px',
                                         }}
                                         showSearch
                                         optionFilterProp="children"
-                                        filterOption={(input, option) =>
-                                            option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
+                                        filterOption={(input, option) => {
+                                            const currency = currencies?.find(c => c.id === option.value);
+                                            return currency?.currencyCode.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                        }}
                                     >
                                         {currencies?.map(currency => (
-                                            <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                            <Option 
+                                                key={currency.id} 
+                                                value={currency.id}
+                                                selected={currency.currencyCode === 'INR'}
+                                            >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <span>{currency.currencyIcon}</span>
+                                                    <span>{currency.currencyCode}</span>
                                                 </div>
                                             </Option>
                                         ))}

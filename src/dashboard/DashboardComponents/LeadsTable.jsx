@@ -4,6 +4,94 @@ import { FiTarget } from 'react-icons/fi';
 
 const { Text } = Typography;
 
+// Add responsive styles object
+const responsiveStyles = {
+    tableWrapper: {
+        overflow: 'auto',
+        '@media (max-width: 768px)': {
+            margin: '0 -16px',
+        }
+    },
+    headerContainer: {
+        background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
+        borderBottom: '1px solid #e6f4ff',
+        padding: '16px',
+        borderRadius: '8px 8px 0 0',
+        '@media (max-width: 768px)': {
+            padding: '12px',
+        }
+    },
+    headerContent: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '12px',
+        flexWrap: 'wrap',
+        gap: '12px',
+        '@media (max-width: 576px)': {
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+        }
+    },
+    titleSection: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        flexWrap: 'wrap',
+        '@media (max-width: 576px)': {
+            width: '100%',
+        }
+    },
+    filterSection: {
+        '@media (max-width: 576px)': {
+            width: '100%',
+            '.ant-radio-group': {
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '8px',
+            },
+            '.ant-radio-button-wrapper': {
+                flex: '1',
+                textAlign: 'center',
+                minWidth: 'calc(50% - 4px)',
+            }
+        }
+    },
+    iconContainer: {
+        background: '#1890ff',
+        width: '28px',
+        height: '28px',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+    },
+    titleText: {
+        fontSize: '18px',
+        color: '#1f2937',
+        background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        fontWeight: '600',
+        letterSpacing: '-0.02em',
+        '@media (max-width: 576px)': {
+            fontSize: '16px',
+        }
+    },
+    totalTag: {
+        marginLeft: '8px',
+        background: '#e6f4ff',
+        border: 'none',
+        color: '#1890ff',
+        fontWeight: '600',
+        fontSize: '13px',
+        '@media (max-width: 576px)': {
+            fontSize: '12px',
+        }
+    }
+};
+
 const LeadsTable = ({
     leads,
     loading,
@@ -47,7 +135,7 @@ const LeadsTable = ({
                         value={selectedKeys[0]}
                         onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
                         onPressEnter={() => confirm()}
-                        style={{ width: 180, marginBottom: 8, display: 'block' }}
+                        style={{ width: '100%', marginBottom: 8, display: 'block' }}
                     />
                     <Space>
                         <Button type="primary" onClick={() => confirm()} size="small">Search</Button>
@@ -58,18 +146,22 @@ const LeadsTable = ({
             onFilter: (value, record) =>
                 record.leadTitle.toLowerCase().includes(value.toLowerCase()),
             render: (text, record) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
                     <Avatar style={{
                         backgroundColor: record.is_converted ? '#52c41a' : '#1890ff',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        flexShrink: 0
                     }}>
-                        {text[0].toUpperCase()}
+                        {text && text[0] ? text[0].toUpperCase() : 'L'}
                     </Avatar>
-                    <Text strong>{text}</Text>
+                    <Text strong style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {text || 'Untitled Lead'}
+                    </Text>
                 </div>
             ),
+            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
         },
         {
             title: "Interest Level",
@@ -116,13 +208,15 @@ const LeadsTable = ({
                         borderRadius: '4px',
                         padding: '2px 8px',
                         fontSize: '12px',
-                        fontWeight: '500'
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap'
                     }}>
                         {interestStyle.icon}
                         {interestStyle.text}
                     </Tag>
                 );
-            }
+            },
+            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Value",
@@ -132,11 +226,12 @@ const LeadsTable = ({
             render: (value, record) => {
                 const currency = currencies?.find(c => c.id === record.currency);
                 return (
-                    <Text strong style={{ fontSize: '13px', color: '#52c41a' }}>
+                    <Text strong style={{ fontSize: '13px', color: '#52c41a', whiteSpace: 'nowrap' }}>
                         {currency?.currencyIcon || ''} {(value || 0).toLocaleString()}
                     </Text>
                 );
-            }
+            },
+            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Status",
@@ -159,12 +254,14 @@ const LeadsTable = ({
                 return (
                     <Tag color={statusColor} style={{
                         textTransform: 'capitalize',
-                        fontSize: '12px'
+                        fontSize: '12px',
+                        whiteSpace: 'nowrap'
                     }}>
                         {statusName}
                     </Tag>
                 );
-            }
+            },
+            responsive: ['md', 'lg', 'xl']
         }
     ];
 
@@ -174,99 +271,62 @@ const LeadsTable = ({
             bodyStyle={{ padding: 0 }}
             style={{ height: '100%' }}
         >
-            <div className="table-header-wrapper" style={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0f2ff 100%)',
-                borderBottom: '1px solid #e6f4ff',
-                padding: '16px',
-                borderRadius: '8px 8px 0 0'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '12px'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{
-                            background: '#1890ff',
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
+            <div style={responsiveStyles.headerContainer}>
+                <div style={responsiveStyles.headerContent}>
+                    <div style={responsiveStyles.titleSection}>
+                        <div style={responsiveStyles.iconContainer}>
                             <FiTarget style={{ color: 'white', fontSize: '16px' }} />
                         </div>
-                        <Text strong style={{
-                            fontSize: '18px',
-                            color: '#1f2937',
-                            background: 'linear-gradient(90deg, #1890ff, #69c0ff)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            fontWeight: '600',
-                            letterSpacing: '-0.02em'
-                        }}>
+                        <Text strong style={responsiveStyles.titleText}>
                             Lead Data
                         </Text>
-                        <Tag style={{
-                            marginLeft: '8px',
-                            background: '#e6f4ff',
-                            border: 'none',
-                            color: '#1890ff',
-                            fontWeight: '600',
-                            fontSize: '13px'
-                        }}>
+                        <Tag style={responsiveStyles.totalTag}>
                             {leads?.length || 0} Total
                         </Tag>
                     </div>
-                    <Radio.Group
-                        value={dateFilter}
-                        onChange={(e) => setDateFilter(e.target.value)}
-                        size="small"
-                    >
-                        <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
-                        <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
-                        <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
-                        <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
-                    </Radio.Group>
+                    <div style={responsiveStyles.filterSection}>
+                        <Radio.Group
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            size="small"
+                        >
+                            <Radio.Button value="all" style={{ fontSize: '12px', fontWeight: '500' }}>All Time</Radio.Button>
+                            <Radio.Button value="today" style={{ fontSize: '12px', fontWeight: '500' }}>Today</Radio.Button>
+                            <Radio.Button value="month" style={{ fontSize: '12px', fontWeight: '500' }}>This Month</Radio.Button>
+                            <Radio.Button value="year" style={{ fontSize: '12px', fontWeight: '500' }}>This Year</Radio.Button>
+                        </Radio.Group>
+                    </div>
                 </div>
             </div>
 
-            <Table
-                dataSource={[...Array(5)].map((_, index) => {
-                    const filteredLeads = filterLeadsByDate(leads) || [];
-                    return filteredLeads[index] || {
-                        id: `empty-${index}`,
-                        leadTitle: '',
-                        interest_level: '',
-                        leadValue: '',
-                        status: '',
-                        isEmpty: true
-                    };
-                })}
-                columns={columns.map(col => ({
-                    ...col,
-                    render: (text, record) => {
-                        if (record.isEmpty) {
-                            return <div style={{ height: '24px' }}>&nbsp;</div>;
-                        }
-                        return col.render ? col.render(text, record) : text;
-                    }
-                }))}
-                rowKey="id"
-                pagination={false}
-                className="colorful-table fixed-height-table"
-                onRow={(record) => ({
-                    onClick: !record.isEmpty ? () => navigate(`/dashboard/crm/lead/${record.id}`) : undefined,
-                    style: {
-                        cursor: !record.isEmpty ? 'pointer' : 'default',
-                        background: record.isEmpty ? '#fafafa' : undefined
-                    }
-                })}
-                scroll={{ x: true }}
-                loading={loading}
-            />
+            <div style={responsiveStyles.tableWrapper}>
+                <Table
+                    dataSource={filterLeadsByDate(leads)}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={false}
+                    className="colorful-table fixed-height-table"
+                    onRow={(record) => ({
+                        onClick: () => navigate(`/dashboard/crm/lead/${record.id}`),
+                        style: { cursor: 'pointer' }
+                    })}
+                    scroll={{ x: 'max-content' }}
+                    // loading={loading}
+                    locale={{
+                        emptyText: (
+                            <div style={{ 
+                                padding: '24px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <Text type="secondary">No leads found</Text>
+                            </div>
+                        )
+                    }}
+                />
+            </div>
         </Card>
     );
 };

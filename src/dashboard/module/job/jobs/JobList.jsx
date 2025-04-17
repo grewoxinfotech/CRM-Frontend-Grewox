@@ -2,8 +2,22 @@ import React from 'react';
 import { Table, Button, Tag, Dropdown, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
 const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
+    const { data: currencies } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
+
+    const getCurrencyDetails = (currencyId) => {
+        if (!currencies || !currencyId) return { icon: '', code: '' };
+        const currency = currencies.find(c => c.id === currencyId);
+        return {
+            icon: currency?.currencyIcon || '',
+            code: currency?.currencyCode || ''
+        };
+    };
 
     const statuses = [
         { id: 'active', name: 'Active' },
@@ -121,11 +135,15 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
         {
             title: 'Salary',
             key: 'salary',
-            sorter: (a, b) => (a.salary || '').localeCompare(b.salary || ''),
-
-            render: (record) => (
-                <span>{record.currency || ''} {record.expectedSalary || 'N/A'}</span>
-            )
+            sorter: (a, b) => (a.expectedSalary || '').localeCompare(b.expectedSalary || ''),
+            render: (record) => {
+                const currencyDetails = getCurrencyDetails(record.currency);
+                return (
+                    <span>
+                        {currencyDetails.icon} {record.expectedSalary || 'N/A'}
+                    </span>
+                );
+            }
         },
         {
             title: 'Status',

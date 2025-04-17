@@ -25,6 +25,8 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
 import { useCreateInterviewMutation } from './services/interviewApi';
+import { useGetUsersQuery } from '../../user-management/users/services/userApi';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 
 // Extend dayjs with plugins
 dayjs.extend(customParseFormat);
@@ -51,6 +53,27 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
     const [createInterview, { isLoading: isCreating }] = useCreateInterviewMutation();
     const { data: jobApplications, isLoading: applicationsLoading } = useGetAllJobApplicationsQuery();
     const { data: jobs, isLoading: isLoadingJobs } = useGetAllJobsQuery();
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
+    const { data: rolesData } = useGetRolesQuery();
+
+    // Add array of excluded role names - adjust these based on your needs
+    const excludedRoleNames = ['employee', 'client', 'sub-client', 'super-admin'];
+
+    // Filter users based on roles
+    const filteredUsers = React.useMemo(() => {
+        if (!userData?.data || !rolesData?.data) return [];
+        
+        const usersList = Array.isArray(userData.data) ? userData.data : [];
+        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+
+        return usersList.filter(user => {
+            const userRole = rolesList.find(role => role.id === user.role_id);
+            if (!userRole || excludedRoleNames.includes(userRole.role_name.toLowerCase())) {
+                return false;
+            }
+            return true;
+        });
+    }, [userData, rolesData]);
 
     useEffect(() => {
         if (open && selectedDate) {
@@ -134,7 +157,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
             open={open}
             onCancel={onCancel}
             footer={null}
-            width={720}
+            width={820}
             destroyOnClose={true}
             centered
             closeIcon={null}
@@ -304,17 +327,128 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
                     <Form.Item
                         name="interviewer"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interviewer</span>}
-                        rules={[{ required: true, message: 'Please enter interviewer name' }]}
+                        rules={[{ required: true, message: 'Please select interviewer' }]}
                     >
-                        <Input
-                            placeholder="Enter interviewer name"
+                        <Select
+                            showSearch
+                            placeholder="Select interviewer"
+                            optionFilterProp="label"
                             size="large"
+                            listHeight={100}
+                            dropdownStyle={{
+                                Height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             style={{
                                 width: '100%',
-                                height: '48px',
                                 borderRadius: '10px',
-                                backgroundColor: '#f8fafc',
                             }}
+                            filterOption={(input, option) => {
+                                const label = option?.label?.toString() || '';
+                                return label.toLowerCase().includes(input.toLowerCase());
+                            }}
+                            options={Array.isArray(filteredUsers) ? filteredUsers.map(user => {
+                                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                                const roleStyles = {
+                                    'employee': {
+                                        color: '#D46B08',
+                                        bg: '#FFF7E6',
+                                        border: '#FFD591'
+                                    },
+                                    'default': {
+                                        color: '#531CAD',
+                                        bg: '#F9F0FF',
+                                        border: '#D3ADF7'
+                                    }
+                                };
+                                
+                                const roleStyle = roleStyles[userRole?.role_name?.toLowerCase()] || roleStyles.default;
+
+                                return {
+                                    label: (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            padding: '4px 0'
+                                        }}>
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '50%',
+                                                background: '#e6f4ff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#1890ff',
+                                                fontSize: '16px',
+                                                fontWeight: '500',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                {user.profilePic ? (
+                                                    <img
+                                                        src={user.profilePic}
+                                                        alt={user.name || user.username}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            objectFit: 'cover'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <FiUser style={{ fontSize: '20px' }} />
+                                                )}
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                flex: 1
+                                            }}>
+                                                <span style={{
+                                                    fontWeight: 500,
+                                                    color: 'rgba(0, 0, 0, 0.85)',
+                                                    fontSize: '14px'
+                                                }}>
+                                                    {user.name || user.username}
+                                                </span>
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                <div
+                                                    className="role-indicator"
+                                                    style={{
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        borderRadius: '50%',
+                                                        background: roleStyle.color,
+                                                        boxShadow: `0 0 8px ${roleStyle.color}`,
+                                                        animation: 'pulse 2s infinite'
+                                                    }}
+                                                />
+                                                <span style={{
+                                                    padding: '0px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '12px',
+                                                    background: roleStyle.bg,
+                                                    color: roleStyle.color,
+                                                    border: `1px solid ${roleStyle.border}`,
+                                                    fontWeight: 500,
+                                                    textTransform: 'capitalize'
+                                                }}>
+                                                    {userRole?.role_name || 'User'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ),
+                                    value: user.id
+                                };
+                            }) : []}
                         />
                     </Form.Item>
 

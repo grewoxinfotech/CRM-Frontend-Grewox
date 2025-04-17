@@ -108,13 +108,6 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
             sorter: (a, b) => a.total_experience.localeCompare(b.total_experience),
         },
         {
-            title: 'Cover Letter',
-            dataIndex: 'cover_letter',
-            key: 'cover_letter',
-            render: (date) => date.slice(0, 10),
-            sorter: (a, b) => moment(a.cover_letter).unix() - moment(b.cover_letter).unix(),
-        },
-        {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',

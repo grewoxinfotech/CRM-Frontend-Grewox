@@ -813,9 +813,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                     className="company-logo"
                   />
                 ) : (
-                  <img 
-                    src="https://grewox.com/assets/logo.png" 
-                    alt="Grewox Logo" 
+          <img
+            src="https://grewox.com/assets/logo.png"
+            alt="Grewox Logo"
                     className="company-logo"
                   />
                 )}
@@ -823,8 +823,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                   <h3>{companyName}</h3>
                   <p>{companyWebsite} | {companyEmail}</p>
                 </div>
-              </div>
-            </div>
+          </div>
+        </div>
 
             <div className="bill-details">
               <div className="bill-section">
@@ -856,72 +856,72 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                       {invoice?.payment_status}
                     </span>
                   </div>
-                </div>
-              </div>
-            </div>
+          </div>
+          </div>
+        </div>
 
             <div className="bill-items">
               <table className="items-table">
-                <thead>
-                  <tr>
+          <thead>
+            <tr>
                     <th>Description</th>
                     <th>Qty</th>
                     <th>Rate</th>
                     <th className="text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
+            </tr>
+          </thead>
+          <tbody>
                   {Array.isArray(invoice.items) && invoice.items.map((item, index) => {
-                    const quantity = Number(item.quantity) || 0;
-                    const rate = Number(item.unit_price || item.rate) || 0;
-                    const amount = quantity * rate;
-                    
-                    return (
-                      <tr key={index}>
+              const quantity = Number(item.quantity) || 0;
+              const rate = Number(item.unit_price || item.rate) || 0;
+              const amount = quantity * rate;
+              
+              return (
+                <tr key={index}>
                         <td>{item.item_name || item.name || item.description}</td>
                         <td>{quantity}</td>
                         <td>₹{rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                         <td className="text-right">
                           ₹{amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                      </tr>
-                    );
-                  })}
+                </tr>
+              );
+            })}
                   {Number(invoice?.tax) > 0 && (
                     <tr className="summary-row">
                       <td colSpan="3">GST</td>
                       <td className="text-right">
                         ₹{Number(invoice.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                    </tr>
-                  )}
+              </tr>
+            )} 
                   {Number(invoice?.discount) > 0 && (
                     <tr className="summary-row">
                       <td colSpan="3">Discount</td>
                       <td className="text-right">
                         ₹{Number(invoice.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                    </tr>
-                  )}
+              </tr>
+            )}
                   <tr className="total-row">
                     <td colSpan="3">Total Amount</td>
                     <td className="text-right total-amount">
                       ₹{Number(invoice?.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-                  </tr>
-                </tbody>
-              </table>
+            </tr>
+          </tbody>
+        </table>
             </div>
 
             <div className="bill-footer">
               <div className="payment-section">
                 <div className="qr-code">
-                  <QRCodeSVG
-                    value={getPaymentUrl()}
-                    size={120}
-                    level="H"
-                    includeMargin={true}
-                  />
+              <QRCodeSVG
+                value={getPaymentUrl()}
+                size={120}
+                level="H"
+                includeMargin={true}
+              />
                   <div className="qr-info">
                     <p>Scan to Pay</p>
                     <p className="amount">₹{Number(invoice?.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
@@ -942,7 +942,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                 <h4>Notes</h4>
                 <p>{invoice?.note || 'Thank you for your payment!'}</p>
                 <p className="powered-by">Powered by {companyName} | {companyWebsite}</p>
-              </div>
+            </div>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Modal,
     Form,
@@ -9,14 +9,18 @@ import {
     message,
     Select,
     InputNumber,
-    DatePicker
+    DatePicker,
+    Space
 } from 'antd';
-import { FiUser, FiFileText, FiMapPin, FiBriefcase, FiDollarSign, FiX, FiClock } from 'react-icons/fi';
+import { FiUser, FiFileText, FiMapPin, FiBriefcase, FiDollarSign, FiX, FiClock, FiFolder, FiPlus } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { useCreateJobMutation, useUpdateJobMutation } from './services/jobApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
+import { useGetUsersQuery } from '../../user-management/users/services/userApi';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
+import CreateUser from '../../user-management/users/CreateUser';
 
 // Initialize dayjs plugins
 dayjs.extend(customParseFormat);
@@ -32,17 +36,6 @@ const jobTypes = [
     'Contract',
     'Temporary',
     'Internship'
-];
-
-const departments = [
-    'Engineering',
-    'Product',
-    'Marketing',
-    'Sales',
-    'Customer Support',
-    'Human Resources',
-    'Finance',
-    'Operations'
 ];
 
 const experienceLevels = [
@@ -78,17 +71,80 @@ const interviewRoundOptions = [
 
 const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading }) => {
     const [form] = Form.useForm();
+    // const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
     const [createJob] = useCreateJobMutation();
     const [updateJob] = useUpdateJobMutation();
     const { data: currencies, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
     });
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
+    const { data: rolesData } = useGetRolesQuery();
+
+    // Add array of excluded role names - adjust these based on your needs
+    const excludedRoleNames = ['employee', 'client', 'sub-client', 'super-admin'];
+
+    // Filter users based on roles
+    const filteredUsers = React.useMemo(() => {
+        if (!userData?.data || !rolesData?.data) return [];
+        
+        const usersList = Array.isArray(userData.data) ? userData.data : [];
+        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+
+        return usersList.filter(user => {
+            const userRole = rolesList.find(role => role.id === user.role_id);
+            if (!userRole || excludedRoleNames.includes(userRole.role_name.toLowerCase())) {
+                return false;
+            }
+            return true;
+        });
+    }, [userData, rolesData]);
+
+    // const handleCreateUserSuccess = async (newUser) => {
+    //     setIsCreateUserModalOpen(false);
+    //     message.success('User created successfully');
+    //     if (newUser?.id) {
+    //         form.setFieldValue('recruiter', newUser.id);
+    //     }
+    // };
+
+    // const handleAddNewUser = (e) => {
+    //     if (e) {
+    //         e.preventDefault();
+    //         e.stopPropagation();
+    //     }
+    //     setIsCreateUserModalOpen(true);
+    // };
+
+    // const dropdownRender = (menu) => (
+    //     <>
+    //         {menu}
+    //         <Divider style={{ margin: '8px 0' }} />
+    //         <div onClick={e => e.stopPropagation()}>
+    //             {/* <Button
+    //                 type="link"
+    //                 icon={<FiPlus style={{ fontSize: '16px' }} />}
+    //                 onClick={handleAddNewUser}
+    //                 style={{ 
+    //                     padding: '8px 12px',
+    //                     display: 'flex',
+    //                     alignItems: 'center',
+    //                     width: '100%',
+    //                     color: '#1890ff',
+    //                     fontWeight: 500,
+    //                     gap: '8px'
+    //                 }}
+    //             >
+    //                 Add New Recruiter
+    //             </Button> */}
+    //         </div>
+    //     </>
+    // );
 
     useEffect(() => {
         if (currencies?.length && !isEditing) {
             const defaultCurrency = currencies.find(c => c.currencyCode === 'INR') || currencies[0];
-            form.setFieldValue('currency', defaultCurrency.currencyCode);
+            form.setFieldValue('currency', defaultCurrency.id);
         }
     }, [currencies, form, isEditing]);
 
@@ -99,16 +155,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                 // Format the initial values for editing
                 const formattedValues = {
                     ...initialValues,
-                    // Format dates
                     startDate: initialValues.startDate ? dayjs(initialValues.startDate) : undefined,
                     endDate: initialValues.endDate ? dayjs(initialValues.endDate) : undefined,
-
-                    skills: initialValues.skills?.Skills || [],
-
-                    // Extract and format interview rounds
-                    interviewRounds: initialValues.interviewRounds?.InterviewRounds || [],
-
-                    // Keep other fields as they are
+                    skills: initialValues.skills?.Skills,
+                    interviewRounds: initialValues.interviewRounds?.InterviewRounds,
                     title: initialValues.title,
                     category: initialValues.category,
                     location: initialValues.location,
@@ -117,38 +167,32 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                     recruiter: initialValues.recruiter,
                     jobType: initialValues.jobType || 'Full-time',
                     workExperience: initialValues.workExperience,
-                    currency: initialValues.currency || 'INR',
+                    currency: initialValues.currency?.id || initialValues.currency,
                     expectedSalary: initialValues.expectedSalary,
                     description: initialValues.description
                 };
 
-                // Ensure dates are valid before setting
-                if (formattedValues.startDate && !dayjs.isDayjs(formattedValues.startDate)) {
-                    formattedValues.startDate = null;
-                }
-                if (formattedValues.endDate && !dayjs.isDayjs(formattedValues.endDate)) {
-                    formattedValues.endDate = null;
-                }
+                console.log(formattedValues);
                 
                 form.setFieldsValue(formattedValues);
             } else {
                 // Set default values for new job
+                const defaultCurrency = currencies?.find(c => c.currencyCode === 'INR') || currencies?.[0];
                 form.setFieldsValue({
                     status: 'active',
                     jobType: 'Full-time',
-                    currency: '₹'
+                    currency: defaultCurrency?.id
                 });
-                
-                // If currencies are loaded but we still want INR as default
-                if (currencies?.length > 0) {
-                    const inrCurrency = currencies.find(c => c.currencyCode === '₹');
-                    if (inrCurrency) {
-                        form.setFieldValue('currency', '₹');
-                    }
-                }
             }
         }
     }, [open, form, initialValues, currencies]);
+
+    const getFieldRules = (fieldName) => {
+        if (!isEditing) {
+            return [{ required: true, message: `Please enter ${fieldName}` }];
+        }
+        return []; // No validation rules in edit mode
+    };
 
     const handleSubmit = async () => {
         try {
@@ -174,25 +218,28 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                 }
             }
 
+            // Get the selected currency details using ID
+            const selectedCurrency = currencies?.find(c => c.id === values.currency);
+
             // Format the data according to the required payload structure
             const formattedValues = {
                 title: values.title,
                 category: values.category,
                 skills: {
-                    Skills: values.skills  // Changed to match API response format
+                    Skills: values.skills
                 },
                 location: values.location,
                 interviewRounds: {
-                    InterviewRounds: values.interviewRounds  // Changed to match API response format
+                    InterviewRounds: values.interviewRounds
                 },
                 startDate: startDate,
                 endDate: endDate,
                 totalOpenings: values.totalOpenings || 1,
                 status: values.status,
                 recruiter: values.recruiter,
-                jobType: values.jobType, // Ensure jobType is included and required
+                jobType: values.jobType,
                 workExperience: values.workExperience,
-                currency: values.currency,
+                currency: values.currency.toString(),
                 expectedSalary: values.expectedSalary,
                 description: values.description
             };
@@ -238,12 +285,13 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
     };
 
     return (
+        <>
         <Modal
             title={null}
             open={open}
             onCancel={onCancel}
             footer={null}
-            width={720}
+                width={820}
             destroyOnClose={true}
             centered
             closeIcon={null}
@@ -362,13 +410,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="title"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Job Title
+                                    Job Title {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[
-                            { required: true, message: 'Please enter job title' },
-                            { max: 100, message: 'Job title cannot exceed 100 characters' }
-                        ]}
+                            rules={getFieldRules('job title')}
                     >
                         <Input
                             prefix={<FiBriefcase style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -389,39 +434,33 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="category"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Category
+                                    Category {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select category' }]}
-                    >
-                        <Select
-                            listHeight={100}
-                            dropdownStyle={{
-                                Height: '100px',
-                                overflowY: 'auto',
-                                scrollbarWidth: 'thin',
-                                scrollBehavior: 'smooth'
-                            }}
-                            placeholder="Select category"
+                            rules={getFieldRules('category')}
+                        >
+                            <Input
+                                prefix={<FiFolder style={{ color: '#1890ff', fontSize: '16px' }} />}
+                                placeholder="Enter job category"
                             size="large"
                             style={{
-                                width: '100%',
+                                    borderRadius: '10px',
+                                    padding: '8px 16px',
                                 height: '48px',
-                            }}
-                        >
-                            {departments.map(dept => (
-                                <Option key={dept} value={dept}>{dept}</Option>
-                            ))}
-                        </Select>
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #e6e8eb',
+                                    transition: 'all 0.3s ease',
+                                }}
+                            />
                     </Form.Item>
                     <Form.Item
                         name="skills"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Skills
+                                    Skills {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select skills' }]}
+                            rules={getFieldRules('skills')}
                     >
                         <Select
                             listHeight={100}
@@ -453,10 +492,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="interviewRounds"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Interview Rounds
+                                    Interview Rounds {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select interview rounds' }]}
+                            rules={getFieldRules('interview rounds')}
                     >
                         <Select
                             listHeight={100}
@@ -488,10 +527,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="workExperience"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Work Experience
+                                    Work Experience {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select work experience' }]}
+                            rules={getFieldRules('work experience')}
                     >
                         <Select
                             listHeight={100}
@@ -519,23 +558,131 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="recruiter"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Recruiter
+                                    Recruiter {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter recruiter' }]}
-                    >
-                        <Input
-                            prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
-                            placeholder="Enter recruiter"
+                            rules={getFieldRules('recruiter')}
+                        >
+                            <Select
+                                showSearch
+                                placeholder="Select recruiter"
+                                optionFilterProp="label"
                             size="large"
+                                listHeight={100}
+                                dropdownStyle={{
+                                    Height: '100px',
+                                    overflowY: 'auto',
+                                    scrollbarWidth: 'thin',
+                                    scrollBehavior: 'smooth'
+                                }}
                             style={{
+                                    width: '100%',
                                 borderRadius: '10px',
-                                padding: '8px 16px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                                transition: 'all 0.3s ease',
-                            }}
+                                }}
+                                filterOption={(input, option) => {
+                                    const label = option?.label?.toString() || '';
+                                    return label.toLowerCase().includes(input.toLowerCase());
+                                }}
+                                options={Array.isArray(filteredUsers) ? filteredUsers.map(user => {
+                                    const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                                    const roleStyles = {
+                                        'employee': {
+                                            color: '#D46B08',
+                                            bg: '#FFF7E6',
+                                            border: '#FFD591'
+                                        },
+                                        'default': {
+                                            color: '#531CAD',
+                                            bg: '#F9F0FF',
+                                            border: '#D3ADF7'
+                                        }
+                                    };
+                                    
+                                    const roleStyle = roleStyles[userRole?.role_name?.toLowerCase()] || roleStyles.default;
+
+                                    return {
+                                        label: (
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '12px',
+                                                padding: '4px 0'
+                                            }}>
+                                                <div style={{
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    borderRadius: '50%',
+                                                    background: '#e6f4ff',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: '#1890ff',
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    textTransform: 'uppercase'
+                                                }}>
+                                                    {user.profilePic ? (
+                                                        <img
+                                                            src={user.profilePic}
+                                                            alt={user.name || user.username}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                borderRadius: '50%',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <FiUser style={{ fontSize: '20px' }} />
+                                                    )}
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    flex: 1
+                                                }}>
+                                                    <span style={{
+                                                        fontWeight: 500,
+                                                        color: 'rgba(0, 0, 0, 0.85)',
+                                                        fontSize: '14px'
+                                                    }}>
+                                                        {user.name || user.username}
+                                                    </span>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px'
+                                                }}>
+                                                    <div
+                                                        className="role-indicator"
+                                                        style={{
+                                                            width: '8px',
+                                                            height: '8px',
+                                                            borderRadius: '50%',
+                                                            background: roleStyle.color,
+                                                            boxShadow: `0 0 8px ${roleStyle.color}`,
+                                                            animation: 'pulse 2s infinite'
+                                                        }}
+                                                    />
+                                                    <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '12px',
+                                                        background: roleStyle.bg,
+                                                        color: roleStyle.color,
+                                                        border: `1px solid ${roleStyle.border}`,
+                                                        fontWeight: 500,
+                                                        textTransform: 'capitalize'
+                                                    }}>
+                                                        {userRole?.role_name || 'User'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ),
+                                        value: user.id
+                                    };
+                                }) : []}
                         />
                     </Form.Item>
 
@@ -543,10 +690,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="startDate"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Start Date
+                                    Start Date {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter start date' }]}
+                            rules={getFieldRules('start date')}
                     >
                         <DatePicker
                             size="large"
@@ -562,29 +709,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="endDate"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                End Date
+                                    End Date {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        dependencies={['startDate']}
-                        rules={[
-                            { required: true, message: 'Please select end date' },
-                            ({ getFieldValue }) => ({
-                                validator(_, value) {
-                                    const startDate = getFieldValue('startDate');
-                                    if (!startDate || !value) {
-                                        return Promise.resolve();
-                                    }
-                                    
-                                    if (dayjs.isDayjs(value) && dayjs.isDayjs(startDate)) {
-                                        if (value.isAfter(startDate)) {
-                                            return Promise.resolve();
-                                        }
-                                    }
-                                    
-                                    return Promise.reject(new Error('End date must be after start date'));
-                                }
-                            })
-                        ]}
+                            rules={getFieldRules('end date')}
                     >
                         <DatePicker
                             size="large"
@@ -604,10 +732,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="jobType"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Job Type
+                                    Job Type {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select job type' }]}
+                            rules={getFieldRules('job type')}
                     >
                         <Select
                             listHeight={100}
@@ -633,10 +761,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="status"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Status
+                                    Status {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select status' }]}
+                            rules={getFieldRules('status')}
                     >
                         <Select
                             listHeight={100}
@@ -662,11 +790,8 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         <Form.Item
                             name="expectedSalary"
                             label={
-                                <span style={{
-                                    fontSize: '14px',
-                                    fontWeight: '500',
-                                }}>
-                                    Expected Salary
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        Expected Salary {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                                 </span>
                             }
                             style={{ flex: 1 }}
@@ -683,7 +808,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                 <Form.Item
                                     name="currency"
                                     noStyle
-                                    rules={[{ required: true }]}
+                                        rules={getFieldRules('currency')}
                                 >
                                     <Select
                                         size="large"
@@ -693,17 +818,18 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                         }}
                                         loading={currenciesLoading}
                                         className="currency-select"
-                                        defaultValue="INR"
+                                            defaultValue={currencies?.find(c => c.currencyCode === 'INR')?.id}
                                         showSearch
                                         optionFilterProp="children"
-                                        filterOption={(input, option) =>
-                                            option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
+                                            filterOption={(input, option) => {
+                                                const currency = currencies?.find(c => c.id === option.value);
+                                                return currency?.currencyCode.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                            }}
                                     >
                                         {currencies?.map(currency => (
                                             <Option 
-                                                key={currency.currencyCode} 
-                                                value={currency.currencyCode}
+                                                    key={currency.id} 
+                                                    value={currency.id}
                                                 selected={currency.currencyCode === 'INR'}
                                             >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -717,7 +843,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                 <Form.Item
                                     name="expectedSalary"
                                     noStyle
-                                    rules={[{ required: true, message: 'Please enter price' }]}
+                                        rules={getFieldRules('expected salary')}
                                 >
                                     <Input
                                         placeholder="Enter price"
@@ -742,10 +868,10 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="location"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Job Location
+                                    Job Location {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter job location' }]}
+                            rules={getFieldRules('job location')}
                     >
                         <Input
                             prefix={<FiMapPin style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -772,7 +898,6 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                             Job Description
                         </span>
                     }
-                    rules={[{ required: true, message: 'Please enter job description' }]}
                 >
                     <TextArea
                         placeholder="Enter detailed job description"
@@ -835,6 +960,53 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                 </div>
             </Form>
         </Modal>
+
+            <style jsx global>{`
+                .custom-modal {
+                    .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+                        background-color: #f8fafc !important;
+                        border: 1px solid #e6e8eb !important;
+                        border-radius: 10px !important;
+                        min-height: 42px !important;
+                        padding: 0px 16px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                    }
+
+                    .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+                        border-color: #1890ff !important;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+                    }
+
+                    .ant-select-single .ant-select-selector .ant-select-selection-item,
+                    .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+                        // line-height: 32px !important;
+                        transition: all 0.3s !important;
+                        display: flex !important;
+                        align-items: center !important;
+                    }
+
+                    @keyframes pulse {
+                        0% {
+                            transform: scale(1);
+                            opacity: 1;
+                        }
+                        50% {
+                            transform: scale(1.2);
+                            opacity: 0.8;
+                        }
+                        100% {
+                            transform: scale(1);
+                            opacity: 1;
+                        }
+                    }
+
+                    .role-indicator {
+                        animation: pulse 2s infinite;
+                    }
+                }
+            `}</style>
+        </>
     );
 };
 

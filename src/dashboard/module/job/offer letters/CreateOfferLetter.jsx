@@ -44,7 +44,7 @@ dayjs.extend(isSameOrBefore);
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateOfferLetter = ({ open, onCancel, loading }) => {
+const CreateOfferLetter = ({ open, onCancel, loading, initialValues }) => {
     const [form] = Form.useForm();
     const [createOfferLetter, { isLoading: createLoading }] = useCreateOfferLetterMutation();
     const [fileList, setFileList] = useState([]);
@@ -57,11 +57,50 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
     });
 
     useEffect(() => {
+        if (currencies?.length && !initialValues) {
+            const defaultCurrency = currencies.find(c => c.currencyCode === 'INR') || currencies[0];
+            form.setFieldValue('currency', defaultCurrency.id);
+        }
+    }, [currencies, form, initialValues]);
+
+    useEffect(() => {
         if (open) {
             form.resetFields();
-            setFileList([]);
+            if (initialValues) {
+                // Format the initial values for editing
+                const formattedValues = {
+                    ...initialValues,
+                    startDate: initialValues.startDate ? dayjs(initialValues.startDate) : undefined,
+                    endDate: initialValues.endDate ? dayjs(initialValues.endDate) : undefined,
+                    skills: initialValues.skills?.Skills,
+                    interviewRounds: initialValues.interviewRounds?.InterviewRounds,
+                    title: initialValues.title,
+                    category: initialValues.category,
+                    location: initialValues.location,
+                    totalOpenings: initialValues.totalOpenings,
+                    status: initialValues.status,
+                    recruiter: initialValues.recruiter,
+                    jobType: initialValues.jobType || 'Full-time',
+                    workExperience: initialValues.workExperience,
+                    currency: initialValues.currency?.id || initialValues.currency,
+                    expectedSalary: initialValues.expectedSalary,
+                    description: initialValues.description
+                };
+
+                console.log(formattedValues);
+                
+                form.setFieldsValue(formattedValues);
+            } else {
+                // Set default values for new job
+                const defaultCurrency = currencies?.find(c => c.currencyCode === 'INR') || currencies?.[0];
+                form.setFieldsValue({
+                    status: 'active',
+                    jobType: 'Full-time',
+                    currency: defaultCurrency?.id
+                });
+            }
         }
-    }, [open, form]);
+    }, [open, form, initialValues, currencies]);
 
     const handleSubmit = async () => {
         try {
@@ -239,7 +278,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="job"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job <span style={{ color: '#ff4d4f' }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select a job position' }]}
                     >
                         <Select
@@ -268,7 +307,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                         name="job_applicant"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Job Applicant
+                                Job Applicant <span style={{ color: '#ff4d4f' }}>*</span>
                             </span>
                         }
                         rules={[{ required: true, message: 'Please select an applicant' }]}
@@ -306,7 +345,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                         name="offer_expiry"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Offer Expire On
+                                Offer Expire On <span style={{ color: '#ff4d4f' }}>*</span>
                             </span>
                         }
                         rules={[
@@ -332,7 +371,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                         name="expected_joining_date"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Expected Joining Date
+                                Expected Joining Date <span style={{ color: '#ff4d4f' }}>*</span>
                             </span>
                         }
                         rules={[
@@ -362,7 +401,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                     fontSize: '14px',
                                     fontWeight: '500',
                                 }}>
-                                    Expected Salary
+                                    Expected Salary <span style={{ color: '#ff4d4f' }}>*</span>
                                 </span>
                             }
                             style={{ flex: 1 }}
@@ -379,7 +418,7 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                 <Form.Item
                                     name="currency"
                                     noStyle
-                                    rules={[{ required: true }]}
+                                    rules={[{ required: true, message: 'Please select a currency' }]}
                                 >
                                     <Select
                                         size="large"
@@ -389,21 +428,23 @@ const CreateOfferLetter = ({ open, onCancel, loading }) => {
                                         }}
                                         loading={currenciesLoading}
                                         className="currency-select"
-                                        defaultValue="₹"
-                                        dropdownStyle={{
-                                            padding: '8px',
-                                            borderRadius: '10px',
-                                        }}
+                                        defaultValue={currencies?.find(c => c.currencyCode === 'INR')?.id}
                                         showSearch
                                         optionFilterProp="children"
-                                        filterOption={(input, option) =>
-                                            option.value.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
+                                        filterOption={(input, option) => {
+                                            const currency = currencies?.find(c => c.id === option.value);
+                                            return currency?.currencyCode.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                        }}
                                     >
                                         {currencies?.map(currency => (
-                                            <Option key={currency.currencyCode} value={currency.currencyCode}>
+                                            <Option 
+                                                key={currency.id} 
+                                                value={currency.id}
+                                                selected={currency.currencyCode === 'INR'}
+                                            >
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <span>{currency.currencyIcon}</span>
+                                                    <span>{currency.currencyCode}</span>
                                                 </div>
                                             </Option>
                                         ))}

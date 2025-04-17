@@ -143,6 +143,19 @@ const NoteDetailModal = ({ visible, note, onClose, formatDate }) => (
                             }} />
                         </div>
                         <div style={{ flex: 1 }}>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}>
+                                  
+                            <p style={{
+                                fontSize: '15px',
+                                color: '#6B7280',
+                                marginBottom: '4px',
+                                fontWeight: '500'
+                            }}>Title:
+                            </p>
                             <Text style={{
                                 fontSize: '24px',
                                 fontWeight: '600',
@@ -154,8 +167,10 @@ const NoteDetailModal = ({ visible, note, onClose, formatDate }) => (
                                 display: 'block',
                                 marginBottom: '8px'
                             }}>
+                               
                                 {note.note_title}
                             </Text>
+                            </div>
                             <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -198,11 +213,21 @@ const NoteDetailModal = ({ visible, note, onClose, formatDate }) => (
                 <div style={{
                     padding: '24px 32px',
                     background: 'white',
-                    borderRadius: '0 0 16px 16px'
+                    borderRadius: '0 0 16px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
                 }}>
+                   <p style={{
+                       fontSize: '15px',
+                       color: '#6B7280',
+                       marginBottom: '4px',
+                       fontWeight: '500'
+                   }}>Description:
+                   </p>
                     <div style={{
                         fontSize: '15px',
-                        lineHeight: '1.6',
+                        // lineHeight: '1.6',
                         color: '#374151',
                         whiteSpace: 'pre-wrap'
                     }}>

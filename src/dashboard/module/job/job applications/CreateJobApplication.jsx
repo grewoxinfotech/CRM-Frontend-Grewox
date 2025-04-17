@@ -11,7 +11,8 @@ import {
     TimePicker,
     Upload,
     message,
-    Tag
+    Tag,
+    InputNumber
 } from 'antd';
 import { FiUser, FiMail, FiPhone, FiBriefcase, FiDollarSign, FiX, FiClock, FiUpload } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -48,25 +49,51 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
     const { data: jobs, isLoading: isLoadingJobs } = useGetAllJobsQuery();
     const { data: countries, isLoading: countriesLoading } = useGetAllCountriesQuery();
 
-
+    const getFieldRules = (fieldName) => {
+        if (!isEditing) {
+            return [{ required: true, message: `Please enter ${fieldName}` }];
+        }
+        return []; // No validation rules in edit mode
+    };
 
     useEffect(() => {
         if (open) {
             form.resetFields();
             if (initialValues) {
-                // Format phone number from +91XXXXXXXXXX to separate code and number
-                const phoneMatch = initialValues.phone?.match(/^\+(\d{2,3})(\d+)$/);
+                // Parse the phone object if it exists
+                let phoneCode = '+91'; // Default to India's code
+                let phoneNumber = '';
+                
+                // Find the country by ID and get its phone code
+                if (initialValues.phoneCode) {
+                    const country = countries?.find(c => c.id === initialValues.phoneCode);
+                    if (country) {
+                        phoneCode = country.phoneCode;
+                    }
+                }
+
+                // Get phone number
+                if (initialValues.phone) {
+                    phoneNumber = initialValues.phone;
+                }
+
                 const formattedValues = {
                     ...initialValues,
-                    phoneCode: phoneMatch ? phoneMatch[1] : '91',
-                    phoneNumber: phoneMatch ? phoneMatch[2] : '',
+                    phoneCode: phoneCode || '+91', // Ensure phoneCode is never null
+                    phoneNumber,
                     interview_date: initialValues.interview_date ? dayjs(initialValues.interview_date) : undefined,
                     interview_time: initialValues.interview_time ? dayjs(initialValues.interview_time, 'HH:mm A') : undefined
                 };
                 form.setFieldsValue(formattedValues);
+            } else {
+                // Set default values for new application
+                form.setFieldsValue({
+                    phoneCode: '+91', // Set default phone code for new applications
+                    status: 'pending'
+                });
             }
         }
-    }, [open, form, initialValues]);
+    }, [open, form, initialValues, countries]);
 
     const handleSubmit = async (values) => { 
         try {
@@ -81,13 +108,21 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                 formData.append('file', cv_path.fileList[0].originFileObj);
             }
 
-            // Format phone number
-            const phone = phoneCode && phoneNumber ? `+${phoneCode}${phoneNumber}` : '';
+            // Find the country ID from the selected phone code
+            const selectedCountry = countries?.find(c => c.phoneCode === phoneCode);
+            if (!selectedCountry) {
+                message.error('Please select a valid phone code');
+                return;
+            }
 
-            // Add all other fields to formData
+            // Format phone data as a string
+            formData.append('phoneCode', selectedCountry.id);
+            formData.append('phone', phoneNumber || '');
+
+            // Add all other fields to formData, excluding any duplicate phone field
+            const { phone, ...cleanValues } = otherValues;
             const payload = {
-                ...otherValues,
-                phone,
+                ...cleanValues,
                 client_id: localStorage.getItem('client_id'),
                 created_by: localStorage.getItem('user_id')
             };
@@ -245,8 +280,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="job"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Position</span>}
-                        rules={[{ required: true, message: 'Please select a job position' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Position {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('job position')}
                     >
                         <Select
                             placeholder="Select job position"
@@ -272,8 +307,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="name"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Name</span>}
-                        rules={[{ required: true, message: 'Please enter name' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Name {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('name')}
                     >
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -292,8 +327,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="email"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Email</span>}
-                        rules={[{ required: true, message: 'Please enter email', type: 'email' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Email {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('email')}
                     >
                         <Input
                             prefix={<FiMail style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -311,15 +346,16 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                     </Form.Item>
 
                     <Form.Item
+                        name="phone"
                         label={
                             <span style={{
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Phone Number
+                                Phone Number {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        required
+                        // rules={getFieldRules('phone')}
                     >
                         <Input.Group compact className="phone-input-group" style={{
                             display: 'flex',
@@ -332,8 +368,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                             <Form.Item
                                 name="phoneCode"
                                 noStyle
-                                rules={[{ required: true, message: 'Required' }]}
-                                initialValue="91"
+                                initialValue="+91"
                             >
                                 <Select
                                     size="large"
@@ -354,10 +389,11 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                     }}
                                     showSearch
                                     optionFilterProp="children"
+                                    defaultValue="+91"
                                 >
                                     {countries?.map(country => (
                                         <Option 
-                                            key={country.phoneCode} 
+                                            key={country.id} 
                                             value={country.phoneCode}
                                             style={{ cursor: 'pointer' }}
                                         >
@@ -377,16 +413,11 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                             <Form.Item
                                 name="phoneNumber"
                                 noStyle
-                                rules={[
-                                    { required: true, message: 'Please enter phone number' },
-                                    {
-                                        pattern: /^\d{10}$/,
-                                        message: 'Phone number must be exactly 10 digits'
-                                    }
-                                ]}
+                                // rules={getFieldRules('phone')}
                             >
                                 <Input
                                     size="large"
+                                    type="number"
                                     style={{
                                         flex: 1,
                                         border: 'none',
@@ -406,8 +437,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="location"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Location</span>}
-                        rules={[{ required: true, message: 'Please enter location' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Location {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('location')}
                     >
                         <Input
                             placeholder="Enter location"
@@ -425,8 +456,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="total_experience"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Total Experience</span>}
-                        rules={[{ required: true, message: 'Please enter total experience' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Total Experience {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('total experience')}
                     >
                         <Select
                         listHeight={100}
@@ -451,8 +482,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="current_location"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Current Location</span>}
-                        rules={[{ required: true, message: 'Please enter current location' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Current Location {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('current location')}
                     >
                         <Input
                             placeholder="Enter current location"
@@ -470,13 +501,14 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="notice_period"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Notice Period</span>}
-                        rules={[{ required: true, message: 'Please enter notice period' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Notice Period {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('notice period')}
                     >
                         <Input
                             prefix={<FiClock style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter notice period"
                             size="large"
+                            type="number"
                             style={{
                                 borderRadius: '10px',
                                 padding: '8px 16px',
@@ -490,8 +522,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="applied_source"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Applied Source</span>}
-                        rules={[{ required: true, message: 'Please enter applied source' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Applied Source {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('applied source')}
                     >
                         <Input
                             placeholder="Enter applied source"
@@ -508,28 +540,9 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                     </Form.Item>
 
                     <Form.Item
-                        name="cover_letter"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Cover Letter</span>}
-                        rules={[{ required: true, message: 'Please enter cover letter' }]}
-                    >
-                        <Input
-                            placeholder="Enter cover letter"
-                            size="large"
-                            style={{
-                                borderRadius: '10px',
-                                padding: '8px 16px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                border: '1px solid #e6e8eb',
-                                transition: 'all 0.3s ease',
-                            }}
-                        />
-                    </Form.Item>
-
-                    <Form.Item
                         name="status"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Status</span>}
-                        rules={[{ required: true, message: 'Please select status' }]}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Status {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        rules={getFieldRules('status')}
                         initialValue="pending"
                     >
                         <Select
@@ -554,9 +567,9 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                 <Form.Item
                     name="cv_path"
-                    label="Resume/CV"
-                    rules={[{ required: true, message: 'Please upload your resume/CV' }]}
-                    className="full-width"
+                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Resume/CV {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                    rules={getFieldRules('status')}
+                    className="full-width"  
                 >
                     <Upload.Dragger
                         name="cv_path"

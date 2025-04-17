@@ -76,6 +76,55 @@ const chartLabelStyle = {
     fill: '#1890ff'
 };
 
+// Add responsive styles for filter controls
+const filterControlsStyles = {
+    container: {
+        marginBottom: '24px',
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '24px', // Increased gap between filter groups
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        '@media (max-width: 576px)': {
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: '16px'
+        }
+    },
+    filterGroup: {
+        display: 'flex',
+        alignItems: 'center',
+        // gap: '12px', // Increased gap between label and select
+        '@media (max-width: 576px)': {
+            width: '100%',
+            justifyContent: 'space-between',
+            gap: '16px'
+        }
+    },
+    label: {
+        fontSize: '13px',
+        color: '#374151',
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '60px', // Added fixed width for labels
+        '@media (max-width: 576px)': {
+            fontSize: '12px',
+            minWidth: '50px'
+        }
+    },
+    select: {
+        width: '160px', // Increased width for better visibility
+        fontSize: '13px',
+        '@media (max-width: 576px)': {
+            width: '100%',
+            maxWidth: '200px'
+        }
+    }
+};
+
 const DealsAnalytics = ({ deals = [] }) => {
     const [timeFilter, setTimeFilter] = useState(TIME_FILTERS.WEEK.value);
     const [selectedPipeline, setSelectedPipeline] = useState("95QsEzSA7EGnxrlRqnDShFw");
@@ -390,33 +439,16 @@ const DealsAnalytics = ({ deals = [] }) => {
     return (
         <div>
             {/* Pipeline and Time Filter Controls */}
-            <div style={{
-                marginBottom: '24px',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '16px',
-                alignItems: 'center'
-            }}>
+            <div style={filterControlsStyles.container}>
                 {/* Pipeline Selection */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <Typography.Text style={{
-                        fontSize: '13px',
-                        color: '#374151',
-                        fontWeight: 500
-                    }}>
-                        Pipeline:
+                <div style={filterControlsStyles.filterGroup}>
+                    <Typography.Text style={filterControlsStyles.label}>
+                        Pipeline
                     </Typography.Text>
                     <Select
                         value={selectedPipeline}
                         onChange={setSelectedPipeline}
-                        style={{
-                            width: 140,
-                            fontSize: '13px'
-                        }}
+                        style={filterControlsStyles.select}
                         options={pipelines.map(pipeline => ({
                             value: pipeline.id,
                             label: (
@@ -437,25 +469,14 @@ const DealsAnalytics = ({ deals = [] }) => {
                 </div>
 
                 {/* Time Filter */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <Typography.Text style={{
-                        fontSize: '13px',
-                        color: '#374151',
-                        fontWeight: 500
-                    }}>
-                        Period:
+                <div style={filterControlsStyles.filterGroup}>
+                    <Typography.Text style={filterControlsStyles.label}>
+                        Period
                     </Typography.Text>
                     <Select
                         value={timeFilter}
                         onChange={value => setTimeFilter(value)}
-                        style={{
-                            width: 120,
-                            fontSize: '13px'
-                        }}
+                        style={filterControlsStyles.select}
                         options={[
                             { value: TIME_FILTERS.TODAY.value, label: TIME_FILTERS.TODAY.label },
                             { value: TIME_FILTERS.WEEK.value, label: TIME_FILTERS.WEEK.label },
@@ -499,12 +520,21 @@ const DealsAnalytics = ({ deals = [] }) => {
                         border-color: #1890ff !important;
                         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
                     }
+                    @media (max-width: 576px) {
+                        .filter-select .ant-select-selector {
+                            height: 36px !important;
+                        }
+                        .filter-select .ant-select-selection-item {
+                            line-height: 34px !important;
+                            font-size: 14px !important;
+                        }
+                    }
                 `}
             </style>
 
             {/* Stats Cards */}
             <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} md={12} lg={6}>
                     <Card bordered={false} style={{
                         background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
@@ -554,7 +584,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                         </div>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} md={12} lg={6}>
                     <Card bordered={false} style={{
                         background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
@@ -604,7 +634,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                         </div>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} md={12} lg={6}>
                     <Card bordered={false} style={{
                         background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
@@ -654,7 +684,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                         </div>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} md={12} lg={6}>
                     <Card bordered={false} style={{
                         background: 'linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%)',
                         borderRadius: '12px',
@@ -708,93 +738,159 @@ const DealsAnalytics = ({ deals = [] }) => {
 
             <Row gutter={[24, 24]}>
                 {/* Weekly Performance Chart */}
-                <Col span={24}>
-                    <div style={chartCardStyle}>
-                        <Title level={5} style={chartTitleStyle}>Weekly Performance</Title>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <AreaChart data={weeklyData}
-                                margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorDeals" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={COLORS.chart.dealCount.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={COLORS.chart.dealCount.light} stopOpacity={0.2} />
-                                    </linearGradient>
-                                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor={COLORS.chart.dealValue.main} stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor={COLORS.chart.dealValue.light} stopOpacity={0.2} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis
-                                    dataKey="name"
-                                    stroke="#1890ff"
-                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
-                                />
-                                <YAxis
-                                    yAxisId="left"
-                                    stroke="#1890ff"
-                                    tickFormatter={formatCountTick}
-                                    interval={0}
-                                    allowDecimals={false}
-                                    tick={{ fill: '#1890ff', fontSize: 12, fontWeight: 500 }}
-                                />
-                                <YAxis
-                                    yAxisId="right"
-                                    orientation="right"
-                                    stroke="#595959"
-                                    tickFormatter={formatValueTick}
-                                    tick={{ fill: '#595959', fontSize: 12, fontWeight: 500 }}
-                                />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Legend
-                                    formatter={(value, entry) => (
-                                        <span style={{
-                                            color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
+                <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+                    <div style={{
+                        ...chartCardStyle,
+                        padding: '16px',
+                        '@media (min-width: 576px)': {
+                            padding: '20px'
+                        },
+                        '@media (min-width: 768px)': {
+                            padding: '24px'
+                        }
+                    }}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: '16px',
+                            marginBottom: '16px',
+                            '@media (min-width: 576px)': {
+                                fontSize: '18px',
+                                marginBottom: '20px'
+                            },
+                            '@media (min-width: 768px)': {
+                                fontSize: '20px',
+                                marginBottom: '24px'
+                            }
+                        }}>Weekly Performance</Title>
+                        <div style={{
+                            width: '100%',
+                            height: '300px',
+                            '@media (max-width: 576px)': {
+                                height: '250px'
+                            }
+                        }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart 
+                                    data={weeklyData}
+                                    margin={{ 
+                                        top: 10, 
+                                        right: 30, 
+                                        left: 0, 
+                                        bottom: 0 
+                                    }}
+                                >
+                                    <defs>
+                                        <linearGradient id="colorDeals" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={COLORS.chart.dealCount.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={COLORS.chart.dealCount.light} stopOpacity={0.2} />
+                                        </linearGradient>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor={COLORS.chart.dealValue.main} stopOpacity={0.8} />
+                                            <stop offset="95%" stopColor={COLORS.chart.dealValue.light} stopOpacity={0.2} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid 
+                                        strokeDasharray="3 3" 
+                                        stroke="#f0f0f0"
+                                        vertical={false}
+                                    />
+                                    <XAxis
+                                        dataKey="name"
+                                        stroke="#1890ff"
+                                        tick={{ 
+                                            fill: '#1890ff', 
+                                            fontSize: 12,
+                                            fontWeight: 500,
+                                            angle: -45,
+                                            textAnchor: 'end'
+                                        }}
+                                        height={60}
+                                    />
+                                    <YAxis
+                                        yAxisId="left"
+                                        stroke="#1890ff"
+                                        tickFormatter={formatCountTick}
+                                        interval={0}
+                                        allowDecimals={false}
+                                        tick={{ 
+                                            fill: '#1890ff', 
+                                            fontSize: 12,
                                             fontWeight: 500
-                                        }}>
-                                            {value}
-                                        </span>
-                                    )}
-                                />
-                                <Area
-                                    yAxisId="left"
-                                    type="monotone"
-                                    dataKey="deals"
-                                    name="Deal Count"
-                                    stroke={COLORS.chart.dealCount.main}
-                                    strokeWidth={2}
-                                    fillOpacity={1}
-                                    fill={COLORS.chart.dealCount.gradient}
-                                    activeDot={{
-                                        r: 6,
-                                        strokeWidth: 2,
-                                        stroke: '#fff',
-                                        fill: COLORS.chart.dealCount.hover
-                                    }}
-                                />
-                                <Area
-                                    yAxisId="right"
-                                    type="monotone"
-                                    dataKey="value"
-                                    name="Deal Value"
-                                    stroke={COLORS.chart.dealValue.main}
-                                    strokeWidth={2}
-                                    fillOpacity={1}
-                                    fill={COLORS.chart.dealValue.gradient}
-                                    activeDot={{
-                                        r: 6,
-                                        strokeWidth: 2,
-                                        stroke: '#fff',
-                                        fill: COLORS.chart.dealValue.hover
-                                    }}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
+                                        }}
+                                        width={40}
+                                    />
+                                    <YAxis
+                                        yAxisId="right"
+                                        orientation="right"
+                                        stroke="#595959"
+                                        tickFormatter={formatValueTick}
+                                        tick={{ 
+                                            fill: '#595959', 
+                                            fontSize: 12,
+                                            fontWeight: 500
+                                        }}
+                                        width={60}
+                                    />
+                                    <Tooltip 
+                                        content={<CustomTooltip />}
+                                        wrapperStyle={{
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                    <Legend
+                                        formatter={(value, entry) => (
+                                            <span style={{
+                                                color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
+                                                fontWeight: 500,
+                                                fontSize: '13px'
+                                            }}>
+                                                {value}
+                                            </span>
+                                        )}
+                                        wrapperStyle={{
+                                            paddingTop: '12px'
+                                        }}
+                                    />
+                                    <Area
+                                        yAxisId="left"
+                                        type="monotone"
+                                        dataKey="deals"
+                                        name="Deal Count"
+                                        stroke={COLORS.chart.dealCount.main}
+                                        strokeWidth={2}
+                                        fillOpacity={1}
+                                        fill={COLORS.chart.dealCount.gradient}
+                                        activeDot={{
+                                            r: 6,
+                                            strokeWidth: 2,
+                                            stroke: '#fff',
+                                            fill: COLORS.chart.dealCount.hover
+                                        }}
+                                    />
+                                    <Area
+                                        yAxisId="right"
+                                        type="monotone"
+                                        dataKey="value"
+                                        name="Deal Value"
+                                        stroke={COLORS.chart.dealValue.main}
+                                        strokeWidth={2}
+                                        fillOpacity={1}
+                                        fill={COLORS.chart.dealValue.gradient}
+                                        activeDot={{
+                                            r: 6,
+                                            strokeWidth: 2,
+                                            stroke: '#fff',
+                                            fill: COLORS.chart.dealValue.hover
+                                        }}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </Col>
 
                 {/* Source Distribution */}
-                <Col xs={24} lg={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12}>
                     <div style={chartCardStyle}>
                         <Title level={5} style={chartTitleStyle}>Source Distribution</Title>
                         <ResponsiveContainer width="100%" height={300}>
@@ -842,7 +938,7 @@ const DealsAnalytics = ({ deals = [] }) => {
                 </Col>
 
                 {/* Status Distribution */}
-                <Col xs={24} lg={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12}>
                     <Card
                         style={{
                             borderRadius: '12px',
@@ -918,248 +1014,442 @@ const DealsAnalytics = ({ deals = [] }) => {
                     </Card>
                 </Col>
 
-                {/* Pipeline Progress and Stage Analysis */}
-                {pipelineData.length > 0 ? (
-                    <>
                         {/* Pipeline Progress */}
-                        <Col xs={24} lg={24}>
-                            <div style={chartCardStyle}>
-                                <Title level={5} style={chartTitleStyle}>Pipeline Progress</Title>
+                        <Col xs={24} md={24} lg={24}>
+                    <div style={{
+                        ...chartCardStyle,
+                        padding: '16px',
+                        '@media (min-width: 576px)': {
+                            padding: '20px'
+                        },
+                        '@media (min-width: 768px)': {
+                            padding: '24px'
+                        }
+                    }}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: '18px',
+                            '@media (max-width: 576px)': {
+                                fontSize: '16px',
+                                marginBottom: '16px',
+                                textAlign: 'center'
+                            },
+                            '@media (min-width: 768px)': {
+                                fontSize: '20px',
+                                marginBottom: '24px'
+                            },
+                            '@media (min-width: 992px)': {
+                                fontSize: '22px'
+                            }
+                        }}>Pipeline Progress</Title>
                                 <ResponsiveContainer width="100%" height={400}>
-                                    <LineChart
+                            <LineChart
                                         data={pipelineData}
-                                        margin={{ top: 20, right: 50, left: 30, bottom: 60 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                        <XAxis
-                                            dataKey="name"
-                                            interval={0}
-                                            height={80}
-                                            tick={{
-                                                fontSize: 16,
-                                                fontWeight: 700,
-                                                fill: '#262626'
-                                            }}
-                                            tickMargin={20}
-                                        />
-                                        <YAxis
-                                            yAxisId="left"
-                                            orientation="left"
-                                            tickFormatter={formatCountTick}
-                                            allowDecimals={false}
-                                            interval={0}
-                                            tick={{
-                                                fontSize: 14,
-                                                fill: '#262626',
-                                                fontWeight: 600
-                                            }}
-                                            tickMargin={12}
-                                            width={80}
-                                            label={{
-                                                value: 'Deal Count',
-                                                angle: -90,
-                                                position: 'insideLeft',
-                                                offset: -5,
-                                                style: {
-                                                    fill: '#262626',
-                                                    fontWeight: 600,
-                                                    fontSize: 14
-                                                }
-                                            }}
-                                        />
-                                        <YAxis
-                                            yAxisId="right"
-                                            orientation="right"
-                                            tickFormatter={formatValueTick}
-                                            tick={{
-                                                fontSize: 14,
-                                                fill: '#262626',
-                                                fontWeight: 600
-                                            }}
-                                            tickMargin={12}
-                                            width={80}
-                                            label={{
-                                                value: 'Deal Value',
-                                                angle: 90,
-                                                position: 'insideRight',
-                                                offset: 5,
-                                                style: {
-                                                    fill: '#262626',
-                                                    fontWeight: 600,
-                                                    fontSize: 14
-                                                }
-                                            }}
-                                        />
-                                        <Tooltip
-                                            content={<CustomTooltip />}
-                                            cursor={{ strokeDasharray: '3 3' }}
-                                        />
-                                        <Legend
-                                            verticalAlign="top"
-                                            height={36}
-                                        />
-                                        <Line
-                                            yAxisId="left"
-                                            type="monotone"
-                                            dataKey="count"
-                                            name="Deal Count"
-                                            stroke={COLORS.chart.dealCount.main}
-                                            strokeWidth={2}
-                                            dot={{
-                                                r: 4,
-                                                fill: COLORS.chart.dealCount.main,
-                                                stroke: '#fff',
-                                                strokeWidth: 2
-                                            }}
-                                            activeDot={{
-                                                r: 6,
-                                                fill: COLORS.chart.dealCount.hover,
-                                                stroke: '#fff',
-                                                strokeWidth: 2
-                                            }}
-                                        />
-                                        <Line
-                                            yAxisId="right"
-                                            type="monotone"
-                                            dataKey="value"
-                                            name="Deal Value"
-                                            stroke={COLORS.chart.dealValue.main}
-                                            strokeWidth={2}
-                                            dot={{
-                                                r: 4,
-                                                fill: COLORS.chart.dealValue.main,
-                                                stroke: '#fff',
-                                                strokeWidth: 2
-                                            }}
-                                            activeDot={{
-                                                r: 6,
-                                                fill: COLORS.chart.dealValue.hover,
-                                                stroke: '#fff',
-                                                strokeWidth: 2
-                                            }}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </Col>
+                                margin={{
+                                    top: 20,
+                                    right: 30,
+                                    left: 20,
+                                    bottom: 60,
+                                    '@media (max-width: 576px)': {
+                                        top: 10,
+                                        right: 10,
+                                        left: 10,
+                                        bottom: 40
+                                    },
+                                    '@media (min-width: 768px)': {
+                                        right: 40,
+                                        left: 30,
+                                        bottom: 60
+                                    }
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis
+                                    dataKey="name"
+                                    interval={0}
+                                    height={80}
+                                    tick={{
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        fill: '#262626',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '14px'
+                                        },
+                                        '@media (min-width: 992px)': {
+                                            fontSize: '16px',
+                                            fontWeight: 700
+                                        }
+                                    }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    tickMargin={20}
+                                />
+                                <YAxis
+                                    yAxisId="left"
+                                    orientation="left"
+                                    tickFormatter={formatCountTick}
+                                    allowDecimals={false}
+                                    tick={{
+                                        fontSize: '12px',
+                                        fontWeight: 500,
+                                        fill: '#262626',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 992px)': {
+                                            fontSize: '14px',
+                                            fontWeight: 600
+                                        }
+                                    }}
+                                    width={60}
+                                    label={{
+                                        value: 'Deal Count',
+                                        angle: -90,
+                                        position: 'insideLeft',
+                                        offset: -5,
+                                        style: {
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            fill: '#262626',
+                                            '@media (min-width: 768px)': {
+                                                fontSize: '14px'
+                                            }
+                                        }
+                                    }}
+                                />
+                                <YAxis
+                                    yAxisId="right"
+                                    orientation="right"
+                                    tickFormatter={formatValueTick}
+                                    tick={{
+                                        fontSize: '12px',
+                                        fontWeight: 500,
+                                        fill: '#262626',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 992px)': {
+                                            fontSize: '14px',
+                                            fontWeight: 600
+                                        }
+                                    }}
+                                    width={60}
+                                    label={{
+                                        value: 'Deal Value',
+                                        angle: 90,
+                                        position: 'insideRight',
+                                        offset: 5,
+                                        style: {
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            fill: '#262626',
+                                            '@media (min-width: 768px)': {
+                                                fontSize: '14px'
+                                            }
+                                        }
+                                    }}
+                                />
+                                <Tooltip
+                                    content={<CustomTooltip />}
+                                    cursor={{ strokeDasharray: '3 3' }}
+                                    wrapperStyle={{
+                                        fontSize: '12px',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 768px)': {
+                                            fontSize: '14px'
+                                        }
+                                    }}
+                                />
+                                <Legend
+                                    verticalAlign="top"
+                                    height={36}
+                                    wrapperStyle={{
+                                        fontSize: '12px',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 768px)': {
+                                            fontSize: '14px'
+                                        },
+                                        paddingBottom: '16px'
+                                    }}
+                                />
+                                <Line
+                                    yAxisId="left"
+                                    type="monotone"
+                                    dataKey="count"
+                                    name="Deal Count"
+                                    stroke={COLORS.chart.dealCount.main}
+                                    strokeWidth={{
+                                        xs: 1.5,
+                                        sm: 1.75,
+                                        md: 2
+                                    }}
+                                    dot={{
+                                        r: {
+                                            xs: 3,
+                                            sm: 3.5,
+                                            md: 4
+                                        },
+                                        fill: COLORS.chart.dealCount.main,
+                                        stroke: '#fff',
+                                        strokeWidth: 2
+                                    }}
+                                    activeDot={{
+                                        r: {
+                                            xs: 5,
+                                            sm: 5.5,
+                                            md: 6
+                                        },
+                                        fill: COLORS.chart.dealCount.hover,
+                                        stroke: '#fff',
+                                        strokeWidth: 2
+                                    }}
+                                />
+                                <Line
+                                    yAxisId="right"
+                                    type="monotone"
+                                    dataKey="value"
+                                    name="Deal Value"
+                                    stroke={COLORS.chart.dealValue.main}
+                                    strokeWidth={{
+                                        xs: 1.5,
+                                        sm: 1.75,
+                                        md: 2
+                                    }}
+                                    dot={{
+                                        r: {
+                                            xs: 3,
+                                            sm: 3.5,
+                                            md: 4
+                                        },
+                                        fill: COLORS.chart.dealValue.main,
+                                        stroke: '#fff',
+                                        strokeWidth: 2
+                                    }}
+                                    activeDot={{
+                                        r: {
+                                            xs: 5,
+                                            sm: 5.5,
+                                            md: 6
+                                        },
+                                        fill: COLORS.chart.dealValue.hover,
+                                        stroke: '#fff',
+                                        strokeWidth: 2
+                                    }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Col>
 
-                        {/* Stage Analysis */}
-                        <Col xs={24} lg={24}>
-                            <div style={chartCardStyle}>
-                                <Title level={5} style={chartTitleStyle}>Stage Analysis</Title>
-                                <ResponsiveContainer width="100%" height={400}>
-                                    <BarChart
-                                        data={pipelineData}
-                                        margin={{ top: 20, right: 50, left: 30, bottom: 60 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                        <XAxis
-                                            dataKey="name"
-                                            interval={0}
-                                            height={80}
-                                            tick={{
-                                                fontSize: 16,
-                                                fontWeight: 700,
-                                                fill: '#262626'
-                                            }}
-                                            tickMargin={20}
-                                        />
-                                        <YAxis
-                                            yAxisId="left"
-                                            orientation="left"
-                                            tickFormatter={formatCountTick}
-                                            allowDecimals={false}
-                                            interval={0}
-                                            tick={{
-                                                fontSize: 14,
-                                                fill: '#262626',
-                                                fontWeight: 600
-                                            }}
-                                            tickMargin={12}
-                                            width={80}
-                                            label={{
-                                                value: 'Deal Count',
-                                                angle: -90,
-                                                position: 'insideLeft',
-                                                offset: -5,
-                                                style: {
-                                                    fill: '#262626',
-                                                    fontWeight: 600,
-                                                    fontSize: 14
-                                                }
-                                            }}
-                                        />
-                                        <YAxis
-                                            yAxisId="right"
-                                            orientation="right"
-                                            tickFormatter={formatValueTick}
-                                            tick={{
-                                                fontSize: 14,
-                                                fill: '#262626',
-                                                fontWeight: 600
-                                            }}
-                                            tickMargin={12}
-                                            width={80}
-                                            label={{
-                                                value: 'Deal Value',
-                                                angle: 90,
-                                                position: 'insideRight',
-                                                offset: 5,
-                                                style: {
-                                                    fill: '#262626',
-                                                    fontWeight: 600,
-                                                    fontSize: 14
-                                                }
-                                            }}
-                                        />
-                                        <Tooltip
-                                            content={<CustomTooltip />}
-                                            cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                                        />
-                                        <Legend
-                                            formatter={(value, entry) => (
-                                                <span style={{
-                                                    color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
-                                                    fontWeight: 500
-                                                }}>
-                                                    {value}
-                                                </span>
-                                            )}
-                                        />
-                                        <Bar
-                                            yAxisId="left"
-                                            dataKey="count"
-                                            name="Deal Count"
-                                            fill={COLORS.chart.dealCount.main}
-                                            radius={[4, 4, 0, 0]}
-                                            maxBarSize={50}
-                                        />
-                                        <Bar
-                                            yAxisId="right"
-                                            dataKey="value"
-                                            name="Deal Value"
-                                            fill={COLORS.chart.dealValue.main}
-                                            radius={[4, 4, 0, 0]}
-                                            maxBarSize={50}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </Col>
-                    </>
-                ) : (
-                    <Col span={24}>
-                        <div style={chartCardStyle}>
-                            <div style={{
-                                textAlign: 'center',
-                                padding: '40px 20px',
-                                color: '#666'
-                            }}>
-                                No pipeline data available
-                            </div>
-                        </div>
-                    </Col>
-                )}
+                {/* Stage Analysis */}
+                <Col xs={24} lg={24}>
+                    <div style={{
+                        ...chartCardStyle,
+                        padding: '16px',
+                        '@media (min-width: 576px)': {
+                            padding: '20px'
+                        },
+                        '@media (min-width: 768px)': {
+                            padding: '24px'
+                        }
+                    }}>
+                        <Title level={5} style={{
+                            ...chartTitleStyle,
+                            fontSize: '18px',
+                            '@media (max-width: 576px)': {
+                                fontSize: '16px',
+                                marginBottom: '16px',
+                                textAlign: 'center'
+                            },
+                            '@media (min-width: 768px)': {
+                                fontSize: '20px',
+                                marginBottom: '24px'
+                            },
+                            '@media (min-width: 992px)': {
+                                fontSize: '22px'
+                            }
+                        }}>Stage Analysis</Title>
+                        <ResponsiveContainer width="100%" height={400}>
+                            <BarChart
+                                data={pipelineData}
+                                margin={{
+                                    top: 20,
+                                    right: 30,
+                                    left: 20,
+                                    bottom: 60,
+                                    '@media (max-width: 576px)': {
+                                        top: 10,
+                                        right: 10,
+                                        left: 10,
+                                        bottom: 40
+                                    },
+                                    '@media (min-width: 768px)': {
+                                        right: 40,
+                                        left: 30,
+                                        bottom: 60
+                                    }
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis
+                                    dataKey="name"
+                                    interval={0}
+                                    height={80}
+                                    tick={{
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        fill: '#262626',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '14px'
+                                        },
+                                        '@media (min-width: 992px)': {
+                                            fontSize: '16px',
+                                            fontWeight: 700
+                                        }
+                                    }}
+                                    angle={-45}
+                                    textAnchor="end"
+                                    tickMargin={20}
+                                />
+                                <YAxis
+                                    yAxisId="left"
+                                    orientation="left"
+                                    tickFormatter={formatCountTick}
+                                    allowDecimals={false}
+                                    tick={{
+                                        fontSize: '12px',
+                                        fontWeight: 500,
+                                        fill: '#262626',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 992px)': {
+                                            fontSize: '14px',
+                                            fontWeight: 600
+                                        }
+                                    }}
+                                    tickMargin={12}
+                                    width={60}
+                                    label={{
+                                        value: 'Deal Count',
+                                        angle: -90,
+                                        position: 'insideLeft',
+                                        offset: -5,
+                                        style: {
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            fill: '#262626',
+                                            '@media (min-width: 768px)': {
+                                                fontSize: '14px'
+                                            }
+                                        }
+                                    }}
+                                />
+                                <YAxis
+                                    yAxisId="right"
+                                    orientation="right"
+                                    tickFormatter={formatValueTick}
+                                    tick={{
+                                        fontSize: '12px',
+                                        fontWeight: 500,
+                                        fill: '#262626',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 992px)': {
+                                            fontSize: '14px',
+                                            fontWeight: 600
+                                        }
+                                    }}
+                                    tickMargin={12}
+                                    width={60}
+                                    label={{
+                                        value: 'Deal Value',
+                                        angle: 90,
+                                        position: 'insideRight',
+                                        offset: 5,
+                                        style: {
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                            fill: '#262626',
+                                            '@media (min-width: 768px)': {
+                                                fontSize: '14px'
+                                            }
+                                        }
+                                    }}
+                                />
+                                <Tooltip
+                                    content={<CustomTooltip />}
+                                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                                    wrapperStyle={{
+                                        fontSize: '12px',
+                                        '@media (min-width: 576px)': {
+                                            fontSize: '13px'
+                                        },
+                                        '@media (min-width: 768px)': {
+                                            fontSize: '14px'
+                                        }
+                                    }}
+                                />
+                                <Legend
+                                    formatter={(value, entry) => (
+                                        <span style={{
+                                            color: entry.color === COLORS.chart.dealCount.main ? '#1890ff' : '#595959',
+                                            fontWeight: 500,
+                                            fontSize: '12px',
+                                            '@media (min-width: 576px)': {
+                                                fontSize: '13px'
+                                            },
+                                            '@media (min-width: 768px)': {
+                                                fontSize: '14px'
+                                            }
+                                        }}>
+                                            {value}
+                                        </span>
+                                    )}
+                                    wrapperStyle={{
+                                        paddingBottom: '16px',
+                                        '@media (max-width: 576px)': {
+                                            paddingBottom: '12px'
+                                        }
+                                    }}
+                                />
+                                <Bar
+                                    yAxisId="left"
+                                    dataKey="count"
+                                    name="Deal Count"
+                                    fill={COLORS.chart.dealCount.main}
+                                    radius={[4, 4, 0, 0]}
+                                    maxBarSize={{
+                                        xs: 30,
+                                        sm: 35,
+                                        md: 40,
+                                        lg: 45,
+                                        xl: 50
+                                    }}
+                                />
+                                <Bar
+                                    yAxisId="right"
+                                    dataKey="value"
+                                    name="Deal Value"
+                                    fill={COLORS.chart.dealValue.main}
+                                    radius={[4, 4, 0, 0]}
+                                    maxBarSize={{
+                                        xs: 30,
+                                        sm: 35,
+                                        md: 40,
+                                        lg: 45,
+                                        xl: 50
+                                    }}
+                                />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Col>
             </Row>
         </div>
     );
