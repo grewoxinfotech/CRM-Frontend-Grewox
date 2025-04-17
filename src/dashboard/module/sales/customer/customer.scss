@@ -379,4 +379,102 @@
             }
         }
     }
+}
+
+// Phone input styles
+.phone-input-group {
+    .ant-select {
+        .ant-select-selector {
+            height: 48px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 8px !important;
+            background-color: white !important;
+            border: none !important;
+
+            .ant-select-selection-item {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                line-height: 48px !important;
+                font-weight: 500 !important;
+                font-size: 14px !important;
+                padding-right: 15px !important;
+                color: #262626 !important;
+                
+                &::before {
+                    content: none !important;
+                }
+            }
+        }
+
+        .ant-select-arrow {
+            color: #262626 !important;
+            right: 8px !important;
+        }
+
+        &.ant-select-focused .ant-select-selector {
+            box-shadow: none !important;
+            background-color: white !important;
+        }
+    }
+
+    .ant-select-dropdown {
+        .ant-select-item {
+            padding: 8px 12px !important;
+
+            &-option-content {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                color: #262626 !important;
+
+                span:first-child {
+                    color: #262626 !important;
+                    font-weight: 500 !important;
+                }
+            }
+
+            &-selected {
+                background-color: #e6f4ff !important;
+                font-weight: 500 !important;
+            }
+
+            &-active {
+                background-color: #f0f7ff !important;
+            }
+        }
+    }
+
+    .ant-input-affix-wrapper {
+        padding: 0 11px !important;
+        display: flex !important;
+        align-items: center !important;
+        border: none !important;
+        box-shadow: none !important;
+        background-color: transparent !important;
+
+        .ant-input {
+            padding: 0 !important;
+            height: 46px !important;
+            line-height: 46px !important;
+            font-size: 14px !important;
+            background-color: transparent !important;
+
+            &::placeholder {
+                line-height: 46px !important;
+                color: #bfbfbf !important;
+            }
+        }
+    }
+
+    &:hover {
+        border-color: #1890ff !important;
+    }
+
+    &:focus-within {
+        border-color: #1890ff !important;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
 } 

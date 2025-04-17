@@ -25,9 +25,16 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
 
     const handleSubmit = async (values) => {
         try {
+            // Find the country ID from the selected phone code
+            const selectedCountry = countries?.find(c => c.phoneCode === values.phonecode);
+            if (!selectedCountry) {
+                message.error('Please select a valid phone code');
+                return;
+            }
+
             const formData = {
                 ...values,
-                phonecode: values.phonecode || '91', // Default phone code if not selected
+                phonecode: selectedCountry.id, // Use country ID as phonecode
                 contact: values.contact
             };
             await createVendor(formData).unwrap();
@@ -186,7 +193,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                                     name="phonecode"
                                     noStyle
                                     rules={[{ required: true, message: 'Required' }]}
-                                    initialValue="91"
+                                    initialValue="+91"
                                 >
                                     <Select
                                         size="large"
@@ -207,11 +214,12 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                                         }}
                                         showSearch
                                         optionFilterProp="children"
+                                        defaultValue="+91"
                                     >
                                         {countries?.map(country => (
                                             <Option 
                                                 key={country.id} 
-                                                value={country.id}
+                                                value={country.phoneCode}
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <div style={{ 
@@ -240,6 +248,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                                 >
                                     <Input
                                         size="large"
+                                        type="number"
                                         style={{
                                             flex: 1,
                                             border: 'none',

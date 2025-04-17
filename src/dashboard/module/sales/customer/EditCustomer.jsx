@@ -31,7 +31,7 @@ const { TextArea } = Input;
 const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { data: countries = [], loading: countriesLoading } = useGetAllCountriesQuery();
   const [selectedCountry, setSelectedCountry] = useState(null);
 
   // Find India in countries array and set as default
@@ -47,15 +47,36 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
 
   useEffect(() => {
     if (initialValues) {
-      form.setFieldsValue({
+      // Parse the phone object if it exists
+      let phoneCode = '+91'; // Default to India's code
+      let phoneNumber = '';
+      
+      // Find the country by ID and get its phone code
+      if (initialValues.phonecode) {
+        const country = countries?.find(c => c.id === initialValues.phonecode);
+        if (country) {
+          phoneCode = country.phoneCode;
+        }
+      }
+
+      // Get phone number
+      if (initialValues.contact) {
+        phoneNumber = initialValues.contact;
+      }
+
+      const formattedValues = {
         ...initialValues,
+        phoneCode: phoneCode || '+91', // Ensure phoneCode is never null
+        phoneNumber,
         billing_address: initialValues.billing_address
           ? JSON.parse(initialValues.billing_address)
           : {},
         shipping_address: initialValues.shipping_address
           ? JSON.parse(initialValues.shipping_address)
           : {},
-      });
+      };
+      form.setFieldsValue(formattedValues);
+
       if (initialValues.profile_image) {
         setFileList([
           {
@@ -67,28 +88,37 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         ]);
       }
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, countries]);
 
   const handleSubmit = async (values) => {
     try {
+      const { phoneCode, phoneNumber, ...otherValues } = values;
+
+      // Find the country ID from the selected phone code
+      const selectedCountry = countries?.find(c => c.phoneCode === phoneCode);
+      if (!selectedCountry) {
+        message.error('Please select a valid phone code');
+        return;
+      }
+
       const customerData = {
         // Basic Information
-        name: values.name || "",
-        contact: values.contact || "",
-        email: values.email || "",
-        tax_number: values.tax_number || "",
-        alternate_number: values.alternate_number || "",
-        text_number: values.text_number || "",
-        company: values.company || "",
-        status: values.status || "active",
-        phonecode: selectedCountry?.phoneCode || "+91",
+        name: otherValues.name || "",
+        contact: phoneNumber || "",
+        email: otherValues.email || "",
+        tax_number: otherValues.tax_number || "",
+        alternate_number: otherValues.alternate_number || "",
+        text_number: otherValues.text_number || "",
+        company: otherValues.company || "",
+        status: otherValues.status || "active",
+        phonecode: selectedCountry.id,
 
         // Address Information
-        billing_address: values.billing_address || {},
-        shipping_address: values.shipping_address || {},
+        billing_address: otherValues.billing_address || {},
+        shipping_address: otherValues.shipping_address || {},
 
         // Additional Information
-        notes: values.notes || "",
+        notes: otherValues.notes || "",
       };
 
       // If there's a profile image, append it to the data
@@ -295,7 +325,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={8}>
+          <Col span={12}>
             <Form.Item
               name="email"
               label={
@@ -325,33 +355,96 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
             </Form.Item>
           </Col>
          
-          <Col span={8}>
+          <Col span={12}>
             <Form.Item
-              name="contact"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Phone Number
-                </span>
-              }
-              rules={[{ required: true, message: "Please enter phone number" }]}
+              label="Contact"
+              style={{ marginBottom: 0 }}
+              required
             >
-              <Input
-                prefix={
-                  <FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter phone number"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-              />
+              <Input.Group compact className="phone-input-group" style={{
+                display: 'flex',
+                height: '48px',
+                backgroundColor: '#f8fafc',
+                borderRadius: '10px',
+                border: '1px solid #e6e8eb',
+                overflow: 'hidden'
+              }}>
+                <Form.Item
+                  name="phoneCode"
+                  noStyle
+                  rules={[{ required: true, message: 'Required' }]}
+                  initialValue="+91"
+                >
+                  <Select
+                    size="large"
+                    style={{
+                      width: '80px',
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      backgroundColor: 'white',
+                      cursor: 'pointer',
+                    }}
+                    loading={countriesLoading}
+                    className="phone-code-select"
+                    dropdownStyle={{
+                      padding: '8px',
+                      borderRadius: '10px',
+                      backgroundColor: 'white',
+                    }}
+                    showSearch
+                    optionFilterProp="children"
+                  >
+                    {countries?.map(country => (
+                      <Option 
+                        key={country.id} 
+                        value={country.phoneCode}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          color: '#262626',
+                          cursor: 'pointer',
+                        }}>
+                          <span>{country.phoneCode}</span>
+                        </div>
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item
+                  name="phoneNumber"
+                  noStyle
+                  rules={[
+                    { required: true, message: 'Please enter phone number' },
+                    {
+                      pattern: /^\d{10}$/,
+                      message: 'Phone number must be exactly 10 digits'
+                    }
+                  ]}
+                >
+                  <Input
+                    size="large"
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      borderLeft: '1px solid #e6e8eb',
+                      borderRadius: 0,
+                      height: '46px',
+                      backgroundColor: 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                    placeholder="Enter 10-digit phone number"
+                    maxLength={10}
+                  />
+                </Form.Item>
+              </Input.Group>
             </Form.Item>
           </Col>
-          <Col span={8}>
+          {/* <Col span={8}>
             <Form.Item
               name="alternate_number"
               label={
@@ -375,7 +468,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                 }}
               />
             </Form.Item>
-          </Col>
+          </Col> */}
         </Row>
 
         <Row gutter={16}>

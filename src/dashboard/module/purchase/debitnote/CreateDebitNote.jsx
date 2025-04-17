@@ -47,8 +47,10 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                 setSelectedCurrencyId(currencyDetails.id);
             }
 
+            const billAmount = selectedBill.total || selectedBill.totalAmount || 0;
             form.setFieldsValue({
-                amount: selectedBill.total || selectedBill.totalAmount || 0
+                amount: billAmount,
+                max_amount: billAmount
             });
         }
     };
@@ -186,6 +188,11 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                     padding: '24px',
                 }}
             >
+                {/* Hidden field to store max_amount */}
+                <Form.Item name="max_amount" hidden>
+                    <Input />
+                </Form.Item>
+
                 <Row gutter={16}>
                     <Col span={12}>
                         <Form.Item
@@ -264,7 +271,18 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                                     Amount <span style={{ color: '#ff4d4f' }}>*</span>
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please enter amount' }]}
+                            rules={[
+                                { required: true, message: 'Please enter amount' },
+                                ({ getFieldValue }) => ({
+                                    validator(_, value) {
+                                        const maxAmount = getFieldValue('max_amount');
+                                        if (!value || !maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
+                                            return Promise.resolve();
+                                        }
+                                        return Promise.reject(new Error('Amount cannot exceed bill amount'));
+                                    },
+                                }),
+                            ]}
                         >
                             <InputNumber
                                 placeholder="Enter amount"
@@ -277,7 +295,6 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                                 }}
                                 formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                 parser={value => value.replace(new RegExp(`${selectedCurrency}|,`, 'g'), '')}
-
                             />
                         </Form.Item>
                     </Col>
@@ -328,6 +345,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                         size="large"
                         type="primary"
                         htmlType="submit"
+                        loading={loading}
                         style={{
                             padding: '8px 32px',
                             height: '44px',

@@ -33,9 +33,27 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                 setFileList([]);
             }
 
+            // Parse the phone object if it exists
+            let phoneCode = '+91'; // Default to India's code
+            let phoneNumber = '';
+            
+            // Find the country by ID and get its phone code
+            if (initialValues.phonecode) {
+                const country = countries?.find(c => c.id === initialValues.phonecode);
+                if (country) {
+                    phoneCode = country.phoneCode;
+                }
+            }
+
+            // Get phone number
+            if (initialValues.contact) {
+                phoneNumber = initialValues.contact;
+            }
+
             const formattedValues = {
                 name: initialValues.name,
-                contact: initialValues.contact,
+                contact: phoneNumber,
+                phonecode: phoneCode || '+91', // Ensure phoneCode is never null
                 email: initialValues.email,
                 taxNumber: initialValues.taxNumber,
                 address: initialValues.address,
@@ -49,14 +67,21 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
 
             form.setFieldsValue(formattedValues);
         }
-    }, [open, form, initialValues]);
+    }, [open, form, initialValues, countries]);
 
     const handleSubmit = async (values) => {
         try {
+            // Find the country ID from the selected phone code
+            const selectedCountry = countries?.find(c => c.phoneCode === values.phonecode);
+            if (!selectedCountry) {
+                message.error('Please select a valid phone code');
+                return;
+            }
+
             const payload = {
                 name: values.name,
                 contact: values.contact,
-                phonecode: values.phonecode || '91',
+                phonecode: selectedCountry.id,
                 email: values.email,
                 taxNumber: values.taxNumber,
                 address: values.address,
@@ -248,7 +273,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                                     name="phonecode"
                                     noStyle
                                     rules={[{ required: true, message: 'Required' }]}
-                                    initialValue="91"
+                                    initialValue="+91"
                                 >
                                     <Select
                                         size="large"
@@ -273,7 +298,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                                         {countries?.map(country => (
                                             <Option 
                                                 key={country.id} 
-                                                value={country.id}
+                                                value={country.phoneCode}
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <div style={{ 

@@ -55,9 +55,8 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [customerForm] = Form.useForm();
   const [createCustomer] = useCreateCustomerMutation();
-  const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
-  const [selectedCurrencyId, setSelectedCurrencyId] = useState('BEzBBPneRQq6rbGYiwYj45k'); // INR currency ID
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null); // INR currency ID
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
@@ -72,19 +71,18 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
 
+   // Fetch currencies
+   const { data: currenciesData, isLoading: currenciesLoading } = useGetAllCurrenciesQuery({
+    page: 1,
+    limit: 100
+});
+
   useEffect(() => {
-    // Set default currency to INR when component mounts
-    if (currenciesData) {
-      const inrCurrency = currenciesData.find(c => c.id === 'BEzBBPneRQq6rbGYiwYj45k');
-      if (inrCurrency) {
-        setSelectedCurrency(inrCurrency.currencyIcon);
-        setSelectedCurrencyId(inrCurrency.id);
-        form.setFieldsValue({
-          currency: inrCurrency.id
-        });
-      }
+    if (currenciesData?.data?.length > 0 ) {
+        const defaultCurrency = currenciesData.find(c => c.currencyCode === 'INR') || currenciesData.data[0];
+        form.setFieldValue('currency', defaultCurrency.id);
     }
-  }, [currenciesData, form]);
+}, [currenciesData, form]);
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
@@ -110,6 +108,7 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
 
     return (amountAfterDiscount * taxRate) / 100;
   };
+
 
   const calculateItemTotal = (item) => {
     if (!item) return 0;
@@ -206,7 +205,9 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         discount_type: item.discount_type || 'percentage',
         hsn_sac: item.hsn_sac || '',
         taxAmount: calculateItemTaxAmount(item),
-        amount: calculateItemTotal(item)
+        amount: calculateItemTotal(item),
+        currency: item.currency || values.currency,
+        currencyIcon: item.currencyIcon || selectedCurrency
       }));
 
       const payload = {
@@ -214,13 +215,17 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         customer: values.customer,
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
-        currency: values.currency,
+        currency: selectedCurrencyId || values.currency,
+        currencyCode: selectedCurrency,
+        currencyIcon: selectedCurrency,
         items: formattedItems,
         subtotal: Number(values.subtotal) || 0,
         tax: Number(values.tax) || 0,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid"
       };
+
+      console.log('Sending payload:', payload); // Add logging for debugging
 
       const result = await createInvoice({id:id, data:payload}).unwrap();
       message.success("Invoice created successfully");
@@ -229,7 +234,12 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error(error?.data?.message || "Failed to create invoice");
+      // Enhanced error message
+      const errorMessage = error?.data?.message || 
+                          error?.data?.error || 
+                          error?.message || 
+                          "Failed to create invoice";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -750,35 +760,38 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
             </Form.Item>
          
             <Form.Item
-              name="currency"
-              label={
-                <span className="form-label">
-                  Currency <span className="required"></span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select currency" }]}
-            >
-              <Select
-                placeholder="Select Currency"
-                size="large"
-                value={selectedCurrencyId}
-                onChange={handleCurrencyChange}
-                disabled={true}
-                style={{
-                  // width: "450px",
-                  borderRadius: "10px",
-                }}
-              >
-                {currenciesData?.map((currency) => (
-                  <Option
-                    key={currency.id}
-                    value={currency.id}
-                    symbol={currency.currencyIcon}
-                  >
-                    {currency.currencyName} ({currency.currencyIcon})
-                  </Option>
-                ))}
-              </Select>
+                        name="currency"
+                        label={
+                            <span className="form-label">
+                                Currency <span className="required"></span>
+                            </span>
+                        }
+                        rules={[{ required: true, message: "Please select currency" }]}
+                    >
+                        <Select
+                            placeholder="Select Currency"
+                            size="large"
+                            value={selectedCurrencyId}
+                            onChange={handleCurrencyChange}
+                            disabled={isCurrencyDisabled}
+                            style={{
+                                borderRadius: "10px",
+                            }}
+                            optionLabelProp="label"
+                        >
+                            {currenciesData?.map((currency) => (
+                                <Option
+                                    key={currency.id}
+                                    value={currency.id}
+                                    label={`${currency.currencyName} (${currency.currencyIcon})`}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>{currency.currencyIcon}</span>
+                                        <span>{currency.currencyName}</span>
+                                    </div>
+                                </Option>
+                            ))}
+                        </Select>
             </Form.Item>
           </div> 
 
@@ -893,7 +906,38 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
                 borderRadius: '10px',
               }}
               value={form.getFieldValue('items')?.[0]?.item_name}
-              onChange={handleProductSelect}
+              onChange={(value, option) => {
+                const selectedProduct = productsData?.data?.find(product => product.id === value);
+                if (selectedProduct) {
+                    // Get the product's currency from currencies list
+                    const productCurrency = currenciesData?.find(c => c.id === selectedProduct.currency);
+                    if (productCurrency) {
+                        setSelectedCurrency(productCurrency.currencyIcon);
+                        setSelectedCurrencyId(productCurrency.id);
+                        setIsCurrencyDisabled(true);
+                    }
+
+                    // Update the items list
+                    const items = form.getFieldValue('items') || [];
+                    const newItems = [...items];
+                    const lastIndex = newItems.length - 1;
+                    newItems[lastIndex] = {
+                        ...newItems[lastIndex],
+                        id: selectedProduct.id,
+                        item_name: selectedProduct.name,
+                        unit_price: selectedProduct.selling_price,
+                        hsn_sac: selectedProduct.hsn_sac,
+                        tax: selectedProduct.tax,
+                        profilePic: selectedProduct.image,
+                        currency: selectedProduct.currency
+                    };
+                    form.setFieldsValue({
+                        items: newItems,
+                        currency: selectedProduct.currency
+                    });
+                    calculateTotals(newItems);
+                }
+            }}
             >
               {productsData?.data?.map(product => (
                 <Option

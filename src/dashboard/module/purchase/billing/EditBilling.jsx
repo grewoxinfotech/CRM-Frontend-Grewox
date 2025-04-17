@@ -20,7 +20,9 @@ const EditBilling = ({ open, onCancel, initialData }) => {
     const [vendorForm] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState(initialData?.currencyIcon || '₹');
+    const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
     const [isTaxEnabled, setIsTaxEnabled] = useState(false);
+    const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
     const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
     const [createVendor] = useCreateVendorMutation();
     const [updateBilling] = useUpdateBillingMutation();
@@ -41,7 +43,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
     const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
 
     useEffect(() => {
-        if (initialData && currenciesData) {
+        if (initialData && currenciesData && vendorsData?.data) {
             // Parse items if they're in string format
             const items = typeof initialData.items === 'string' 
                 ? JSON.parse(initialData.items) 
@@ -57,27 +59,35 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 curr.currencyCode === initialData.currencyCode
             );
 
-            // Set currency symbol if found
+            // Set currency symbol and ID if found
             if (selectedCurrencyData) {
                 setSelectedCurrency(selectedCurrencyData.currencyIcon);
+                setSelectedCurrencyId(selectedCurrencyData.id);
             }
+
+            // Find the vendor data
+            const selectedVendor = vendorsData.data.find(vendor => vendor.id === initialData.vendor);
 
             // Set initial form values
             const formValues = {
-                vendor_id: initialData.vendor,
+                vendor_id: selectedVendor?.id || initialData.vendor,
+                vendor_name: selectedVendor?.name || '',
                 bill_date: dayjs(initialData.billDate),
-                currency: selectedCurrencyData?.currencyCode || initialData.currencyCode,
+                currency: selectedCurrencyData?.id || initialData.currency,
                 discription: initialData.discription,
                 status: initialData.status || 'pending',
                 items: items?.length > 0 
                     ? items.map(item => ({
                         item_name: item.itemName,
                         quantity: item.quantity,
-                        unitPrice: Number(item.selling_price || item.unit_price),
+                        unit_price: Number(item.unitPrice || 0),
+                        selling_price: Number(item.unitPrice || 0),
                         hsn_sac: item.hsnSac,
                         taxId: item.taxId,
                         tax: item.tax,
                         discount: item.discount || 0,
+                        currency: item.currency || initialData.currency,
+                        currencyIcon: item.currencyIcon || selectedCurrencyData?.currencyIcon
                     }))
                     : [{}],
                 sub_total: initialData.subTotal?.toFixed(2),
@@ -94,7 +104,11 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 const firstItem = items[0];
                 const matchingProduct = productsData.data.find(p => p.name === firstItem.itemName);
                 if (matchingProduct) {
-                    form.setFieldsValue({ product_id: matchingProduct.id });
+                    form.setFieldsValue({ 
+                        product_id: matchingProduct.id,
+                        [`items[0].unit_price`]: Number(firstItem.unitPrice || 0),
+                        [`items[0].selling_price`]: Number(firstItem.unitPrice || 0)
+                    });
                 }
             }
 
@@ -103,31 +117,42 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 calculateTotals(formValues.items);
             }, 100);
         }
-    }, [initialData, form, currenciesData, productsData]);
+    }, [initialData, form, currenciesData, productsData, vendorsData]);
 
     // Handle currency change
     const handleCurrencyChange = (value, option) => {
-        const currencySymbol = option?.symbol || '₹';
-        setSelectedCurrency(currencySymbol);
+        const currency = currenciesData?.find(c => c.id === value);
+        if (currency) {
+            setSelectedCurrency(currency.currencyIcon);
+            setSelectedCurrencyId(value);
 
-        // Recalculate all amounts with new currency
-        const items = form.getFieldValue('items') || [];
-        calculateTotals(items);
+            // Update all prices with new currency
+            const items = form.getFieldValue('items') || [];
+            const updatedItems = items.map(item => ({
+                ...item,
+                unit_price: item.unit_price || 0,
+                currency: value,
+                currencyIcon: currency.currencyIcon
+            }));
+            form.setFieldsValue({ items: updatedItems });
+            calculateTotals(updatedItems);
+        }
     };
 
-        const handleSubmit = async (values) => {
-            try {
+    const handleSubmit = async (values) => {
+        try {
             setLoading(true);
 
             // Find selected currency details
-            const selectedCurrencyData = currenciesData?.find(curr => curr.currencyCode === values.currency);
+            const selectedCurrencyData = currenciesData?.find(curr => curr.id === values.currency);
 
             // Format the data according to your API requirements
             const formattedData = {
                 vendor: values.vendor_id,
                 billDate: dayjs(values.bill_date).format('YYYY-MM-DD'),
                 currency: selectedCurrencyData?.id || values.currency,
-                currencyCode: values.currency,
+                currencyCode: selectedCurrencyData?.currencyCode || values.currency,
+                currencyIcon: selectedCurrencyData?.currencyIcon || selectedCurrency,
                 items: values.items?.map(item => ({
                     itemName: item.item_name,
                     quantity: Number(item.quantity),
@@ -138,7 +163,8 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     taxId: item.taxId,
                     taxAmount: calculateItemTaxAmount(item),
                     amount: calculateItemTotal(item),
-                   
+                    currency: item.currency || values.currency,
+                    currencyIcon: item.currencyIcon || selectedCurrency
                 })),
                 discription: values.discription || '',
                 status: values.status || 'pending',
@@ -158,8 +184,6 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 createdAt: initialData?.createdAt,
                 updatedAt: initialData?.updatedAt
             };
-
-            console.log('Submitting data:', formattedData);
 
             const response = await updateBilling({
                 id: initialData.id,
@@ -492,6 +516,35 @@ const EditBilling = ({ open, onCancel, initialData }) => {
         </Modal>
     );
 
+    // Update the product selection handler
+    const handleProductChange = (value, option) => {
+        const items = form.getFieldValue('items') || [];
+        const newItems = [...items];
+        const lastIndex = newItems.length - 1;
+        
+        // Get the selected product's details
+        const selectedProduct = productsData?.data?.find(p => p.id === value);
+        
+        if (selectedProduct) {
+            newItems[lastIndex] = {
+                ...newItems[lastIndex],
+                item_name: selectedProduct.name,
+                unit_price: Number(selectedProduct.selling_price || 0),
+                selling_price: Number(selectedProduct.selling_price || 0),
+                hsn_sac: selectedProduct.hsn_sac,
+                profilePic: selectedProduct.image
+            };
+            
+            form.setFieldsValue({ 
+                items: newItems,
+                [`items[${lastIndex}].unit_price`]: Number(selectedProduct.selling_price || 0),
+                [`items[${lastIndex}].selling_price`]: Number(selectedProduct.selling_price || 0)
+            });
+            
+            calculateTotals(newItems);
+        }
+    };
+
     return (
         <>
             <Modal
@@ -624,10 +677,25 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                     borderRadius: '8px',
                                 }}
                                 dropdownRender={dropdownRender}
+                                onChange={(value, option) => {
+                                    const selectedVendor = vendorsData?.data?.find(v => v.id === value);
+                                    if (selectedVendor) {
+                                        form.setFieldsValue({
+                                            vendor_name: selectedVendor.name
+                                        });
+                                    }
+                                }}
                             >
                                 {vendorsData?.data?.map(vendor => (
-                                    <Option key={vendor.id} value={vendor.id}>
-                                        {vendor.name}
+                                    <Option 
+                                        key={vendor.id} 
+                                        value={vendor.id}
+                                        label={vendor.name}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <FiUser style={{ color: '#1890ff' }} />
+                                            <span>{vendor.name}</span>
+                                        </div>
                                     </Option>
                                 ))}
                             </Select>
@@ -668,18 +736,24 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                             <Select
                                 placeholder="Select Currency"
                                 size="large"
-                                disabled
+                                value={selectedCurrencyId}
+                                onChange={handleCurrencyChange}
+                                disabled={isCurrencyDisabled}
                                 style={{
                                     borderRadius: "10px",
                                 }}
+                                optionLabelProp="label"
                             >
                                 {currenciesData?.map((currency) => (
                                     <Option
                                         key={currency.id}
                                         value={currency.id}
-                                        symbol={currency.currencyIcon}
+                                        label={`${currency.currencyName} (${currency.currencyIcon})`}
                                     >
-                                        {currency.currencyName} ({currency.currencyIcon})
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span>{currency.currencyIcon}</span>
+                                            <span>{currency.currencyName}</span>
+                                        </div>
                                     </Option>
                                 ))}
                             </Select>
@@ -762,21 +836,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                     borderRadius: '10px',
                                 }}
                                 value={form.getFieldValue('items')?.[0]?.item_name}
-                                onChange={(value, option) => {
-                                    const items = form.getFieldValue('items') || [];
-                                    const newItems = [...items];
-                                    const lastIndex = newItems.length - 1;
-                                    newItems[lastIndex] = {
-                                        ...newItems[lastIndex],
-                                        item_name: option.label,
-                                        unit_price: option.selling_price,
-                                        selling_price: option.selling_price,
-                                        hsn_sac: option.hsn_sac,
-                                        profilePic: option.image
-                                    };
-                                    form.setFieldsValue({ items: newItems });
-                                    calculateTotals(newItems);
-                                }}
+                                onChange={handleProductChange}
                             >
                                 {productsData?.data?.map(product => (
                                     <Option

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Button, Typography, Select, Row, Col, Divider, InputNumber, DatePicker, Space, message, Switch } from 'antd';
 import { FiFileText, FiX, FiUser, FiCalendar, FiHash, FiDollarSign, FiPlus, FiTrash2, FiPackage, FiPhone } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -18,13 +18,12 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
     const [loading, setLoading] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState('₹');
     const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
-    const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
+    const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
     const [isTaxEnabled, setIsTaxEnabled] = useState(false);
     const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
     const [vendorForm] = Form.useForm();
     const [createVendor] = useCreateVendorMutation();
     const loggedInUser = useSelector(selectCurrentUser);
-    // Add this to fetch vendors
     const { data: vendorsData, isLoading: vendorsLoading } = useGetVendorsQuery();
 
     // Fetch currencies
@@ -38,6 +37,71 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
 
     // Fetch products
     const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
+
+    useEffect(() => {
+        if (currenciesData?.data?.length > 0 ) {
+            const defaultCurrency = currenciesData.find(c => c.currencyCode === 'INR') || currenciesData.data[0];
+            form.setFieldValue('currency', defaultCurrency.id);
+        }
+    }, [currenciesData, form]);
+
+    const handleCurrencyChange = (value, option) => {
+        const currency = currenciesData?.find(c => c.id === value);
+        if (currency) {
+            setSelectedCurrency(currency.currencyIcon);
+            setSelectedCurrencyId(value);
+
+            // Update all prices with new currency
+            const items = form.getFieldValue('items') || [];
+            const updatedItems = items.map(item => ({
+                ...item,
+                unit_price: item.unit_price || 0,
+                currency: value,
+                currencyIcon: currency.currencyIcon
+            }));
+            form.setFieldsValue({ items: updatedItems });
+            calculateTotals(updatedItems);
+        }
+    };
+
+    const handleProductSelect = (value, option) => {
+        const selectedProduct = productsData?.data?.find(product => product.id === value);
+        if (selectedProduct) {
+            // Get the product's currency from currencies list
+            const productCurrency = currenciesData?.find(c => c.id === selectedProduct.currency);
+            if (productCurrency) {
+                setSelectedCurrency(productCurrency.currencyIcon);
+                setSelectedCurrencyId(productCurrency.id);
+                setIsCurrencyDisabled(true);
+
+                // Update the form with the product's currency
+                form.setFieldsValue({
+                    currency: productCurrency.id
+                });
+
+                // Update the items list
+                const items = form.getFieldValue('items') || [];
+                const newItems = [...items];
+                const lastIndex = newItems.length - 1;
+                newItems[lastIndex] = {
+                    ...newItems[lastIndex],
+                    id: selectedProduct.id,
+                    item_name: selectedProduct.name,
+                    unit_price: selectedProduct.selling_price,
+                    hsn_sac: selectedProduct.hsn_sac,
+                    tax: selectedProduct.tax,
+                    profilePic: selectedProduct.image,
+                    currency: selectedProduct.currency,
+                    currencyIcon: productCurrency.currencyIcon
+                };
+                form.setFieldsValue({
+                    items: newItems,
+                    currency: selectedProduct.currency
+                });
+                calculateTotals(newItems);
+            }
+        }
+    };
 
     const handleCreateVendor = async (values) => {
         try {
@@ -62,14 +126,15 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
             setLoading(true);
 
             // Find selected currency details
-            const selectedCurrencyData = currenciesData?.find(curr => curr.currencyCode === values.currency);
+            const selectedCurrencyData = currenciesData?.find(curr => curr.id === values.currency);
 
             // Format the data according to your API requirements
             const formattedData = {
                 vendor: values.vendor_id,
                 billDate: values.billDate ? dayjs(values.billDate).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
                 currency: selectedCurrencyData?.id || values.currency,
-                currencyCode: values.currency,
+                currencyCode: selectedCurrencyData?.currencyCode || values.currency,
+                currencyIcon: selectedCurrencyData?.currencyIcon || selectedCurrency,
                 items: values.items?.map(item => ({
                     itemName: item.item_name,
                     quantity: Number(item.quantity),
@@ -80,7 +145,9 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                     taxId: item.taxId,
                     taxAmount: calculateItemTaxAmount(item),
                     amount: calculateItemTotal(item),
-                    description: item.description || ''
+                    description: item.description || '',
+                    currency: item.currency || values.currency,
+                    currencyIcon: item.currencyIcon || selectedCurrency
                 })),
                 discription: values.discription || '',
                 subTotal: Number(values.sub_total || 0),
@@ -569,23 +636,24 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                         <Select
                             placeholder="Select Currency"
                             size="large"
-                            disabled
+                            value={selectedCurrencyId}
+                            onChange={handleCurrencyChange}
+                            disabled={isCurrencyDisabled}
                             style={{
                                 borderRadius: "10px",
                             }}
-                            onChange={(value, option) => {
-                                setSelectedCurrency(option?.symbol || '₹');
-                                setSelectedCurrencyId(value);
-                                calculateTotals(form.getFieldValue('items'));
-                            }}
+                            optionLabelProp="label"
                         >
                             {currenciesData?.map((currency) => (
                                 <Option
                                     key={currency.id}
                                     value={currency.id}
-                                    symbol={currency.currencyIcon}
+                                    label={`${currency.currencyName} (${currency.currencyIcon})`}
                                 >
-                                    {currency.currencyName} ({currency.currencyIcon})
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span>{currency.currencyIcon}</span>
+                                        <span>{currency.currencyName}</span>
+                                    </div>
                                 </Option>
                             ))}
                         </Select>
@@ -671,26 +739,31 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                             onChange={(value, option) => {
                                 const selectedProduct = productsData?.data?.find(product => product.id === value);
                                 if (selectedProduct) {
-                                    // Find the product's currency from currenciesData
-                                    const productCurrency = currenciesData?.find(curr => curr.id === selectedProduct.currency);
-                                    
-                                    // Set the currency and disable the field
-                                    setSelectedCurrency(productCurrency?.currencyIcon || '₹');
-                                    setSelectedCurrencyId(productCurrency?.id);
-                                    setIsCurrencyDisabled(true);
+                                    // Get the product's currency from currencies list
+                                    const productCurrency = currenciesData?.find(c => c.id === selectedProduct.currency);
+                                    if (productCurrency) {
+                                        setSelectedCurrency(productCurrency.currencyIcon);
+                                        setSelectedCurrencyId(productCurrency.id);
+                                        setIsCurrencyDisabled(true);
+                                    }
 
+                                    // Update the items list
                                     const items = form.getFieldValue('items') || [];
                                     const newItems = [...items];
                                     const lastIndex = newItems.length - 1;
                                     newItems[lastIndex] = {
                                         ...newItems[lastIndex],
+                                        id: selectedProduct.id,
                                         item_name: selectedProduct.name,
                                         unit_price: selectedProduct.selling_price,
-                                        hsn_sac: selectedProduct.hsn_sac
+                                        hsn_sac: selectedProduct.hsn_sac,
+                                        tax: selectedProduct.tax,
+                                        profilePic: selectedProduct.image,
+                                        currency: selectedProduct.currency
                                     };
-                                    form.setFieldsValue({ 
+                                    form.setFieldsValue({
                                         items: newItems,
-                                        currency: productCurrency?.id
+                                        currency: selectedProduct.currency
                                     });
                                     calculateTotals(newItems);
                                 }

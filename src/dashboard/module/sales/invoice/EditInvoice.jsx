@@ -55,14 +55,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [createCustomer] = useCreateCustomerMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState('₹');
-  const [selectedCurrencyId, setSelectedCurrencyId] = useState('BEzBBPneRQq6rbGYiwYj45k'); // INR currency ID
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   
-  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
+  const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('customer');
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
@@ -145,7 +145,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate, "YYYY-MM-DD") : null,
         dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate, "YYYY-MM-DD") : null,
         referenceNumber: initialValues.salesInvoiceNumber,
-        currency: initialValues.currency || 'BEzBBPneRQq6rbGYiwYj45k', // Default to INR if not set
+        currency: initialValues.currency,
         status: initialValues.payment_status,
         items: items.map(item => ({
           product: item.product_id,
@@ -171,7 +171,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       form.setFieldsValue(formattedValues);
 
       // Set currency details
-      const selectedCurrency = currenciesData?.find(c => c.id === (initialValues.currency || 'BEzBBPneRQq6rbGYiwYj45k'));
+      const selectedCurrency = currenciesData?.find(c => c.id === initialValues.currency);
       if (selectedCurrency) {
         setSelectedCurrency(selectedCurrency.currencyIcon);
         setSelectedCurrencyId(selectedCurrency.id);
@@ -296,9 +296,21 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     calculateTotals(items);
   };
 
-  const handleCurrencyChange = (value) => {
-    // Currency is disabled, so this function is not needed
-    return;
+  const handleCurrencyChange = (value, option) => {
+    const currency = currenciesData?.find(c => c.id === value);
+    if (currency) {
+      setSelectedCurrency(currency.currencyIcon);
+      setSelectedCurrencyId(value);
+
+      // Update all prices with new currency
+      const items = form.getFieldValue('items') || [];
+      const updatedItems = items.map(item => ({
+        ...item,
+        unit_price: item.unit_price || 0
+      }));
+      form.setFieldsValue({ items: updatedItems });
+      calculateTotals(updatedItems);
+    }
   };
 
   const handleProductSelect = (value, option) => {
@@ -846,21 +858,25 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               <Select
                 placeholder="Select Currency"
                 size="large"
-                value={selectedProductCurrency?.id || selectedCurrencyId}
+                value={selectedCurrencyId}
                 onChange={handleCurrencyChange}
-                disabled={true}
+                disabled={isCurrencyDisabled}
                 style={{
                   width: "100%",
                   borderRadius: "10px",
                 }}
+                optionLabelProp="label"
               >
                 {currenciesData?.map((currency) => (
                   <Option
                     key={currency.id}
                     value={currency.id}
-                    symbol={currency.currencyIcon}
+                    label={`${currency.currencyName} (${currency.currencyIcon})`}
                   >
-                    {currency.currencyName} ({currency.currencyIcon})
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>{currency.currencyIcon}</span>
+                      <span>{currency.currencyName}</span>
+                    </div>
                   </Option>
                 ))}
               </Select>

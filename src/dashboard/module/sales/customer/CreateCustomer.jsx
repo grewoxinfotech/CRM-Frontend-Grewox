@@ -32,7 +32,7 @@ const { TextArea } = Input;
 const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { data: countries = [], loading: countriesLoading } = useGetAllCountriesQuery();
   const [selectedCountry, setSelectedCountry] = useState(null);
 
   // Find India in countries array and set as default
@@ -50,24 +50,33 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
   
   const handleSubmit = async (values) => {
     try {
+      // Find the country ID from the selected phone code
+      const selectedCountry = countries?.find(c => c.phoneCode === values.phoneCode);
+      if (!selectedCountry) {
+        message.error('Please select a valid phone code');
+        return;
+      }
+
+      const { phoneCode, phoneNumber, ...otherValues } = values;
+      
       const customerData = {
         // Basic Information
-        name: values.name || "",
-        contact: values.phone || "",
-        email: values.email || "",
-        tax_number: values.tax_number || "",
-        alternate_number: values.alternate_number || "",
-        text_number: values.text_number || "",
-        company: values.company || "",
-        status: values.status || "active",
-        phonecode: selectedCountry?.phoneCode || "+91",
+        name: otherValues.name || "",
+        contact: phoneNumber || "",
+        email: otherValues.email || "",
+        tax_number: otherValues.tax_number || "",
+        alternate_number: otherValues.alternate_number || "",
+        text_number: otherValues.text_number || "",
+        company: otherValues.company || "",
+        status: otherValues.status || "active",
+        phonecode: selectedCountry.id, // Use country ID as phonecode
 
-        // Address Information - Send as objects directly
-        billing_address: values.billing_address || null,
-        shipping_address: values.shipping_address || null,
+        // Address Information
+        billing_address: otherValues.billing_address || null,
+        shipping_address: otherValues.shipping_address || null,
 
         // Additional Information
-        notes: values.notes || "",
+        notes: otherValues.notes || "",
       };
 
       // If there's a profile image, append it to the data
@@ -300,55 +309,94 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
               />
             </Form.Item>
           </Col>
-          {/* <Col span={4}>
-            <Form.Item
-              name="country"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Country Code
-                </span>
-              }
-            >
-              <Select
-                size="large"
-                onChange={handleCountryChange}
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                {countries.map((country) => (
-                  <Option key={country.id} value={country.id}>
-                    {country.phoneCode} ({country.countryCode})
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col> */}
           <Col span={12}>
             <Form.Item
               name="phone"
               label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Phone Number
+                <span style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                }}>
+                    Phone Number <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please enter phone number" }]}
+              // rules={[{ required: true, message: "Please enter phone number" }]}
             >
-              <Input
-                prefix={
-                  <FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />
-                }
-                placeholder="Enter phone number"
-                size="large"
-                style={{
-                  borderRadius: "10px",
-                  padding: "8px 16px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
-                  border: "1px solid #e6e8eb",
-                }}
-              />
+              <Input.Group compact className="phone-input-group" style={{
+                  display: 'flex',
+                  height: '48px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '10px',
+                  border: '1px solid #e6e8eb',
+                  overflow: 'hidden'
+              }}>
+                  <Form.Item
+                      name="phoneCode"
+                      noStyle
+                      initialValue="+91"
+                  >
+                      <Select
+                          size="large"
+                          style={{
+                              width: '80px',
+                              height: '48px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              backgroundColor: 'white',
+                              cursor: 'pointer',
+                          }}
+                          loading={countriesLoading}
+                          className="phone-code-select"
+                          dropdownStyle={{
+                              padding: '8px',
+                              borderRadius: '10px',
+                              backgroundColor: 'white',
+                          }}
+                          showSearch
+                          optionFilterProp="children"
+                          defaultValue="+91"
+                      >
+                          {countries?.map(country => (
+                              <Option 
+                                  key={country.id} 
+                                  value={country.phoneCode}
+                                  style={{ cursor: 'pointer' }}
+                              >
+                                  <div style={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center', 
+                                      justifyContent: 'center',
+                                      color: '#262626',
+                                      cursor: 'pointer',
+                                  }}>
+                                      <span>{country.phoneCode}</span>
+                                  </div>
+                              </Option>
+                          ))}
+                      </Select>
+                  </Form.Item>
+                  <Form.Item
+                      name="phoneNumber"
+                      noStyle
+                  >
+                      <Input
+                          size="large"
+                          type="number"
+                          style={{
+                              flex: 1,
+                              border: 'none',
+                              borderLeft: '1px solid #e6e8eb',
+                              borderRadius: 0,
+                              height: '46px',
+                              backgroundColor: 'transparent',
+                              display: 'flex',
+                              alignItems: 'center',
+                          }}
+                          placeholder="Enter 10-digit phone number"
+                          maxLength={10}
+                      />
+                  </Form.Item>
+              </Input.Group>
             </Form.Item>
           </Col>
         </Row>
