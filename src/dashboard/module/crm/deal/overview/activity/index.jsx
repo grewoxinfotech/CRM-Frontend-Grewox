@@ -1,17 +1,69 @@
-import React from 'react';
-import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty, Badge, Input, Button, TimePicker, Space } from 'antd';
 import {
     FiPlus, FiEdit2, FiTrash2, FiFileText, FiDollarSign,
-    FiFlag, FiCheckSquare, FiMessageSquare, FiUser, FiClock
+    FiFlag, FiCheckSquare, FiMessageSquare, FiUser, FiClock, FiBell, FiSearch, FiFilter
 } from 'react-icons/fi';
 import './activity.scss';
 import { useGetActivitiesQuery } from '../../../lead/overview/activity/services/activityApi';
 import moment from 'moment';
 
 const DealActivity = ({ deal }) => {
-    const { data: response, isLoading, error } = useGetActivitiesQuery(deal.id, {
-        skip: !deal.id // Skip the query if deal.id is not available
+    const [lastActivityCount, setLastActivityCount] = useState(0);
+    const [newActivityCount, setNewActivityCount] = useState(0);
+    const [searchText, setSearchText] = useState('');
+    const [timeFilter, setTimeFilter] = useState(moment());
+    const [filteredActivities, setFilteredActivities] = useState([]);
+    const { data: response, isLoading, error } = useGetActivitiesQuery(deal?.id, {
+        skip: !deal?.id,
+        pollingInterval: 3000,
+        refetchOnMountOrArgChange: true
     });
+
+    useEffect(() => {
+        if (response?.data) {
+            const currentCount = response.data.length;
+            if (currentCount > lastActivityCount) {
+                setNewActivityCount(currentCount - lastActivityCount);
+            }
+            setLastActivityCount(currentCount);
+            filterActivities(response.data);
+        }
+    }, [response?.data, lastActivityCount, timeFilter, searchText]);
+
+    const filterActivities = (activities) => {
+        let filtered = [...activities];
+
+        // Apply time filter
+        if (timeFilter) {
+            const selectedTime = moment(timeFilter);
+            filtered = filtered.filter(activity => {
+                const activityTime = moment(activity.createdAt);
+                return activityTime.isSame(selectedTime, 'hour');
+            });
+        }
+
+        // Apply search filter
+        if (searchText) {
+            filtered = filtered.filter(activity => 
+                activity.activity_message?.toLowerCase().includes(searchText.toLowerCase()) ||
+                activity.performed_by?.toLowerCase().includes(searchText.toLowerCase()) ||
+                activity.action?.toLowerCase().includes(searchText.toLowerCase())
+            );
+        }
+
+        setFilteredActivities(filtered);
+    };
+
+    const handleTimeChange = (time) => {
+        setTimeFilter(time);
+    };
+
+    const handleSearch = () => {
+        if (response?.data) {
+            filterActivities(response.data);
+        }
+    };
 
     const getActionColor = (action) => {
         switch (action?.toLowerCase()) {
@@ -46,6 +98,10 @@ const DealActivity = ({ deal }) => {
                 return <FiFileText />;
             case 'meeting':
                 return <FiUser />;
+            case 'deal_member':
+                return <FiUser />;
+            case 'sales_invoice':
+                return <FiDollarSign />;
             default:
                 return <FiMessageSquare />;
         }
@@ -94,9 +150,43 @@ const DealActivity = ({ deal }) => {
 
     return (
         <div className="deal-activity">
-            <Card title="Deal Activity">
+            <Card 
+                title={
+                    <div className="card-header">
+                        <div className="title-section">
+                            Deal Activity
+                            {newActivityCount > 0 && (
+                                <Badge 
+                                    count={newActivityCount} 
+                                    style={{ backgroundColor: '#1890ff' }}
+                                    title={`${newActivityCount} new activities`}
+                                />
+                            )}
+                        </div>
+                        <div className="filter-section">
+                            <Space>
+                                <TimePicker
+                                    value={timeFilter}
+                                    onChange={handleTimeChange}
+                                    format="HH:mm"
+                                    style={{ width: 120, height: '50px' }}
+                                    placeholder="Select time"
+                                />
+                                <Input
+                                    placeholder="Search activities..."
+                                    allowClear
+                                    value={searchText}
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    onSearch={handleSearch}
+                                    style={{ height: '50px', width: '300px' }}
+                                />
+                            </Space>
+                        </div>
+                    </div>
+                }
+            >
                 <Timeline
-                    items={activities.map(activity => ({
+                    items={filteredActivities.map(activity => ({
                         dot: (
                             <div
                                 className="timeline-dot"
@@ -127,11 +217,11 @@ const DealActivity = ({ deal }) => {
                                             {formatDate(activity.createdAt)}
                                         </span>
                                     </div>
-                                    {activity.activity_message && (
+                                    {/* {activity.activity_message && (
                                         <div className="activity-description">
                                             {activity.activity_message}
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
                         )

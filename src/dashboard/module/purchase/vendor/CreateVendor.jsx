@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Button, Typography, Select, DatePicker, Row, Col, Divider, Upload, message } from 'antd';
-import { FiDollarSign, FiX, FiCalendar, FiUser, FiHash, FiUpload, FiBriefcase, FiCreditCard, FiFileText, FiTag } from 'react-icons/fi';
+import { FiDollarSign, FiX, FiCalendar, FiUser, FiHash, FiUpload, FiBriefcase, FiCreditCard, FiFileText, FiTag, FiPhone } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './vendor.scss';
 import { useCreateVendorMutation } from './services/vendorApi';
-import { useGetAllCountriesQuery } from '../../settings/services/settingsApi';
+import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from '../../settings/services/settingsApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -14,14 +14,26 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
     const [createVendor] = useCreateVendorMutation();
     const [form] = Form.useForm();
     const [fileList, setFileList] = useState([]);
-    const { data: countries = [] } = useGetAllCountriesQuery();
+    const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery();
+    const { data: currencies = [] } = useGetAllCurrenciesQuery();
+
+    useEffect(() => {
+        if (open) {
+            form.resetFields();
+        }
+    }, [open, form]);
 
     const handleSubmit = async (values) => {
         try {
-            await createVendor(values).unwrap();
+            const formData = {
+                ...values,
+                phonecode: values.phonecode || '91', // Default phone code if not selected
+                contact: values.contact
+            };
+            await createVendor(formData).unwrap();
             message.success('Vendor created successfully');
             form.resetFields();
-            onCancel(); // Close modal after success
+            onCancel();
         } catch (error) {
             console.error('Submit Error:', error);
             message.error('Failed to create vendor');
@@ -158,19 +170,91 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                     </Col>
                     <Col span={12}>
                         <Form.Item
-                            name="contact"
                             label="Contact"
-                            rules={[{ required: true, message: 'Please enter contact' }]}
+                            style={{ marginBottom: 0 }}
+                            required
                         >
-                            <Input
-                                placeholder="Enter contact"
-                                size="large"
-                                style={{
-                                    borderRadius: '10px',
-                                    height: '48px',
-                                    backgroundColor: '#f8fafc',
-                                }}
-                            />
+                            <Input.Group compact className="phone-input-group" style={{
+                                display: 'flex',
+                                height: '48px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '10px',
+                                border: '1px solid #e6e8eb',
+                                overflow: 'hidden'
+                            }}>
+                                <Form.Item
+                                    name="phonecode"
+                                    noStyle
+                                    rules={[{ required: true, message: 'Required' }]}
+                                    initialValue="91"
+                                >
+                                    <Select
+                                        size="large"
+                                        style={{
+                                            width: '80px',
+                                            height: '48px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            backgroundColor: 'white',
+                                            cursor: 'pointer',
+                                        }}
+                                        loading={countriesLoading}
+                                        className="phone-code-select"
+                                        dropdownStyle={{
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                            backgroundColor: 'white',
+                                        }}
+                                        showSearch
+                                        optionFilterProp="children"
+                                    >
+                                        {countries?.map(country => (
+                                            <Option 
+                                                key={country.id} 
+                                                value={country.id}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center',
+                                                    color: '#262626',
+                                                    cursor: 'pointer',
+                                                }}>
+                                                    <span>{country.phoneCode}</span>
+                                                </div>
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                                <Form.Item
+                                    name="contact"
+                                    noStyle
+                                    rules={[
+                                        { required: true, message: 'Please enter phone number' },
+                                        {
+                                            pattern: /^\d{10}$/,
+                                            message: 'Phone number must be exactly 10 digits'
+                                        }
+                                    ]}
+                                >
+                                    <Input
+                                        size="large"
+                                        style={{
+                                            flex: 1,
+                                            border: 'none',
+                                            borderLeft: '1px solid #e6e8eb',
+                                            borderRadius: 0,
+                                            height: '46px',
+                                            backgroundColor: 'transparent',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                        placeholder="Enter 10-digit phone number"
+                                        maxLength={10}
+                                    />
+                                </Form.Item>
+                            </Input.Group>
                         </Form.Item>
                     </Col>
                 </Row>
@@ -266,7 +350,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             label="Country"
                         >
                             <Input
-                                placeholder="Enter country (optional)"
+                                placeholder="Enter country"
                                 size="large"
                                 style={{
                                     borderRadius: '10px',
@@ -293,6 +377,8 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         </Form.Item>
                     </Col>
                 </Row>
+
+                
 
                 <Divider style={{ margin: '24px 0' }} />
 

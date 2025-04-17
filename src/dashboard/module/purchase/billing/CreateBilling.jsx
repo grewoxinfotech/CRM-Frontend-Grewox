@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Button, Typography, Select, Row, Col, Divider, InputNumber, DatePicker, Space, message, Switch } from 'antd';
-import { FiFileText, FiX, FiUser, FiCalendar, FiHash, FiDollarSign, FiPlus, FiTrash2, FiPackage } from 'react-icons/fi';
+import { FiFileText, FiX, FiUser, FiCalendar, FiHash, FiDollarSign, FiPlus, FiTrash2, FiPackage, FiPhone } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './billing.scss';
-import { useGetVendorsQuery } from './services/billingApi';
+import { useGetVendorsQuery, useCreateVendorMutation } from '../vendor/services/vendorApi';
 import { useGetProductsQuery } from '../../sales/product&services/services/productApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 import { useGetAllTaxesQuery } from '../../settings/tax/services/taxApi';
@@ -16,8 +16,13 @@ const { Option } = Select;
 const CreateBilling = ({ open, onCancel, onSubmit }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const [selectedCurrency, setSelectedCurrency] = useState('₹'); // Default to rupee symbol
+    const [selectedCurrency, setSelectedCurrency] = useState('₹');
+    const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
+    const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
     const [isTaxEnabled, setIsTaxEnabled] = useState(false);
+    const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
+    const [vendorForm] = Form.useForm();
+    const [createVendor] = useCreateVendorMutation();
     const loggedInUser = useSelector(selectCurrentUser);
     // Add this to fetch vendors
     const { data: vendorsData, isLoading: vendorsLoading } = useGetVendorsQuery();
@@ -34,14 +39,22 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
     // Fetch products
     const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
 
-    // Handle currency change
-    const handleCurrencyChange = (value, option) => {
-        const currencySymbol = option?.symbol || '₹';
-        setSelectedCurrency(currencySymbol);
+    const handleCreateVendor = async (values) => {
+        try {
+            const result = await createVendor({
+                name: values.name,
+                contact: values.contact,
+            }).unwrap();
 
-        // Recalculate all amounts with new currency
-        const items = form.getFieldValue('items') || [];
-        calculateTotals(items);
+            message.success('Vendor created successfully');
+            setIsVendorModalOpen(false);
+            vendorForm.resetFields();
+
+            // Automatically select the newly created vendor
+            form.setFieldValue('vendor_id', result.data.id);
+        } catch (error) {
+            message.error('Failed to create vendor: ' + error.message);
+        }
     };
 
     const handleSubmit = async (values) => {
@@ -155,6 +168,192 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
             total_amount: totalAmount.toFixed(2)
         });
     };
+
+    const vendorModal = (
+        <Modal
+            title={null}
+            open={isVendorModalOpen}
+            onCancel={() => {
+                setIsVendorModalOpen(false);
+                vendorForm.resetFields();
+            }}
+            footer={null}
+            width={500}
+            destroyOnClose={true}
+            centered
+            closeIcon={null}
+            className="pro-modal custom-modal"
+            styles={{
+                body: {
+                    padding: 0,
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                }
+            }}
+        >
+            <div
+                style={{
+                    background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
+                    padding: '24px',
+                    color: '#ffffff',
+                    position: 'relative',
+                }}
+            >
+                <Button
+                    type="text"
+                    onClick={() => {
+                        setIsVendorModalOpen(false);
+                        vendorForm.resetFields();
+                    }}
+                    style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        color: '#ffffff',
+                        width: '32px',
+                        height: '32px',
+                        padding: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: '8px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                    }}
+                >
+                    <FiX style={{ fontSize: '20px' }} />
+                </Button>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                    }}
+                >
+                    <div
+                        style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '12px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            backdropFilter: 'blur(8px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <FiUser style={{ fontSize: '24px', color: '#ffffff' }} />
+                    </div>
+                    <div>
+                        <h2
+                            style={{
+                                margin: '0',
+                                fontSize: '24px',
+                                fontWeight: '600',
+                                color: '#ffffff',
+                            }}
+                        >
+                            Create New Vendor
+                        </h2>
+                        <Text
+                            style={{
+                                fontSize: '14px',
+                                color: 'rgba(255, 255, 255, 0.85)',
+                            }}
+                        >
+                            Add a new vendor to the system
+                        </Text>
+                    </div>
+                </div>
+            </div>
+
+            <Form
+                form={vendorForm}
+                layout="vertical"
+                onFinish={handleCreateVendor}
+                requiredMark={false}
+                style={{
+                    padding: '24px',
+                }}
+            >
+                <Form.Item
+                    name="name"
+                    label="Vendor Name"
+                    rules={[{ required: true, message: 'Please enter vendor name' }]}
+                >
+                    <Input
+                        prefix={<FiUser style={{ color: '#1890ff' }} />}
+                        placeholder="Enter vendor name"
+                        size="large"
+                        style={{ borderRadius: '8px' }}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    name="contact"
+                    label="Phone Number"
+                    rules={[
+                        { required: true, message: 'Please enter phone number' },
+                        { pattern: /^\d{10}$/, message: 'Please enter a valid 10-digit phone number' }
+                    ]}
+                >
+                    <Input
+                        prefix={<FiPhone style={{ color: '#1890ff' }} />}
+                        placeholder="Enter phone number"
+                        size="large"
+                        style={{ borderRadius: '8px' }}
+                    />
+                </Form.Item>
+
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        gap: '12px',
+                        marginTop: '24px',
+                    }}
+                >
+                    <Button
+                        size="large"
+                        onClick={() => {
+                            setIsVendorModalOpen(false);
+                            vendorForm.resetFields();
+                        }}
+                        style={{
+                            padding: '8px 24px',
+                            height: '44px',
+                            borderRadius: '8px',
+                            border: '1px solid #e6e8eb',
+                            fontWeight: '500',
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        type="primary"
+                        size="large"
+                        htmlType="submit"
+                        style={{
+                            padding: '8px 24px',
+                            height: '44px',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        }}
+                    >
+                        Create Vendor
+                    </Button>
+                </div>
+            </Form>
+        </Modal>
+    );
 
     return (
         <Modal
@@ -290,10 +489,46 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                 width: '100%',
                                 borderRadius: '8px',
                             }}
+                            dropdownRender={(menu) => (
+                                <>
+                                    {menu}
+                                    <Divider style={{ margin: '8px 0' }} />
+                                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                                        <Button
+                                            type="primary"
+                                            icon={<FiPlus />}
+                                            onClick={() => setIsVendorModalOpen(true)}
+                                            style={{
+                                                width: '100%',
+                                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                                border: 'none',
+                                                height: '40px',
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: '8px',
+                                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                                fontWeight: '500',
+                                            }}
+                                        >
+                                            Add Vendor
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         >
                             {vendorsData?.data?.map(vendor => (
                                 <Option key={vendor.id} value={vendor.id}>
-                                    {vendor.name}
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '4px 0'
+                                    }}>
+                                        <FiUser style={{ color: '#1890ff' }} />
+                                        <span>{vendor.name}</span>
+                                    </div>
                                 </Option>
                             ))}
                         </Select>
@@ -325,37 +560,32 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                     <Form.Item
                         name="currency"
                         label={
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Currency <span style={{ color: '#ff4d4f' }}></span>
+                            <span className="form-label">
+                                Currency <span className="required"></span>
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please select currency' }]}
+                        rules={[{ required: true, message: "Please select currency" }]}
                     >
                         <Select
-                        listHeight={100}
-                        dropdownStyle={{
-                          Height: '100px',
-                          overflowY: 'auto',
-                          scrollbarWidth: 'thin',
-                          scrollBehavior: 'smooth'
-                        }}
                             placeholder="Select Currency"
                             size="large"
-                            loading={currenciesLoading}
-                            onChange={handleCurrencyChange}
+                            disabled
                             style={{
-                                width: '100%',
-                                borderRadius: '10px',
+                                borderRadius: "10px",
+                            }}
+                            onChange={(value, option) => {
+                                setSelectedCurrency(option?.symbol || '₹');
+                                setSelectedCurrencyId(value);
+                                calculateTotals(form.getFieldValue('items'));
                             }}
                         >
-                            {currenciesData?.map(currency => (
+                            {currenciesData?.map((currency) => (
                                 <Option
                                     key={currency.id}
-                                    value={currency.currencyCode}
+                                    value={currency.id}
                                     symbol={currency.currencyIcon}
-                                    data={currency}
                                 >
-                                    {currency.currencyCode} - {currency.currencyName}
+                                    {currency.currencyName} ({currency.currencyIcon})
                                 </Option>
                             ))}
                         </Select>
@@ -439,19 +669,31 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                             }}
                             value={form.getFieldValue('items')?.[0]?.item_name}
                             onChange={(value, option) => {
-                                const items = form.getFieldValue('items') || [];
-                                const newItems = [...items];
-                                const lastIndex = newItems.length - 1;
-                                newItems[lastIndex] = {
-                                    ...newItems[lastIndex],
-                                    item_name: option.label,
-                                    unit_price: option.selling_price,
-                                    selling_price: option.selling_price,
-                                    hsn_sac: option.hsn_sac,
-                                    profilePic: option.image
-                                };
-                                form.setFieldsValue({ items: newItems });
-                                calculateTotals(newItems);
+                                const selectedProduct = productsData?.data?.find(product => product.id === value);
+                                if (selectedProduct) {
+                                    // Find the product's currency from currenciesData
+                                    const productCurrency = currenciesData?.find(curr => curr.id === selectedProduct.currency);
+                                    
+                                    // Set the currency and disable the field
+                                    setSelectedCurrency(productCurrency?.currencyIcon || '₹');
+                                    setSelectedCurrencyId(productCurrency?.id);
+                                    setIsCurrencyDisabled(true);
+
+                                    const items = form.getFieldValue('items') || [];
+                                    const newItems = [...items];
+                                    const lastIndex = newItems.length - 1;
+                                    newItems[lastIndex] = {
+                                        ...newItems[lastIndex],
+                                        item_name: selectedProduct.name,
+                                        unit_price: selectedProduct.selling_price,
+                                        hsn_sac: selectedProduct.hsn_sac
+                                    };
+                                    form.setFieldsValue({ 
+                                        items: newItems,
+                                        currency: productCurrency?.id
+                                    });
+                                    calculateTotals(newItems);
+                                }
                             }}
                         >
                             {productsData?.data?.map(product => (
@@ -461,7 +703,6 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                     label={product.name}
                                     selling_price={product.selling_price}
                                     hsn_sac={product.hsn_sac}
-                                    profilePic={product.image}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <div style={{ width: '30px', height: '30px', borderRadius: '4px', overflow: 'hidden' }}>
@@ -481,7 +722,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                             </div>
                                             <div>
                                                 <span style={{ fontSize: '12px', color: '#666' }}>
-                                                    {product.selling_price}
+                                                    {/* {product.selling_price} */}
                                                 </span>
                                             </div>
                                         </div>
@@ -758,6 +999,8 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                     </Button>
                 </div>
             </Form>
+
+            {vendorModal}
         </Modal>
     );
 };

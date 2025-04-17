@@ -4,6 +4,7 @@ import { FiDollarSign, FiX, FiCalendar, FiUser, FiHash, FiUpload, FiBriefcase, F
 import dayjs from 'dayjs';
 import './vendor.scss';
 import { useUpdateVendorMutation, useGetVendorByIdQuery } from './services/vendorApi';
+import { useGetAllCountriesQuery } from '../../settings/services/settingsApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -13,6 +14,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
     const [form] = Form.useForm();
     const [updateVendor] = useUpdateVendorMutation();
     const [fileList, setFileList] = useState([]);
+    const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery();
 
     useEffect(() => {
         if (open && initialValues) {
@@ -54,6 +56,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
             const payload = {
                 name: values.name,
                 contact: values.contact,
+                phonecode: values.phonecode || '91',
                 email: values.email,
                 taxNumber: values.taxNumber,
                 address: values.address,
@@ -229,19 +232,91 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                     </Col>
                     <Col span={12}>
                         <Form.Item
-                            name="contact"
                             label="Contact"
-                            rules={[{ required: true, message: 'Please enter contact' }]}
+                            style={{ marginBottom: 0 }}
+                            required
                         >
-                            <Input
-                                placeholder="Enter contact"
-                                size="large"
-                                style={{
-                                    borderRadius: '10px',
-                                    height: '48px',
-                                    backgroundColor: '#f8fafc',
-                                }}
-                            />
+                            <Input.Group compact className="phone-input-group" style={{
+                                display: 'flex',
+                                height: '48px',
+                                backgroundColor: '#f8fafc',
+                                borderRadius: '10px',
+                                border: '1px solid #e6e8eb',
+                                overflow: 'hidden'
+                            }}>
+                                <Form.Item
+                                    name="phonecode"
+                                    noStyle
+                                    rules={[{ required: true, message: 'Required' }]}
+                                    initialValue="91"
+                                >
+                                    <Select
+                                        size="large"
+                                        style={{
+                                            width: '80px',
+                                            height: '48px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            backgroundColor: 'white',
+                                            cursor: 'pointer',
+                                        }}
+                                        loading={countriesLoading}
+                                        className="phone-code-select"
+                                        dropdownStyle={{
+                                            padding: '8px',
+                                            borderRadius: '10px',
+                                            backgroundColor: 'white',
+                                        }}
+                                        showSearch
+                                        optionFilterProp="children"
+                                    >
+                                        {countries?.map(country => (
+                                            <Option 
+                                                key={country.id} 
+                                                value={country.id}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <div style={{ 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    justifyContent: 'center',
+                                                    color: '#262626',
+                                                    cursor: 'pointer',
+                                                }}>
+                                                    <span>{country.phoneCode}</span>
+                                                </div>
+                                            </Option>
+                                        ))}
+                                    </Select>
+                                </Form.Item>
+                                <Form.Item
+                                    name="contact"
+                                    noStyle
+                                    rules={[
+                                        { required: true, message: 'Please enter phone number' },
+                                        {
+                                            pattern: /^\d{10}$/,
+                                            message: 'Phone number must be exactly 10 digits'
+                                        }
+                                    ]}
+                                >
+                                    <Input
+                                        size="large"
+                                        style={{
+                                            flex: 1,
+                                            border: 'none',
+                                            borderLeft: '1px solid #e6e8eb',
+                                            borderRadius: 0,
+                                            height: '46px',
+                                            backgroundColor: 'transparent',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                        placeholder="Enter 10-digit phone number"
+                                        maxLength={10}
+                                    />
+                                </Form.Item>
+                            </Input.Group>
                         </Form.Item>
                     </Col>
                 </Row>
