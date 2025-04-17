@@ -38,6 +38,7 @@ import { useUpdateInvoiceMutation } from "../../../../sales/invoice/services/inv
 import { useGetContactsQuery } from "../../../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../../../crm/companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 const { Option } = Select;

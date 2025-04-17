@@ -189,7 +189,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         },
         reminder: reminderData,
         repeat: repeatData,
-        participants_reminder: values.participants_reminder
+        participants_reminder: values.participants_reminder,
+        priority: values.priority
       };
 
       await createFollowupMeeting({ id: dealId, data: formattedValues }).unwrap();
@@ -561,8 +562,7 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
-
-        <Form.Item
+          <Form.Item
             name="assigned_to"
             label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Assign To</span>}
             rules={[{ required: true, message: 'Please select assignee' }]}
@@ -629,41 +629,39 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
             </Select>
           </Form.Item>
 
-        <Form.Item
-          name="meeting_status"
-          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Meeting Status</span>}
-          rules={[{ required: true, message: 'Please select meeting status' }]}
-          initialValue="scheduled"
-        >
-          <Select
-            placeholder="Select status"
-            size="large"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px"
-            }}
+          <Form.Item
+            name="meeting_status"
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Meeting Status</span>}
+            rules={[{ required: true, message: 'Please select meeting status' }]}
+            initialValue="scheduled"
           >
-            <Option value="scheduled">
-              <Tag color="processing">Scheduled</Tag>
-            </Option>
-            <Option value="in_progress">
-              <Tag color="warning">In Progress</Tag>
-            </Option>
-            <Option value="completed">
-              <Tag color="success">Completed</Tag>
-            </Option>
-            <Option value="cancelled">
-              <Tag color="error">Cancelled</Tag>
-            </Option>
-            <Option value="postponed">
-              <Tag color="default">Postponed</Tag>
-            </Option>
-          </Select>
-        </Form.Item>
+            <Select
+              placeholder="Select status"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px"
+              }}
+            >
+              <Option value="scheduled">
+                <Tag color="processing">Scheduled</Tag>
+              </Option>
+              <Option value="in_progress">
+                <Tag color="warning">In Progress</Tag>
+              </Option>
+              <Option value="completed">
+                <Tag color="success">Completed</Tag>
+              </Option>
+              <Option value="cancelled">
+                <Tag color="error">Cancelled</Tag>
+              </Option>
+              <Option value="postponed">
+                <Tag color="default">Postponed</Tag>
+              </Option>
+            </Select>
+          </Form.Item>
         </div>
-
-
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -937,34 +935,68 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           )}
         </div>
 
-        <Form.Item
-          name="participants_reminder"
-          label="Participants Reminder"
-          style={{ marginTop: "20px" }}
-        >
-          <Select
-            placeholder="Select reminder option"
-            size="large"
-            listHeight={100}
-            virtual={true}
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px",
-            }}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
+          <Form.Item
+            name="priority"
+            label={<span style={formItemStyle}>Priority</span>}
+            rules={[{ required: true, message: "Please select priority" }]}
           >
-            <Option value="none">None</Option>
-      
-            <Option value="15_min">15 minutes before</Option>
-            <Option value="30_min">30 minutes before</Option>
-            <Option value="1_hour">1 hour before</Option>
-            <Option value="1_day">1 day before</Option>
-            <Option value="2_days">2 days before</Option>
+            <Select
+              placeholder="Select priority"
+              style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
+            >
+              <Option value="highest">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  Highest - Urgent and Critical
+                </div>
+              </Option>
+              <Option value="high">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  High - Important
+                </div>
+              </Option>
+              <Option value="medium">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  Medium - Normal
+                </div>
+              </Option>
+              <Option value="low">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  Low - Can Wait
+                </div>
+              </Option>
+            </Select>
+          </Form.Item>
 
-          </Select>
-        </Form.Item>
-
-
+          <Form.Item
+            name="participants_reminder"
+            label="Participants Reminder"
+          >
+            <Select
+              placeholder="Select reminder option"
+              size="large"
+              listHeight={100}
+              virtual={true}
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+              }}
+            >
+              <Option value="none">None</Option>
+              <Option value="5_min">5 minutes before</Option>
+              <Option value="10_min">10 minutes before</Option>
+              <Option value="15_min">15 minutes before</Option>
+              <Option value="30_min">30 minutes before</Option>
+              <Option value="1_hour">1 hour before</Option>
+            </Select>
+          </Form.Item>
+        </div>
 
         <div style={{
           display: "flex",

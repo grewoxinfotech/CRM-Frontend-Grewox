@@ -221,8 +221,44 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
         {/* Duration and Reminder */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
           <Form.Item
+            name="priority"
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority</span>}
+            rules={[{ required: true, message: "Please select priority" }]}
+          >
+            <Select
+              placeholder="Select priority"
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="highest">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  Highest - Urgent and Critical
+                </div>
+              </Option>
+              <Option value="high">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  High - Important
+                </div>
+              </Option>
+              <Option value="medium">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  Medium - Normal
+                </div>
+              </Option>
+              <Option value="low">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  Low - Can Wait
+                </div>
+              </Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item
             name="call_reminder"
-            label="Reminder"
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Reminder</span>}
             rules={[{ required: true, message: 'Please select reminder' }]}
           >
             <Select

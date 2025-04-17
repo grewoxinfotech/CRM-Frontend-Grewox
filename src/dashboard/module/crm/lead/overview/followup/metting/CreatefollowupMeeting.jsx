@@ -189,7 +189,8 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, lea
         },
         reminder: reminderData,
         repeat: repeatData,
-        participants_reminder: values.participants_reminder
+        participants_reminder: values.participants_reminder,
+        priority: values.priority
       };
 
       await createFollowupMeeting({ id: leadId, data: formattedValues }).unwrap();
@@ -561,117 +562,148 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, lea
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
-
-        <Form.Item
-          name="assigned_to"
-          label={
-            <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Participants
-            </span>
-          }
-          rules={[{ required: true, message: 'Please select participants' }]}
-        >
-          <Select
-            mode="multiple"
-            showSearch
-            size="large"
-            placeholder="Select team members"
-            optionFilterProp="children"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px"
-            }}
-            listHeight={100}
-            dropdownStyle={{
-              maxHeight: '120px',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollBehavior: 'smooth'
-            }}
-            filterOption={(input, option) => {
-              const username = option?.username?.toLowerCase() || '';
-              const searchTerm = input.toLowerCase();
-              return username.includes(searchTerm);
-            }}
-            defaultOpen={false}
+          <Form.Item
+            name="priority"
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority</span>}
+            rules={[{ required: true, message: "Please select priority" }]}
           >
-            {users.map((user) => {
-              const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-              const roleStyle = getRoleStyle(userRole?.role_name);
+            <Select
+              placeholder="Select priority"
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="highest">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  Highest - Urgent and Critical
+                </div>
+              </Option>
+              <Option value="high">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  High - Important
+                </div>
+              </Option>
+              <Option value="medium">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  Medium - Normal
+                </div>
+              </Option>
+              <Option value="low">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  Low - Can Wait
+                </div>
+              </Option>
+            </Select>
+          </Form.Item>
+          
 
-              return (
-                <Option
-                  key={user.id}
-                  value={user.id}
-                  username={user.username}
-                >
-                  <div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%'
-                    }}>
+          <Form.Item
+            name="assigned_to"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Participants
+              </span>
+            }
+            rules={[{ required: true, message: 'Please select participants' }]}
+          >
+            <Select
+              mode="multiple"
+              showSearch
+              size="large"
+              placeholder="Select team members"
+              optionFilterProp="children"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px"
+              }}
+              listHeight={100}
+              dropdownStyle={{
+                maxHeight: '120px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
+              }}
+              filterOption={(input, option) => {
+                const username = option?.username?.toLowerCase() || '';
+                const searchTerm = input.toLowerCase();
+                return username.includes(searchTerm);
+              }}
+              defaultOpen={false}
+            >
+              {users.map((user) => {
+                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                const roleStyle = getRoleStyle(userRole?.role_name);
+
+                return (
+                  <Option
+                    key={user.id}
+                    value={user.id}
+                    username={user.username}
+                  >
+                    <div>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        justifyContent: 'space-between',
+                        width: '100%'
                       }}>
-                        <Avatar
-                          size="small"
-                          style={{
-                            backgroundColor: user.color || '#1890ff',
-                            fontSize: '12px'
-                          }}
-                        >
-                          {user.username?.[0]?.toUpperCase() || '?'}
-                        </Avatar>
-                        <Text strong>{user.username}</Text>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <Avatar
+                            size="small"
+                            style={{
+                              backgroundColor: user.color || '#1890ff',
+                              fontSize: '12px'
+                            }}
+                          >
+                            {user.username?.[0]?.toUpperCase() || '?'}
+                          </Avatar>
+                          <Text strong>{user.username}</Text>
+                        </div>
+                        <Tag style={{
+                          margin: 0,
+                          background: roleStyle.bg,
+                          color: roleStyle.color,
+                          border: `1px solid ${roleStyle.border}`,
+                          fontSize: '12px',
+                          borderRadius: '16px',
+                          padding: '2px 10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          {roleStyle.icon}
+                          {userRole?.role_name || 'User'}
+                        </Tag>
                       </div>
-                      <Tag style={{
-                        margin: 0,
-                        background: roleStyle.bg,
-                        color: roleStyle.color,
-                        border: `1px solid ${roleStyle.border}`,
-                        fontSize: '12px',
-                        borderRadius: '16px',
-                        padding: '2px 10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        {roleStyle.icon}
-                        {userRole?.role_name || 'User'}
-                      </Tag>
                     </div>
-                  </div>
-                </Option>
-              );
-            })}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
+                  </Option>
+                );
+              })}
+            </Select>
+          </Form.Item>
+          <Form.Item
           name="meeting_status"
           label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Meeting Status</span>}
-          rules={[{ required: true, message: 'Please select meeting status' }]}
           initialValue="scheduled"
+          rules={[{ required: true, message: 'Please select meeting status' }]}
+          style={{ marginTop: "20px" }}
         >
           <Select
-            placeholder="Select status"
-            size="large"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-              height: "48px"
-            }}
+            placeholder="Select meeting status"
+            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
           >
             <Option value="scheduled">
-              <Tag color="processing">Scheduled</Tag>
+              <Tag color="default">Scheduled</Tag>
             </Option>
             <Option value="in_progress">
-              <Tag color="warning">In Progress</Tag>
+              <Tag color="processing">In Progress</Tag>
             </Option>
             <Option value="completed">
               <Tag color="success">Completed</Tag>
@@ -680,13 +712,11 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, lea
               <Tag color="error">Cancelled</Tag>
             </Option>
             <Option value="postponed">
-              <Tag color="default">Postponed</Tag>
+              <Tag color="warning">Postponed</Tag>
             </Option>
           </Select>
         </Form.Item>
         </div>
-
-
 
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -978,16 +1008,18 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, lea
           >
             <Option value="none">None</Option>
       
+            <Option value="5_min">5 minutes before</Option>
+            <Option value="10_min">10 minutes before</Option>
             <Option value="15_min">15 minutes before</Option>
             <Option value="30_min">30 minutes before</Option>
             <Option value="1_hour">1 hour before</Option>
-            <Option value="1_day">1 day before</Option>
-            <Option value="2_days">2 days before</Option>
+           
 
           </Select>
         </Form.Item>
 
-
+        {/* Meeting Status */}
+     
 
         <div style={{
           display: "flex",

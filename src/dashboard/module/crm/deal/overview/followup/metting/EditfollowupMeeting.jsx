@@ -927,12 +927,11 @@ const EditFollowupMeeting = ({ open, onCancel, onSubmit, meetingId, meetingData 
                         }}
                     >
                         <Option value="none">None</Option>
-                        <Option value="at_time_of_meeting">At time of meeting</Option>
-                        <Option value="15_min">15 minutes before</Option>
-                        <Option value="30_min">30 minutes before</Option>
-                        <Option value="1_hour">1 hour before</Option>
-                        <Option value="1_day">1 day before</Option>
-                        <Option value="2_days">2 days before</Option>
+            <Option value="5_min">5 minutes before</Option>
+            <Option value="10_min">10 minutes before</Option>
+            <Option value="15_min">15 minutes before</Option>
+            <Option value="30_min">30 minutes before</Option>
+            <Option value="1_hour">1 hour before</Option>
 
                     </Select>
                 </Form.Item>
