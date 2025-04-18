@@ -225,15 +225,12 @@ const CreateInvoice = ({ open, onCancel, onSubmit, setCreateModalVisible, produc
         payment_status: values.status || "unpaid"
       };
 
-      console.log('Sending payload:', payload); // Add logging for debugging
-
-      const result = await createInvoice({id:id, data:payload}).unwrap();
+       await createInvoice({id:id, data:payload}).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
       setCreateModalVisible(false);
       onCancel();
     } catch (error) {
-      console.error("Submit Error:", error);
       // Enhanced error message
       const errorMessage = error?.data?.message || 
                           error?.data?.error || 

@@ -68,48 +68,18 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
   const contacts = contactsData?.data;
-  const companyAccounts = companyAccountsData?.data;
-
-  const getOptionsBasedOnCategory = () => {
-    switch (selectedCategory) {
-      case 'customer':
-        return customers?.map((customer) => ({
-          label: customer.name,
-          value: customer.id
-        })) || [];
-      case 'contact':
-        return contacts?.map((contact) => ({
-          label: contact.name ||
-            `${contact.first_name || ''} ${contact.last_name || ''}`.trim() ||
-            contact.contact_name ||
-            'Unnamed Contact',
-          value: contact.id
-        })) || [];
-      case 'company_account':
-        return companyAccounts?.map((account) => ({
-          label: account.company_name ||
-            account.name ||
-            account.account_name ||
-            'Unnamed Company',
-          value: account.id
-        })) || [];
-      default:
-        return [];
-    }
-  };
-
-  const handleCategoryChange = (value) => {
-    // Category is locked to 'customer', so this function is not needed
-    return;
-  };
+  const companyAccounts = companyAccountsData?.data;  
 
   const handleCustomerChange = (value) => {
-    const entityName = getEntityNameById(selectedCategory, value);
+    const selectedCustomer = customers?.find(c => c.id === value);
+    const customerName = selectedCustomer?.name || '';
     form.setFieldsValue({
       customer: value,
-      customerName: entityName
+      customerName: customerName
     });
   };
+
+
 
   useEffect(() => {
     if (initialValues) {
@@ -130,18 +100,15 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       // Set initial category to customer always
       setSelectedCategory('customer');
 
-      // Find the selected entity and its name based on category
-      let selectedEntity;
-      let entityName = '';
-
-      selectedEntity = customers?.find(c => c.id === initialValues.customer);
-      entityName = selectedEntity?.name || '';
-
+      // Find the selected customer and their name
+      const selectedCustomer = customers?.find(c => c.id === initialValues.customer);
+      const customerName = selectedCustomer?.name || 'null';
+      
       // Format initial values for the form
       const formattedValues = {
         category: 'customer', // Always set to customer
         customer: initialValues.customer,
-        customerName: entityName,
+        customerName: customerName,
         issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate, "YYYY-MM-DD") : null,
         dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate, "YYYY-MM-DD") : null,
         referenceNumber: initialValues.salesInvoiceNumber,
@@ -770,9 +737,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         label={
           <span style={{ fontSize: "14px", fontWeight: "500" }}>
             <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-            {selectedCategory === 'customer' ? 'Customer' :
-              selectedCategory === 'contact' ? 'Contact' :
-                'Company Account'} <span style={{ color: "#ff4d4f" }}>*</span>
+            Customer <span style={{ color: "#ff4d4f" }}>*</span>
           </span>
         }
         rules={[{ required: true, message: `Please select ${selectedCategory}` }]}
@@ -785,9 +750,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             scrollbarWidth: 'thin',
             scrollBehavior: 'smooth'
           }}
-          placeholder={`Select ${selectedCategory === 'customer' ? 'Customer' :
-            selectedCategory === 'contact' ? 'Contact' :
-              'Company Account'}`}
+          placeholder="Select Customer"
           showSearch
           optionFilterProp="children"
           size="large"
@@ -799,48 +762,42 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           dropdownRender={(menu) => (
             <>
               {menu}
-              {selectedCategory === 'customer' && (
-                <>
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Button
-                      type="primary"
-                      icon={<FiPlus />}
-                      onClick={() => setIsCustomerModalOpen(true)}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Add Customer
-                    </Button>
-                  </div>
-                </>
-              )}
+              <Divider style={{ margin: '8px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <Button
+                  type="primary"
+                  icon={<FiPlus />}
+                  onClick={() => setIsCustomerModalOpen(true)}
+                  style={{
+                    width: '100%',
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    border: 'none',
+                    height: '40px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                    fontWeight: '500',
+                  }}
+                >
+                  Add Customer
+                </Button>
+              </div>
             </>
           )}
         >
-          {getOptionsBasedOnCategory().map((option) => (
-            <Option key={option.value} value={option.value}>
+          {customers?.map((customer) => (
+            <Option key={customer.id} value={customer.id}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 padding: '4px 0'
               }}>
-                {selectedCategory === 'customer' ? <FiUser style={{ color: '#1890ff' }} /> :
-                  selectedCategory === 'contact' ? <FiPhone style={{ color: '#1890ff' }} /> :
-                    <FiCreditCard style={{ color: '#1890ff' }} />}
-                <span>{option.label}</span>
+                <FiUser style={{ color: '#1890ff' }} />
+                <span>{customer.name}</span>
               </div>
             </Option>
           ))}
@@ -945,7 +902,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
-              {/* <Option value="partially_paid">Partially Paid</Option> */}
+              <Option value="partially_paid">Partially Paid</Option>
             </Select>
           </Form.Item>
         </div>

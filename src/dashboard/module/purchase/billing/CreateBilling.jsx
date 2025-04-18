@@ -676,10 +676,10 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                 borderRadius: '10px',
                             }}
                         >
-                            <Option value="pending">Pending</Option>
+                             <Option value="pending">Pending</Option>
+                            <Option value="unpaid">Unpaid</Option>
+                            <Option value="partially_paid">Partially Paid</Option>
                             <Option value="paid">Paid</Option>
-                            <Option value="overdue">Overdue</Option>
-                            <Option value="cancelled">Cancelled</Option>
                         </Select>
                     </Form.Item>
                 </div>

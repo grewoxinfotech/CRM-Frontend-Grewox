@@ -27,7 +27,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
     const { data: currenciesData } = useGetAllCurrenciesQuery();
 
     const [loading, setLoading] = useState(false);
-    const [selectedCurrency, setSelectedCurrency] = useState('₹');
+    const [selectedCurrency, setSelectedCurrency] = useState('');
     const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
 
     useEffect(() => {
@@ -40,17 +40,30 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
         const selectedBill = billsData?.data?.find(bill => bill.id === value || bill._id === value);
 
         if (selectedBill) {
-            // Find currency details
+            // Parse items to get currency icon
+            let currencyIcon = '';
+            try {
+                const items = JSON.parse(selectedBill.items);
+                if (items && items.length > 0) {
+                    currencyIcon = items[0].currencyIcon || '';
+                }
+            } catch (e) {
+                console.error('Error parsing items:', e);
+            }
+
+            // Find currency details from the selected bill
             const currencyDetails = currenciesData?.find(curr => curr.id === selectedBill.currency);
             if (currencyDetails) {
-                setSelectedCurrency(currencyDetails.currencyIcon || '₹');
-                setSelectedCurrencyId(currencyDetails.id);
+                setSelectedCurrency(currencyDetails.currencyIcon);
+                setSelectedCurrencyId(currencyDetails.id?.toString());
             }
 
             const billAmount = selectedBill.total || selectedBill.totalAmount || 0;
             form.setFieldsValue({
                 amount: billAmount,
-                max_amount: billAmount
+                max_amount: billAmount,
+                currency: selectedBill.currency,
+                currency_icon: currencyIcon || currencyDetails?.currencyIcon // Use currency icon from items or fallback to currency details
             });
         }
     };
@@ -63,7 +76,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                 date: values.date?.format('YYYY-MM-DD'),
                 amount: Number(values.amount || 0),
                 description: values.description || '',
-                currency: selectedCurrencyId
+                currency: values.currency // Use the currency from the form (which comes from the selected bill)
             };
 
             await createDebitNote(formattedData).unwrap();
@@ -188,7 +201,13 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                     padding: '24px',
                 }}
             >
-                {/* Hidden field to store max_amount */}
+                {/* Hidden fields to store currency and currency icon */}
+                <Form.Item name="currency" hidden>
+                    <Input />
+                </Form.Item>
+                <Form.Item name="currency_icon" hidden>
+                    <Input />
+                </Form.Item>
                 <Form.Item name="max_amount" hidden>
                     <Input />
                 </Form.Item>
@@ -222,8 +241,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                                     option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                 }
                             >
-                                {billsData?.data?.map(bill => {
-
+                                {billsData?.data?.filter(bill => bill.status !== 'paid').map(bill => {
                                     return (
                                         <Option
                                             key={bill.id || bill._id}
@@ -293,8 +311,17 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                                     height: '48px',
                                     backgroundColor: '#f8fafc',
                                 }}
-                                formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                parser={value => value.replace(new RegExp(`${selectedCurrency}|,`, 'g'), '')}
+                                formatter={value => {
+                                    if (!value) return '';
+                                    const currencyIcon = form.getFieldValue('currency_icon') || '';
+                                    return `${currencyIcon} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                }}
+                                parser={value => {
+                                    if (!value) return '';
+                                    const currencyIcon = form.getFieldValue('currency_icon') || '';
+                                    return value.replace(new RegExp(`${currencyIcon}|,|\\s`, 'g'), '');
+                                }}
+                                // prefix={form.getFieldValue('currency_icon')   ||  ''}
                             />
                         </Form.Item>
                     </Col>

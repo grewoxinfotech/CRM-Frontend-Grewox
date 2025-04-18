@@ -702,21 +702,21 @@ const CreateLead = ({
               placeholder="Select team members"
               style={{
                 width: '100%',
-                // height: 'auto',
-                // minHeight: '48px'
+                height: 'auto',
+                minHeight: '48px'
               }}
-              listHeight={100}
+              listHeight={200}
+              maxTagCount={3}
+              maxTagTextLength={15}
               dropdownStyle={{
-                Height: '120px',
+                maxHeight: '300px',
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollBehavior: 'smooth'
               }}
-              popupClassName="custom-select-dropdown"
+              popupClassName="team-members-dropdown"
               showSearch
               optionFilterProp="children"
-              maxTagCount={5}
-              maxTagTextLength={15}
               loading={usersLoading}
               open={teamMembersOpen}
               onDropdownVisibleChange={setTeamMembersOpen}
@@ -830,8 +830,8 @@ const CreateLead = ({
                       </div>
                       <div style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        flex: 1
+                        flexDirection: 'row',
+                        gap: '4px'
                       }}>
                         <span style={{
                           fontWeight: 500,
@@ -844,7 +844,8 @@ const CreateLead = ({
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        marginLeft: 'auto'
                       }}>
                         <div
                           className="role-indicator"
@@ -1153,8 +1154,8 @@ const CreateLead = ({
           .ant-select-multiple {
             .ant-select-selector {
               min-height: 48px !important;
-              height: auto !important;
-              padding: 4px 8px !important;
+              // height: auto !important;
+              padding: 0px 16px !important;
               background-color: #f8fafc !important;
               border: 1px solid #e6e8eb !important;
               border-radius: 10px !important;

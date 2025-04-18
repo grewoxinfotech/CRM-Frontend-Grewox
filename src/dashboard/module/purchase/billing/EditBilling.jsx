@@ -94,7 +94,8 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 discount: initialData.discount,
                 discount_type: initialData.discountType || 'percentage',
                 tax_amount: initialData.tax?.toFixed(2),
-                total_amount: initialData.total?.toFixed(2)
+                total_amount: initialData.total?.toFixed(2),
+                payment_status: initialData.payment_status || 'unpaid',
             };
             
             form.setFieldsValue(formValues);
@@ -182,7 +183,10 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 created_by: initialData?.created_by,
                 updated_by: initialData?.updated_by,
                 createdAt: initialData?.createdAt,
-                updatedAt: initialData?.updatedAt
+                updatedAt: initialData?.updatedAt,
+                payment_status: values.payment_status || 'unpaid',
+                paid_amount: Number(values.paid_amount || 0),
+                remaining_amount: Number(values.remaining_amount || 0)
             };
 
             const response = await updateBilling({
@@ -269,6 +273,11 @@ const EditBilling = ({ open, onCancel, initialData }) => {
             tax_amount: isTaxEnabled ? totalTaxAmount.toFixed(2) : '0.00',
             total_amount: totalAmount.toFixed(2)
         });
+
+        setSubTotal(subTotal);
+        setTaxTotal(totalTaxAmount);
+        setTotal(totalAmount);
+        setItems(items);
     };
 
     const handleCreateVendor = async (values) => {
@@ -777,8 +786,9 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                 }}
                             >
                                 <Option value="pending">Pending</Option>
+                                <Option value="unpaid">UnPaid</Option>
+                                <Option value="partially_paid">Partially Paid</Option>
                                 <Option value="paid">Paid</Option>
-                                <Option value="cancelled">Cancelled</Option>
                             </Select>
                         </Form.Item>
                     </div>

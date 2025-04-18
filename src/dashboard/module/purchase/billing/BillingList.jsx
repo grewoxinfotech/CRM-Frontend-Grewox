@@ -73,7 +73,21 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
               onFilter: (value, record) =>
                 record.billNumber.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
-            render: (text) => <span style={{ fontWeight: '500' }}>{text}</span>,
+            render: (text, record) => (
+                <a 
+                    onClick={() => handleViewBilling(record)}
+                    style={{ 
+                        color: '#1890ff',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            textDecoration: 'underline'
+                        }
+                    }}
+                >
+                    {text}
+                </a>
+            ),
         },
         {
             title: 'Vendor',
@@ -167,6 +181,20 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
                 );
             },
         },
+        {
+            title: 'Amount',
+            dataIndex: 'amount',
+            key: 'amount',
+            render: (amount, record) => {
+                const currencyIcon = currencyMap[record.currency] || '₹';
+                return (
+                    <span style={{ fontWeight: '500', color: '#1890ff' }}>
+                        {currencyIcon}{Number(amount).toLocaleString()}
+                    </span>
+                );
+            },
+        },
+
         {
             title: 'Status',
             dataIndex: 'status',
