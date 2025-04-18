@@ -12,6 +12,7 @@
 :where(.css-dev-only-do-not-override-240cud).ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item.ant-dropdown-menu-item-danger:not(.ant-dropdown-menu-item-disabled):hover,
 :where(.css-dev-only-do-not-override-240cud).ant-dropdown-menu-submenu .ant-dropdown-menu .ant-dropdown-menu-item.ant-dropdown-menu-item-danger:not(.ant-dropdown-menu-item-disabled):hover {
     color: #ff4d4f !important;
+    background-color: transparent !important;
 }
 
 /* Fix for browser autofill background color */

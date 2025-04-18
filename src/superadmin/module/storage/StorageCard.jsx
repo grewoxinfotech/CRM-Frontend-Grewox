@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Modal, Dropdown, Empty, Image, Progress, Space, Tooltip } from 'antd';
+import { Typography, Modal, Dropdown, Empty, Image } from 'antd';
 import {
     FolderFilled,
     InfoCircleOutlined,
@@ -8,13 +8,12 @@ import {
     FileOutlined,
     EyeOutlined,
     DownloadOutlined,
-    CloseOutlined,
-    ArrowLeftOutlined
+    CloseOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import './Storage.scss';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const StorageCard = ({ data = [], searchText = '', loading = false }) => {
     const [selectedClient, setSelectedClient] = useState(null);
@@ -97,12 +96,7 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
         if (!Array.isArray(files) || files.length === 0) {
             return (
                 <div className="empty-state">
-                    <Empty
-                        description={
-                            <Text type="secondary">No files found in this folder</Text>
-                        }
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    />
+                    <Empty description="No files found" />
                 </div>
             );
         }
@@ -112,7 +106,7 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
                 {files.map((file, index) => (
                     <Dropdown menu={getContextMenu(file)} trigger={['contextMenu']} key={index}>
                         <div
-                            className="folder-item file-item"
+                            className="folder-item"
                             onClick={(e) => isImageFile(file.name) ? handlePreview(file.url, file.name) : handleDownload(file.url, file.name, e)}
                         >
                             {isImageFile(file.name) ? (
@@ -126,12 +120,12 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
                             ) : (
                                 getFileIcon(file.name)
                             )}
-                            <div className="item-details">
-                                <Tooltip title={file.name}>
-                                    <Text className="item-name" ellipsis>{file.name}</Text>
-                                </Tooltip>
-                                <Text className="item-info">{file.size}</Text>
-                            </div>
+                            <Text className="folder-name">
+                                {file.name}
+                            </Text>
+                            <Text className="folder-info">
+                                {file.size}
+                            </Text>
                         </div>
                     </Dropdown>
                 ))}
@@ -143,12 +137,7 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
         if (!Array.isArray(items) || items.length === 0) {
             return (
                 <div className="empty-state">
-                    <Empty
-                        description={
-                            <Text type="secondary">No folders found</Text>
-                        }
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    />
+                    <Empty description="No folders found" />
                 </div>
             );
         }
@@ -162,27 +151,12 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
                             onClick={() => selectedClient ? setSelectedFileType(item) : setSelectedClient(item)}
                         >
                             <FolderFilled className="folder-icon" />
-                            <div className="item-details">
-                                <Tooltip title={selectedClient ? item.type : item.username}>
-                                    <Text className="item-name" ellipsis>
-                                        {selectedClient ? item.type : item.username}
-                                    </Text>
-                                </Tooltip>
-                                <Text className="item-info">
-                                    {item.totalFiles || item.count || 0} files
-                                </Text>
-                                {item.totalSize && (
-                                    <Progress
-                                        percent={Math.min(100, (parseFloat(item.totalSize) / 1024) * 100)}
-                                        size="small"
-                                        showInfo={false}
-                                        strokeColor={{
-                                            '0%': '#1677ff',
-                                            '100%': '#4096ff',
-                                        }}
-                                    />
-                                )}
-                            </div>
+                            <Text className="folder-name">
+                                {selectedClient ? item.type : item.username}
+                            </Text>
+                            <Text className="folder-info">
+                                {item.totalFiles || item.count || 0} files
+                            </Text>
                         </div>
                     </Dropdown>
                 ))}
@@ -206,43 +180,22 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
                         setSelectedClient(null);
                     }
                 }}>
-                    <ArrowLeftOutlined />
-                    <span>Back to {selectedFileType ? selectedClient.username : 'Clients'}</span>
+                    ← Back to {selectedFileType ? selectedClient.username : 'Clients'}
                 </div>
             )}
-
-            <div className="content-area">
-                <div className="breadcrumb">
-                    <Text>
-                        {selectedClient
-                            ? selectedFileType
-                                ? `${selectedClient.username} / ${selectedFileType.type}`
-                                : selectedClient.username
-                            : 'All Clients'
-                        }
-                    </Text>
-                </div>
-
-                {selectedFileType ? renderFiles(currentContent) : renderFolders(currentContent)}
-            </div>
+            {selectedFileType ? renderFiles(currentContent) : renderFolders(currentContent)}
 
             <Modal
-                title={
-                    <Space>
-                        <InfoCircleOutlined />
-                        <span>Properties</span>
-                    </Space>
-                }
+                title="Properties"
                 open={propertiesVisible}
                 footer={null}
                 onCancel={() => setPropertiesVisible(false)}
-                className="properties-modal"
             >
                 {selectedItem && (
                     <div className="properties-content">
                         <div className="property-item">
                             <Text type="secondary">Name:</Text>
-                            <Text strong>{selectedItem.username || selectedItem.name}</Text>
+                            <Text>{selectedItem.username || selectedItem.name}</Text>
                         </div>
                         <div className="property-item">
                             <Text type="secondary">Files:</Text>
@@ -254,14 +207,8 @@ const StorageCard = ({ data = [], searchText = '', loading = false }) => {
                         </div>
                         <div className="property-item">
                             <Text type="secondary">Path:</Text>
-                            <Text className="path-text">{selectedItem.s3Path}</Text>
+                            <Text>{selectedItem.s3Path}</Text>
                         </div>
-                        {selectedItem.lastModified && (
-                            <div className="property-item">
-                                <Text type="secondary">Last Modified:</Text>
-                                <Text>{dayjs(selectedItem.lastModified).format('YYYY-MM-DD HH:mm:ss')}</Text>
-                            </div>
-                        )}
                     </div>
                 )}
             </Modal>
