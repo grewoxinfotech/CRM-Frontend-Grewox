@@ -36,6 +36,7 @@ import {
 } from "./services/customFormApi";
 import "./CustomForm.scss";
 import { FileTextOutlined, DeleteOutlined } from '@ant-design/icons';
+import FormSubmitted from './FormSubmitted';
 
 const { Title, Text } = Typography;
 
@@ -259,6 +260,14 @@ const CustomFormPage = () => {
                 </Space>
             ),
         },
+    ];
+
+    const routes = [
+        // ... existing routes ...
+        {
+            path: '/form-submitted',
+            element: <FormSubmitted />
+        }
     ];
 
     return (

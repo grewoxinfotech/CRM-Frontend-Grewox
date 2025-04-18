@@ -18,7 +18,8 @@ import {
     FiGlobe,
     FiCreditCard,
     FiEdit3,
-    FiBox
+    FiBox,
+    FiHardDrive
 } from 'react-icons/fi';
 import { useLogout } from '../../../hooks/useLogout';
 import './sidebar.scss';
@@ -55,6 +56,11 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
             title: 'Plans',
             icon: <FiBox />,
             path: '/superadmin/plans'
+        },
+        {
+            title: 'Storage',
+            icon: <FiHardDrive />,
+            path: '/superadmin/storage'
         },
         {
             title: 'Subscribed Users',

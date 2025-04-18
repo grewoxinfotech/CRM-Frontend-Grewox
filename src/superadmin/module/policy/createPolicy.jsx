@@ -15,7 +15,7 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
             const formData = new FormData();
             formData.append('title', values.title);
             formData.append('description', values.description);
-            
+
             // Check if there's a new file to upload
             const hasNewFile = fileList.length > 0 && fileList[0].originFileObj;
             if (hasNewFile) {

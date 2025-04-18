@@ -85,15 +85,10 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                             <motion.div
                                 animate={{ rotate: 360 }}
                                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                style={{
-                                    background: 'rgba(24, 144, 255, 0.1)',
-                                    borderRadius: '50%',
-                                    padding: '8px'
-                                }}
                             >
                                 <FiClock style={{ color: '#1890ff', fontSize: '18px' }} />
                             </motion.div>
-                            <Text style={{ 
+                            <Text style={{
                                 fontSize: '15px',
                                 color: '#666',
                                 fontWeight: '500'
@@ -132,7 +127,7 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ duration: 0.4, delay: 0.4 }}
                         >
-                            <Text style={{ 
+                            <Text style={{
                                 fontSize: '16px',
                                 color: '#666',
                                 display: 'block',
@@ -151,7 +146,7 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                alignItems: { xs: 'flex-start', sm: 'flex-start', md: 'flex-end' },
+                                alignItems: 'flex-end',
                                 gap: '20px'
                             }}
                         >
@@ -235,15 +230,15 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ duration: 0.4, delay: 0.8 }}
-                                style={{ 
+                                style={{
                                     width: '100%',
                                     maxWidth: '360px',
                                     display: 'flex',
                                     justifyContent: { xs: 'flex-start', sm: 'flex-start', md: 'flex-end' }
                                 }}
                             >
-                                <motion.div 
-                                    whileHover={{ scale: 1.05 }} 
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     style={{ width: '100%' }}
                                 >
@@ -252,7 +247,7 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                                         icon={<FiBarChart2 style={{ fontSize: '18px' }} />}
                                         onClick={() => setShowAnalytics(!showAnalytics)}
                                         style={{
-                                            background: showAnalytics 
+                                            background: showAnalytics
                                                 ? 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)'
                                                 : 'linear-gradient(135deg, #1890ff 0%, #69c0ff 100%)',
                                             border: 'none',

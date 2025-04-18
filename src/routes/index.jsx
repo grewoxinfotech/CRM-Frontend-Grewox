@@ -23,7 +23,7 @@ import ResetPassword from "../auth/resend";
 import RoleBasedRoute from "./RoleBasedRoute";
 import Notes from "../superadmin/module/notes/index.jsx";
 import Inquiry from "../superadmin/module/inquary/index.jsx";
-// import SubClient from "../dashboard/module/user-management/subclient/index.jsx";
+import FormSubmitted from "../dashboard/module/crm/generate-link/FormSubmitted.jsx";
 import Designation from "../dashboard/module/hrm/Designation";
 import Department from "../dashboard/module/hrm/Department";
 import Training from "../dashboard/module/hrm/Training";
@@ -40,13 +40,10 @@ import OfferLetters from "../dashboard/module/job/offer letters/index.jsx";
 import Interviews from "../dashboard/module/job/interviews/index.jsx";
 import Lead from "../dashboard/module/crm/lead/index.jsx";
 import Deal from "../dashboard/module/crm/deal/index.jsx";
-import CompanyInquiry from "../dashboard/module/crm/company-inquiry/index.jsx";
 import CompanyLinkGenerator from "../dashboard/module/crm/generate-link/index.jsx";
 import PublicFormView from "../dashboard/module/crm/generate-link/PublicFormView.jsx";
 import Crmsystem from "../dashboard/module/crm/crmsystem/index.jsx";
 import Task from "../dashboard/module/crm/task/index.jsx";
-import Project from "../dashboard/module/crm/project/index.jsx";
-import ProjectDetail from "../dashboard/module/crm/project/ProjectDetail";
 import Customer from "../dashboard/module/sales/customer/index.jsx";
 import Invoice from "../dashboard/module/sales/invoice/index.jsx";
 import ProductServices from "../dashboard/module/sales/product&services/index.jsx";
@@ -78,6 +75,8 @@ import ContactDetailsOverview from "../dashboard/module/crm/contact/ContactDetai
 import FormSubmissions from "../dashboard/module/crm/generate-link/FormSubmissions.jsx";
 import GeneralSettings from "../superadmin/module/settings/general/index.jsx";
 import Payment from "../dashboard/module/settings/payment/index.jsx";
+import Storage from "../superadmin/module/storage/index.jsx";
+
 const PermissionRoute = ({ children, permissionKey }) => {
   const userRole = useSelector(selectUserRole);
   const permissions = parsePermissions(userRole?.permissions);
@@ -97,6 +96,10 @@ const routes = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/form-submitted",
+    element: <FormSubmitted />,
   },
   {
     path: "/forgot-password",
@@ -487,6 +490,10 @@ const routes = createBrowserRouter([
         element: <Plans />,
       },
       {
+        path: "storage",
+        element: <Storage />,
+      },
+      {
         path: "subscribed-user",
         element: <SubscribedUser />,
       },
@@ -539,6 +546,14 @@ const routes = createBrowserRouter([
       //   element: <Inquiry />,
       // },
     ],
+  },
+  {
+    path: "/superadmin/storage",
+    element: (
+      <RoleBasedRoute allowedRoles={["super-admin"]}>
+        <Storage />
+      </RoleBasedRoute>
+    ),
   },
   {
     path: "/forms/:formId",

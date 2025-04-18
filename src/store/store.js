@@ -70,6 +70,7 @@ import { followupMeetingApi } from "../dashboard/module/crm/deal/overview/follow
 import { followupCallApi } from "../dashboard/module/crm/deal/overview/followup/call/services/followupCallApi";
 import { forgotPasswordApi } from "../auth/forgot-password/services/forgot-passwordApi";
 import dealStageReducer from "../dashboard/module/crm/deal/services/DealStageSlice";
+import { storageApi } from "../superadmin/module/storage/services/storageApi";
 
 const persistConfig = {
   key: "root",
@@ -148,6 +149,7 @@ const rootReducer = combineReducers({
   [settingApi.reducerPath]: settingApi.reducer,
   [activityApi.reducerPath]: activityApi.reducer,
   [forgotPasswordApi.reducerPath]: forgotPasswordApi.reducer,
+  [storageApi.reducerPath]: storageApi.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -225,6 +227,7 @@ export const store = configureStore({
       .concat(settingApi.middleware)
       .concat(activityApi.middleware)
       .concat(forgotPasswordApi.middleware)
+      .concat(storageApi.middleware)
 });
 
 export const persistor = persistStore(store);

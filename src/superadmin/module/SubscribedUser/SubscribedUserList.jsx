@@ -5,6 +5,7 @@ import { useGetAllSubscribedUsersQuery } from './services/SubscribedUserApi';
 import moment from 'moment'; // Import moment for date formatting
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllCompaniesQuery, useRemovePlanMutation } from '../company/services/companyApi';
+import StorageUsageDisplay from './components/StorageUsageDisplay';
 
 const SubscribedUserList = ({ data, loading }) => {
     const { data: companiesData } = useGetAllCompaniesQuery();
@@ -55,93 +56,90 @@ const SubscribedUserList = ({ data, loading }) => {
             key: 'plan_id',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search plan name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search plan name"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.plan_id.toLowerCase().includes(value.toLowerCase()),
             render: (planId) => getPlanName(planId),
-            
         },
         {
             title: 'Client Name',
-            dataIndex: 'client_id', // or 'company_id' depending on your API response
+            dataIndex: 'client_id',
             key: 'client_id',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search client name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search client name"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.client_id.toLowerCase().includes(value.toLowerCase()),
             render: (clientId) => getCompanyName(clientId),
-           
         },
         {
-            title: 'Total Client Count',
-            dataIndex: 'current_clients_count',
-            key: 'current_clients_count',
-            sorter: (a, b) => (a.current_clients_count || 0) - (b.current_clients_count || 0),
-            render: (count) => count || 0
-        },
-        {
-            title: 'Total Storage Used',
-            dataIndex: 'current_storage_used',
-            key: 'current_storage_used',
-            sorter: (a, b) => (a.current_storage_used || 0) - (b.current_storage_used || 0),
-            render: (storage) => `${storage || 0} GB`
-        },
-        {
-            title: 'Total Users Count',
-            dataIndex: 'current_users_count',
-            key: 'current_users_count',
-            sorter: (a, b) => (a.current_users_count || 0) - (b.current_users_count || 0),
-            render: (count) => count || 0
+            title: 'Storage Usage',
+            dataIndex: 'storage',
+            key: 'storage',
+            sorter: (a, b) => {
+                const aUsed = a.storage?.used || 0;
+                const bUsed = b.storage?.used || 0;
+                return aUsed - bUsed;
+            },
+            render: (_, record) => {
+                const { used, total, percentage } = record.storage || {};
+                return (
+                    <StorageUsageDisplay
+                        used={used}
+                        total={total}
+                        percentage={percentage}
+                    />
+                );
+            }
         },
         {
             title: 'Payment Status',
             dataIndex: 'payment_status',
             key: 'payment_status',
             filters: paymentStatuses,
-            onFilter: (value, record) => 
+            onFilter: (value, record) =>
                 (record.payment_status?.toLowerCase() || '') === value.toLowerCase(),
             render: (status) => {
                 let color = 'blue';
@@ -171,11 +169,11 @@ const SubscribedUserList = ({ data, loading }) => {
             key: 'status',
             render: (_, record) => (
                 <Popconfirm
-                    title={record.status !== 'cancelled' ? 
-                        "Deactivate Subscription?" : 
+                    title={record.status !== 'cancelled' ?
+                        "Deactivate Subscription?" :
                         "Subscription is inactive"}
-                    description={record.status !== 'cancelled' ? 
-                        "This will prevent the company from accessing their account." : 
+                    description={record.status !== 'cancelled' ?
+                        "This will prevent the company from accessing their account." :
                         "This subscription is no longer active."}
                     onConfirm={() => handleStatusChange(record)}
                     okText="Yes"
@@ -203,8 +201,7 @@ const SubscribedUserList = ({ data, loading }) => {
             key: 'end_date',
             sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
             render: (date) => moment(date).format('DD MMM YYYY')
-        },
-       
+        }
     ];
 
     // Transform the users data to ensure each row has a unique key
@@ -226,7 +223,7 @@ const SubscribedUserList = ({ data, loading }) => {
                 showTotal: (total) => `Total ${total} items`,
             }}
             className="custom-table"
-            scroll={{ x: 1500 }}
+            scroll={{ x: 1200 }}
             style={{
                 background: '#ffffff',
                 borderRadius: '8px',
