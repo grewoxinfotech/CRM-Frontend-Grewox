@@ -601,91 +601,29 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, lea
 
           <Form.Item
             name="assigned_to"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Participants
-              </span>
-            }
-            rules={[{ required: true, message: 'Please select participants' }]}
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Participants</span>}
+            rules={[{ required: true, message: 'Please select at least one participant' }]}
+            style={{ marginTop: "20px" }}
           >
             <Select
               mode="multiple"
-              showSearch
-              size="large"
               placeholder="Select team members"
-              optionFilterProp="children"
-              style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px"
-              }}
-              listHeight={100}
-              dropdownStyle={{
-                maxHeight: '120px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
-              filterOption={(input, option) => {
-                const username = option?.username?.toLowerCase() || '';
-                const searchTerm = input.toLowerCase();
-                return username.includes(searchTerm);
-              }}
-              defaultOpen={false}
+              style={{ width: "100%", borderRadius: "10px", minHeight: "48px" }}
+              maxTagCount={3}
+              maxTagPlaceholder={(omitted) => `+ ${omitted.length} more`}
+              showSearch
+              filterOption={(input, option) =>
+                option.children[1]?.toLowerCase().includes(input.toLowerCase())
+              }
             >
-              {users.map((user) => {
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleStyle(userRole?.role_name);
-
-                return (
-                  <Option
-                    key={user.id}
-                    value={user.id}
-                    username={user.username}
-                  >
-                    <div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        width: '100%'
-                      }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          <Avatar
-                            size="small"
-                            style={{
-                              backgroundColor: user.color || '#1890ff',
-                              fontSize: '12px'
-                            }}
-                          >
-                            {user.username?.[0]?.toUpperCase() || '?'}
-                          </Avatar>
-                          <Text strong>{user.username}</Text>
-                        </div>
-                        <Tag style={{
-                          margin: 0,
-                          background: roleStyle.bg,
-                          color: roleStyle.color,
-                          border: `1px solid ${roleStyle.border}`,
-                          fontSize: '12px',
-                          borderRadius: '16px',
-                          padding: '2px 10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
-                          {roleStyle.icon}
-                          {userRole?.role_name || 'User'}
-                        </Tag>
-                      </div>
-                    </div>
-                  </Option>
-                );
-              })}
+              {users.map(user => (
+                <Option key={user.id} value={user.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {getRoleStyle(user.role_name).icon}
+                    <span>{user.username}</span>
+                  </div>
+                </Option>
+              ))}
             </Select>
           </Form.Item>
           <Form.Item

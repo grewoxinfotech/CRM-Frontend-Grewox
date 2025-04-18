@@ -33,11 +33,15 @@ const NotificationsComponent = () => {
     const unreadNotifications = notifications.filter(n => {
         try {
             // Parse the users JSON string to get assigned users
-            const usersData = JSON.parse(n.users);
-            const assignedUsers = usersData.assignedusers || [];
+            const usersArray = JSON.parse(n.users);
+            const assignedUsers = Array.isArray(usersArray) ? usersArray : [];
             
-            // Check if current user is in assigned users list
-            return !n.read && assignedUsers.includes(id);
+            // Check if current user is in assigned users list OR if user's ID matches client_id
+            const isAssignedUser = assignedUsers.includes(id);
+            // const isClientUser = n.client_id === id;
+
+            // Show notification if unread AND (user is assigned OR is client)
+            return !n.read && (isAssignedUser);
         } catch (error) {
             console.error('Error parsing users data:', error);
             return false;

@@ -565,22 +565,25 @@ const CreateMeeting = ({ open, onCancel, onSubmit, initialDate, initialTime, dea
           <Form.Item
             name="assigned_to"
             label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Assign To</span>}
-            rules={[{ required: true, message: 'Please select assignee' }]}
+            rules={[{ required: true, message: 'Please select at least one assignee' }]}
           >
             <Select
               showSearch
-              placeholder="Select team member"
+              mode="multiple"
+              placeholder="Select team members"
               optionFilterProp="children"
               style={{
                 width: "100%",
                 borderRadius: "10px",
-                height: "48px"
+                minHeight: "48px"
               }}
               filterOption={(input, option) => {
                 const username = option?.username?.toLowerCase() || '';
                 const searchTerm = input.toLowerCase();
                 return username.includes(searchTerm);
               }}
+              maxTagCount={3}
+              maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
             >
               {users.map((user) => {
                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
