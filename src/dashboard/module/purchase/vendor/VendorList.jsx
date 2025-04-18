@@ -8,11 +8,11 @@ import EditVendor from './EditVendor';
 
 const { Text } = Typography;
 
-const VendorList = ({ onEdit, onDelete, onView, loading, searchText }) => {
+const VendorList = ({ onEdit, onDelete, onView, searchText }) => {
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [selectedVendorId, setSelectedVendorId] = useState(null);
     const [selectedVendor, setSelectedVendor] = useState(null);
-    const { data, isLoading, isError } = useGetVendorsQuery();
+    const { data,  isError } = useGetVendorsQuery();
     const [deleteVendor] = useDeleteVendorMutation();
 
     const vendors = data?.data || [];
@@ -175,7 +175,7 @@ const VendorList = ({ onEdit, onDelete, onView, loading, searchText }) => {
                     columns={columns}
                     dataSource={filteredVendors}
                     rowKey="_id"
-                    loading={loading}
+                    // loading={loading}
                     pagination={{
                         defaultPageSize: 10,
                         showSizeChanger: true,

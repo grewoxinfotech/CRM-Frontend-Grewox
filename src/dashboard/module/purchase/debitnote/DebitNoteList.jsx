@@ -14,9 +14,9 @@ const getCompanyId = (state) => {
     return user?.companyId || user?.company_id || user?.id;
 };
 
-const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText, loading }) => {
+const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
     const companyId = useSelector(getCompanyId);
-    const { data: billings, isLoading } = useGetBillingsQuery(companyId);
+    const { data: billings } = useGetBillingsQuery(companyId);
     const { data: currenciesData } = useGetAllCurrenciesQuery();
 
     const getBillNumber = (billId) => {
@@ -147,7 +147,7 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText, loading }) 
                 columns={columns}
                 dataSource={filteredDebitNotes}
                 rowKey="_id"
-                loading={loading}
+                // loading={loading}
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,

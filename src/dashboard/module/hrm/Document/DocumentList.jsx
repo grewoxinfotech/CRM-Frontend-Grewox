@@ -196,7 +196,7 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
       <Table
         columns={columns}
         dataSource={filteredDocuments}
-        loading={loading || isLoading}
+        // loading={loading || isLoading}
         rowKey="id"
         pagination={{
           pageSize: 10,

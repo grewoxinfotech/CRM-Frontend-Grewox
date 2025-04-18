@@ -94,7 +94,7 @@ const responsiveStyles = {
 
 const DealsTable = ({
     deals,
-    loading,
+    // loading,
     currencies,
     stagesData,
     dateFilter,
@@ -281,7 +281,7 @@ const DealsTable = ({
                 <Table
                     dataSource={filterDealsByDate(deals)}
                     columns={columns}
-                    loading={loading}
+                    // loading={loading}
                     rowKey="id"
                     size="middle"
                     pagination={{
@@ -315,7 +315,7 @@ const DealsTable = ({
                                 alignItems: 'center',
                                 gap: '8px'
                             }}>
-                                <FiFileText style={{ fontSize: '24px', color: '#8c8c8c' }} />
+                                {/* <FiFileText style={{ fontSize: '24px', color: '#8c8c8c' }} /> */}
                                 <Text type="secondary">No deals found</Text>
                             </div>
                         )

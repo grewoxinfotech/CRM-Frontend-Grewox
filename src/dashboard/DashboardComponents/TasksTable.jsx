@@ -324,7 +324,7 @@ const TaskDetailCard = ({ record, users, visible, onClose }) => {
 
 const TasksTable = ({
     tasks,
-    loading,
+    // loading,
     dateFilter,
     setDateFilter,
     navigate,
@@ -504,7 +504,7 @@ const TasksTable = ({
                         style: { cursor: 'pointer' }
                     })}
                     scroll={{ x: true }}
-                    loading={loading}
+                    // loading={loading}
                     locale={{
                         emptyText: (
                             <div style={{ 

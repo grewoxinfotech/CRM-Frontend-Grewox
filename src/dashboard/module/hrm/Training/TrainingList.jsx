@@ -229,7 +229,7 @@ const TrainingList = ({  loading, onEdit, onDelete, onView, searchText }) => {
             <Table
                 columns={columns}
                 dataSource={filteredTrainings}
-                loading={isLoading || loading}
+                // loading={isLoading || loading}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,

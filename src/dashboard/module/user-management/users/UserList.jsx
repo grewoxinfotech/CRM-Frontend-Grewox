@@ -5,7 +5,7 @@ import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 
-const UserList = ({ users, loading, onEdit, onDelete, onView, currentPage, onPageChange }) => {
+const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
 
@@ -382,7 +382,7 @@ const UserList = ({ users, loading, onEdit, onDelete, onView, currentPage, onPag
         <Table
             dataSource={users}
             columns={columns}
-            loading={loading}
+            // loading={loading}
             rowKey="id"
             pagination={{
                 current: currentPage,

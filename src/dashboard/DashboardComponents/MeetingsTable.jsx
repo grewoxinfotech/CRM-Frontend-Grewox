@@ -95,7 +95,7 @@ const responsiveStyles = {
 
 const MeetingsTable = ({
     meetings,
-    loading,
+    // loading,
     dateFilter,
     setDateFilter,
     navigate
@@ -292,7 +292,7 @@ const MeetingsTable = ({
                         style: { cursor: 'pointer' }
                     })}
                     scroll={{ x: true }}
-                    loading={loading}
+                    // loading={loading}
                     locale={{
                         emptyText: (
                             <div style={{ 

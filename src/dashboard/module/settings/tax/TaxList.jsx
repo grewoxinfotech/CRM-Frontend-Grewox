@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, Button, Tag, Dropdown, Space, Input } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
 
-const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
+    const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
     // Define action items for dropdown
     const getActionItems = (record) => [
         {
@@ -104,7 +104,7 @@ const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
         <Table
             columns={columns}
             dataSource={taxes}
-            loading={loading}
+            // loading={loading}
             pagination={{
                 pageSize: 10,
                 showSizeChanger: false,

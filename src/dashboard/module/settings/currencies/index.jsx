@@ -27,7 +27,7 @@ const Currencies = () => {
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const { data: currencies = [], error, isLoading } = useGetAllCurrenciesQuery({
+    const { data: currencies = [], error} = useGetAllCurrenciesQuery({
         page: currentPage,
         limit: 10
     });
@@ -296,7 +296,7 @@ const Currencies = () => {
                 <Table
                     dataSource={filteredCurrencies}
                     columns={columns}
-                    loading={isLoading}
+                    // loading={isLoading}
                     onChange={handleTableChange}
                     pagination={{
                         current: currentPage,

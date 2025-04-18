@@ -307,7 +307,7 @@ const MeetingList = ({ searchText }) => {
             <Table 
                 columns={columns}
                 dataSource={filteredMeetings}
-                loading={isLoading}
+                // loading={isLoading}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,

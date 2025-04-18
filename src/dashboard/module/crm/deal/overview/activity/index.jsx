@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty, Badge, Input, Button, TimePicker, Space } from 'antd';
+import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty, Badge, Input, Button, TimePicker, Space, Typography, DatePicker } from 'antd';
 import {
     FiPlus, FiEdit2, FiTrash2, FiFileText, FiDollarSign,
     FiFlag, FiCheckSquare, FiMessageSquare, FiUser, FiClock, FiBell, FiSearch, FiFilter
@@ -12,7 +12,8 @@ const DealActivity = ({ deal }) => {
     const [lastActivityCount, setLastActivityCount] = useState(0);
     const [newActivityCount, setNewActivityCount] = useState(0);
     const [searchText, setSearchText] = useState('');
-    const [timeFilter, setTimeFilter] = useState(moment());
+    const [dateFilter, setDateFilter] = useState(null);
+    const [timeFilter, setTimeFilter] = useState(null);
     const [filteredActivities, setFilteredActivities] = useState([]);
     const { data: response, isLoading, error } = useGetActivitiesQuery(deal?.id, {
         skip: !deal?.id,
@@ -29,17 +30,26 @@ const DealActivity = ({ deal }) => {
             setLastActivityCount(currentCount);
             filterActivities(response.data);
         }
-    }, [response?.data, lastActivityCount, timeFilter, searchText]);
+    }, [response?.data, lastActivityCount, searchText, dateFilter, timeFilter]);
 
     const filterActivities = (activities) => {
         let filtered = [...activities];
 
+        // Apply date filter
+        if (dateFilter) {
+            const selectedDate = moment(dateFilter).format('YYYY-MM-DD');
+            filtered = filtered.filter(activity => {
+                const activityDate = moment(activity.createdAt).format('YYYY-MM-DD');
+                return activityDate === selectedDate;
+            });
+        }
+
         // Apply time filter
         if (timeFilter) {
-            const selectedTime = moment(timeFilter);
+            const selectedTime = moment(timeFilter).format('HH:mm');
             filtered = filtered.filter(activity => {
-                const activityTime = moment(activity.createdAt);
-                return activityTime.isSame(selectedTime, 'hour');
+                const activityTime = moment(activity.createdAt).format('HH:mm');
+                return activityTime === selectedTime;
             });
         }
 
@@ -55,11 +65,22 @@ const DealActivity = ({ deal }) => {
         setFilteredActivities(filtered);
     };
 
-    const handleTimeChange = (time) => {
-        setTimeFilter(time);
+    const handleDateChange = (date) => {
+        setDateFilter(date);
+        if (response?.data) {
+            filterActivities(response.data);
+        }
     };
 
-    const handleSearch = () => {
+    const handleTimeChange = (time) => {
+        setTimeFilter(time);
+        if (response?.data) {
+            filterActivities(response.data);
+        }
+    };
+
+    const handleSearch = (value) => {
+        setSearchText(value);
         if (response?.data) {
             filterActivities(response.data);
         }
@@ -165,12 +186,21 @@ const DealActivity = ({ deal }) => {
                         </div>
                         <div className="filter-section">
                             <Space>
+                                <DatePicker
+                                    value={dateFilter}
+                                    onChange={handleDateChange}
+                                    format="DD/MM/YYYY"
+                                    style={{ width: 150, height: '40px' }}
+                                    placeholder="Select date"
+                                    allowClear
+                                />
                                 <TimePicker
                                     value={timeFilter}
                                     onChange={handleTimeChange}
                                     format="HH:mm"
-                                    style={{ width: 120, height: '50px' }}
+                                    style={{ width: 150, height: '40px' }}
                                     placeholder="Select time"
+                                    allowClear
                                 />
                                 <Input
                                     placeholder="Search activities..."
@@ -178,7 +208,7 @@ const DealActivity = ({ deal }) => {
                                     value={searchText}
                                     onChange={(e) => setSearchText(e.target.value)}
                                     onSearch={handleSearch}
-                                    style={{ height: '50px', width: '300px' }}
+                                    style={{ height: '40px', width: '300px' }}
                                 />
                             </Space>
                         </div>

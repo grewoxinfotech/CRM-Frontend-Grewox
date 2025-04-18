@@ -233,7 +233,7 @@ const DesignationList = ({ onEdit, onView, searchText, filters }) => {
             <Table
                 columns={columns}
                 dataSource={designations}
-                loading={isLoadingDesignations || isLoadingBranches}
+                // loading={isLoadingDesignations || isLoadingBranches}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,

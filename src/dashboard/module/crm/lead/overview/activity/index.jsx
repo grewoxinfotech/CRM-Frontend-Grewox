@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty, Badge, Input, Button, TimePicker, Space, Typography } from 'antd';
+import { Card, Timeline, Tag, Avatar, Tooltip, Spin, Empty, Badge, Input, Button, Space, Typography } from 'antd';
 import {
     FiPlus, FiEdit2, FiTrash2, FiFileText, FiDollarSign,
     FiFlag, FiCheckSquare, FiMessageSquare, FiUser, FiClock, FiBell, FiSearch
@@ -14,13 +14,13 @@ const LeadActivity = ({ leadId }) => {
     const [lastActivityCount, setLastActivityCount] = useState(0);
     const [newActivityCount, setNewActivityCount] = useState(0);
     const [searchText, setSearchText] = useState('');
-    const [timeFilter, setTimeFilter] = useState(moment());
     const [filteredActivities, setFilteredActivities] = useState([]);
     const { data: response, isLoading, error } = useGetActivitiesQuery(leadId, {
         skip: !leadId,
         pollingInterval: 3000,
         refetchOnMountOrArgChange: true
     });
+    console.log("response",response?.data);
 
     useEffect(() => {
         if (response?.data) {
@@ -31,7 +31,7 @@ const LeadActivity = ({ leadId }) => {
             setLastActivityCount(currentCount);
             filterActivities(response.data);
         }
-    }, [response?.data, lastActivityCount, timeFilter, searchText]);
+    }, [response?.data, lastActivityCount, searchText]);
 
     const getActionColor = (action) => {
         switch (action?.toLowerCase()) {
@@ -81,20 +81,25 @@ const LeadActivity = ({ leadId }) => {
     };
 
     const filterActivities = (activities) => {
-        const filtered = activities.filter(activity => {
-            const matchesSearch = activity.activity_message.toLowerCase().includes(searchText.toLowerCase());
-            const matchesTime = moment(activity.createdAt).isSame(timeFilter, 'day');
-            return matchesSearch && matchesTime;
-        });
+        let filtered = [...activities];
+
+        // Apply search filter
+        if (searchText) {
+            filtered = filtered.filter(activity => 
+                activity.activity_message?.toLowerCase().includes(searchText.toLowerCase()) ||
+                activity.performed_by?.toLowerCase().includes(searchText.toLowerCase()) ||
+                activity.action?.toLowerCase().includes(searchText.toLowerCase())
+            );
+        }
+
         setFilteredActivities(filtered);
     };
 
-    const handleTimeChange = (value) => {
-        setTimeFilter(value);
-    };
-
-    const handleSearch = () => {
-        filterActivities(response.data);
+    const handleSearch = (value) => {
+        setSearchText(value);
+        if (response?.data) {
+            filterActivities(response.data);
+        }
     };
 
     if (!leadId) {
@@ -163,20 +168,12 @@ const LeadActivity = ({ leadId }) => {
                         </div>
                         <div className="filter-section">
                             <Space>
-                                <TimePicker
-                                    value={timeFilter}
-                                    onChange={handleTimeChange}
-                                    format="HH:mm"
-                                    style={{ width: 120, height: '50px' }}
-                                    placeholder="Select time"
-                                />
                                 <Input
                                     placeholder="Search activities..."
                                     allowClear
                                     value={searchText}
-                                    onChange={(e) => setSearchText(e.target.value)}
-                                    onSearch={handleSearch}
-                                    style={{ height: '50px', width: '300px' }}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    style={{ height: '40px', width: '300px', alignItems: 'center' }}
                                 />
                             </Space>
                         </div>

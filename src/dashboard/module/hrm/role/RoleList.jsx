@@ -5,7 +5,7 @@ import EditRole from "./EditRole";
 
 const { Text } = Typography;
 
-const RoleList = ({ roles, loading, onEdit, onDelete }) => {
+const RoleList = ({ roles, onEdit, onDelete }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [selectedRole, setSelectedRole] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -442,7 +442,7 @@ const RoleList = ({ roles, loading, onEdit, onDelete }) => {
                 dataSource={roles}
                 columns={columns}
                 rowKey={(record) => record.id}
-                loading={loading}
+                // loading={loading}
                 pagination={{
                     current: currentPage,
                     pageSize: 10,

@@ -94,7 +94,7 @@ const responsiveStyles = {
 
 const LeadsTable = ({
     leads,
-    loading,
+    // loading,
     currencies,
     statusesData,
     dateFilter,
@@ -303,7 +303,7 @@ const LeadsTable = ({
                 <Table
                     dataSource={filterLeadsByDate(leads)}
                     columns={columns}
-                    loading={loading}
+                    // loading={loading}
                     rowKey="id"
                     size="middle"
                     pagination={{

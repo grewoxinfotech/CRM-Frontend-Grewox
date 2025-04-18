@@ -1709,11 +1709,11 @@ export default function Chat() {
                     <TabPane tab="Online" key="online" />
                     <TabPane tab="Starred" key="starred" />
                 </Tabs>
-                <List
+                <List 
                     className="chat-list"
                     dataSource={getFilteredUsers()}
                     renderItem={renderChatItem}
-                    loading={isLoadingUsers || isLoadingRoles}
+                    // loading={isLoadingUsers || isLoadingRoles}
                 />
             </Sider>
             <Content className="chat-content">

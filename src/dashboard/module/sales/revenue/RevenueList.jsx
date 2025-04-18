@@ -68,7 +68,7 @@ const RevenueList = ({
     }
   }, [customerFromList, productFromList]);
 
-  const { data: revenueData, isLoading } = useGetRevenueQuery();
+  const { data: revenueData} = useGetRevenueQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
   const { data: customersData } = useGetCustomersQuery();
@@ -499,7 +499,7 @@ const RevenueList = ({
           columns={columns}
           dataSource={filteredRevenue}
           rowKey="id"
-          loading={isLoading}
+          // loading={isLoading}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

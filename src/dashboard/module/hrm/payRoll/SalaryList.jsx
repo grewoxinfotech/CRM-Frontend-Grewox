@@ -466,7 +466,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
             size="small"
             checked={status === 'paid'}
             onChange={(checked) => handleStatusChange(checked, record)}
-            loading={loading}
+            // loading={loading}
             className={`status-switch ${status === 'paid' ? 'paid' : ''}`}
           />
           <Tag
@@ -543,7 +543,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
         columns={columns}
         dataSource={filteredSalary}
         rowKey="id"
-        loading={isLoading}
+        // loading={isLoading}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,

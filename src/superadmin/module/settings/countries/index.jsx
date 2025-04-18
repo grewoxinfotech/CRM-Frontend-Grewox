@@ -27,7 +27,7 @@ const Countries = () => {
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const { data: countries = [], error, isLoading } = useGetAllCountriesQuery({
+    const { data: countries = [], error} = useGetAllCountriesQuery({
         page: currentPage,
         limit: 10
     });
@@ -297,7 +297,7 @@ const Countries = () => {
                 <Table
                     dataSource={filteredCountries}
                     columns={columns}
-                    loading={isLoading}
+                    // loading={isLoading}
                     onChange={handleTableChange}
                     pagination={{
                         current: currentPage,
