@@ -30,7 +30,10 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./invoices.scss";
-import { useGetCustomersQuery, useCreateCustomerMutation } from "../../../../sales/customer/services/custApi";
+import {
+  useGetCustomersQuery,
+  useCreateCustomerMutation,
+} from "../../../../sales/customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../../../superadmin/module/settings/services/settingsApi";
 import { useGetAllTaxesQuery } from "../../../../settings/tax/services/taxApi";
 import { useGetProductsQuery } from "../../../../sales/product&services/services/productApi";
@@ -43,9 +46,14 @@ import { useSelector } from "react-redux";
 const { Text } = Typography;
 const { Option } = Select;
 
-const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
-
-
+const EditInvoice = ({
+  open,
+  onCancel,
+  onSubmit,
+  initialValues,
+  productsData,
+  productsLoading,
+}) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [updateInvoice] = useUpdateInvoiceMutation();
@@ -55,15 +63,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [customerForm] = Form.useForm();
   const [createCustomer] = useCreateCustomerMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
-  const [selectedCurrency, setSelectedCurrency] = useState('₹');
+  const [selectedCurrency, setSelectedCurrency] = useState("₹");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isTaxEnabled, setIsTaxEnabled] = useState(false);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const loggedInUser = useSelector(selectCurrentUser);
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('customer');
+  const [selectedCategory, setSelectedCategory] = useState("customer");
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
@@ -72,27 +79,35 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
   const getOptionsBasedOnCategory = () => {
     switch (selectedCategory) {
-      case 'customer':
-        return customers?.map((customer) => ({
-          label: customer.name,
-          value: customer.id
-        })) || [];
-      case 'contact':
-        return contacts?.map((contact) => ({
-          label: contact.name ||
-            `${contact.first_name || ''} ${contact.last_name || ''}`.trim() ||
-            contact.contact_name ||
-            'Unnamed Contact',
-          value: contact.id
-        })) || [];
-      case 'company_account':
-        return companyAccounts?.map((account) => ({
-          label: account.company_name ||
-            account.name ||
-            account.account_name ||
-            'Unnamed Company',
-          value: account.id
-        })) || [];
+      case "customer":
+        return (
+          customers?.map((customer) => ({
+            label: customer.name,
+            value: customer.id,
+          })) || []
+        );
+      case "contact":
+        return (
+          contacts?.map((contact) => ({
+            label:
+              contact.name ||
+              `${contact.first_name || ""} ${contact.last_name || ""}`.trim() ||
+              contact.contact_name ||
+              "Unnamed Contact",
+            value: contact.id,
+          })) || []
+        );
+      case "company_account":
+        return (
+          companyAccounts?.map((account) => ({
+            label:
+              account.company_name ||
+              account.name ||
+              account.account_name ||
+              "Unnamed Company",
+            value: account.id,
+          })) || []
+        );
       default:
         return [];
     }
@@ -100,9 +115,9 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
   const handleCategoryChange = (value) => {
     setSelectedCategory(value);
-    form.setFieldsValue({ 
+    form.setFieldsValue({
       customer: undefined,
-      customerName: ''
+      customerName: "",
     });
   };
 
@@ -110,7 +125,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     const entityName = getEntityNameById(selectedCategory, value);
     form.setFieldsValue({
       customer: value,
-      customerName: entityName
+      customerName: entityName,
     });
   };
 
@@ -127,34 +142,44 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         items = [];
       }
 
-      const hasTax = items?.some(item => item.tax_rate > 0);
+      const hasTax = items?.some((item) => item.tax_rate > 0);
       setIsTaxEnabled(hasTax);
 
       // Set initial category
-      setSelectedCategory(initialValues.category || 'customer');
+      setSelectedCategory(initialValues.category || "customer");
 
       // Find the selected entity and its name based on category
       let selectedEntity;
-      let entityName = '';
+      let entityName = "";
 
       switch (initialValues.category) {
-        case 'customer':
-          selectedEntity = customers?.find(c => c.id === initialValues.customer);
-          entityName = selectedEntity?.name || '';
+        case "customer":
+          selectedEntity = customers?.find(
+            (c) => c.id === initialValues.customer
+          );
+          entityName = selectedEntity?.name || "";
           break;
-        case 'contact':
-          selectedEntity = contacts?.find(c => c.id === initialValues.customer);
-          entityName = selectedEntity?.name || 
-            `${selectedEntity?.first_name || ''} ${selectedEntity?.last_name || ''}`.trim() ||
+        case "contact":
+          selectedEntity = contacts?.find(
+            (c) => c.id === initialValues.customer
+          );
+          entityName =
+            selectedEntity?.name ||
+            `${selectedEntity?.first_name || ""} ${
+              selectedEntity?.last_name || ""
+            }`.trim() ||
             selectedEntity?.contact_name ||
-            '';
+            "";
           break;
-        case 'company_account':
-          selectedEntity = companyAccounts?.find(c => c.id === initialValues.customer);
-          entityName = selectedEntity?.company_name ||
+        case "company_account":
+          selectedEntity = companyAccounts?.find(
+            (c) => c.id === initialValues.customer
+          );
+          entityName =
+            selectedEntity?.company_name ||
             selectedEntity?.name ||
             selectedEntity?.account_name ||
-            '';
+            "";
           break;
         default:
           break;
@@ -165,36 +190,42 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         category: initialValues.category,
         customer: initialValues.customer,
         customerName: entityName,
-        issueDate: initialValues.issueDate ? dayjs(initialValues.issueDate, "YYYY-MM-DD") : null,
-        dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate, "YYYY-MM-DD") : null,
+        issueDate: initialValues.issueDate
+          ? dayjs(initialValues.issueDate, "YYYY-MM-DD")
+          : null,
+        dueDate: initialValues.dueDate
+          ? dayjs(initialValues.dueDate, "YYYY-MM-DD")
+          : null,
         referenceNumber: initialValues.salesInvoiceNumber,
         currency: initialValues.currency,
         status: initialValues.payment_status,
-        items: items.map(item => ({
+        items: items.map((item) => ({
           product: item.product_id,
           id: item.product_id,
           item_name: item.name,
-          quantity: item.quantity, 
+          quantity: item.quantity,
           unit_price: item.unit_price,
           discount: item.discount || 0,
-          discount_type: 'percentage',
+          discount_type: item.discount_type,
           tax: item.tax_rate || 0,
           taxId: null,
-          hsn_sac: item.hsn_sac || '',
-          taxAmount: item.tax_amount || 0
+          hsn_sac: item.hsn_sac || "",
+          taxAmount: item.tax_amount || 0,
         })),
         subtotal: initialValues.subtotal,
         totalTax: initialValues.tax,
         totalDiscount: initialValues.discount,
         totalAmount: initialValues.total,
-        additionalNotes: initialValues.additional_notes
+        additionalNotes: initialValues.additional_notes,
       };
 
       // Set form values
       form.setFieldsValue(formattedValues);
 
       // Set currency details
-      const selectedCurrency = currenciesData?.data?.find(c => c.id === initialValues.currency);
+      const selectedCurrency = currenciesData?.data?.find(
+        (c) => c.id === initialValues.currency
+      );
       if (selectedCurrency) {
         setSelectedCurrency(selectedCurrency.currencyIcon);
         setSelectedCurrencyId(selectedCurrency.id);
@@ -204,17 +235,21 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       calculateTotals(formattedValues.items);
 
       // Set initial category
-      setSelectedCategory(initialValues.category || 'customer');
+      setSelectedCategory(initialValues.category || "customer");
 
       // Set initial product if exists
       if (items.length > 0) {
         const firstItem = items[0];
-        form.setFieldValue('product_id', firstItem.product_id);
-        
+        form.setFieldValue("product_id", firstItem.product_id);
+
         // Find and set product currency if exists
-        const selectedProduct = productsData?.data?.find(product => product.id === firstItem.product_id);
+        const selectedProduct = productsData?.data?.find(
+          (product) => product.id === firstItem.product_id
+        );
         if (selectedProduct) {
-          const productCurrency = currenciesData?.data?.find(c => c.id === selectedProduct.currency);
+          const productCurrency = currenciesData?.data?.find(
+            (c) => c.id === selectedProduct.currency
+          );
           if (productCurrency) {
             setSelectedProductCurrency(productCurrency);
             setSelectedCurrency(productCurrency.currencyIcon);
@@ -224,97 +259,126 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         }
       }
     }
-  }, [initialValues, form, currenciesData, customers, contacts, companyAccounts, productsData]);
+  }, [
+    initialValues,
+    form,
+    currenciesData,
+    customers,
+    contacts,
+    companyAccounts,
+    productsData,
+  ]);
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
     if (!isTaxEnabled || !item.tax) return 0;
 
-    const quantity = Number(item.quantity) || 0;
-    const price = Number(item.unit_price) || 0;
+    const quantity = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unit_price) || 0;
     const itemAmount = quantity * price;
-    
+
     // Calculate discount first
-    const itemDiscount = Number(item.discount || 0);
-    const itemDiscountType = item.discount_type || 'percentage';
+    const itemDiscount = parseFloat(item.discount || 0);
+    const itemDiscountType = item.discount_type || "percentage";
     let itemDiscountAmount = 0;
 
-    if (itemDiscountType === 'percentage') {
+    if (itemDiscountType === "percentage") {
       itemDiscountAmount = (itemAmount * itemDiscount) / 100;
     } else {
-      itemDiscountAmount = itemDiscount;
+      itemDiscountAmount = Math.min(itemDiscount, itemAmount);
     }
 
     // Calculate tax on amount after discount
-    const amountAfterDiscount = itemAmount - itemDiscountAmount;
-    const taxRate = Number(item.tax) || 0;
+    const amountAfterDiscount = Math.max(0, itemAmount - itemDiscountAmount);
+    const taxRate = parseFloat(item.tax) || 0;
     return (amountAfterDiscount * taxRate) / 100;
   };
 
   const calculateItemTotal = (item) => {
     if (!item) return 0;
 
-    const quantity = Number(item.quantity) || 0;
-    const price = Number(item.unit_price) || 0;
+    const quantity = parseFloat(item.quantity) || 0;
+    const price = parseFloat(item.unit_price) || 0;
     const itemAmount = quantity * price;
 
     // Calculate discount
-    const itemDiscount = Number(item.discount || 0);
-    const itemDiscountType = item.discount_type || 'percentage';
+    const itemDiscount = parseFloat(item.discount || 0);
+    const itemDiscountType = item.discount_type || "percentage";
     let itemDiscountAmount = 0;
 
-    if (itemDiscountType === 'percentage') {
+    if (itemDiscountType === "percentage") {
       itemDiscountAmount = (itemAmount * itemDiscount) / 100;
     } else {
-      itemDiscountAmount = itemDiscount;
+      // For fixed amount, directly use the discount value
+      itemDiscountAmount = Math.min(itemDiscount, itemAmount); // Ensure discount doesn't exceed item amount
     }
 
-    // Calculate tax
+    // Calculate tax on amount after discount
+    const amountAfterDiscount = Math.max(0, itemAmount - itemDiscountAmount);
     const taxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
 
-    // Final item total: amount - discount + tax
-    return itemAmount - itemDiscountAmount + taxAmount;
+    // Final item total: (amount - discount) + tax
+    return amountAfterDiscount + taxAmount;
   };
 
   const calculateTotals = (items = []) => {
-    let subtotal = 0;
-    let totalTaxAmount = 0;
-    let totalDiscountAmount = 0;
+    if (!Array.isArray(items)) {
+      items = [];
+    }
 
-    // Calculate totals from items
-    items.forEach(item => {
-      const quantity = Number(item.quantity) || 0;
-      const price = Number(item.unit_price) || 0;
+    let subTotal = 0;
+    let totalTax = 0;
+    let totalDiscount = 0;
+
+    items.forEach((item) => {
+      const quantity = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unit_price) || 0;
       const itemAmount = quantity * price;
-      
+
       // Calculate item discount
-      const itemDiscount = Number(item.discount || 0);
-      const itemDiscountType = item.discount_type || 'percentage';
+      const itemDiscount = parseFloat(item.discount || 0);
+      const itemDiscountType = item.discount_type || "percentage";
       let itemDiscountAmount = 0;
 
-      if (itemDiscountType === 'percentage') {
+      if (itemDiscountType === "percentage") {
         itemDiscountAmount = (itemAmount * itemDiscount) / 100;
       } else {
-        itemDiscountAmount = itemDiscount;
+        // For fixed amount, directly use the discount value
+        itemDiscountAmount = Math.min(itemDiscount, itemAmount); // Ensure discount doesn't exceed item amount
       }
 
-      // Calculate tax
-      const taxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
+      totalDiscount += itemDiscountAmount;
+      subTotal += itemAmount;
 
-      subtotal += itemAmount;
-      totalTaxAmount += taxAmount;
-      totalDiscountAmount += itemDiscountAmount;
+      // Calculate tax on amount after discount
+      const amountAfterDiscount = Math.max(0, itemAmount - itemDiscountAmount);
+      if (isTaxEnabled) {
+        const taxRate = parseFloat(item.tax) || 0;
+        totalTax += (amountAfterDiscount * taxRate) / 100;
+      }
     });
 
-    // Final total = subtotal + tax - discount
-    const totalAmount = subtotal + totalTaxAmount - totalDiscountAmount;
+    // Ensure all values are non-negative
+    subTotal = Math.max(0, subTotal);
+    totalDiscount = Math.min(totalDiscount, subTotal); // Ensure total discount doesn't exceed subtotal
+    const totalAmount = Math.max(0, subTotal - totalDiscount + totalTax);
 
+    // Update form values with proper rounding
     form.setFieldsValue({
-      subtotal: subtotal.toFixed(2),
-      total_tax: totalTaxAmount.toFixed(2),
-      total_discount: totalDiscountAmount.toFixed(2),
-      total: totalAmount.toFixed(2)
+      subtotal: subTotal.toFixed(2),
+      total_tax: totalTax.toFixed(2),
+      total_discount: totalDiscount.toFixed(2),
+      total: totalAmount.toFixed(2),
     });
+
+    // Update individual item amounts
+    const updatedItems = items.map((item) => ({
+      ...item,
+      amount: calculateItemTotal(item).toFixed(2),
+      tax_amount: (isTaxEnabled ? calculateItemTaxAmount(item) : 0).toFixed(2),
+    }));
+
+    form.setFieldsValue({ items: updatedItems });
   };
 
   const handleItemChange = () => {
@@ -323,17 +387,17 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   };
 
   const handleCurrencyChange = (value) => {
-    const currencyDetails = currenciesData?.find(curr => curr.id === value);
+    const currencyDetails = currenciesData?.find((curr) => curr.id === value);
     if (currencyDetails) {
-      setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+      setSelectedCurrency(currencyDetails.currencyIcon || "₹");
       setSelectedCurrencyId(value);
     }
 
     // Update all existing items with new currency
-    const items = form.getFieldValue('items') || [];
-    const updatedItems = items.map(item => ({
+    const items = form.getFieldValue("items") || [];
+    const updatedItems = items.map((item) => ({
       ...item,
-      unit_price: item.unit_price || 0
+      unit_price: item.unit_price || 0,
     }));
     form.setFieldsValue({ items: updatedItems });
 
@@ -342,10 +406,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   };
 
   const handleProductSelect = (value, option) => {
-    const selectedProduct = productsData?.data?.find(product => product.id === value);
+    const selectedProduct = productsData?.data?.find(
+      (product) => product.id === value
+    );
     if (selectedProduct) {
       // Get the product's currency from currencies list
-      const productCurrency = currenciesData?.find(c => c.id === selectedProduct.currency);
+      const productCurrency = currenciesData?.find(
+        (c) => c.id === selectedProduct.currency
+      );
       if (productCurrency) {
         setSelectedProductCurrency(productCurrency);
         setSelectedCurrency(productCurrency.currencyIcon);
@@ -354,7 +422,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       }
 
       // Update the items list
-      const items = form.getFieldValue('items') || [];
+      const items = form.getFieldValue("items") || [];
       const newItems = [...items];
       const lastIndex = newItems.length - 1;
       newItems[lastIndex] = {
@@ -365,7 +433,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         hsn_sac: selectedProduct.hsn_sac,
         tax: selectedProduct.tax,
         profilePic: selectedProduct.image,
-        currency: selectedProduct.currency
+        currency: selectedProduct.currency,
       };
       form.setFieldsValue({ items: newItems });
       calculateTotals(newItems);
@@ -376,43 +444,38 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     try {
       setLoading(true);
 
-      // Format dates using dayjs
-      const formatDate = (dateStr) => {
-        if (!dateStr) return null;
-        return dayjs(dateStr, "DD-MM-YYYY").format("YYYY-MM-DD");
-      };
-
       const payload = {
         category: selectedCategory,
         customer: values.customer,
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: values.currency,
-        items: values.items?.map(item => ({
+        items: values.items?.map((item) => ({
           product_id: item.id,
           name: item.item_name,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
           tax_rate: Number(item.tax) || 0,
           discount: Number(item.discount) || 0,
-          discount_type: item.discount_type || 'percentage',
-          hsn_sac: item.hsn_sac || '',
+          discount_type: item.discount_type || "percentage",
+          hsn_sac: item.hsn_sac || "",
           tax_amount: calculateItemTaxAmount(item),
-          amount: calculateItemTotal(item)
+          amount: calculateItemTotal(item),
         })),
         subtotal: Number(values.subtotal) || 0,
         tax: Number(values.total_tax) || 0,
         discount: Number(values.total_discount) || 0,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid",
-        additional_notes: values.additionalNotes
+        additional_notes: values.additionalNotes,
       };
-
-      console.log("Submitting payload:", payload); // Add this for debugging
 
       await updateInvoice({ id: initialValues.id, data: payload }).unwrap();
       message.success("Invoice updated successfully");
       onCancel();
+      if (onSubmit) {
+        onSubmit(payload);
+      }
     } catch (error) {
       message.error("Failed to update invoice");
       console.error("Submit Error:", error);
@@ -428,14 +491,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         contact: values.contact,
       }).unwrap();
 
-      message.success('Customer created successfully');
+      message.success("Customer created successfully");
       setIsCustomerModalOpen(false);
       customerForm.resetFields();
 
       // Automatically select the newly created customer
-      form.setFieldValue('customer', result.data.id);
+      form.setFieldValue("customer", result.data.id);
     } catch (error) {
-      message.error('Failed to create customer: ' + error.message);
+      message.error("Failed to create customer: " + error.message);
     }
   };
 
@@ -444,10 +507,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     form.resetFields();
     onCancel();
   };
-
- 
-      
-
 
   const customerModal = (
     <Modal
@@ -567,14 +626,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         <Form.Item
           name="name"
           label="Customer Name"
-          rules={[{ required: true, message: 'Please enter customer name' }]}
+          rules={[{ required: true, message: "Please enter customer name" }]}
         >
           <Input
-            prefix={<FiUser style={{ color: '#1890ff' }} />}
+            prefix={<FiUser style={{ color: "#1890ff" }} />}
             placeholder="Enter customer name"
             size="large"
             style={{
-              borderRadius: '8px',
+              borderRadius: "8px",
               height: "40px",
               backgroundColor: "#f8fafc",
             }}
@@ -585,23 +644,33 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           name="contact"
           label="Phone Number"
           rules={[
-            { required: true, message: 'Please enter phone number' },
-            { pattern: /^\d{10}$/, message: 'Please enter a valid 10-digit phone number' }
+            { required: true, message: "Please enter phone number" },
+            {
+              pattern: /^\d{10}$/,
+              message: "Please enter a valid 10-digit phone number",
+            },
           ]}
         >
           <Input
-            prefix={<FiPhone style={{ color: '#1890ff' }} />}
+            prefix={<FiPhone style={{ color: "#1890ff" }} />}
             placeholder="Enter phone number"
             size="large"
             style={{
-              borderRadius: '8px',
+              borderRadius: "8px",
               height: "40px",
               backgroundColor: "#f8fafc",
             }}
           />
         </Form.Item>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "24px",
+          }}
+        >
           <Button
             size="large"
             onClick={() => {
@@ -642,23 +711,24 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   // Add this function to get entity name based on ID
   const getEntityNameById = (category, id) => {
     switch (category) {
-      case 'customer':
-        const customer = customers?.find(c => c.id === id);
-        return customer?.name || '';
-      case 'contact':
-        const contact = contacts?.find(c => c.id === id);
-        return contact?.name || 
-          `${contact?.first_name || ''} ${contact?.last_name || ''}`.trim() ||
+      case "customer":
+        const customer = customers?.find((c) => c.id === id);
+        return customer?.name || "";
+      case "contact":
+        const contact = contacts?.find((c) => c.id === id);
+        return (
+          contact?.name ||
+          `${contact?.first_name || ""} ${contact?.last_name || ""}`.trim() ||
           contact?.contact_name ||
-          '';
-      case 'company_account':
-        const account = companyAccounts?.find(c => c.id === id);
-        return account?.company_name ||
-          account?.name ||
-          account?.account_name ||
-          '';
+          ""
+        );
+      case "company_account":
+        const account = companyAccounts?.find((c) => c.id === id);
+        return (
+          account?.company_name || account?.name || account?.account_name || ""
+        );
       default:
-        return '';
+        return "";
     }
   };
 
@@ -772,165 +842,163 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           padding: "24px",
         }}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-        {/* <Form.Item
-        name="category"
-        label={
-          <span style={{ fontSize: "14px", fontWeight: "500" }}>
-            <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-            Invoice Type <span style={{ color: "#ff4d4f" }}>*</span>
-          </span>
-        }
-        rules={[{ required: true, message: "Please select category" }]}
-        initialValue={initialValues?.category || "customer"}
-      >
-        <Select
-          placeholder="Select Category"
-          onChange={handleCategoryChange}
-          size="large"
+        <div
           style={{
-            width: "100%",
-            borderRadius: "10px",
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "16px",
           }}
         >
-          <Option value="customer">Customer</Option>
-          {/* <Option value="contact">Contact</Option>
-          <Option value="company_account">Company Account</Option> */}
-        {/* </Select> */}
-      {/* </Form.Item>  */}
-
-      <Form.Item
-        name="customer"
-        label={
-          <span style={{ fontSize: "14px", fontWeight: "500" }}>
-            <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-            {selectedCategory === 'customer' ? 'Customer' :
-              selectedCategory === 'contact' ? 'Contact' :
-                'Company Account'} <span style={{ color: "#ff4d4f" }}>*</span>
-          </span>
-        }
-        rules={[{ required: true, message: `Please select ${selectedCategory}` }]}
-      >
-        <Select
-          listHeight={100}
-          dropdownStyle={{
-            Height: '100px',
-            overflowY: 'auto',
-            scrollbarWidth: 'thin',
-            scrollBehavior: 'smooth'
-          }}
-          placeholder={`Select ${selectedCategory === 'customer' ? 'Customer' :
-            selectedCategory === 'contact' ? 'Contact' :
-              'Company Account'}`}
-          showSearch
-          optionFilterProp="children"
-          size="large"
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-          }}
-          onChange={handleCustomerChange}
-          dropdownRender={(menu) => (
-            <>
-              {menu}
-              {selectedCategory === 'customer' && (
+          <Form.Item
+            name="customer"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
+                {selectedCategory === "customer"
+                  ? "Customer"
+                  : selectedCategory === "contact"
+                  ? "Contact"
+                  : "Company Account"}{" "}
+                <span style={{ color: "#ff4d4f" }}>*</span>
+              </span>
+            }
+            rules={[
+              { required: true, message: `Please select ${selectedCategory}` },
+            ]}
+          >
+            <Select
+              listHeight={100}
+              dropdownStyle={{
+                Height: "100px",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollBehavior: "smooth",
+              }}
+              placeholder={`Select ${
+                selectedCategory === "customer"
+                  ? "Customer"
+                  : selectedCategory === "contact"
+                  ? "Contact"
+                  : "Company Account"
+              }`}
+              showSearch
+              optionFilterProp="children"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+              }}
+              onChange={handleCustomerChange}
+              dropdownRender={(menu) => (
                 <>
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <Button
-                      type="primary"
-                      icon={<FiPlus />}
-                      onClick={() => setIsCustomerModalOpen(true)}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Add Customer
-                    </Button>
-                  </div>
+                  {menu}
+                  {selectedCategory === "customer" && (
+                    <>
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{ display: "flex", justifyContent: "center" }}
+                      >
+                        <Button
+                          type="primary"
+                          icon={<FiPlus />}
+                          onClick={() => setIsCustomerModalOpen(true)}
+                          style={{
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Add Customer
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
-            </>
-          )}
-        >
-          {getOptionsBasedOnCategory().map((option) => (
-            <Option key={option.value} value={option.value}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '4px 0'
-              }}>
-                {selectedCategory === 'customer' ? <FiUser style={{ color: '#1890ff' }} /> :
-                  selectedCategory === 'contact' ? <FiPhone style={{ color: '#1890ff' }} /> :
-                    <FiCreditCard style={{ color: '#1890ff' }} />}
-                <span>{option.label}</span>
-              </div>
-            </Option>
-          ))}
-        </Select>
-      </Form.Item>
-            <Form.Item
-              name="currency"
-              label={
-                <span className="form-label">
-                  Currency <span className="required"></span>
-                </span>
-              }
-              rules={[{ required: true, message: "Please select currency" }]}
             >
-              <Select
-                placeholder="Select Currency"
-                size="large"
-                value={selectedProductCurrency?.id || selectedCurrencyId}
-                onChange={handleCurrencyChange}
-                disabled={true}
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-              >
-                {currenciesData?.map((currency) => (
-                  <Option
-                    key={currency.id}
-                    value={currency.id}
-                    symbol={currency.currencyIcon}
+              {getOptionsBasedOnCategory().map((option) => (
+                <Option key={option.value} value={option.value}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "4px 0",
+                    }}
                   >
-                    {currency.currencyName} ({currency.currencyIcon})
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
+                    {selectedCategory === "customer" ? (
+                      <FiUser style={{ color: "#1890ff" }} />
+                    ) : selectedCategory === "contact" ? (
+                      <FiPhone style={{ color: "#1890ff" }} />
+                    ) : (
+                      <FiCreditCard style={{ color: "#1890ff" }} />
+                    )}
+                    <span>{option.label}</span>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item
+            name="currency"
+            label={
+              <span className="form-label">
+                Currency <span className="required"></span>
+              </span>
+            }
+            rules={[{ required: true, message: "Please select currency" }]}
+          >
+            <Select
+              placeholder="Select Currency"
+              size="large"
+              value={selectedProductCurrency?.id || selectedCurrencyId}
+              onChange={handleCurrencyChange}
+              disabled={true}
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+              }}
+            >
+              {currenciesData?.map((currency) => (
+                <Option
+                  key={currency.id}
+                  value={currency.id}
+                  symbol={currency.currencyIcon}
+                >
+                  {currency.currencyName} ({currency.currencyIcon})
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "16px",
+          }}
+        >
           <Form.Item
             name="issueDate"
-            rules={[{ required: true, message: 'Please select issue date' }]}
+            rules={[{ required: true, message: "Please select issue date" }]}
           >
-            <DatePicker
-              format="YYYY-MM-DD"
-              style={{ width: '100%' }}
-            />
+            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="dueDate"
-            rules={[{ required: true, message: 'Please select due date' }]}
+            rules={[{ required: true, message: "Please select due date" }]}
           >
-            <DatePicker
-              format="YYYY-MM-DD"
-              style={{ width: '100%' }}
-            />
+            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="status"
@@ -957,26 +1025,38 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         </div>
 
         <div className="table-style-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', marginBottom: '16px', marginLeft: '16px', marginRight: '16px' }}>
-            <span style={{ fontSize: '16px', fontWeight: '500', color: '#1f2937' }}>
-              <FiPackage style={{ marginRight: '8px', color: '#1890ff' }} />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: "16px",
+              marginBottom: "16px",
+              marginLeft: "16px",
+              marginRight: "16px",
+            }}
+          >
+            <span
+              style={{ fontSize: "16px", fontWeight: "500", color: "#1f2937" }}
+            >
+              <FiPackage style={{ marginRight: "8px", color: "#1890ff" }} />
               Items & Services
-          </span>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <Text style={{ marginRight: '8px' }}>Enable Tax</Text>
+            </span>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <Text style={{ marginRight: "8px" }}>Enable Tax</Text>
               <Switch
                 checked={isTaxEnabled}
                 onChange={(checked) => {
                   setIsTaxEnabled(checked);
                   if (!checked) {
-                    const items = form.getFieldValue('items') || [];
-                    items.forEach(item => {
+                    const items = form.getFieldValue("items") || [];
+                    items.forEach((item) => {
                       item.tax = 0;
                       item.taxId = undefined;
                     });
                     form.setFieldsValue({ items });
                   }
-                  calculateTotals(form.getFieldValue('items'));
+                  calculateTotals(form.getFieldValue("items"));
                 }}
                 size="small"
               />
@@ -985,41 +1065,51 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
           <Form.Item
             name="product_id"
-            rules={[{ required: true, message: 'Please select product' }]}
+            rules={[{ required: true, message: "Please select product" }]}
           >
             <Select
               placeholder="Select Product"
               size="large"
               loading={productsLoading}
               style={{
-                width: '30%',
-                marginLeft: '16px',
-                marginRight: '16px',
-                marginTop: '16px',
-                marginBottom: '16px',
-                borderRadius: '10px',
+                width: "30%",
+                marginLeft: "16px",
+                marginRight: "16px",
+                marginTop: "16px",
+                marginBottom: "16px",
+                borderRadius: "10px",
               }}
-              value={form.getFieldValue('product_id')}
+              value={form.getFieldValue("product_id")}
               onChange={handleProductSelect}
             >
-              {productsData?.data?.map(product => (
-                <Option
-                  key={product.id}
-                  value={product.id}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '4px', overflow: 'hidden' }}>
+              {productsData?.data?.map((product) => (
+                <Option key={product.id} value={product.id}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "30px",
+                        height: "30px",
+                        borderRadius: "4px",
+                        overflow: "hidden",
+                      }}
+                    >
                       <img
                         src={product.image}
                         alt={product.name}
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
                         }}
                       />
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                       <span style={{ fontWeight: 500 }}>{product.name}</span>
                     </div>
                   </div>
@@ -1045,97 +1135,136 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                     </tr>
                   </thead>
                   <tbody>
-              {fields.map(({ key, name, ...restField }, index) => (
+                    {fields.map(({ key, name, ...restField }, index) => (
                       <tr key={key} className="item-data-row">
                         <td>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "item_name"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <Input
-                          placeholder="Item Name"
-                              className="item-input"
-                        />
-                      </Form.Item>
-                        </td>
-                        <td>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "quantity"]}
-                        rules={[{ required: true, message: "Required" }]}
-                            initialValue={1}
-                      >
-                        <InputNumber
-                          min={1}
-                              className="quantity-input"
-                              onChange={() => calculateTotals(form.getFieldValue("items"))}
-                        />
-                      </Form.Item>
-                        </td>
-                        <td>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "unit_price"]}
-                        rules={[{ required: true, message: "Required" }]}
-                      >
-                        <InputNumber
-                              className="price-input"
-                              formatter={value => `${selectedCurrency} ${value}`}
-                              parser={value => value.replace(selectedCurrency, '').trim()}
-                              onChange={() => calculateTotals(form.getFieldValue("items"))}
-                              defaultValue={0}
-                        />
-                      </Form.Item>
-                        </td>
-                        <td>
-                      <Form.Item {...restField} name={[name, "hsn_sac"]}>
-                            <Input placeholder="HSN/SAC" className="item-input" />
-                      </Form.Item>
-                        </td>
-                        <td>
-                      <Form.Item {...restField} name={[name, "discount"]} style={{ margin: 0 }}>
-                        <Space>
                           <Form.Item
                             {...restField}
-                            name={[name, "discount_type"]}
-                            style={{ margin: 0 }}
+                            name={[name, "item_name"]}
+                            rules={[{ required: true, message: "Required" }]}
                           >
-                            <Select
-                          size="large"
-                          style={{
-                                width: '120px',
-                                borderRadius: '8px',
-                                height: '40px',
-                              }}
-                              defaultValue="percentage"
-                              onChange={() => calculateTotals(form.getFieldValue("items"))}
-                            >
-                              <Option value="percentage">Percentage</Option>
-                              <Option value="fixed">Fixed Amount</Option>
-                            </Select>
-                      </Form.Item>
+                            <Input
+                              placeholder="Item Name"
+                              className="item-input"
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "quantity"]}
+                            rules={[{ required: true, message: "Required" }]}
+                            initialValue={1}
+                          >
+                            <InputNumber
+                              min={1}
+                              className="quantity-input"
+                              onChange={() =>
+                                calculateTotals(form.getFieldValue("items"))
+                              }
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "unit_price"]}
+                            rules={[{ required: true, message: "Required" }]}
+                          >
+                            <InputNumber
+                              className="price-input"
+                              formatter={(value) =>
+                                `${selectedCurrency} ${value}`
+                              }
+                              parser={(value) =>
+                                value.replace(selectedCurrency, "").trim()
+                              }
+                              onChange={() =>
+                                calculateTotals(form.getFieldValue("items"))
+                              }
+                              defaultValue={0}
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
+                          <Form.Item {...restField} name={[name, "hsn_sac"]}>
+                            <Input
+                              placeholder="HSN/SAC"
+                              className="item-input"
+                            />
+                          </Form.Item>
+                        </td>
+                        <td>
                           <Form.Item
                             {...restField}
                             name={[name, "discount"]}
                             style={{ margin: 0 }}
                           >
-                        <InputNumber
-                              className="item-discount-input"
-                              placeholder={form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? 'Amount' : '%'}
-                              formatter={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
-                              parser={value => form.getFieldValue('items')?.[index]?.discount_type === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
-                              onChange={() => calculateTotals(form.getFieldValue("items"))}
-                          style={{
-                                width: '100px',
-                                borderRadius: '8px',
-                                height: '40px',
-                              }}
-                        />
-                      </Form.Item>
-                          {form.getFieldValue('items')?.[index]?.discount_type === 'percentage' && <Text style={{ marginTop: '10px' }}>%</Text>}
-                        </Space>
-                      </Form.Item>
+                            <Space>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "discount_type"]}
+                                style={{ margin: 0 }}
+                              >
+                                <Select
+                                  size="large"
+                                  style={{
+                                    width: "120px",
+                                    borderRadius: "8px",
+                                    height: "40px",
+                                  }}
+                                  defaultValue="percentage"
+                                  onChange={() =>
+                                    calculateTotals(form.getFieldValue("items"))
+                                  }
+                                >
+                                  <Option value="percentage">Percentage</Option>
+                                  <Option value="fixed">Fixed Amount</Option>
+                                </Select>
+                              </Form.Item>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "discount"]}
+                                style={{ margin: 0 }}
+                              >
+                                <InputNumber
+                                  className="item-discount-input"
+                                  placeholder={
+                                    form.getFieldValue("items")?.[index]
+                                      ?.discount_type === "fixed"
+                                      ? "Amount"
+                                      : "%"
+                                  }
+                                  formatter={(value) =>
+                                    form.getFieldValue("items")?.[index]
+                                      ?.discount_type === "fixed"
+                                      ? `${selectedCurrency}${value}`
+                                      : `${value}`
+                                  }
+                                  parser={(value) =>
+                                    form.getFieldValue("items")?.[index]
+                                      ?.discount_type === "fixed"
+                                      ? value
+                                          .replace(selectedCurrency, "")
+                                          .trim()
+                                      : value.replace("%", "")
+                                  }
+                                  onChange={() =>
+                                    calculateTotals(form.getFieldValue("items"))
+                                  }
+                                  style={{
+                                    width: "100px",
+                                    borderRadius: "8px",
+                                    height: "40px",
+                                  }}
+                                />
+                              </Form.Item>
+                              {form.getFieldValue("items")?.[index]
+                                ?.discount_type === "percentage" && (
+                                <Text style={{ marginTop: "10px" }}>%</Text>
+                              )}
+                            </Space>
+                          </Form.Item>
                         </td>
                         <td>
                           <Form.Item {...restField} name={[name, "taxId"]}>
@@ -1144,13 +1273,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               loading={taxesLoading}
                               disabled={!isTaxEnabled}
                               onChange={(value, option) => {
-                                const items = form.getFieldValue('items') || [];
+                                const items = form.getFieldValue("items") || [];
                                 items[index].tax = option?.taxRate;
                                 form.setFieldsValue({ items });
                                 calculateTotals(items);
                               }}
                             >
-                              {taxesData?.data?.map(tax => (
+                              {taxesData?.data?.map((tax) => (
                                 <Option
                                   key={tax.id}
                                   value={tax.id}
@@ -1160,94 +1289,125 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                 </Option>
                               ))}
                             </Select>
-                      </Form.Item>
+                          </Form.Item>
                         </td>
                         <td>
                           <div className="amount-field">
-                            <span className="currency-symbol">{selectedCurrency}</span>
+                            <span className="currency-symbol">
+                              {selectedCurrency}
+                            </span>
                             <span className="amount-value">
-                              {calculateItemTotal(form.getFieldValue("items")[index])?.toFixed(2) || '0.00'}
+                              {calculateItemTotal(
+                                form.getFieldValue("items")[index]
+                              )?.toFixed(2) || "0.00"}
                             </span>
                           </div>
                         </td>
                         <td>
-                      {fields.length > 1 && (
-                        <Button
-                          type="text"
+                          {fields.length > 1 && (
+                            <Button
+                              type="text"
                               className="delete-btn"
-                              icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                          onClick={() => {
-                            remove(name);
-                            calculateTotals(form.getFieldValue("items"));
-                          }}
-                        />
-                      )}
+                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                              onClick={() => {
+                                remove(name);
+                                calculateTotals(form.getFieldValue("items"));
+                              }}
+                            />
+                          )}
                         </td>
                       </tr>
-              ))}
+                    ))}
                   </tbody>
                 </table>
 
                 <div className="add-item-container">
-              <Button
+                  <Button
                     type="primary"
-                icon={<FiPlus />}
+                    icon={<FiPlus />}
                     onClick={() => add()}
                     className="add-item-btn"
                   >
                     Add Items
-              </Button>
+                  </Button>
                 </div>
-            </>
-          )}
-        </Form.List>
+              </>
+            )}
+          </Form.List>
         </div>
 
         <div className="summary-card">
           <div className="summary-content">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <Text style={{ marginTop: '10px' }}>Sub Total</Text>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "12px",
+              }}
+            >
+              <Text style={{ marginTop: "10px" }}>Sub Total</Text>
               <Form.Item name="subtotal" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: '120px',
-                    borderRadius: '8px',
-                    height: '40px',
+                    width: "120px",
+                    borderRadius: "8px",
+                    height: "40px",
                   }}
-                  formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  formatter={(value) =>
+                    `${selectedCurrency}${value}`.replace(
+                      /\B(?=(\d{3})+(?!\d))/g,
+                      ","
+                    )
+                  }
                 />
               </Form.Item>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <Text style={{ marginTop: '10px' }}>Total Tax</Text>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "12px",
+              }}
+            >
+              <Text style={{ marginTop: "10px" }}>Total Tax</Text>
               <Form.Item name="total_tax" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: '120px',
-                    borderRadius: '8px',
-                    height: '40px',
+                    width: "120px",
+                    borderRadius: "8px",
+                    height: "40px",
                   }}
-                  formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  formatter={(value) =>
+                    `${selectedCurrency}${value}`.replace(
+                      /\B(?=(\d{3})+(?!\d))/g,
+                      ","
+                    )
+                  }
                 />
               </Form.Item>
             </div>
-            <Divider style={{ margin: '12px 0' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Text style={{ marginTop: '10px' }}>Total Amount</Text>
+            <Divider style={{ margin: "12px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Text style={{ marginTop: "10px" }}>Total Amount</Text>
               <Form.Item name="total" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: '120px',
-                    borderRadius: '8px',
-                    height: '40px',
+                    width: "120px",
+                    borderRadius: "8px",
+                    height: "40px",
                   }}
-                  formatter={value => `${selectedCurrency}${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  formatter={(value) =>
+                    `${selectedCurrency}${value}`.replace(
+                      /\B(?=(\d{3})+(?!\d))/g,
+                      ","
+                    )
+                  }
                 />
               </Form.Item>
             </div>
@@ -1255,10 +1415,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         </div>
 
         <div className="form-footer">
-          <Button
-            onClick={handleCancel}
-            className="cancel-btn"
-          >
+          <Button onClick={handleCancel} className="cancel-btn">
             Cancel
           </Button>
           <Button
