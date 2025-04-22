@@ -40,23 +40,30 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 const { Text } = Typography;
 const { Search } = Input;
 
-const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,onProductRevenueClick, currenciesData }) => {
+const ProductList = ({
+  onEdit,
+  onView,
+  searchText = "",
+  selectedCategory = null,
+  onProductRevenueClick,
+  currenciesData,
+}) => {
   // const loggedInUser = useSelector(selectCurrentUser);
   // const id = loggedInUser?.id;
   const currentUser = useSelector(selectCurrentUser);
 
-  const id = currentUser?.id;
-
-  const { data: productsData = [], isLoading } = useGetProductsQuery(id);
+  const { data: productsData = [], isLoading } = useGetProductsQuery(
+    currentUser?.id
+  );
 
   const products = productsData.data;
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
- 
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
-  const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
+  const categories =
+    categoriesData?.data?.filter((item) => item.lableType === "category") || [];
 
   // Create a map of category IDs to category names
   const categoryMap = React.useMemo(() => {
@@ -70,7 +77,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
   // Function to get currency details
   const getCurrencyDetails = (currencyId) => {
     if (!currenciesData) return { currencyIcon: "₹", currencyCode: "INR" };
-    const currency = currenciesData.find(c => c.id === currencyId);
+    const currency = currenciesData.find((c) => c.id === currencyId);
     return currency || { currencyIcon: "₹", currencyCode: "INR" }; // Default to INR if not found
   };
 
@@ -81,9 +88,9 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
   };
 
   const statuses = [
-    { id: 'in_stock', name: 'In Stock' },
-    { id: 'low_stock', name: 'Low Stock' },
-    { id: 'out_of_stock', name: 'Out of Stock' },
+    { id: "in_stock", name: "In Stock" },
+    { id: "low_stock", name: "Low Stock" },
+    { id: "out_of_stock", name: "Out of Stock" },
   ];
 
   const categoriess = categories;
@@ -91,7 +98,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
   // Filter products based on search text and category
   const filteredProducts = React.useMemo(() => {
     if (!products) return [];
-    return products.filter(product => {
+    return products.filter((product) => {
       const searchLower = searchText.toLowerCase();
       const name = product?.name?.toLowerCase() || "";
       const category = categoryMap[product?.category]?.toLowerCase() || "";
@@ -104,7 +111,8 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
         sku.includes(searchLower) ||
         description.includes(searchLower);
 
-      const matchesCategory = !selectedCategory || product.category === selectedCategory;
+      const matchesCategory =
+        !selectedCategory || product.category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
@@ -112,20 +120,20 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
 
   const handleDelete = async (id) => {
     Modal.confirm({
-      title: 'Delete Product',
-      content: 'Are you sure you want to delete this product?',
-      okText: 'Yes',
-      okType: 'danger',
-      cancelText: 'No',
+      title: "Delete Product",
+      content: "Are you sure you want to delete this product?",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
       bodyStyle: {
-        padding: '20px',
+        padding: "20px",
       },
       onOk: async () => {
         try {
           await deleteProduct(id).unwrap();
-          message.success('Product deleted successfully');
+          message.success("Product deleted successfully");
         } catch (error) {
-          message.error(error?.data?.message || 'Failed to delete product');
+          message.error(error?.data?.message || "Failed to delete product");
         }
       },
     });
@@ -144,27 +152,27 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
   const getDropdownItems = (record) => ({
     items: [
       {
-        key: 'view',
+        key: "view",
         icon: <FiEye />,
-        label: 'View Details',
+        label: "View Details",
         onClick: (e) => {
           e.domEvent.stopPropagation();
           onView(record);
         },
       },
       {
-        key: 'edit',
+        key: "edit",
         icon: <FiEdit2 />,
-        label: 'Edit',
+        label: "Edit",
         onClick: (e) => {
           e.domEvent.stopPropagation();
           handleEdit(record);
         },
       },
       {
-        key: 'delete',
+        key: "delete",
         icon: <FiTrash2 />,
-        label: 'Delete',
+        label: "Delete",
         onClick: (e) => {
           e.domEvent.stopPropagation();
           handleDelete(record.id);
@@ -179,15 +187,22 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       title: "Product Details",
       dataIndex: "name",
       key: "name",
-      width: '25%',
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      width: "25%",
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search product name"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -198,7 +213,11 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
@@ -217,12 +236,17 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
                 width: "40px",
                 height: "40px",
                 objectFit: "cover",
-                borderRadius: "4px"
+                borderRadius: "4px",
               }}
             />
           )}
           <div>
-            <Text strong style={{ display: "block", fontSize: "14px", marginTop: "10px" }}>{name}</Text>
+            <Text
+              strong
+              style={{ display: "block", fontSize: "14px", marginTop: "10px" }}
+            >
+              {name}
+            </Text>
             {/* {record.sku && (
               <Text type="secondary" style={{ fontSize: "12px" }}>
                 SKU: {record.sku}
@@ -235,21 +259,29 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
     {
       title: "Stock Info",
       key: "stock",
-      width: '20%',
-      filters: statuses.map(status => ({
+      width: "20%",
+      filters: statuses.map((status) => ({
         text: status.name,
-        value: status.id
+        value: status.id,
       })),
       onFilter: (value, record) => record.stock_status === value,
       render: (_, record) => (
         <div>
           <div style={{ marginBottom: "4px" }}>
-            <Tag color={
-              record.stock_status === 'in_stock' ? 'success' :
-                record.stock_status === 'low_stock' ? 'warning' : 'error'
-            }>
-              {record.stock_status === 'in_stock' ? 'In Stock' :
-                record.stock_status === 'low_stock' ? 'Low Stock' : 'Out of Stock'}
+            <Tag
+              color={
+                record.stock_status === "in_stock"
+                  ? "success"
+                  : record.stock_status === "low_stock"
+                  ? "warning"
+                  : "error"
+              }
+            >
+              {record.stock_status === "in_stock"
+                ? "In Stock"
+                : record.stock_status === "low_stock"
+                ? "Low Stock"
+                : "Out of Stock"}
             </Tag>
           </div>
           <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
@@ -257,7 +289,8 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
             Quantity: {record.stock_quantity}
           </Text>
           <Text type="secondary" style={{ fontSize: "12px" }}>
-            Min: {record.min_stock_level} | Max: {record.max_stock_level || 'N/A'}
+            Min: {record.min_stock_level} | Max:{" "}
+            {record.max_stock_level || "N/A"}
           </Text>
         </div>
       ),
@@ -265,7 +298,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
     {
       title: "Pricing",
       key: "pricing",
-      width: '20%',
+      width: "20%",
       sorter: (a, b) => a.selling_price - b.selling_price,
       render: (_, record) => (
         <div>
@@ -287,11 +320,14 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
     {
       title: "Profit Metrics",
       key: "profit",
-      width: '20%',
+      width: "20%",
       sorter: (a, b) => a.profit_margin - b.profit_margin,
       render: (_, record) => {
         const profit_margin = record.selling_price - record.buying_price;
-        const profit_percentage = record.buying_price > 0 ? ((profit_margin / record.buying_price) * 100).toFixed(2) : 0;
+        const profit_percentage =
+          record.buying_price > 0
+            ? ((profit_margin / record.buying_price) * 100).toFixed(2)
+            : 0;
 
         return (
           <div>
@@ -307,14 +343,14 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
       title: "Category",
       dataIndex: "category",
       key: "category",
-      width: '15%',
-      filters: categoriess.map(categorys => ({
+      width: "15%",
+      filters: categoriess.map((categorys) => ({
         text: categorys.name,
-        value: categorys.id
+        value: categorys.id,
       })),
       onFilter: (value, record) => record.category === value,
       render: (categoryId) => {
-        const category = categories.find(c => c.id === categoryId);
+        const category = categories.find((c) => c.id === categoryId);
         return (
           <Tag
             color={category?.color || "blue"}
@@ -322,7 +358,7 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
               borderRadius: "4px",
               padding: "2px 8px",
               fontSize: "13px",
-              textTransform: "capitalize"
+              textTransform: "capitalize",
             }}
           >
             {category?.name || "Uncategorized"}
@@ -333,26 +369,26 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
     {
       title: "Action",
       key: "actions",
-      width: '5%',
+      width: "5%",
       align: "center",
       render: (_, record) => (
-        <div onClick={e => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={getDropdownItems(record)}
             trigger={["click"]}
             placement="bottomRight"
             overlayClassName="product-actions-dropdown"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-dropdown-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              e.preventDefault();
-            }}
-          />
-        </Dropdown>
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical />}
+              className="action-dropdown-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            />
+          </Dropdown>
         </div>
       ),
     },
@@ -372,11 +408,14 @@ const ProductList = ({ onEdit, onView, searchText = "", selectedCategory = null,
           }}
           onRow={(record) => ({
             onClick: (e) => {
-              if (!e.target.closest('.ant-dropdown-menu') && !e.target.closest('.action-dropdown-button')) {
+              if (
+                !e.target.closest(".ant-dropdown-menu") &&
+                !e.target.closest(".action-dropdown-button")
+              ) {
                 onProductRevenueClick(record);
               }
             },
-            style: { cursor: 'pointer' }
+            style: { cursor: "pointer" },
           })}
           className="product-table"
           scroll={{ x: true }}

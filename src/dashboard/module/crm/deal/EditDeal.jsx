@@ -29,22 +29,27 @@ import {
   FiBox,
 } from "react-icons/fi";
 import { useUpdateDealMutation, useGetDealsQuery } from "./services/DealApi";
-import { useGetAllCurrenciesQuery, useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
-import './Deal.scss';
-import dayjs from 'dayjs';
-import customParseFormat from 'dayjs/plugin/customParseFormat';
+import {
+  useGetAllCurrenciesQuery,
+  useGetAllCountriesQuery,
+} from "../../../module/settings/services/settingsApi";
+import "./Deal.scss";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined } from "@ant-design/icons";
 import { useGetUsersQuery } from "../../user-management/users/services/userApi";
 import { useSelector } from "react-redux";
-import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
-import CreateUser from '../../user-management/users/CreateUser';
-import { useGetLabelsQuery, useGetSourcesQuery } from "../crmsystem/souce/services/SourceApi";
-import { useGetProductsQuery } from '../../sales/product&services/services/productApi';
-
+import CreateUser from "../../user-management/users/CreateUser";
+import {
+  useGetLabelsQuery,
+  useGetSourcesQuery,
+} from "../crmsystem/souce/services/SourceApi";
+import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
 
 // import { useGetAllUsersQuery } from "../../../module/user/services/userApi";
 dayjs.extend(customParseFormat);
@@ -63,11 +68,11 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
   const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
-    limit: 100
+    limit: 100,
   });
   const { data: countries = [] } = useGetAllCountriesQuery({
     page: 1,
-    limit: 100
+    limit: 100,
   });
 
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
@@ -80,8 +85,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
-  const { data: productsData } = useGetProductsQuery();
-
+  const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
@@ -89,57 +93,58 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
   // Get pipeline name by ID
   const getPipelineName = (pipelineId) => {
-    const pipeline = pipelines.find(p => p.id === pipelineId);
-    return pipeline ? pipeline.pipeline_name : '';
+    const pipeline = pipelines.find((p) => p.id === pipelineId);
+    return pipeline ? pipeline.pipeline_name : "";
   };
 
   // Get stage name by ID
   const getStageName = (stageId) => {
-    const stage = dealStages.find(s => s.id === stageId);
-    return stage ? stage.stageName : '';
+    const stage = dealStages.find((s) => s.id === stageId);
+    return stage ? stage.stageName : "";
   };
 
   // Filter stages by pipeline and type
   const filteredStages = dealStages.filter(
-    stage => stage.stageType === "deal" && stage.pipeline === selectedPipeline
+    (stage) => stage.stageType === "deal" && stage.pipeline === selectedPipeline
   );
 
   // const { data: users = [] } = useGetAllUsersQuery({
   //   page: 1,
   //   limit: 100,
   // });
-  const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
-
-  
+  const subclientRoleId = rolesData?.data?.find(
+    (role) => role?.role_name === "sub-client"
+  )?.id;
 
   // Filter users to get team members (excluding subclients)
-  const users = usersResponse?.data?.filter(user =>
-    user?.created_by === loggedInUser?.username &&
-    user?.role_id !== subclientRoleId
-  ) || [];
+  const users =
+    usersResponse?.data?.filter(
+      (user) =>
+        user?.created_by === loggedInUser?.username &&
+        user?.role_id !== subclientRoleId
+    ) || [];
 
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
-    form.setFieldValue('stage', undefined);
+    form.setFieldValue("stage", undefined);
   };
 
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
   };
 
-
   const handleCreateUserSuccess = (newUser) => {
     setIsCreateUserVisible(false);
     // Add the newly created user to the selected team members
-    const currentMembers = form.getFieldValue('deal_members') || [];
-    form.setFieldValue('deal_members', [...currentMembers, newUser.id]);
+    const currentMembers = form.getFieldValue("deal_members") || [];
+    form.setFieldValue("deal_members", [...currentMembers, newUser.id]);
   };
 
   React.useEffect(() => {
     if (initialValues) {
       // Parse assigned_to if it's a string
       let assignedTo = initialValues.assigned_to;
-      if (typeof assignedTo === 'string') {
+      if (typeof assignedTo === "string") {
         try {
           assignedTo = JSON.parse(assignedTo);
         } catch (e) {
@@ -149,7 +154,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
       // Parse products if it's a string
       let selectedProducts = [];
-      if (typeof initialValues.products === 'string') {
+      if (typeof initialValues.products === "string") {
         try {
           const parsedProducts = JSON.parse(initialValues.products);
           selectedProducts = parsedProducts.products || [];
@@ -159,8 +164,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
       }
 
       // Parse phone number to separate code and number
-      let phoneCode = '91';
-      let phoneNumber = '';
+      let phoneCode = "91";
+      let phoneNumber = "";
       if (initialValues.phone) {
         const phoneMatch = initialValues.phone.match(/\+(\d{1,3})\s*(.+)/);
         if (phoneMatch) {
@@ -170,9 +175,9 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
       }
 
       // Parse the closed date
-      const closedDate = initialValues.closedDate ? 
-        dayjs(initialValues.closedDate) : 
-        null;
+      const closedDate = initialValues.closedDate
+        ? dayjs(initialValues.closedDate)
+        : null;
 
       const formValues = {
         leadTitle: initialValues.dealTitle,
@@ -180,7 +185,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         email: initialValues.email,
         phoneCode: phoneCode,
         phone: phoneNumber,
-        currency: initialValues.currency || 'INR',
+        currency: initialValues.currency || "INR",
         value: initialValues.value || 0,
         pipeline: initialValues.pipeline,
         stage: initialValues.stage,
@@ -191,18 +196,18 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         label: initialValues.label,
         products: selectedProducts,
         closedDate: closedDate,
-        status: initialValues.status || 'pending',
+        status: initialValues.status || "pending",
         assigned_to: assignedTo?.assigned_to || [],
-        is_won: initialValues.is_won
+        is_won: initialValues.is_won,
       };
 
       // Set the selected pipeline for stage filtering
       setSelectedPipeline(initialValues.pipeline);
-      
+
       // Calculate product prices if needed
       const initialProductPrices = {};
-      selectedProducts.forEach(productId => {
-        const product = products.find(p => p.id === productId);
+      selectedProducts.forEach((productId) => {
+        const product = products.find((p) => p.id === productId);
         if (product) {
           initialProductPrices[productId] = product.price || 0;
         }
@@ -216,26 +221,26 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
 
   const getRoleColor = (role) => {
     const roleColors = {
-      'employee': {
-        color: '#D46B08',
-        bg: '#FFF7E6',
-        border: '#FFD591'
+      employee: {
+        color: "#D46B08",
+        bg: "#FFF7E6",
+        border: "#FFD591",
       },
-      'admin': {
-        color: '#096DD9',
-        bg: '#E6F7FF',
-        border: '#91D5FF'
+      admin: {
+        color: "#096DD9",
+        bg: "#E6F7FF",
+        border: "#91D5FF",
       },
-      'manager': {
-        color: '#08979C',
-        bg: '#E6FFFB',
-        border: '#87E8DE'
+      manager: {
+        color: "#08979C",
+        bg: "#E6FFFB",
+        border: "#87E8DE",
       },
-      'default': {
-        color: '#531CAD',
-        bg: '#F9F0FF',
-        border: '#D3ADF7'
-      }
+      default: {
+        color: "#531CAD",
+        bg: "#F9F0FF",
+        border: "#D3ADF7",
+      },
     };
     return roleColors[role?.toLowerCase()] || roleColors.default;
   };
@@ -243,15 +248,15 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   const handleSubmit = async (values) => {
     try {
       // Format phone number
-      const formattedPhone = values.phone ? 
-        `+${values.phoneCode} ${values.phone}` : 
-        null;
+      const formattedPhone = values.phone
+        ? `+${values.phoneCode} ${values.phone}`
+        : null;
 
       // Prepare submission values
       const submissionValues = {
         dealTitle: values.leadTitle,
-        firstName: values.dealName?.split(' ')[0] || '',
-        lastName: values.dealName?.split(' ').slice(1).join(' ') || '',
+        firstName: values.dealName?.split(" ")[0] || "",
+        lastName: values.dealName?.split(" ").slice(1).join(" ") || "",
         email: values.email,
         phone: formattedPhone,
         currency: values.currency,
@@ -260,19 +265,22 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
         stage: values.stage,
         status: values.status,
         label: values.label,
-        closedDate: values.closedDate ? 
-          values.closedDate.format('YYYY-MM-DD') : 
-          null,
+        closedDate: values.closedDate
+          ? values.closedDate.format("YYYY-MM-DD")
+          : null,
         company_name: values.company,
         address: values.address,
         website: values.website,
         products: { products: values.products || [] },
         assigned_to: {
-          assigned_to: values.assigned_to || []
+          assigned_to: values.assigned_to || [],
         },
-        is_won: values.status === 'won' ? true : 
-                values.status === 'lost' ? false : 
-                null
+        is_won:
+          values.status === "won"
+            ? true
+            : values.status === "lost"
+            ? false
+            : null,
       };
 
       await updateDeal({
@@ -290,8 +298,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   };
 
   const selectStyle = {
-    width: '100%',
-    height: '48px'
+    width: "100%",
+    height: "48px",
   };
 
   const handleCancel = () => {
@@ -300,7 +308,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
   };
   const formItemStyle = {
     fontSize: "14px",
-    fontWeight: "500"
+    fontWeight: "500",
   };
 
   const handleAddPipelineClick = (e) => {
@@ -315,7 +323,10 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
     setManualValue(numValue);
 
     // Calculate total product prices
-    const productPricesTotal = Object.values(selectedProductPrices).reduce((sum, price) => sum + price, 0);
+    const productPricesTotal = Object.values(selectedProductPrices).reduce(
+      (sum, price) => sum + price,
+      0
+    );
 
     // Set form value to manual value plus product prices
     form.setFieldsValue({ value: numValue + productPricesTotal });
@@ -326,8 +337,8 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
     const newSelectedPrices = {};
 
     // Calculate prices for selected products
-    selectedProductIds.forEach(productId => {
-      const product = products.find(p => p.id === productId);
+    selectedProductIds.forEach((productId) => {
+      const product = products.find((p) => p.id === productId);
       if (product) {
         newSelectedPrices[productId] = product.price || 0;
       }
@@ -337,7 +348,10 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
     setSelectedProductPrices(newSelectedPrices);
 
     // Calculate total of selected product prices
-    const productPricesTotal = Object.values(newSelectedPrices).reduce((sum, price) => sum + price, 0);
+    const productPricesTotal = Object.values(newSelectedPrices).reduce(
+      (sum, price) => sum + price,
+      0
+    );
 
     // Update form value with manual value plus product prices
     form.setFieldsValue({ value: manualValue + productPricesTotal });
@@ -365,11 +379,11 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
             overflow: "hidden",
           },
           mask: {
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backgroundColor: "rgba(0, 0, 0, 0.45)",
           },
           content: {
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          }
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+          },
         }}
       >
         <div
@@ -441,29 +455,41 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            phoneCode: '91',
-            currency: 'INR',
-
+            phoneCode: "91",
+            currency: "INR",
           }}
           className="lead-form"
-          style={{ padding: '24px' }}
+          style={{ padding: "24px" }}
         >
           {/* Deal Details Section */}
-          <div className="section-title" style={{ marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Deal Details</Text>
+          <div className="section-title" style={{ marginBottom: "16px" }}>
+            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+              Deal Details
+            </Text>
           </div>
-          <div className="form-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-            marginBottom: '32px'
-          }}>
+          <div
+            className="form-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "16px",
+              marginBottom: "32px",
+            }}
+          >
             <Form.Item
               name="leadTitle"
               label={<span style={formItemStyle}>Lead Title</span>}
             >
               <Input
-                prefix={<FiHash style={{ color: "#1890ff", fontSize: "16px", marginRight: "8px" }} />}
+                prefix={
+                  <FiHash
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      marginRight: "8px",
+                    }}
+                  />
+                }
                 placeholder="Enter lead title"
                 style={{
                   height: "48px",
@@ -481,7 +507,15 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               label={<span style={formItemStyle}>Deal Name</span>}
             >
               <Input
-                prefix={<FiBriefcase style={{ color: "#1890ff", fontSize: "16px", marginRight: "8px" }} />}
+                prefix={
+                  <FiBriefcase
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      marginRight: "8px",
+                    }}
+                  />
+                }
                 placeholder="Enter deal name"
                 style={{
                   height: "48px",
@@ -499,7 +533,15 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               label={<span style={formItemStyle}>Email</span>}
             >
               <Input
-                prefix={<FiMail style={{ color: "#1890ff", fontSize: "16px", marginRight: "8px" }} />}
+                prefix={
+                  <FiMail
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      marginRight: "8px",
+                    }}
+                  />
+                }
                 placeholder="Enter email"
                 style={{
                   height: "48px",
@@ -522,44 +564,55 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 <Form.Item
                   name="currency"
                   noStyle
-                  rules={[{ required: true, message: "Please select currency" }]}
+                  rules={[
+                    { required: true, message: "Please select currency" },
+                  ]}
                 >
                   <Select
-                    style={{ width: '90px' }}
+                    style={{ width: "90px" }}
                     className="currency-select"
                     dropdownMatchSelectWidth={false}
                     suffixIcon={<FiChevronDown size={14} />}
                     showSearch
                     optionFilterProp="children"
                     filterOption={(input, option) => {
-                      const currencyData = currencies.find(c => c.currencyCode === option.value);
+                      const currencyData = currencies.find(
+                        (c) => c.currencyCode === option.value
+                      );
                       return (
-                        currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
-                        currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
+                        currencyData?.currencyName
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase()) ||
+                        currencyData?.currencyCode
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase())
                       );
                     }}
-                    dropdownStyle={{ minWidth: '180px' }}
+                    dropdownStyle={{ minWidth: "180px" }}
                     popupClassName="custom-select-dropdown"
                   >
                     {currencies?.map((currency) => (
                       <Option key={currency.id} value={currency.currencyCode}>
                         <div className="currency-option">
-                          <span className="currency-icon">{currency.currencyIcon}</span>
+                          <span className="currency-icon">
+                            {currency.currencyIcon}
+                          </span>
                           <div className="currency-details">
-                            <span className="currency-code">{currency.currencyCode}</span>
-                            <span className="currency-name">{currency.currencyName}</span>
+                            <span className="currency-code">
+                              {currency.currencyCode}
+                            </span>
+                            <span className="currency-name">
+                              {currency.currencyName}
+                            </span>
                           </div>
                         </div>
                       </Option>
                     ))}
                   </Select>
                 </Form.Item>
-                <Form.Item
-                  name="value"
-                  noStyle
-                >
+                <Form.Item name="value" noStyle>
                   <Input
-                    style={{ width: 'calc(100% - 120px)' }}
+                    style={{ width: "calc(100% - 120px)" }}
                     placeholder="Enter amount"
                     type="number"
                     onChange={(e) => handleValueChange(e.target.value)}
@@ -575,50 +628,59 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               className="combined-input-item"
             >
               <Input.Group compact className="phone-input-group">
-                <Form.Item
-                  name="phoneCode"
-                  noStyle
-                >
+                <Form.Item name="phoneCode" noStyle>
                   <Select
-                    style={{ width: '90px' }}
+                    style={{ width: "90px" }}
                     dropdownMatchSelectWidth={false}
                     showSearch
                     optionFilterProp="children"
                     className="phone-code-select"
                     suffixIcon={<FiChevronDown size={14} />}
                     filterOption={(input, option) => {
-                      const countryData = countries.find(c => c.phoneCode.replace('+', '') === option.value);
+                      const countryData = countries.find(
+                        (c) => c.phoneCode.replace("+", "") === option.value
+                      );
                       return (
-                        countryData?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
-                        countryData?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
+                        countryData?.countryName
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase()) ||
+                        countryData?.countryCode
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase()) ||
                         countryData?.phoneCode?.includes(input)
                       );
                     }}
-                    dropdownStyle={{ minWidth: '200px' }}
+                    dropdownStyle={{ minWidth: "200px" }}
                     popupClassName="custom-select-dropdown"
                   >
                     {countries?.map((country) => (
-                      <Option key={country.id} value={country.phoneCode.replace('+', '')}>
+                      <Option
+                        key={country.id}
+                        value={country.phoneCode.replace("+", "")}
+                      >
                         <div className="phone-code-option">
                           <div className="phone-code-main">
-                            <span className="phone-code">+{country.phoneCode.replace('+', '')}</span>
-                            <span className="country-code">{country.countryCode}</span>
+                            <span className="phone-code">
+                              +{country.phoneCode.replace("+", "")}
+                            </span>
+                            <span className="country-code">
+                              {country.countryCode}
+                            </span>
                           </div>
-                          <span className="country-name">{country.countryName}</span>
+                          <span className="country-name">
+                            {country.countryName}
+                          </span>
                         </div>
                       </Option>
                     ))}
                   </Select>
                 </Form.Item>
-                
-                <Form.Item
-                  name="phone"
-                  noStyle
-                >
+
+                <Form.Item name="phone" noStyle>
                   <Input
                     style={{
-                      width: 'calc(100% - 120px)',
-                      backgroundColor: '#f8fafc'
+                      width: "calc(100% - 120px)",
+                      backgroundColor: "#f8fafc",
                     }}
                     placeholder="Enter phone number"
                   />
@@ -626,10 +688,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Input.Group>
             </Form.Item>
 
-            <Form.Item
-              name="pipeline"
-              label="Pipeline"
-            >
+            <Form.Item name="pipeline" label="Pipeline">
               <Select
                 placeholder="Select Pipeline"
                 onChange={handlePipelineChange}
@@ -637,12 +696,12 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 dropdownRender={(menu) => (
                   <div>
                     {menu}
-                    <Divider style={{ margin: '8px 0' }} />
+                    <Divider style={{ margin: "8px 0" }} />
                     <Button
                       type="text"
                       icon={<PlusOutlined />}
                       onClick={handleAddPipelineClick}
-                      style={{ width: '100%', textAlign: 'left' }}
+                      style={{ width: "100%", textAlign: "left" }}
                     >
                       Add New Pipeline
                     </Button>
@@ -657,10 +716,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Select>
             </Form.Item>
 
-            <Form.Item
-              name="stage"
-              label="Stage"
-            >
+            <Form.Item name="stage" label="Stage">
               <Select
                 placeholder="Select Stage"
                 disabled={!selectedPipeline}
@@ -674,14 +730,21 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               </Select>
             </Form.Item>
 
-
             {/* Company Name */}
             <Form.Item
               name="company"
               label={<span style={formItemStyle}>Company Name</span>}
             >
               <Input
-                prefix={<FiBriefcase style={{ color: "#1890ff", fontSize: "16px", marginRight: "8px" }} />}
+                prefix={
+                  <FiBriefcase
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      marginRight: "8px",
+                    }}
+                  />
+                }
                 placeholder="Enter company name"
                 style={{
                   height: "48px",
@@ -703,7 +766,15 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               ]}
             >
               <Input
-                prefix={<FiGlobe style={{ color: "#1890ff", fontSize: "16px", marginRight: "8px" }} />}
+                prefix={
+                  <FiGlobe
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      marginRight: "8px",
+                    }}
+                  />
+                }
                 placeholder="Enter website"
                 style={{
                   height: "48px",
@@ -722,7 +793,15 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               label={<span style={formItemStyle}>Address</span>}
             >
               <Input
-                prefix={<FiMapPin style={{ color: "#1890ff", fontSize: "16px", marginRight: "8px" }} />}
+                prefix={
+                  <FiMapPin
+                    style={{
+                      color: "#1890ff",
+                      fontSize: "16px",
+                      marginRight: "8px",
+                    }}
+                  />
+                }
                 placeholder="Enter address"
                 style={{
                   height: "48px",
@@ -748,13 +827,19 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               >
                 {sources.map((source) => (
                   <Option key={source.id} value={source.id}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
                       <div
                         style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: source.color || '#1890ff'
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: source.color || "#1890ff",
                         }}
                       />
                       {source.name}
@@ -774,89 +859,113 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 suffixIcon={<FiChevronDown size={14} />}
                 popupClassName="custom-select-dropdown"
               >
-                {labels.map(label => (
+                {labels.map((label) => (
                   <Option key={label.id} value={label.name}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: label.color || '#1890ff'
-                      }}></div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: label.color || "#1890ff",
+                        }}
+                      ></div>
                       {label.name}
                     </div>
                   </Option>
                 ))}
               </Select>
             </Form.Item>
+          </div>
 
-            </div>
-          
-
-            <Form.Item
-              name="products"
-              label={<Text style={formItemStyle}>Products</Text>}
-              className="products-section"
+          <Form.Item
+            name="products"
+            label={<Text style={formItemStyle}>Products</Text>}
+            className="products-section"
+          >
+            <Select
+              mode="multiple"
+              placeholder="Select products"
+              style={{ width: "100%" }}
+              optionFilterProp="children"
+              showSearch
+              onChange={handleProductsChange}
+              listHeight={200}
+              maxTagCount={2}
+              maxTagTextLength={15}
+              dropdownStyle={{
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollBehavior: "smooth",
+              }}
+              className="custom-multiple-select"
             >
-              <Select
-                mode="multiple"
-                placeholder="Select products"
-                style={{ width: '100%' }}
-                optionFilterProp="children"
-                showSearch
-                onChange={handleProductsChange}
-                listHeight={200}
-                maxTagCount={2}
-                maxTagTextLength={15}
-                dropdownStyle={{
-                  overflowY: 'auto',
-                  scrollbarWidth: 'thin',
-                  scrollBehavior: 'smooth'
-                }}
-                className="custom-multiple-select"
-              >
-                {products?.map((product) => (
-                  <Option key={product.id} value={product.id}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '32px',
-                        borderRadius: '4px', 
-                        overflow: 'hidden'
-                      }}>
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => e.target.style.display = 'none'}
-                          />
-                        ) : (
-                          <span style={{
-                            fontSize: '18px',
-                            color: '#1890ff',
-                            fontWeight: '500'
-                          }}>
-                            {product?.name?.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <span style={{ fontWeight: '500' }}>{product.name}</span>
-                        <span style={{ fontSize: '12px', color: '#6B7280' }}>{product.selling_price}</span>
-                      </div>
+              {products?.map((product) => (
+                <Option key={product.id} value={product.id}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "32px",
+                        borderRadius: "4px",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                          onError={(e) => (e.target.style.display = "none")}
+                        />
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: "18px",
+                            color: "#1890ff",
+                            fontWeight: "500",
+                          }}
+                        >
+                          {product?.name?.charAt(0)}
+                        </span>
+                      )}
                     </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontWeight: "500" }}>{product.name}</span>
+                      <span style={{ fontSize: "12px", color: "#6B7280" }}>
+                        {product.selling_price}
+                      </span>
+                    </div>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
-            <div className="form-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-            marginBottom: '32px'
-          }}>
-
+          <div
+            className="form-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "16px",
+              marginBottom: "32px",
+            }}
+          >
             {/* Closed Date */}
             <Form.Item
               name="closedDate"
@@ -866,14 +975,14 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 size="large"
                 format="YYYY-MM-DD"
                 style={{
-                  width: '100%',
+                  width: "100%",
                   borderRadius: "10px",
                   height: "48px",
                   backgroundColor: "#f8fafc",
                   border: "1px solid #e6e8eb",
                 }}
                 disabledDate={(current) => {
-                  return current && current < dayjs().startOf('day');
+                  return current && current < dayjs().startOf("day");
                 }}
                 placeholder="Select date"
                 suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
@@ -886,9 +995,7 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
             <Form.Item
               name="status"
               label={<span style={formItemStyle}>Status</span>}
-              rules={[
-                { required: true, message: "Please select status" },
-              ]}
+              rules={[{ required: true, message: "Please select status" }]}
             >
               <Select
                 placeholder="Select status"
@@ -905,30 +1012,29 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
           </div>
 
           {/* Team Members Section */}
-          <div className="section-title" style={{ marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Team Members</Text>
+          <div className="section-title" style={{ marginBottom: "16px" }}>
+            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+              Team Members
+            </Text>
           </div>
-          <div style={{ marginBottom: '32px' }}>
-            <Form.Item
-              name="assigned_to"
-              style={{ marginBottom: '16px' }}
-            >
+          <div style={{ marginBottom: "32px" }}>
+            <Form.Item name="assigned_to" style={{ marginBottom: "16px" }}>
               <Select
                 mode="multiple"
                 placeholder="Select team members"
                 style={{
-                  width: '100%',
-                  minHeight: '48px'
+                  width: "100%",
+                  minHeight: "48px",
                 }}
                 dropdownRender={(menu) => (
                   <>
                     {menu}
-                    <Divider style={{ margin: '8px 0' }} />
+                    <Divider style={{ margin: "8px 0" }} />
                     <Button
                       type="text"
                       icon={<FiUserPlus />}
                       onClick={handleCreateUser}
-                      style={{ width: '100%', textAlign: 'left' }}
+                      style={{ width: "100%", textAlign: "left" }}
                     >
                       Add New User
                     </Button>
@@ -936,22 +1042,32 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 )}
               >
                 {users?.map((user) => {
-                  const role = rolesData?.data?.find(r => r.id === user.role_id)?.role_name || 'User';
+                  const role =
+                    rolesData?.data?.find((r) => r.id === user.role_id)
+                      ?.role_name || "User";
                   const roleColor = getRoleColor(role);
 
                   return (
                     <Option key={user.id} value={user.id}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <span>{user.name || user.username}</span>
-                        <span style={{
-                          fontSize: '12px',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          background: roleColor.bg,
-                          color: roleColor.color,
-                          gap: '8px',
-                          textTransform: 'capitalize'
-                        }}>
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            background: roleColor.bg,
+                            color: roleColor.color,
+                            gap: "8px",
+                            textTransform: "capitalize",
+                          }}
+                        >
                           {role}
                         </span>
                       </div>
@@ -963,16 +1079,23 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
           </div>
 
           {/* Form Actions */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "12px",
+              marginTop: "24px",
+            }}
+          >
             <Button
               onClick={handleCancel}
               style={{
-                height: '44px',
-                padding: '0 24px',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                height: "44px",
+                padding: "0 24px",
+                borderRadius: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               Cancel
@@ -982,14 +1105,14 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
               htmlType="submit"
               loading={isLoading}
               style={{
-                height: '44px',
-                padding: '0 24px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                height: "44px",
+                padding: "0 24px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                border: "none",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               Update Deal

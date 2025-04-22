@@ -27,7 +27,12 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
-import { useGetProductsQuery, useCreateProductMutation, useUpdateProductMutation, useDeleteProductMutation } from "./services/productApi";
+import {
+  useGetProductsQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
+} from "./services/productApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
@@ -44,12 +49,15 @@ const ProductServices = () => {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
-  const id = currentUser?.id;
-  const { data: productsData = [], isLoading, refetch } = useGetProductsQuery(id);
+
+  const {
+    data: productsData = [],
+    isLoading,
+    refetch,
+  } = useGetProductsQuery(currentUser?.id);
   const [createProduct] = useCreateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
-
 
   const handleCreate = () => {
     setSelectedProduct(null);
@@ -70,13 +78,11 @@ const ProductServices = () => {
     }
   };
 
-
   const handleProductRevenueClick = (product) => {
-    navigate(`/dashboard/sales/revenue`, { 
-      state: { selectedProduct: product } 
+    navigate(`/dashboard/sales/revenue`, {
+      state: { selectedProduct: product },
     });
   };
-  
 
   // const handleEdit = (record) => {
   //   setSelectedProduct(record);
@@ -98,7 +104,6 @@ const ProductServices = () => {
   //   }
   // };
 
-
   const handleEdit = (record) => {
     setSelectedProduct(record);
     setEditModalVisible(true);
@@ -109,12 +114,9 @@ const ProductServices = () => {
     setSelectedProduct(null);
   };
 
-
   const handleView = (record) => {
     console.log("View product:", record);
   };
-
-  
 
   const handleExport = async (type) => {
     try {
@@ -236,13 +238,17 @@ const ProductServices = () => {
       <div className="page-header">
         <div className="page-title">
           <Title level={2}>Products & Services</Title>
-          <Text type="secondary">Manage all products and services in the organization</Text>
+          <Text type="secondary">
+            Manage all products and services in the organization
+          </Text>
         </div>
         <Row justify="center" className="header-actions-wrapper">
           <Col xs={24} sm={24} md={20} lg={16} xl={14}>
             <div className="header-actions">
               <Input
-                prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                prefix={
+                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
+                }
                 placeholder="Search products & services..."
                 allowClear
                 onChange={(e) => setSearchText(e.target.value)}
@@ -290,7 +296,7 @@ const ProductServices = () => {
         currenciesData={currenciesData}
         loading={loading}
       />
-{/* 
+      {/* 
       <EditProduct
         visible={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -299,7 +305,7 @@ const ProductServices = () => {
         loading={loading}
       /> */}
 
-<EditProduct
+      <EditProduct
         open={editModalVisible}
         currenciesData={currenciesData}
         onCancel={handleEditModalClose}

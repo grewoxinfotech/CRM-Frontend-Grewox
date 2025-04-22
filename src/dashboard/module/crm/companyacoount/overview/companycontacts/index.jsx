@@ -9,12 +9,7 @@ import {
   Modal,
   message,
 } from "antd";
-import {
-  FiEdit2,
-  FiTrash2,
-  FiEye,
-  FiMoreVertical,
-} from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import EditContact from "../../../contact/EditContact";
@@ -24,19 +19,31 @@ import { useGetCompanyAccountsQuery } from "../../../companyacoount/services/com
 
 const { Text } = Typography;
 
-const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,company }) => {
+const CompanyContactList = ({
+  onEdit,
+  onView,
+  searchText = "",
+  loggedInUser,
+  company,
+}) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const { data: contactsResponsee, isLoading, error } = useGetContactsQuery();
-  const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+  const {
+    data: companyAccountsResponse = { data: [] },
+    isLoading: isCompanyAccountsLoading,
+  } = useGetCompanyAccountsQuery();
   const navigate = useNavigate();
 
-  const allContacts = Array.isArray(contactsResponsee.data) ? contactsResponsee.data : [];
+  const allContacts = Array.isArray(contactsResponsee.data)
+    ? contactsResponsee.data
+    : [];
 
-  const contactsResponse = allContacts.filter(contact => contact.company_name === company?.id);
+  const contactsResponse = allContacts.filter(
+    (contact) => contact.company_name === company?.id
+  );
 
-  
   // Safely handle contacts data
   const contacts = React.useMemo(() => {
     if (!contactsResponse) return [];
@@ -51,7 +58,10 @@ const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,comp
   const companyAccounts = React.useMemo(() => {
     if (!companyAccountsResponse) return [];
     if (Array.isArray(companyAccountsResponse)) return companyAccountsResponse;
-    if (companyAccountsResponse?.data && Array.isArray(companyAccountsResponse.data)) {
+    if (
+      companyAccountsResponse?.data &&
+      Array.isArray(companyAccountsResponse.data)
+    ) {
       return companyAccountsResponse.data;
     }
     return [];
@@ -67,9 +77,10 @@ const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,comp
 
   // Enhance contacts with company names
   const enhancedContacts = React.useMemo(() => {
-    return contacts.map(contact => ({
+    return contacts.map((contact) => ({
       ...contact,
-      company_display_name: companyMap[contact.company_name] || contact.company_name
+      company_display_name:
+        companyMap[contact.company_name] || contact.company_name,
     }));
   }, [contacts, companyMap]);
 
@@ -160,9 +171,15 @@ const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,comp
     {
       title: "Name",
       key: "first_name",
-      sorter: (a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`),
+      sorter: (a, b) =>
+        `${a.first_name} ${a.last_name}`.localeCompare(
+          `${b.first_name} ${b.last_name}`
+        ),
       render: (_, record) => (
-        <Text style={{ fontWeight: 500, cursor: 'pointer', color: '#1890ff' }} onClick={() => handleView(record)}>
+        <Text
+          style={{ fontWeight: 500, cursor: "pointer", color: "#1890ff" }}
+          onClick={() => handleView(record)}
+        >
           {`${record.first_name} ${record.last_name}`}
         </Text>
       ),
@@ -182,7 +199,8 @@ const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,comp
       title: "Company",
       dataIndex: "company_display_name",
       key: "company_display_name",
-      sorter: (a, b) => a.company_display_name.localeCompare(b.company_display_name),
+      sorter: (a, b) =>
+        a.company_display_name.localeCompare(b.company_display_name),
     },
     {
       title: "Contact Owner",
@@ -193,7 +211,7 @@ const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,comp
           return <Text>{loggedInUser?.username}</Text>;
         }
         return <Text>{ownerId}</Text>;
-      }
+      },
     },
     {
       title: "Created Date",
@@ -272,7 +290,7 @@ const CompanyContactList = ({ onEdit, onView, searchText = "", loggedInUser,comp
           }}
           onRow={(record) => ({
             onClick: () => handleView(record),
-            style: { cursor: 'pointer' }
+            style: { cursor: "pointer" },
           })}
         />
       </div>

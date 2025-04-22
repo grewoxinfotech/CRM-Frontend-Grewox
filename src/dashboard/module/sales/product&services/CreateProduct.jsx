@@ -39,14 +39,20 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 import { useGetCategoriesQuery } from "../../crm/crmsystem/souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import './product.scss';
+import "./product.scss";
 import AddCategoryModal from "../../crm/crmsystem/category/AddCategoryModal";
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) => {
+const CreateProduct = ({
+  visible,
+  onClose,
+  onSubmit,
+  loading,
+  currenciesData,
+}) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const currentUser = useSelector(selectCurrentUser);
@@ -54,21 +60,22 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
   const [addCategoryVisible, setAddCategoryVisible] = useState(false);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
 
-  const categories = categoriesData?.data?.filter(item => item.lableType === "category") || [];
+  const categories =
+    categoriesData?.data?.filter((item) => item.lableType === "category") || [];
 
   // Watch for stock-related field changes
   useEffect(() => {
     const updateStockStatus = () => {
-      const stockQuantity = form.getFieldValue('stock_quantity') || 0;
-      const minStockLevel = form.getFieldValue('min_stock_level') || 0;
-      
-      let newStatus = 'in_stock';
+      const stockQuantity = form.getFieldValue("stock_quantity") || 0;
+      const minStockLevel = form.getFieldValue("min_stock_level") || 0;
+
+      let newStatus = "in_stock";
       if (stockQuantity <= 0) {
-        newStatus = 'out_of_stock';
+        newStatus = "out_of_stock";
       } else if (stockQuantity <= minStockLevel) {
-        newStatus = 'low_stock';
+        newStatus = "low_stock";
       }
-      
+
       form.setFieldsValue({ stock_status: newStatus });
     };
 
@@ -77,15 +84,18 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
     if (stock_quantity !== undefined || min_stock_level !== undefined) {
       updateStockStatus();
     }
-  }, [form.getFieldValue('stock_quantity'), form.getFieldValue('min_stock_level')]);
+  }, [
+    form.getFieldValue("stock_quantity"),
+    form.getFieldValue("min_stock_level"),
+  ]);
 
   // Initialize form with INR currency
   useEffect(() => {
     if (currenciesData) {
-      const inrCurrency = currenciesData.find(c => c.currencyCode === 'INR');
+      const inrCurrency = currenciesData.find((c) => c.currencyCode === "INR");
       if (inrCurrency) {
         form.setFieldsValue({
-          currency: inrCurrency.id
+          currency: inrCurrency.id,
         });
       }
     }
@@ -93,26 +103,26 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
   const stockStatusOptions = [
     {
-      value: 'in_stock',
-      label: 'In Stock',
-      icon: <FiCheckCircle style={{ color: '#52c41a' }} />,
-      color: '#52c41a',
-      description: 'Product is available'
+      value: "in_stock",
+      label: "In Stock",
+      icon: <FiCheckCircle style={{ color: "#52c41a" }} />,
+      color: "#52c41a",
+      description: "Product is available",
     },
     {
-      value: 'low_stock',
-      label: 'Low Stock',
-      icon: <FiAlertTriangle style={{ color: '#faad14' }} />,
-      color: '#faad14',
-      description: 'Stock is below minimum level'
+      value: "low_stock",
+      label: "Low Stock",
+      icon: <FiAlertTriangle style={{ color: "#faad14" }} />,
+      color: "#faad14",
+      description: "Stock is below minimum level",
     },
     {
-      value: 'out_of_stock',
-      label: 'Out of Stock',
-      icon: <FiXCircle style={{ color: '#ff4d4f' }} />,
-      color: '#ff4d4f',
-      description: 'Product is not available'
-    }
+      value: "out_of_stock",
+      label: "Out of Stock",
+      icon: <FiXCircle style={{ color: "#ff4d4f" }} />,
+      color: "#ff4d4f",
+      description: "Product is not available",
+    },
   ];
 
   const handleSubmit = async (values) => {
@@ -123,7 +133,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
       formData.append("category", values.category);
       formData.append("buying_price", values.buying_price);
       formData.append("selling_price", values.selling_price);
-      formData.append("currency", values.currency || 'BEzBBPneRQq6rbGYiwYj45k'); // Default to INR if not set
+      formData.append("currency", values.currency || "BEzBBPneRQq6rbGYiwYj45k"); // Default to INR if not set
       formData.append("sku", values.sku || "");
       formData.append("tax", values.tax || "");
       formData.append("hsn_sac", values.hsn_sac || "");
@@ -181,64 +191,88 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
       { required: false },
       ({ getFieldValue }) => ({
         validator(_, value) {
-          const stockQuantity = getFieldValue('stock_quantity');
+          const stockQuantity = getFieldValue("stock_quantity");
           if (!value || !stockQuantity || value >= stockQuantity) {
             return Promise.resolve();
           }
-          return Promise.reject(new Error('Maximum stock level must be greater than current stock quantity'));
-        }
-      })
+          return Promise.reject(
+            new Error(
+              "Maximum stock level must be greater than current stock quantity"
+            )
+          );
+        },
+      }),
     ],
     stock_quantity: [
       { required: true, message: "Please enter stock quantity" },
       ({ getFieldValue }) => ({
         validator(_, value) {
-          const maxStock = getFieldValue('max_stock_level');
-          const minStock = getFieldValue('min_stock_level');
-          
+          const maxStock = getFieldValue("max_stock_level");
+          const minStock = getFieldValue("min_stock_level");
+
           if (maxStock && value > maxStock) {
-            return Promise.reject(new Error('Stock quantity cannot exceed maximum stock level'));
+            return Promise.reject(
+              new Error("Stock quantity cannot exceed maximum stock level")
+            );
           }
           if (minStock && value < minStock) {
-            return Promise.reject(new Error('Stock quantity cannot be less than minimum stock level'));
+            return Promise.reject(
+              new Error(
+                "Stock quantity cannot be less than minimum stock level"
+              )
+            );
           }
           return Promise.resolve();
-        }
-      })
+        },
+      }),
     ],
     min_stock_level: [
       { required: false },
+      { max: 20, message: "Minimum stock level cannot be more than 20" },
       ({ getFieldValue }) => ({
         validator(_, value) {
           if (!value) return Promise.resolve();
-          
-          const stockQuantity = getFieldValue('stock_quantity');
-          const reorderQuantity = getFieldValue('reorder_quantity');
-          
+
+          const stockQuantity = getFieldValue("stock_quantity");
+          const reorderQuantity = getFieldValue("reorder_quantity");
+
           if (value > stockQuantity) {
-            return Promise.reject(new Error('Minimum stock level cannot be greater than current stock quantity'));
+            return Promise.reject(
+              new Error(
+                "Minimum stock level cannot be greater than current stock quantity"
+              )
+            );
           }
           if (reorderQuantity && value < reorderQuantity) {
-            return Promise.reject(new Error('Minimum stock level must be greater than reorder quantity'));
+            return Promise.reject(
+              new Error(
+                "Minimum stock level must be greater than reorder quantity"
+              )
+            );
           }
           return Promise.resolve();
-        }
-      })
+        },
+      }),
     ],
     reorder_quantity: [
       { required: false },
+      { max: 20, message: "Reorder quantity cannot be more than 20" },
       ({ getFieldValue }) => ({
         validator(_, value) {
           if (!value) return Promise.resolve();
-          
-          const minStock = getFieldValue('min_stock_level');
+
+          const minStock = getFieldValue("min_stock_level");
           if (minStock && value > minStock) {
-            return Promise.reject(new Error('Reorder quantity must be less than minimum stock level'));
+            return Promise.reject(
+              new Error(
+                "Reorder quantity must be less than minimum stock level"
+              )
+            );
           }
           return Promise.resolve();
-        }
-      })
-    ]
+        },
+      }),
+    ],
   };
 
   return (
@@ -262,11 +296,11 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           overflow: "hidden",
         },
         mask: {
-          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          backgroundColor: "rgba(0, 0, 0, 0.45)",
         },
         content: {
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-        }
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+        },
       }}
     >
       <div
@@ -341,70 +375,83 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
         style={{ padding: "24px" }}
       >
         {/* Basic Information Section */}
-        <div className="section-title" style={{ marginBottom: '16px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
+        <div className="section-title" style={{ marginBottom: "16px" }}>
+          <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+            Basic Information
+          </Text>
         </div>
-        <div className="form-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '16px',
-          marginBottom: '32px'
-        }}>
+        <div
+          className="form-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: "16px",
+            marginBottom: "32px",
+          }}
+        >
           <Form.Item
             name="name"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Product Name</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Product Name
+              </span>
+            }
             rules={[{ required: true, message: "Please enter product name" }]}
           >
             <Input
-              prefix={<FiBox style={{ color: '#9CA3AF' }} />}
+              prefix={<FiBox style={{ color: "#9CA3AF" }} />}
               placeholder="Enter product name"
-              style={{ height: '48px', borderRadius: '10px' }}
+              style={{ height: "48px", borderRadius: "10px" }}
             />
           </Form.Item>
 
           <Form.Item
             name="category"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Category</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Category
+              </span>
+            }
             rules={[{ required: true, message: "Please select a category" }]}
           >
             <Select
-              placeholder="Select category" 
-              style={{ width: '100%', height: '48px' }}
+              placeholder="Select category"
+              style={{ width: "100%", height: "48px" }}
               listHeight={100}
               dropdownStyle={{
-                Height: '100px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
+                Height: "100px",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollBehavior: "smooth",
               }}
               dropdownRender={(menu) => (
                 <div onClick={(e) => e.stopPropagation()}>
                   {menu}
-                  <Divider style={{ margin: '8px 0' }} />
+                  <Divider style={{ margin: "8px 0" }} />
                   <div
                     style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
+                      padding: "8px 12px",
+                      display: "flex",
+                      justifyContent: "center",
                     }}
                   >
-                    
                     <Button
                       type="primary"
                       icon={<FiPlus />}
                       onClick={handleAddCategory}
                       style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
+                        width: "100%",
+                        background:
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        border: "none",
+                        height: "40px",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                        fontWeight: "500",
                       }}
                     >
                       Add Category
@@ -415,13 +462,21 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             >
               {categories.map((category) => (
                 <Option key={category.id} value={category.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      backgroundColor: category.color || '#1890ff'
-                    }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: category.color || "#1890ff",
+                      }}
+                    />
                     {category.name}
                   </div>
                 </Option>
@@ -433,63 +488,76 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
         <Divider />
 
         {/* Pricing Details */}
-        <div className="section-title" style={{ marginBottom: '16px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Pricing Details</Text>
+        <div className="section-title" style={{ marginBottom: "16px" }}>
+          <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+            Pricing Details
+          </Text>
         </div>
-        <div className="form-grid" style={{
-          display: 'grid',
-          gap: '16px',
-          marginBottom: '32px'
-        }}>
+        <div
+          className="form-grid"
+          style={{
+            display: "grid",
+            gap: "16px",
+            marginBottom: "32px",
+          }}
+        >
           <Form.Item
             name="buying_price"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Buying Price</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Buying Price
+              </span>
+            }
             rules={[{ required: true, message: "Please enter buying price" }]}
           >
-            <div className="price-input-group" style={{
-              display: 'flex',
-              height: '48px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '10px',
-              border: '1px solid #e6e8eb',
-              overflow: 'hidden',
-              marginBottom: 0
-            }}>
-              <Form.Item
-                name="currency"
-                noStyle
-                rules={[{ required: true }]}
-              >
-                <div style={{
-                  width: '100px',
-                  height: '48px',
-                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '10px 0 0 10px',
-                  fontWeight: 500
-                }}>
+            <div
+              className="price-input-group"
+              style={{
+                display: "flex",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                borderRadius: "10px",
+                border: "1px solid #e6e8eb",
+                overflow: "hidden",
+                marginBottom: 0,
+              }}
+            >
+              <Form.Item name="currency" noStyle rules={[{ required: true }]}>
+                <div
+                  style={{
+                    width: "100px",
+                    height: "48px",
+                    background:
+                      "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                    color: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px 0 0 10px",
+                    fontWeight: 500,
+                  }}
+                >
                   <span>₹</span>
                 </div>
               </Form.Item>
               <Form.Item
                 name="buying_price"
                 noStyle
-                rules={[{ required: true, message: 'Please enter buying price' }]}
+                rules={[
+                  { required: true, message: "Please enter buying price" },
+                ]}
               >
                 <InputNumber
                   placeholder="Enter buying price"
                   size="large"
                   style={{
                     flex: 1,
-                    width: '100%',
-                    border: 'none',
-                    borderLeft: '1px solid #e6e8eb',
+                    width: "100%",
+                    border: "none",
+                    borderLeft: "1px solid #e6e8eb",
                     borderRadius: 0,
-                    height: '48px',
-                    padding: '0 16px',
+                    height: "48px",
+                    padding: "0 16px",
                   }}
                   min={0}
                   precision={2}
@@ -501,51 +569,65 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
           <Form.Item
             name="selling_price"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Selling Price
+              </span>
+            }
             rules={[{ required: true, message: "Please enter selling price" }]}
           >
-            <div className="price-input-group" style={{
-              display: 'flex',
-              height: '48px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '10px',
-              border: '1px solid #e6e8eb',
-              overflow: 'hidden',
-              marginBottom: 0
-            }}>
+            <div
+              className="price-input-group"
+              style={{
+                display: "flex",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                borderRadius: "10px",
+                border: "1px solid #e6e8eb",
+                overflow: "hidden",
+                marginBottom: 0,
+              }}
+            >
               <Select
                 value="BEzBBPneRQq6rbGYiwYj45k"
                 size="large"
                 style={{
-                  width: '100px',
-                  height: '48px'
+                  width: "100px",
+                  height: "48px",
                 }}
                 className="currency-select"
                 disabled
               >
                 <Option value="BEzBBPneRQq6rbGYiwYj45k">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
                     <span>₹</span>
-                   
                   </div>
                 </Option>
               </Select>
               <Form.Item
                 name="selling_price"
                 noStyle
-                rules={[{ required: true, message: 'Please enter selling price' }]}
+                rules={[
+                  { required: true, message: "Please enter selling price" },
+                ]}
               >
                 <InputNumber
                   placeholder="Enter selling price"
                   size="large"
                   style={{
                     flex: 1,
-                    width: '100%',
-                    border: 'none',
-                    borderLeft: '1px solid #e6e8eb',
+                    width: "100%",
+                    border: "none",
+                    borderLeft: "1px solid #e6e8eb",
                     borderRadius: 0,
-                    height: '48px',
-                    padding: '0 16px',
+                    height: "48px",
+                    padding: "0 16px",
                   }}
                   min={0}
                   precision={2}
@@ -557,55 +639,70 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
           <Form.Item
             name="hsn_sac"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>HSN/SAC Code</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                HSN/SAC Code
+              </span>
+            }
           >
-            <Input
-              placeholder="Enter HSN/SAC code"
-              style={{ width: '100%' }}
-            />
+            <Input placeholder="Enter HSN/SAC code" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="sku"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>SKU</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>SKU</span>
+            }
           >
-            <Input
-              placeholder="Enter SKU"
-              style={{ width: '100%' }}
-            />
+            <Input placeholder="Enter SKU" style={{ width: "100%" }} />
           </Form.Item>
         </div>
 
         <Divider />
 
         {/* Stock Management */}
-        <div className="section-title" style={{ marginBottom: '16px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Stock Management</Text>
+        <div className="section-title" style={{ marginBottom: "16px" }}>
+          <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+            Stock Management
+          </Text>
         </div>
-        <div className="form-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '24px',
-          marginBottom: '32px'
-        }}>
+        <div
+          className="form-grid"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: "24px",
+            marginBottom: "32px",
+          }}
+        >
           <Form.Item
             name="stock_status"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Status</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Stock Status
+              </span>
+            }
           >
             <Select
               placeholder="Select status"
               className="stock-status-select"
               suffixIcon={<FiChevronDown />}
               style={{
-                width: '100%',
-                height: '48px',
-                borderRadius: '10px',
-                border: '1px solid #d1d5db',
-                backgroundColor: '#f9fafb'
+                width: "100%",
+                height: "48px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "#f9fafb",
               }}
             >
-              {stockStatusOptions.map(option => (
+              {stockStatusOptions.map((option) => (
                 <Option key={option.value} value={option.value}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
                     {option.icon}
                     <span>{option.label}</span>
                   </div>
@@ -617,8 +714,12 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           <Form.Item
             name="stock_quantity"
             label={
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ color: '#374151', fontWeight: 500 }}>Stock Quantity</span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "4px" }}
+              >
+                <span style={{ color: "#374151", fontWeight: 500 }}>
+                  Stock Quantity
+                </span>
               </div>
             }
             rules={validateStockQuantities.stock_quantity}
@@ -626,75 +727,107 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
             <InputNumber
               placeholder="Enter quantity"
               min={0}
-              onChange={() => form.validateFields(['min_stock_level', 'max_stock_level', 'reorder_quantity'])}
+              onChange={() =>
+                form.validateFields([
+                  "min_stock_level",
+                  "max_stock_level",
+                  "reorder_quantity",
+                ])
+              }
               style={{
-                width: '100%',
-                height: '48px',
-                borderRadius: '10px',
-                border: '1px solid #d1d5db',
-                backgroundColor: '#f9fafb'
+                width: "100%",
+                height: "48px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "#f9fafb",
               }}
-              prefix={<FiPackage style={{ color: '#6b7280', marginRight: '8px' }} />}
+              prefix={
+                <FiPackage style={{ color: "#6b7280", marginRight: "8px" }} />
+              }
             />
           </Form.Item>
 
           <Form.Item
             name="min_stock_level"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Minimum Stock Level</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Minimum Stock Level
+              </span>
+            }
             rules={validateStockQuantities.min_stock_level}
           >
             <InputNumber
               placeholder="Enter minimum stock level"
               min={0}
-              onChange={() => form.validateFields(['stock_quantity', 'reorder_quantity'])}
+              onChange={() =>
+                form.validateFields(["stock_quantity", "reorder_quantity"])
+              }
               style={{
-                width: '100%',
-                height: '48px',
-                borderRadius: '10px',
-                border: '1px solid #d1d5db',
-                backgroundColor: '#f9fafb'
+                width: "100%",
+                height: "48px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "#f9fafb",
               }}
-              prefix={<FiAlertCircle style={{ color: '#6b7280', marginRight: '8px' }} />}
+              prefix={
+                <FiAlertCircle
+                  style={{ color: "#6b7280", marginRight: "8px" }}
+                />
+              }
             />
           </Form.Item>
 
           <Form.Item
             name="max_stock_level"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Maximum Stock Level</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Maximum Stock Level
+              </span>
+            }
             rules={validateStockQuantities.max_stock_level}
           >
             <InputNumber
               placeholder="Enter maximum stock level"
               min={0}
-              onChange={() => form.validateFields(['stock_quantity'])}
+              onChange={() => form.validateFields(["stock_quantity"])}
               style={{
-                width: '100%',
-                height: '48px',
-                borderRadius: '10px',
-                border: '1px solid #d1d5db',
-                backgroundColor: '#f9fafb'
+                width: "100%",
+                height: "48px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "#f9fafb",
               }}
-              prefix={<FiTrendingUp style={{ color: '#6b7280', marginRight: '8px' }} />}
+              prefix={
+                <FiTrendingUp
+                  style={{ color: "#6b7280", marginRight: "8px" }}
+                />
+              }
             />
           </Form.Item>
 
           <Form.Item
             name="reorder_quantity"
-            label={<span style={{ color: '#374151', fontWeight: 500 }}>Reorder Quantity</span>}
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Reorder Quantity
+              </span>
+            }
             rules={validateStockQuantities.reorder_quantity}
           >
             <InputNumber
               placeholder="Enter reorder quantity"
               min={0}
-              onChange={() => form.validateFields(['min_stock_level'])}
+              onChange={() => form.validateFields(["min_stock_level"])}
               style={{
-                width: '100%',
-                height: '48px',
-                borderRadius: '10px',
-                border: '1px solid #d1d5db',
-                backgroundColor: '#f9fafb'
+                width: "100%",
+                height: "48px",
+                borderRadius: "10px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "#f9fafb",
               }}
-              prefix={<FiInfo style={{ color: '#6b7280', marginRight: '8px' }} />}
+              prefix={
+                <FiInfo style={{ color: "#6b7280", marginRight: "8px" }} />
+              }
             />
           </Form.Item>
         </div>
@@ -702,40 +835,48 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
         <Divider />
 
         {/* Additional Information */}
-        <div className="section-title" style={{ marginBottom: '16px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Additional Information</Text>
+        <div className="section-title" style={{ marginBottom: "16px" }}>
+          <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+            Additional Information
+          </Text>
         </div>
         <Form.Item
           name="description"
-          label={<span style={{ color: '#374151', fontWeight: 500 }}>Description</span>}
+          label={
+            <span style={{ color: "#374151", fontWeight: 500 }}>
+              Description
+            </span>
+          }
         >
           <TextArea
             placeholder="Enter product description"
             rows={4}
-            style={{ borderRadius: '10px' }}
+            style={{ borderRadius: "10px" }}
           />
         </Form.Item>
 
         <Form.Item
           name="image"
-          label={<span style={{ color: '#374151', fontWeight: 500 }}>Product Image</span>}
+          label={
+            <span style={{ color: "#374151", fontWeight: 500 }}>
+              Product Image
+            </span>
+          }
         >
           <Upload {...uploadProps}>
-            <Button icon={<FiUpload />}>
-              Click to upload
-            </Button>
+            <Button icon={<FiUpload />}>Click to upload</Button>
           </Upload>
         </Form.Item>
 
-        <div style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          gap: '16px',
-          marginTop: '24px'
-        }}>
-          <Button onClick={handleCancel}>
-            Cancel
-          </Button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "16px",
+            marginTop: "24px",
+          }}
+        >
+          <Button onClick={handleCancel}>Cancel</Button>
           <Button type="primary" htmlType="submit" loading={loading}>
             Create Product
           </Button>
@@ -749,7 +890,11 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
       <style jsx>{`
         .currency-select .ant-select-selector {
-          background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+          background: linear-gradient(
+            135deg,
+            #1890ff 0%,
+            #096dd9 100%
+          ) !important;
           border: none !important;
           color: white !important;
           height: 48px !important;
@@ -785,7 +930,10 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           opacity: 1;
         }
 
-        .currency-select.ant-select-status-error:not(.ant-select-disabled):not(.ant-select-customize-input) .ant-select-selector {
+        .currency-select.ant-select-status-error:not(.ant-select-disabled):not(
+            .ant-select-customize-input
+          )
+          .ant-select-selector {
           border-color: rgba(255, 255, 255, 0.3) !important;
         }
 
@@ -834,7 +982,11 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
           .ant-select-selector {
             border: none !important;
-            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+            background: linear-gradient(
+              135deg,
+              #1890ff 0%,
+              #096dd9 100%
+            ) !important;
             color: white !important;
             padding: 0 16px !important;
             display: flex;
@@ -860,8 +1012,9 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
           .ant-input-number {
             background-color: transparent;
             height: 46px !important;
-            
-            &:hover, &:focus {
+
+            &:hover,
+            &:focus {
               border-color: transparent !important;
               box-shadow: none !important;
             }
@@ -870,7 +1023,7 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
               height: 46px !important;
               margin: 0 !important;
               padding: 0 !important;
-              
+
               input {
                 height: 46px !important;
                 font-size: 14px;
@@ -886,9 +1039,13 @@ const CreateProduct = ({ visible, onClose, onSubmit, loading, currenciesData }) 
 
           &:hover {
             border-color: #1890ff;
-            
+
             .ant-select-selector {
-              background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+              background: linear-gradient(
+                135deg,
+                #40a9ff 0%,
+                #1890ff 100%
+              ) !important;
             }
           }
 

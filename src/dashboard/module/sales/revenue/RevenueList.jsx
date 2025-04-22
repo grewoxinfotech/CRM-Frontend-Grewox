@@ -15,7 +15,7 @@ import {
   Tooltip,
   Input,
   Space,
-  DatePicker
+  DatePicker,
 } from "antd";
 import {
   FiEdit2,
@@ -27,7 +27,7 @@ import {
   FiPackage,
   FiUser,
   FiTrendingUp,
-  FiPercent
+  FiPercent,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -37,18 +37,13 @@ import {
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from "react-router-dom";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 const { Text } = Typography;
 const { Option } = Select;
 
-const RevenueList = ({
-  onEdit,
-  onDelete,
-  onView,
-  searchText = "",
-}) => {
+const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const location = useLocation();
@@ -68,7 +63,7 @@ const RevenueList = ({
     }
   }, [customerFromList, productFromList]);
 
-  const { data: revenueData} = useGetRevenueQuery();
+  const { data: revenueData } = useGetRevenueQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
   const { data: customersData } = useGetCustomersQuery();
@@ -82,14 +77,16 @@ const RevenueList = ({
   // Process revenue data to include parsed products
   const processedRevenue = useMemo(() => {
     try {
-      return (revdata || []).map(revenue => ({
+      return (revdata || []).map((revenue) => ({
         ...revenue,
-        parsedProducts: revenue?.products ?
-          (typeof revenue.products === 'string' ? JSON.parse(revenue.products) : revenue.products)
-          : []
+        parsedProducts: revenue?.products
+          ? typeof revenue.products === "string"
+            ? JSON.parse(revenue.products)
+            : revenue.products
+          : [],
       }));
     } catch (error) {
-      console.error('Error processing revenue data:', error);
+      console.error("Error processing revenue data:", error);
       return [];
     }
   }, [revdata]);
@@ -98,15 +95,15 @@ const RevenueList = ({
   const productRevenue = useMemo(() => {
     try {
       const revenueMap = new Map();
-      (processedRevenue || []).forEach(revenue => {
-        (revenue?.parsedProducts || []).forEach(product => {
+      (processedRevenue || []).forEach((revenue) => {
+        (revenue?.parsedProducts || []).forEach((product) => {
           if (!product?.product_id) return;
 
           const existing = revenueMap.get(product.product_id) || {
             total_revenue: 0,
             total_profit: 0,
             quantity_sold: 0,
-            product_name: product.name || 'Unknown Product',
+            product_name: product.name || "Unknown Product",
           };
 
           existing.total_revenue += Number(product.total) || 0;
@@ -122,7 +119,7 @@ const RevenueList = ({
         ...data,
       }));
     } catch (error) {
-      console.error('Error calculating product revenue:', error);
+      console.error("Error calculating product revenue:", error);
       return [];
     }
   }, [processedRevenue]);
@@ -131,7 +128,7 @@ const RevenueList = ({
   const customerRevenue = useMemo(() => {
     try {
       const revenueMap = new Map();
-      (processedRevenue || []).forEach(revenue => {
+      (processedRevenue || []).forEach((revenue) => {
         if (!revenue?.customer) return;
 
         const customerId = revenue.customer;
@@ -153,18 +150,21 @@ const RevenueList = ({
         ...data,
       }));
     } catch (error) {
-      console.error('Error calculating customer revenue:', error);
+      console.error("Error calculating customer revenue:", error);
       return [];
     }
   }, [processedRevenue]);
 
   // Filter revenue based on selected product and customer
   const filteredRevenue = useMemo(() => {
-    return processedRevenue.filter(revenue => {
-      const matchesProduct = !selectedProduct ||
-        revenue.parsedProducts.some(p => p.product_id === selectedProduct);
-      const matchesCustomer = !selectedCustomer || revenue.customer === selectedCustomer;
-      const matchesSearch = !searchText ||
+    return processedRevenue.filter((revenue) => {
+      const matchesProduct =
+        !selectedProduct ||
+        revenue.parsedProducts.some((p) => p.product_id === selectedProduct);
+      const matchesCustomer =
+        !selectedCustomer || revenue.customer === selectedCustomer;
+      const matchesSearch =
+        !searchText ||
         revenue.description?.toLowerCase().includes(searchText.toLowerCase()) ||
         revenue.category?.toLowerCase().includes(searchText.toLowerCase());
 
@@ -191,18 +191,19 @@ const RevenueList = ({
   };
 
   const getCurrencyDetails = (currencyId) => {
-    if (!currencyId || !currencies) return { currencyIcon: '₹', currencyCode: 'INR' };
-    const currency = currencies.find(c => c.id === currencyId);
-    return currency || { currencyIcon: '₹', currencyCode: 'INR' };
+    if (!currencyId || !currencies)
+      return { currencyIcon: "₹", currencyCode: "INR" };
+    const currency = currencies.find((c) => c.id === currencyId);
+    return currency || { currencyIcon: "₹", currencyCode: "INR" };
   };
 
   const formatAmount = (amount, currencyId) => {
-    if (amount === undefined || amount === null) return '₹ 0.00';
+    if (amount === undefined || amount === null) return "₹ 0.00";
     const currency = getCurrencyDetails(currencyId);
     const numericAmount = Number(amount) || 0;
-    return `${currency.currencyIcon} ${numericAmount.toLocaleString('en-IN', {
+    return `${currency.currencyIcon} ${numericAmount.toLocaleString("en-IN", {
       maximumFractionDigits: 2,
-      minimumFractionDigits: 2
+      minimumFractionDigits: 2,
     })}`;
   };
 
@@ -211,57 +212,22 @@ const RevenueList = ({
       title: "Date",
       dataIndex: "date", // Added dataIndex which was missing
       key: "date",
-      width: '25%',
-      render: (date) => dayjs(date).format('DD-MM-YYYY'),
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-          <div style={{ padding: 8 }}>
-              <DatePicker
-                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-                  onChange={(date) => {
-                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
-                      setSelectedKeys(dateStr ? [dateStr] : []);
-                  }}
-                  style={{ marginBottom: 8, display: 'block' }}
-              />
-              <Space>
-                  <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Filter
-                  </Button>
-                  <Button
-                      onClick={() => clearFilters()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Reset
-                  </Button>
-              </Space>
-          </div>
-      ),
-      onFilter: (value, record) => {
-          if (!value || !record.date) return false;
-          return dayjs(record.date).format('YYYY-MM-DD') === value;
-      },
-      filterIcon: filtered => (
-          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
-      )
-    },
-    {
-      title: "Products",
-      key: "products",
-      width: '30%',
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      width: "25%",
+      render: (date) => dayjs(date).format("DD-MM-YYYY"),
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search product name"
-            value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          <DatePicker
+            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+            onChange={(date) => {
+              const dateStr = date ? date.format("YYYY-MM-DD") : null;
+              setSelectedKeys(dateStr ? [dateStr] : []);
+            }}
+            style={{ marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -272,18 +238,77 @@ const RevenueList = ({
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) => {
+        if (!value || !record.date) return false;
+        return dayjs(record.date).format("YYYY-MM-DD") === value;
+      },
+      filterIcon: (filtered) => (
+        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
+      ),
+    },
+    {
+      title: "Products",
+      key: "products",
+      width: "30%",
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search product name"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
         </div>
       ),
       onFilter: (value, record) =>
-        record.parsedProducts.some(p => p.name.toLowerCase().includes(value.toLowerCase())),
+        record.parsedProducts.some((p) =>
+          p.name.toLowerCase().includes(value.toLowerCase())
+        ),
       render: (_, record) => (
         <div>
           {record.parsedProducts.map((product, index) => (
-            <div key={index} style={{ marginBottom: index !== record.parsedProducts.length - 1 ? '8px' : 0 }}>
+            <div
+              key={index}
+              style={{
+                marginBottom:
+                  index !== record.parsedProducts.length - 1 ? "8px" : 0,
+              }}
+            >
               <Text strong>{product.name}</Text>
               <div>
                 {/* <Text type="secondary" style={{ fontSize: "12px" }}>
@@ -292,7 +317,7 @@ const RevenueList = ({
                   {product.discount > 0 && ` (Discount: ${formatAmount(product.discount, record.currency)})`}
                 </Text> */}
               </div>
-              <Text type="success" style={{ fontSize: "12px" }} >
+              <Text type="success" style={{ fontSize: "12px" }}>
                 Total: {formatAmount(product.total, record.currency)}
               </Text>
             </div>
@@ -303,7 +328,7 @@ const RevenueList = ({
     {
       title: "Amount",
       key: "amount",
-      width: '15%',
+      width: "15%",
       sorter: (a, b) => Number(a.amount) - Number(b.amount),
       render: (_, record) => (
         <div>
@@ -319,14 +344,17 @@ const RevenueList = ({
     {
       title: "Profit",
       key: "profit",
-      width: '20%',
+      width: "20%",
       sorter: (a, b) => Number(a.profit) - Number(b.profit),
       render: (_, record) => (
         <div>
-          <Text strong style={{
-            color: Number(record.profit || 0) < 0 ? '#ff4d4f' : '#1890ff',
-            display: "block"
-          }}>
+          <Text
+            strong
+            style={{
+              color: Number(record.profit || 0) < 0 ? "#ff4d4f" : "#1890ff",
+              display: "block",
+            }}
+          >
             <FiTrendingUp style={{ marginRight: "4px" }} />
             {formatAmount(record.profit || 0, record.currency)}
           </Text>
@@ -339,7 +367,7 @@ const RevenueList = ({
     {
       title: "Action",
       key: "actions",
-      width: '10%',
+      width: "10%",
       align: "center",
       render: (_, record) => (
         <Dropdown
@@ -382,22 +410,26 @@ const RevenueList = ({
 
   // Calculate totals for stats
   const stats = useMemo(() => {
-    return filteredRevenue.reduce((acc, rev) => ({
-      total_revenue: acc.total_revenue + (Number(rev.amount) || 0),
-      total_profit: acc.total_profit + (Number(rev.profit) || 0),
-      total_margin: acc.total_margin + (Number(rev.profit_margin_percentage) || 0),
-      count: acc.count + 1
-    }), { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 });
+    return filteredRevenue.reduce(
+      (acc, rev) => ({
+        total_revenue: acc.total_revenue + (Number(rev.amount) || 0),
+        total_profit: acc.total_profit + (Number(rev.profit) || 0),
+        total_margin:
+          acc.total_margin + (Number(rev.profit_margin_percentage) || 0),
+        count: acc.count + 1,
+      }),
+      { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 }
+    );
   }, [filteredRevenue]);
 
   const clearCustomerFilter = () => {
     setSelectedCustomer(null);
-    navigate('/dashboard/sales/revenue', { replace: true });
+    navigate("/dashboard/sales/revenue", { replace: true });
   };
 
   const clearProductFilter = () => {
     setSelectedProduct(null);
-    navigate('/dashboard/sales/revenue', { replace: true });
+    navigate("/dashboard/sales/revenue", { replace: true });
   };
 
   return (
@@ -457,7 +489,9 @@ const RevenueList = ({
               title="Total Revenue"
               value={stats.total_revenue}
               precision={2}
-              formatter={(value) => `₹ ${(Number(value) || 0).toLocaleString('en-IN')}`}
+              formatter={(value) =>
+                `₹ ${(Number(value) || 0).toLocaleString("en-IN")}`
+              }
             />
           </Card>
         </Col>
@@ -468,11 +502,13 @@ const RevenueList = ({
               value={stats.total_profit}
               precision={2}
               valueStyle={{
-                color: stats.total_profit < 0 ? '#ff4d4f' : '#3f8600',
-                fontWeight: '600'
+                color: stats.total_profit < 0 ? "#ff4d4f" : "#3f8600",
+                fontWeight: "600",
               }}
-              prefix={stats.total_profit < 0 ? '-₹ ' : '₹ '}
-              formatter={(value) => `${Math.abs(Number(value) || 0).toLocaleString('en-IN')}`}
+              prefix={stats.total_profit < 0 ? "-₹ " : "₹ "}
+              formatter={(value) =>
+                `${Math.abs(Number(value) || 0).toLocaleString("en-IN")}`
+              }
             />
           </Card>
         </Col>
@@ -480,15 +516,24 @@ const RevenueList = ({
           <Card>
             <Statistic
               title="Average Profit Margin"
-              value={stats.count > 0 ? (stats.total_margin / stats.count) : 0}
+              value={stats.count > 0 ? stats.total_margin / stats.count : 0}
               precision={2}
               suffix="%"
               valueStyle={{
-                color: (stats.count > 0 ? (stats.total_margin / stats.count) : 0) < 0 ? '#ff4d4f' : '#3f8600',
-                fontWeight: '600'
+                color:
+                  (stats.count > 0 ? stats.total_margin / stats.count : 0) < 0
+                    ? "#ff4d4f"
+                    : "#3f8600",
+                fontWeight: "600",
               }}
-              prefix={(stats.count > 0 ? (stats.total_margin / stats.count) : 0) < 0 ? '-' : '+'}
-              formatter={(value) => `${Math.abs(Number(value) || 0).toFixed(2)}`}
+              prefix={
+                (stats.count > 0 ? stats.total_margin / stats.count : 0) < 0
+                  ? "-"
+                  : "+"
+              }
+              formatter={(value) =>
+                `${Math.abs(Number(value) || 0).toFixed(2)}`
+              }
             />
           </Card>
         </Col>

@@ -46,14 +46,7 @@ import { useSelector } from "react-redux";
 const { Text } = Typography;
 const { Option } = Select;
 
-const EditInvoice = ({
-  open,
-  onCancel,
-  onSubmit,
-  initialValues,
-  productsData,
-  productsLoading,
-}) => {
+const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [updateInvoice] = useUpdateInvoiceMutation();
@@ -73,6 +66,9 @@ const EditInvoice = ({
   const [selectedCategory, setSelectedCategory] = useState("customer");
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+
+  const { data: productsData, isLoading: productsLoading } =
+    useGetProductsQuery(loggedInUser?.id);
 
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
@@ -990,24 +986,58 @@ const EditInvoice = ({
         >
           <Form.Item
             name="issueDate"
+            label={
+              <span className="form-label">
+                <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
+                Issue Date <span style={{ color: "#ff4d4f" }}>*</span>
+              </span>
+            }
             rules={[{ required: true, message: "Please select issue date" }]}
           >
-            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
+            <DatePicker
+              format="DD-MM-YYYY"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+              }}
+              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+            />
           </Form.Item>
           <Form.Item
             name="dueDate"
+            label={
+              <span className="form-label">
+                <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
+                Due Date <span style={{ color: "#ff4d4f" }}>*</span>
+              </span>
+            }
             rules={[{ required: true, message: "Please select due date" }]}
           >
-            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
+            <DatePicker
+              format="DD-MM-YYYY"
+              size="large"
+              style={{
+                width: "100%",
+                borderRadius: "10px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+              }}
+              suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+            />
           </Form.Item>
           <Form.Item
             name="status"
             label={
               <span className="form-label">
-                Status <span className="required"></span>
+                Payment Status <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
-            rules={[{ required: true, message: "Please select status" }]}
+            rules={[
+              { required: true, message: "Please select payment status" },
+            ]}
           >
             <Select
               placeholder="Select Status"
@@ -1019,7 +1049,7 @@ const EditInvoice = ({
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
-              <Option value="partially_paid">Partially Paid</Option>
+              {/* <Option value="partially_paid">Partially Paid</Option> */}
             </Select>
           </Form.Item>
         </div>
@@ -1079,7 +1109,7 @@ const EditInvoice = ({
                 marginBottom: "16px",
                 borderRadius: "10px",
               }}
-              value={form.getFieldValue("product_id")}
+              value={form.getFieldValue("items")?.[0]?.item_name}
               onChange={handleProductSelect}
             >
               {productsData?.data?.map((product) => (
@@ -1173,16 +1203,17 @@ const EditInvoice = ({
                           >
                             <InputNumber
                               className="price-input"
-                              formatter={(value) =>
-                                `${selectedCurrency} ${value}`
-                              }
-                              parser={(value) =>
-                                value.replace(selectedCurrency, "").trim()
-                              }
+                              min={0}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
                               }
-                              defaultValue={0}
+                              formatter={(value) =>
+                                `${selectedCurrency}${value}`.replace(
+                                  /\B(?=(\d{3})+(?!\d))/g,
+                                  ","
+                                )
+                              }
+                              parser={(value) => value.replace(/[^\d.]/g, "")}
                             />
                           </Form.Item>
                         </td>
@@ -1190,7 +1221,7 @@ const EditInvoice = ({
                           <Form.Item {...restField} name={[name, "hsn_sac"]}>
                             <Input
                               placeholder="HSN/SAC"
-                              className="item-input"
+                              className="hsn-input"
                             />
                           </Form.Item>
                         </td>
@@ -1235,23 +1266,43 @@ const EditInvoice = ({
                                       ? "Amount"
                                       : "%"
                                   }
-                                  formatter={(value) =>
-                                    form.getFieldValue("items")?.[index]
-                                      ?.discount_type === "fixed"
-                                      ? `${selectedCurrency}${value}`
-                                      : `${value}`
-                                  }
-                                  parser={(value) =>
-                                    form.getFieldValue("items")?.[index]
-                                      ?.discount_type === "fixed"
-                                      ? value
-                                          .replace(selectedCurrency, "")
-                                          .trim()
-                                      : value.replace("%", "")
-                                  }
-                                  onChange={() =>
-                                    calculateTotals(form.getFieldValue("items"))
-                                  }
+                                  formatter={(value) => {
+                                    const type =
+                                      form.getFieldValue("items")?.[index]
+                                        ?.discount_type;
+                                    if (type === "fixed") {
+                                      // Remove any existing currency symbols first
+                                      const cleanValue = value
+                                        ?.toString()
+                                        .replace(selectedCurrency, "")
+                                        .trim();
+                                      return cleanValue
+                                        ? `${selectedCurrency}${cleanValue}`
+                                        : "";
+                                    }
+                                    return value;
+                                  }}
+                                  parser={(value) => {
+                                    const type =
+                                      form.getFieldValue("items")?.[index]
+                                        ?.discount_type;
+                                    if (type === "fixed") {
+                                      // Remove currency symbol and any non-digit characters except decimal point
+                                      return value?.replace(
+                                        new RegExp(`[^\\d.]`, "g"),
+                                        ""
+                                      );
+                                    }
+                                    return value?.replace("%", "");
+                                  }}
+                                  onChange={(value) => {
+                                    form
+                                      .validateFields([[name, "discount"]])
+                                      .catch(() => {});
+                                    calculateTotals(
+                                      form.getFieldValue("items")
+                                    );
+                                  }}
                                   style={{
                                     width: "100px",
                                     borderRadius: "8px",
@@ -1307,7 +1358,6 @@ const EditInvoice = ({
                           {fields.length > 1 && (
                             <Button
                               type="text"
-                              className="delete-btn"
                               icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
                               onClick={() => {
                                 remove(name);

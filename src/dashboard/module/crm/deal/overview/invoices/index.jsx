@@ -18,7 +18,7 @@ import {
   FiHome,
   FiChevronDown,
 } from "react-icons/fi";
-import { Link, useParams  } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import InvoiceList from "./InvoiceList";
 import CreateInvoice from "./CreateInvoice";
 import EditInvoice from "./EditInvoice";
@@ -39,6 +39,7 @@ const Invoice = () => {
   const idd = useParams();
 
   const id = idd.dealId;
+  const loggedInUser = useSelector(selectCurrentUser);
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -46,9 +47,13 @@ const Invoice = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const { data: invoicesData, isLoading } = useGetInvoicesQuery();
-  const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
-  const loggedInUser = useSelector(selectCurrentUser);
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(loggedInUser?.id);
+  const invoices = (invoicesData?.data || []).filter(
+    (invoice) => invoice.related_id === id
+  );
+
+  const { data: productsData, isLoading: productsLoading } =
+    useGetProductsQuery(loggedInUser?.id);
+
 
   const handleExport = async (type) => {
     try {
@@ -58,9 +63,9 @@ const Invoice = () => {
         "Issue Date": dayjs(invoice.issueDate).format("DD/MM/YYYY"),
         "Due Date": dayjs(invoice.dueDate).format("DD/MM/YYYY"),
         "Customer Name": invoice.customerName,
-        "Total": invoice.total,
-        "Amount": invoice.amount,
-        "Status": invoice.payment_status,
+        Total: invoice.total,
+        Amount: invoice.amount,
+        Status: invoice.payment_status,
       }));
 
       switch (type) {
@@ -144,7 +149,7 @@ const Invoice = () => {
     // TODO: Implement view invoice functionality
     console.log("View invoice:", invoice);
   };
-  
+
   const exportToCSV = (data, filename) => {
     const csvContent = [
       Object.keys(data[0]).join(","),

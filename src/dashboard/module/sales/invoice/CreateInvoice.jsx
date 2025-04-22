@@ -1159,67 +1159,73 @@ const CreateInvoice = ({
                                   <Option value="fixed">Fixed Amount</Option>
                                 </Select>
                               </Form.Item>
-                              <Form.Item
-                                {...restField}
-                                name={[name, "discount"]}
-                                style={{ margin: 0 }}
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
                               >
-                                <InputNumber
-                                  className="item-discount-input"
-                                  placeholder={
-                                    form.getFieldValue("items")?.[index]
-                                      ?.discount_type === "fixed"
-                                      ? "Amount"
-                                      : "%"
-                                  }
-                                  formatter={(value) => {
-                                    const type =
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, "discount"]}
+                                  style={{ margin: 0 }}
+                                >
+                                  <InputNumber
+                                    className="item-discount-input"
+                                    placeholder={
                                       form.getFieldValue("items")?.[index]
-                                        ?.discount_type;
-                                    if (type === "fixed") {
-                                      // Remove any existing currency symbols first
-                                      const cleanValue = value
-                                        ?.toString()
-                                        .replace(selectedCurrency, "")
-                                        .trim();
-                                      return cleanValue
-                                        ? `${selectedCurrency}${cleanValue}`
-                                        : "";
+                                        ?.discount_type === "fixed"
+                                        ? "Amount"
+                                        : "%"
                                     }
-                                    return value;
-                                  }}
-                                  parser={(value) => {
-                                    const type =
-                                      form.getFieldValue("items")?.[index]
-                                        ?.discount_type;
-                                    if (type === "fixed") {
-                                      // Remove currency symbol and any non-digit characters except decimal point
-                                      return value?.replace(
-                                        new RegExp(`[^\\d.]`, "g"),
+                                    formatter={(value) => {
+                                      if (!value && value !== 0) return "";
+                                      return value
+                                        .toString()
+                                        .replace(/[^\d.]/g, "");
+                                    }}
+                                    parser={(value) => {
+                                      const parsed = value?.replace(
+                                        /[^\d.]/g,
                                         ""
                                       );
-                                    }
-                                    return value?.replace("%", "");
-                                  }}
-                                  onChange={() => {
-                                    form
-                                      .validateFields([[name, "discount"]])
-                                      .catch(() => {});
-                                    calculateTotals(
-                                      form.getFieldValue("items")
-                                    );
-                                  }}
-                                  style={{
-                                    width: "100px",
-                                    borderRadius: "8px",
-                                    height: "40px",
-                                  }}
-                                />
-                              </Form.Item>
-                              {form.getFieldValue("items")?.[index]
-                                ?.discount_type === "percentage" && (
-                                <Text style={{ marginTop: "10px" }}>%</Text>
-                              )}
+                                      return parsed || "0";
+                                    }}
+                                    onStep={(value) => {
+                                      const items = form.getFieldValue("items");
+                                      if (items?.[index]) {
+                                        items[index].discount = value || 0;
+                                        form.setFieldsValue({ items });
+                                        calculateTotals(items);
+                                      }
+                                    }}
+                                    onChange={(value) => {
+                                      const items = form.getFieldValue("items");
+                                      if (items?.[index]) {
+                                        items[index].discount = value || 0;
+                                        form.setFieldsValue({ items });
+                                        calculateTotals(items);
+                                      }
+                                    }}
+                                    onKeyUp={() => {
+                                      calculateTotals(
+                                        form.getFieldValue("items")
+                                      );
+                                    }}
+                                    style={{
+                                      width: "100px",
+                                      borderRadius: "8px",
+                                      height: "40px",
+                                    }}
+                                  />
+                                </Form.Item>
+                                <Text style={{ marginLeft: "4px" }}>
+                                  {form.getFieldValue("items")?.[index]
+                                    ?.discount_type === "percentage"
+                                    ? "%"
+                                    : selectedCurrency}
+                                </Text>
+                              </div>
                             </Space>
                           </Form.Item>
                         </td>

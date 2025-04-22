@@ -52,8 +52,11 @@ const Invoice = () => {
   const loggedInUser = useSelector(selectCurrentUser);
   const id = loggedInUser?.id;
   const { data: invoicesData, isLoading, error } = useGetInvoicesQuery();
-  const invoices = (invoicesData?.data || []).filter(invoice => invoice.related_id === id);
-  const { data: productsData, isLoading: productsLoading } = useGetProductsQuery(id);
+  const invoices = (invoicesData?.data || []).filter(
+    (invoice) => invoice.related_id === id
+  );
+  const { data: productsData, isLoading: productsLoading } =
+    useGetProductsQuery(loggedInUser?.id);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -64,9 +67,9 @@ const Invoice = () => {
   const [updateInvoice] = useUpdateInvoiceMutation();
 
   const handleDateRangeChange = (dates) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      dateRange: dates ? [dates[0].startOf('day'), dates[1].endOf('day')] : []
+      dateRange: dates ? [dates[0].startOf("day"), dates[1].endOf("day")] : [],
     }));
   };
 
@@ -78,9 +81,9 @@ const Invoice = () => {
         "Issue Date": dayjs(invoice.issueDate).format("DD/MM/YYYY"),
         "Due Date": dayjs(invoice.dueDate).format("DD/MM/YYYY"),
         "Customer Name": invoice.customerName,
-        "Total": invoice.total,
-        "Amount": invoice.amount,
-        "Status": invoice.payment_status,
+        Total: invoice.total,
+        Amount: invoice.amount,
+        Status: invoice.payment_status,
       }));
 
       switch (type) {
@@ -164,7 +167,7 @@ const Invoice = () => {
     // TODO: Implement view invoice functionality
     console.log("View invoice:", invoice);
   };
-  
+
   const exportToCSV = (data, filename) => {
     const csvContent = [
       Object.keys(data[0]).join(","),
@@ -254,7 +257,10 @@ const Invoice = () => {
           <Text type="secondary">Manage all invoices in the organization</Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div
+            className="search-filter-group"
+            style={{ display: "flex", gap: "16px", alignItems: "center" }}
+          >
             <Input
               prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search invoices..."
@@ -262,10 +268,10 @@ const Invoice = () => {
               onChange={(e) => setSearchText(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ 
-                width: '300px', 
-                borderRadius: '20px',
-                height: '38px'
+              style={{
+                width: "300px",
+                borderRadius: "20px",
+                height: "38px",
               }}
             />
             <RangePicker
@@ -273,7 +279,7 @@ const Invoice = () => {
               value={filters.dateRange}
               allowClear
               style={{ width: 400 }}
-              placeholder={['Start Date', 'End Date']}
+              placeholder={["Start Date", "End Date"]}
             />
           </div>
           <div className="action-buttons">
