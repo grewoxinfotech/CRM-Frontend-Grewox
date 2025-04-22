@@ -264,8 +264,15 @@ const Plans = () => {
         doc.save(`${filename}.pdf`);
     };
 
-    const handlePageChange = (page, pageSize) => {
-        setFilters(prev => ({ ...prev, page, limit: pageSize }));
+    const handlePageChange = (pagination, filters, sorter) => {
+        setFilters(prev => ({
+            ...prev,
+            page: pagination.current,
+            limit: pagination.pageSize,
+            ...filters,
+            sort: sorter.field,
+            order: sorter.order
+        }));
     };
 
     const renderCardView = () => (

@@ -1148,3 +1148,403 @@
         font-size: 16px;
     }
 }
+
+.companies-table-wrapper {
+    .companies-table {
+        .ant-table {
+            background: transparent;
+
+            .ant-table-thead {
+                tr {
+                    th {
+                        background: #ffffff;
+                        border-bottom: 1px solid #edf2f7;
+                        padding: 12px 16px;
+                        font-weight: 500;
+                        color: #64748b;
+                        font-size: 13px;
+
+                        &::before {
+                            display: none;
+                        }
+
+                        .column-header {
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+
+                            .header-icon {
+                                font-size: 14px;
+                                color: #94a3b8;
+                            }
+                        }
+
+                        &:hover {
+                            background: #ffffff;
+                        }
+                    }
+                }
+            }
+
+            .ant-table-tbody {
+                tr {
+                    td {
+                        padding: 12px 16px;
+                        border-bottom: 1px solid #edf2f7;
+                        background: #ffffff;
+                        transition: all 0.2s ease;
+
+                        &:first-child {
+                            padding-left: 24px;
+                        }
+
+                        &:last-child {
+                            padding-right: 24px;
+                        }
+                    }
+
+                    &:hover {
+                        td {
+                            background: #f8fafc !important;
+                        }
+                    }
+                }
+            }
+
+            // Profile Cell
+            .profile-cell {
+                display: flex;
+                align-items: center;
+
+                .ant-avatar {
+                    background: #e2e8f0;
+                    color: #64748b;
+                    font-size: 14px;
+                    font-weight: 500;
+                    border: none;
+
+                    &.default-avatar {
+                        background: #e2e8f0;
+                        color: #64748b;
+                    }
+                }
+            }
+
+            // Company Name Cell
+            .company-name-cell {
+                font-weight: 500;
+                color: #1e293b;
+            }
+
+            // Email Cell
+            .email-cell {
+                a {
+                    color: #3b82f6;
+                    text-decoration: none;
+                    font-weight: normal;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+                }
+            }
+
+            // Phone Cell
+            .phone-cell {
+                color: #64748b;
+            }
+
+            // Status Tags
+            .status-tag {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                border-radius: 16px;
+                padding: 4px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                line-height: 18px;
+                border: none;
+                text-transform: uppercase;
+
+                .anticon {
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                }
+
+                &.active {
+                    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+                    color: #15803d;
+                    border: 1px solid #86efac;
+
+                    .anticon {
+                        color: #15803d;
+                    }
+                }
+
+                &.inactive {
+                    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+                    color: #b91c1c;
+                    border: 1px solid #fca5a5;
+
+                    .anticon {
+                        color: #b91c1c;
+                    }
+                }
+            }
+
+            // Date Cell
+            .date-cell {
+                color: #64748b;
+                font-size: 13px;
+            }
+
+            // Action Cell
+            .action-cell {
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+
+                .login-button {
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+                        transform: translateY(-2px);
+                        box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+                    }
+
+                    svg {
+                        font-size: 14px;
+                    }
+                }
+
+                .action-button {
+                    width: 28px;
+                    height: 28px;
+                    padding: 0;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    transition: all 0.2s ease;
+                    border: none;
+
+                    .action-icon {
+                        font-size: 14px;
+                    }
+
+                    &.more {
+                        color: #64748b;
+
+                        &:hover {
+                            background: rgba(100, 116, 139, 0.1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Pagination
+        .ant-pagination {
+            margin: 16px 24px;
+
+            .ant-pagination-item {
+                border-radius: 6px;
+                border: 1px solid #e2e8f0;
+                font-size: 13px;
+
+                &-active {
+                    border-color: #3b82f6;
+                    background: #3b82f6;
+
+                    a {
+                        color: #ffffff;
+                    }
+                }
+            }
+
+            .ant-pagination-prev,
+            .ant-pagination-next {
+                .ant-pagination-item-link {
+                    border-radius: 6px;
+                }
+            }
+        }
+
+        // Custom Filter Dropdown
+        .custom-filter-dropdown {
+            padding: 12px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            min-width: 240px;
+            border: 1px solid #e2e8f0;
+
+            .filter-input {
+                margin-bottom: 12px;
+
+                .ant-input-affix-wrapper {
+                    border-radius: 6px;
+                    border: 1px solid #e2e8f0;
+                    padding: 6px 12px;
+
+                    &:hover,
+                    &:focus {
+                        border-color: #3b82f6;
+                        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+                    }
+
+                    .search-icon {
+                        color: #94a3b8;
+                        font-size: 14px;
+                    }
+
+                    .clear-icon {
+                        color: #94a3b8;
+                        font-size: 14px;
+                    }
+
+                    input {
+                        font-size: 13px;
+                    }
+                }
+            }
+
+            .filter-actions {
+                display: flex;
+                gap: 8px;
+
+                .filter-button {
+                    flex: 1;
+                    height: 32px;
+                    border-radius: 6px;
+                    font-size: 13px;
+                    padding: 0 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+
+                    &[type="primary"] {
+                        background: #3b82f6;
+                        border: none;
+
+                        &:hover {
+                            background: #2563eb;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Filter Dropdown
+        .ant-table-filter-dropdown {
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+
+            .ant-table-filter-dropdown-btns {
+                border-top: 1px solid #e2e8f0;
+                padding-top: 12px;
+                margin-top: 8px;
+
+                .ant-btn-primary {
+                    background: #3b82f6;
+                    border: none;
+
+                    &:hover {
+                        background: #2563eb;
+                    }
+                }
+            }
+
+            .ant-checkbox-wrapper {
+                margin: 8px 0;
+
+                &:hover {
+                    .ant-checkbox-inner {
+                        border-color: #3b82f6;
+                    }
+                }
+
+                .ant-checkbox-checked {
+                    .ant-checkbox-inner {
+                        background-color: #3b82f6;
+                        border-color: #3b82f6;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Dropdown Menu Styles
+.company-actions-dropdown {
+    .ant-dropdown-menu {
+        padding: 4px;
+        min-width: 160px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #475569;
+            transition: all 0.2s ease;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
+            .anticon,
+            svg {
+                font-size: 14px;
+            }
+
+            &:hover {
+                background: #f8fafc;
+            }
+
+            &-upgrade {
+                color: #8b5cf6;
+
+                &:hover {
+                    background: rgba(139, 92, 246, 0.1);
+                }
+            }
+
+            &-edit {
+                color: #48bb78;
+
+                &:hover {
+                    background: rgba(72, 187, 120, 0.1);
+                }
+            }
+
+            &-view {
+                color: #3b82f6;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.1);
+                }
+            }
+
+            &-danger {
+                color: #f56565;
+
+                &:hover {
+                    background: rgba(245, 101, 101, 0.1);
+                }
+            }
+        }
+    }
+}

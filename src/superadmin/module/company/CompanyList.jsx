@@ -1,29 +1,109 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Modal, Avatar, message, Input, Space } from 'antd';
-import { FiEye, FiEdit2, FiTrash2, FiMoreVertical, FiUser, FiLogIn } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Avatar, message, Input, Space } from 'antd';
+import {
+    FiEdit2,
+    FiTrash2,
+    FiMoreVertical,
+    FiUser,
+    FiLogIn,
+    FiSearch,
+    FiFilter,
+    FiX,
+    FiBriefcase,
+    FiMail,
+    FiPhone,
+    FiCalendar,
+    FiToggleRight,
+    FiCheck,
+    FiX as FiXCircle
+} from 'react-icons/fi';
 import { PiRocketBold } from 'react-icons/pi';
 import moment from 'moment';
-import EditCompany from './EditCompany';
-import CreateUpgradePlan from './CreateUpgradePlan';
 import { useAdminLoginMutation } from '../../../auth/services/authApi';
 import { useNavigate } from 'react-router-dom';
 import { useGetAllAssignedPlansQuery } from './services/companyApi';
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import CreateUpgradePlan from './CreateUpgradePlan';
 
-const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
-
-    const [editModalVisible, setEditModalVisible] = useState(false);
-    const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
-    const [selectedCompany, setSelectedCompany] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
+const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText }) => {
+    const [filteredInfo, setFilteredInfo] = useState({});
     const [adminLogin] = useAdminLoginMutation();
     const navigate = useNavigate();
+    const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+    const [selectedCompany, setSelectedCompany] = useState(null);
 
-    // Define status options
-    const planStatuses = [
-        { text: 'Active', value: 'active' },
-        { text: 'Inactive', value: 'inactive' }
-    ];
+    const handleTableChange = (pagination, filters, sorter) => {
+        console.log('Table Change:', { pagination, filters, sorter });
+        setFilteredInfo(filters);
+        if (onPageChange) {
+            onPageChange(pagination, filters, sorter);
+        }
+    };
+
+    const handleSearch = (selectedKeys, confirm, dataIndex) => {
+        confirm();
+        setFilteredInfo(prev => ({
+            ...prev,
+            [dataIndex]: selectedKeys
+        }));
+    };
+
+    const handleReset = (clearFilters, confirm, dataIndex) => {
+        clearFilters();
+        confirm();
+        setFilteredInfo(prev => ({
+            ...prev,
+            [dataIndex]: null
+        }));
+    };
+
+    const getColumnSearchProps = (dataIndex) => ({
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+            <div className="custom-filter-dropdown">
+                <div className="filter-input">
+                    <Input
+                        placeholder={`Search ${dataIndex}`}
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                        prefix={<FiSearch className="search-icon" />}
+                        allowClear={{
+                            clearIcon: <FiX className="clear-icon" />
+                        }}
+                        autoFocus
+                    />
+                </div>
+                <Space className="filter-actions">
+                    <Button
+                        type="primary"
+                        onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                        className="filter-button"
+                        icon={<FiFilter />}
+                    >
+                        Apply Filter
+                    </Button>
+                    <Button
+                        onClick={() => handleReset(clearFilters, confirm, dataIndex)}
+                        className="filter-button"
+                    >
+                        Reset
+                    </Button>
+                </Space>
+            </div>
+        ),
+        filterIcon: filtered => (
+            <FiFilter
+                style={{
+                    color: filtered ? '#3b82f6' : '#94a3b8'
+                }}
+            />
+        ),
+        onFilter: (value, record) => {
+            return record[dataIndex]
+                ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+                : '';
+        },
+        filteredValue: filteredInfo[dataIndex] || null
+    });
 
     // Fetch all assigned plans
     const { data: assignedPlans } = useGetAllAssignedPlansQuery();
@@ -52,11 +132,6 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         }
     };
 
-    const handleUpgradePlan = (record) => {
-        setSelectedCompany(record);
-        setUpgradeModalVisible(true);
-    };
-
     const getInitials = (username) => {
         return username
             ? username.split(' ')
@@ -66,31 +141,38 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
             : 'U';
     };
 
+    const handleUpgradeClick = (company) => {
+        setSelectedCompany(company);
+        setUpgradeModalVisible(true);
+    };
+
+    const handleUpgradeModalClose = () => {
+        setUpgradeModalVisible(false);
+        setSelectedCompany(null);
+    };
+
     const getDropdownItems = (record) => ({
         items: [
             {
                 key: 'upgrade',
                 icon: <PiRocketBold />,
                 label: 'Upgrade Plan',
-                onClick: () => handleUpgradePlan(record),
-            },
-            {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => onView(record),
+                onClick: () => handleUpgradeClick(record),
+                className: 'ant-dropdown-menu-item-upgrade'
             },
             {
                 key: 'edit',
                 icon: <FiEdit2 />,
                 label: 'Edit Company',
                 onClick: () => onEdit(record),
+                className: 'ant-dropdown-menu-item-edit'
             },
             {
                 key: 'login',
                 icon: <FiLogIn />,
                 label: 'Login as Company',
                 onClick: () => handleAdminLogin(record),
+                className: 'ant-dropdown-menu-item-view'
             },
             {
                 key: 'delete',
@@ -98,163 +180,158 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
                 label: 'Delete Company',
                 danger: true,
                 onClick: () => onDelete(record),
+                className: 'ant-dropdown-menu-item-danger'
             }
         ]
     });
 
+    // Status filter options
+    const statusFilters = [
+        { text: 'Active', value: true },
+        { text: 'Inactive', value: false }
+    ];
+
     const columns = [
         {
-            title: 'Profile',
+            title: (
+                <div className="column-header">
+                    <FiUser className="header-icon" />
+                    <span>Profile</span>
+                </div>
+            ),
             dataIndex: 'profilePic',
-            key: 'profilePic',
-            sorter: (a, b) => a.profilePic.localeCompare(b.profilePic),
-            width: 80,
+            key: 'profile',
+            width: '60px',
             render: (profilePic, record) => (
-                <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div className="profile-cell">
                     <Avatar
                         size={40}
                         src={profilePic}
                         icon={!profilePic && <FiUser />}
-                        style={{
-                            backgroundColor: !profilePic ? '#1890ff' : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
+                        className={!profilePic ? 'default-avatar' : ''}
                     >
-                        {!profilePic && getInitials(record.username)}
+                        {!profilePic && getInitials(record.name)}
                     </Avatar>
                 </div>
             ),
         },
         {
-            title: 'Company Name',
+            title: (
+                <div className="column-header">
+                    <FiBriefcase className="header-icon" />
+                    <span>Company Name</span>
+                </div>
+            ),
             dataIndex: 'name',
             key: 'name',
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search company name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
-                </div>
-              ),
-              onFilter: (value, record) =>
-                (record.name?.toLowerCase() || '').includes(value.toLowerCase()),    
+            ...getColumnSearchProps('name'),
+            width: '200px',
             render: (text) => (
-                <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>
+                <div className="company-name-cell">
+                    {text || 'N/A'}
+                </div>
             ),
-            width: '20%',
         },
         {
-            title: 'Email',
+            title: (
+                <div className="column-header">
+                    <FiMail className="header-icon" />
+                    <span>Email</span>
+                </div>
+            ),
             dataIndex: 'email',
             key: 'email',
-            sorter: (a, b) => a.email.localeCompare(b.email),
+            ...getColumnSearchProps('email'),
+            width: '250px',
             render: (text) => (
-                text && text !== 'N/A' ? (
-                    <a href={`mailto:${text}`} onClick={(e) => e.stopPropagation()}>
-                        {text}
-                    </a>
-                ) : 'N/A'
+                <div className="email-cell">
+                    {text && text !== 'N/A' ? (
+                        <a href={`mailto:${text}`} onClick={(e) => e.stopPropagation()}>
+                            {text}
+                        </a>
+                    ) : 'N/A'}
+                </div>
             ),
-            width: '25%',
         },
         {
-            title: 'Phone',
+            title: (
+                <div className="column-header">
+                    <FiPhone className="header-icon" />
+                    <span>Phone</span>
+                </div>
+            ),
             dataIndex: 'phone',
             key: 'phone',
-            sorter: (a, b) => a.phone.localeCompare(b.phone),
-            render: (text) => text || 'N/A',
-            width: '15%',
+            ...getColumnSearchProps('phone'),
+            width: '150px',
+            render: (text) => (
+                <div className="phone-cell">
+                    {text || 'N/A'}
+                </div>
+            ),
         },
         {
-            title: 'Plan Status',
-            key: 'planStatus',
-            width: '140px',
-            filters: planStatuses,
-            onFilter: (value, record) => {
-                const isActive = hasActiveSubscription(record.id);
-                return value === (isActive ? 'active' : 'inactive');
-            },
+            title: (
+                <div className="column-header">
+                    <FiToggleRight className="header-icon" />
+                    <span>Status</span>
+                </div>
+            ),
+            key: 'status',
+            width: '120px',
+            filters: statusFilters,
+            filteredValue: filteredInfo.status || null,
+            onFilter: (value, record) => hasActiveSubscription(record.id) === value,
             render: (_, record) => {
                 const isActive = hasActiveSubscription(record.id);
                 return (
                     <Tag
-                        style={{
-                            background: isActive 
-                                ? 'linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)'
-                                : 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
-                            color: isActive ? '#15803d' : '#b91c1c',
-                            border: `1px solid ${isActive ? '#86efac' : '#fca5a5'}`,
-                            padding: '4px 12px',
-                            borderRadius: '20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '12px',
-                            fontWeight: '600'
-                        }}
+                        className={`status-tag ${isActive ? 'active' : 'inactive'}`}
+                        icon={isActive ? <FiCheck style={{ fontSize: '14px' }} /> : <FiXCircle style={{ fontSize: '14px' }} />}
                     >
-                        {isActive ? (
-                            <>
-                                <CheckCircleOutlined style={{ fontSize: '12px' }} />
-                                ACTIVE
-                            </>
-                        ) : (
-                            <>
-                                <CloseCircleOutlined style={{ fontSize: '12px' }} />
-                                INACTIVE
-                            </>
-                        )}
+                        {isActive ? 'ACTIVE' : 'INACTIVE'}
                     </Tag>
                 );
             },
         },
         {
-            title: 'Created',
+            title: (
+                <div className="column-header">
+                    <FiCalendar className="header-icon" />
+                    <span>Created</span>
+                </div>
+            ),
             dataIndex: 'created_at',
             key: 'created_at',
-            render: (date) => date ? moment(date).format('YYYY-MM-DD') : '-',
-            sorter: (a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0),
-            width: '15%',
+            width: '120px',
+            render: (date) => (
+                <div className="date-cell">
+                    {date ? moment(date).format('YYYY-MM-DD') : '-'}
+                </div>
+            ),
         },
         {
             title: 'Actions',
             key: 'actions',
-            width: 280,
+            width: '100px',
+            fixed: 'right',
             render: (_, record) => (
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="action-cell">
                     <Button
                         type="primary"
                         icon={<FiLogIn />}
                         onClick={() => handleAdminLogin(record)}
+                        className="login-button"
                         style={{
                             background: 'linear-gradient(135deg, #4096ff 0%, #1677ff 100%)',
                             border: 'none',
+                            borderRadius: '8px',
                             height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
+                            width: 'auto',
                             padding: '0 12px',
-                            borderRadius: '6px',
-                            fontSize: '13px'
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
                         }}
                     >
                         Login
@@ -263,18 +340,12 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
                         menu={getDropdownItems(record)}
                         trigger={['click']}
                         placement="bottomRight"
+                        overlayClassName="company-actions-dropdown"
                     >
                         <Button
-                            icon={<FiMoreVertical />}
-                            style={{
-                                border: '1px solid #E5E7EB',
-                                width: '32px',
-                                height: '32px',
-                                padding: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}
+                            type="text"
+                            icon={<FiMoreVertical className="action-icon" />}
+                            className="action-button more"
                         />
                     </Dropdown>
                 </div>
@@ -283,52 +354,25 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
     ];
 
     return (
-        <>
+        <div className="companies-table-wrapper">
             <Table
-                dataSource={companies}
                 columns={columns}
-                rowKey={record => record.id}
-                scroll={{ x: 1100 }}
-                pagination={{
-                    current: currentPage,
-                    pageSize: 10,
-                    total: companies.length,
-                    showSizeChanger: false,
-                    showQuickJumper: false,
-                    onChange: (page) => setCurrentPage(page)
-                }}
+                dataSource={companies}
+                loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
+                rowKey="id"
+                className="companies-table"
+                scroll={{ x: 1200 }}
             />
-
-            {editModalVisible && (
-                <EditCompany
-                    visible={editModalVisible}
-                    onCancel={() => {
-                        setEditModalVisible(false);
-                        setSelectedCompany(null);
-                    }}
-                    onComplete={(updatedCompany) => {
-                        setEditModalVisible(false);
-                        setSelectedCompany(null);
-                        if (onEdit) {
-                            onEdit(updatedCompany);
-                        }
-                    }}
-                    initialValues={selectedCompany}
-                    loading={loading}
-                />
-            )}
-
             <CreateUpgradePlan
                 open={upgradeModalVisible}
-                onCancel={() => {
-                    setUpgradeModalVisible(false);
-                    setSelectedCompany(null);
-                }}
+                onCancel={handleUpgradeModalClose}
                 companyId={selectedCompany?.id}
                 isEditing={false}
                 initialValues={null}
             />
-        </>
+        </div>
     );
 };
 

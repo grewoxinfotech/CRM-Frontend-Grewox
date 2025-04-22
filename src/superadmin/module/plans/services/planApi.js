@@ -7,10 +7,18 @@ export const planApi = createApi({
     tagTypes: ['Subscriptions'],
     endpoints: (builder) => ({
         getAllPlans: builder.query({
-            query: ({ page = 1, limit = 10, search = '' }) => ({
+            query: ({ page = 1, limit = 10, search = '', sort, order, status, name }) => ({
                 url: `/subscriptions`,
                 method: 'GET',
-                params: { page, limit, search }
+                params: {
+                    page,
+                    limit,
+                    search,
+                    sort,
+                    order,
+                    status,
+                    name
+                }
             }),
             providesTags: ['Subscriptions']
         }),

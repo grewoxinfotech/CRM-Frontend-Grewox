@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, Button, Dropdown, Tag, Tooltip, Modal, message, Input, Space } from 'antd';
 import {
     FiEye,
@@ -8,7 +8,12 @@ import {
     FiDollarSign,
     FiUsers,
     FiClock,
-    FiHardDrive
+    FiHardDrive,
+    FiPackage,
+    FiToggleRight,
+    FiSearch,
+    FiFilter,
+    FiX
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
@@ -20,6 +25,82 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         limit: 100
     });
 
+    const [filteredInfo, setFilteredInfo] = useState({});
+
+    const handleTableChange = (pagination, filters, sorter) => {
+        console.log('Table Change:', { pagination, filters, sorter });
+        setFilteredInfo(filters);
+        if (onPageChange) {
+            onPageChange(pagination, filters, sorter);
+        }
+    };
+
+    const handleSearch = (selectedKeys, confirm, dataIndex) => {
+        confirm();
+        setFilteredInfo(prev => ({
+            ...prev,
+            [dataIndex]: selectedKeys
+        }));
+    };
+
+    const handleReset = (clearFilters, confirm) => {
+        clearFilters();
+        confirm();
+        setFilteredInfo(prev => ({
+            ...prev,
+            [dataIndex]: null
+        }));
+    };
+
+    const getColumnSearchProps = (dataIndex) => ({
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+            <div className="custom-filter-dropdown">
+                <div className="filter-input">
+                    <Input
+                        placeholder={`Search ${dataIndex}`}
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                        prefix={<FiSearch className="search-icon" />}
+                        allowClear={{
+                            clearIcon: <FiX className="clear-icon" />
+                        }}
+                        autoFocus
+                    />
+                </div>
+                <Space className="filter-actions">
+                    <Button
+                        type="primary"
+                        onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                        className="filter-button"
+                        icon={<FiFilter />}
+                    >
+                        Apply Filter
+                    </Button>
+                    <Button
+                        onClick={() => handleReset(clearFilters, confirm)}
+                        className="filter-button"
+                    >
+                        Reset
+                    </Button>
+                </Space>
+            </div>
+        ),
+        filterIcon: filtered => (
+            <FiFilter
+                style={{
+                    color: filtered ? '#3b82f6' : '#94a3b8'
+                }}
+            />
+        ),
+        onFilter: (value, record) => {
+            return record[dataIndex]
+                ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
+                : '';
+        },
+        filteredValue: filteredInfo[dataIndex] || null
+    });
+
     // Define plan status options
     const planStatuses = [
         { text: 'Active', value: 'active' },
@@ -28,7 +109,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
 
     const getCurrencyIcon = (currencyId) => {
         const currency = currencies?.find(c => c.id === currencyId);
-        return currency?.currencyIcon || '$';
+        return currency?.currencyIcon || '₹';
     };
 
     const highlightText = (text, highlight) => {
@@ -38,7 +119,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             <span>
                 {parts.map((part, i) =>
                     part.toLowerCase() === highlight.toLowerCase() ? (
-                        <span key={i} style={{ backgroundColor: '#bae7ff' }}>
+                        <span key={i} className="highlight-text">
                             {part}
                         </span>
                     ) : (
@@ -75,14 +156,20 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
 
     const getActionItems = (record) => [
         {
+            key: 'view',
+            icon: <FiEye className="action-icon" />,
+            label: 'View Details',
+            onClick: () => onView(record)
+        },
+        {
             key: 'edit',
-            icon: <FiEdit2 />,
+            icon: <FiEdit2 className="action-icon" />,
             label: 'Edit Plan',
             onClick: () => onEdit(record)
         },
         {
             key: 'delete',
-            icon: <FiTrash2 />,
+            icon: <FiTrash2 className="action-icon" />,
             label: 'Delete Plan',
             danger: true,
             onClick: () => onDelete(record)
@@ -101,121 +188,94 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
 
     const columns = [
         {
-            title: 'Name',
-            dataIndex: 'name',
-            key: 'name',
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search plan name"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+            title: (
+                <div className="column-header">
+                    <FiPackage className="header-icon" />
+                    <span>Plan Name</span>
                 </div>
             ),
-            onFilter: (value, record) =>
-                record.name?.toLowerCase().includes(value.toLowerCase()),
-            render: (text) => {
-                if (!searchText?.trim() || !text) return <div style={{ fontWeight: 500 }}>{text || 'N/A'}</div>;
-
-                const parts = text.split(new RegExp(`(${searchText})`, 'gi'));
-                return (
-                    <div style={{ fontWeight: 500 }}>
-                        {parts.map((part, i) =>
-                            part.toLowerCase() === searchText.toLowerCase() ? (
-                                <span key={i} style={{ backgroundColor: '#bae7ff' }}>
-                                    {part}
-                                </span>
-                            ) : (
-                                part
-                            )
-                        )}
-                    </div>
-                );
-            },
-            width: '15%',
+            dataIndex: 'name',
+            key: 'name',
+            ...getColumnSearchProps('name'),
+            width: '20%',
             fixed: 'left'
         },
         {
-            title: 'Price',
+            title: (
+                <div className="column-header">
+                    <FiDollarSign className="header-icon" />
+                    <span>Price</span>
+                </div>
+            ),
             dataIndex: 'price',
             key: 'price',
             sorter: (a, b) => (a.price || 0) - (b.price || 0),
             render: (price, record) => (
                 <div className="price-cell">
-                    <span className="plan-price">
-                        <small className="currency-duration">
-                            {getCurrencyIcon(record.currency)}
-                        </small>
-                        {Number(price || 0).toFixed(2)}
-                    </span>
+                    <div className="price-amount">
+                        <span className="currency" aria-label="currency">{getCurrencyIcon(record.currency)}</span>
+                        <span className="amount">{Number(price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
                 </div>
             ),
-            width: '20%',
+            width: '15%',
         },
         {
-            title: 'Limits',
+            title: (
+                <div className="column-header">
+                    <FiUsers className="header-icon" />
+                    <span>Limits</span>
+                </div>
+            ),
             key: 'limits',
-            sorter: (a, b) => (a.max_users || 0) - (b.max_users || 0),
             render: (_, record) => (
                 <div className="limits-cell">
-                    <div className="limits-row">
+                    <div className="limits-group">
                         <Tooltip title="Users Limit">
-                            <Tag color="blue">
-                                <FiUsers /> {record.max_users || 0} Users
+                            <Tag className="limit-tag users">
+                                <FiUsers className="tag-icon" /> {record.max_users || 0} Users
                             </Tag>
                         </Tooltip>
                         <Tooltip title="Clients Limit">
-                            <Tag color="cyan">
-                                <FiUsers /> {record.max_clients || 0} Clients
+                            <Tag className="limit-tag clients">
+                                <FiUsers className="tag-icon" /> {record.max_clients || 0} Clients
                             </Tag>
                         </Tooltip>
                     </div>
-                    <div className="limits-row">
+                    <div className="limits-group">
                         <Tooltip title="Vendors Limit">
-                            <Tag color="purple">
-                                <FiUsers /> {record.max_vendors || 0} Vendors
+                            <Tag className="limit-tag vendors">
+                                <FiUsers className="tag-icon" /> {record.max_vendors || 0} Vendors
                             </Tag>
                         </Tooltip>
                         <Tooltip title="Customers Limit">
-                            <Tag color="magenta">
-                                <FiUsers /> {record.max_customers || 0} Customers
+                            <Tag className="limit-tag customers">
+                                <FiUsers className="tag-icon" /> {record.max_customers || 0} Customers
                             </Tag>
                         </Tooltip>
                     </div>
                 </div>
             ),
-            width: '25%',
+            width: '30%',
         },
         {
-            title: 'Storage & Trial',
+            title: (
+                <div className="column-header">
+                    <FiHardDrive className="header-icon" />
+                    <span>Storage & Trial</span>
+                </div>
+            ),
             key: 'storage_trial',
-            sorter: (a, b) => (parseFloat(a.storage_limit) || 0) - (parseFloat(b.storage_limit) || 0),
             render: (_, record) => (
                 <div className="storage-trial-cell">
                     <Tooltip title="Storage Limit">
-                        <Tag color="orange">
-                            <FiHardDrive /> {formatStorageSize(record.storage_limit)}
+                        <Tag className="feature-tag storage">
+                            <FiHardDrive className="tag-icon" /> {formatStorageSize(record.storage_limit)}
                         </Tag>
                     </Tooltip>
                     <Tooltip title="Trial Period">
-                        <Tag color="green">
-                            <FiClock /> {record.trial_period || 0} Days Trial
+                        <Tag className="feature-tag trial">
+                            <FiClock className="tag-icon" /> {record.trial_period || 0} Days
                         </Tag>
                     </Tooltip>
                 </div>
@@ -223,60 +283,72 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             width: '20%',
         },
         {
-            title: 'Status',
+            title: (
+                <div className="column-header status-header">
+                    <FiToggleRight className="header-icon" />
+                    <span>Status</span>
+                </div>
+            ),
             dataIndex: 'status',
             key: 'status',
+            align: 'center',
+            className: 'status-column',
             filters: planStatuses,
             onFilter: (value, record) => (record.status?.toLowerCase() || '') === value.toLowerCase(),
-            render: (status) => (
-                <span className={`plan-status ${status?.toLowerCase() || 'inactive'}`}>
-                    {(status || 'Inactive').charAt(0).toUpperCase() + (status || 'inactive').slice(1)}
-                </span>
-            ),
-            width: '10%',
+            render: (status) => {
+                const statusText = (status || 'Inactive').charAt(0).toUpperCase() + (status || 'inactive').slice(1);
+                return (
+                    <Tag className={`status-tag ${status?.toLowerCase() || 'inactive'}`}>
+                        {statusText}
+                    </Tag>
+                );
+            },
+            width: '12%',
         },
         {
             title: 'Actions',
             key: 'actions',
-            align: 'center',
+            align: 'right',
             render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: getActionItems(record)
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayClassName="plan-actions-dropdown"
-                >
+                <div className="action-cell">
                     <Button
                         type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                        onClick={(e) => e.preventDefault()}
+                        icon={<FiEye className="action-icon" />}
+                        onClick={() => onView(record)}
+                        className="action-button view"
                     />
-                </Dropdown>
+                    <Button
+                        type="text"
+                        icon={<FiEdit2 className="action-icon" />}
+                        onClick={() => onEdit(record)}
+                        className="action-button edit"
+                    />
+                    <Button
+                        type="text"
+                        icon={<FiTrash2 className="action-icon" />}
+                        onClick={() => onDelete(record)}
+                        className="action-button delete"
+                    />
+                </div>
             ),
-            width: '80px',
+            width: '15%',
             fixed: 'right'
-        },
+        }
     ];
 
     return (
-        <Table
-            dataSource={plans}
-            columns={columns}
-            rowKey={record => record.id}
-            loading={loading}
-            scroll={{ x: 1200 }}
-            pagination={pagination}
-            onChange={(pagination) => onPageChange?.(pagination.current, pagination.pageSize)}
-            className="custom-table"
-            style={{
-                background: '#ffffff',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-            }}
-        />
+        <div className="plans-table-wrapper">
+            <Table
+                columns={columns}
+                dataSource={plans}
+                loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
+                rowKey="id"
+                className="plans-table"
+                scroll={{ x: 1200 }}
+            />
+        </div>
     );
 };
 

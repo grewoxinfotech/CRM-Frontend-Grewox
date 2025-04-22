@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, Switch, InputNumber, message, Spin, Space } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetCustomFormByIdQuery, useSubmitFormResponseMutation } from './services/customFormApi';
-import { FiUser, FiMail, FiPhone, FiFileText, FiCalendar, FiToggleRight, FiHash, FiMapPin } from 'react-icons/fi';
+import { FiFileText, FiCalendar, FiToggleRight, FiHash, FiMapPin } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './PublicForm.scss';
 

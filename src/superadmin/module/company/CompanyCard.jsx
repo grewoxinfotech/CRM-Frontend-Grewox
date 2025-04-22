@@ -188,54 +188,54 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         opacity: 0.3
                     }} />
 
-                    <div className="ant-card-extra" style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '12px' 
+                    <div className="ant-card-extra" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
                     }}>
-                       
-                        
-                       <Dropdown
-                        menu={{
-                            items: actionItems,
-                            style: {
-                                borderRadius: '12px',
-                                padding: '8px',
-                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                            }
-                        }}
-                        trigger={['click']}
-                        placement="bottomRight"
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-                            style={{
-                                position: 'absolute',
-                                right: '12px',
-                                top: '12px',
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '10px',
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                backdropFilter: 'blur(8px)',
-                                border: 'none',
-                                color: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transition: 'all 0.2s ease'
+
+
+                        <Dropdown
+                            menu={{
+                                items: actionItems,
+                                style: {
+                                    borderRadius: '12px',
+                                    padding: '8px',
+                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                                }
                             }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                e.currentTarget.style.transform = 'scale(1)';
-                            }}
-                        />
-                    </Dropdown>
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button
+                                type="text"
+                                icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
+                                style={{
+                                    position: 'absolute',
+                                    right: '12px',
+                                    top: '12px',
+                                    width: '32px',
+                                    height: '32px',
+                                    borderRadius: '10px',
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    backdropFilter: 'blur(8px)',
+                                    border: 'none',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                    e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                            />
+                        </Dropdown>
                     </div>
                 </div>
 
@@ -724,7 +724,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                 loading={false}
             />
 
-            <CreateUpgradePlan 
+            <CreateUpgradePlan
                 open={upgradeModalVisible}
                 onCancel={handleUpgradeModalClose}
                 companyId={company.id}

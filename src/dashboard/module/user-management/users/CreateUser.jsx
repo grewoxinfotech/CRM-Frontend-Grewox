@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Button, Select, message, Tooltip, Space } from 'antd';
+import { Modal, Form, Input, Button, Select, message } from 'antd';
 import { FiX, FiUserPlus, FiPlus, FiLock } from 'react-icons/fi';
 import { useCreateUserMutation, useResendOtpMutation, useVerifySignupMutation, useResendSignupOtpMutation } from './services/userApi';
 import { useCreateRoleMutation, useGetRolesQuery } from '../../hrm/role/services/roleApi';
@@ -17,21 +17,23 @@ const CreateUser = ({ visible, onCancel }) => {
     const [isOtpModalVisible, setIsOtpModalVisible] = useState(false);
     const [userFormData, setUserFormData] = useState(null);
     const [otpLoading, setOtpLoading] = useState(false);
-    const [resendOtp] = useResendOtpMutation();
-    const [sessionToken, setSessionToken] = useState(null);
     const [verifySignup] = useVerifySignupMutation();
     const [resendSignupOtp] = useResendSignupOtpMutation();
+
+    React.useEffect(() => {
+        return () => {
+            localStorage.removeItem('verificationToken');
+        };
+    }, []);
 
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-
+            setUserFormData(values);
             const response = await createUser(values).unwrap();
 
             if (response.success) {
-                setUserFormData(values);
-                // Store the session token
-                setSessionToken(response.data.sessionToken);
+                localStorage.setItem('verificationToken', response.data.sessionToken);
                 setIsOtpModalVisible(true);
                 message.success(response.message || 'Please verify your email to complete registration');
             } else {
@@ -47,13 +49,12 @@ const CreateUser = ({ visible, onCancel }) => {
             setOtpLoading(true);
             const otpValue = await otpForm.validateFields();
 
-            // Pass both OTP and token
             const verifyResponse = await verifySignup({
-                otp: otpValue.otp,
-                token: sessionToken // Pass token in the request payload
+                otp: otpValue.otp
             }).unwrap();
 
             if (verifyResponse.success) {
+                localStorage.removeItem('verificationToken');
                 message.success('User verified successfully');
                 setIsOtpModalVisible(false);
                 otpForm.resetFields();
@@ -71,13 +72,10 @@ const CreateUser = ({ visible, onCancel }) => {
 
     const handleResendOtp = async () => {
         try {
-            const response = await resendSignupOtp({
-                token: sessionToken
-            }).unwrap();
+            const response = await resendSignupOtp().unwrap();
 
             if (response.success) {
-                // Update session token with new one from response
-                setSessionToken(response.data.sessionToken);
+                localStorage.setItem('verificationToken', response.data.verificationToken);
                 message.success('OTP resent successfully');
             } else {
                 message.error(response.message || 'Failed to resend OTP');

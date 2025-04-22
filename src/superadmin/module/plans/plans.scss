@@ -12,6 +12,12 @@
     padding: 24px;
     background: $background-color;
 
+
+    :where(.css-dev-only-do-not-override-240cud).ant-card .ant-card-body {
+        padding: 0px !important;
+        border-radius: 0 0 8px 8px;
+    }
+
     @media (max-width: 576px) {
         padding: 16px;
     }
@@ -744,267 +750,521 @@
         }
     }
 
-    .plans-table-card {
-        @include hover-shadow;
-        background: white;
+    .plans-table-wrapper {
+        background: #ffffff;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        padding: 1px;
 
-        @media (max-width: 576px) {
-            border-radius: 8px;
-        }
+        .plans-table {
+            .ant-table {
+                background: transparent;
 
-        .ant-table-wrapper {
-            padding: 0 1px;
-
-            @media (max-width: 576px) {
-                overflow-x: auto;
-            }
-        }
-
-        .ant-table {
-            .ant-table-thead {
-                position: relative;
-                z-index: 2;
-
-                >tr>th {
-                    background: $background-color;
-                    font-weight: 600;
-                    color: $text-color-dark;
-                    padding: 12px 16px;
-                    border-bottom: 2px solid $border-color;
-                    transition: all 0.3s ease;
-                    position: relative;
-
-                    @media (max-width: 576px) {
-                        padding: 10px 12px;
-                        font-size: 13px;
-                    }
-
-                    &:hover {
-                        background: darken($background-color, 5%);
-                    }
-
-                    &.ant-table-column-sort {
-                        background: rgba(24, 144, 255, 0.05);
+                .ant-table-thead {
+                    >tr>th {
+                        background: #f8fafc !important;
+                        border-bottom: 1px solid #e2e8f0 !important;
+                        padding: 16px !important;
+                        font-weight: 600 !important;
+                        color: #1e293b !important;
+                        transition: background-color 0.3s ease !important;
+                        position: relative;
 
                         &:hover {
-                            background: rgba(24, 144, 255, 0.1);
-                        }
-                    }
-
-                    .ant-table-column-sorter {
-                        color: rgba(0, 0, 0, 0.45);
-
-                        &-up.active,
-                        &-down.active {
-                            color: #1677ff;
-                        }
-                    }
-                }
-            }
-
-            .ant-table-tbody {
-                >tr {
-                    >td {
-                        padding: 16px;
-                        border-bottom: 1px solid $border-color;
-                        transition: all 0.3s ease;
-
-                        @media (max-width: 576px) {
-                            padding: 12px;
-                            font-size: 13px;
+                            background: #f1f5f9 !important;
                         }
 
-                        .plan-name {
-                            font-weight: 500;
-                            color: $text-color-dark;
-                        }
-
-                        .price-cell {
+                        // Sort and filter icons wrapper
+                        .ant-table-column-sorters {
+                            padding: 0;
                             display: flex;
                             align-items: center;
-                            gap: 8px;
+                            justify-content: space-between;
 
-                            @media (max-width: 576px) {
-                                gap: 6px;
+                            .ant-table-column-title {
+                                flex: auto;
+                                padding-right: 8px;
                             }
 
-                            .price-icon {
-                                color: #52c41a;
-                                font-size: 16px;
+                            .ant-table-column-sorter {
+                                margin-left: 4px;
+                                color: #94a3b8;
 
-                                @media (max-width: 576px) {
-                                    font-size: 14px;
-                                }
-                            }
-
-                            .plan-price {
-                                font-weight: 600;
-                                color: $primary-color;
-                                display: flex;
-                                align-items: baseline;
-                                gap: 4px;
-
-                                .currency-duration {
-                                    color: $text-color-light;
+                                &-up,
+                                &-down {
                                     font-size: 12px;
-                                    font-weight: normal;
 
-                                    @media (max-width: 576px) {
-                                        font-size: 11px;
+                                    &.active {
+                                        color: #3b82f6;
                                     }
                                 }
                             }
                         }
 
-                        .limits-cell {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 8px;
+                        // Filter trigger button
+                        .ant-table-filter-trigger {
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 6px;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-left: 4px;
+                            color: #94a3b8;
+                            transition: all 0.2s ease;
 
-                            @media (max-width: 576px) {
-                                gap: 6px;
+                            &:hover {
+                                background: rgba(59, 130, 246, 0.08);
+                                color: #3b82f6;
                             }
 
-                            .limits-row {
-                                display: flex;
-                                gap: 8px;
-                                justify-content: flex-start;
-
-                                @media (max-width: 576px) {
-                                    gap: 6px;
-                                    flex-wrap: wrap;
-                                }
-
-                                .ant-tag {
-                                    margin: 0;
-                                    display: inline-flex;
-                                    align-items: center;
-                                    gap: 4px;
-                                    padding: 4px 8px;
-                                    border-radius: 4px;
-                                    font-size: 12px;
-                                    font-weight: 500;
-                                    flex: 1;
-                                    white-space: nowrap;
-
-                                    @media (max-width: 576px) {
-                                        font-size: 11px;
-                                        padding: 3px 6px;
-                                    }
-
-                                    svg {
-                                        font-size: 14px;
-
-                                        @media (max-width: 576px) {
-                                            font-size: 12px;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        .storage-trial-cell {
-                            display: flex;
-                            gap: 8px;
-
-                            @media (max-width: 576px) {
-                                gap: 6px;
-                                flex-wrap: wrap;
-                            }
-
-                            .ant-tag {
-                                margin: 0;
-                                display: inline-flex;
-                                align-items: center;
-                                gap: 4px;
-                                padding: 4px 8px;
-                                border-radius: 4px;
-                                font-size: 12px;
-                                font-weight: 500;
-
-                                @media (max-width: 576px) {
-                                    font-size: 11px;
-                                    padding: 3px 6px;
-                                }
-
-                                svg {
-                                    font-size: 14px;
-
-                                    @media (max-width: 576px) {
-                                        font-size: 12px;
-                                    }
-                                }
-                            }
-                        }
-
-                        .plan-type {
-                            color: #1677ff;
-                            background: rgba(24, 144, 255, 0.08);
-                            padding: 4px 8px;
-                            border-radius: 4px;
-                            font-size: 13px;
-                            display: inline-block;
-
-                            @media (max-width: 576px) {
-                                font-size: 11px;
-                                padding: 3px 6px;
-                            }
-                        }
-
-                        .plan-status {
                             &.active {
-                                color: #52c41a;
-                                background: rgba(82, 196, 26, 0.08);
-                            }
-
-                            &.inactive {
-                                color: #ff4d4f;
-                                background: rgba(255, 77, 79, 0.08);
-                            }
-
-                            display: inline-block;
-                            padding: 4px 8px;
-                            border-radius: 4px;
-                            font-size: 13px;
-
-                            @media (max-width: 576px) {
-                                font-size: 11px;
-                                padding: 3px 6px;
+                                background: rgba(59, 130, 246, 0.1);
+                                color: #3b82f6;
                             }
                         }
                     }
+                }
 
-                    &:hover {
+                .ant-table-tbody {
+                    >tr {
+                        &:hover {
+                            >td {
+                                background: #f7faff;
+                            }
+                        }
+
                         >td {
-                            background: rgba(24, 144, 255, 0.02);
+                            padding: 16px;
+                            border-bottom: 1px solid #edf2f7;
+                            transition: all 0.3s ease;
+
+                            &:first-child {
+                                border-top-left-radius: 8px;
+                                border-bottom-left-radius: 8px;
+                            }
+
+                            &:last-child {
+                                border-top-right-radius: 8px;
+                                border-bottom-right-radius: 8px;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        .ant-pagination {
-            margin: 16px;
-
-            @media (max-width: 576px) {
-                margin: 12px;
-                font-size: 13px;
-            }
-
-            .ant-pagination-item {
-                transition: all 0.3s ease;
-
-                @media (max-width: 576px) {
-                    min-width: 28px;
-                    height: 28px;
-                    line-height: 26px;
+            // Plan Name Cell
+            .plan-name-cell {
+                .plan-name {
+                    font-weight: 500;
+                    color: #2d3748;
                 }
 
-                &:hover,
-                &-active {
-                    transform: translateY(-2px);
+                .highlight-text {
+                    background-color: rgba(66, 153, 225, 0.2);
+                    padding: 2px 4px;
+                    border-radius: 4px;
+                }
+            }
+
+            // Price Cell
+            .price-cell {
+                .price-amount {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+
+                    .currency {
+                        color: #2d3748;
+                        font-size: 15px;
+                        font-weight: 500;
+                        margin-right: 1px;
+                        position: relative;
+                        top: 0.5px;
+                    }
+
+                    .amount {
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #2d3748;
+                        letter-spacing: -0.2px;
+                    }
+                }
+            }
+
+            // Limits Cell
+            .limits-cell {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+
+                .limits-group {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+
+                .limit-tag {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: none;
+                    font-size: 13px;
+
+                    .tag-icon {
+                        font-size: 12px;
+                    }
+
+                    &.users {
+                        background: rgba(66, 153, 225, 0.1);
+                        color: #2b6cb0;
+                    }
+
+                    &.clients {
+                        background: rgba(56, 178, 172, 0.1);
+                        color: #2c7a7b;
+                    }
+
+                    &.vendors {
+                        background: rgba(159, 122, 234, 0.1);
+                        color: #6b46c1;
+                    }
+
+                    &.customers {
+                        background: rgba(236, 72, 153, 0.1);
+                        color: #b83280;
+                    }
+                }
+            }
+
+            // Storage & Trial Cell
+            .storage-trial-cell {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+
+                .feature-tag {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    padding: 4px 8px;
+                    border-radius: 6px;
+                    border: none;
+                    font-size: 13px;
+
+                    .tag-icon {
+                        font-size: 12px;
+                    }
+
+                    &.storage {
+                        background: rgba(246, 173, 85, 0.1);
+                        color: #c05621;
+                    }
+
+                    &.trial {
+                        background: rgba(72, 187, 120, 0.1);
+                        color: #2f855a;
+                    }
+                }
+            }
+
+            // Status Cell
+            .status-tag {
+                border-radius: 20px;
+                padding: 6px 12px;
+                font-size: 13px;
+                font-weight: 500;
+                text-transform: capitalize;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+
+                &::before {
+                    content: '';
+                    display: inline-block;
+                    width: 6px;
+                    height: 6px;
+                    border-radius: 50%;
+                }
+
+                &.active {
+                    background: #ecfdf5;
+                    color: #059669;
+                    border: 1px solid rgba(5, 150, 105, 0.15);
+
+                    &::before {
+                        background-color: #059669;
+                        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+                    }
+                }
+
+                &.inactive {
+                    background: #f3f4f6;
+                    color: #6b7280;
+                    border: 1px solid rgba(107, 114, 128, 0.15);
+
+                    &::before {
+                        background-color: #6b7280;
+                        box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+                    }
+                }
+
+                &:hover {
+                    transform: translateY(-1px);
+                    transition: all 0.2s ease;
+                }
+            }
+
+            // Column header for status
+            .column-header {
+                &.status-header {
+                    justify-content: center;
+
+                    .header-icon {
+                        font-size: 14px;
+                    }
+                }
+            }
+
+            // Status column alignment
+            td.status-column {
+                text-align: center !important;
+            }
+
+            // Action Cell
+            .action-cell {
+                display: flex;
+                justify-content: flex-end;
+                gap: 4px;
+
+                .action-button {
+                    padding: 6px;
+                    height: 32px;
+                    width: 32px;
+                    border-radius: 6px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+
+                    .action-icon {
+                        font-size: 16px;
+                    }
+
+                    &.view {
+                        color: #4299e1;
+
+                        &:hover {
+                            background: rgba(66, 153, 225, 0.1);
+                        }
+                    }
+
+                    &.edit {
+                        color: #48bb78;
+
+                        &:hover {
+                            background: rgba(72, 187, 120, 0.1);
+                        }
+                    }
+
+                    &.delete {
+                        color: #f56565;
+
+                        &:hover {
+                            background: rgba(245, 101, 101, 0.1);
+                        }
+                    }
+                }
+            }
+
+            // Filter Dropdown
+            .custom-filter-dropdown {
+                padding: 16px;
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+                min-width: 280px;
+                border: 1px solid #e2e8f0;
+
+                .filter-input {
+                    margin-bottom: 16px;
+
+                    .ant-input-affix-wrapper {
+                        border-radius: 8px;
+                        padding: 8px 12px;
+                        font-size: 14px;
+                        border: 1px solid #e2e8f0;
+                        background-color: #f8fafc;
+                        transition: all 0.2s ease;
+                        height: 40px;
+
+                        &:hover {
+                            border-color: #94a3b8;
+                            background-color: #ffffff;
+                        }
+
+                        &:focus,
+                        &-focused {
+                            border-color: #3b82f6;
+                            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+                            background-color: #ffffff;
+                        }
+
+                        .ant-input-prefix {
+                            margin-right: 8px;
+
+                            .search-icon {
+                                color: #94a3b8;
+                                font-size: 16px;
+                            }
+                        }
+
+                        .ant-input {
+                            background: transparent;
+                            font-size: 14px;
+
+                            &::placeholder {
+                                color: #94a3b8;
+                            }
+                        }
+
+                        .ant-input-clear-icon {
+                            color: #94a3b8;
+                            font-size: 14px;
+                            opacity: 0.7;
+                            transition: all 0.2s ease;
+
+                            &:hover {
+                                opacity: 1;
+                                color: #64748b;
+                            }
+                        }
+                    }
+                }
+
+                .filter-actions {
+                    display: flex;
+                    gap: 8px;
+
+                    .filter-button {
+                        flex: 1;
+                        height: 38px;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        font-weight: 500;
+                        padding: 0 16px;
+                        transition: all 0.2s ease;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+                        svg {
+                            font-size: 14px;
+                            stroke-width: 2.5;
+                        }
+
+                        &.ant-btn-primary {
+                            background: #3b82f6;
+                            border: none;
+                            color: white;
+
+                            &:hover {
+                                background: #2563eb;
+                            }
+
+                            &:active {
+                                background: #1d4ed8;
+                            }
+                        }
+
+                        &.ant-btn-default {
+                            border: 1px solid #e2e8f0;
+                            color: #64748b;
+                            background: #ffffff;
+
+                            &:hover {
+                                color: #3b82f6;
+                                border-color: #3b82f6;
+                                background: #f8fafc;
+                            }
+
+                            &:active {
+                                color: #1d4ed8;
+                                border-color: #1d4ed8;
+                                background: #f1f5f9;
+                            }
+                        }
+
+                        &:hover {
+                            transform: translateY(-1px);
+                        }
+
+                        &:active {
+                            transform: translateY(0);
+                        }
+                    }
+                }
+            }
+
+            // Column Filter Icon
+            .ant-table-filter-trigger {
+                color: #64748b;
+                transition: all 0.3s ease;
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+
+                &:hover {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #3b82f6;
+                }
+
+                &.active {
+                    color: #3b82f6;
+                    background: rgba(59, 130, 246, 0.1);
+                }
+            }
+
+            // Filter Dropdown Overlay
+            .ant-table-filter-dropdown {
+                padding: 0;
+                border-radius: 12px;
+                overflow: hidden;
+                border: none;
+
+                .ant-dropdown-menu {
+                    border-radius: 12px;
+                    padding: 4px;
+
+                    .ant-dropdown-menu-item {
+                        padding: 8px 12px;
+                        border-radius: 6px;
+                        margin: 2px 0;
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            background: #f1f5f9;
+                        }
+
+                        &-selected {
+                            background: #eff6ff;
+                            color: #3b82f6;
+                            font-weight: 500;
+
+                            &:hover {
+                                background: #e0f2fe;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1403,4 +1663,223 @@
 .ant-input-number:focus {
     border-color: #1890ff !important;
     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+}
+
+// Table Header and Filter Styles
+.ant-table-thead {
+    >tr>th {
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 16px !important;
+        font-weight: 600 !important;
+        color: #1e293b !important;
+        transition: background-color 0.3s ease !important;
+        position: relative;
+
+        &:hover {
+            background: #f1f5f9 !important;
+        }
+
+        // Sort and filter icons wrapper
+        .ant-table-column-sorters {
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            .ant-table-column-title {
+                flex: auto;
+                padding-right: 8px;
+            }
+
+            .ant-table-column-sorter {
+                margin-left: 4px;
+                color: #94a3b8;
+
+                &-up,
+                &-down {
+                    font-size: 12px;
+
+                    &.active {
+                        color: #3b82f6;
+                    }
+                }
+            }
+        }
+
+        // Filter trigger button
+        .ant-table-filter-trigger {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 4px;
+            color: #94a3b8;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: rgba(59, 130, 246, 0.08);
+                color: #3b82f6;
+            }
+
+            &.active {
+                background: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+            }
+        }
+    }
+}
+
+// Filter Dropdown Styles
+.custom-filter-dropdown {
+    padding: 16px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    min-width: 280px;
+    border: 1px solid #e2e8f0;
+
+    .filter-input {
+        margin-bottom: 16px;
+
+        .ant-input-affix-wrapper {
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            border: 1px solid #e2e8f0;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+            height: 40px;
+
+            &:hover {
+                border-color: #94a3b8;
+                background-color: #ffffff;
+            }
+
+            &:focus,
+            &-focused {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+                background-color: #ffffff;
+            }
+
+            .ant-input-prefix {
+                margin-right: 8px;
+
+                .search-icon {
+                    color: #94a3b8;
+                    font-size: 16px;
+                }
+            }
+
+            .ant-input {
+                background: transparent;
+                font-size: 14px;
+
+                &::placeholder {
+                    color: #94a3b8;
+                }
+            }
+
+            .ant-input-clear-icon {
+                color: #94a3b8;
+                font-size: 14px;
+                opacity: 0.7;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    opacity: 1;
+                    color: #64748b;
+                }
+            }
+        }
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 8px;
+
+        .filter-button {
+            flex: 1;
+            height: 38px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 0 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+            svg {
+                font-size: 14px;
+                stroke-width: 2.5;
+            }
+
+            &.ant-btn-primary {
+                background: #3b82f6;
+                border: none;
+                color: white;
+
+                &:hover {
+                    background: #2563eb;
+                }
+
+                &:active {
+                    background: #1d4ed8;
+                }
+            }
+
+            &.ant-btn-default {
+                border: 1px solid #e2e8f0;
+                color: #64748b;
+                background: #ffffff;
+
+                &:hover {
+                    color: #3b82f6;
+                    border-color: #3b82f6;
+                    background: #f8fafc;
+                }
+
+                &:active {
+                    color: #1d4ed8;
+                    border-color: #1d4ed8;
+                    background: #f1f5f9;
+                }
+            }
+
+            &:hover {
+                transform: translateY(-1px);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+    }
+}
+
+// Column Header
+.column-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #1e293b;
+
+    .header-icon {
+        color: #64748b;
+        font-size: 16px;
+        position: relative;
+        top: -1px;
+    }
+
+    span {
+        font-size: 14px;
+        letter-spacing: -0.1px;
+    }
 }

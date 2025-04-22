@@ -7,10 +7,12 @@ export const customFormApi = createApi({
     tagTypes: ["CustomForms", "FormSubmissions"],
     endpoints: (builder) => ({
         getCustomForms: builder.query({
-            query: () => ({
-                url: "/custom-forms",
-                method: "GET"
-            }),
+            query: () => {
+                return {
+                    url: `/custom-forms`,
+                    method: "GET"
+                };
+            },
             transformResponse: (response) => ({
                 data: response.data || [],
                 success: response.success,
@@ -19,30 +21,41 @@ export const customFormApi = createApi({
             providesTags: ["CustomForms"],
         }),
         createCustomForm: builder.mutation({
-            query: (data) => ({
-                url: "/custom-forms",
-                method: "POST",
-                body: data,
-            }),
+            query: (data) => {
+                return {
+                    url: `/custom-forms`,
+                    method: "POST",
+                    body: data,
+                };
+            },
             invalidatesTags: ["CustomForms"],
         }),
         updateCustomForm: builder.mutation({
-            query: ({ id, data }) => ({
-                url: `/custom-forms/${id}`,
-                method: "PUT",
-                body: data,
-            }),
+            query: ({ id, data }) => {
+                return {
+                    url: `/custom-forms/${id}`,
+                    method: "PUT",
+                    body: data,
+                };
+            },
             invalidatesTags: ["CustomForms"],
         }),
         deleteCustomForm: builder.mutation({
-            query: (id) => ({
-                url: `/custom-forms/${id}`,
-                method: "DELETE",
-            }),
+            query: (id) => {
+                return {
+                    url: `/custom-forms/${id}`,
+                    method: "DELETE",
+                };
+            },
             invalidatesTags: ["CustomForms"],
         }),
         getCustomFormById: builder.query({
-            query: (id) => `/custom-forms/${id}`,
+            query: (id) => {
+                return {
+                    url: `/custom-forms/${id}`,
+                    method: "GET",
+                };
+            },
             transformResponse: (response) => ({
                 data: response.data,
                 success: response.success,
