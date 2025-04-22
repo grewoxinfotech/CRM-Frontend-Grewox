@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Typography, Tag, Space } from 'antd';
 import {
     FiUser,
@@ -18,6 +18,7 @@ import {
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from '../services/companyAccountApi';
+import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 
 const { Title, Text } = Typography;
 
@@ -25,7 +26,9 @@ const CompanyDetails = () => {
     const { accountId } = useParams();
     const navigate = useNavigate();
     const { data: companyAccountsResponse, isLoading } = useGetCompanyAccountsQuery();
+    const { data: usersData } = useGetUsersQuery();
     const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
+    const [ownerName, setOwnerName] = useState('');
 
     const companies = Array.isArray(companyAccountsResponse?.data)
         ? companyAccountsResponse.data
@@ -35,10 +38,18 @@ const CompanyDetails = () => {
 
     const company = companies.find(company => company.id === accountId);
 
+    useEffect(() => {
+        if (company?.account_owner && usersData?.data) {
+            const owner = usersData.data.find(user => user.id === company.account_owner);
+            if (owner) {
+                setOwnerName(owner.name || `${owner.firstName} ${owner.lastName}`.trim());
+            }
+        }
+    }, [company?.account_owner, usersData]);
 
     if (!company) return <div>Company not found</div>;
 
-  return (
+    return (
         <div className="overview-content">
             <Card className="info-card contact-card">
                 <div className="profile-header">
@@ -50,7 +61,7 @@ const CompanyDetails = () => {
                             <h2 className="company-name">{company?.company_name || 'Company Name'}</h2>
                             <div className="contact-name">
                                 <FiUser className="icon" />
-                                {company?.account_owner}
+                                {ownerName || 'No Owner Assigned'}
                             </div>
                         </div>
                     </div>

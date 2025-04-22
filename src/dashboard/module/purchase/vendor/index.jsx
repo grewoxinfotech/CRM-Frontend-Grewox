@@ -43,9 +43,6 @@ const Vendor = () => {
         setIsEditing(true);
     };
 
-    const handleView = (record) => {
-        console.log('View vendor:', record);
-    };
 
     const handleDelete = async (record) => {
         try {
@@ -247,7 +244,7 @@ const Vendor = () => {
                 <VendorList
                     onEdit={handleEdit}
                     onDelete={handleDelete}
-                    onView={handleView}
+                    // onView={handleView}
                     loading={isLoading}
                     searchText={searchText}
                 />

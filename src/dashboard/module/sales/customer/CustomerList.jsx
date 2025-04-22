@@ -85,19 +85,28 @@ const CustomerList = ({
         key: "view",
         icon: <FiEye />,
         label: "View Details",
-        onClick: () => onView?.(record),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          onView?.(record);
+        },
       },
       {
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
-        onClick: () => onEdit?.(record),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          onEdit?.(record);
+        },
       },
       {
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
-        onClick: () => handleDelete(record.id),
+        onClick: (e) => {
+          e.domEvent.stopPropagation();
+          handleDelete(record.id);
+        },
         danger: true,
       },
     ],
@@ -155,7 +164,7 @@ const CustomerList = ({
       render: (email) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiMail style={{ color: "#1890ff" }} />
-          <a href={`mailto:${email}`}>{email}</a>
+          <a href={`mailto:${email}`} onClick={(e) => e.stopPropagation()}>{email}</a>
         </div>
       ),
     },
@@ -167,7 +176,7 @@ const CustomerList = ({
       render: (contact) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiPhone style={{ color: "#1890ff" }} />
-          <a href={`tel:${contact}`}>{contact}</a>
+          <a href={`tel:${contact}`} onClick={(e) => e.stopPropagation()}>{contact}</a>
         </div>
       ),
     },
@@ -185,19 +194,24 @@ const CustomerList = ({
       width: 80,
       align: "center",
       render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="customer-actions-dropdown"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
-          />
-        </Dropdown>
+        <div onClick={e => e.stopPropagation()}>
+          <Dropdown
+            menu={getDropdownItems(record)}
+            trigger={["click"]}
+            placement="bottomRight"
+            overlayClassName="customer-actions-dropdown"
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical />}
+              className="action-dropdown-button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];
@@ -214,7 +228,13 @@ const CustomerList = ({
           showTotal: (total) => `Total ${total} items`,
         }}
         onRow={(record) => ({
-          onClick: () => onCustomerRevenueClick(record),
+          onClick: (e) => {
+            if (!e.target.closest('.ant-dropdown-menu') && 
+                !e.target.closest('.action-dropdown-button') &&
+                !e.target.closest('a')) {
+              onCustomerRevenueClick(record);
+            }
+          },
           style: { cursor: 'pointer' }
         })}
         className="customer-table"

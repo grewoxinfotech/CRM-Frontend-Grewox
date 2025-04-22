@@ -30,12 +30,6 @@ const VendorList = ({ onEdit, onDelete, onView, searchText }) => {
     const getDropdownItems = (record) => ({
         items: [
             {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => onView(record),
-            },
-            {
                 key: 'edit',
                 icon: <FiEdit2 />,
                 label: 'Edit',

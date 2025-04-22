@@ -22,6 +22,7 @@ const ViewBilling = ({ data }) => {
   const [companyName, setCompanyName] = useState('Grewox CRM');
   const [companyEmail, setCompanyEmail] = useState('contact@grewox.com');
   const [companyWebsite, setCompanyWebsite] = useState('www.grewox.com');
+  const [merchantUpiId, setMerchantUpiId] = useState('');
 
   // Get company settings from general settings
   useEffect(() => {
@@ -33,19 +34,20 @@ const ViewBilling = ({ data }) => {
         setCompanyLogo(settings.companylogo);
       }
       
-      // Set company name if available - note the correct property name is companyName
+      // Set company name if available
       if (settings.companyName) {
         setCompanyName(settings.companyName);
       } 
       
-      // Set company email if available
-      if (settings.email) {
-        setCompanyEmail(settings.email);
+      // Set merchant name as email if available
+      if (settings.merchant_name) {
+        setCompanyEmail(settings.merchant_name);
       }
       
-      // Set company website if available
-      if (settings.website) {
-        setCompanyWebsite(settings.website);
+      // Set merchant UPI ID if available
+      if (settings.merchant_upi_id) {
+        setMerchantUpiId(settings.merchant_upi_id);
+        setCompanyWebsite(settings.merchant_upi_id);
       }
     } 
   }, [settingsData]);
@@ -77,6 +79,18 @@ const ViewBilling = ({ data }) => {
   // Get payment URL for QR code
   const getPaymentUrl = () => {
     if (!data) return '';
+    
+    // If there's a UPI ID, create a UPI payment URL
+    if (merchantUpiId) {
+      const amount = Number(data?.total || 0);
+      const tr = data?.billNumber || '';
+      const pn = companyName || 'Merchant';
+      
+      // Create UPI URL with parameters
+      return `upi://pay?pa=${merchantUpiId}&pn=${encodeURIComponent(pn)}&am=${amount}&tr=${tr}&tn=Bill%20Payment`;
+    }
+    
+    // Fallback to bill link if no UPI ID
     return data.upiLink || `https://grewox.com/bill/${data.billNumber}`;
   };
 

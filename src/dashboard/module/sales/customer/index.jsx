@@ -82,6 +82,12 @@ const Customer = () => {
     navigate(`/dashboard/crm/customers/${customer.id}`);
   };
 
+  const handleCustomerRevenueClick = (customer) => {
+    navigate(`/dashboard/sales/revenue`, { 
+      state: { selectedCustomer: customer } 
+    });
+  };
+
   const handleDelete = (record) => {
     Modal.confirm({
       title: (
@@ -298,6 +304,7 @@ const Customer = () => {
           onDelete={handleDelete}
           onView={handleView}
           onCustomerClick={handleCustomerClick}
+          onCustomerRevenueClick={handleCustomerRevenueClick}
           searchText={searchText}
         />
       </Card>
