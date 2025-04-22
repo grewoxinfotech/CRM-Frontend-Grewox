@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Table, Card, Button, Space, Popconfirm, message, Typography, Tag, Tooltip, Avatar, Dropdown } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -7,72 +7,12 @@ import {
     useGetCustomFormByIdQuery,
 } from './services/customFormApi';
 import dayjs from 'dayjs';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiArrowLeft, FiUserPlus, FiCheck } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiArrowLeft, FiUserPlus, FiCheck, FiChevronRight, FiChevronLeft, FiCalendar, FiUser, FiPhone, FiBriefcase, FiAward, FiMail, FiMapPin, FiClock, FiClipboard, FiFileText } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import './CustomForm.scss';
 import { useGetLeadsQuery } from '../lead/services/LeadApi';
 
 const { Title, Text } = Typography;
-
-// Column width configurations
-const COLUMN_WIDTHS = {
-    companyName: 180,
-    industryType: 150,
-    website: 150,
-    contactPerson: 120,
-    emailAddress: 200,
-    currentCrmSystem: 150,
-    requirements: 300,
-    default: 150
-};
-
-// Modern scrollbar styles
-const scrollbarStyles = {
-    '.custom-table-container': {
-        width: '100%',
-        overflow: 'auto',
-        // For Webkit browsers (Chrome, Safari)
-        '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-        },
-        '&::-webkit-scrollbar-track': {
-            background: '#f1f1f1',
-            borderRadius: '4px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-            background: '#888',
-            borderRadius: '4px',
-            '&:hover': {
-                background: '#555',
-            },
-        },
-        // For Firefox
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#888 #f1f1f1',
-    },
-    '.ant-table-body': {
-        '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-        },
-        '&::-webkit-scrollbar-track': {
-            background: '#f1f1f1',
-            borderRadius: '4px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-            background: '#888',
-            borderRadius: '4px',
-            '&:hover': {
-                background: '#555',
-            },
-        },
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#888 #f1f1f1',
-    }
-};
-
-// Text truncation component
 const TruncatedText = ({ text, maxLength = 100 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -114,6 +54,8 @@ const FormSubmissions = () => {
     const { data: formData } = useGetCustomFormByIdQuery(formId);
     const [deleteSubmission] = useDeleteFormSubmissionMutation();
     const { data: leads } = useGetLeadsQuery();
+    const tableRef = useRef(null);
+    const [scrollPosition, setScrollPosition] = useState(0);
 
     const handleDelete = async (id) => {
         try {
@@ -146,7 +88,7 @@ const FormSubmissions = () => {
     };
 
     const renderValue = (value) => {
-        if (value === null || value === undefined) return '-';
+        if (value === null || value === undefined || value === '') return '-';
         if (typeof value === 'boolean') {
             return (
                 <Tag color={value ? 'green' : 'red'}>
@@ -155,7 +97,7 @@ const FormSubmissions = () => {
             );
         }
         if (Array.isArray(value)) {
-            return value.join(', ');
+            return value.length > 0 ? value.join(', ') : 'None';
         }
         if (typeof value === 'object') {
             return JSON.stringify(value);
@@ -221,101 +163,174 @@ const FormSubmissions = () => {
         }
     };
 
-    const getColumnWidth = (fieldName) => COLUMN_WIDTHS[fieldName] || COLUMN_WIDTHS.default;
+    const getFieldIcon = (fieldName) => {
+        const lowerField = fieldName.toLowerCase();
+        if (lowerField.includes('schedule') || lowerField.includes('date') || lowerField.includes('time')) return <FiCalendar />;
+        if (lowerField.includes('name') || lowerField.includes('participant')) return <FiUser />;
+        if (lowerField.includes('phone') || lowerField.includes('contact')) return <FiPhone />;
+        if (lowerField.includes('experience') || lowerField.includes('level')) return <FiBriefcase />;
+        if (lowerField.includes('certificate')) return <FiAward />;
+        if (lowerField.includes('email')) return <FiMail />;
+        if (lowerField.includes('address') || lowerField.includes('location')) return <FiMapPin />;
+        if (lowerField.includes('duration')) return <FiClock />;
+        if (lowerField.includes('notes') || lowerField.includes('additional')) return <FiClipboard />;
+        return <FiFileText />;
+    };
+
+    const getFieldColor = (fieldName) => {
+        const lowerField = fieldName.toLowerCase();
+        if (lowerField.includes('schedule') || lowerField.includes('date') || lowerField.includes('time')) return '#2196f3';
+        if (lowerField.includes('name') || lowerField.includes('participant')) return '#4caf50';
+        if (lowerField.includes('phone') || lowerField.includes('contact')) return '#ff9800';
+        if (lowerField.includes('experience') || lowerField.includes('level')) return '#9c27b0';
+        if (lowerField.includes('certificate')) return '#f44336';
+        if (lowerField.includes('email')) return '#00bcd4';
+        if (lowerField.includes('address') || lowerField.includes('location')) return '#795548';
+        if (lowerField.includes('duration')) return '#607d8b';
+        if (lowerField.includes('notes') || lowerField.includes('additional')) return '#ff5722';
+        return '#3f51b5';
+    };
+
+    const handleScroll = (e) => {
+        const element = e.target;
+        const scrollWidth = element.scrollWidth - element.clientWidth;
+        const scrolled = (element.scrollLeft / scrollWidth) * 100;
+        setScrollPosition(scrolled);
+    };
+
+    const renderCellContent = (value, field) => {
+        const content = renderValue(value);
+        const getTooltipContent = () => {
+            if (React.isValidElement(content)) {
+                return value === null || value === undefined ? '-' : String(value);
+            }
+            return typeof content === 'string' ? content : String(value);
+        };
+
+        return (
+            <Tooltip title={getTooltipContent()} placement="topLeft">
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    height: '32px',
+                }}>
+                    <div style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%'
+                    }}>
+                        {content}
+                    </div>
+                </div>
+            </Tooltip>
+        );
+    };
 
     const columns = useMemo(() => {
         if (!submissionsData?.data?.[0]) return [];
 
         const firstSubmission = parseSubmissionData(submissionsData.data[0]);
-        const fields = Object.keys(firstSubmission.submission_data || {});
+        const allFields = Object.keys(firstSubmission.submission_data || {});
 
-        const dynamicColumns = fields.map((field, index) => ({
+        // Status column
+        const statusColumn = {
+            title: 'Status',
+            key: 'status',
+            width: 120,
+            render: (_, record) => {
+                const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
+                return (
+                    <Tag color={isConverted ? 'success' : 'default'} style={{
+                        margin: 0,
+                        borderRadius: '16px',
+                        padding: '4px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        border: 'none',
+                        background: isConverted ? '#e6f4ff' : '#f5f5f5',
+                        color: isConverted ? '#1890ff' : '#666',
+                        height: '24px'
+                    }}>
+                        {isConverted ? (
+                            <>
+                                <FiCheck style={{ fontSize: '14px' }} />
+                                Converted
+                            </>
+                        ) : 'Not Converted'}
+                    </Tag>
+                );
+            }
+        };
+
+        // First 5 fields
+        const visibleFields = allFields.slice(0, 5);
+        const dataColumns = visibleFields.map((field) => ({
             title: formatFieldName(field),
             dataIndex: ['submission_data', field],
             key: field,
-            fixed: index === 0 ? 'left' : false,
-            width: getColumnWidth(field),
-            ellipsis: false,
+            width: 200,
             render: (_, record) => {
                 const parsed = parseSubmissionData(record);
                 const value = parsed.submission_data?.[field];
-                return renderValue(value);
-            },
-            sorter: (a, b) => {
-                const parsedA = parseSubmissionData(a);
-                const parsedB = parseSubmissionData(b);
-                const valueA = parsedA.submission_data?.[field];
-                const valueB = parsedB.submission_data?.[field];
-
-                if (typeof valueA === 'number' && typeof valueB === 'number') {
-                    return valueA - valueB;
-                }
-                if (typeof valueA === 'boolean' && typeof valueB === 'boolean') {
-                    return valueA === valueB ? 0 : valueA ? -1 : 1;
-                }
-                return String(valueA || '').localeCompare(String(valueB || ''));
+                return renderCellContent(value, field);
             }
         }));
 
-        return [
-            ...dynamicColumns,
-            {
-                title: 'Status',
-                key: 'status',
-                width: 120,
-                render: (_, record) => {
-                    const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
-                    return (
-                        <Tag color={isConverted ? 'success' : 'default'} style={{
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '12px'
-                        }}>
-                            {isConverted ? (
-                                <>
-                                    <FiCheck style={{ fontSize: '14px' }} />
-                                    Converted to Lead
-                                </>
-                            ) : 'Not Converted'}
-                        </Tag>
-                    );
-                }
-            },
-            {
-                title: 'Submission Date',
-                dataIndex: 'createdAt',
-                key: 'createdAt',
-                width: 120,
-                render: (date) => dayjs(date).format('MMM DD, YYYY')
-            },
-            {
-                title: 'Action',
-                key: 'actions',
-                fixed: 'right',
-                width: 80,
-                align: 'center',
-                render: (_, record) => {
-                    const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
-                    return (
-                        <Dropdown
-                            menu={getDropdownItems(record)}
-                            trigger={['click']}
-                            placement="bottomRight"
-                            disabled={isConverted}
-                        >
-                            <Button
-                                type="text"
-                                icon={<FiMoreVertical />}
-                                onClick={(e) => e.preventDefault()}
-                                style={{ color: isConverted ? '#8c8c8c' : undefined }}
-                            />
-                        </Dropdown>
-                    );
-                },
+        // Remaining fields
+        const remainingFields = allFields.slice(5);
+        const remainingColumns = remainingFields.map((field) => ({
+            title: formatFieldName(field),
+            dataIndex: ['submission_data', field],
+            key: field,
+            width: 200,
+            render: (_, record) => {
+                const parsed = parseSubmissionData(record);
+                const value = parsed.submission_data?.[field];
+                return renderCellContent(value, field);
             }
+        }));
+
+        // Action column
+        const actionColumn = {
+            title: (
+                <div style={{
+                    padding: '0 12px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: '#262626'
+                }}>
+                    Action
+                </div>
+            ),
+            key: 'actions',
+            width: 100,
+            fixed: 'right',
+            render: (_, record) => (
+                <div className="action-cell">
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
+                            className="action-button"
+                        />
+                    </Dropdown>
+                </div>
+            )
+        };
+
+        return [
+            actionColumn,
+            statusColumn,
+            ...dataColumns,
+            ...remainingColumns
         ];
     }, [submissionsData?.data, leads?.data]);
 
@@ -385,76 +400,152 @@ const FormSubmissions = () => {
                     </Button>
                 </Space>
 
-                <div className="table-wrapper">
+                <div className="table-container">
                     <style>
                         {`
-                            .table-wrapper {
-                                background: #fff;
-                                border-radius: 8px;
+                            .table-container {
+                                position: relative;
+                                border-radius: 12px;
+                                overflow: hidden;
                             }
-                            .ant-table {
-                                border-radius: 8px;
+
+                            .ant-table-wrapper {
+                                overflow: hidden;
                             }
-                            .ant-table-thead > tr > th {
-                                background: #fafafa;
-                                padding: 12px 16px;
-                                font-weight: 500;
+
+                            .ant-table-body {
+                                overflow-x: auto !important;
+                                overflow-y: auto !important;
+                                max-height: 600px;
+                                margin-bottom: 8px;
                             }
-                            .ant-table-tbody > tr > td {
-                                padding: 12px 16px;
-                                line-height: 1.5;
-                            }
-                            .ant-table-tbody > tr:hover > td {
-                                background: #fafafa;
-                            }
-                            .ant-table-cell {
-                                font-size: 14px;
-                            }
-                            .ant-table-thead > tr > th {
-                                font-size: 14px;
-                                font-weight: 500;
-                                color: #1f2937;
-                            }
-                            .custom-table-container::-webkit-scrollbar,
+
+                            /* Custom Scrollbar Styles */
                             .ant-table-body::-webkit-scrollbar {
-                                width: 6px;
-                                height: 6px;
+                                width: 8px;
+                                height: 8px;
                             }
-                            .custom-table-container::-webkit-scrollbar-thumb,
+
                             .ant-table-body::-webkit-scrollbar-thumb {
-                                background: #d1d5db;
-                                border-radius: 3px;
+                                background: #1890ff;
+                                border-radius: 4px;
+                                border: 2px solid #f1f1f1;
                             }
-                            .custom-table-container::-webkit-scrollbar-track,
+
                             .ant-table-body::-webkit-scrollbar-track {
-                                background: #f3f4f6;
-                                border-radius: 3px;
+                                background: #f1f1f1;
+                                border-radius: 4px;
                             }
-                            .ant-pagination {
-                                margin: 16px 0;
+
+                            /* Firefox scrollbar */
+                            .ant-table-body {
+                                scrollbar-width: thin;
+                                scrollbar-color: #1890ff #f1f1f1;
                             }
-                            .ant-table-container table > thead > tr:first-child th:first-child {
-                                border-top-left-radius: 8px;
+
+                            .action-cell {
+                                display: flex;
+                                justify-content: flex-start;
+                                align-items: center;
+                                height: 48px;
+                                padding: 0 12px !important;
                             }
-                            .ant-table-container table > thead > tr:first-child th:last-child {
-                                border-top-right-radius: 8px;
+                            
+                            .action-button {
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 6px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: #595959;
+                                background: #f5f5f5;
+                                border: none;
+                                opacity: 1 !important;
+                            }
+
+                            .action-button:hover {
+                                background: #e8e8e8;
+                            }
+
+                            /* Remove hover effects */
+                            .ant-table-tbody > tr:hover .action-button {
+                                opacity: 1 !important;
+                                color: #595959 !important;
+                                background: #f5f5f5 !important;
+                            }
+
+                            .ant-table-tbody > tr:hover .action-button:hover {
+                                background: #e8e8e8 !important;
+                            }
+
+                            /* Rest of the styles */
+                            .ant-table-wrapper .ant-table-tbody > tr {
+                                position: relative;
+                            }
+
+                            .ant-table-wrapper .ant-table-tbody > tr::after {
+                                content: '';
+                                position: absolute;
+                                left: 0;
+                                top: 0;
+                                height: 100%;
+                                width: 0;
+                                background: #1890ff;
+                                opacity: 0;
+                                transition: all 0.3s ease;
+                                z-index: 0;
+                            }
+
+                            .ant-table-wrapper .ant-table-tbody > tr:hover::after {
+                                width: 100%;
+                                opacity: 0.1;
+                            }
+
+                            .ant-table-wrapper .ant-table-tbody > tr > td {
+                                position: relative;
+                                z-index: 1;
+                                background: none !important;
+                                border-bottom: 1px solid #f0f0f0;
+                            }
+
+                            /* Style action column header */
+                            .ant-table-thead th[class*="action"] {
+                                background: #fafafa !important;
+                                border-bottom: 1px solid #f0f0f0 !important;
+                            }
+
+                            /* Fix table header alignment */
+                            .ant-table-header {
+                                margin-right: 0 !important;
+                                margin-bottom: 0 !important;
+                            }
+
+                            /* Add space for scrollbar */
+                            .ant-table-container {
+                                padding-bottom: 8px;
                             }
                         `}
                     </style>
+
                     <Table
+                        ref={tableRef}
                         columns={columns}
                         dataSource={processedData}
                         loading={isLoading}
                         rowKey="id"
-                        scroll={{ x: 'max-content' }}
+                        scroll={{
+                            x: 1500,
+                            y: 600
+                        }}
                         pagination={{
                             pageSize: 10,
                             showSizeChanger: true,
                             showTotal: (total) => `Total ${total} items`,
-                            position: ['bottomRight'],
-                            size: 'default'
+                            position: ['bottomRight']
                         }}
                         size="middle"
+                        onScroll={handleScroll}
                     />
                 </div>
             </Space>

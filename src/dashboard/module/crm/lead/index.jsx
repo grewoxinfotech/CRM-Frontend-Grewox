@@ -73,14 +73,10 @@ const Lead = () => {
         inquiry_id: location.state.formSubmissionId
       };
 
-      // Get the first available status if not provided
-      if (statusesData?.data?.length > 0) {
-        formData.status = statusesData.data[0].id;
-      }
-
       // Get the first available currency if not provided
       if (currencies?.length > 0) {
-        formData.currency = currencies[0].id;
+        const inrCurrency = currencies.find(c => c.currencyCode === 'INR');
+        formData.currency = inrCurrency?.id || currencies[0].id;
       }
 
       setInitialFormData(formData);
@@ -92,7 +88,7 @@ const Lead = () => {
         state: {}
       });
     }
-  }, [location.state, navigate, statusesData, currencies]);
+  }, [location.state, navigate, currencies]);
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -218,7 +214,7 @@ const Lead = () => {
       head: [Object.keys(data[0])],
       body: data.map((item) => Object.values(item)),
       margin: { top: 20 },
-      styles: { 
+      styles: {
         fontSize: 8,
         cellPadding: 3,
         overflow: 'linebreak'

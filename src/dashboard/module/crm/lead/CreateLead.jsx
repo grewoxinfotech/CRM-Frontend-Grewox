@@ -158,21 +158,24 @@ const CreateLead = ({
 
   // Handle initial values when form opens
   useEffect(() => {
-    if (open && initialValues) {
-      console.log('Setting initial form values:', initialValues); // Debug log
-      form.setFieldsValue(initialValues);
+    if (open) {
+      const { defaultCurrency } = findIndianDefaults(currencies, countries);
 
-      // Double check if inquiry_id is set
-      const formValues = form.getFieldsValue();
-      console.log('Form values after setting:', formValues); // Debug log
+      // Only set initial values if they exist
+      if (initialValues) {
+        form.setFieldsValue({
+          ...initialValues,
+          currency: defaultCurrency // Always set INR as default currency
+        });
+      } else {
+        // If no initial values, just set the currency
+        form.setFieldValue('currency', defaultCurrency);
+      }
     }
-  }, [open, initialValues, form]);
+  }, [open, initialValues, form, currencies, countries]);
 
   const handleSubmit = async (values) => {
     try {
-      console.log('Form values on submit:', values); // Debug log
-      console.log('Initial values reference:', initialValues); // Debug log
-
       // Get the selected country's phone code
       const selectedCountry = countries.find(c => c.id === values.phoneCode);
 
@@ -183,7 +186,7 @@ const CreateLead = ({
 
       const formData = {
         ...values,
-        inquiry_id: values.inquiry_id || initialValues?.inquiry_id || null, // Ensure inquiry_id is preserved
+        inquiry_id: values.inquiry_id || initialValues?.inquiry_id || null,
         telephone: formattedPhone,
         leadStage: values.stage,
         lead_members: {
@@ -191,12 +194,10 @@ const CreateLead = ({
         },
         assigned: values.assigned || [],
         files: values.files || [],
-        status: values.status || 'active',
-        source: values.source || 'website',
         pipeline: values.pipeline
       };
 
-      console.log('Submitting lead with data:', formData); // Debug log
+      console.log('Submitting lead with data:', formData);
 
       const response = await createLead(formData).unwrap();
       message.success("Lead created successfully");
@@ -623,12 +624,15 @@ const CreateLead = ({
           <Form.Item
             name="status"
             label={<span style={formItemStyle}>Status</span>}
+            initialValue={undefined}
           >
             <Select
               placeholder="Select status"
               style={selectStyle}
               popupClassName="custom-select-dropdown"
               listHeight={100}
+              allowClear
+              defaultValue={undefined}
               dropdownStyle={{
                 maxHeight: '120px',
                 overflowY: 'auto',

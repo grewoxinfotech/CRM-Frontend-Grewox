@@ -15,11 +15,11 @@ $border-radius: 6px;
 
 // Common hover effect mixin
 @mixin hover-shadow {
-    transition: all 0.3s ease;
+  transition: all 0.3s ease;
 
-    &:hover {
-        transform: translateY(-2px);
-    }
+  &:hover {
+    transform: translateY(-2px);
+  }
 }
 
 // View Invoice Styles
@@ -85,7 +85,8 @@ $border-radius: 6px;
       justify-content: space-between;
       gap: 32px;
 
-      .bill-to, .bill-info {
+      .bill-to,
+      .bill-info {
         flex: 1;
       }
 
@@ -174,7 +175,8 @@ $border-radius: 6px;
       border-collapse: collapse;
       margin-top: 16px;
 
-      th, td {
+      th,
+      td {
         padding: 12px 16px;
         text-align: left;
         border-bottom: 1px solid #f0f0f0;
@@ -343,537 +345,536 @@ $border-radius: 6px;
 }
 
 .invoice-page {
-    padding: 24px;
+  padding: 24px;
 
-    .page-breadcrumb {
-        margin-bottom: 16px;
+  .page-breadcrumb {
+    margin-bottom: 16px;
 
-        .ant-breadcrumb {
+    .ant-breadcrumb {
+      font-size: 14px;
+
+      .ant-breadcrumb-link {
+        color: $text-color-light;
+        transition: all 0.3s ease;
+
+        a {
+          color: $text-color-light;
+          display: inline-flex;
+          align-items: center;
+
+          &:hover {
+            color: #1677ff;
+          }
+        }
+
+        &:last-child {
+          color: $text-color-dark;
+          font-weight: 500;
+        }
+      }
+
+      .ant-breadcrumb-separator {
+        margin: 0 8px;
+        color: $text-color-light;
+      }
+    }
+  }
+
+  .page-header {
+    @include hover-shadow;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    background: white;
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+    .page-title {
+      text-align: left;
+      margin-bottom: 0;
+      flex-shrink: 0;
+
+      h2 {
+        color: $text-color-dark;
+        margin-bottom: 4px;
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .ant-typography-secondary {
+        color: $text-color-light;
+        font-size: 15px;
+        display: block;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+      width: 100%;
+      max-width: 800px;
+
+      .search-filter-group {
+        max-width: 360px;
+        min-width: 200px;
+
+        .ant-input-affix-wrapper {
+          border-radius: 40px;
+          height: 40px;
+          padding: 4px 16px;
+          transition: all 0.3s ease;
+          border: 1px solid $border-color;
+          width: 100%;
+
+          .anticon {
+            color: $text-color-light;
+            margin-right: 8px;
+            font-size: 16px;
+          }
+
+          .ant-input {
             font-size: 14px;
-
-            .ant-breadcrumb-link {
-                color: $text-color-light;
-                transition: all 0.3s ease;
-
-                a {
-                    color: $text-color-light;
-                    display: inline-flex;
-                    align-items: center;
-
-                    &:hover {
-                        color: #1677ff;
-                    }
-                }
-
-                &:last-child {
-                    color: $text-color-dark;
-                    font-weight: 500;
-                }
-            }
-
-            .ant-breadcrumb-separator {
-                margin: 0 8px;
-                color: $text-color-light;
-            }
-        }
-    }
-
-    .page-header {
-        @include hover-shadow;
-        margin-bottom: 24px;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 24px;
-        background: white;
-        padding: 24px 32px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        .page-title {
-            text-align: left;
-            margin-bottom: 0;
-            flex-shrink: 0;
-
-            h2 {
-                color: $text-color-dark;
-                margin-bottom: 4px;
-                font-size: 28px;
-                font-weight: 600;
-                line-height: 1.2;
-            }
-
-            .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
-                display: block;
-            }
-        }
-
-        .header-actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 16px;
-            width: 100%;
-            max-width: 800px;
-
-            .search-filter-group {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
-
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
-
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
-                    }
-
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
-
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
-                        }
-                    }
-
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                    }
-                }
-            }
-
-            .action-buttons {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex-shrink: 0;
-
-                .export-button,
-                .add-button {
-                    height: 40px;
-                    padding: 0 20px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    transition: all 0.3s ease;
-
-                    svg {
-                        font-size: 16px;
-                    }
-                }
-
-                .export-button {
-                    border: 1px solid $border-color;
-                    background: white;
-
-                    &:hover {
-                        color: #1677ff;
-                        border-color: #1677ff;
-                        transform: translateY(-2px);
-                    }
-                }
-
-                .add-button {
-                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                    border: none;
-                    color: white;
-
-                    &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                        transform: translateY(-2px);
-                    }
-                }
-            }
-        }
-    }
-
-    .invoice-table-card {
-        @include hover-shadow;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
-
-        .ant-card-body {
+            background: transparent;
+            border: none;
             padding: 0;
+            margin: 0 4px;
+
+            &::placeholder {
+              color: rgba($text-color, 0.45);
+            }
+          }
+
+          &:hover,
+          &:focus,
+          &-focused {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+          }
+        }
+      }
+
+      .action-buttons {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+
+        .export-button,
+        .add-button {
+          height: 40px;
+          padding: 0 20px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border-radius: 8px;
+          font-weight: 500;
+          transition: all 0.3s ease;
+
+          svg {
+            font-size: 16px;
+          }
         }
 
-        .ant-table-wrapper {
-            .ant-table {
-                background: transparent;
+        .export-button {
+          border: 1px solid $border-color;
+          background: white;
 
-                .ant-table-thead > tr > th {
-                    background: #fafafa;
-                    font-weight: 600;
-                    color: $text-color-dark;
-                    padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
-
-                    &::before {
-                        display: none;
-                    }
-                }
-
-                .ant-table-tbody > tr > td {
-                    padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
-
-                    &:last-child {
-                        padding-right: 24px;
-                    }
-                }
-
-                .ant-table-row {
-                    transition: all 0.3s ease;
-
-                    &:hover {
-                        background: $primary-light;
-                    }
-                }
-            }
-
-            .ant-table-pagination {
-                margin: 16px 24px;
-            }
+          &:hover {
+            color: #1677ff;
+            border-color: #1677ff;
+            transform: translateY(-2px);
+          }
         }
+
+        .add-button {
+          background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+          border: none;
+          color: white;
+
+          &:hover {
+            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+            transform: translateY(-2px);
+          }
+        }
+      }
     }
+  }
+
+  .invoice-table-card {
+    @include hover-shadow;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+    .ant-card-body {
+      padding: 0;
+    }
+
+    .ant-table-wrapper {
+      .ant-table {
+        background: transparent;
+
+        .ant-table-thead>tr>th {
+          background: #fafafa;
+          font-weight: 600;
+          color: $text-color-dark;
+          padding: 16px 24px;
+          border-bottom: 1px solid $border-color;
+
+          &::before {
+            display: none;
+          }
+        }
+
+        .ant-table-tbody>tr>td {
+          padding: 16px 24px;
+          border-bottom: 1px solid $border-color;
+
+          &:last-child {
+            padding-right: 24px;
+          }
+        }
+
+        .ant-table-row {
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: $primary-light;
+          }
+        }
+      }
+
+      .ant-table-pagination {
+        margin: 16px 24px;
+      }
+    }
+  }
 }
 
 // Form Elements
 .form-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 500;
-    font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 14px;
 
-    .icon {
-        color: #1890ff;
-    }
+  .icon {
+    color: #1890ff;
+  }
 
-    .required {
-        color: #ff4d4f;
-    }
+  .required {
+    color: #ff4d4f;
+  }
 }
 
 // Items & Services Section
 .table-style-container {
-    background: white;
-    border-radius: 12px;
-    // padding: 24px;
+  background: white;
+  border-radius: 12px;
+  // padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      color: #1f2937;
 
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            color: #1f2937;
-
-            .header-icon {
-                color: #1890ff;
-            }
-        }
-
-        .tax-switch {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+      .header-icon {
+        color: #1890ff;
+      }
     }
 
-    .proposal-items-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
+    .tax-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
 
-        th,
-        td {
-            padding: 16px;
-            text-align: left;
-            border-bottom: 1px solid #f0f0f0;
-        }
+  .proposal-items-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
 
-        th {
-            background: #fafafa;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        tr:hover td {
-            background: #fafafa;
-        }
-
-        .item-input {
-            width: 100%;
-            border-radius: 8px;
-        }
-
-        .quantity-input,
-        .price-input {
-            width: 100%;
-            border-radius: 8px;
-        }
-
-        .item-discount-input {
-            width: 100px;
-            border-radius: 8px;
-        }
-
-        .delete-btn {
-            color: #ff4d4f;
-
-            &:hover {
-                background: #fff1f0;
-            }
-        }
+    th,
+    td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
     }
 
-    .add-item-container {
-        margin-top: 16px;
-        text-align: center;
-
-        .add-item-btn {
-            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-            border: none;
-            border-radius: 8px;
-            height: 40px;
-            padding: 0 24px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-
-            &:hover {
-                background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-            }
-        }
+    th {
+      background: #fafafa;
+      font-weight: 600;
+      color: #1f2937;
     }
+
+    tr:hover td {
+      background: #fafafa;
+    }
+
+    .item-input {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .quantity-input,
+    .price-input {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .item-discount-input {
+      width: 100px;
+      border-radius: 8px;
+    }
+
+    .delete-btn {
+      color: #ff4d4f;
+
+      &:hover {
+        background: #fff1f0;
+      }
+    }
+  }
+
+  .add-item-container {
+    margin-top: 16px;
+    text-align: center;
+
+    .add-item-btn {
+      background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+      border: none;
+      border-radius: 8px;
+      height: 40px;
+      padding: 0 24px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      &:hover {
+        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+      }
+    }
+  }
 }
 
 // Summary Card
 .summary-card {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
-    .summary-content {
-        .ant-divider {
-            margin: 16px 0;
-        }
+  .summary-content {
+    .ant-divider {
+      margin: 16px 0;
     }
+  }
 }
 
 // Form Footer
 .form-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
 
-    .cancel-btn {
-        height: 40px;
-        padding: 0 24px;
-        border-radius: 8px;
-        font-weight: 500;
+  .cancel-btn {
+    height: 40px;
+    padding: 0 24px;
+    border-radius: 8px;
+    font-weight: 500;
+  }
+
+  .create-btn {
+    height: 40px;
+    padding: 0 24px;
+    border-radius: 8px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    border: none;
+
+    &:hover {
+      background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
     }
-
-    .create-btn {
-        height: 40px;
-        padding: 0 24px;
-        border-radius: 8px;
-        font-weight: 500;
-        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-        border: none;
-
-        &:hover {
-            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-        }
-    }
+  }
 }
 
 // Responsive styles
 @media (max-width: 768px) {
-    .invoice-page {
-        .page-header {
-            flex-direction: column;
-            padding: 16px;
+  .invoice-page {
+    .page-header {
+      flex-direction: column;
+      padding: 16px;
 
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-
-                .search-filter-group {
-                    max-width: 100%;
-                }
-
-                .action-buttons {
-                    width: 100%;
-                    justify-content: space-between;
-                }
-            }
-        }
-
-        .invoice-table-card {
-            .ant-table {
-
-                .ant-table-thead>tr>th,
-                .ant-table-tbody>tr>td {
-                    padding: 12px 8px;
-                }
-            }
-        }
-    }
-
-    .summary-card {
-        .summary-content {
-            width: 100%;
-        }
-    }
-
-    .form-footer {
+      .header-actions {
         flex-direction: column;
+        width: 100%;
 
-        .cancel-btn,
-        .create-btn {
-            width: 100%;
+        .search-filter-group {
+          max-width: 100%;
         }
+
+        .action-buttons {
+          width: 100%;
+          justify-content: space-between;
+        }
+      }
     }
+
+    .invoice-table-card {
+      .ant-table {
+
+        .ant-table-thead>tr>th,
+        .ant-table-tbody>tr>td {
+          padding: 12px 8px;
+        }
+      }
+    }
+  }
+
+  .summary-card {
+    .summary-content {
+      width: 100%;
+    }
+  }
+
+  .form-footer {
+    flex-direction: column;
+
+    .cancel-btn,
+    .create-btn {
+      width: 100%;
+    }
+  }
 }
 
 // Product selector styles
 .ant-select-dropdown {
-    padding: 8px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
-    .ant-select-item {
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-bottom: 4px;
+  .ant-select-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
 
-        &:hover {
-            background-color: #f0f7ff;
-        }
-
-        &-option-selected {
-            background-color: #e6f4ff;
-            font-weight: 500;
-        }
+    &:hover {
+      background-color: #f0f7ff;
     }
+
+    &-option-selected {
+      background-color: #e6f4ff;
+      font-weight: 500;
+    }
+  }
 }
 
 // Form item styles
 .ant-form-item {
-    margin-bottom: 24px;
+  margin-bottom: 24px;
 
-    .ant-form-item-label {
-        padding-bottom: 8px;
+  .ant-form-item-label {
+    padding-bottom: 8px;
 
-        label {
-            height: 24px;
-            display: flex;
-            align-items: center;
-            color: #374151;
-        }
+    label {
+      height: 24px;
+      display: flex;
+      align-items: center;
+      color: #374151;
+    }
+  }
+
+  .ant-select-selector {
+    height: 48px !important;
+    padding: 0 16px !important;
+    border-radius: 10px !important;
+    border: 1px solid #e5e7eb !important;
+    background-color: #f8fafc !important;
+
+    .ant-select-selection-search-input {
+      height: 46px !important;
     }
 
-    .ant-select-selector {
-        height: 48px !important;
-        padding: 0 16px !important;
-        border-radius: 10px !important;
-        border: 1px solid #e5e7eb !important;
-        background-color: #f8fafc !important;
-
-        .ant-select-selection-search-input {
-            height: 46px !important;
-        }
-
-        // .ant-select-selection-item {
-        //     // line-height: 46px !important;
-        // }
-    }
+    // .ant-select-selection-item {
+    //     // line-height: 46px !important;
+    // }
+  }
 }
 
 // Table styles update
 .table-style-container {
-    .proposal-items-table {
-        th {
-            background: #f8fafc;
-            padding: 12px 16px;
-            font-size: 14px;
-            color: #4b5563;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        td {
-            padding: 16px;
-            vertical-align: top;
-
-            .ant-form-item {
-                margin-bottom: 0;
-            }
-
-            .ant-input,
-            .ant-input-number,
-            .ant-select-selector {
-                height: 40px !important;
-                border-radius: 8px !important;
-                background-color: #f8fafc !important;
-            }
-        }
+  .proposal-items-table {
+    th {
+      background: #f8fafc;
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #4b5563;
+      border-bottom: 1px solid #e5e7eb;
     }
+
+    td {
+      padding: 16px;
+      vertical-align: top;
+
+      .ant-form-item {
+        margin-bottom: 0;
+      }
+
+      .ant-input,
+      .ant-input-number,
+      .ant-select-selector {
+        height: 40px !important;
+        border-radius: 8px !important;
+        background-color: #f8fafc !important;
+      }
+    }
+  }
 }
 
 // Summary card update
 .summary-card {
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
 
-    .summary-content {
-        .ant-input-number {
-            background-color: white !important;
-        }
+  .summary-content {
+    .ant-input-number {
+      background-color: white !important;
     }
+  }
 }
 
 // Form footer update
 .form-footer {
-    padding-top: 24px;
-    border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
 
-    .cancel-btn,
-    .create-btn {
-        min-width: 120px;
-        height: 44px;
-    }
+  .cancel-btn,
+  .create-btn {
+    min-width: 120px;
+    height: 44px;
+  }
 }

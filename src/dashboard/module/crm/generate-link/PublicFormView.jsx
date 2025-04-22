@@ -1,13 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Typography, Switch, InputNumber, message, Spin, Space } from 'antd';
+import { Form, Input, Button, Card, Typography, Switch, InputNumber, message, Spin, Space, Select, Checkbox, Radio } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGetCustomFormByIdQuery, useSubmitFormResponseMutation } from './services/customFormApi';
-import { FiFileText, FiCalendar, FiToggleRight, FiHash, FiMapPin } from 'react-icons/fi';
+import {
+    FiUser,
+    FiMail,
+    FiPhone,
+    FiFileText,
+    FiCalendar,
+    FiToggleRight,
+    FiHash,
+    FiMapPin,
+    FiList,
+    FiCheck,
+    FiMessageSquare,
+    FiBookmark,
+    FiGrid,
+    FiLayers,
+    FiClock,
+    FiAlertCircle
+} from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './PublicForm.scss';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
+const { Option } = Select;
+
+const FormExpired = () => (
+    <div className="form-status-container">
+        <div className="status-icon">
+            <FiAlertCircle />
+        </div>
+        <Title level={2}>Form Has Expired</Title>
+        <Text>This form is no longer accepting responses.</Text>
+        <Text type="secondary">Please contact the organizer for more information.</Text>
+    </div>
+);
+
+const FormCountdown = ({ startDate }) => {
+    const [timeLeft, setTimeLeft] = useState(null);
+
+    useEffect(() => {
+        const calculateTimeLeft = () => {
+            const now = dayjs();
+            const start = dayjs(startDate);
+            const diff = start.diff(now);
+
+            if (diff <= 0) {
+                return null;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            return { days, hours, minutes, seconds };
+        };
+
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+
+        setTimeLeft(calculateTimeLeft());
+
+        return () => clearInterval(timer);
+    }, [startDate]);
+
+    if (!timeLeft) return null;
+
+    return (
+        <div className="form-status-container upcoming">
+            <div className="status-icon">
+                <FiClock />
+            </div>
+            <Title level={2}>Registration Opens Soon</Title>
+            <div className="countdown-timer">
+                <div className="countdown-item">
+                    <span className="number">{timeLeft.days}</span>
+                    <span className="label">Days</span>
+                </div>
+                <div className="countdown-item">
+                    <span className="number">{timeLeft.hours}</span>
+                    <span className="label">Hours</span>
+                </div>
+                <div className="countdown-item">
+                    <span className="number">{timeLeft.minutes}</span>
+                    <span className="label">Minutes</span>
+                </div>
+                <div className="countdown-item">
+                    <span className="number">{timeLeft.seconds}</span>
+                    <span className="label">Seconds</span>
+                </div>
+            </div>
+            <Text>The registration will open on {dayjs(startDate).format('MMM DD, YYYY [at] hh:mm A')}</Text>
+        </div>
+    );
+};
 
 const PublicFormView = () => {
     const { formId } = useParams();
@@ -16,7 +106,10 @@ const PublicFormView = () => {
     const { data: formData, isLoading, error } = useGetCustomFormByIdQuery(formId);
     const [submitFormResponse, { isLoading: isSubmitting }] = useSubmitFormResponseMutation();
     const [fields, setFields] = useState({});
+    const [submitting, setSubmitting] = useState(false);
+    const [checkboxStates, setCheckboxStates] = useState({});
 
+    // Initialize checkbox states
     useEffect(() => {
         if (formData?.data) {
             try {
@@ -24,25 +117,137 @@ const PublicFormView = () => {
                     ? JSON.parse(formData.data.fields)
                     : formData.data.fields;
                 setFields(parsedFields);
+
+                // Initialize checkbox states
+                const initialCheckboxStates = {};
+                Object.entries(parsedFields).forEach(([fieldName, field]) => {
+                    if (field.type === 'checkbox' && field.options) {
+                        initialCheckboxStates[fieldName] = {};
+                        field.options.forEach(option => {
+                            initialCheckboxStates[fieldName][option] = false;
+                        });
+                    }
+                });
+                setCheckboxStates(initialCheckboxStates);
+                form.setFieldsValue(initialCheckboxStates);
             } catch (error) {
                 console.error('Error parsing fields:', error);
                 message.error('Error loading form fields');
             }
         }
-    }, [formData]);
+    }, [formData, form]);
 
-    const getFieldIcon = (type) => {
+    const handleCheckboxChange = (fieldName, option, checked) => {
+        setCheckboxStates(prev => {
+            const newState = {
+                ...prev,
+                [fieldName]: {
+                    ...prev[fieldName],
+                    [option]: checked
+                }
+            };
+
+            // Update form values
+            form.setFieldsValue({
+                [fieldName]: newState[fieldName]
+            });
+
+            return newState;
+        });
+    };
+
+    const handleSubmit = async (values) => {
+        try {
+            setSubmitting(true);
+            const submissionData = { ...values };
+
+            // Ensure checkbox values are included
+            Object.entries(checkboxStates).forEach(([fieldName, fieldValue]) => {
+                submissionData[fieldName] = fieldValue;
+            });
+
+            const response = await submitFormResponse({
+                formId,
+                data: { submission_data: submissionData }
+            }).unwrap();
+
+            if (response.success) {
+                message.success('Form submitted successfully');
+                form.resetFields();
+                setCheckboxStates({});
+            }
+        } catch (error) {
+            console.error('Form submission error:', error);
+            message.error(error.data?.message || 'Failed to submit form');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Add form validation debugging
+    const onFieldsChange = (changedFields, allFields) => {
+        console.log('Field changed:', changedFields);
+        console.log('Current form values:', form.getFieldsValue());
+    };
+
+    if (isLoading) {
+        return (
+            <div className="public-form-loading">
+                <Spin size="large" />
+                <Text>Loading form...</Text>
+            </div>
+        );
+    }
+
+    if (error?.error?.code === 'BAD_REQUEST' && error?.error?.message === 'Form has expired') {
+        return <FormExpired />;
+    }
+
+    if (error) {
+        return (
+            <div className="public-form-error">
+                <Title level={3}>Unable to load form</Title>
+                <Text type="secondary">Please try again later or contact support.</Text>
+            </div>
+        );
+    }
+
+    const now = dayjs();
+    const startDate = dayjs(formData?.data?.start_date);
+    const endDate = dayjs(formData?.data?.end_date);
+
+    if (now.isBefore(startDate)) {
+        return <FormCountdown startDate={startDate} />;
+    }
+
+    if (now.isAfter(endDate)) {
+        return <FormExpired />;
+    }
+
+    const getFieldPrefix = (type) => {
+        const iconProps = { className: 'field-icon' };
         switch (type) {
-            case 'string':
-                return <FiFileText className="field-icon" />;
-            case 'number':
-                return <FiHash className="field-icon" />;
             case 'text':
-                return <FiFileText className="field-icon" />;
+            case 'name':
+                return <FiUser {...iconProps} />;
+            case 'message':
+                return <FiMessageSquare {...iconProps} />;
+            case 'email':
+                return <FiMail {...iconProps} />;
+            case 'phone':
+                return <FiPhone {...iconProps} />;
+            case 'select':
+            case 'multiselect':
+                return <FiGrid {...iconProps} />;
+            case 'checkbox':
+            case 'radio':
+                return <FiLayers {...iconProps} />;
+            case 'file':
+                return <FiFileText {...iconProps} />;
             case 'boolean':
-                return <FiToggleRight className="field-icon" />;
+                return <FiToggleRight {...iconProps} />;
             default:
-                return <FiFileText className="field-icon" />;
+                return <FiBookmark {...iconProps} />;
         }
     };
 
@@ -52,21 +257,21 @@ const PublicFormView = () => {
         const commonProps = {
             key: fieldName,
             name: fieldName,
-            label: (
-                <Space>
-                    {getFieldIcon(field.type)}
-                    <span>{label}</span>
-                </Space>
-            ),
+            label: label,
             rules: [{ required: field.required, message: `Please enter ${label}` }],
             className: 'custom-form-item'
         };
 
         switch (field.type) {
-            case 'string':
+            case 'text':
+            case 'name':
                 return (
                     <Form.Item {...commonProps}>
-                        <Input className="custom-input" placeholder={`Enter ${label.toLowerCase()}`} />
+                        <Input
+                            className="custom-input"
+                            placeholder={`Enter ${label.toLowerCase()}`}
+                            prefix={getFieldPrefix(field.type)}
+                        />
                     </Form.Item>
                 );
             case 'number':
@@ -76,17 +281,102 @@ const PublicFormView = () => {
                             className="custom-input"
                             style={{ width: '100%' }}
                             placeholder={`Enter ${label.toLowerCase()}`}
+                            prefix={<FiHash className="field-icon" />}
+                            min={field.validation?.min}
+                            max={field.validation?.max}
                         />
                     </Form.Item>
                 );
-            case 'text':
+            case 'textarea':
                 return (
                     <Form.Item {...commonProps}>
-                        <TextArea
+                        <Input.TextArea
                             className="custom-textarea"
                             rows={4}
                             placeholder={`Enter ${label.toLowerCase()}`}
+                            prefix={<FiMessageSquare className="field-icon" />}
                         />
+                    </Form.Item>
+                );
+            case 'email':
+                return (
+                    <Form.Item {...commonProps} rules={[...commonProps.rules, { type: 'email', message: 'Please enter a valid email' }]}>
+                        <Input
+                            className="custom-input"
+                            placeholder="Enter email address"
+                            prefix={getFieldPrefix('email')}
+                        />
+                    </Form.Item>
+                );
+            case 'phone':
+                return (
+                    <Form.Item {...commonProps}>
+                        <Input
+                            className="custom-input"
+                            placeholder="Enter phone number"
+                            prefix={getFieldPrefix('phone')}
+                        />
+                    </Form.Item>
+                );
+            case 'select':
+                return (
+                    <Form.Item {...commonProps}>
+                        <Select
+                            className="custom-select"
+                            placeholder={`Select ${label.toLowerCase()}`}
+                            suffixIcon={getFieldPrefix('select')}
+                            options={field.options?.map(option => ({
+                                label: option,
+                                value: option
+                            }))}
+                        />
+                    </Form.Item>
+                );
+            case 'multiselect':
+                return (
+                    <Form.Item {...commonProps}>
+                        <Select
+                            mode="multiple"
+                            className="custom-select"
+                            placeholder={`Select ${label.toLowerCase()}`}
+                            suffixIcon={getFieldPrefix('multiselect')}
+                            options={field.options?.map(option => ({
+                                label: option,
+                                value: option
+                            }))}
+                        />
+                    </Form.Item>
+                );
+            case 'checkbox':
+                return (
+                    <Form.Item {...commonProps}>
+                        <div className="checkbox-group-wrapper">
+                            {getFieldPrefix('checkbox')}
+                            <div className="custom-checkbox-group" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {field.options?.map((option) => (
+                                    <Checkbox
+                                        key={option}
+                                        checked={checkboxStates[fieldName]?.[option] || false}
+                                        onChange={(e) => handleCheckboxChange(fieldName, option, e.target.checked)}
+                                    >
+                                        {option}
+                                    </Checkbox>
+                                ))}
+                            </div>
+                        </div>
+                    </Form.Item>
+                );
+            case 'radio':
+                return (
+                    <Form.Item {...commonProps}>
+                        <div className="radio-group-wrapper">
+                            {getFieldPrefix('radio')}
+                            <Radio.Group className="custom-radio-group">
+                                {field.options?.map(option => (
+                                    <Radio key={option} value={option}>{option}</Radio>
+                                ))}
+                            </Radio.Group>
+                        </div>
                     </Form.Item>
                 );
             case 'boolean':
@@ -99,68 +389,6 @@ const PublicFormView = () => {
                 return null;
         }
     };
-
-    const handleSubmit = async (values) => {
-        try {
-            const response = await submitFormResponse({
-                formId,
-                data: values
-            }).unwrap();
-
-            if (response.success) {
-                message.success({
-                    content: response.message || 'Form submitted successfully',
-                    duration: 5
-                });
-                form.resetFields();
-                setTimeout(() => {
-                    navigate('/form-submitted', {
-                        state: {
-                            formTitle: formData?.data?.title,
-                            submissionId: response.data?.id
-                        }
-                    });
-                }, 2000);
-            } else {
-                message.error(response.message || 'Failed to submit form');
-            }
-        } catch (error) {
-            console.error('Form submission error:', error);
-            message.error(error.data?.message || 'Failed to submit form. Please try again later.');
-        }
-    };
-
-    const isFormExpired = () => {
-        if (!formData?.data?.end_date) return false;
-        return new Date() > new Date(formData.data.end_date);
-    };
-
-    if (isFormExpired()) {
-        return (
-            <div className="public-form-error">
-                <Title level={3}>Form Expired</Title>
-                <Text type="secondary">This form is no longer accepting submissions.</Text>
-            </div>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <div className="public-form-loading">
-                <Spin size="large" />
-                <Text>Loading form...</Text>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="public-form-error">
-                <Title level={3}>Unable to load form</Title>
-                <Text type="secondary">Please try again later or contact support.</Text>
-            </div>
-        );
-    }
 
     return (
         <div className="public-form-container">
@@ -201,6 +429,7 @@ const PublicFormView = () => {
                     form={form}
                     layout="vertical"
                     onFinish={handleSubmit}
+                    onFieldsChange={onFieldsChange}
                     className="custom-form"
                     validateTrigger={['onBlur', 'onChange']}
                 >
@@ -214,7 +443,6 @@ const PublicFormView = () => {
                             htmlType="submit"
                             size="large"
                             loading={isSubmitting}
-                            disabled={isFormExpired()}
                         >
                             {isSubmitting ? 'Submitting...' : 'Submit Form'}
                         </Button>

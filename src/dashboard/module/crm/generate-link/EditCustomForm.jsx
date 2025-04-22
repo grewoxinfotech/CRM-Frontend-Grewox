@@ -10,6 +10,8 @@ import {
     Switch,
     Divider,
     DatePicker,
+    TimePicker,
+    InputNumber,
 } from "antd";
 import {
     FiFileText,
@@ -18,6 +20,11 @@ import {
     FiMinus,
     FiCalendar,
     FiMapPin,
+    FiMail,
+    FiPhone,
+    FiLink,
+    FiCheckSquare,
+    FiList,
 } from "react-icons/fi";
 import "./CustomForm.scss";
 import dayjs from 'dayjs';
@@ -28,10 +35,21 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const fieldTypes = [
-    { value: 'string', label: 'Text Input' },
-    { value: 'number', label: 'Number Input' },
-    { value: 'boolean', label: 'Yes/No (Boolean)' },
-    { value: 'text', label: 'Long Text' }
+    { value: 'text', label: 'Short Text', icon: <FiFileText />, validations: ['minLength', 'maxLength'] },
+    { value: 'textarea', label: 'Long Text', icon: <FiFileText />, validations: ['minLength', 'maxLength'] },
+    { value: 'number', label: 'Number', icon: <FiList />, validations: ['min', 'max'] },
+    { value: 'phone', label: 'Phone', icon: <FiPhone />, validations: ['minLength'] },
+    { value: 'email', label: 'Email', icon: <FiMail /> },
+    { value: 'url', label: 'URL', icon: <FiLink /> },
+    { value: 'date', label: 'Date', icon: <FiCalendar />, validations: ['minDate', 'maxDate'] },
+    { value: 'time', label: 'Time', icon: <FiCalendar /> },
+    { value: 'datetime', label: 'Date & Time', icon: <FiCalendar />, validations: ['minDate', 'maxDate'] },
+    { value: 'boolean', label: 'Yes/No', icon: <FiCheckSquare /> },
+    { value: 'select', label: 'Single Select', icon: <FiList />, hasOptions: true },
+    { value: 'multiselect', label: 'Multi Select', icon: <FiList />, hasOptions: true, validations: ['minSelect', 'maxSelect'] },
+    { value: 'radio', label: 'Radio Buttons', icon: <FiList />, hasOptions: true },
+    { value: 'checkbox', label: 'Checkboxes', icon: <FiList />, hasOptions: true, validations: ['minSelect', 'maxSelect'] },
+    { value: 'password', label: 'Password', icon: <FiFileText />, validations: ['minLength', 'maxLength'] },
 ];
 
 const EditCustomForm = ({ open, onCancel, onSubmit, loading, initialValues }) => {
@@ -39,53 +57,61 @@ const EditCustomForm = ({ open, onCancel, onSubmit, loading, initialValues }) =>
 
     useEffect(() => {
         if (initialValues) {
-            // Parse fields if they're a string
-            let fields = initialValues.fields;
-            if (typeof fields === 'string') {
-                try {
-                    fields = JSON.parse(fields);
-                } catch (error) {
-                    console.error('Error parsing fields:', error);
-                    fields = {};
-                }
-            }
+            // Parse the fields JSON string if it exists
+            const parsedFields = initialValues.fields ? JSON.parse(initialValues.fields) : {};
 
-            // Convert fields object to array format for form
-            const fieldsArray = Object.entries(fields).map(([name, details]) => ({
+            // Transform fields object to array format with validation rules
+            const fieldsArray = Object.entries(parsedFields).map(([name, config]) => ({
                 name,
-                type: details.type,
-                required: details.required
+                type: config.type,
+                required: config.required,
+                validation: config.validation || {},
+                options: config.options ? config.options.join(', ') : undefined,
             }));
 
-            // Set form values including event dates
             form.setFieldsValue({
                 ...initialValues,
                 fields: fieldsArray,
-                event_dates: initialValues.start_date && initialValues.end_date ? [
-                    dayjs(initialValues.start_date),
-                    dayjs(initialValues.end_date)
-                ] : undefined
+                event_dates: [dayjs(initialValues.start_date), dayjs(initialValues.end_date)],
             });
         }
     }, [initialValues, form]);
 
     const handleSubmit = async (values) => {
         try {
-            // Transform fields array to object format
+            // Transform fields array to object format with validation rules
             const fieldsObject = values.fields.reduce((acc, field) => {
-                acc[field.name] = {
+                const fieldType = fieldTypes.find(t => t.value === field.type);
+                const fieldConfig = {
                     type: field.type,
-                    required: field.required
+                    required: field.required,
                 };
+
+                // Add validation rules if present
+                if (field.validation) {
+                    fieldConfig.validation = {};
+                    Object.entries(field.validation).forEach(([key, value]) => {
+                        if (value !== undefined && value !== '') {
+                            fieldConfig.validation[key] = value;
+                        }
+                    });
+                }
+
+                // Add options for select/radio/checkbox fields
+                if (fieldType?.hasOptions && field.options) {
+                    fieldConfig.options = field.options.split(',').map(opt => opt.trim());
+                }
+
+                acc[field.name] = fieldConfig;
                 return acc;
             }, {});
 
             const formData = {
                 ...values,
-                id: initialValues.id,
-                fields: fieldsObject,
+                fields: JSON.stringify(fieldsObject), // Stringify the fields object
                 start_date: values.event_dates[0].toISOString(),
                 end_date: values.event_dates[1].toISOString(),
+                id: initialValues.id, // Preserve the ID
             };
             delete formData.event_dates;
 
@@ -326,72 +352,156 @@ const EditCustomForm = ({ open, onCancel, onSubmit, loading, initialValues }) =>
 
                 <Divider style={{ margin: "24px 0" }}>Form Fields</Divider>
 
-                <Form.List
-                    name="fields"
-                    initialValue={[{ name: '', type: 'string', required: false }]}
-                >
+                <Form.List name="fields">
                     {(fields, { add, remove }) => (
                         <>
-                            {fields.map(({ key, name, ...restField }) => (
-                                <Space key={key} style={{ display: 'flex', marginBottom: 8, width: '100%' }} align="baseline">
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'name']}
-                                        rules={[{ required: true, message: 'Missing field name' }]}
-                                        style={{ flex: 1 }}
-                                    >
-                                        <Input
-                                            placeholder="Field name"
-                                            style={{
-                                                borderRadius: "10px",
-                                                padding: "8px 16px",
-                                                backgroundColor: "#f8fafc",
-                                                border: "1px solid #e6e8eb",
-                                            }}
-                                        />
-                                    </Form.Item>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'type']}
-                                        rules={[{ required: true, message: 'Missing field type' }]}
-                                    >
-                                        <Select
-                                            style={{
-                                                width: 130,
-                                                borderRadius: "10px",
-                                            }}
-                                            placeholder="Field type"
-                                        >
-                                            {fieldTypes.map(type => (
-                                                <Option key={type.value} value={type.value}>
-                                                    {type.label}
-                                                </Option>
-                                            ))}
-                                        </Select>
-                                    </Form.Item>
-                                    <Form.Item
-                                        {...restField}
-                                        name={[name, 'required']}
-                                        valuePropName="checked"
-                                        initialValue={false}
-                                    >
-                                        <Switch checkedChildren="Required" unCheckedChildren="Optional" />
-                                    </Form.Item>
-                                    <Button
-                                        type="text"
-                                        icon={<FiMinus />}
-                                        onClick={() => remove(name)}
-                                        style={{
-                                            color: "#ff4d4f",
-                                            borderRadius: "8px",
-                                        }}
-                                    />
-                                </Space>
-                            ))}
+                            {fields.map(({ key, name, ...restField }) => {
+                                const selectedType = form.getFieldValue(['fields', name, 'type']) || 'text';
+                                const fieldType = fieldTypes.find(t => t.value === selectedType);
+
+                                return (
+                                    <div key={key} className="field-config-container">
+                                        <Space style={{ display: 'flex', marginBottom: 8, width: '100%' }} align="baseline">
+                                            <Form.Item
+                                                {...restField}
+                                                name={[name, 'name']}
+                                                rules={[{ required: true, message: 'Missing field name' }]}
+                                                style={{ flex: 1 }}
+                                            >
+                                                <Input
+                                                    placeholder="Field name"
+                                                    style={{
+                                                        borderRadius: "10px",
+                                                        padding: "8px 16px",
+                                                        backgroundColor: "#f8fafc",
+                                                        border: "1px solid #e6e8eb",
+                                                    }}
+                                                />
+                                            </Form.Item>
+                                            <Form.Item
+                                                {...restField}
+                                                name={[name, 'type']}
+                                                rules={[{ required: true, message: 'Missing field type' }]}
+                                                initialValue="text"
+                                            >
+                                                <Select
+                                                    style={{
+                                                        width: 180,
+                                                        borderRadius: "10px",
+                                                    }}
+                                                    placeholder="Field type"
+                                                    onChange={(value) => {
+                                                        // Clear validation values when type changes
+                                                        const currentValues = form.getFieldValue(['fields', name, 'validation']) || {};
+                                                        Object.keys(currentValues).forEach(key => {
+                                                            form.setFieldValue(['fields', name, 'validation', key], undefined);
+                                                        });
+                                                        // Clear options when type changes
+                                                        form.setFieldValue(['fields', name, 'options'], undefined);
+
+                                                        // Force re-render by updating the form
+                                                        form.setFieldsValue({
+                                                            fields: form.getFieldValue('fields')
+                                                        });
+                                                    }}
+                                                >
+                                                    {fieldTypes.map(type => (
+                                                        <Option key={type.value} value={type.value}>
+                                                            <Space>
+                                                                {type.icon}
+                                                                {type.label}
+                                                            </Space>
+                                                        </Option>
+                                                    ))}
+                                                </Select>
+                                            </Form.Item>
+                                            <Form.Item
+                                                {...restField}
+                                                name={[name, 'required']}
+                                                valuePropName="checked"
+                                                initialValue={false}
+                                            >
+                                                <Switch checkedChildren="Required" unCheckedChildren="Optional" />
+                                            </Form.Item>
+                                            <Button
+                                                type="text"
+                                                icon={<FiMinus />}
+                                                onClick={() => remove(name)}
+                                                style={{
+                                                    color: "#ff4d4f",
+                                                    borderRadius: "8px",
+                                                }}
+                                            />
+                                        </Space>
+
+                                        {selectedType && fieldType && fieldType.validations && fieldType.validations.length > 0 && (
+                                            <div className="field-validation-container" style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f8fafc', borderRadius: '10px' }}>
+                                                {fieldType.hasOptions && (
+                                                    <Form.Item
+                                                        {...restField}
+                                                        name={[name, 'options']}
+                                                        label={
+                                                            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                                                                <FiList style={{ marginRight: "8px", color: "#1890ff" }} />
+                                                                Options (comma-separated)
+                                                            </span>
+                                                        }
+                                                        rules={[{ required: true, message: 'Please enter options' }]}
+                                                    >
+                                                        <Input
+                                                            placeholder="Option 1, Option 2, Option 3"
+                                                            style={{
+                                                                borderRadius: "8px",
+                                                                backgroundColor: "#ffffff",
+                                                            }}
+                                                        />
+                                                    </Form.Item>
+                                                )}
+
+                                                {fieldType.validations?.map(validation => (
+                                                    <Form.Item
+                                                        key={validation}
+                                                        {...restField}
+                                                        name={[name, 'validation', validation]}
+                                                        label={
+                                                            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                                                                <FiFileText style={{ marginRight: "8px", color: "#1890ff" }} />
+                                                                {validation.charAt(0).toUpperCase() + validation.slice(1)}
+                                                            </span>
+                                                        }
+                                                    >
+                                                        {validation === 'minDate' || validation === 'maxDate' ? (
+                                                            <DatePicker
+                                                                style={{
+                                                                    width: '100%',
+                                                                    borderRadius: "8px",
+                                                                    backgroundColor: "#ffffff",
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <InputNumber
+                                                                placeholder={`Enter ${validation}`}
+                                                                min={0}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    borderRadius: "8px",
+                                                                    backgroundColor: "#ffffff",
+                                                                }}
+                                                            />
+                                                        )}
+                                                    </Form.Item>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                             <Form.Item>
                                 <Button
                                     type="dashed"
-                                    onClick={() => add()}
+                                    onClick={() => {
+                                        add({ name: '', type: 'text', required: false });
+                                    }}
                                     block
                                     icon={<FiPlus />}
                                     style={{

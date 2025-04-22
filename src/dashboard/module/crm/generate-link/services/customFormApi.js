@@ -115,13 +115,14 @@ export const customFormApi = createApi({
             ],
         }),
         submitFormResponse: builder.mutation({
-            query: ({ formId, data }) => ({
-                url: `/form-submissions/${formId}/submit`,
-                method: 'POST',
-                body: {
-                    submission_data: data
-                },
-            }),
+            query: ({ formId, data }) => {
+                console.log('Submitting form data:', { formId, data });
+                return {
+                    url: `/form-submissions/${formId}/submit`,
+                    method: 'POST',
+                    body: data,
+                };
+            },
             invalidatesTags: (result, error, { formId }) => [
                 { type: 'FormSubmissions', id: formId },
                 'FormSubmissions'

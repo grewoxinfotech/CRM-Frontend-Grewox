@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
     Card,
     Typography,
@@ -18,6 +18,7 @@ import {
     FiDownload,
     FiHome,
     FiChevronDown,
+    FiEdit2,
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -43,7 +44,7 @@ const { Title, Text } = Typography;
 const CustomFormPage = () => {
     const [searchText, setSearchText] = useState("");
     const [createModalVisible, setCreateModalVisible] = useState(false);
-    const [editModalVisible, setEditModalVisible] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [generateLinkModalVisible, setGenerateLinkModalVisible] = useState(false);
     const [selectedForm, setSelectedForm] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -81,30 +82,29 @@ const CustomFormPage = () => {
         }
     };
 
-    const handleEdit = (record) => {
+    const handleEditClick = useCallback((record) => {
         setSelectedForm(record);
-        setEditModalVisible(true);
-    };
+        setIsEditModalOpen(true);
+    }, []);
+
+    const handleEditCancel = useCallback(() => {
+        setIsEditModalOpen(false);
+    }, []);
+
+    const handleEditSubmit = useCallback(async (values) => {
+        try {
+            await updateForm(values).unwrap();
+            message.success('Form updated successfully');
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error('Update error:', error);
+            message.error(error?.data?.message || 'Failed to update form');
+        }
+    }, [updateForm]);
 
     const handleGenerateLink = (record) => {
         setSelectedForm(record);
         setGenerateLinkModalVisible(true);
-    };
-
-    const handleUpdate = async (values) => {
-        try {
-            await updateForm({
-                id: values.id || values._id,
-                data: values
-            }).unwrap();
-            message.success("Custom form updated successfully");
-            setEditModalVisible(false);
-            setSelectedForm(null);
-            refetch(); // Refresh the list after updating
-        } catch (error) {
-            console.error('Update error:', error);
-            message.error(error?.data?.message || "Failed to update custom form");
-        }
     };
 
     const handleDelete = (record) => {
@@ -331,7 +331,7 @@ const CustomFormPage = () => {
                 <CustomFormList
                     data={forms}
                     loading={isLoading}
-                    onEdit={handleEdit}
+                    onEdit={handleEditClick}
                     onDelete={handleDelete}
                     onGenerateLink={handleGenerateLink}
                     searchText={searchText}
@@ -343,15 +343,13 @@ const CustomFormPage = () => {
                 onCancel={() => setCreateModalVisible(false)}
                 onSubmit={handleCreate}
                 loading={loading}
+                initialValues={selectedForm}
             />
 
             <EditCustomForm
-                open={editModalVisible}
-                onCancel={() => {
-                    setEditModalVisible(false);
-                    setSelectedForm(null);
-                }}
-                onSubmit={handleUpdate}
+                open={isEditModalOpen}
+                onCancel={handleEditCancel}
+                onSubmit={handleEditSubmit}
                 loading={loading}
                 initialValues={selectedForm}
             />
