@@ -105,22 +105,26 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
         <>
             {menu}
             <Divider style={{ margin: '8px 0' }} />
-            <div onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <Button
-                    type="link"
-                    icon={<FiPlus style={{ fontSize: '16px' }} />}
+                    type="primary"
+                    icon={<FiPlus />}
                     onClick={() => setIsCreateBranchModalOpen(true)}
                     style={{
-                        padding: '8px 12px',
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
                         display: 'flex',
                         alignItems: 'center',
-                        width: '100%',
-                        color: '#1890ff',
-                        fontWeight: 500,
-                        gap: '8px'
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
                     }}
                 >
-                    Add New Branch
+                    Add Branch
                 </Button>
             </div>
         </>

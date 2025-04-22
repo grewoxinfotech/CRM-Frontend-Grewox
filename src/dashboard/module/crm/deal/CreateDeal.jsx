@@ -745,32 +745,50 @@ console.log("asdasdsa",leadData);
                   mode="multiple"
                   placeholder="Select products"
                   style={selectStyle}
+                  
+                  // style={{
+                  //   ...multiSelectStyle,
+                  //   minHeight: '48px',
+                  //   height: 'auto'
+                  // }}
                   optionFilterProp="children"
                   showSearch
                   onChange={handleProductsChange}
-                  listHeight={100}
+                  listHeight={200}
+                  maxTagCount={2}
+                  maxTagTextLength={15}
                   dropdownStyle={{
-                    maxHeight: '100px',                  
+                    // maxHeight: '100px',                  
                     overflowY: 'auto',
                     scrollbarWidth: 'thin',
                     scrollBehavior: 'smooth'
                   }}
+                  className="custom-multiple-select"
                 >
                   {products?.map((product) => (
                     <Option key={product.id} value={product.id}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{
                           width: '32px',
-                          // height: '40px',
-                          borderRadius: '4px',
+                          borderRadius: '4px', 
                           overflow: 'hidden'
                         }}>
-                          <img
+                          {product.image ? (
+                            <img
                             src={product.image}
                             alt={product.name}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             onError={(e) => e.target.style.display = 'none'}
                           />
+                          ) : (
+                            <span style={{
+                              fontSize: '18px',
+                              color: '#1890ff',
+                              fontWeight: '500'
+                            }}>
+                              {product?.name?.charAt(0) }
+                            </span>
+                          )}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: '500' }}>{product.name}</span>
@@ -1432,6 +1450,87 @@ console.log("asdasdsa",leadData);
                 background-color: #f0f7ff !important;
               }
             }
+          }
+        }
+
+        .product-select {
+          .ant-select-selector {
+            height: auto !important;
+            min-height: 48px !important;
+            padding: 4px 8px !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+            background-color: #f8fafc !important;
+            border: 1px solid #e6e8eb !important;
+            border-radius: 10px !important;
+            transition: all 0.3s ease !important;
+
+            &:hover {
+              border-color: #40a9ff !important;
+            }
+
+            &.ant-select-focused {
+              border-color: #1890ff !important;
+              box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+            }
+          }
+
+          .ant-select-selection-item {
+            height: auto !important;
+            margin: 4px !important;
+            padding: 4px 8px !important;
+            background: #f0f7ff !important;
+            border: 1px solid #91caff !important;
+            border-radius: 6px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+
+            .ant-select-selection-item-content {
+              display: flex !important;
+              align-items: center !important;
+              gap: 8px !important;
+            }
+
+            img {
+              width: 32px !important;
+              height: 32px !important;
+              border-radius: 4px !important;
+              object-fit: cover !important;
+            }
+
+            .ant-select-selection-item-remove {
+              color: #6B7280 !important;
+              margin-left: auto !important;
+              padding: 4px !important;
+              border-radius: 4px !important;
+              
+              &:hover {
+                background-color: #EEF2FF !important;
+                color: #4B5563 !important;
+              }
+            }
+          }
+
+          .ant-select-selection-placeholder {
+            line-height: 38px !important;
+            color: #9CA3AF !important;
+          }
+
+          .ant-select-selection-search {
+            margin: 0 !important;
+            padding: 0 !important;
+            
+            input {
+              height: 38px !important;
+            }
+          }
+
+          &.ant-select-focused .ant-select-selector {
+            border-color: #1890ff !important;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
           }
         }
       }

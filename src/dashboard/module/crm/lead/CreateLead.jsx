@@ -706,7 +706,7 @@ const CreateLead = ({
                 minHeight: '48px'
               }}
               listHeight={200}
-              maxTagCount={3}
+              maxTagCount={2}
               maxTagTextLength={15}
               dropdownStyle={{
                 maxHeight: '300px',
@@ -1132,7 +1132,7 @@ const CreateLead = ({
             border: 1px solid #e6e8eb !important;
             border-radius: 10px !important;
             min-height: 48px !important;
-            padding: 8px!important;
+            // padding: 0 18px!important;
             display: flex !important;
             align-items: center !important;
           }
@@ -1152,17 +1152,17 @@ const CreateLead = ({
           }
 
           .ant-select-multiple {
-            .ant-select-selector {
-              min-height: 48px !important;
-              // height: auto !important;
-              padding: 0px 16px !important;
-              background-color: #f8fafc !important;
-              border: 1px solid #e6e8eb !important;
-              border-radius: 10px !important;
-              display: flex !important;
-              align-items: flex-start !important;
-              flex-wrap: wrap !important;
-            }
+            // .ant-select-selector {
+            //   // min-height: 48px !important;
+            //   // height: auto !important;
+            //   padding: 0px 16px !important;
+            //   background-color: #f8fafc !important;
+            //   border: 1px solid #e6e8eb !important;
+            //   border-radius: 10px !important;  
+            //   display: flex !important;
+            //   align-items: flex-start !important;
+            //   flex-wrap: wrap !important;
+            // }
 
             .ant-select-selection-item {
               height: 32px !important;

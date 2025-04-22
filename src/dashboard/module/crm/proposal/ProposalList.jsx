@@ -218,7 +218,7 @@ const ProposalList = ({ proposals, onDelete, onView, loading, onProposalUpdated 
                 columns={columns}
                 dataSource={proposals}
                 rowKey="id"
-                scroll={{ x: 1300 }}
+                // scroll={{ x: 1300 }}
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,

@@ -109,22 +109,26 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
         <>
             {menu}
             <Divider style={{ margin: '8px 0' }} />
-            <div onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <Button
-                    type="link"
-                    icon={<FiPlus style={{ fontSize: '16px' }} />}
+                    type="primary"
+                    icon={<FiPlus />}
                     onClick={handleAddNewUser}
-                    style={{ 
-                        padding: '8px 12px',
+                    style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
                         display: 'flex',
                         alignItems: 'center',
-                        width: '100%',
-                        color: '#1890ff',
-                        fontWeight: 500,
-                        gap: '8px'
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
                     }}
                 >
-                    Add New Branch Manager
+                    Add Branch Manager
                 </Button>
             </div>
         </>
@@ -277,7 +281,6 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
 
                     <Form.Item
                         name="branchManager"
-                        
                         label={
                             <div style={{ 
                                 display: 'flex', 
@@ -298,9 +301,8 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                             optionFilterProp="label"
                             loading={isLoadingUsers}
                             size="large"
-                            listHeight={100}
+                            listHeight={200}
                             dropdownStyle={{
-                                Height: '100px',
                                 overflowY: 'auto',
                                 scrollbarWidth: 'thin',
                                 scrollBehavior: 'smooth'
@@ -314,40 +316,116 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                                 const label = option?.label?.toString() || '';
                                 return label.toLowerCase().includes(input.toLowerCase());
                             }}
-                            options={Array.isArray(filteredUsers) ? filteredUsers.map(user => ({
-                                label: user.name || user.username,
-                                value: user.id,
-                                icon: (
-                                    <Space>
-                                        <span style={{ 
-                                            width: '28px',
-                                            height: '28px',
-                                            borderRadius: '50%',
-                                            background: '#f0f2f5',
-                                            display: 'inline-flex',
+                            options={Array.isArray(filteredUsers) ? filteredUsers.map(user => {
+                                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+                                const roleStyles = {
+                                    'employee': {
+                                        color: '#D46B08',
+                                        bg: '#FFF7E6',
+                                        border: '#FFD591'
+                                    },
+                                    'admin': {
+                                        color: '#096DD9',
+                                        bg: '#E6F7FF',
+                                        border: '#91D5FF'
+                                    },
+                                    'manager': {
+                                        color: '#08979C',
+                                        bg: '#E6FFFB',
+                                        border: '#87E8DE'
+                                    },
+                                    'default': {
+                                        color: '#531CAD',
+                                        bg: '#F9F0FF',
+                                        border: '#D3ADF7'
+                                    }
+                                };
+
+                                const roleStyle = roleStyles[userRole?.role_name?.toLowerCase()] || roleStyles.default;
+
+                                return {
+                                    label: (
+                                        <div style={{
+                                            display: 'flex',
                                             alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginRight: '8px'
+                                            gap: '12px',
+                                            padding: '4px 0'
                                         }}>
-                                            {user.avatar ? (
-                                                <img 
-                                                    src={user.avatar} 
-                                                    alt={user.name} 
-                                                    style={{ 
-                                                        width: '100%', 
-                                                        height: '100%', 
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '50%',
+                                                background: '#e6f4ff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#1890ff',
+                                                fontSize: '16px',
+                                                fontWeight: '500',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                {user.avatar ? (
+                                                    <img
+                                                        src={user.avatar}
+                                                        alt={user.name || user.username}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            objectFit: 'cover'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <FiUser style={{ fontSize: '20px' }} />
+                                                )}
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                flex: 1
+                                            }}>
+                                                <span style={{
+                                                    fontWeight: 500,
+                                                    color: 'rgba(0, 0, 0, 0.85)',
+                                                    fontSize: '14px'
+                                                }}>
+                                                    {user.name || user.username}
+                                                </span>
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                <div
+                                                    className="role-indicator"
+                                                    style={{
+                                                        width: '8px',
+                                                        height: '8px',
                                                         borderRadius: '50%',
-                                                        objectFit: 'cover'
-                                                    }} 
+                                                        background: roleStyle.color,
+                                                        boxShadow: `0 0 8px ${roleStyle.color}`,
+                                                        animation: 'pulse 2s infinite'
+                                                    }}
                                                 />
-                                            ) : (
-                                                <FiUser style={{ fontSize: '14px', color: '#8c8c8c' }} />
-                                            )}
-                                        </span>
-                                        {user.name || user.username}
-                                    </Space>
-                                )
-                            })) : []}
+                                                <span style={{
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '12px',
+                                                    background: roleStyle.bg,
+                                                    color: roleStyle.color,
+                                                    border: `1px solid ${roleStyle.border}`,
+                                                    fontWeight: 500,
+                                                    textTransform: 'capitalize'
+                                                }}>
+                                                    {userRole?.role_name || 'User'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ),
+                                    value: user.id
+                                };
+                            }) : []}
                         />
                     </Form.Item>
 
@@ -427,6 +505,50 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                 onCancel={() => setIsCreateUserModalOpen(false)}
                 onSuccess={handleCreateUserSuccess}
             />
+
+            <style jsx global>{`
+                .custom-modal {
+                    .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+                        background-color: #f8fafc !important;
+                        border: 1px solid #e6e8eb !important;
+                        border-radius: 10px !important;
+                        min-height: 42px !important;
+                        padding: 0px 16px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                    }
+
+                    .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+                        border-color: #1890ff !important;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+                    }
+
+                    .ant-select-single .ant-select-selector .ant-select-selection-item,
+                    .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+                        display: flex !important;
+                        align-items: center !important;
+                    }
+
+                    @keyframes pulse {
+                        0% {
+                            transform: scale(1);
+                            opacity: 1;
+                        }
+                        50% {
+                            transform: scale(1.2);
+                            opacity: 0.8;
+                        }
+                        100% {
+                            transform: scale(1);
+                            opacity: 1;
+                        }
+                    }
+
+                    .role-indicator {
+                        animation: pulse 2s infinite;
+                    }
+                }
+            `}</style>
         </>
     );
 };

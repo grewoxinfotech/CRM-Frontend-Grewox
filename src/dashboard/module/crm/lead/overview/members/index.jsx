@@ -192,6 +192,12 @@ const LeadMembers = ({ leadId }) => {
         }
     ];
 
+
+    const formItemStyle = {
+        fontSize: "14px",
+        fontWeight: "500"
+    };
+
     const handleCreateUser = () => {
         setIsCreateUserVisible(true);
     };
@@ -356,35 +362,41 @@ const LeadMembers = ({ leadId }) => {
                     }}>
                         <Form.Item
                             name="lead_members"
-                            label={<span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>Select Members</span>}
-                            rules={[{ required: true, message: 'Please select at least one member' }]}
+                            label={<span style={formItemStyle}>Select Members</span>}
+                            style={{ marginBottom: '16px' }}
                         >
                             <Select
                                 mode="multiple"
-                                placeholder="Search and select members"
-                                style={{ width: '100%' }}
-                                open={dropdownOpen}
-                                onDropdownVisibleChange={setDropdownOpen}
-                                loading={usersLoading || rolesLoading}
-                                listHeight={90}
+                                placeholder="Select team members"
+                                style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    minHeight: '48px'
+                                  }}
+                                listHeight={200}
+                                maxTagCount={2}
+                                maxTagTextLength={15}
                                 dropdownStyle={{
-                                    Height: '100px',
+                                    maxHeight: '300px',
                                     overflowY: 'auto',
                                     scrollbarWidth: 'thin',
                                     scrollBehavior: 'smooth'
-                                }}
-                                maxTagCount={5}
-                                maxTagTextLength={20}
-                                maxTagPlaceholder={(omittedValues) => `+${omittedValues.length} more`}
+                                  }}
+                                popupClassName="team-members-dropdown"
+                                showSearch
+                                optionFilterProp="children"
+                                loading={usersLoading}
+                                open={dropdownOpen}
+                                onDropdownVisibleChange={setDropdownOpen}
                                 dropdownRender={(menu) => (
-                                    <div>
+                                    <>
                                         {menu}
                                         <Divider style={{ margin: '8px 0' }} />
                                         <div style={{
-                                            padding: '8px',
                                             display: 'flex',
-                                            justifyContent: 'flex-end',
-                                            gap: '8px'
+                                            gap: '8px',
+                                            padding: '0 8px',
+                                            justifyContent: 'flex-end'
                                         }}>
                                             <Button
                                                 type="text"
@@ -413,7 +425,10 @@ const LeadMembers = ({ leadId }) => {
                                             <Button
                                                 type="text"
                                                 icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
-                                                onClick={() => setDropdownOpen(false)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDropdownOpen(false);
+                                                }}
                                                 style={{
                                                     height: '36px',
                                                     borderRadius: '6px',
@@ -438,152 +453,92 @@ const LeadMembers = ({ leadId }) => {
                                                 Done
                                             </Button>
                                         </div>
-                                    </div>
+                                    </>
                                 )}
-                                tagRender={(props) => {
-                                    const { label, value, closable, onClose } = props;
-                                    const user = users.find(u => u.id === value);
-                                    const userRole = rolesData?.data?.find(role => role.id === user?.role_id);
-                                    const roleStyle = getRoleColor(userRole?.role_name);
-
-                                    return (
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
-                                                background: '#F0F7FF',
-                                                borderRadius: '16px',
-                                                padding: '3px 8px',
-                                                margin: '2px',
-                                                border: '1px solid #91CAFF',
-                                                maxWidth: '100%',
-                                                height: '28px'
-                                            }}
-                                        >
-                                            <div style={{
-                                                width: '20px',
-                                                height: '20px',
-                                                borderRadius: '50%',
-                                                background: '#E6F4FF',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: '#1890FF',
-                                                fontSize: '12px',
-                                                fontWeight: '500',
-                                                textTransform: 'uppercase',
-                                                flexShrink: 0
-                                            }}>
-                                                <FiUser style={{ fontSize: '12px' }} />
-                                            </div>
-                                            <span style={{
-                                                color: '#0958D9',
-                                                fontSize: '13px',
-                                                fontWeight: '500',
-                                                maxWidth: '120px',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                {user?.username}
-                                            </span>
-                                            <Tag style={{
-                                                margin: 0,
-                                                background: roleStyle.bg,
-                                                color: roleStyle.color,
-                                                border: `1px solid ${roleStyle.border}`,
-                                                fontSize: '11px',
-                                                borderRadius: '12px',
-                                                padding: '0 6px',
-                                                height: '18px',
-                                                lineHeight: '16px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                flexShrink: 0
-                                            }}>
-                                                {userRole?.role_name}
-                                            </Tag>
-                                            {closable && (
-                                                <span
-                                                    style={{
-                                                        cursor: 'pointer',
-                                                        color: '#0958D9',
-                                                        fontSize: '14px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        flexShrink: 0
-                                                    }}
-                                                    onClick={onClose}
-                                                >
-                                                    ×
-                                                </span>
-                                            )}
-                                        </div>
-                                    );
-                                }}
                             >
-                                {users.map(user => {
+                                {Array.isArray(users) && users.map(user => {
                                     const userRole = rolesData?.data?.find(role => role.id === user.role_id);
                                     const roleStyle = getRoleColor(userRole?.role_name);
 
                                     return (
-                                        <Option
-                                            key={user.id}
-                                            value={user.id}
-                                            label={user.username}
-                                            username={user.username}
-                                        >
+                                        <Option key={user.id} value={user.id}>
                                             <div style={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                padding: '8px 4px',
-                                                width: '100%'
+                                                gap: '12px',
+                                                padding: '4px 0'
                                             }}>
                                                 <div style={{
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    borderRadius: '50%',
+                                                    background: '#e6f4ff',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '12px'
+                                                    justifyContent: 'center',
+                                                    color: '#1890ff',
+                                                    fontSize: '16px',
+                                                    fontWeight: '500',
+                                                    textTransform: 'uppercase'
                                                 }}>
+                                                    {user.profilePic ? (
+                                                        <img
+                                                            src={user.profilePic}
+                                                            alt={user.username}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                borderRadius: '50%',
+                                                                objectFit: 'cover'
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        user.username?.charAt(0) || <FiUser />
+                                                    )}
+                                                </div>
                                                     <div style={{
-                                                        width: '32px',
-                                                        height: '32px',
-                                                        borderRadius: '50%',
-                                                        background: '#E6F4FF',
                                                         display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        color: '#1890FF',
-                                                        fontSize: '14px',
-                                                        fontWeight: '500',
-                                                        textTransform: 'uppercase',
-                                                        flexShrink: 0
-                                                    }}>
-                                                        <FiUser style={{ fontSize: '16px' }} />
-                                                    </div>
+                                                    flexDirection: 'row',
+                                                    gap: '4px'
+                                                }}>
                                                     <span style={{
                                                         fontWeight: 500,
-                                                        color: '#1f2937',
+                                                        color: 'rgba(0, 0, 0, 0.85)',
                                                         fontSize: '14px'
                                                     }}>
                                                         {user.username}
                                                     </span>
                                                 </div>
-                                                <Tag style={{
-                                                    margin: 0,
-                                                    background: roleStyle.bg,
-                                                    color: roleStyle.color,
-                                                    border: `1px solid ${roleStyle.border}`,
-                                                    fontSize: '12px',
-                                                    borderRadius: '16px',
-                                                    padding: '2px 10px',
-                                                    display: 'inline-flex',
+                                                <div style={{
+                                                    display: 'flex',
                                                     alignItems: 'center',
-                                                    height: '24px'
+                                                    gap: '8px',
+                                                    marginLeft: 'auto'
+                                                }}>
+                                                    <div
+                                                        className="role-indicator"
+                                                        style={{
+                                                            width: '8px',
+                                                            height: '8px',
+                                                            borderRadius: '50%',
+                                                            background: roleStyle.color,
+                                                            boxShadow: `0 0 8px ${roleStyle.color}`,
+                                                            animation: 'pulse 2s infinite'
+                                                        }}
+                                                    />
+                                                    <span style={{
+                                                        padding: '2px 8px',
+                                                        borderRadius: '4px',
+                                                        fontSize: '12px',
+                                                        background: roleStyle.bg,
+                                                        color: roleStyle.color,
+                                                        border: `1px solid ${roleStyle.border}`,
+                                                        fontWeight: 500,
+                                                        textTransform: 'capitalize'
                                                 }}>
                                                     {userRole?.role_name || 'User'}
-                                                </Tag>
+                                                    </span>
+                                                </div>
                                             </div>
                                         </Option>
                                     );

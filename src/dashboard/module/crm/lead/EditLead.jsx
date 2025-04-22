@@ -725,7 +725,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               popupClassName="custom-select-dropdown"
               showSearch
               optionFilterProp="children"
-              maxTagCount={5}
+              maxTagCount={2}
               maxTagTextLength={15}
               loading={usersLoading}
               open={teamMembersOpen}
@@ -1170,17 +1170,17 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           }
 
           .ant-select-multiple {
-            .ant-select-selector {
-              min-height: 48px !important;
-              height: auto !important;
-              padding: 4px 8px !important;
-              background-color: #f8fafc !important;
-              border: 1px solid #e6e8eb !important;
-              border-radius: 10px !important;
-              display: flex !important;
-              align-items: flex-start !important;
-              flex-wrap: wrap !important;
-            }
+            // .ant-select-selector {
+            //   min-height: 48px !important;
+            //   height: auto !important;
+            //   padding: 4px 8px !important;
+            //   background-color: #f8fafc !important;
+            //   border: 1px solid #e6e8eb !important;
+            //   border-radius: 10px !important;
+            //   display: flex !important;
+            //   align-items: flex-start !important;
+            //   flex-wrap: wrap !important;
+            // }
 
             .ant-select-selection-item {
               height: 32px !important;

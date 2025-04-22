@@ -805,26 +805,42 @@ const EditDeal = ({ open, onCancel, initialValues, pipelines, dealStages }) => {
                 optionFilterProp="children"
                 showSearch
                 onChange={handleProductsChange}
-                popupClassName="products-dropdown"
+                listHeight={200}
+                maxTagCount={2}
+                maxTagTextLength={15}
+                dropdownStyle={{
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
+                className="custom-multiple-select"
               >
                 {products?.map((product) => (
                   <Option key={product.id} value={product.id}>
-                    <div className="product-option">
-                      <div className="product-image">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{
+                        width: '32px',
+                        borderRadius: '4px', 
+                        overflow: 'hidden'
+                      }}>
                         {product.image ? (
                           <img
                             src={product.image}
                             alt={product.name}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.parentElement.innerHTML = '<FiBox className="product-icon" />';
-                            }}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => e.target.style.display = 'none'}
                           />
                         ) : (
-                          <FiBox className="product-icon" />
+                          <span style={{
+                            fontSize: '18px',
+                            color: '#1890ff',
+                            fontWeight: '500'
+                          }}>
+                            {product?.name?.charAt(0)}
+                          </span>
                         )}
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column',marginLeft: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
                         <span style={{ fontWeight: '500' }}>{product.name}</span>
                         <span style={{ fontSize: '12px', color: '#6B7280' }}>{product.selling_price}</span>
                       </div>

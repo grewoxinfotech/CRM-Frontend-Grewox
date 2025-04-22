@@ -113,8 +113,12 @@ const GeneralSettings = () => {
       // Add required fields with exact field names matching backend
       formData.append('companyName', values.companyName);
       formData.append('title', values.title);
-      // Ensure termsandconditions is never empty by providing a default value
-      formData.append('termsandconditions', values.termsandconditions || 'No terms and conditions provided');
+      
+      // Only append termsandconditions if it has a value
+      if (values.termsandconditions && values.termsandconditions.trim() !== '') {
+        formData.append('termsandconditions', values.termsandconditions);
+      }
+      
       // Add merchant fields
       formData.append('merchant_name', values.merchant_name || '');
       formData.append('merchant_upi_id', values.merchant_upi_id || '');
