@@ -1,40 +1,117 @@
 import React, { useState, useRef } from "react";
-import { Modal, Form, Input, Select, Button, Typography, Divider } from "antd";
+import { Modal, Form, Input, Select, Button, Typography, Divider, Switch, message } from "antd";
 import { FiX, FiLayers } from "react-icons/fi";
-import { useAddLeadStageMutation } from "./services/leadStageApi";
+import { useAddLeadStageMutation, useGetLeadStagesQuery, useUpdateLeadStageMutation } from "./services/leadStageApi";
 import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import AddPipelineModal from "../pipeline/AddPipelineModal";
 
 const { Text } = Typography;
+const { confirm } = Modal;
 
-const AddLeadStageModal = ({ isOpen, onClose }) => {
+const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
   const [form] = Form.useForm();
-  const [addLeadStage, { isLoading }] = useAddLeadStageMutation();
+  const [addLeadStage, { isLoading: isAddingStage }] = useAddLeadStageMutation();
+  const [updateLeadStage, { isLoading: isUpdatingStage }] = useUpdateLeadStageMutation();
   const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: stages = [], refetch: refetchStages } = useGetLeadStagesQuery();
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
   const selectRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const showDefaultWarning = (selectedPipeline, callback) => {
+    const existingDefaultStage = stages.find(
+      stage => stage.pipeline === selectedPipeline &&
+        stage.isDefault &&
+        stage.stageType === "lead"
+    );
+
+    if (existingDefaultStage) {
+      confirm({
+        title: 'Change Default Stage',
+        icon: <ExclamationCircleOutlined />,
+        content: `"${existingDefaultStage.stageName}" is currently set as default. Setting this stage as default will remove the default status from "${existingDefaultStage.stageName}". Do you want to continue?`,
+        okText: 'Yes',
+        okType: 'primary',
+        cancelText: 'No',
+        onOk() {
+          callback(true, existingDefaultStage);
+        },
+        onCancel() {
+          setIsDefault(false);
+          callback(false);
+        },
+      });
+    } else {
+      callback(true);
+    }
+  };
+
   const handleSubmit = async (values) => {
     try {
-      await addLeadStage({
-        stageName: values.name,
-        pipeline: values.pipeline,
-        stageType: "lead",
-        client_id: "2KjXVJ7qGgG52EXLiJzkdRb",
-      });
-      form.resetFields();
-      onClose();
+      const selectedPipeline = values.pipeline || pipelineId;
+
+      if (isDefault) {
+        showDefaultWarning(selectedPipeline, async (proceed, existingDefaultStage) => {
+          if (proceed) {
+            // If there's an existing default stage, update it first
+            if (existingDefaultStage) {
+              try {
+                const updateData = {
+                  stageName: existingDefaultStage.stageName,
+                  pipeline: existingDefaultStage.pipeline,
+                  stageType: existingDefaultStage.stageType,
+                  isDefault: false,
+                  id: existingDefaultStage.id
+                };
+                await updateLeadStage(updateData).unwrap();
+              } catch (error) {
+                message.error("Failed to update existing default stage");
+                return;
+              }
+            }
+            // Then create the new stage as default
+            await submitStage(values, selectedPipeline);
+          }
+        });
+      } else {
+        await submitStage(values, selectedPipeline);
+      }
     } catch (error) {
-      console.error("Failed to add lead stage:", error);
+      message.error("Failed to add lead stage: " + error.message);
+    }
+  };
+
+  const submitStage = async (values, selectedPipeline) => {
+    try {
+      const createData = {
+        stageName: values.name,
+        pipeline: selectedPipeline,
+        stageType: "lead",
+        isDefault: isDefault
+      };
+      await addLeadStage(createData).unwrap();
+
+      message.success("Lead stage created successfully");
+      form.resetFields();
+      setIsDefault(false);
+      refetchStages(); // Refetch stages to update the list
+      onClose(true);
+    } catch (error) {
+      message.error("Failed to create lead stage");
     }
   };
 
   const handleAddPipelineClick = (e) => {
-    e.stopPropagation(); // Prevent event bubbling
+    e.stopPropagation();
     setDropdownOpen(false);
     setIsAddPipelineVisible(true);
+  };
+
+  const handlePipelineChange = (value) => {
+    // Reset isDefault when pipeline changes
+    setIsDefault(false);
   };
 
   return (
@@ -42,7 +119,11 @@ const AddLeadStageModal = ({ isOpen, onClose }) => {
       <Modal
         title={null}
         open={isOpen}
-        onCancel={onClose}
+        onCancel={() => {
+          form.resetFields();
+          setIsDefault(false);
+          onClose();
+        }}
         footer={null}
         width={520}
         destroyOnClose={true}
@@ -68,7 +149,11 @@ const AddLeadStageModal = ({ isOpen, onClose }) => {
         >
           <Button
             type="text"
-            onClick={onClose}
+            onClick={() => {
+              form.resetFields();
+              setIsDefault(false);
+              onClose();
+            }}
             style={{
               position: "absolute",
               top: "16px",
@@ -149,61 +234,68 @@ const AddLeadStageModal = ({ isOpen, onClose }) => {
             />
           </Form.Item>
 
-          <Form.Item
-            name="pipeline"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline</span>}
-            rules={[{ required: true, message: "Please select a pipeline" }]}
-          >
-            <Select
-              ref={selectRef}
-              open={dropdownOpen}
-              onDropdownVisibleChange={setDropdownOpen}
-              placeholder="Select pipeline"
-              style={{
-                width: "100%",
-                height: "48px",
-              }}
-              dropdownRender={(menu) => (
-                <div onClick={(e) => e.stopPropagation()}>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div
-                    style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
+          {!pipelineId && (
+            <Form.Item
+              name="pipeline"
+              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline</span>}
+              rules={[{ required: true, message: "Please select a pipeline" }]}
+            >
+              <Select
+                ref={selectRef}
+                placeholder="Select pipeline"
+                style={{ width: "100%" }}
+                onDropdownVisibleChange={setDropdownOpen}
+                onChange={handlePipelineChange}
+                open={dropdownOpen}
+                dropdownRender={(menu) => (
+                  <div>
+                    {menu}
+                    <Divider style={{ margin: "8px 0" }} />
                     <Button
-                      type="primary"
+                      type="text"
                       icon={<PlusOutlined />}
                       onClick={handleAddPipelineClick}
                       style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "8px 12px",
                       }}
                     >
                       Add Pipeline
                     </Button>
                   </div>
-                </div>
-              )}
-            >
-              {pipelines.map((pipeline) => (
-                <Select.Option key={pipeline.id} value={pipeline.id}>
-                  {pipeline.pipeline_name}
-                </Select.Option>
-              ))}
-            </Select>
+                )}
+              >
+                {pipelines.map((pipeline) => (
+                  <Select.Option key={pipeline.id} value={pipeline.id}>
+                    {pipeline.pipeline_name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+
+          <Form.Item
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Default Stage</span>}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Switch
+                checked={isDefault}
+                onChange={(checked) => {
+                  const selectedPipeline = form.getFieldValue('pipeline') || pipelineId;
+                  if (checked && selectedPipeline) {
+                    showDefaultWarning(selectedPipeline, (proceed) => {
+                      setIsDefault(proceed);
+                    });
+                  } else {
+                    setIsDefault(checked);
+                  }
+                }}
+              />
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                Set as default stage for new leads
+              </Text>
+            </div>
           </Form.Item>
 
           <div
@@ -215,7 +307,11 @@ const AddLeadStageModal = ({ isOpen, onClose }) => {
             }}
           >
             <Button
-              onClick={onClose}
+              onClick={() => {
+                form.resetFields();
+                setIsDefault(false);
+                onClose();
+              }}
               style={{
                 padding: "8px 24px",
                 height: "44px",
@@ -229,7 +325,7 @@ const AddLeadStageModal = ({ isOpen, onClose }) => {
             <Button
               type="primary"
               htmlType="submit"
-              loading={isLoading}
+              loading={isAddingStage || isUpdatingStage}
               style={{
                 padding: "8px 32px",
                 height: "44px",
@@ -248,7 +344,12 @@ const AddLeadStageModal = ({ isOpen, onClose }) => {
 
       <AddPipelineModal
         isOpen={isAddPipelineVisible}
-        onClose={() => setIsAddPipelineVisible(false)}
+        onClose={(success) => {
+          setIsAddPipelineVisible(false);
+          if (success) {
+            setDropdownOpen(true);
+          }
+        }}
       />
     </>
   );

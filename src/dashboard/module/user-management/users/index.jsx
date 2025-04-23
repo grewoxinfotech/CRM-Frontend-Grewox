@@ -310,17 +310,26 @@ const Users = () => {
                         onDelete={handleDelete}
                     />
                 ) : (
-                    <div className="users-grid">
-                        {filteredUsers.map(user => (
-                            <UserCard
+                    <Row gutter={[16, 16]} className="user-cards-grid">
+                        {filteredUsers.map((user, index) => (
+                            <Col
                                 key={user.id}
-                                user={user}
-                                onEdit={handleEditUser}
-                                onDelete={handleDelete}
-                                onView={() => { }}
-                            />
+                                xs={24}
+                                sm={index === 0 ? 24 : 12}
+                                md={index === 0 ? 24 : 12}
+                                lg={index === 0 ? 24 : 12}
+                                xl={index === 0 ? 24 : 12}
+                                style={{ marginBottom: '16px' }}
+                            >
+                                <UserCard
+                                    user={user}
+                                    onEdit={handleEditUser}
+                                    onDelete={handleDelete}
+                                    onView={() => { }}
+                                />
+                            </Col>
                         ))}
-                    </div>
+                    </Row>
                 )}
             </Card>
 

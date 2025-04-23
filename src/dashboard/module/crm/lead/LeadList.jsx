@@ -17,6 +17,7 @@ import { useDeleteLeadMutation } from "./services/LeadApi";
 import { useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
+import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -40,6 +41,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
 
   // Filter and prepare data
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
@@ -140,34 +142,40 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
           </Space>
         </div>
       ),
-      onFilter: (value, record) =>
-        record.leadTitle.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
-      render: (text, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Avatar style={{
-            backgroundColor: record.is_converted ? '#52c41a' : '#1890ff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {text[0].toUpperCase()}
-          </Avatar>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Text strong style={{ fontSize: '14px' }}>
-                {text}
+      onFilter: (value, record) => {
+        const companyName = companyAccountsResponse?.data?.find(c => c.id === record.company_name)?.company_name || '';
+        return record.leadTitle.toLowerCase().includes(value.toLowerCase()) ||
+          companyName.toLowerCase().includes(value.toLowerCase());
+      },
+      render: (text, record) => {
+        const companyName = companyAccountsResponse?.data?.find(c => c.id === record.company_name)?.company_name || 'No Company';
+
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Avatar style={{
+              backgroundColor: record.is_converted ? '#52c41a' : '#1890ff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {text[0].toUpperCase()}
+            </Avatar>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Text strong style={{ fontSize: '14px' }}>
+                  {text}
+                </Text>
+                {record.is_converted && (
+                  <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
+                )}
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
+                {companyName}
               </Text>
-              {record.is_converted && (
-                <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
-              )}
             </div>
-            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-              {record.company_name}
-            </Text>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "Source",

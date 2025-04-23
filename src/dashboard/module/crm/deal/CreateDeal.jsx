@@ -25,7 +25,7 @@ import {
   FiCalendar,
   FiInfo,
 } from "react-icons/fi";
-import { useCreateDealMutation } from "./services/DealApi";
+import { useCreateDealMutation } from "./services/dealApi";
 import { PlusOutlined } from "@ant-design/icons";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
@@ -103,8 +103,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     page: 1,
     limit: 100,
   });
-
-  console.log("companyAccountsResponse", companyAccountsResponse.data);
 
   const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(
     currencies,
@@ -1169,7 +1167,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         backgroundColor: "#f8fafc",
                       }}
                       placeholder="Enter phone number"
-                      // prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
+                    // prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
                     />
                   </Form.Item>
                 </Input.Group>

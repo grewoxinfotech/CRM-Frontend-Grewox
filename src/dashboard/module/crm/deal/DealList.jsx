@@ -343,17 +343,6 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
 
   return (
     <>
-      <div style={{
-        marginBottom: '16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0 12px'
-      }}>
-        <Text strong>
-          {deals.length} {deals.length === 1 ? 'Deal' : 'Deals'}
-        </Text>
-      </div>
 
       <Table
         columns={columns}

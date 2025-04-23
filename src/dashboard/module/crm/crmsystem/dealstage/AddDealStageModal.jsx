@@ -1,33 +1,105 @@
 import React, { useState, useRef } from "react";
-import { Modal, Form, Input, Select, Button, Typography, Divider } from "antd";
+import { Modal, Form, Input, Select, Button, Typography, Divider, Switch, message } from "antd";
 import { FiX, FiLayers } from "react-icons/fi";
-import { useAddDealStageMutation } from "./services/dealStageApi";
+import { useAddDealStageMutation, useGetDealStagesQuery, useUpdateDealStageMutation } from "./services/dealStageApi";
 import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import AddPipelineModal from "../pipeline/AddPipelineModal";
 
 const { Text } = Typography;
+const { confirm } = Modal;
 
-const AddDealStageModal = ({ isOpen, onClose }) => {
+const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
   const [form] = Form.useForm();
-  const [addDealStage, { isLoading }] = useAddDealStageMutation();
+  const [addDealStage, { isLoading: isAddingStage }] = useAddDealStageMutation();
+  const [updateDealStage, { isLoading: isUpdatingStage }] = useUpdateDealStageMutation();
   const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: stages = [], refetch: refetchStages } = useGetDealStagesQuery();
   const [isAddPipelineVisible, setIsAddPipelineVisible] = useState(false);
+  const [isDefault, setIsDefault] = useState(false);
   const selectRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const showDefaultWarning = (selectedPipeline, callback) => {
+    const existingDefaultStage = stages.find(
+      stage => stage.pipeline === selectedPipeline &&
+        stage.isDefault &&
+        stage.stageType === "deal"
+    );
+
+    if (existingDefaultStage) {
+      confirm({
+        title: 'Change Default Stage',
+        icon: <ExclamationCircleOutlined />,
+        content: `"${existingDefaultStage.stageName}" is currently set as default. Setting this stage as default will remove the default status from "${existingDefaultStage.stageName}". Do you want to continue?`,
+        okText: 'Yes',
+        okType: 'primary',
+        cancelText: 'No',
+        onOk() {
+          callback(true, existingDefaultStage);
+        },
+        onCancel() {
+          setIsDefault(false);
+          callback(false);
+        },
+      });
+    } else {
+      callback(true);
+    }
+  };
+
   const handleSubmit = async (values) => {
     try {
-      await addDealStage({
-        stageName: values.name,
-        pipeline: values.pipeline,
-        stageType: "deal",
-        client_id: "2KjXVJ7qGgG52EXLiJzkdRb",
-      });
-      form.resetFields();
-      onClose();
+      const selectedPipeline = values.pipeline || pipelineId;
+
+      if (isDefault) {
+        showDefaultWarning(selectedPipeline, async (proceed, existingDefaultStage) => {
+          if (proceed) {
+            // If there's an existing default stage, update it first
+            if (existingDefaultStage) {
+              try {
+                const updateData = {
+                  stageName: existingDefaultStage.stageName,
+                  pipeline: existingDefaultStage.pipeline,
+                  stageType: existingDefaultStage.stageType,
+                  isDefault: false,
+                  id: existingDefaultStage.id
+                };
+                await updateDealStage(updateData).unwrap();
+              } catch (error) {
+                message.error("Failed to update existing default stage");
+                return;
+              }
+            }
+            // Then create the new stage as default
+            await submitStage(values, selectedPipeline);
+          }
+        });
+      } else {
+        await submitStage(values, selectedPipeline);
+      }
     } catch (error) {
-      console.error("Failed to add deal stage:", error);
+      message.error("Failed to add deal stage: " + error.message);
+    }
+  };
+
+  const submitStage = async (values, selectedPipeline) => {
+    try {
+      const createData = {
+        stageName: values.name,
+        pipeline: selectedPipeline,
+        stageType: "deal",
+        isDefault: isDefault
+      };
+      await addDealStage(createData).unwrap();
+
+      message.success("Deal stage created successfully");
+      form.resetFields();
+      setIsDefault(false);
+      refetchStages(); // Refetch stages to update the list
+      onClose(true);
+    } catch (error) {
+      message.error("Failed to create deal stage");
     }
   };
 
@@ -37,12 +109,21 @@ const AddDealStageModal = ({ isOpen, onClose }) => {
     setIsAddPipelineVisible(true);
   };
 
+  const handlePipelineChange = (value) => {
+    // Reset isDefault when pipeline changes
+    setIsDefault(false);
+  };
+
   return (
     <>
       <Modal
         title={null}
         open={isOpen}
-        onCancel={onClose}
+        onCancel={() => {
+          form.resetFields();
+          setIsDefault(false);
+          onClose();
+        }}
         footer={null}
         width={520}
         destroyOnClose={true}
@@ -206,6 +287,29 @@ const AddDealStageModal = ({ isOpen, onClose }) => {
             </Select>
           </Form.Item>
 
+          <Form.Item
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Default Stage</span>}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Switch
+                checked={isDefault}
+                onChange={(checked) => {
+                  const selectedPipeline = form.getFieldValue('pipeline') || pipelineId;
+                  if (checked && selectedPipeline) {
+                    showDefaultWarning(selectedPipeline, (proceed) => {
+                      setIsDefault(proceed);
+                    });
+                  } else {
+                    setIsDefault(checked);
+                  }
+                }}
+              />
+              <Text type="secondary" style={{ fontSize: '14px' }}>
+                Set as default stage for new deals
+              </Text>
+            </div>
+          </Form.Item>
+
           <div
             style={{
               display: "flex",
@@ -229,7 +333,7 @@ const AddDealStageModal = ({ isOpen, onClose }) => {
             <Button
               type="primary"
               htmlType="submit"
-              loading={isLoading}
+              loading={isAddingStage || isUpdatingStage}
               style={{
                 padding: "8px 32px",
                 height: "44px",
@@ -248,7 +352,12 @@ const AddDealStageModal = ({ isOpen, onClose }) => {
 
       <AddPipelineModal
         isOpen={isAddPipelineVisible}
-        onClose={() => setIsAddPipelineVisible(false)}
+        onClose={(success) => {
+          setIsAddPipelineVisible(false);
+          if (success) {
+            setDropdownOpen(true);
+          }
+        }}
       />
     </>
   );

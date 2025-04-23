@@ -297,6 +297,154 @@
             }
         }
     }
+
+    .user-cards-grid {
+        margin: 0 !important;
+
+        .ant-col {
+            &:first-child {
+                .user-card {
+                    height: auto;
+
+                    .user-card-header {
+                        padding: 24px;
+
+                        .user-main-info {
+                            .user-avatar {
+                                width: 72px;
+                                height: 72px;
+                                font-size: 32px;
+                            }
+
+                            .user-info {
+                                h3 {
+                                    font-size: 20px;
+                                }
+                            }
+                        }
+                    }
+
+                    .user-details {
+                        padding: 24px;
+                    }
+                }
+            }
+        }
+    }
+
+    .user-card {
+        height: 100%;
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .user-card-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+
+            .user-main-info {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+
+                .user-info {
+                    h3 {
+                        margin: 0 0 8px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #1f2937;
+                    }
+
+                    .role-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                }
+            }
+        }
+
+        .user-details {
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin: 0 16px 16px;
+
+            .detail-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 8px 0;
+                color: #4b5563;
+                font-size: 14px;
+
+                &:not(:last-child) {
+                    border-bottom: 1px solid #e5e7eb;
+                }
+
+                .detail-icon {
+                    color: #6b7280;
+                    font-size: 16px;
+                }
+
+                .date-cell {
+                    display: flex;
+                    flex-direction: column;
+
+                    .date {
+                        color: #374151;
+                        font-weight: 500;
+                    }
+
+                    .time {
+                        color: #6b7280;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+
+        .action-dropdown-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+            padding: 0;
+            margin: -4px -8px 0 0;
+
+            &:hover {
+                background: #f3f4f6;
+                border-color: #d1d5db;
+            }
+        }
+    }
+
+    .action-menu {
+        min-width: 180px;
+        padding: 4px;
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+
+            .anticon {
+                font-size: 16px;
+            }
+        }
+    }
 }
 
 // Modal styles
@@ -724,4 +872,14 @@
         padding: 16px;
         gap: 16px;
     }
+}
+
+.card-top-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1890ff 0%, #096dd9 100%);
+    opacity: 0.8;
 }
