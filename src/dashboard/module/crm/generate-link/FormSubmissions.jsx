@@ -238,6 +238,7 @@ const FormSubmissions = () => {
             title: 'Status',
             key: 'status',
             width: 120,
+            fixed: 'left',
             render: (_, record) => {
                 const isConverted = leads?.data?.some(lead => lead.inquiry_id === record.id);
                 return (
@@ -308,7 +309,7 @@ const FormSubmissions = () => {
             ),
             key: 'actions',
             width: 100,
-            fixed: 'right',
+            fixed: 'left',
             render: (_, record) => (
                 <div className="action-cell">
                     <Dropdown
@@ -405,125 +406,129 @@ const FormSubmissions = () => {
                         {`
                             .table-container {
                                 position: relative;
-                                border-radius: 12px;
+                                border-radius: 8px;
                                 overflow: hidden;
+                                background: #fff;
                             }
 
                             .ant-table-wrapper {
                                 overflow: hidden;
                             }
 
+                            .ant-table {
+                                background: #fff;
+                            }
+
+                            .ant-table-container {
+                                padding-bottom: 0;
+                            }
+
+                            .ant-table-header {
+                                background: #fff;
+                            }
+
                             .ant-table-body {
                                 overflow-x: auto !important;
                                 overflow-y: auto !important;
-                                max-height: 600px;
-                                margin-bottom: 8px;
+                                max-height: calc(100vh - 280px) !important;
+                                min-height: 400px;
                             }
 
-                            /* Custom Scrollbar Styles */
-                            .ant-table-body::-webkit-scrollbar {
-                                width: 8px;
-                                height: 8px;
+                            .ant-table-thead > tr > th {
+                                background: #fafafa !important;
+                                font-weight: 600;
+                                padding: 12px 16px;
+                                border-bottom: 1px solid #f0f0f0;
                             }
 
-                            .ant-table-body::-webkit-scrollbar-thumb {
+                            .ant-table-tbody > tr > td {
+                                padding: 12px 16px;
+                                border-bottom: 1px solid #f0f0f0;
+                            }
+
+                            .ant-table-tbody > tr:hover > td {
+                                background: #fafafa !important;
+                            }
+
+                            /* Pagination Styles */
+                            .ant-pagination {
+                                margin: 16px 0 !important;
+                                padding: 0 24px;
+                            }
+
+                            .ant-pagination-total-text {
+                                color: #666;
+                                font-size: 13px;
+                            }
+
+                            .ant-pagination-item {
+                                border-radius: 4px;
+                                font-size: 13px;
+                            }
+
+                            .ant-pagination-item-active {
                                 background: #1890ff;
-                                border-radius: 4px;
-                                border: 2px solid #f1f1f1;
+                                border-color: #1890ff;
                             }
 
-                            .ant-table-body::-webkit-scrollbar-track {
-                                background: #f1f1f1;
-                                border-radius: 4px;
+                            .ant-pagination-item-active a {
+                                color: #fff;
                             }
 
-                            /* Firefox scrollbar */
-                            .ant-table-body {
-                                scrollbar-width: thin;
-                                scrollbar-color: #1890ff #f1f1f1;
-                            }
-
+                            /* Action Column Styles */
                             .action-cell {
                                 display: flex;
-                                justify-content: flex-start;
+                                justify-content: center;
                                 align-items: center;
-                                height: 48px;
                                 padding: 0 12px !important;
+                                opacity: 1 !important;
+                                visibility: visible !important;
                             }
                             
                             .action-button {
                                 width: 32px;
                                 height: 32px;
-                                border-radius: 6px;
-                                display: flex;
+                                border-radius: 4px;
+                                display: flex !important;
                                 align-items: center;
                                 justify-content: center;
-                                color: #595959;
-                                background: #f5f5f5;
+                                color: #666;
+                                transition: all 0.3s;
                                 border: none;
+                                background: transparent;
                                 opacity: 1 !important;
+                                visibility: visible !important;
                             }
 
                             .action-button:hover {
-                                background: #e8e8e8;
+                                background: #f5f5f5;
+                                color: #1890ff;
                             }
 
-                            /* Remove hover effects */
-                            .ant-table-tbody > tr:hover .action-button {
+                            /* Override any hover visibility styles */
+                            .ant-table-tbody > tr > td .action-cell,
+                            .ant-table-tbody > tr > td .action-button {
                                 opacity: 1 !important;
-                                color: #595959 !important;
-                                background: #f5f5f5 !important;
+                                visibility: visible !important;
+                                display: flex !important;
                             }
 
-                            .ant-table-tbody > tr:hover .action-button:hover {
-                                background: #e8e8e8 !important;
-                            }
-
-                            /* Rest of the styles */
-                            .ant-table-wrapper .ant-table-tbody > tr {
-                                position: relative;
-                            }
-
-                            .ant-table-wrapper .ant-table-tbody > tr::after {
-                                content: '';
-                                position: absolute;
-                                left: 0;
-                                top: 0;
-                                height: 100%;
-                                width: 0;
-                                background: #1890ff;
-                                opacity: 0;
-                                transition: all 0.3s ease;
-                                z-index: 0;
-                            }
-
-                            .ant-table-wrapper .ant-table-tbody > tr:hover::after {
-                                width: 100%;
-                                opacity: 0.1;
-                            }
-
-                            .ant-table-wrapper .ant-table-tbody > tr > td {
-                                position: relative;
-                                z-index: 1;
-                                background: none !important;
+                            .ant-table-tbody > tr > td {
+                                padding: 12px 16px;
                                 border-bottom: 1px solid #f0f0f0;
                             }
 
-                            /* Style action column header */
-                            .ant-table-thead th[class*="action"] {
+                            .ant-table-tbody > tr:hover > td {
                                 background: #fafafa !important;
-                                border-bottom: 1px solid #f0f0f0 !important;
                             }
 
-                            /* Fix table header alignment */
-                            .ant-table-header {
-                                margin-right: 0 !important;
-                                margin-bottom: 0 !important;
-                            }
-
-                            /* Add space for scrollbar */
-                            .ant-table-container {
-                                padding-bottom: 8px;
+                            /* Ensure dropdown trigger is always visible */
+                            .ant-dropdown-trigger {
+                                display: inline-flex !important;
+                                align-items: center;
+                                justify-content: center;
+                                opacity: 1 !important;
+                                visibility: visible !important;
                             }
                         `}
                     </style>
@@ -535,17 +540,20 @@ const FormSubmissions = () => {
                         loading={isLoading}
                         rowKey="id"
                         scroll={{
-                            x: 1500,
-                            y: 600
+                            y: 'calc(100vh - 280px)'
                         }}
                         pagination={{
                             pageSize: 10,
                             showSizeChanger: true,
-                            showTotal: (total) => `Total ${total} items`,
-                            position: ['bottomRight']
+                            showTotal: (total) => `Total ${total} submissions`,
+                            position: ['bottomRight'],
+                            style: {
+                                padding: '16px 24px',
+                                background: '#fff',
+                                borderTop: '1px solid #f0f0f0'
+                            }
                         }}
                         size="middle"
-                        onScroll={handleScroll}
                     />
                 </div>
             </Space>

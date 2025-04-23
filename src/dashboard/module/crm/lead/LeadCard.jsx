@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 import { useGetLeadsQuery, useUpdateLeadMutation } from './services/LeadApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
+import { useGetPipelinesQuery } from '../crmsystem/pipeline/services/pipelineApi';
 import { useDispatch, useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { setStageOrder, selectStageOrder } from '../crmsystem/leadstage/services/leadStageSlice';
@@ -408,7 +409,20 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No leads"
+            description={
+              <Text style={{ color: '#9CA3AF', fontSize: '13px' }}>No leads</Text>
+            }
+            style={{
+              margin: '20px 0',
+              padding: '24px',
+              background: '#FAFAFA',
+              borderRadius: '8px',
+              border: '1px dashed #E5E7EB'
+            }}
+            imageStyle={{
+              height: 40,
+              opacity: 0.5
+            }}
           />
         )}
       </SortableContext>
@@ -567,25 +581,37 @@ const SortableColumn = ({ stage, leads, children, index }) => {
 const LeadCard = ({ currencies, countries, sourcesData, statusesData, categoriesData }) => {
   const { data: leadsData, isLoading: isLoadingLeads, error: errorLeads } = useGetLeadsQuery();
   const { data: stageQueryData, isLoading: isLoadingStages, error: errorStages, refetch: refetchStages } = useGetLeadStagesQuery();
+  const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const [updateLead] = useUpdateLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const savedStageOrder = useSelector(selectStageOrder);
   const [activeId, setActiveId] = useState(null);
   const [orderedStages, setOrderedStages] = useState([]);
-  const [selectedPipeline, setSelectedPipeline] = useState("95QsEzSA7EGnxrlRqnDShFw");
+  const [selectedPipeline, setSelectedPipeline] = useState(null);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
+
+  const pipelines = pipelinesData || [];
+
+  // Initialize selected pipeline if not set
+  useEffect(() => {
+    if (!selectedPipeline && pipelines.length > 0) {
+      setSelectedPipeline(pipelines[0]?.id);
+    }
+  }, [selectedPipeline, pipelines]);
 
   // Filter and order lead stages
   const stages = React.useMemo(() => {
     if (!stageQueryData) return [];
     const actualStages = Array.isArray(stageQueryData) ? stageQueryData : (stageQueryData.data || []);
 
+    // Filter stages by type and pipeline
     const leadStages = actualStages.filter(stage =>
       stage.stageType === 'lead' &&
       stage.pipeline === selectedPipeline
     );
 
+    // Sort stages based on saved order if available
     if (savedStageOrder.length > 0 && leadStages.length > 0) {
       const stageOrderMap = new Map(savedStageOrder.map((id, index) => [id, index]));
       return [...leadStages].sort((a, b) => {
@@ -618,12 +644,6 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
       return acc;
     }, {});
   }, [orderedStages, leads]);
-
-  // Pipeline selection buttons
-  const pipelines = [
-    { id: "95QsEzSA7EGnxrlRqnDShFw", name: "Marketing" },
-    { id: "cFaSfTBNfdMnnvSNxQmql0w", name: "Sales" }
-  ];
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -704,7 +724,7 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     }
   };
 
-  if (isLoadingLeads || isLoadingStages) return <div>Loading...</div>;
+  if (isLoadingLeads || isLoadingStages || isLoadingPipelines) return <div>Loading...</div>;
   if (errorLeads || errorStages) return <div>Error loading data. Please try again.</div>;
 
   return (
@@ -746,7 +766,7 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
               }}
             >
               <FiTarget style={{ fontSize: '12px' }} />
-              {pipeline.name}
+              {pipeline.pipeline_name}
             </Button>
           ))}
         </div>
@@ -760,8 +780,8 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
       >
         <div className="kanban-board-wrapper" style={{
           width: '100%',
-          height: 'calc(100vh - 180px)',
-          overflow: 'hidden',
+          minHeight: 'calc(100vh - 240px)',
+          overflow: 'auto',
           position: 'relative',
           isolation: 'isolate',
           perspective: 1000,
@@ -773,14 +793,84 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
             padding: '12px',
             width: 'max-content',
             minWidth: '100%',
-            height: '100%',
-            overflowX: 'auto',
-            overflowY: 'hidden',
+            height: 'fit-content',
             position: 'relative',
             transformStyle: 'preserve-3d',
             perspective: 1000,
             alignItems: 'flex-start'
           }}>
+            <style jsx global>{`
+              .kanban-board-wrapper {
+                scrollbar-width: thin;
+                scrollbar-color: #d1d5db transparent;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar-track {
+                background: transparent;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar-thumb {
+                background-color: #d1d5db;
+                border-radius: 3px;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar-thumb:hover {
+                background-color: #9ca3af;
+              }
+
+              .kanban-column-content {
+                max-height: calc(100vh - 320px) !important;
+                overflow-y: auto !important;
+                scrollbar-width: thin;
+                scrollbar-color: #d1d5db transparent;
+              }
+
+              .kanban-column-content::-webkit-scrollbar {
+                width: 4px;
+              }
+
+              .kanban-column-content::-webkit-scrollbar-track {
+                background: transparent;
+              }
+
+              .kanban-column-content::-webkit-scrollbar-thumb {
+                background-color: #d1d5db;
+                border-radius: 2px;
+              }
+
+              .kanban-column-content::-webkit-scrollbar-thumb:hover {
+                background-color: #9ca3af;
+              }
+
+              .kanban-column {
+                height: fit-content;
+                min-height: calc(100vh - 320px);
+              }
+
+              .ant-empty {
+                margin: 0 !important;
+              }
+              .ant-empty-image {
+                margin-bottom: 8px !important;
+              }
+              .kanban-column-content .ant-empty-description {
+                margin-bottom: 0 !important;
+              }
+              .kanban-column-content {
+                background: #ffffff;
+                border-radius: 0 0 8px 8px;
+              }
+              .kanban-column-content:empty {
+                padding: 0 !important;
+                background: transparent;
+              }
+            `}</style>
+
             <SortableContext
               items={orderedStages.map(stage => `column-${stage.id}`)}
               strategy={horizontalListSortingStrategy}
@@ -844,26 +934,8 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
           pipelineId={selectedPipeline}
         />
       )}
-
-      <style jsx global>{`
-        .kanban-board {
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .kanban-column-content {
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .lead-card {
-          backface-visibility: hidden;
-        }
-        
-        .kanban-column.is-dragging {
-          cursor: grabbing !important;
-        }
-      `}</style>
     </div>
   );
 };
 
-export default LeadCard;
+export default LeadCard;                                                                                                                                                

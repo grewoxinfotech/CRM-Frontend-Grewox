@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Tag, Button, Tooltip, Avatar, Dropdown, Typography, Progress, Empty, message } from "antd";
+import { Card, Tag, Button, Tooltip, Dropdown, Typography, Progress, Empty, message } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -15,7 +15,7 @@ import {
   FiPlus
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation } from "./services/DealApi";
+import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery, useUpdateLeadStageMutation } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLabelsQuery, useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
@@ -574,21 +574,25 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
   const [updateLeadStage] = useUpdateLeadStageMutation();
   const { data: dealsData, isLoading: isLoadingDeals, error: dealsError } = useGetDealsQuery();
   const { data: stageQueryData, isLoading: isLoadingStages, refetch: refetchStages } = useGetLeadStagesQuery();
+  const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const currentUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const savedStageOrder = useSelector(selectDealStageOrder);
 
   const [activeId, setActiveId] = useState(null);
   const [orderedStages, setOrderedStages] = useState([]);
-  const [selectedPipeline, setSelectedPipeline] = useState("cFaSfTBNfdMnnvSNxQmql0w");
+  const [selectedPipeline, setSelectedPipeline] = useState(null);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
   const [deals, setDeals] = useState([]);
 
-  // Pipeline options
-  const pipelines = [
-    { id: "95QsEzSA7EGnxrlRqnDShFw", name: "Marketing" },
-    { id: "cFaSfTBNfdMnnvSNxQmql0w", name: "Sales" }
-  ];
+  const pipelines = pipelinesData || [];
+
+  // Initialize selected pipeline if not set
+  useEffect(() => {
+    if (!selectedPipeline && pipelines.length > 0) {
+      setSelectedPipeline(pipelines[0]?.id);
+    }
+  }, [selectedPipeline, pipelines]);
 
   useEffect(() => {
     if (dealsData) {
@@ -743,7 +747,7 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
     }
   };
 
-  if (isLoadingDeals || isLoadingStages) return <div>Loading...</div>;
+  if (isLoadingDeals || isLoadingStages || isLoadingPipelines) return <div>Loading...</div>;
   if (dealsError) return <div>Error loading data. Please try again.</div>;
 
   return (
@@ -751,18 +755,18 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
       display: 'flex',
       flexDirection: 'column',
       width: '100%',
-      height: '100vh',
+      height: '100%',
       overflow: 'hidden',
       position: 'relative'
     }}>
-      {/* Pipeline Filter */}
+      {/* Pipeline Selector */}
       <div style={{
-        padding: '12px',
+        marginBottom: '8px',
         display: 'flex',
         gap: '8px',
         alignItems: 'center',
-        borderBottom: '1px solid #f0f0f0',
-        background: '#ffffff'
+        padding: '0 12px',
+        marginTop: '5px'
       }}>
         <Text strong style={{ fontSize: '13px', color: '#374151' }}>Pipeline:</Text>
         <div style={{
@@ -786,7 +790,7 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
               }}
             >
               <FiTarget style={{ fontSize: '12px' }} />
-              {pipeline.name}
+              {pipeline.pipeline_name}
             </Button>
           ))}
         </div>
@@ -800,8 +804,8 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
       >
         <div className="kanban-board-wrapper" style={{
           width: '100%',
-          height: 'calc(100vh - 180px)',
-          overflow: 'hidden',
+          minHeight: 'calc(100vh - 240px)',
+          overflow: 'auto',
           position: 'relative',
           isolation: 'isolate',
           perspective: 1000,
@@ -813,14 +817,85 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
             padding: '12px',
             width: 'max-content',
             minWidth: '100%',
-            height: '100%',
-            overflowX: 'auto',
-            overflowY: 'hidden',
+            height: 'fit-content',
             position: 'relative',
             transformStyle: 'preserve-3d',
             perspective: 1000,
             alignItems: 'flex-start'
           }}>
+            <style jsx global>{`
+              .kanban-board-wrapper {
+                scrollbar-width: thin;
+                scrollbar-color: #d1d5db transparent;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar-track {
+                background: transparent;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar-thumb {
+                background-color: #d1d5db;
+                border-radius: 3px;
+              }
+
+              .kanban-board-wrapper::-webkit-scrollbar-thumb:hover {
+                background-color: #9ca3af;
+              }
+
+              .kanban-column-content {
+                max-height: calc(100vh - 320px) !important;
+                min-height: 200px;
+                overflow-y: auto !important;
+                scrollbar-width: thin;
+                scrollbar-color: #d1d5db transparent;
+              }
+
+              .kanban-column-content::-webkit-scrollbar {
+                width: 4px;
+              }
+
+              .kanban-column-content::-webkit-scrollbar-track {
+                background: transparent;
+              }
+
+              .kanban-column-content::-webkit-scrollbar-thumb {
+                background-color: #d1d5db;
+                border-radius: 2px;
+              }
+
+              .kanban-column-content::-webkit-scrollbar-thumb:hover {
+                background-color: #9ca3af;
+              }
+
+              .kanban-column {
+                height: fit-content;
+                min-height: calc(100vh - 320px);
+              }
+
+              .ant-empty {
+                margin: 0 !important;
+              }
+              .ant-empty-image {
+                margin-bottom: 8px !important;
+              }
+              .kanban-column-content .ant-empty-description {
+                margin-bottom: 0 !important;
+              }
+              .kanban-column-content {
+                background: #ffffff;
+                border-radius: 0 0 8px 8px;
+              }
+              .kanban-column-content:empty {
+                padding: 0 !important;
+                background: transparent;
+              }
+            `}</style>
+
             <SortableContext
               items={orderedStages.map(stage => `column-${stage.id}`)}
               strategy={horizontalListSortingStrategy}
@@ -835,11 +910,11 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
                     <DroppableStage
                       stage={stage}
                       deals={dealsByStage[stage.id] || []}
-                      isColumnDragging={activeId === `column-${stage.id}`}
                       onEdit={onEdit}
                       onDelete={onDelete}
                       onView={onView}
                       onDealClick={onDealClick}
+                      isColumnDragging={activeId === `column-${stage.id}`}
                     />
                   </SortableColumn>
                 </div>
@@ -849,7 +924,9 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
             {/* Add Stage Button */}
             <div style={{
               width: '350px',
-              minWidth: '350px'
+              minWidth: '350px',
+              height: 'auto',
+              paddingTop: '0px'
             }}>
               <Button
                 type="dashed"
@@ -867,7 +944,8 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
                   background: '#f9fafb',
                   border: '1px dashed #d1d5db',
                   borderRadius: '8px',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)'
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+                  disabled: isLoadingStages
                 }}
                 disabled={isLoadingStages}
               >
@@ -887,24 +965,6 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
           pipelineId={selectedPipeline}
         />
       )}
-
-      <style jsx global>{`
-        .kanban-board {
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .kanban-column-content {
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .deal-card {
-          backface-visibility: hidden;
-        }
-        
-        .kanban-column.is-dragging {
-          cursor: grabbing !important;
-        }
-      `}</style>
     </div>
   );
 };

@@ -71,20 +71,22 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
     }
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
-      {
-        key: "view",
-        icon: <FiEye style={{ color: '#1890ff' }} />,
-        label: (
-          <Text style={{ color: '#1890ff', fontWeight: '500' }}>
-            Overview
-          </Text>
-        ),
-        onClick: () => onLeadClick(record),
-      },
-      ...(!record.inquiry_id ? [
+  const getDropdownItems = (record) => {
+
+    const shouldShowEditDelete = record.is_converted === false;
+    return {
+      items: [
         {
+          key: "view",
+          icon: <FiEye style={{ color: '#1890ff' }} />,
+          label: (
+            <Text style={{ color: '#1890ff', fontWeight: '500' }}>
+              Overview
+            </Text>
+          ),
+          onClick: () => onLeadClick(record),
+        },
+        shouldShowEditDelete && {
           key: "edit",
           icon: <FiEdit2 style={{ color: '#52c41a' }} />,
           label: (
@@ -94,7 +96,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
           ),
           onClick: () => onEdit(record),
         },
-        {
+        shouldShowEditDelete && {
           key: "delete",
           icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
           label: (
@@ -105,9 +107,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
           onClick: () => handleDelete(record),
           danger: true,
         }
-      ] : [])
-    ],
-  });
+      ].filter(Boolean),
+    };
+  };
 
   const columns = [
     {

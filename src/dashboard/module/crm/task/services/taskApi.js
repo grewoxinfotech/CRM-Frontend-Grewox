@@ -27,7 +27,6 @@ export const taskApi = createApi({
               };
             })
           };
-          console.log('Transformed Response:', JSON.stringify(transformedData, null, 2));
           return transformedData;
         }
         return response;
