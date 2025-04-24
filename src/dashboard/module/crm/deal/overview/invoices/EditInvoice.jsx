@@ -42,6 +42,7 @@ import { useGetContactsQuery } from "../../../../crm/contact/services/contactApi
 import { useGetCompanyAccountsQuery } from "../../../../crm/companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import { useGetAllCountriesQuery } from "../../../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -66,6 +67,10 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [selectedCategory, setSelectedCategory] = useState("customer");
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+  const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery({
+    page: 1,
+    limit: 100
+  });
 
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
@@ -482,9 +487,17 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
   const handleCreateCustomer = async (values) => {
     try {
+      // Find the country ID from the selected phone code
+      const selectedCountry = countries?.find(c => c.phoneCode === values.phonecode);
+      if (!selectedCountry) {
+        message.error('Please select a valid phone code');
+        return;
+      }
+
       const result = await createCustomer({
         name: values.name,
         contact: values.contact,
+        phonecode: selectedCountry.id // Use country ID instead of phone code
       }).unwrap();
 
       message.success("Customer created successfully");
@@ -647,16 +660,81 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             },
           ]}
         >
-          <Input
-            prefix={<FiPhone style={{ color: "#1890ff" }} />}
-            placeholder="Enter phone number"
-            size="large"
-            style={{
-              borderRadius: "8px",
-              height: "40px",
-              backgroundColor: "#f8fafc",
-            }}
-          />
+          <Input.Group compact className="phone-input-group" style={{
+              display: 'flex',
+              height: '48px',
+              backgroundColor: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e6e8eb',
+              overflow: 'hidden'
+          }}>
+              <Form.Item
+                  name="phonecode"
+                  noStyle
+                  initialValue="+91"
+              >
+                  <Select
+                      size="large"
+                      style={{
+                          width: '80px',
+                          height: '48px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          backgroundColor: 'white',
+                          cursor: 'pointer',
+                      }}
+                      loading={countriesLoading}
+                      className="phone-code-select"
+                      dropdownStyle={{
+                          padding: '8px',
+                          borderRadius: '10px',
+                          backgroundColor: 'white',
+                      }}
+                      showSearch
+                      optionFilterProp="children"
+                      defaultValue="+91"
+                  >
+                      {countries?.map(country => (
+                          <Option 
+                              key={country.id} 
+                              value={country.phoneCode}
+                              style={{ cursor: 'pointer' }}
+                          >
+                              <div style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'center',
+                                  color: '#262626',
+                                  cursor: 'pointer',
+                              }}>
+                                  <span>{country.phoneCode}</span>
+                              </div>
+                          </Option>
+                      ))}
+                  </Select>
+              </Form.Item>
+              <Form.Item
+                  name="contact"
+                  noStyle
+              >
+                  <Input
+                      size="large"
+                      type="number"
+                      style={{
+                          flex: 1,
+                          border: 'none',
+                          borderLeft: '1px solid #e6e8eb',
+                          borderRadius: 0,
+                          height: '46px',
+                          backgroundColor: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                      }}
+                      placeholder="Enter 10-digit phone number"
+                      maxLength={10}
+                  />
+              </Form.Item>
+          </Input.Group>
         </Form.Item>
 
         <div

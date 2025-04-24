@@ -610,7 +610,13 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 }}
                 className="task-table"
                 onRow={(record) => ({
-                    onClick: () => handleView(record),
+                    onClick: (e) => {
+                        if (!e.target.closest('.ant-dropdown-trigger') && 
+                            !e.target.closest('.ant-dropdown') && 
+                            !e.target.closest('.ant-dropdown-menu')) {
+                            handleView(record);
+                        }
+                    },
                     style: { cursor: 'pointer' }
                 })}
             />

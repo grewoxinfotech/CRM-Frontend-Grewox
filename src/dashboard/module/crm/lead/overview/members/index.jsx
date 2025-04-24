@@ -374,7 +374,7 @@ const LeadMembers = ({ leadId }) => {
                                     minHeight: '48px'
                                   }}
                                 listHeight={200}
-                                maxTagCount={2}
+                                maxTagCount={1}
                                 maxTagTextLength={15}
                                 dropdownStyle={{
                                     maxHeight: '300px',
