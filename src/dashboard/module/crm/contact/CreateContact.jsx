@@ -245,7 +245,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                     Company Name <span className="required">*</span>
                   </span>
                 }
-                rules={[{ required: true, message: "Please select company" }]}
+                // rules={[{ required: true, message: "Please select company" }]}
               >
                 <Select
                   placeholder="Select company"

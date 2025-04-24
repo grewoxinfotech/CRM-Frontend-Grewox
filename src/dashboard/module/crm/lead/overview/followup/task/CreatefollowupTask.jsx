@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Checkbox, Space, Avatar, Radio, Switch, message } from 'antd';
-import { FiX, FiCalendar, FiCheckSquare, FiUser, FiShield, FiBriefcase, FiChevronDown } from 'react-icons/fi';
+import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Divider, Checkbox, Space, Avatar, Radio, Switch, message } from 'antd';
+import { FiX, FiCalendar, FiCheckSquare, FiUser, FiShield, FiBriefcase, FiChevronDown, FiUserPlus } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
@@ -24,6 +24,8 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
   const [customFrequency, setCustomFrequency] = useState('weekly');
+  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+  const [teamMembersOpen , setTeamMembersOpen] = useState(false);
   
   const [monthlyPattern, setMonthlyPattern] = useState('day');
   const [yearlyPattern, setYearlyPattern] = useState('date');
@@ -70,34 +72,34 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   ) || [];
 
   // Get role colors and icons
-  const getRoleStyle = (roleName) => {
+  const getRoleColor = (role) => {
     const roleColors = {
       'employee': {
         color: '#D46B08',
-        bg: '#FFF7E6', 
-        border: '#FFD591',
-        icon: <FiUser style={{ fontSize: '14px' }} />
+        bg: '#FFF7E6',
+        border: '#FFD591'
       },
       'admin': {
         color: '#096DD9',
         bg: '#E6F7FF',
-        border: '#91D5FF', 
-        icon: <FiShield style={{ fontSize: '14px' }} />
+        border: '#91D5FF'
       },
       'manager': {
         color: '#08979C',
         bg: '#E6FFFB',
-        border: '#87E8DE',
-        icon: <FiBriefcase style={{ fontSize: '14px' }} />
+        border: '#87E8DE'
       },
       'default': {
         color: '#531CAD',
         bg: '#F9F0FF',
-        border: '#D3ADF7',
-        icon: <FiUser style={{ fontSize: '14px' }} />
+        border: '#D3ADF7'
       }
     };
-    return roleColors[roleName?.toLowerCase()] || roleColors.default;
+    return roleColors[role?.toLowerCase()] || roleColors.default;
+  };
+
+  const handleCreateUser = () => {
+    setIsCreateUserVisible(true);
   };
 
   // Watch due_date field to enable repeat option
@@ -390,60 +392,178 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           >
             <Select
               mode="multiple"
-              showSearch
               placeholder="Select team members"
-              optionFilterProp="children"
               style={{
-                width: "100%",
-                borderRadius: "10px",
-                height: "48px"
+                width: '100%',
+                height: 'auto',
+                minHeight: '48px'
               }}
-              filterOption={(input, option) => {
-                const username = option?.username?.toLowerCase() || '';
-                const searchTerm = input.toLowerCase();
-                return username.includes(searchTerm);
+              listHeight={200}
+              maxTagCount={2}
+              maxTagTextLength={15}
+              dropdownStyle={{
+                maxHeight: '300px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
               }}
+              popupClassName="team-members-dropdown"
+              showSearch
+              optionFilterProp="children"
+              loading={usersLoading}
+              open={teamMembersOpen}
+              onDropdownVisibleChange={setTeamMembersOpen}
+              dropdownRender={(menu) => (
+                <>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    padding: '0 8px',
+                    justifyContent: 'flex-end'
+                  }}>
+                    <Button
+                      type="text"
+                      icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                      onClick={handleCreateUser}
+                      style={{
+                        height: '36px',
+                        padding: '8px 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                      }}
+                    >
+                      Add New User
+                    </Button>
+                    <Button
+                      type="text"
+                      icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTeamMembersOpen(false);
+                      }}
+                      style={{
+                        height: '36px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        background: '#ffffff',
+                        border: '1px solid #1890ff',
+                        color: '#1890ff',
+                        fontWeight: '500'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#e6f4ff';
+                        e.currentTarget.style.borderColor = '#69b1ff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#ffffff';
+                        e.currentTarget.style.borderColor = '#1890ff';
+                      }}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </>
+              )}
             >
-              {users.map((user) => {
+              {Array.isArray(users) && users.map(user => {
                 const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleStyle(userRole?.role_name);
+                const roleStyle = getRoleColor(userRole?.role_name);
 
                 return (
-                  <Option key={user.id} value={user.id} username={user.username}>
+                  <Option key={user.id} value={user.id}>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%'
+                      gap: '12px',
+                      padding: '4px 0'
                     }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: '#e6f4ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#1890ff',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textTransform: 'uppercase'
+                      }}>
+                        {user.profilePic ? (
+                          <img
+                            src={user.profilePic}
+                            alt={user.username}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '50%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        ) : (
+                          user.username?.charAt(0) || <FiUser />
+                        )}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '4px'
+                      }}>
+                        <span style={{
+                          fontWeight: 500,
+                          color: 'rgba(0, 0, 0, 0.85)',
+                          fontSize: '14px'
+                        }}>
+                          {user.username}
+                        </span>
+                      </div>
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px'
+                        gap: '8px',
+                        marginLeft: 'auto'
                       }}>
-                        <Avatar size="small" style={{
-                          backgroundColor: user.color || '#1890ff',
-                          fontSize: '12px'
+                        <div
+                          className="role-indicator"
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: roleStyle.color,
+                            boxShadow: `0 0 8px ${roleStyle.color}`,
+                            animation: 'pulse 2s infinite'
+                          }}
+                        />
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          background: roleStyle.bg,
+                          color: roleStyle.color,
+                          border: `1px solid ${roleStyle.border}`,
+                          fontWeight: 500,
+                          textTransform: 'capitalize'
                         }}>
-                          {user.username?.[0]?.toUpperCase() || '?'}
-                        </Avatar>
-                        <Text strong>{user.username}</Text>
+                          {userRole?.role_name || 'User'}
+                        </span>
                       </div>
-                      <Tag style={{
-                        margin: 0,
-                        background: roleStyle.bg,
-                        color: roleStyle.color,
-                        border: `1px solid ${roleStyle.border}`,
-                        fontSize: '12px',
-                        borderRadius: '16px',
-                        padding: '2px 10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        {roleStyle.icon}
-                        {userRole?.role_name || 'User'}
-                      </Tag>
                     </div>
                   </Option>
                 );

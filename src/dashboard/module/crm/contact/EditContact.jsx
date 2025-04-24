@@ -283,7 +283,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Company Name <span className="required">*</span>
                   </span>
                 }
-                rules={[{ required: true, message: "Please select company" }]}
+                // rules={[{ required: true, message: "Please select company" }]}
               >
                 <Select
                   placeholder="Select company"
