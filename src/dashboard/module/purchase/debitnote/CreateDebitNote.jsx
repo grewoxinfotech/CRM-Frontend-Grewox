@@ -59,6 +59,14 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
             }
 
             const billAmount = selectedBill.amount || selectedBill.amount || 0;
+            
+            // Check if bill amount is 0
+            if (billAmount <= 0) {
+                message.error('Cannot create debit note for bill with zero amount');
+                form.resetFields(['bill']);
+                return;
+            }
+
             form.setFieldsValue({
                 amount: billAmount,
                 max_amount: billAmount,
@@ -71,12 +79,19 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
     const handleSubmit = async (values) => {
         try {
             setLoading(true);
+            
+            // Check if amount is 0 or less
+            if (!values.amount || values.amount <= 0) {
+                message.error('Debit note amount must be greater than zero');
+                return;
+            }
+
             const formattedData = {
                 bill: values.bill,
                 date: values.date?.format('YYYY-MM-DD'),
-                amount: Number(values.amount || 0),
+                amount: values.amount,
                 description: values.description || '',
-                currency: values.currency // Use the currency from the form (which comes from the selected bill)
+                currency: values.currency
             };
 
             await createDebitNote(formattedData).unwrap();

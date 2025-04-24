@@ -85,6 +85,13 @@ const CreateCreditNotes = ({ open, onCancel }) => {
 
   const handleSubmit = async (values) => {
     try {
+
+        // Check if amount is 0 or less
+        if (!values.amount || values.amount <= 0) {
+          message.error('Credit note amount must be greater than zero');
+          return;
+      }
+
       // Check if credit note amount exceeds invoice amount
       if (parseFloat(values.amount) > parseFloat(values.max_amount)) {
         message.error("Credit note amount cannot exceed invoice amount");
