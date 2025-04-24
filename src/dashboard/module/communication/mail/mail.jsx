@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Form, message } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Form, message, Badge, Tooltip, Button, Spin } from 'antd';
 import { useGetEmailsQuery, useSendEmailMutation, useStarEmailMutation, useToggleImportantMutation, useMoveToTrashMutation, useDeleteEmailMutation } from './services/mailApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
@@ -8,6 +8,7 @@ import EmailList from './components/EmailList';
 import Sidebar from './components/Sidebar';
 import MailHeader from './components/MailHeader';
 import ScheduleModal from './components/ScheduleModal';
+import { FiMenu } from 'react-icons/fi';
 import './mail.scss';
 
 const Mail = () => {
@@ -36,8 +37,20 @@ const Mail = () => {
   const [attachments, setAttachments] = useState([]);
   const [isImportant, setIsImportant] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [sidebarVisible, setSidebarVisible] = useState(!isMobile);
 
-  console.log("currentUser", currentUser.username)
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      setSidebarVisible(!mobile);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Filter emails based on selected menu and search text
   const emails = React.useMemo(() => {
@@ -153,15 +166,6 @@ const Mail = () => {
         });
       }
 
-      // Log FormData contents properly
-      console.log("FormData contents:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
-      }
-
-      // Also log the attachments array for debugging
-      console.log("Attachments array:", attachments);
-
       await sendEmail(formData);
       
       message.success(scheduledDateTime ? 'Email scheduled successfully' : 'Email sent successfully');
@@ -217,8 +221,20 @@ const Mail = () => {
     }
   };
 
+  const toggleSidebar = () => {
+    setSidebarVisible(!sidebarVisible);
+  };
+
   return (
     <Layout className="mail-layout">
+      {isMobile && (
+        <Button 
+          className="mobile-menu-toggle" 
+          icon={<FiMenu />} 
+          onClick={toggleSidebar}
+        />
+      )}
+      
       <Sidebar 
         selectedMenu={selectedMenu}
         setSelectedMenu={setSelectedMenu}
@@ -228,6 +244,7 @@ const Mail = () => {
         scheduledCount={scheduledCount}
         trashCount={trashCount}
         setComposeVisible={setComposeVisible}
+        className={sidebarVisible ? 'visible' : ''}
       />
 
       <Layout className="mail-content">
@@ -236,16 +253,24 @@ const Mail = () => {
           setSearchText={setSearchText}
           onRefresh={handleRefresh}
           isRefreshing={isRefreshing}
+          selectedMenu={selectedMenu}
         />
 
-        <EmailList 
-          emails={emails}
-          handleStarEmail={handleStarEmail}
-          handleImportant={handleImportant}
-          handleDelete={handleDelete}
-          handleRestore={handleRestore}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="loading-container">
+            <Spin size="large" />
+            <p>Loading emails...</p>
+          </div>
+        ) : (
+          <EmailList 
+            emails={emails}
+            handleStarEmail={handleStarEmail}
+            handleImportant={handleImportant}
+            handleDelete={handleDelete}
+            handleRestore={handleRestore}
+            isLoading={isLoading}
+          />
+        )}
       </Layout>
 
       <ComposeModal 

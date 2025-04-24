@@ -22,13 +22,13 @@ const Sidebar = ({
   return (
     <Sider width={280} className={`mail-sider ${className || ''}`}>
       <div className="mail-filters">
-        <div className="user-profile">
+        {/* <div className="user-profile">
           <Avatar size={48} icon={<FiUser />} className="user-avatar" />
           <div className="user-info">
             <Text strong>John Doe</Text>
             <Text type="secondary">john.doe@example.com</Text>
           </div>
-        </div>
+        </div> */}
 
         <Button
           type="primary"
@@ -80,15 +80,15 @@ const Sidebar = ({
               label: 'Trash',
               suffix: trashCount > 0 && <Badge count={trashCount} style={{ backgroundColor: '#64748b' }} />
             },
-            {
-              type: 'divider'
-            },
-            {
-              key: 'settings',
-              icon: <FiSettings />,
-              label: 'Email Settings',
-              onClick: () => setSettingsVisible(true)
-            }
+            // {
+            //   type: 'divider'
+            // },
+            // {
+            //   key: 'settings',
+            //   icon: <FiSettings />,
+            //   label: 'Email Settings',
+            //   onClick: () => setSettingsVisible(true)
+            // }
           ]}
         />
       </div>

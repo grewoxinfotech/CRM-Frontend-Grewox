@@ -6,13 +6,9 @@ export const emailTemplates = {
     html: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6;">
         <p>Dear {{recipient_name}},</p>
-        
         <p>Welcome to {{company_name}}! We're excited to have you with us.</p>
-        
         <p>Your account has been set up and will be active from {{start_date}}.</p>
-
-        <p>If you have any questions, feel free to reach out to us.</p>
-
+        <p>If you have any questions, feel free to reach out to us.</p> 
         <p>Best regards,<br>
         {{sender_name}}</p>
       </div>

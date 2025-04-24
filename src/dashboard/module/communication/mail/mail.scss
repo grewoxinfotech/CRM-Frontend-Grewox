@@ -1,16 +1,23 @@
 // Variables
-$primary-color: #1890ff;
-$secondary-color: #52c41a;
-$danger-color: #ff4d4f;
-$border-color: #e6e8eb;
-$text-color: #1f2937;
-$text-secondary: #6b7280;
+$primary-color: #4361ee;
+$primary-light: #4895ef;
+$secondary-color: #4cc9f0;
+$success-color: #4ade80;
+$warning-color: #fbbf24;
+$danger-color: #f87171;
+$border-color: #e2e8f0;
+$text-color: #1e293b;
+$text-secondary: #64748b;
 $bg-light: #f8fafc;
-$transition: all 0.3s ease;
+$bg-white: #ffffff;
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 $shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 $shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 $radius-sm: 8px;
 $radius-md: 12px;
+$radius-lg: 16px;
+$radius-full: 9999px;
 
 // Mixins
 @mixin flex-center {
@@ -25,60 +32,111 @@ $radius-md: 12px;
   justify-content: space-between;
 }
 
+@mixin glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 // Main Layout
 .mail-layout {
   height: calc(100vh - 64px);
   background: $bg-light;
-  border-radius: $radius-md;
+  border-radius: $radius-lg;
   overflow: hidden;
-  box-shadow: $shadow-md;
+  box-shadow: $shadow-lg;
   margin: 16px;
+  display: flex;
+  position: relative;
+
+  .mobile-menu-toggle {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 20;
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-full;
+    @include flex-center;
+    background: $bg-white;
+    box-shadow: $shadow-md;
+    border: none;
+  }
 
   // Sidebar
   .mail-sider {
-    background: white;
+    background: $bg-white;
     border-right: 1px solid $border-color;
     height: 100%;
     overflow: hidden;
+    width: 280px;
+    transition: $transition;
+    box-shadow: $shadow-sm;
 
     .mail-filters {
-      padding: 20px;
+      padding: 24px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+
+      .user-profile {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid $border-color;
+
+        .user-avatar {
+          background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+          color: white;
+          font-size: 20px;
+          margin-right: 12px;
+        }
+
+        .user-info {
+          display: flex;
+          flex-direction: column;
+        }
+      }
 
       .compose-button {
-        height: 48px;
-        border-radius: $radius-sm;
-        font-weight: 500;
-        background: linear-gradient(135deg, $primary-color 0%, darken($primary-color, 10%) 100%);
+        height: 52px;
+        border-radius: $radius-full;
+        font-weight: 600;
+        background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
         border: none;
-        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
-        margin-bottom: 24px;
+        box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
+        margin-bottom: 32px;
         transition: $transition;
+        letter-spacing: 0.5px;
 
         &:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 16px rgba(24, 144, 255, 0.2);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(67, 97, 238, 0.3);
         }
       }
 
       .ant-menu {
         border: none;
         background: transparent;
+        flex: 1;
 
         .ant-menu-item {
-          height: 44px;
+          height: 48px;
           margin: 4px 0;
           border-radius: $radius-sm;
           padding: 0 16px;
           transition: $transition;
+          font-weight: 500;
 
           &:hover {
-            background: rgba($primary-color, 0.06);
+            background: rgba($primary-color, 0.08);
           }
 
           &.ant-menu-item-selected {
             background: rgba($primary-color, 0.1);
             color: $primary-color;
-            font-weight: 500;
+            font-weight: 600;
           }
 
           .anticon {
@@ -95,33 +153,56 @@ $radius-md: 12px;
 
   // Main Content
   .mail-content {
-    background: white;
+    background: $bg-white;
     height: 100%;
     display: flex;
     flex-direction: column;
+    flex: 1;
 
     // Header
     .mail-header {
-      padding: 16px 24px;
+      padding: 20px 24px;
       border-bottom: 1px solid $border-color;
       @include flex-between;
+      @include glass-effect;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      .header-title {
+        display: flex;
+        align-items: center;
+        
+        .title-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: $radius-full;
+          background: rgba($primary-color, 0.1);
+          color: $primary-color;
+          @include flex-center;
+          margin-right: 12px;
+          font-size: 18px;
+        }
+      }
 
       .header-actions {
         display: flex;
-        gap: 8px;
+        gap: 12px;
 
         .ant-btn {
-          width: 36px;
-          height: 36px;
-          border-radius: $radius-sm;
+          width: 40px;
+          height: 40px;
+          border-radius: $radius-full;
           @include flex-center;
           border: 1px solid $border-color;
           transition: $transition;
+          background: $bg-white;
 
           &:hover {
             background: $bg-light;
             border-color: $primary-color;
             color: $primary-color;
+            transform: translateY(-1px);
           }
         }
       }
@@ -132,47 +213,96 @@ $radius-md: 12px;
         margin: 0 24px;
 
         .ant-input-affix-wrapper {
-          border-radius: $radius-sm;
-          height: 40px;
+          border-radius: $radius-full;
+          height: 44px;
           background: $bg-light;
           border: 1px solid $border-color;
           transition: $transition;
+          box-shadow: $shadow-sm;
 
           &:hover, &:focus-within {
             border-color: $primary-color;
-            box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+            box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
           }
 
           .anticon {
             color: $text-secondary;
+            font-size: 16px;
           }
         }
       }
     }
 
+    // Loading container
+    .loading-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: $text-secondary;
+      
+      p {
+        margin-top: 16px;
+        font-size: 16px;
+      }
+    }
+
     // Email List
     .mail-list {
+      background: $bg-white;
+      border-radius: $radius-lg;
+      box-shadow: $shadow-sm;
       flex: 1;
       overflow: auto;
-      padding: 12px;
+      padding: 16px;
 
       .mail-item {
         padding: 16px;
-        border-radius: $radius-sm;
-        margin-bottom: 8px;
+        border-radius: $radius-md;
+        margin-bottom: 12px;
         border: 1px solid transparent;
         transition: $transition;
         cursor: pointer;
+        background: $bg-white;
+        position: relative;
+        overflow: hidden;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 4px;
+          height: 100%;
+          background: linear-gradient(135deg, $primary-color, $primary-light);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
 
         &:hover {
-          background: $bg-light;
-          border-color: $border-color;
+          background: linear-gradient(to right, rgba($primary-color, 0.02), rgba($primary-light, 0.05));
+          border-color: rgba($primary-color, 0.1);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba($primary-color, 0.1);
+
+          &::before {
+            opacity: 1;
+          }
+
+          .mail-actions {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
 
         &.unread {
           background: white;
-          border-color: $border-color;
           box-shadow: $shadow-sm;
+
+          &::before {
+            opacity: 1;
+          }
 
           .ant-list-item-meta-title {
             font-weight: 600;
@@ -189,9 +319,16 @@ $radius-md: 12px;
           .ant-avatar {
             width: 40px;
             height: 40px;
-            border-radius: $radius-sm;
-            background: $primary-color;
-            font-weight: 500;
+            border-radius: $radius-full;
+            background: linear-gradient(135deg, $primary-color, $primary-light);
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba($primary-color, 0.2);
+            transition: transform 0.3s ease;
+
+            &:hover {
+              transform: scale(1.05);
+            }
           }
 
           .ant-list-item-meta-content {
@@ -201,51 +338,102 @@ $radius-md: 12px;
             .ant-list-item-meta-title {
               margin: 0;
               color: $text-color;
-              font-size: 14px;
+              font-size: 15px;
+              font-weight: 500;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+
+              .ant-tag {
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 2px 8px;
+                font-size: 12px;
+                border: none;
+                border-radius: $radius-full;
+
+                &.ant-tag-default {
+                  background: rgba($primary-color, 0.1);
+                  color: $primary-color;
+                }
+
+                &.ant-tag-warning {
+                  background: rgba($warning-color, 0.1);
+                  color: $warning-color;
+                }
+
+                &.ant-tag-error {
+                  background: rgba($danger-color, 0.1);
+                  color: $danger-color;
+                }
+
+                .anticon {
+                  font-size: 12px;
+                }
+              }
             }
 
             .mail-item-content {
               @include flex-between;
+              margin-top: 8px;
               color: $text-secondary;
-              font-size: 13px;
-              margin-top: 4px;
+              font-size: 14px;
+
+              .ant-typography {
+                color: $text-secondary;
+              }
             }
           }
         }
 
-        .ant-list-item-action {
-          margin-left: 24px;
+        .mail-actions {
+          opacity: 0.7;
+          transform: translateX(10px);
+          transition: all 0.3s ease;
 
           .ant-btn {
+            padding: 4px;
             width: 32px;
             height: 32px;
-            border-radius: $radius-sm;
-            @include flex-center;
-            border: 1px solid $border-color;
-            transition: $transition;
+            border: none;
+            background: transparent;
 
             &:hover {
-              background: $bg-light;
-              border-color: $primary-color;
+              background: rgba($primary-color, 0.1);
               color: $primary-color;
             }
 
             &.starred {
-              color: #faad14;
-              border-color: #faad14;
+              color: $warning-color;
+
+              &:hover {
+                background: rgba($warning-color, 0.1);
+              }
             }
 
             &.important {
               color: $danger-color;
-              border-color: $danger-color;
+
+              &:hover {
+                background: rgba($danger-color, 0.1);
+              }
             }
 
             &.restore-btn {
-              color: $secondary-color;
-              border-color: $secondary-color;
+              color: $success-color;
 
               &:hover {
-                background: rgba($secondary-color, 0.1);
+                background: rgba($success-color, 0.1);
+                color: $success-color;
+              }
+            }
+
+            &.ant-btn-dangerous {
+              &:hover {
+                background: rgba($danger-color, 0.1);
+                color: $danger-color;
               }
             }
           }
@@ -258,22 +446,25 @@ $radius-md: 12px;
 // Modals
 .compose-modal {
   .ant-modal-content {
-    border-radius: $radius-md;
+    border-radius: $radius-lg;
     overflow: hidden;
     padding: 0;
+    box-shadow: $shadow-lg;
 
     .ant-modal-header {
-      padding: 20px 24px;
+      padding: 24px;
       border-bottom: 1px solid $border-color;
       margin: 0;
+      background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+      color: white;
 
       .compose-header {
         @include flex-center;
         gap: 12px;
 
         .header-icon {
-          font-size: 20px;
-          color: $primary-color;
+          font-size: 24px;
+          color: white;
         }
       }
     }
@@ -285,28 +476,39 @@ $radius-md: 12px;
         margin-bottom: 24px;
         padding-bottom: 16px;
         border-bottom: 1px solid $border-color;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       .template-fields {
         background: $bg-light;
-        padding: 16px;
-        border-radius: $radius-sm;
+        padding: 20px;
+        border-radius: $radius-md;
         margin-bottom: 24px;
+        box-shadow: $shadow-sm;
       }
 
       .attachments-preview {
         margin-top: 16px;
-        padding: 12px;
+        padding: 16px;
         background: $bg-light;
-        border-radius: $radius-sm;
+        border-radius: $radius-md;
+        box-shadow: $shadow-sm;
 
         .attachment-item {
           @include flex-between;
-          padding: 8px;
+          padding: 12px;
           background: white;
           border-radius: $radius-sm;
           margin-bottom: 8px;
           border: 1px solid $border-color;
+          transition: $transition;
+
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: $shadow-sm;
+          }
 
           &:last-child {
             margin-bottom: 0;
@@ -319,7 +521,8 @@ $radius-md: 12px;
 
 .schedule-modal {
   .ant-modal-content {
-    border-radius: $radius-md;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-lg;
     
     .ant-modal-body {
       padding: 24px;
@@ -329,16 +532,23 @@ $radius-md: 12px;
 
         .ant-picker {
           width: 100%;
-          height: 40px;
+          height: 44px;
           border-radius: $radius-sm;
+          border: 1px solid $border-color;
+          transition: $transition;
+          
+          &:hover, &:focus {
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+          }
         }
       }
     }
   }
 
   .ant-picker {
-    height: 40px;
-    border-radius: 8px;
+    height: 44px;
+    border-radius: $radius-sm;
     
     &:hover, &:focus {
       border-color: $primary-color;
@@ -350,7 +560,7 @@ $radius-md: 12px;
       font-size: 14px;
       
       &::placeholder {
-        color: #999;
+        color: $text-secondary;
       }
     }
   }
@@ -377,22 +587,25 @@ $radius-md: 12px;
 
 .settings-modal {
   .ant-modal-content {
-    border-radius: $radius-md;
+    border-radius: $radius-lg;
     overflow: hidden;
     padding: 0;
+    box-shadow: $shadow-lg;
 
     .ant-modal-header {
-      padding: 20px 24px;
+      padding: 24px;
       border-bottom: 1px solid $border-color;
       margin: 0;
+      background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+      color: white;
 
       .settings-header {
         @include flex-center;
         gap: 12px;
 
         .header-icon {
-          font-size: 20px;
-          color: $primary-color;
+          font-size: 24px;
+          color: white;
         }
       }
     }
@@ -405,8 +618,15 @@ $radius-md: 12px;
           margin-bottom: 24px;
 
           .ant-input-affix-wrapper {
-            height: 40px;
+            height: 44px;
             border-radius: $radius-sm;
+            border: 1px solid $border-color;
+            transition: $transition;
+            
+            &:hover, &:focus-within {
+              border-color: $primary-color;
+              box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+            }
             
             .anticon {
               color: $text-secondary;
@@ -414,9 +634,9 @@ $radius-md: 12px;
           }
 
           .ant-form-item-extra {
-            font-size: 12px;
+            font-size: 13px;
             color: $text-secondary;
-            margin-top: 4px;
+            margin-top: 6px;
           }
         }
 
@@ -425,9 +645,365 @@ $radius-md: 12px;
           margin-top: 32px;
 
           .ant-btn {
-            min-width: 100px;
+            min-width: 120px;
+            height: 44px;
+            border-radius: $radius-sm;
+            font-weight: 500;
           }
         }
+      }
+    }
+  }
+}
+
+// Email View Modal
+.email-view-modal {
+  .ant-modal-content {
+    border-radius: $radius-lg;
+    overflow: hidden;
+  }
+
+  .ant-modal-header {
+    background: linear-gradient(135deg, $primary-color, $primary-light);
+    border-bottom: none;
+    padding: 16px 24px;
+    
+    .email-modal-header {
+      .email-modal-title {
+        display: flex;
+        align-items: center;
+        color: #fff;
+        
+        .header-icon {
+          margin-right: 12px;
+          font-size: 20px;
+        }
+        
+        span {
+          font-size: 16px;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  .ant-modal-close {
+    color: #fff;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .email-view {
+    padding: 24px;
+
+    .email-header {
+      margin-bottom: 24px;
+      
+      .email-subject {
+        margin-bottom: 16px;
+      }
+      
+      .email-tags {
+        display: flex;
+        gap: 8px;
+        
+        .ant-tag {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 12px;
+          border-radius: $radius-full;
+          margin: 0;
+          border: none;
+          
+          .anticon {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+
+    .email-meta {
+      background: $bg-light;
+      border-radius: $radius-md;
+      padding: 16px;
+      margin-bottom: 24px;
+      
+      .meta-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        .meta-icon {
+          margin-right: 12px;
+          color: $text-secondary;
+          font-size: 16px;
+        }
+        
+        .meta-content {
+          flex: 1;
+          
+          .ant-typography {
+            display: block;
+            
+            &:first-child {
+              color: $text-secondary;
+              margin-bottom: 4px;
+            }
+          }
+        }
+      }
+    }
+
+    .email-content-container {
+      background: #fff;
+      border-radius: $radius-md;
+      padding: 24px;
+      margin-bottom: 24px;
+      border: 1px solid $border-color;
+      
+      .email-content {
+        color: $text-color;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+    }
+
+    .email-attachments {
+      background: $bg-light;
+      border-radius: $radius-md;
+      padding: 16px;
+      margin-bottom: 24px;
+      
+      .attachments-title {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+        
+        .attachments-icon {
+          margin-right: 8px;
+          color: $text-secondary;
+        }
+        
+        span {
+          font-weight: 600;
+          color: $text-color;
+        }
+      }
+      
+      .attachments-list {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        
+        .attachment-item {
+          background: #fff;
+          border-radius: $radius-md;
+          padding: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border: 1px solid $border-color;
+          transition: $transition;
+          
+          &:hover {
+            border-color: $primary-color;
+            transform: translateY(-1px);
+            box-shadow: $shadow-sm;
+          }
+          
+          .attachment-content {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            margin-right: 12px;
+            
+            .file-icon {
+              width: 32px;
+              height: 32px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: $radius-md;
+              margin-right: 12px;
+              font-size: 18px;
+              
+              &.pdf {
+                background: rgba($danger-color, 0.1);
+                color: $danger-color;
+              }
+              
+              &.doc {
+                background: rgba($primary-color, 0.1);
+                color: $primary-color;
+              }
+              
+              &.xls {
+                background: rgba($success-color, 0.1);
+                color: $success-color;
+              }
+              
+              &.image {
+                background: rgba($warning-color, 0.1);
+                color: $warning-color;
+              }
+            }
+            
+            .attachment-info {
+              .attachment-name {
+                font-weight: 500;
+                margin-bottom: 4px;
+                color: $text-color;
+              }
+              
+              .file-size {
+                font-size: 12px;
+                color: $text-secondary;
+              }
+            }
+          }
+          
+          .download-button {
+            background: linear-gradient(135deg, $primary-color, $primary-light);
+            border: none;
+            height: 32px;
+            padding: 0 16px;
+            border-radius: $radius-full;
+            
+            &:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+            }
+            
+            .anticon {
+              margin-right: 4px;
+            }
+          }
+        }
+      }
+    }
+
+    .email-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 24px;
+      border-top: 1px solid $border-color;
+      
+      .ant-btn {
+        display: flex;
+        align-items: center;
+        height: 36px;
+        padding: 0 16px;
+        border-radius: $radius-full;
+        
+        .anticon {
+          margin-right: 8px;
+        }
+        
+        &.starred {
+          color: $warning-color;
+          border-color: $warning-color;
+          
+          &:hover {
+            background: rgba($warning-color, 0.1);
+          }
+        }
+        
+        &.important {
+          color: $danger-color;
+          border-color: $danger-color;
+          
+          &:hover {
+            background: rgba($danger-color, 0.1);
+          }
+        }
+
+        &.restore-btn {
+          color: $success-color;
+          border-color: $success-color;
+          
+          &:hover {
+            background: rgba($success-color, 0.1);
+          }
+        }
+
+        &.ant-btn-primary {
+          background: linear-gradient(135deg, $primary-color, $primary-light);
+          border: none;
+          
+          &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+          }
+
+          &.ant-btn-dangerous {
+            background: linear-gradient(135deg, $danger-color, lighten($danger-color, 10%));
+            
+            &:hover {
+              box-shadow: 0 4px 12px rgba($danger-color, 0.3);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .mail-layout {
+    margin: 0;
+    border-radius: 0;
+    height: 100vh;
+    
+    .mail-sider {
+      width: 240px;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .mail-layout {
+    .mail-sider {
+      width: 100%;
+      position: absolute;
+      z-index: 10;
+      transform: translateX(-100%);
+      
+      &.visible {
+        transform: translateX(0);
+      }
+    }
+    
+    .mail-content {
+      width: 100%;
+    }
+    
+    .mail-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+      
+      .header-title {
+        width: 100%;
+      }
+      
+      .search-wrapper {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+      }
+      
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
       }
     }
   }
