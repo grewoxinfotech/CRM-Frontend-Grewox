@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Spin, Button, Space, message } from 'antd';
 import { useGetVendorsQuery } from './services/billingApi';
 import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
+import { useGetDebitNotesQuery } from '../debitnote/services/debitnoteApi';
 import { QRCodeSVG } from 'qrcode.react';
 import { FiDownload, FiPrinter, FiMail, FiShare2 } from 'react-icons/fi';
 import html2canvas from 'html2canvas';
@@ -17,7 +18,7 @@ const ViewBilling = ({ data }) => {
   // Fetch vendors data
   const { data: vendorsData } = useGetVendorsQuery();
   const { data: settingsData, isLoading: isSettingsLoading } = useGetAllSettingsQuery();
-
+  const { data: debitNotesData } = useGetDebitNotesQuery();
   
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
@@ -25,6 +26,9 @@ const ViewBilling = ({ data }) => {
   const [companyEmail, setCompanyEmail] = useState('contact@grewox.com');
   const [companyWebsite, setCompanyWebsite] = useState('www.grewox.com');
   const [merchantUpiId, setMerchantUpiId] = useState('');
+  
+  // State for debit note amount
+  const [debitNoteAmount, setDebitNoteAmount] = useState(0);
 
   // Get company settings from general settings
   useEffect(() => {
@@ -54,6 +58,25 @@ const ViewBilling = ({ data }) => {
     } 
   }, [settingsData]);
 
+  // Calculate total debit note amount for current bill
+  useEffect(() => {
+    if (debitNotesData?.data && data?.id) {
+      // Filter debit notes for current bill
+      const currentBillDebitNotes = debitNotesData.data.filter(
+        note => note.bill === data.id
+      );
+      
+      // Calculate total amount of filtered debit notes
+      const totalAmount = currentBillDebitNotes.reduce((sum, note) => {
+        return sum + Number(note.amount || 0);
+      }, 0);
+      
+      setDebitNoteAmount(totalAmount);
+    } else {
+      setDebitNoteAmount(0);
+    }
+  }, [debitNotesData, data]);
+
   if (!data) {
     return <div>No billing data found</div>;
   }
@@ -70,6 +93,15 @@ const ViewBilling = ({ data }) => {
     return addressParts.join(', ');
   };
 
+  const getColor = (status) => {
+    const normalizedStatus = status?.toLowerCase() || '';
+    
+    if (normalizedStatus === 'paid') return 'status-paid';
+    if (normalizedStatus === 'unpaid') return 'status-unpaid';
+    if (normalizedStatus === 'partially_paid' || normalizedStatus === 'partially paid') return 'status-partial';
+    return 'status-gray';
+  };
+
   // Parse items safely
   let items = [];
   try {
@@ -84,7 +116,7 @@ const ViewBilling = ({ data }) => {
     
     // If there's a UPI ID, create a UPI payment URL
     if (merchantUpiId) {
-      const amount = Number(data?.total || 0);
+      const amount = Number(data?.amount || 0);
       const tr = data?.billNumber || '';
       const pn = companyName || 'Merchant';
       
@@ -210,15 +242,29 @@ const ViewBilling = ({ data }) => {
           color: #666;
           font-size: 12px;
         }
-        .status-badge {
-          padding: 4px 12px;
-          border-radius: 4px;
-          font-size: 12px;
-        }
-        .status-badge.partially_paid {
-          background: #ede9fe;
-          color: #7c3aed;
-        }
+         .status-badge {
+                display: inline-block;
+                padding: 6px 16px;
+                border-radius: 4px;
+                font-size: 14px;
+                font-weight: 500;
+              }
+              .status-paid {
+                background-color: #e6f4ea;
+                color: #1e8e3e;
+              }
+              .status-unpaid {
+                background-color: #fce8e6;
+                color: #d93025;
+              }
+              .status-partial {
+                background-color: #f3e8fd;
+                color: #8430ce;
+              }
+              .status-gray {
+                background-color: #f1f3f4;
+                color: #5f6368;
+              }
       `;
 
       // Create a temporary style element
@@ -341,8 +387,8 @@ const ViewBilling = ({ data }) => {
                 </div>
                 <div className="info-row">
                   <span className="label">Status:</span>
-                  <span className={`status-badge ${data?.status?.toLowerCase() || data?.bill_status?.toLowerCase()}`}>
-                    {data?.status || data?.bill_status}
+                  <span className={`status-badge ${getColor(data?.status || data?.bill_status)}`}>
+                    {data?.status === 'partially_paid' ? 'Partially paid' : data?.status || data?.bill_status}
                   </span>
                 </div>
               </div>
@@ -394,6 +440,18 @@ const ViewBilling = ({ data }) => {
                     ₹{formatNumber(data?.total)}
                   </td>
                 </tr>
+                <tr className="summary-row">
+                  <td colSpan="4" className="text-right">Debit Note</td>
+                  <td className="text-right debit-note" style={{ color: '#ff4d4f' }}>
+                    - ₹{Number(debitNoteAmount || 0)}
+                  </td>
+                </tr>
+                <tr className="summary-row">
+                  <td colSpan="4" className="text-right">Final Amount</td>
+                  <td className="text-right ">
+                    ₹{formatNumber(data?.amount )}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -409,7 +467,7 @@ const ViewBilling = ({ data }) => {
                 />
                 <div className="qr-info">
                   <p>Scan to Pay</p>
-                  <p className="amount">₹{formatNumber(data?.total)}</p>
+                  <p className="amount">₹{formatNumber(data?.amount)}</p>
                 </div>
               </div>
               <div className="payment-info">

@@ -27,8 +27,8 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
     const statuses = [
         { id: 'paid', name: 'Paid' },
         { id: 'pending', name: 'Pending' },
-        { id: 'overdue', name: 'Overdue' },
-        { id: 'cancelled', name: 'Cancelled' },
+        { id: 'partially_paid', name: 'Partially Paid' },
+        { id: 'unpaid', name: 'Unpaid' }
     ];
 
     // Create a map of currency IDs/codes to currency icons
@@ -40,6 +40,40 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
             return acc;
         }, {});
     }, [currenciesData]);
+
+    const getStatusTag = (status) => {
+        const statusColors = {
+            draft: "#d97706",
+            pending: "#2563eb",
+            paid: "#059669",
+            unpaid: "#dc2626",
+            partially_paid: "#7c3aed"
+        };
+
+        const statusBgColors = {
+            draft: "#fef3c7",
+            pending: "#dbeafe",
+            paid: "#d1fae5",
+            unpaid: "#fee2e2",
+            partially_paid: "#ede9fe"
+        };
+
+        return (
+            <Tag
+                className={`status-tag ${status}`}
+                style={{
+                    color: statusColors[status],
+                    backgroundColor: statusBgColors[status],
+                    border: "none",
+                    textTransform: "capitalize",
+                    borderRadius: "6px",
+                    padding: "4px 8px",
+                }}
+            >
+                {status}
+            </Tag>
+        );
+    };
 
     const columns = [
         {
@@ -202,25 +236,9 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
             filters: statuses.map(status => ({
                 text: status.name,
                 value: status.id
-              })),
-              onFilter: (value, record) => record.status === value,
-            render: (status) => {
-                let color = 'default';
-                switch (status?.toLowerCase()) {
-                    case 'paid':
-                        color = 'success';
-                        break;
-                    case 'pending':
-                        color = 'warning';
-                        break;
-                    case 'overdue':
-                        color = 'error';
-                        break;
-                    default:
-                        color = 'default';
-                }
-                return <Tag color={color}>{status}</Tag>;
-            },
+            })),
+            onFilter: (value, record) => record.status === value,
+            render: (status) => getStatusTag(status)
         },
         {
             title: 'Actions',

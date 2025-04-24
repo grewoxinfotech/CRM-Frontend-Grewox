@@ -308,8 +308,11 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                                 { required: true, message: 'Please enter amount' },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
+                                        if (!value || value <= 0) {
+                                            return Promise.reject(new Error('Amount must be greater than zero'));
+                                        }
                                         const maxAmount = getFieldValue('max_amount');
-                                        if (!value || !maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
+                                        if (!maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
                                             return Promise.resolve();
                                         }
                                         return Promise.reject(new Error('Amount cannot exceed bill amount'));

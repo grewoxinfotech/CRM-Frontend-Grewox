@@ -128,6 +128,9 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
             // Find selected currency details
             const selectedCurrencyData = currenciesData?.find(curr => curr.id === values.currency);
 
+            // Get the selected discount type
+            const selectedDiscountType = values.discount_type || 'percentage';
+
             // Format the data according to your API requirements
             const formattedData = {
                 vendor: values.vendor_id,
@@ -140,17 +143,19 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                     quantity: Number(item.quantity),
                     unitPrice: Number(item.selling_price || item.unit_price),
                     hsnSac: item.hsn_sac || '',
-                    discount: Number(item.discount || 0),
                     tax: Number(item.tax || 0),
                     taxId: item.taxId,
                     taxAmount: calculateItemTaxAmount(item),
                     amount: calculateItemTotal(item),
-                    description: item.description || '',
                     currency: item.currency || values.currency,
-                    currencyIcon: item.currencyIcon || selectedCurrency
+                    currencyIcon: item.currencyIcon || selectedCurrency,
+                    discountType: selectedDiscountType,
+                    discountValue: Number(values.discount || 0)
                 })),
                 discription: values.discription || '',
                 subTotal: Number(values.sub_total || 0),
+                discountType: selectedDiscountType,
+                discountValue: Number(values.discount || 0),
                 discount: Number(values.discount || 0),
                 tax: Number(values.tax_amount || 0),
                 taxAmount: Number(values.tax_amount || 0),
@@ -1001,19 +1006,57 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                     style={{ margin: 0 }}
                                 >
                                     <InputNumber
-                                        placeholder={form.getFieldValue('discount_type') === 'fixed' ? 'Amount' : '%'}
                                         size="large"
                                         style={{
                                             width: '100px',
                                             borderRadius: '8px',
                                             height: '40px',
                                         }}
-                                        formatter={value => form.getFieldValue('discount_type') === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
-                                        parser={value => form.getFieldValue('discount_type') === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
-                                        onChange={() => calculateTotals(form.getFieldValue('items'))}
+                                        placeholder={
+                                            form.getFieldValue("discount_type") === "fixed"
+                                                ? "Amount"
+                                                : "%"
+                                        }
+                                        formatter={(value) => {
+                                            if (!value && value !== 0) return "";
+                                            return value
+                                                .toString()
+                                                .replace(/[^\d.]/g, "");
+                                        }}
+                                        parser={(value) => {
+                                            const parsed = value?.replace(
+                                                /[^\d.]/g,
+                                                ""
+                                            );
+                                            return parsed || "0";
+                                        }}
+                                        onStep={(value) => {
+                                            form.setFieldsValue({ discount: value || 0 });
+                                            calculateTotals(form.getFieldValue('items'));
+                                        }}
+                                        onChange={(value) => {
+                                            form.setFieldsValue({ discount: value || 0 });
+                                            calculateTotals(form.getFieldValue('items'));
+                                        }}
+                                        onKeyUp={() => {
+                                            calculateTotals(form.getFieldValue('items'));
+                                        }}
                                     />
                                 </Form.Item>
-                                {form.getFieldValue('discount_type') === 'percentage' && <Text>%</Text>}
+                                <Form.Item
+                                    noStyle
+                                    shouldUpdate={(prevValues, currentValues) => 
+                                        prevValues.discount_type !== currentValues.discount_type
+                                    }
+                                >
+                                    {({ getFieldValue }) => (
+                                        <Text style={{ marginLeft: "4px" }}>
+                                            {getFieldValue("discount_type") === "fixed" 
+                                                ? selectedCurrency 
+                                                : "%"}
+                                        </Text>
+                                    )}
+                                </Form.Item>
                             </Space>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>

@@ -43,10 +43,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   const { data: customersData } = useGetCustomersQuery();
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
-  const { data: creditNotesData } = useGetCreditNotesQuery(invoice?.id, {
-    skip: !invoice?.id
-  });
-
+  const { data: creditNotesData } = useGetCreditNotesQuery();
   
   const { data: settingsData } = useGetAllSettingsQuery(id);
 
@@ -110,14 +107,24 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     }
   }, [invoice, customersData, contactsData, companyAccountsData]);
 
+  // Calculate total credit note amount for current invoice
   useEffect(() => {
-    if (creditNotesData?.data) {
-      const totalAmount = creditNotesData.data.reduce((sum, note) => {
+    if (creditNotesData?.data && invoice?.id) {
+      // Filter credit notes for current invoice
+      const currentInvoiceCreditNotes = creditNotesData.data.filter(
+        note => note.invoice === invoice.id
+      );
+      
+      // Calculate total amount of filtered credit notes
+      const totalAmount = currentInvoiceCreditNotes.reduce((sum, note) => {
         return sum + Number(note.amount || 0);
       }, 0);
+      
       setCreditNoteAmount(totalAmount);
+    } else {
+      setCreditNoteAmount(0);
     }
-  }, [creditNotesData]);
+  }, [creditNotesData, invoice]);
 
   const renderBillingDetails = () => {
     if (!billingData) {
@@ -166,7 +173,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     
     // If there's a UPI ID, create a UPI payment URL
     if (merchantUpiId) {
-      const amount = Number(invoice?.total || 0);
+      const amount = Number(invoice?.amount || 0);
       const tr = invoice?.salesInvoiceNumber || '';
       const pn = companyName || 'Merchant';
       
@@ -188,7 +195,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
       // Add necessary styles before generating PDF
       const styleContent = `
         .bill-card.invoice-container {
-          padding: 40px;
+          // padding: 40px;
           background: white;
           width: 100%;
         }
@@ -293,13 +300,29 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           font-size: 12px;
         }
         .status-badge {
-          padding: 4px 12px;
+          display: inline-block;
+          padding: 6px 16px;
           border-radius: 4px;
-          font-size: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          text-align: center;
+          min-width: 100px;
         }
-        .status-badge.partially_paid {
-          background: #ede9fe;
-          color: #7c3aed;
+        .status-paid {
+          background-color: #e6f4ea;
+          color: #1e8e3e;
+        }
+        .status-unpaid {
+          background-color: #fce8e6;
+          color: #d93025;
+        }
+        .status-partial {
+          background-color: #f3e8fd;
+          color: #8430ce;
+        }
+        .status-gray {
+          background-color: #f1f3f4;
+          color: #5f6368;
         }
       `;
 
@@ -761,6 +784,15 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     ]
   };
 
+  const getColor = (status) => {
+    const normalizedStatus = status?.toLowerCase() || '';
+    
+    if (normalizedStatus === 'paid') return 'status-paid';
+    if (normalizedStatus === 'unpaid') return 'status-unpaid';
+    if (normalizedStatus === 'partially_paid' || normalizedStatus === 'partially paid') return 'status-partial';
+    return 'status-gray';
+  };
+
   if (!invoice) return null;
 
   return (
@@ -852,8 +884,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                   </div>
                   <div className="info-row">
                     <span className="label">Status:</span>
-                    <span className={`status-badge ${invoice?.payment_status?.toLowerCase()}`}>
-                      {invoice?.payment_status}
+                    <span className={`status-badge ${getColor(invoice?.payment_status)}`}>
+                      {invoice?.payment_status === 'partially_paid' ? 'Partially paid' : invoice?.payment_status}
                     </span>
                   </div>
           </div>
@@ -908,7 +940,19 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                     <td className="text-right total-amount">
                       ₹{Number(invoice?.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
-            </tr>
+                  </tr>
+                  <tr className="summary-row" style={{ border: 'none' }}>
+                    <td colSpan="3" className="text-right">Credit Note</td>
+                    <td className="text-right credit-note" style={{ color: '#ff4d4f' }}>
+                      - ₹{Number(creditNoteAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                  <tr className="summary-row" style={{ border: 'none' }}>
+                    <td colSpan="3" className="text-right">Final Amount</td>
+                    <td className="text-right">
+                      ₹{Number(invoice?.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
           </tbody>
         </table>
             </div>
@@ -924,7 +968,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
               />
                   <div className="qr-info">
                     <p>Scan to Pay</p>
-                    <p className="amount">₹{Number(invoice?.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
+                    <p className="amount">₹{Number(invoice?.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
                   </div>
                 </div>
                 <div className="payment-info">

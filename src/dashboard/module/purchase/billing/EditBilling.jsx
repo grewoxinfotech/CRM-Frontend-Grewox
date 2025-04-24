@@ -68,6 +68,9 @@ const EditBilling = ({ open, onCancel, initialData }) => {
             // Find the vendor data
             const selectedVendor = vendorsData.data.find(vendor => vendor.id === initialData.vendor);
 
+            // Get the discount type from the first item or default to percentage
+            const discountType = items?.[0]?.discountType || 'percentage';
+
             // Set initial form values
             const formValues = {
                 vendor_id: selectedVendor?.id || initialData.vendor,
@@ -86,13 +89,14 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                         taxId: item.taxId,
                         tax: item.tax,
                         discount: item.discount || 0,
+                        discountType: item.discountType || discountType, // Use item's discount type or default
                         currency: item.currency || initialData.currency,
                         currencyIcon: item.currencyIcon || selectedCurrencyData?.currencyIcon
                     }))
                     : [{}],
                 sub_total: initialData.subTotal?.toFixed(2),
-                discount: initialData.discount,
-                discount_type: initialData.discountType || 'percentage',
+                discount: initialData.discount || 0,
+                discount_type: discountType, // Set the discount type from the first item
                 tax_amount: initialData.tax?.toFixed(2),
                 total_amount: initialData.total?.toFixed(2),
                 payment_status: initialData.payment_status || 'unpaid',
@@ -147,6 +151,9 @@ const EditBilling = ({ open, onCancel, initialData }) => {
             // Find selected currency details
             const selectedCurrencyData = currenciesData?.find(curr => curr.id === values.currency);
 
+            // Get the selected discount type
+            const selectedDiscountType = values.discount_type || 'percentage';
+
             // Format the data according to your API requirements
             const formattedData = {
                 vendor: values.vendor_id,
@@ -160,6 +167,8 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     unitPrice: Number(item.selling_price || item.unit_price),
                     hsnSac: item.hsn_sac || '',
                     discount: Number(item.discount || 0),
+                    discountType: selectedDiscountType, // Store the selected discount type
+                    discountValue: Number(item.discount || 0), // Store the discount value
                     tax: Number(item.tax || 0),
                     taxId: item.taxId,
                     taxAmount: calculateItemTaxAmount(item),
@@ -1057,43 +1066,81 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                                 <Text style={{marginTop:'10px'}}>Discount</Text>
                                 <Space>
-                                    <Form.Item
-                                        name="discount_type"
-                                        style={{ margin: 0 }}
+                                <Form.Item
+                                    name="discount_type"
+                                    style={{ margin: 0 }}
+                                >
+                                    <Select
+                                        size="large"
+                                        style={{
+                                            width: '120px',
+                                            borderRadius: '8px',
+                                            height: '40px',
+                                        }}
+                                        defaultValue="percentage"
+                                        onChange={() => calculateTotals(form.getFieldValue('items'))}
                                     >
-                                        <Select
-                                            size="large"
-                                            style={{
-                                                width: '120px',
-                                                borderRadius: '8px',
-                                                height: '40px',
-                                            }}
-                                            defaultValue="percentage"
-                                            onChange={() => calculateTotals(form.getFieldValue('items'))}
-                                        >
-                                            <Option value="percentage">Percentage</Option>
-                                            <Option value="fixed">Fixed Amount</Option>
-                                        </Select>
-                                    </Form.Item>
-                                    <Form.Item
-                                        name="discount"
-                                        style={{ margin: 0 }}
-                                    >
-                                        <InputNumber
-                                            placeholder={form.getFieldValue('discount_type') === 'fixed' ? 'Amount' : '%'}
-                                            size="large"
-                                            style={{
-                                                width: '100px',
-                                                borderRadius: '8px',
-                                                height: '40px',
-                                            }}
-                                            formatter={value => form.getFieldValue('discount_type') === 'fixed' ? `${selectedCurrency}${value}` : `${value}`}
-                                            parser={value => form.getFieldValue('discount_type') === 'fixed' ? value.replace(selectedCurrency, '').trim() : value.replace('%', '')}
-                                            onChange={() => calculateTotals(form.getFieldValue('items'))}
-                                        />
-                                    </Form.Item>
-                                    {form.getFieldValue('discount_type') === 'percentage' && <Text>%</Text>}
-                                </Space>
+                                        <Option value="percentage">Percentage</Option>
+                                        <Option value="fixed">Fixed Amount</Option>
+                                    </Select>
+                                </Form.Item>
+                                <Form.Item
+                                    name="discount"
+                                    style={{ margin: 0 }}
+                                >
+                                    <InputNumber
+                                        size="large"
+                                        style={{
+                                            width: '100px',
+                                            borderRadius: '8px',
+                                            height: '40px',
+                                        }}
+                                        placeholder={
+                                            form.getFieldValue("discount_type") === "fixed"
+                                                ? "Amount"
+                                                : "%"
+                                        }
+                                        formatter={(value) => {
+                                            if (!value && value !== 0) return "";
+                                            return value
+                                                .toString()
+                                                .replace(/[^\d.]/g, "");
+                                        }}
+                                        parser={(value) => {
+                                            const parsed = value?.replace(
+                                                /[^\d.]/g,
+                                                ""
+                                            );
+                                            return parsed || "0";
+                                        }}
+                                        onStep={(value) => {
+                                            form.setFieldsValue({ discount: value || 0 });
+                                            calculateTotals(form.getFieldValue('items'));
+                                        }}
+                                        onChange={(value) => {
+                                            form.setFieldsValue({ discount: value || 0 });
+                                            calculateTotals(form.getFieldValue('items'));
+                                        }}
+                                        onKeyUp={() => {
+                                            calculateTotals(form.getFieldValue('items'));
+                                        }}
+                                    />
+                                </Form.Item>
+                                <Form.Item
+                                    noStyle
+                                    shouldUpdate={(prevValues, currentValues) => 
+                                        prevValues.discount_type !== currentValues.discount_type
+                                    }
+                                >
+                                    {({ getFieldValue }) => (
+                                        <Text style={{ marginLeft: "4px" }}>
+                                            {getFieldValue("discount_type") === "fixed" 
+                                                ? selectedCurrency 
+                                                : "%"}
+                                        </Text>
+                                    )}
+                                </Form.Item>
+                            </Space>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                                 <Text style={{marginTop:'10px'}}>Tax Amount</Text>

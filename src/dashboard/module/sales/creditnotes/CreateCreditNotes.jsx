@@ -62,8 +62,11 @@ const CreateCreditNotes = ({ open, onCancel }) => {
       // Find customer name from customer data
       const customerDetails = customers?.find(cust => cust.id === selectedInvoice.customer);
       
-      // Set amount from invoice total
-      form.setFieldValue('amount', selectedInvoice.amount);
+      // Calculate due amount (total - credit notes)
+      const dueAmount = Number(selectedInvoice.amount || 0) - Number(selectedInvoice.creditNoteAmount || 0);
+      
+      // Set amount from invoice due amount
+      form.setFieldValue('amount', dueAmount);
       
       // Set currency from invoice
       form.setFieldValue('currency', selectedInvoice.currency);
@@ -78,23 +81,22 @@ const CreateCreditNotes = ({ open, onCancel }) => {
         setSelectedCurrency(currencyDetails.currencyIcon || '₹');
       }
 
-      // Store selected invoice amount for validation
-      form.setFieldValue('max_amount', selectedInvoice.amount);
+      // Store selected invoice due amount for validation
+      form.setFieldValue('max_amount', dueAmount);
     }
   };
 
   const handleSubmit = async (values) => {
     try {
-
-        // Check if amount is 0 or less
-        if (!values.amount || values.amount <= 0) {
-          message.error('Credit note amount must be greater than zero');
-          return;
+      // Check if amount is 0 or less
+      if (!values.amount || values.amount <= 0) {
+        message.error('Credit note amount must be greater than zero');
+        return;
       }
 
-      // Check if credit note amount exceeds invoice amount
+      // Check if credit note amount exceeds due amount
       if (parseFloat(values.amount) > parseFloat(values.max_amount)) {
-        message.error("Credit note amount cannot exceed invoice amount");
+        message.error("Credit note amount cannot exceed due amount");
         return;
       }
 
@@ -362,11 +364,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 { required: true, message: "Please enter amount" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
+                    if (!value || value <= 0) {
+                      return Promise.reject(new Error('Amount must be greater than zero'));
+                    }
                     const maxAmount = getFieldValue('max_amount');
-                    if (!value || !maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
+                    if (!maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('Amount cannot exceed invoice amount'));
+                    return Promise.reject(new Error('Amount cannot exceed due amount'));
                   },
                 }),
               ]}

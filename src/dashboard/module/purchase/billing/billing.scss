@@ -679,8 +679,8 @@ $border-radius: 6px;
 
 // View Billing Styles
 .view-billing-container {
-  padding: 24px;
-  background-color: #f8fafc;
+  // padding: 24px;
+  // background-color: #f8fafc;
   min-height: 100vh;
   font-family: 'Segoe UI', sans-serif;
 }
@@ -1073,5 +1073,35 @@ $border-radius: 6px;
         text-align: center;
       }
     }
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+  
+  &.status-paid {
+    color: #059669; 
+    background: #d1fae5;
+  }
+  
+  &.status-unpaid {
+    color: #dc2626;
+     background: #fee2e2;
+  }
+  
+  &.status-partial {
+    color: #7c3aed; 
+    background: #ede9fe; 
+  }
+  
+  &.status-gray {
+    background-color: #f1f3f4;
+    color: #5f6368;
   }
 }
