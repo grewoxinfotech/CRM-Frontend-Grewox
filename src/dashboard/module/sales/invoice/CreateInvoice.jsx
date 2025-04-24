@@ -1057,7 +1057,7 @@ const CreateInvoice = ({
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
-                <table className="proposal-items-table">
+                <table className="invoice-items-table">
                   <thead>
                     <tr>
                       <th>Item</th>
@@ -1220,10 +1220,9 @@ const CreateInvoice = ({
                                   />
                                 </Form.Item>
                                 <Text style={{ marginLeft: "4px" }}>
-                                  {form.getFieldValue("items")?.[index]
-                                    ?.discount_type === "percentage"
-                                    ? "%"
-                                    : selectedCurrency}
+                                  {form.getFieldValue("items")?.[index]?.discount_type === "fixed" 
+                                    ? selectedCurrency
+                                    : "%"}
                                 </Text>
                               </div>
                             </Space>

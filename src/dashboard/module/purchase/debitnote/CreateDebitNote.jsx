@@ -58,7 +58,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                 setSelectedCurrencyId(currencyDetails.id?.toString());
             }
 
-            const billAmount = selectedBill.total || selectedBill.totalAmount || 0;
+            const billAmount = selectedBill.amount || selectedBill.amount || 0;
             form.setFieldsValue({
                 amount: billAmount,
                 max_amount: billAmount,

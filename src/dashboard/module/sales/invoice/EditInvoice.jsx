@@ -1220,10 +1220,9 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                   />
                                 </Form.Item>
                                 <Text style={{ marginLeft: "4px" }}>
-                                  {form.getFieldValue("items")?.[index]
-                                    ?.discount_type === "percentage"
-                                    ? "%"
-                                    : selectedCurrency}
+                                  {form.getFieldValue("items")?.[index]?.discount_type === "fixed" 
+                                    ? selectedCurrency
+                                    : "%"}
                                 </Text>
                               </div>
                             </Space>
@@ -1234,6 +1233,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             <Select
                               placeholder="Select Tax"
                               loading={taxesLoading}
+                              allowClear
                               disabled={!isTaxEnabled}
                               onChange={(value, option) => {
                                 const items = form.getFieldValue("items") || [];

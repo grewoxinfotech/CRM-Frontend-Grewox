@@ -807,15 +807,15 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
             <div className="bill-header">
               <div className="company-info">
                 {companyLogo ? (
-                  <img 
-                    src={companyLogo} 
-                    alt={`${companyName} Logo`} 
+                  <img
+                    src={companyLogo}
+                    alt={`${companyName} Logo`}
                     className="company-logo"
                   />
                 ) : (
-          <img
-            src="https://grewox.com/assets/logo.png"
-            alt="Grewox Logo"
+                  <img
+                    src="https://grewox.com/assets/logo.png"
+                    alt="Grewox Logo"
                     className="company-logo"
                   />
                 )}

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Spin } from 'antd';
+import { Spin, Button, Space, message } from 'antd';
 import { useGetVendorsQuery } from './services/billingApi';
 import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
 import { QRCodeSVG } from 'qrcode.react';
 import { FiDownload, FiPrinter, FiMail, FiShare2 } from 'react-icons/fi';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import './billing.scss';
 
 // Add a helper function for safe number formatting
@@ -94,12 +96,205 @@ const ViewBilling = ({ data }) => {
     return data.upiLink || `https://grewox.com/bill/${data.billNumber}`;
   };
 
+  const handleDownload = async () => {
+    try {
+      const element = document.getElementById('billing-content');
+      if (!element) return;
+
+      message.loading({ content: 'Generating PDF...', key: 'download' });
+
+      // Add necessary styles before generating PDF
+      const styleContent = `
+        .bill-card {
+          padding: 40px;
+          background: white;
+          width: 100%;
+        }
+        .bill-header {
+          margin-bottom: 30px;
+        }
+        .company-info {
+          display: flex;
+          align-items: flex-start;
+          gap: 20px;
+        }
+        .company-logo {
+          max-height: 60px;
+          width: auto;
+          object-fit: contain;
+        }
+        .company-details {
+          flex: 1;
+        }
+        .company-details h3 {
+          margin: 0 0 5px 0;
+          font-size: 24px;
+          color: #333;
+        }
+        .company-details p {
+          margin: 0;
+          color: #666;
+        }
+        .bill-details {
+          margin: 30px 0;
+        }
+        .bill-section {
+          display: flex;
+          justify-content: space-between;
+          gap: 40px;
+        }
+        .bill-to, .bill-info {
+          flex: 1;
+        }
+        .bill-to h4, .bill-info h4 {
+          margin: 0 0 15px 0;
+          color: #333;
+        }
+        .vendor-info h5 {
+          margin: 0 0 10px 0;
+          font-weight: normal;
+        }
+        .info-row {
+          margin-bottom: 10px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        .items-table th {
+          background: #f8f9fa;
+          padding: 12px;
+          text-align: left;
+          border-bottom: 1px solid #ddd;
+        }
+        .items-table td {
+          padding: 12px;
+          border-bottom: 1px solid #ddd;
+        }
+        .text-right {
+          text-align: right;
+        }
+        .total-row {
+          font-weight: bold;
+          background: #f8f9fa;
+        }
+        .payment-section {
+          display: flex;
+          gap: 40px;
+          margin-top: 30px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 8px;
+        }
+        .qr-code {
+          text-align: center;
+        }
+        .qr-info {
+          margin-top: 10px;
+        }
+        .payment-info {
+          flex: 1;
+        }
+        .bank-details {
+          margin-top: 15px;
+        }
+        .bill-notes {
+          margin-top: 30px;
+        }
+        .powered-by {
+          margin-top: 20px;
+          text-align: center;
+          color: #666;
+          font-size: 12px;
+        }
+        .status-badge {
+          padding: 4px 12px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+        .status-badge.partially_paid {
+          background: #ede9fe;
+          color: #7c3aed;
+        }
+      `;
+
+      // Create a temporary style element
+      const style = document.createElement('style');
+      style.textContent = styleContent;
+      element.appendChild(style);
+
+      // Wait for all images to load
+      const images = element.getElementsByTagName('img');
+      await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = () => {
+            if (img.classList.contains('company-logo')) {
+              img.src = 'https://grewox.com/assets/logo.png';
+              resolve();
+            } else {
+              reject();
+            }
+          };
+        });
+      }));
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById('billing-content');
+          // Add the same styles to cloned element
+          const clonedStyle = document.createElement('style');
+          clonedStyle.textContent = styleContent;
+          clonedElement.appendChild(clonedStyle);
+          
+          // Ensure images are visible
+          const clonedImages = clonedElement.getElementsByTagName('img');
+          Array.from(clonedImages).forEach(img => {
+            img.style.display = 'block';
+            img.crossOrigin = 'anonymous';
+          });
+        }
+      });
+
+      // Remove the temporary style element
+      element.removeChild(style);
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Bill-${data?.billNumber || 'download'}.pdf`);
+
+      message.success({ content: 'Bill downloaded successfully!', key: 'download' });
+    } catch (error) {
+      console.error('Error downloading bill:', error);
+      message.error({ content: 'Failed to download bill', key: 'download' });
+    }
+  };
+
   return (
     <div className="view-billing-container">
      
 
       <div className="view-billing-content">
-        <div className="bill-card">
+        <div className="bill-card" id="billing-content">
           <div className="bill-header">
             <div className="company-info">
               {companyLogo ? (
@@ -235,6 +430,17 @@ const ViewBilling = ({ data }) => {
               <p className="powered-by">Powered by {companyName} | {companyWebsite}</p>
             </div>
           </div>
+        </div>
+        <div style={{ marginTop: '20px', textAlign: 'right' }}>
+          <Space>
+            <Button 
+              type="primary" 
+              icon={<FiDownload />} 
+              onClick={handleDownload}
+            >
+              Download
+            </Button>
+          </Space>
         </div>
       </div>
     </div>

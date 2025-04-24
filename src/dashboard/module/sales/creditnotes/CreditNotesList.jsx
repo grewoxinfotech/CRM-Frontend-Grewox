@@ -210,7 +210,7 @@ console.log("invoices",invoices);
             fontSize: "13px",
           }}
         >
-          {description}
+          {description || "N/A"}
         </Text>
       ),
     },
@@ -256,6 +256,8 @@ console.log("invoices",invoices);
           <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
       )
     },
+    
+
     
   ];
 

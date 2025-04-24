@@ -466,7 +466,20 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
           <Form.Item
             name="selling_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
-            rules={[{ required: true, message: "Please enter selling price" }]}
+            rules={[
+              { required: true, message: "Please enter selling price" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const buyingPrice = getFieldValue('buying_price');
+                  if (!value || !buyingPrice || value >= buyingPrice) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error('Selling price cannot be lower than buying price')
+                  );
+                },
+              }),
+            ]}
           >
             <div className="price-input-group" style={{
               display: 'flex',

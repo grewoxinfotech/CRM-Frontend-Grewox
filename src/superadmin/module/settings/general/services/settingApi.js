@@ -14,6 +14,14 @@ export const settingApi = createApi({
             }),
             invalidatesTags: ['Settings'],
         }),
+        updateSetting: builder.mutation({
+            query: ({ id, data }) => ({
+                url: `/settings/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['Settings'],
+        }),
         getAllSettings: builder.query({
             query: () => '/settings',
             providesTags: ['Settings'],
@@ -31,5 +39,6 @@ export const settingApi = createApi({
 export const {
     useCreateSettingMutation,
     useGetAllSettingsQuery,
+    useUpdateSettingMutation,
     useDeleteSettingMutation,
 } = settingApi;

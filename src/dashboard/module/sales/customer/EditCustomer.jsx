@@ -418,11 +418,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                   name="phoneNumber"
                   noStyle
                   rules={[
-                    { required: true, message: 'Please enter phone number' },
-                    {
-                      pattern: /^\d{10}$/,
-                      message: 'Phone number must be exactly 10 digits'
-                    }
+                    { required: true, message: 'Please enter phone number' }
                   ]}
                 >
                   <Input
@@ -437,8 +433,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                       display: 'flex',
                       alignItems: 'center',
                     }}
-                    placeholder="Enter 10-digit phone number"
-                    maxLength={10}
+                    placeholder="Enter phone number"
                   />
                 </Form.Item>
               </Input.Group>

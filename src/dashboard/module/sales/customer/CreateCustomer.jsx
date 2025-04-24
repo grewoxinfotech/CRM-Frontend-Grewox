@@ -392,8 +392,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                               display: 'flex',
                               alignItems: 'center',
                           }}
-                          placeholder="Enter 10-digit phone number"
-                          maxLength={10}
+                          placeholder="Enter phone number"
                       />
                   </Form.Item>
               </Input.Group>

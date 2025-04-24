@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Upload, Typography, Card, Space, Row, Col, Modal, message } from 'antd';
+import { Form, Input, Button, Upload, Typography, Card, Space, Row, Col, Modal, message, Divider, Tooltip, Alert } from 'antd';
 import { 
   UploadOutlined, 
   HomeOutlined, 
@@ -8,14 +8,18 @@ import {
   GlobalOutlined,
   BuildOutlined,
   EyeOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  InfoCircleOutlined,
+  EditOutlined
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
-import { useCreateSettingMutation, useGetAllSettingsQuery, useDeleteSettingMutation } from './services/settingApi';
+import { useCreateSettingMutation, useGetAllSettingsQuery, useDeleteSettingMutation, useUpdateSettingMutation } from './services/settingApi';
 import { applySiteSettings } from '../../../../utils/siteSettings';
 import './general.scss';
+import { FiX } from 'react-icons/fi';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 const GeneralSettings = () => {
   const [form] = Form.useForm();
@@ -26,9 +30,11 @@ const GeneralSettings = () => {
   const [selectedLogo, setSelectedLogo] = useState(null);
   const [selectedFavicon, setSelectedFavicon] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   const { data: settingsData, isLoading: isLoadingSettings, refetch: refetchSettings } = useGetAllSettingsQuery();
   const [createSetting] = useCreateSettingMutation();
+  const [updateSetting] = useUpdateSettingMutation();
   const [deleteSetting] = useDeleteSettingMutation();
 
   // Initialize form with termsContent
@@ -57,8 +63,8 @@ const GeneralSettings = () => {
       
       // Apply site settings
       applySiteSettings({
-        favicon: existingSettings.favicon,
-        title: existingSettings.title,
+        // favicon: existingSettings.favicon,
+        // title: existingSettings.title,
         companyName: existingSettings.companyName
       });
     }
@@ -102,11 +108,7 @@ const GeneralSettings = () => {
         return;
       }
       
-      if (!selectedFavicon) {
-        message.error('Favicon is required');
-        return;
-      }
-      
+    
       // Create FormData object for file uploads
       const formData = new FormData();
       
@@ -125,7 +127,7 @@ const GeneralSettings = () => {
       
       // Add files
       formData.append('companylogo', selectedLogo);
-      formData.append('favicon', selectedFavicon);
+      // formData.append('favicon', selectedFavicon);
 
       // Log the FormData contents for debugging
       console.log('FormData contents:');
@@ -231,6 +233,92 @@ const GeneralSettings = () => {
     }
   };
 
+  const handleEdit = () => {
+    setIsEditModalVisible(true);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditModalVisible(false);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      setLoading(true);
+      const values = await form.validateFields();
+      
+      // Create FormData object for file uploads
+      const formData = new FormData();
+      
+      // Add required fields
+      formData.append('companyName', values.companyName);
+      formData.append('title', values.title || savedData.title); // Keep existing title if not changed
+      
+      // Add terms and conditions if changed
+      if (values.termsandconditions?.trim()) {
+        formData.append('termsandconditions', values.termsandconditions);
+      }
+      
+      // Add merchant fields
+      formData.append('merchant_name', values.merchant_name || '');
+      formData.append('merchant_upi_id', values.merchant_upi_id || '');
+      
+      // Handle company logo
+      if (selectedLogo) {
+        // If a new logo is selected, append it
+        formData.append('companylogo', selectedLogo);
+      } else if (savedData?.companylogo) {
+        // If no new logo is selected but there's an existing one, append the existing logo URL
+        formData.append('companylogo', savedData.companylogo);
+      }
+
+      // Log the FormData contents for debugging
+      console.log('Update FormData contents:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+      }
+
+      // Call the update API with the ID and FormData
+      const response = await updateSetting({
+        id: savedData.id,
+        data: formData
+      }).unwrap();
+      
+      if (response.success) {
+        // Update the saved data with the response
+        const updatedSettings = {
+          ...values,
+          id: savedData.id, // Preserve the ID
+          companylogo: response.data?.companylogo || savedData?.companylogo,
+          favicon: response.data?.favicon || savedData?.favicon
+        };
+        setSavedData(updatedSettings);
+        setIsEditModalVisible(false);
+        message.success('Settings updated successfully!');
+        
+        // Apply site settings with the updated data
+        applySiteSettings({
+          favicon: response.data?.favicon || savedData?.favicon,
+          title: values.title || savedData?.title,
+          companyName: values.companyName
+        });
+        
+        // Reset file selections
+        setSelectedLogo(null);
+        setSelectedFavicon(null);
+        
+        // Refetch settings to update the UI
+        refetchSettings();
+      } else {
+        message.error(response.message || 'Failed to update settings');
+      }
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      message.error(error?.data?.message || 'Failed to update settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const ViewPage = () => (
     <div className="view-page">
       <div className="view-header">
@@ -240,14 +328,22 @@ const GeneralSettings = () => {
             <p>View your general settings configuration</p>
           </div>
           <div className="header-actions">
-            <Button 
-              icon={<DeleteOutlined />} 
-              onClick={handleDelete}
-              danger
-              className="delete-button"
-            >
-              Delete
-            </Button>
+            <Space>
+              <Button 
+                icon={<EditOutlined />} 
+                onClick={handleEdit}
+                type="primary"
+              >
+                Edit
+              </Button>
+              <Button 
+                icon={<DeleteOutlined />} 
+                onClick={handleDelete}
+                danger
+              >
+                Delete
+              </Button>
+            </Space>
           </div>
         </div>
       </div>
@@ -353,7 +449,7 @@ const GeneralSettings = () => {
                         <Input placeholder="Enter your company name" />
                       </Form.Item>
                     </Col>
-                    <Col xs={24} md={12}>
+                    {/* <Col xs={24} md={12}>
                       <Form.Item
                         label="Site Title"
                         name="title"
@@ -361,7 +457,7 @@ const GeneralSettings = () => {
                       >
                         <Input placeholder="Enter your site title" />
                       </Form.Item>
-                    </Col>
+                    </Col> */}
                   </Row>
                 </Form>
               </Card>
@@ -389,29 +485,44 @@ const GeneralSettings = () => {
                         <div >
                            <Form.Item
                         // label="Company Logo"
-                        name="companylogo"
-                        rules={[{ required: true, message: 'Please upload company logo' }]}
+                        name="file"
+                        className="full-width"
                       >
-                        <Upload.Dragger 
-                          {...uploadProps} 
-                          className="upload-area"
+                        <Upload.Dragger
+                          name="file"
+                          multiple={false}
                           beforeUpload={(file) => {
                             handleFileChange({ file }, 'logo');
                             return false;
                           }}
+                          maxCount={1}
+                          accept=".png,.jpg,.jpeg"
+                          fileList={selectedLogo ? [{
+                            uid: '-1',
+                            name: selectedLogo.name,
+                            status: 'done',
+                            url: URL.createObjectURL(selectedLogo)
+                          }] : savedData?.companylogo ? [{
+                            uid: '-1',
+                            name: savedData.companylogo.split('/').pop(),
+                            status: 'done',
+                            url: savedData.companylogo
+                          }] : []}
                         >
-                          <div className="upload-content">
-                            <CloudUploadOutlined className="upload-icon" />
-                            <p className="upload-title">Upload Logo</p>
-                            <p className="upload-hint">PNG, JPG up to 2MB</p>
-                          </div>
+                          <p className="ant-upload-drag-icon">
+                            <CloudUploadOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+                          </p>
+                          <p className="ant-upload-text">Click or drag file to upload logo</p>
+                          <p className="ant-upload-hint">
+                            Support for PNG, JPG, JPEG files up to 2MB
+                          </p>
                         </Upload.Dragger>
                       </Form.Item>
                         </div>
                       </div>
                     </div>
                   </Col>
-                  <Col xs={24} md={12}>
+                  {/* <Col xs={24} md={12}>
                     <div className="upload-section">
                     <label style={{ 
                           display: 'block',
@@ -441,7 +552,7 @@ const GeneralSettings = () => {
                         </Upload.Dragger>
                       </Form.Item>
                     </div>
-                  </Col>
+                  </Col> */}
                 </Row>
               </Card>
 
@@ -518,6 +629,275 @@ const GeneralSettings = () => {
           </div>
         </>
       )}
+
+      <Modal
+        title={null}
+        open={isEditModalVisible}
+        onCancel={handleEditCancel}
+        footer={null}
+        width={800}
+        destroyOnClose={true}
+        centered
+        closeIcon={null}
+        className="pro-modal custom-modal"
+        style={{
+          "--antd-arrow-background-color": "#ffffff",
+        }}
+        styles={{
+          body: {
+            padding: 0,
+            borderRadius: "8px",
+            overflow: "hidden",
+          },
+        }}
+      >
+        <div
+          className="modal-header"
+          style={{
+            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+            padding: "24px",
+            color: "#ffffff",
+            position: "relative",
+          }}
+        >
+          <Button
+            type="text"
+            onClick={handleEditCancel}
+            style={{
+              position: "absolute",
+              top: "16px",
+              right: "16px",
+              color: "#ffffff",
+              width: "32px",
+              height: "32px",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+            }}
+          >
+            <FiX style={{ fontSize: "20px" }} />
+          </Button>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.2)",
+                backdropFilter: "blur(8px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <EditOutlined style={{ fontSize: "24px", color: "#ffffff" }} />
+            </div>
+            <div>
+              <h2
+                style={{
+                  margin: "0",
+                  fontSize: "24px",
+                  fontWeight: "600",
+                  color: "#ffffff",
+                }}
+              >
+                Edit Settings
+              </h2>
+              <Text
+                style={{
+                  fontSize: "14px",
+                  color: "rgba(255, 255, 255, 0.85)",
+                }}
+              >
+                Update your general settings configuration
+              </Text>
+            </div>
+          </div>
+        </div>
+
+        <Form
+          form={form}
+          layout="vertical"
+          className="settings-form"
+          initialValues={savedData}
+          style={{
+            padding: "24px",
+          }}
+        >
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="companyName"
+                label={
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    Company Name
+                  </span>
+                }
+                // rules={[{ required: true, message: 'Please enter company name' }]}
+              >
+                <Input 
+                  placeholder="Enter company name"
+                  size="large"
+                  style={{
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                  }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="merchant_name"
+                label={
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    Merchant Name
+                  </span>
+                }
+              >
+                <Input 
+                  placeholder="Enter merchant name"
+                  size="large"
+                  style={{
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                  }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item
+                name="merchant_upi_id"
+                label={
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    Merchant UPI ID
+                  </span>
+                }
+              >
+                <Input 
+                  placeholder="Enter merchant UPI ID"
+                  size="large"
+                  style={{
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                  }}
+                />
+              </Form.Item>
+            </Col>
+           
+            <Col xs={24} md={24}>
+              <Form.Item
+                label={
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    Company Logo
+                  </span>
+                }
+                name="file"
+                className="full-width"
+              >
+                <Upload.Dragger
+                  name="file"
+                  multiple={false}
+                  beforeUpload={(file) => {
+                    handleFileChange({ file }, 'logo');
+                    return false;
+                  }}
+                  maxCount={1}
+                  accept=".png,.jpg,.jpeg"
+                  fileList={selectedLogo ? [{
+                    uid: '-1',
+                    name: selectedLogo.name,
+                    status: 'done',
+                    url: URL.createObjectURL(selectedLogo)
+                  }] : savedData?.companylogo ? [{
+                    uid: '-1',
+                    name: savedData.companylogo.split('/').pop(),
+                    status: 'done',
+                    url: savedData.companylogo
+                  }] : []}
+                >
+                  <p className="ant-upload-drag-icon">
+                    <CloudUploadOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+                  </p>
+                  <p className="ant-upload-text">Click or drag file to upload logo</p>
+                  <p className="ant-upload-hint">
+                    Support for PNG, JPG, JPEG files up to 2MB
+                  </p>
+                </Upload.Dragger>
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={24}>
+              <Form.Item
+                name="termsandconditions"
+                label={
+                  <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                    Terms and Conditions
+                  </span>
+                }
+              >
+                <TextArea 
+                  rows={4} 
+                  placeholder="Enter terms and conditions"
+                  value={termsContent}
+                  onChange={(e) => setTermsContent(e.target.value)}
+                  style={{
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                  }}
+                />
+              </Form.Item>
+            </Col>  
+          </Row>
+
+          <Form.Item className="form-actions" style={{ marginBottom: 0, marginTop: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <Button
+                onClick={handleEditCancel}
+                size="large"
+                style={{
+                  borderRadius: "10px",
+                  padding: "6px 20px",
+                  height: "40px",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleEditSubmit}
+                loading={loading}
+                size="large"
+                style={{
+                  borderRadius: "10px",
+                  padding: "6px 20px",
+                  height: "40px",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  border: "none",
+                }}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

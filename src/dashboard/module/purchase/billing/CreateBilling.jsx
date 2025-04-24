@@ -892,6 +892,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                                                 placeholder="Select Tax"
                                                                 loading={taxesLoading}
                                                                 disabled={!isTaxEnabled}
+                                                                allowClear
                                                                 onChange={(value, option) => {
                                                                     const items = form.getFieldValue('items') || [];
                                                                     items[index].tax = option?.taxRate;

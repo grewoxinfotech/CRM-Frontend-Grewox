@@ -228,7 +228,7 @@ const CreateProduct = ({
     ],
     min_stock_level: [
       { required: false },
-      { max: 20, message: "Minimum stock level cannot be more than 20" },
+      // { max: 20, message: "Minimum stock level cannot be more than 20" },
       ({ getFieldValue }) => ({
         validator(_, value) {
           if (!value) return Promise.resolve();
@@ -256,7 +256,7 @@ const CreateProduct = ({
     ],
     reorder_quantity: [
       { required: false },
-      { max: 20, message: "Reorder quantity cannot be more than 20" },
+      // { max: 20, message: "Reorder quantity cannot be more than 20" },
       ({ getFieldValue }) => ({
         validator(_, value) {
           if (!value) return Promise.resolve();
@@ -574,7 +574,20 @@ const CreateProduct = ({
                 Selling Price
               </span>
             }
-            rules={[{ required: true, message: "Please enter selling price" }]}
+            rules={[
+              { required: true, message: "Please enter selling price" },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const buyingPrice = getFieldValue('buying_price');
+                  if (!value || !buyingPrice || value >= buyingPrice) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(
+                    new Error('Selling price cannot be lower than buying price')
+                  );
+                },
+              }),
+            ]}
           >
             <div
               className="price-input-group"

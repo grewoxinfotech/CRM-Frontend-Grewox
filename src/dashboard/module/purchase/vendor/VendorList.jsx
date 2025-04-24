@@ -80,7 +80,7 @@ const VendorList = ({ onEdit, onDelete, onView, searchText }) => {
             render: (name) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiUser style={{ color: '#1890ff' }} />
-                    <Text>{name}</Text>
+                    <Text>{name || "N/A"}</Text>
                 </div>
             ),
         },
@@ -91,7 +91,7 @@ const VendorList = ({ onEdit, onDelete, onView, searchText }) => {
             render: (contact) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiPhone style={{ color: '#1890ff' }} />
-                    <Text>{contact}</Text>
+                    <Text>{contact || "N/A"}</Text>
                 </div>
             ),
             sorter: (a, b) => (a?.contact || '').localeCompare(b?.contact || ''),
@@ -102,6 +102,9 @@ const VendorList = ({ onEdit, onDelete, onView, searchText }) => {
             key: 'email',
             ellipsis: true,
             sorter: (a, b) => (a?.email || '').localeCompare(b?.email || ''),
+            render: (email) => (
+                <Text>{email || "N/A"}</Text>
+            ),
         },
         {
             title: 'Address',
@@ -109,24 +112,36 @@ const VendorList = ({ onEdit, onDelete, onView, searchText }) => {
             key: 'address',
             ellipsis: true,
             sorter: (a, b) => (a?.address || '').localeCompare(b?.address || ''),
+            render: (address) => (
+                <Text>{address || "N/A"}</Text>
+            ),
         },
         {
             title: 'City',
             dataIndex: 'city',
             key: 'city',
             sorter: (a, b) => (a?.city || '').localeCompare(b?.city || ''),
+            render: (city) => (
+                <Text>{city || "N/A"}</Text>
+            ),
         },
         {
             title: 'State',
             dataIndex: 'state',
             key: 'state',
             sorter: (a, b) => (a?.state || '').localeCompare(b?.state || ''),
+            render: (state) => (
+                <Text>{state || "N/A"}</Text>
+            ),
         },
         {
             title: 'Country',
             dataIndex: 'country',
             key: 'country',
             sorter: (a, b) => (a?.country || '').localeCompare(b?.country || ''),
+            render: (country) => (
+                <Text>{country || "N/A"}</Text>
+            ),
         },
         {
             title: 'Action',

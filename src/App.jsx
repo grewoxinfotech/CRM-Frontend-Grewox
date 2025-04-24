@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import router from './routes'
 import './styles/index.scss'
-import SiteSettingsInitializer from './components/SiteSettingsInitializer'
+// import SiteSettingsInitializer from './components/SiteSettingsInitializer'
 
 const LoadingFallback = () => (
   <div style={{
@@ -18,7 +18,7 @@ const LoadingFallback = () => (
 function App() {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <SiteSettingsInitializer />
+      {/* <SiteSettingsInitializer /> */}
       <RouterProvider
         router={router}
         future={{
