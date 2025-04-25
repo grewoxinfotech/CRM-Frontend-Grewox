@@ -224,6 +224,7 @@ const CreateInvoice = ({
       const payload = {
         category: values.category,
         customer: values.customer,
+        section: "sales-invoice",
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: selectedCurrencyId || values.currency,

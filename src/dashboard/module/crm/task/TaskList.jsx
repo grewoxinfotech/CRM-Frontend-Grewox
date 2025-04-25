@@ -261,7 +261,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
     const [selectedTask, setSelectedTask] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    console.log('Raw Tasks in TaskList:', JSON.stringify(tasks, null, 2));
+    // console.log('Raw Tasks in TaskList:', JSON.stringify(tasks, null, 2));
 
     const userMap = useMemo(() => {
         return users.reduce((acc, user) => {
@@ -288,7 +288,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 created_by: task.created_by || 'Unknown',
                 task_reporter: task.task_reporter || ''
             };
-            console.log('Validated task:', validatedTask);
+                // console.log('Validated task:', validatedTask);
             return validatedTask;
         });
     }, [tasks]);

@@ -356,6 +356,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       const payload = {
         category: selectedCategory,
         customer: values.customer,
+        section: "sales-invoice",
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: values.currency,
@@ -1220,7 +1221,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                   />
                                 </Form.Item>
                                 <Text style={{ marginLeft: "4px" }}>
-                                  {form.getFieldValue("items")?.[index]?.discount_type === "fixed" 
+                                  {form.getFieldValue("items")?.[index]
+                                    ?.discount_type === "fixed"
                                     ? selectedCurrency
                                     : "%"}
                                 </Text>

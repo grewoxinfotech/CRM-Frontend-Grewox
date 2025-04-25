@@ -33,7 +33,7 @@ import { useGetUsersQuery } from "../../user-management/users/services/userApi";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
-import CreateUser from '../../user-management/users/CreateUser';
+import CreateUser from "../../user-management/users/CreateUser";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -59,52 +59,52 @@ const CreateTask = ({
   const formItemStyle = {
     fontSize: "14px",
     fontWeight: "500",
-    color: "#1f2937"
+    color: "#1f2937",
   };
 
   const inputStyle = {
-    height: "48px", 
+    height: "48px",
     borderRadius: "10px",
     padding: "8px 16px",
     backgroundColor: "#f8fafc",
     border: "1px solid #e6e8eb",
-    transition: "all 0.3s ease"
+    transition: "all 0.3s ease",
   };
 
   const prefixIconStyle = {
     color: "#1890ff",
     fontSize: "16px",
-    marginRight: "8px"
+    marginRight: "8px",
   };
 
   const selectStyle = {
-    width: '100%',
-    height: '48px'
+    width: "100%",
+    height: "48px",
   };
 
   // Get role colors and icons
   const getRoleColor = (role) => {
     const roleColors = {
-      'employee': {
-        color: '#D46B08',
-        bg: '#FFF7E6',
-        border: '#FFD591'
+      employee: {
+        color: "#D46B08",
+        bg: "#FFF7E6",
+        border: "#FFD591",
       },
-      'admin': {
-        color: '#096DD9',
-        bg: '#E6F7FF',
-        border: '#91D5FF'
+      admin: {
+        color: "#096DD9",
+        bg: "#E6F7FF",
+        border: "#91D5FF",
       },
-      'manager': {
-        color: '#08979C',
-        bg: '#E6FFFB',
-        border: '#87E8DE'
+      manager: {
+        color: "#08979C",
+        bg: "#E6FFFB",
+        border: "#87E8DE",
       },
-      'default': {
-        color: '#531CAD',
-        bg: '#F9F0FF',
-        border: '#D3ADF7'
-      }
+      default: {
+        color: "#531CAD",
+        bg: "#F9F0FF",
+        border: "#D3ADF7",
+      },
     };
     return roleColors[role?.toLowerCase()] || roleColors.default;
   };
@@ -114,36 +114,40 @@ const CreateTask = ({
   const { data: rolesData } = useGetRolesQuery();
 
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+  const subclientRoleId = rolesData?.data?.find(
+    (role) => role?.role_name === "sub-client"
+  )?.id;
 
   // Filter users to get team members (excluding subclients)
-  const teamMembers = usersResponse?.data?.filter(user =>
-    user?.created_by === currentUser?.username &&
-    user?.role_id !== subclientRoleId
-  ) || [];
+  const teamMembers =
+    usersResponse?.data?.filter(
+      (user) =>
+        user?.created_by === currentUser?.username &&
+        user?.role_id !== subclientRoleId
+    ) || [];
 
   // Define roleStyles object outside of the map function
   const roleStyles = {
-    'employee': {
-      color: '#D46B08',
-      bg: '#FFF7E6',
-      border: '#FFD591'
+    employee: {
+      color: "#D46B08",
+      bg: "#FFF7E6",
+      border: "#FFD591",
     },
-    'admin': {
-      color: '#096DD9',
-      bg: '#E6F7FF',
-      border: '#91D5FF'
+    admin: {
+      color: "#096DD9",
+      bg: "#E6F7FF",
+      border: "#91D5FF",
     },
-    'manager': {
-      color: '#08979C',
-      bg: '#E6FFFB',
-      border: '#87E8DE'
+    manager: {
+      color: "#08979C",
+      bg: "#E6FFFB",
+      border: "#87E8DE",
     },
-    'default': {
-      color: '#531CAD',
-      bg: '#F9F0FF',
-      border: '#D3ADF7'
-    }
+    default: {
+      color: "#531CAD",
+      bg: "#F9F0FF",
+      border: "#D3ADF7",
+    },
   };
 
   const handleCreateUser = () => {
@@ -154,7 +158,10 @@ const CreateTask = ({
   const handleCreateUserSuccess = (newUser) => {
     setIsCreateUserVisible(false);
     setTeamMembersOpen(true);
-    form.setFieldValue('assignTo', [...(form.getFieldValue('assignTo') || []), newUser.id]);
+    form.setFieldValue("assignTo", [
+      ...(form.getFieldValue("assignTo") || []),
+      newUser.id,
+    ]);
   };
 
   useEffect(() => {
@@ -179,6 +186,7 @@ const CreateTask = ({
       const formData = new FormData();
 
       formData.append("taskName", values.taskName || "");
+      formData.append("section", "task");
       formData.append("task_reporter", values.task_reporter || "");
       formData.append(
         "startDate",
@@ -426,26 +434,78 @@ const CreateTask = ({
                 suffixIcon={<FiChevronDown size={14} />}
               >
                 <Option value="highest">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ff4d4f",
+                      }}
+                    />
                     Highest - Urgent and Critical
                   </div>
                 </Option>
                 <Option value="high">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#faad14",
+                      }}
+                    />
                     High - Important
                   </div>
                 </Option>
                 <Option value="medium">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#1890ff",
+                      }}
+                    />
                     Medium - Normal
                   </div>
                 </Option>
                 <Option value="low">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#52c41a",
+                      }}
+                    />
                     Low - Can Wait
                   </div>
                 </Option>
@@ -453,74 +513,141 @@ const CreateTask = ({
             </Form.Item>
           </Col>
           <Col span={12}>
-          <Form.Item
-            name="status"
-            label={<span style={formItemStyle}>Status</span>}
-            rules={[{ required: true, message: "Please select status" }]}
-          >
-            <Select
-              placeholder="Select status"
-              style={selectStyle}
-              suffixIcon={<FiChevronDown size={14} />}
+            <Form.Item
+              name="status"
+              label={<span style={formItemStyle}>Status</span>}
+              rules={[{ required: true, message: "Please select status" }]}
             >
-              <Option value="not_started">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#d9d9d9' }} />
-                  Not Started
-                </div>
-              </Option>
-              <Option value="in_progress">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
-                  In Progress
-                </div>
-              </Option>
-              <Option value="completed">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
-                  Completed
-                </div>
-              </Option>
-              <Option value="on_hold">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
-                  On Hold
-                </div>
-              </Option>
-              <Option value="cancelled">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
-                  Cancelled
-                </div>
-              </Option>
-            </Select>
-          </Form.Item>
+              <Select
+                placeholder="Select status"
+                style={selectStyle}
+                suffixIcon={<FiChevronDown size={14} />}
+              >
+                <Option value="not_started">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#d9d9d9",
+                      }}
+                    />
+                    Not Started
+                  </div>
+                </Option>
+                <Option value="in_progress">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#1890ff",
+                      }}
+                    />
+                    In Progress
+                  </div>
+                </Option>
+                <Option value="completed">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#52c41a",
+                      }}
+                    />
+                    Completed
+                  </div>
+                </Option>
+                <Option value="on_hold">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#faad14",
+                      }}
+                    />
+                    On Hold
+                  </div>
+                </Option>
+                <Option value="cancelled">
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ff4d4f",
+                      }}
+                    />
+                    Cancelled
+                  </div>
+                </Option>
+              </Select>
+            </Form.Item>
           </Col>
         </Row>
 
         <Form.Item
           name="assignTo"
-          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
-            Assign To
-          </span>}
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Assign To
+            </span>
+          }
           rules={[{ required: true, message: "Please select assignees" }]}
         >
           <Select
             mode="multiple"
             placeholder="Select team members"
             style={{
-              width: '100%',
-              height: 'auto',
-              minHeight: '48px'
+              width: "100%",
+              height: "auto",
+              minHeight: "48px",
             }}
             listHeight={200}
             maxTagCount={2}
             maxTagTextLength={15}
             dropdownStyle={{
-              maxHeight: '300px',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollBehavior: 'smooth'
+              maxHeight: "300px",
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollBehavior: "smooth",
             }}
             popupClassName="team-members-dropdown"
             showSearch
@@ -531,63 +658,76 @@ const CreateTask = ({
             dropdownRender={(menu) => (
               <>
                 {menu}
-                <Divider style={{ margin: '8px 0' }} />
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  padding: '0 8px',
-                  justifyContent: 'flex-end'
-                }}>
+                <Divider style={{ margin: "8px 0" }} />
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                    padding: "0 8px",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <Button
                     type="text"
-                    icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                    icon={
+                      <FiUserPlus
+                        style={{ fontSize: "16px", color: "#ffffff" }}
+                      />
+                    }
                     onClick={handleCreateUser}
                     style={{
-                      height: '36px',
-                      padding: '8px 12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '6px'
+                      height: "36px",
+                      padding: "8px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      background:
+                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "6px",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                      e.currentTarget.style.background =
+                        "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                      e.currentTarget.style.background =
+                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
                     }}
                   >
                     Add New User
                   </Button>
                   <Button
                     type="text"
-                    icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                    icon={
+                      <FiShield
+                        style={{ fontSize: "16px", color: "#1890ff" }}
+                      />
+                    }
                     onClick={(e) => {
                       e.stopPropagation();
                       setTeamMembersOpen(false);
                     }}
                     style={{
-                      height: '36px',
-                      borderRadius: '6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      background: '#ffffff',
-                      border: '1px solid #1890ff',
-                      color: '#1890ff',
-                      fontWeight: '500'
+                      height: "36px",
+                      borderRadius: "6px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      background: "#ffffff",
+                      border: "1px solid #1890ff",
+                      color: "#1890ff",
+                      fontWeight: "500",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#e6f4ff';
-                      e.currentTarget.style.borderColor = '#69b1ff';
+                      e.currentTarget.style.background = "#e6f4ff";
+                      e.currentTarget.style.borderColor = "#69b1ff";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#ffffff';
-                      e.currentTarget.style.borderColor = '#1890ff';
+                      e.currentTarget.style.background = "#ffffff";
+                      e.currentTarget.style.borderColor = "#1890ff";
                     }}
                   >
                     Done
@@ -596,87 +736,236 @@ const CreateTask = ({
               </>
             )}
           >
-            {teamMembers.map(user => {
-              const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-              const roleStyle = roleStyles[userRole?.role_name?.toLowerCase()] || roleStyles.default;
+            {teamMembers.map((user) => {
+              const userRole = rolesData?.data?.find(
+                (role) => role.id === user.role_id
+              );
+              const roleStyle =
+                roleStyles[userRole?.role_name?.toLowerCase()] ||
+                roleStyles.default;
 
               return (
                 <Option key={user.id} value={user.id}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '4px 0'
-                  }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      background: '#e6f4ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#1890ff',
-                      fontSize: '16px',
-                      fontWeight: '500',
-                      textTransform: 'uppercase'
-                    }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "4px 0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        background: "#e6f4ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#1890ff",
+                        fontSize: "16px",
+                        fontWeight: "500",
+                        textTransform: "uppercase",
+                      }}
+                    >
                       {user.profilePic ? (
                         <img
                           src={user.profilePic}
                           alt={user.username}
                           style={{
-                            width: '100%',
-                            height: '100%',
-                            borderRadius: '50%',
-                            objectFit: 'cover'
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover",
                           }}
                         />
                       ) : (
                         user.username?.charAt(0) || <FiUser />
                       )}
                     </div>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      gap: '4px'
-                    }}>
-                      <span style={{
-                        fontWeight: 500,
-                        color: 'rgba(0, 0, 0, 0.85)',
-                        fontSize: '14px'
-                      }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "4px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: 500,
+                          color: "rgba(0, 0, 0, 0.85)",
+                          fontSize: "14px",
+                        }}
+                      >
                         {user.username || user.email}
                       </span>
                     </div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      marginLeft: 'auto'
-                    }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginLeft: "auto",
+                      }}
+                    >
                       <div
                         className="role-indicator"
                         style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
                           background: roleStyle.color,
                           boxShadow: `0 0 8px ${roleStyle.color}`,
-                          animation: 'pulse 2s infinite'
+                          animation: "pulse 2s infinite",
                         }}
                       />
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        background: roleStyle.bg,
-                        color: roleStyle.color,
-                        border: `1px solid ${roleStyle.border}`,
-                        fontWeight: 500,
-                        textTransform: 'capitalize'
-                      }}>
-                        {userRole?.role_name || 'User'}
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "12px",
+                          background: roleStyle.bg,
+                          color: roleStyle.color,
+                          border: `1px solid ${roleStyle.border}`,
+                          fontWeight: 500,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {userRole?.role_name || "User"}
+                      </span>
+                    </div>
+                  </div>
+                </Option>
+              );
+            })}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="task_reporter"
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Task Reporter
+            </span>
+          }
+          rules={[{ required: true, message: "Please select task reporter" }]}
+        >
+          <Select
+            showSearch
+            placeholder="Select task reporter"
+            style={{
+              width: "100%",
+              height: "auto",
+              minHeight: "48px",
+            }}
+            listHeight={200}
+            maxTagCount={1}
+            maxTagTextLength={15}
+            dropdownStyle={{
+              maxHeight: "320px",
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+              scrollBehavior: "smooth",
+            }}
+            popupClassName="team-members-dropdown"
+            optionFilterProp="children"
+          >
+            {users.map((user) => {
+              const userRole = rolesData?.data?.find(
+                (role) => role.id === user.role_id
+              );
+              const roleStyle = getRoleColor(userRole?.role_name);
+
+              return (
+                <Option key={user.id} value={user.id}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "4px 0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        background: "#e6f4ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#1890ff",
+                        fontSize: "16px",
+                        fontWeight: "500",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {user.profilePic ? (
+                        <img
+                          src={user.profilePic}
+                          alt={user.username}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        user.username?.charAt(0) || <FiUser />
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "4px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: 500,
+                          color: "rgba(0, 0, 0, 0.85)",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {user.username || user.email}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginLeft: "auto",
+                      }}
+                    >
+                      <div
+                        className="role-indicator"
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: roleStyle.color,
+                          boxShadow: `0 0 8px ${roleStyle.color}`,
+                          animation: "pulse 2s infinite",
+                        }}
+                      />
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "12px",
+                          background: roleStyle.bg,
+                          color: roleStyle.color,
+                          border: `1px solid ${roleStyle.border}`,
+                          fontWeight: 500,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {userRole?.role_name || "User"}
                       </span>
                     </div>
                   </div>
@@ -687,45 +976,7 @@ const CreateTask = ({
         </Form.Item>
 
         <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              name="task_reporter"
-              label={
-                <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Task Reporter
-                </span>
-              }
-              rules={[
-                { required: true, message: "Please select task reporter" },
-              ]}
-            >
-              <Select
-                showSearch
-                placeholder="Select task reporter"
-                size="large"
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                }}
-                listHeight={100}
-                dropdownStyle={{
-                  maxHeight: '120px',
-                  overflowY: 'auto',
-                  scrollbarWidth: 'thin',
-                  scrollBehavior: 'smooth'
-                }}
-                suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
-                optionFilterProp="children"
-              >
-                {users.map((user) => (
-                  <Option key={user.id} value={user.id}>
-                    {user.username || user.email}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col span={12}>
+          <Col span={24}>
             <Form.Item
               name="reminder_date"
               label={
@@ -896,7 +1147,10 @@ const CreateTask = ({
             gap: 4px !important;
           }
 
-          .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+          .ant-select-focused:not(.ant-select-disabled).ant-select:not(
+              .ant-select-customize-input
+            )
+            .ant-select-selector {
             border-color: #1890ff !important;
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
           }
@@ -922,23 +1176,23 @@ const CreateTask = ({
             border-radius: 12px !important;
             border: 1px solid #e5e7eb !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-            
+
             .ant-select-item {
               padding: 8px !important;
               border-radius: 8px !important;
               margin: 2px 0 !important;
-              
+
               &-option-selected {
-                background-color: #E6F4FF !important;
+                background-color: #e6f4ff !important;
                 font-weight: 500 !important;
               }
-              
+
               &-option-active {
-                background-color: #F0F7FF !important;
+                background-color: #f0f7ff !important;
               }
-              
+
               &:hover {
-                background-color: #F0F7FF !important;
+                background-color: #f0f7ff !important;
               }
             }
           }
