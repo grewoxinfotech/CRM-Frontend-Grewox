@@ -22,9 +22,15 @@ import {
   FiMapPin,
   FiUser,
   FiUpload,
+  FiShield,
+  FiBriefcase,
+  FiUserPlus,
+  FiChevronDown,
 } from "react-icons/fi";
 import moment from "moment";
 import { useUpdateTaskMutation } from "./services/taskApi";
+import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
+import CreateUser from '../../user-management/users/CreateUser';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -34,6 +40,30 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
   const [form] = Form.useForm();
   const [updateTask, { isLoading }] = useUpdateTaskMutation();
   const [fileList, setFileList] = useState([]);
+  const { data: rolesData } = useGetRolesQuery();
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+
+  // Add style constants
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#1f2937"
+  };
+
+  const inputStyle = {
+    height: "48px", 
+    borderRadius: "10px",
+    padding: "8px 16px",
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e6e8eb",
+    transition: "all 0.3s ease"
+  };
+
+  const selectStyle = {
+    width: '100%',
+    height: '48px'
+  };
 
   const filterAssignTo = (assignTo) => {
     try {
@@ -138,6 +168,45 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
   const handleFileChange = ({ fileList: newFileList }) => {
     setFileList(newFileList);
+  };
+
+  // Get role colors and icons
+  const getRoleColor = (role) => {
+    const roleColors = {
+      'employee': {
+        color: '#D46B08',
+        bg: '#FFF7E6',
+        border: '#FFD591'
+      },
+      'admin': {
+        color: '#096DD9',
+        bg: '#E6F7FF',
+        border: '#91D5FF'
+      },
+      'manager': {
+        color: '#08979C',
+        bg: '#E6FFFB',
+        border: '#87E8DE'
+      },
+      'default': {
+        color: '#531CAD',
+        bg: '#F9F0FF',
+        border: '#D3ADF7'
+      }
+    };
+    return roleColors[role?.toLowerCase()] || roleColors.default;
+  };
+
+  const handleCreateUser = () => {
+    setIsCreateUserVisible(true);
+    setTeamMembersOpen(false);
+  };
+
+  const handleCreateUserSuccess = (newUser) => {
+    setIsCreateUserVisible(false);
+    setTeamMembersOpen(true);
+    const currentAssignTo = form.getFieldValue('assignTo') || [];
+    form.setFieldValue('assignTo', [...currentAssignTo, newUser.id]);
   };
 
   return (
@@ -322,109 +391,270 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
 
         <Row gutter={16}>
           <Col span={12}>
-            <Form.Item
+          <Form.Item
               name="priority"
-              label="Priority"
+              label={<span style={formItemStyle}>Priority</span>}
               rules={[{ required: true, message: "Please select priority" }]}
             >
               <Select
-                size="large"
                 placeholder="Select priority"
-                style={{ width: "100%" }}
-                suffixIcon={<FiFlag style={{ color: "#1890ff" }} />}
+                style={selectStyle}
+                suffixIcon={<FiChevronDown size={14} />}
               >
-                <Option value="High">High</Option>
-                <Option value="Medium">Medium</Option>
-                <Option value="Low">Low</Option>
+                <Option value="highest">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                    Highest - Urgent and Critical
+                  </div>
+                </Option>
+                <Option value="high">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                    High - Important
+                  </div>
+                </Option>
+                <Option value="medium">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                    Medium - Normal
+                  </div>
+                </Option>
+                <Option value="low">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                    Low - Can Wait
+                  </div>
+                </Option>
               </Select>
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item
-              name="status"
-              label="Status"
-              rules={[{ required: true, message: "Please select status" }]}
+          <Form.Item
+            name="status"
+            label={<span style={formItemStyle}>Status</span>}
+            rules={[{ required: true, message: "Please select status" }]}
+          >
+            <Select
+              placeholder="Select status"
+              style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
             >
-              <Select
-                size="large"
-                placeholder="Select status"
-                style={{ width: "100%" }}
-              >
-                <Option value="Todo">Todo</Option>
-                <Option value="In Progress">In Progress</Option>
-                <Option value="Completed">Completed</Option>
-              </Select>
-            </Form.Item>
+              <Option value="not_started">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#d9d9d9' }} />
+                  Not Started
+                </div>
+              </Option>
+              <Option value="in_progress">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  In Progress
+                </div>
+              </Option>
+              <Option value="completed">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  Completed
+                </div>
+              </Option>
+              <Option value="on_hold">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  On Hold
+                </div>
+              </Option>
+              <Option value="cancelled">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  Cancelled
+                </div>
+              </Option>
+            </Select>
+          </Form.Item>
           </Col>
         </Row>
 
         <Form.Item
           name="assignTo"
-          label="Assign To"
+          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
+            Assign To
+          </span>}
           rules={[{ required: true, message: "Please select assignees" }]}
         >
           <Select
             mode="multiple"
-            placeholder="Select assignees"
-            size="large"
+            placeholder="Select team members"
             style={{
-              width: "100%",
-              borderRadius: "10px",
+              width: '100%',
+              height: 'auto',
+              minHeight: '48px'
             }}
-            listHeight={100}
+            listHeight={200}
+            maxTagCount={1}
+            maxTagTextLength={15}
             dropdownStyle={{
-              maxHeight: '120px',
+              maxHeight: '300px',
               overflowY: 'auto',
               scrollbarWidth: 'thin',
               scrollBehavior: 'smooth'
             }}
-            suffixIcon={<FiUser style={{ color: "#1890ff" }} />}
-            optionFilterProp="children"
+            popupClassName="team-members-dropdown"
             showSearch
-            maxTagCount={3}
-            maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
-            removeIcon={<FiX style={{ fontSize: '14px', color: '#ffffff' }} />}
-            tagRender={(props) => {
-              const { label, closable, onClose } = props;
-              return (
-                <Tag
-                  color="blue"
-                  closable={closable}
-                  onClose={onClose}
-                  style={{
-                    marginRight: 3,
-                    padding: '4px 8px',
-                    fontSize: '12px',
-                    borderRadius: '6px',
-                  }}
-                >
-                  {label}
-                </Tag>
-              );
-            }}
-            onDeselect={(value) => {
-              // Force dropdown to update when an option is deselected
-              const select = document.querySelector('.ant-select-selector');
-              if (select) {
-                const event = new MouseEvent('click', {
-                  bubbles: true,
-                  cancelable: true,
-                  view: window
-                });
-                select.dispatchEvent(event);
-              }
-            }}
+            optionFilterProp="children"
+            open={teamMembersOpen}
+            onDropdownVisibleChange={setTeamMembersOpen}
+            dropdownRender={(menu) => (
+              <>
+                {menu}
+                <Divider style={{ margin: '8px 0' }} />
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  padding: '0 8px',
+                  justifyContent: 'flex-end'
+                }}>
+                  <Button
+                    type="text"
+                    icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                    onClick={handleCreateUser}
+                    style={{
+                      height: '36px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                    }}
+                  >
+                    Add New User
+                  </Button>
+                  <Button
+                    type="text"
+                    icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTeamMembersOpen(false);
+                    }}
+                    style={{
+                      height: '36px',
+                      borderRadius: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      background: '#ffffff',
+                      border: '1px solid #1890ff',
+                      color: '#1890ff',
+                      fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#e6f4ff';
+                      e.currentTarget.style.borderColor = '#69b1ff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#ffffff';
+                      e.currentTarget.style.borderColor = '#1890ff';
+                    }}
+                  >
+                    Done
+                  </Button>
+                </div>
+              </>
+            )}
           >
-            {users.map((user) => {
-              const value = form.getFieldValue('assignTo') || [];
-              const isSelected = value.includes(user.id);
+            {users.map(user => {
+              const userRole = rolesData?.data?.find(role => role.id === user.role_id);
+              const roleStyle = getRoleColor(userRole?.role_name);
+
               return (
-                <Option
-                  key={user.id}
-                  value={user.id}
-                  style={isSelected ? { display: 'none' } : undefined}
-                >
-                  {user.username || user.email}
+                <Option key={user.id} value={user.id}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '4px 0'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: '#e6f4ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1890ff',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      textTransform: 'uppercase'
+                    }}>
+                      {user.profilePic ? (
+                        <img
+                          src={user.profilePic}
+                          alt={user.username}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        user.username?.charAt(0) || <FiUser />
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      gap: '4px'
+                    }}>
+                      <span style={{
+                        fontWeight: 500,
+                        color: 'rgba(0, 0, 0, 0.85)',
+                        fontSize: '14px'
+                      }}>
+                        {user.username || user.email}
+                      </span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginLeft: 'auto'
+                    }}>
+                      <div
+                        className="role-indicator"
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: roleStyle.color,
+                          boxShadow: `0 0 8px ${roleStyle.color}`,
+                          animation: 'pulse 2s infinite'
+                        }}
+                      />
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        background: roleStyle.bg,
+                        color: roleStyle.color,
+                        border: `1px solid ${roleStyle.border}`,
+                        fontWeight: 500,
+                        textTransform: 'capitalize'
+                      }}>
+                        {userRole?.role_name || 'User'}
+                      </span>
+                    </div>
+                  </div>
                 </Option>
               );
             })}
@@ -523,6 +753,109 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
           </Button>
         </div>
       </Form>
+
+      <CreateUser
+        visible={isCreateUserVisible}
+        onCancel={() => {
+          setIsCreateUserVisible(false);
+          setTeamMembersOpen(true);
+        }}
+        onSuccess={handleCreateUserSuccess}
+      />
+
+      <style jsx global>{`
+        .edit-task-modal {
+          .ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+            min-height: 42px !important;
+            padding: 4px 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 4px !important;
+          }
+
+          .ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            border-color: #1890ff !important;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+          }
+
+          .ant-select-multiple {
+            .ant-select-selection-overflow {
+              flex-wrap: wrap !important;
+              gap: 4px !important;
+              padding: 2px !important;
+            }
+
+            .ant-select-selection-overflow-item {
+              margin: 0 !important;
+            }
+
+            .ant-select-selection-placeholder {
+              padding: 0 8px !important;
+            }
+          }
+
+          .ant-select-dropdown {
+            padding: 8px !important;
+            border-radius: 12px !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            
+            .ant-select-item {
+              padding: 8px !important;
+              border-radius: 8px !important;
+              margin: 2px 0 !important;
+              
+              &-option-selected {
+                background-color: #E6F4FF !important;
+                font-weight: 500 !important;
+              }
+              
+              &-option-active {
+                background-color: #F0F7FF !important;
+              }
+              
+              &:hover {
+                background-color: #F0F7FF !important;
+              }
+            }
+          }
+
+          .custom-dropdown {
+            .ant-select-item-option-content {
+              white-space: normal !important;
+              word-break: break-word !important;
+            }
+          }
+
+          .role-wrapper {
+            position: relative;
+            padding-left: 12px;
+          }
+
+          .role-indicator {
+            animation: pulse 2s infinite;
+          }
+
+          @keyframes pulse {
+            0% {
+              transform: translateY(-50%) scale(1);
+              opacity: 1;
+            }
+            50% {
+              transform: translateY(-50%) scale(1.2);
+              opacity: 0.8;
+            }
+            100% {
+              transform: translateY(-50%) scale(1);
+              opacity: 1;
+            }
+          }
+        }
+      `}</style>
     </Modal>
   );
 };

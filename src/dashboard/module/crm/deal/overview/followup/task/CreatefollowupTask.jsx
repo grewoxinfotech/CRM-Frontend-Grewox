@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
 import { useCreateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
 import { useParams } from 'react-router-dom';
+import CreateUser from '../../../../../user-management/users/CreateUser';
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
@@ -62,6 +63,13 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
 
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
+    setTeamMembersOpen(false);
+  };
+
+  const handleCreateUserSuccess = (newUser) => {
+    setIsCreateUserVisible(false);
+    const currentAssignees = form.getFieldValue('assigned_to') || [];
+    form.setFieldValue('assigned_to', [...currentAssignees, newUser.id]);
   };
 
   // Add formItemStyle constant
@@ -248,6 +256,7 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
   };
 
   return (
+    <>
     <Modal
       title={null}
       open={open}
@@ -975,7 +984,19 @@ const CreatefollowupTask = ({ open, onCancel, onSubmit, initialDate, initialTime
           </Button>
         </div>
       </Form>
+
     </Modal>
+      <CreateUser
+        visible={isCreateUserVisible}
+        onCancel={() => {
+          setIsCreateUserVisible(false);
+          setTeamMembersOpen(true);
+        }}
+        onSuccess={handleCreateUserSuccess}
+      />
+      </>
+
+    
   );
 };
 
