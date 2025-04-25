@@ -11,15 +11,26 @@ import EditFollowupMeeting from './EditfollowupMeeting';
 
 const FollowupMeetingList = ({ dealId, users }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
-    const [selectedMeetingId, setSelectedMeetingId] = useState(null);
+    const [editLogModalVisible, setEditLogModalVisible] = useState(false);
+    const [selectedCallId, setSelectedCallId] = useState(null);
+    const [selectedCallData, setSelectedCallData] = useState(null);
+
 
     const { data: followupMeeting, isLoading: followupMeetingLoading } = useGetFollowupMeetingsQuery(dealId);
     const [deleteFollowupMeeting] = useDeleteFollowupMeetingMutation();
 
-    const handleEdit = (meetingId) => {
-        setSelectedMeetingId(meetingId);
-        setEditModalVisible(true);
-    };
+   
+  const handleEdit = (callId) => {
+    const call = followupCall?.data?.find((c) => c.id === callId);
+    setSelectedCallId(callId);
+    setSelectedCallData(call);
+
+    if (call?.call_type === "scheduled") {
+      setEditModalVisible(true);
+    } else if (call?.call_type === "log") {
+      setEditLogModalVisible(true);
+    }
+  };
 
     const handleDelete = (id) => {
         Modal.confirm({
@@ -223,21 +234,38 @@ const FollowupMeetingList = ({ dealId, users }) => {
                 }}
                 className="followup-table"
             />
-            {editModalVisible && (
-                <EditFollowupMeeting
-                    open={editModalVisible}
-                    meetingId={selectedMeetingId}
-                    meetingData={followupMeeting?.data?.find(meeting => meeting.id === selectedMeetingId)}
-                    onCancel={() => {
-                        setEditModalVisible(false);
-                        setSelectedMeetingId(null);
-                    }}
-                    onSubmit={() => {
-                        setEditModalVisible(false);
-                        setSelectedMeetingId(null);
-                    }}
-                />
-            )}
+             {editModalVisible && (
+        <EditFollowupCall
+          open={editModalVisible}
+          onCancel={() => {
+            setEditModalVisible(false);
+            setSelectedCallId(null);
+          }}
+          callId={selectedCallId}
+          callData={selectedCallData}
+          rtiId={rtiId}
+          onSubmit={() => {
+            setEditModalVisible(false);
+            setSelectedCallId(null);
+          }}
+        />
+      )}
+      {editLogModalVisible && (
+        <EditFollowupLog
+          open={editLogModalVisible}
+          onCancel={() => {
+            setEditLogModalVisible(false);
+            setSelectedCallId(null);
+          }}
+          callId={selectedCallId}
+          callData={selectedCallData}
+          rtiId={rtiId}
+          onSubmit={() => {
+            setEditLogModalVisible(false);
+            setSelectedCallId(null);
+          }}
+        />
+      )}
         </>
     );
 };

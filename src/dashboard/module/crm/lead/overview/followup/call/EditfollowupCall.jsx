@@ -24,6 +24,7 @@ import {
   FiUser,
   FiShield,
   FiBriefcase,
+  FiChevronDown,
   FiUserPlus,
 } from "react-icons/fi";
 import dayjs from "dayjs";
@@ -31,35 +32,38 @@ import { useGetUsersQuery } from "../../../../../user-management/users/services/
 import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
-import { useCreateFollowupCallMutation } from "./services/followupCallApi";
+import {
+  useUpdateFollowupCallMutation,
+  useGetFollowupCallsQuery,
+} from "./services/followupCallApi";
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateLog = ({
+const EditFollowupCall = ({
   open,
   onCancel,
   onSubmit,
-  initialDate,
-  initialTime,
-  dealId,
+  callId,
+  callData,
+  rtiId,
 }) => {
   const [form] = Form.useForm();
-  const [repeatType, setRepeatType] = useState("none");
-  const [repeatEndType, setRepeatEndType] = useState("never");
-  const [repeatTimes, setRepeatTimes] = useState(1);
-  const [showReminder, setShowReminder] = useState(false);
-  const [showRepeat, setShowRepeat] = useState(false);
-  const [callDuration, setCallDuration] = useState("");
-  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
-  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
-  const [createFollowupCall, { isLoading: followupCallResponseLoading }] =
-    useCreateFollowupCallMutation();
-
+  const [selectedCallType, setSelectedCallType] = useState(null);
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+
+  const [updateFollowupCall, { isLoading: followupCallResponseLoading }] =
+    useUpdateFollowupCallMutation();
+  const { data: callDataFromApi, isLoading: isCallLoading } =
+    useGetFollowupCallsQuery(callId);
+
+  // Use callData from props if available, otherwise use data from API
+  const call = callData || callDataFromApi?.data?.find((c) => c.id === callId);
 
   // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(
@@ -105,72 +109,64 @@ const CreateLog = ({
     setIsCreateUserVisible(true);
   };
 
-  // Watch due_date field to enable repeat option
+  // Set initial form values when call data is loaded
   useEffect(() => {
-    const callDate = form.getFieldValue("call_date");
-    setShowRepeat(!!callDate);
-  }, [form.getFieldValue("call_date")]);
-
-  // Update repeat availability when call date changes
-  const handleCallDateChange = (date) => {
-    setShowRepeat(!!date);
-    if (!date) {
-      setRepeatType("none");
-    }
-  };
-
-  // Handle repeat toggle when no call date is selected
-  const handleRepeatToggle = (checked) => {
-    if (!showRepeat && checked) {
-      message.info("Select a call date to set recurring");
-      return;
-    }
-    setRepeatType(checked ? "daily" : "none");
-  };
-
-  // Add function to calculate duration
-  const calculateDuration = () => {
-    const startTime = form.getFieldValue("call_start_time");
-    const endTime = form.getFieldValue("call_end_time");
-
-    if (startTime && endTime) {
-      const start = startTime.valueOf();
-      const end = endTime.valueOf();
-
-      if (end >= start) {
-        const durationMs = end - start;
-        const minutes = Math.floor(durationMs / (1000 * 60));
-        const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
-        setCallDuration(`${minutes} minutes ${seconds} seconds`);
-        form.setFieldsValue({
-          call_duration: `${minutes} minutes ${seconds} seconds`,
-        });
-      } else {
-        setCallDuration("Invalid duration");
-        form.setFieldsValue({ call_duration: "" });
+    if (call) {
+      // Parse assigned_to (participants)
+      let assignedTo = { assigned_to: [] };
+      if (call.assigned_to) {
+        try {
+          assignedTo =
+            typeof call.assigned_to === "string"
+              ? JSON.parse(call.assigned_to)
+              : call.assigned_to;
+        } catch (e) {
+          console.error("Error parsing assigned_to:", e);
+        }
       }
-    }
-  };
 
-  // Watch for changes in start and end time
-  useEffect(() => {
-    calculateDuration();
-  }, [
-    form.getFieldValue("call_start_time"),
-    form.getFieldValue("call_end_time"),
-  ]);
+      // Set form values
+      const formValues = {
+        subject: call.subject || "",
+        call_start_date: call.call_start_date
+          ? dayjs(call.call_start_date)
+          : null,
+        call_start_time: call.call_start_time
+          ? dayjs(call.call_start_time, "HH:mm:ss")
+          : null,
+        call_end_time: call.call_end_time
+          ? dayjs(call.call_end_time, "HH:mm:ss")
+          : null,
+        call_duration: call.call_duration || "",
+        call_reminder: call.call_reminder || null,
+        assigned_to: assignedTo.assigned_to || [],
+        call_purpose: call.call_purpose || "",
+        call_notes: call.call_notes || "",
+        call_type: call.call_type || "scheduled",
+        call_status: call.call_status || "not_started",
+        priority: call.priority || "medium",
+        rti_id: rtiId || call.rti_id || null,
+      };
+
+      form.setFieldsValue(formValues);
+    } else {
+      message.error("Failed to load call data");
+    }
+  }, [call, form, rtiId]);
 
   const handleSubmit = async (values) => {
-    try {
-      // If no assignee is selected, assign to current user
-      const assignedTo = values.assigned_to
-        ? values.assigned_to.map((id) => String(id))
-        : [String(currentUser?.id)];
+    const assignedToArray = Array.isArray(values.assigned_to)
+      ? values.assigned_to
+      : [values.assigned_to].filter(Boolean);
 
+    try {
       const formattedValues = {
         ...values,
-        call_type: "log",
-
+        assigned_to: {
+          assigned_to: assignedToArray,
+        },
+        call_type: "scheduled",
+        section: "lead",
         call_start_date: values.call_start_date
           ? values.call_start_date.format("YYYY-MM-DD")
           : null,
@@ -180,13 +176,11 @@ const CreateLog = ({
         call_end_time: values.call_end_time
           ? values.call_end_time.format("HH:mm:ss")
           : null,
-        assigned_to: {
-          assigned_to: assignedTo,
-        },
+        rti_id: rtiId || values.rti_id || null,
       };
 
-      await createFollowupCall({ id: dealId, data: formattedValues });
-      message.success("Call logged successfully");
+      await updateFollowupCall({ id: callId, data: formattedValues });
+      message.success("Call updated successfully");
       form.resetFields();
       onCancel();
 
@@ -194,8 +188,8 @@ const CreateLog = ({
         onSubmit(formattedValues);
       }
     } catch (error) {
-      console.error("Error logging call:", error);
-      message.error("Failed to log call");
+      console.error("Error updating call:", error);
+      message.error("Failed to update call");
     }
   };
 
@@ -280,7 +274,7 @@ const CreateLog = ({
                 color: "#ffffff",
               }}
             >
-              Log a call
+              Edit Call
             </h2>
             <Text
               style={{
@@ -288,7 +282,7 @@ const CreateLog = ({
                 color: "rgba(255, 255, 255, 0.85)",
               }}
             >
-              Log your call details
+              Update call details
             </Text>
           </div>
         </div>
@@ -300,15 +294,12 @@ const CreateLog = ({
         onFinish={handleSubmit}
         style={{ padding: "24px" }}
       >
-        <Typography.Title level={5} style={{ marginBottom: "24px" }}>
-          Call Information
-        </Typography.Title>
-
-        <div style={{ display: "flex", gap: "16px" }}>
+        {/* Schedule Information */}
+        <div style={{ display: "flex", gap: "16px", marginTop: "20px" }}>
           <Form.Item
             name="call_start_date"
-            label="Call Start Date"
-            rules={[{ required: true, message: "Please select start date" }]}
+            label="Call Date"
+            rules={[{ required: true, message: "Please select date" }]}
             style={{ flex: 1 }}
           >
             <DatePicker
@@ -320,8 +311,8 @@ const CreateLog = ({
 
           <Form.Item
             name="call_start_time"
-            label="Call Start Time"
-            rules={[{ required: true, message: "Please select start time" }]}
+            label="Call Time"
+            rules={[{ required: true, message: "Please select time" }]}
             style={{ flex: 1 }}
           >
             <TimePicker
@@ -329,26 +320,11 @@ const CreateLog = ({
               size="large"
               style={{ width: "100%", borderRadius: "10px", height: "48px" }}
               use12Hours
-              onChange={() => calculateDuration()}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="call_end_time"
-            label="Call End Time"
-            rules={[{ required: true, message: "Please select end time" }]}
-            style={{ flex: 1 }}
-          >
-            <TimePicker
-              format="hh:mm A"
-              size="large"
-              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
-              use12Hours
-              onChange={() => calculateDuration()}
             />
           </Form.Item>
         </div>
 
+        {/* Duration and Reminder */}
         <div
           style={{
             display: "grid",
@@ -358,83 +334,100 @@ const CreateLog = ({
           }}
         >
           <Form.Item
-            name="call_status"
-            label="Call Status"
-            initialValue="not_started"
-            rules={[{ required: true, message: "Please select call status" }]}
-          >
-            <Select
-              placeholder="Select call status"
-              size="large"
-              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
-            >
-              <Option value="not_started">
-                <Tag color="default">Not Started</Tag>
-              </Option>
-              <Option value="in_progress">
-                <Tag color="processing">In Progress</Tag>
-              </Option>
-              <Option value="completed">
-                <Tag color="success">Completed</Tag>
-              </Option>
-              <Option value="cancelled">
-                <Tag color="error">Cancelled</Tag>
-              </Option>
-              <Option value="no_answer">
-                <Tag color="warning">No Answer</Tag>
-              </Option>
-              <Option value="busy">
-                <Tag color="orange">Busy</Tag>
-              </Option>
-              <Option value="wrong_number">
-                <Tag color="red">Wrong Number</Tag>
-              </Option>
-              <Option value="voicemail">
-                <Tag color="purple">Voicemail</Tag>
-              </Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
             name="priority"
-            label="Priority"
-            initialValue="medium"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Priority
+              </span>
+            }
             rules={[{ required: true, message: "Please select priority" }]}
           >
             <Select
               placeholder="Select priority"
-              size="large"
               style={{ width: "100%", borderRadius: "10px", height: "48px" }}
             >
+              <Option value="highest">
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ff4d4f",
+                    }}
+                  />
+                  Highest - Urgent and Critical
+                </div>
+              </Option>
               <Option value="high">
-                <Tag color="red">High</Tag>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#faad14",
+                    }}
+                  />
+                  High - Important
+                </div>
               </Option>
               <Option value="medium">
-                <Tag color="orange">Medium</Tag>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#1890ff",
+                    }}
+                  />
+                  Medium - Normal
+                </div>
               </Option>
               <Option value="low">
-                <Tag color="green">Low</Tag>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#52c41a",
+                    }}
+                  />
+                  Low - Can Wait
+                </div>
               </Option>
             </Select>
           </Form.Item>
 
           <Form.Item
-            name="call_duration"
-            label="Call Duration"
-            rules={[
-              {
-                required: true,
-                message: "Call duration will be calculated automatically",
-              },
-            ]}
+            name="call_reminder"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Reminder
+              </span>
+            }
           >
-            <Input
-              placeholder="Duration will be calculated automatically"
+            <Select
+              placeholder="Select reminder"
               size="large"
-              style={{ borderRadius: "10px", height: "48px" }}
-              disabled
-              value={callDuration}
-            />
+              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+            >
+              <Option value="5_min">5 minutes before</Option>
+              <Option value="10_min">10 minutes before</Option>
+              <Option value="15_min">15 minutes before</Option>
+              <Option value="30_min">30 minutes before</Option>
+              <Option value="1_hour">1 hour before</Option>
+            </Select>
           </Form.Item>
         </div>
 
@@ -668,15 +661,13 @@ const CreateLog = ({
           </Form.Item>
         </div>
 
-        <Typography.Title level={5} style={{ margin: "24px 0" }}>
-          Purpose Of Call
-        </Typography.Title>
-
+        {/* Subject and Purpose */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
             gap: "16px",
+            marginTop: "20px",
           }}
         >
           <Form.Item
@@ -685,52 +676,79 @@ const CreateLog = ({
             rules={[{ required: true, message: "Please enter subject" }]}
           >
             <Input
-              placeholder="Outgoing call to contact"
+              placeholder="e.g., Product Demo Call"
               size="large"
               style={{ borderRadius: "10px", height: "48px" }}
             />
           </Form.Item>
 
-          <Form.Item
-            name="call_purpose"
-            label="Call Purpose"
-            rules={[{ required: true, message: "Please select call purpose" }]}
-          >
-            <Select
-              placeholder="Select purpose"
+          <Form.Item name="call_purpose" label="Purpose">
+            <Input
+              placeholder="Enter purpose"
               size="large"
-              listHeight={100}
-              virtual={true}
-              style={{ width: "100%", borderRadius: "10px", height: "48px" }}
-            >
-              <Option value="none">-None-</Option>
-              <Option value="prospecting">Prospecting</Option>
-              <Option value="administrative">Administrative</Option>
-              <Option value="negotiation">Negotiation</Option>
-              <Option value="demo">Demo</Option>
-              <Option value="project">Project</Option>
-              <Option value="desk">Desk</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="call_notes"
-            label="Notes"
-            rules={[{ required: true, message: "Please enter call notes" }]}
-            style={{ gridColumn: "1 / -1" }}
-          >
-            <TextArea
-              placeholder="Enter call notes"
-              rows={4}
-              style={{
-                borderRadius: "10px",
-                backgroundColor: "#f8fafc",
-                border: "1px solid #e6e8eb",
-              }}
+              style={{ borderRadius: "10px", height: "48px" }}
             />
           </Form.Item>
         </div>
 
+        {/* Call Status */}
+        <Form.Item
+          name="call_status"
+          label="Call Status"
+          initialValue="not_started"
+          rules={[{ required: true, message: "Please select call status" }]}
+          style={{ marginTop: "20px" }}
+        >
+          <Select
+            placeholder="Select call status"
+            size="large"
+            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+          >
+            <Option value="not_started">
+              <Tag color="default">Not Started</Tag>
+            </Option>
+            <Option value="in_progress">
+              <Tag color="processing">In Progress</Tag>
+            </Option>
+            <Option value="completed">
+              <Tag color="success">Completed</Tag>
+            </Option>
+            <Option value="cancelled">
+              <Tag color="error">Cancelled</Tag>
+            </Option>
+            <Option value="no_answer">
+              <Tag color="warning">No Answer</Tag>
+            </Option>
+            <Option value="busy">
+              <Tag color="orange">Busy</Tag>
+            </Option>
+            <Option value="wrong_number">
+              <Tag color="red">Wrong Number</Tag>
+            </Option>
+            <Option value="voicemail">
+              <Tag color="purple">Voicemail</Tag>
+            </Option>
+          </Select>
+        </Form.Item>
+
+        {/* Notes */}
+        <Form.Item
+          name="call_notes"
+          label="Notes"
+          style={{ marginTop: "20px" }}
+        >
+          <TextArea
+            placeholder="Enter any notes or talking points for the call"
+            rows={4}
+            style={{
+              borderRadius: "10px",
+              backgroundColor: "#f8fafc",
+              border: "1px solid #e6e8eb",
+            }}
+          />
+        </Form.Item>
+
+        {/* Action Buttons */}
         <div
           style={{
             display: "flex",
@@ -762,7 +780,7 @@ const CreateLog = ({
               background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
             }}
           >
-            Submit
+            Update Call
           </Button>
         </div>
       </Form>
@@ -770,4 +788,4 @@ const CreateLog = ({
   );
 };
 
-export default CreateLog;
+export default EditFollowupCall;

@@ -31,20 +31,13 @@ import { useGetUsersQuery } from "../../../../../user-management/users/services/
 import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
-import { useCreateFollowupCallMutation } from "./services/followupCallApi";
+import { useUpdateFollowupCallMutation } from "./services/followupCallApi";
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateLog = ({
-  open,
-  onCancel,
-  onSubmit,
-  initialDate,
-  initialTime,
-  dealId,
-}) => {
+const EditLog = ({ open, onCancel, onSubmit, callId, callData, rtiId }) => {
   const [form] = Form.useForm();
   const [repeatType, setRepeatType] = useState("none");
   const [repeatEndType, setRepeatEndType] = useState("never");
@@ -52,14 +45,15 @@ const CreateLog = ({
   const [showReminder, setShowReminder] = useState(false);
   const [showRepeat, setShowRepeat] = useState(false);
   const [callDuration, setCallDuration] = useState("");
-  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
-  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
-  const [createFollowupCall, { isLoading: followupCallResponseLoading }] =
-    useCreateFollowupCallMutation();
+  const [updateFollowupCall, { isLoading: followupCallResponseLoading }] =
+    useUpdateFollowupCallMutation();
+
 
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
+  const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
 
   // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(
@@ -104,6 +98,49 @@ const CreateLog = ({
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
   };
+
+  // Set initial form values when call data is loaded
+  useEffect(() => {
+    if (callData) {
+      // Parse assigned_to (participants)
+      let assignedTo = { assigned_to: [] };
+      if (callData.assigned_to) {
+        try {
+          assignedTo =
+            typeof callData.assigned_to === "string"
+              ? JSON.parse(callData.assigned_to)
+              : callData.assigned_to;
+        } catch (e) {
+          console.error("Error parsing assigned_to:", e);
+        }
+      }
+
+      // Set form values
+      const formValues = {
+        subject: callData.subject || "",
+        call_start_date: callData.call_start_date
+          ? dayjs(callData.call_start_date)
+          : null,
+        call_start_time: callData.call_start_time
+          ? dayjs(callData.call_start_time, "HH:mm:ss")
+          : null,
+        call_end_time: callData.call_end_time
+          ? dayjs(callData.call_end_time, "HH:mm:ss")
+          : null,
+        call_duration: callData.call_duration || "",
+        call_reminder: callData.call_reminder || null,
+        assigned_to: assignedTo.assigned_to || [],
+        call_purpose: callData.call_purpose || "",
+        call_notes: callData.call_notes || "",
+        call_type: callData.call_type || "log",
+        call_status: callData.call_status || "not_started",
+        priority: callData.priority || "medium",
+        rti_id: rtiId || callData.rti_id || null,
+      };
+
+      form.setFieldsValue(formValues);
+    }
+  }, [callData, form, rtiId]);
 
   // Watch due_date field to enable repeat option
   useEffect(() => {
@@ -170,7 +207,7 @@ const CreateLog = ({
       const formattedValues = {
         ...values,
         call_type: "log",
-
+        priority: values.priority || "medium",
         call_start_date: values.call_start_date
           ? values.call_start_date.format("YYYY-MM-DD")
           : null,
@@ -185,8 +222,8 @@ const CreateLog = ({
         },
       };
 
-      await createFollowupCall({ id: dealId, data: formattedValues });
-      message.success("Call logged successfully");
+      await updateFollowupCall({ id: callId, data: formattedValues });
+      message.success("Call updated successfully");
       form.resetFields();
       onCancel();
 
@@ -194,8 +231,8 @@ const CreateLog = ({
         onSubmit(formattedValues);
       }
     } catch (error) {
-      console.error("Error logging call:", error);
-      message.error("Failed to log call");
+      console.error("Error updating call:", error);
+      message.error("Failed to update call");
     }
   };
 
@@ -280,7 +317,7 @@ const CreateLog = ({
                 color: "#ffffff",
               }}
             >
-              Log a call
+              Edit Call Log
             </h2>
             <Text
               style={{
@@ -288,7 +325,7 @@ const CreateLog = ({
                 color: "rgba(255, 255, 255, 0.85)",
               }}
             >
-              Log your call details
+              Update call log details
             </Text>
           </div>
         </div>
@@ -762,7 +799,7 @@ const CreateLog = ({
               background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
             }}
           >
-            Submit
+            Update Call
           </Button>
         </div>
       </Form>
@@ -770,4 +807,4 @@ const CreateLog = ({
   );
 };
 
-export default CreateLog;
+export default EditLog;

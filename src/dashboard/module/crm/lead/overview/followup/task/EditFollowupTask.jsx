@@ -1,13 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Divider, Checkbox, Space, Avatar, Radio, Switch, message } from 'antd';
-import { FiX, FiCalendar, FiCheckSquare, FiUser, FiShield, FiBriefcase, FiChevronDown, FiUserPlus } from 'react-icons/fi';
-import dayjs from 'dayjs';
-import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
-import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
-import { useUpdateFollowupTaskMutation, useGetFollowupTaskByIdQuery } from './services/followupTaskApi';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  TimePicker,
+  Select,
+  Button,
+  Typography,
+  Tag,
+  Divider,
+  Checkbox,
+  Space,
+  Avatar,
+  Radio,
+  Switch,
+  message,
+} from "antd";
+import {
+  FiX,
+  FiCalendar,
+  FiCheckSquare,
+  FiUser,
+  FiShield,
+  FiBriefcase,
+  FiChevronDown,
+  FiUserPlus,
+} from "react-icons/fi";
+import dayjs from "dayjs";
+import { useGetUsersQuery } from "../../../../../user-management/users/services/userApi";
+import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
+import {
+  useUpdateFollowupTaskMutation,
+  useGetFollowupTaskByIdQuery,
+} from "./services/followupTaskApi";
+import { useParams } from "react-router-dom";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -19,51 +48,51 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
 
   const [form] = Form.useForm();
   const [updateFollowupTask] = useUpdateFollowupTaskMutation();
-  const { data: taskDataFromApi, isLoading } = useGetFollowupTaskByIdQuery(taskId);
+  const { data: taskDataFromApi, isLoading } =
+    useGetFollowupTaskByIdQuery(taskId);
 
   // Use taskData from props if available, otherwise use data from API
-  const task = taskData || (taskDataFromApi?.data?.find(t => t.id === taskId));
+  const task = taskData || taskDataFromApi?.data?.find((t) => t.id === taskId);
 
-  const [repeatType, setRepeatType] = useState('none');
-  const [repeatEndType, setRepeatEndType] = useState('never');
+  const [repeatType, setRepeatType] = useState("none");
+  const [repeatEndType, setRepeatEndType] = useState("never");
   const [repeatTimes, setRepeatTimes] = useState(1);
   const [showReminder, setShowReminder] = useState(false);
   const [showRepeat, setShowRepeat] = useState(false);
   const [customRepeatInterval, setCustomRepeatInterval] = useState(1);
   const [customRepeatDays, setCustomRepeatDays] = useState([]);
-  const [customFrequency, setCustomFrequency] = useState('weekly');
-  const [monthlyPattern, setMonthlyPattern] = useState('day');
-  const [yearlyPattern, setYearlyPattern] = useState('date');
+  const [customFrequency, setCustomFrequency] = useState("weekly");
+  const [monthlyPattern, setMonthlyPattern] = useState("day");
+  const [yearlyPattern, setYearlyPattern] = useState("date");
   const [repeatEndDate, setRepeatEndDate] = useState(null);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
-  const [teamMembersOpen , setTeamMembersOpen] = useState(false);
-
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
 
   // Add formItemStyle constant
   const formItemStyle = {
     fontSize: "14px",
     fontWeight: "500",
-    color: "#1f2937"
+    color: "#1f2937",
   };
 
   const inputStyle = {
-    height: "48px", 
+    height: "48px",
     borderRadius: "10px",
     padding: "8px 16px",
     backgroundColor: "#f8fafc",
     border: "1px solid #e6e8eb",
-    transition: "all 0.3s ease"
+    transition: "all 0.3s ease",
   };
 
   const prefixIconStyle = {
     color: "#1890ff",
     fontSize: "16px",
-    marginRight: "8px"
+    marginRight: "8px",
   };
 
   const selectStyle = {
-    width: '100%',
-    height: '48px'
+    width: "100%",
+    height: "48px",
   };
 
   const currentUser = useSelector(selectCurrentUser);
@@ -71,79 +100,82 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
 
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+  const subclientRoleId = rolesData?.data?.find(
+    (role) => role?.role_name === "sub-client"
+  )?.id;
 
   // Filter users to get team members (excluding subclients)
-  const users = usersResponse?.data?.filter(user =>
-    user?.created_by === currentUser?.username &&
-    user?.role_id !== subclientRoleId
-  ) || [];
+  const users =
+    usersResponse?.data?.filter(
+      (user) =>
+        user?.created_by === currentUser?.username &&
+        user?.role_id !== subclientRoleId
+    ) || [];
 
   // Get role colors and icons
   const getRoleColor = (role) => {
     const roleColors = {
-      'employee': {
-        color: '#D46B08',
-        bg: '#FFF7E6',
-        border: '#FFD591'
+      employee: {
+        color: "#D46B08",
+        bg: "#FFF7E6",
+        border: "#FFD591",
       },
-      'admin': {
-        color: '#096DD9',
-        bg: '#E6F7FF',
-        border: '#91D5FF'
+      admin: {
+        color: "#096DD9",
+        bg: "#E6F7FF",
+        border: "#91D5FF",
       },
-      'manager': {
-        color: '#08979C',
-        bg: '#E6FFFB',
-        border: '#87E8DE'
+      manager: {
+        color: "#08979C",
+        bg: "#E6FFFB",
+        border: "#87E8DE",
       },
-      'default': {
-        color: '#531CAD',
-        bg: '#F9F0FF',
-        border: '#D3ADF7'
-      }
+      default: {
+        color: "#531CAD",
+        bg: "#F9F0FF",
+        border: "#D3ADF7",
+      },
     };
     return roleColors[role?.toLowerCase()] || roleColors.default;
   };
 
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
-  };  
+  };
 
   // Watch due_date field to enable repeat option
   useEffect(() => {
-    const dueDate = form.getFieldValue('due_date');
+    const dueDate = form.getFieldValue("due_date");
     setShowRepeat(!!dueDate);
-  }, [form.getFieldValue('due_date')]);
+  }, [form.getFieldValue("due_date")]);
 
   // Update repeat availability when due date changes
   const handleDueDateChange = (date) => {
     setShowRepeat(!!date);
     if (!date) {
-      setRepeatType('none');
+      setRepeatType("none");
     }
   };
 
   // Handle repeat toggle when no due date is selected
   const handleRepeatToggle = (checked) => {
     if (!showRepeat && checked) {
-      message.info('Select a due date to set recurring');
+      message.info("Select a due date to set recurring");
       return;
     }
-    setRepeatType(checked ? 'daily' : 'none');
+    setRepeatType(checked ? "daily" : "none");
   };
 
   // Initialize form with task data
   useEffect(() => {
     if (task) {
-
       // Parse assigned_to
       let assignedTo = { assigned_to: [] };
       if (task.assigned_to) {
         try {
           assignedTo = JSON.parse(task.assigned_to);
         } catch (e) {
-          console.error('Error parsing assigned_to:', e);
+          console.error("Error parsing assigned_to:", e);
         }
       }
 
@@ -154,7 +186,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
           reminderData = JSON.parse(task.reminder);
           setShowReminder(true);
         } catch (e) {
-          console.error('Error parsing reminder:', e);
+          console.error("Error parsing reminder:", e);
         }
       } else {
         setShowReminder(false);
@@ -166,39 +198,43 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
         try {
           repeatData = JSON.parse(task.repeat);
           setShowRepeat(true);
-          setRepeatType(repeatData.repeat_type || 'none');
-          setRepeatEndType(repeatData.repeat_end_type || 'never');
+          setRepeatType(repeatData.repeat_type || "none");
+          setRepeatEndType(repeatData.repeat_end_type || "never");
           setRepeatTimes(repeatData.repeat_times || 1);
           setCustomRepeatInterval(repeatData.custom_repeat_interval || 1);
           setCustomRepeatDays(repeatData.custom_repeat_days || []);
-          setCustomFrequency(repeatData.custom_repeat_frequency || 'weekly');
+          setCustomFrequency(repeatData.custom_repeat_frequency || "weekly");
           if (repeatData.repeat_end_date) {
             setRepeatEndDate(dayjs(repeatData.repeat_end_date));
           }
         } catch (e) {
-          console.error('Error parsing repeat data:', e);
+          console.error("Error parsing repeat data:", e);
         }
       } else {
         setShowRepeat(false);
-        setRepeatType('none');
+        setRepeatType("none");
       }
 
       // Set form values
       const formValues = {
-        subject: task.subject || '',
+        subject: task.subject || "",
         due_date: task.due_date ? dayjs(task.due_date) : null,
-        priority: task.priority || '',
-        task_reporter: task.task_reporter || '',
+        priority: task.priority || "",
+        task_reporter: task.task_reporter || "",
         assigned_to: assignedTo.assigned_to || [],
-        status: task.status || '',
-        description: task.description || '',
+        status: task.status || "",
+        description: task.description || "",
         created_by: task.created_by || currentUser?.username,
       };
 
       // Add reminder values if exists
       if (reminderData) {
-        formValues.reminder_date = reminderData.reminder_date ? dayjs(reminderData.reminder_date) : null;
-        formValues.reminder_time = reminderData.reminder_time ? dayjs(reminderData.reminder_time, 'HH:mm:ss') : null;
+        formValues.reminder_date = reminderData.reminder_date
+          ? dayjs(reminderData.reminder_date)
+          : null;
+        formValues.reminder_time = reminderData.reminder_time
+          ? dayjs(reminderData.reminder_time, "HH:mm:ss")
+          : null;
       }
 
       // Add repeat values if exists
@@ -207,60 +243,74 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
       }
       form.setFieldsValue(formValues);
     } else {
-      console.error('No task data available');
-      message.error('Failed to load task data');
+      console.error("No task data available");
+      message.error("Failed to load task data");
     }
   }, [task, form, currentUser]);
 
   const handleSubmit = async (values) => {
     try {
       // Prepare reminder data
-      const reminderData = showReminder ? {
-        reminder_date: values.reminder_date?.format('YYYY-MM-DD'),
-        reminder_time: values.reminder_time?.format('HH:mm:ss'),
-      } : null;
+      const reminderData = showReminder
+        ? {
+            reminder_date: values.reminder_date?.format("YYYY-MM-DD"),
+            reminder_time: values.reminder_time?.format("HH:mm:ss"),
+          }
+        : null;
 
       // Prepare repeat data
-      const repeatData = showRepeat && repeatType !== 'none' ? {
-        repeat_type: repeatType,
-        repeat_end_type: repeatEndType,
-        repeat_times: repeatTimes,
-        repeat_end_date: repeatEndType === 'on' ? repeatEndDate?.format('YYYY-MM-DD') : null,
-        custom_repeat_interval: customRepeatInterval,
-        custom_repeat_days: customRepeatDays,
-        custom_repeat_frequency: customFrequency,
-      } : null;
+      const repeatData =
+        showRepeat && repeatType !== "none"
+          ? {
+              repeat_type: repeatType,
+              repeat_end_type: repeatEndType,
+              repeat_times: repeatTimes,
+              repeat_end_date:
+                repeatEndType === "on"
+                  ? repeatEndDate?.format("YYYY-MM-DD")
+                  : null,
+              custom_repeat_interval: customRepeatInterval,
+              custom_repeat_days: customRepeatDays,
+              custom_repeat_frequency: customFrequency,
+            }
+          : null;
 
       // Format the update payload
       const updateData = {
         subject: values.subject,
-        due_date: values.due_date?.format('YYYY-MM-DD'),
+        section: "lead",
+        due_date: values.due_date?.format("YYYY-MM-DD"),
         priority: values.priority,
         task_reporter: values.task_reporter,
         assigned_to: {
-          assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to]
+          assigned_to: Array.isArray(values.assigned_to)
+            ? values.assigned_to
+            : [values.assigned_to],
         },
         status: values.status,
         description: values.description,
         reminder: reminderData,
         repeat: repeatData,
         client_id: taskData?.data?.client_id,
-        updated_by: currentUser?.username
+        updated_by: currentUser?.username,
       };
 
       const data = updateData;
 
       // Make the update API call
-      const result = await updateFollowupTask({ id: taskId, data: updateData }).unwrap();
+      const result = await updateFollowupTask({
+        id: taskId,
+        data: updateData,
+      }).unwrap();
 
       if (result.success) {
-        message.success('Task updated successfully');
+        message.success("Task updated successfully");
         onCancel();
         if (onSubmit) onSubmit();
       }
     } catch (error) {
-      console.error('Error updating task:', error);
-      message.error(error?.data?.message || 'Failed to update task');
+      console.error("Error updating task:", error);
+      message.error(error?.data?.message || "Failed to update task");
     }
   };
 
@@ -322,31 +372,37 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
           <FiX style={{ fontSize: "20px" }} />
         </Button>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{
-            width: "48px",
-            height: "48px",
-            borderRadius: "12px",
-            background: "rgba(255, 255, 255, 0.2)",
-            backdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <FiCheckSquare style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
           <div>
-            <h2 style={{
-              margin: "0",
-              fontSize: "24px",
-              fontWeight: "600",
-              color: "#ffffff",
-            }}>
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#ffffff",
+              }}
+            >
               Edit Task
             </h2>
-            <Text style={{
-              fontSize: "14px",
-              color: "rgba(255, 255, 255, 0.85)",
-            }}>
+            <Text
+              style={{
+                fontSize: "14px",
+                color: "rgba(255, 255, 255, 0.85)",
+              }}
+            >
               Update task details
             </Text>
           </div>
@@ -359,17 +415,30 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
         onFinish={handleSubmit}
         style={{ padding: "24px" }}
       >
-        <div style={{ marginBottom: '24px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Task Details</Text>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ marginBottom: "24px" }}>
+          <Text
+            strong
+            style={{
+              fontSize: "16px",
+              color: "#1f2937",
+              display: "block",
+              marginBottom: "16px",
+            }}
+          >
+            Task Details
+          </Text>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "16px",
+            }}
+          >
             <Form.Item
               name="subject"
               label={<span style={formItemStyle}>Subject</span>}
             >
-              <Input
-                placeholder="Enter subject"
-                style={inputStyle}
-              />
+              <Input placeholder="Enter subject" style={inputStyle} />
             </Form.Item>
 
             <Form.Item
@@ -380,7 +449,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                 format="DD-MM-YYYY"
                 style={{
                   ...inputStyle,
-                  width: '100%'
+                  width: "100%",
                 }}
                 suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 onChange={handleDueDateChange}
@@ -397,59 +466,122 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                 suffixIcon={<FiChevronDown size={14} />}
               >
                 <Option value="highest">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ff4d4f",
+                      }}
+                    />
                     Highest - Urgent and Critical
                   </div>
                 </Option>
                 <Option value="high">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#faad14",
+                      }}
+                    />
                     High - Important
                   </div>
                 </Option>
                 <Option value="medium">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#1890ff",
+                      }}
+                    />
                     Medium - Normal
                   </div>
                 </Option>
                 <Option value="low">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#52c41a",
+                      }}
+                    />
                     Low - Can Wait
                   </div>
                 </Option>
               </Select>
             </Form.Item>
-
           </div>
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Assignment</Text>
+        <div style={{ marginBottom: "24px" }}>
+          <Text
+            strong
+            style={{
+              fontSize: "16px",
+              color: "#1f2937",
+              display: "block",
+              marginBottom: "16px",
+            }}
+          >
+            Assignment
+          </Text>
           <Form.Item
             name="assigned_to"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Assign To
-            </span>}
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Assign To
+              </span>
+            }
           >
-           <Select
+            <Select
               mode="multiple"
               placeholder="Select team members"
               style={{
-                width: '100%',
-                height: 'auto',
-                minHeight: '48px'
+                width: "100%",
+                height: "auto",
+                minHeight: "48px",
               }}
               listHeight={200}
               maxTagCount={2}
               maxTagTextLength={15}
               dropdownStyle={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
+                maxHeight: "300px",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollBehavior: "smooth",
               }}
               popupClassName="team-members-dropdown"
               showSearch
@@ -460,63 +592,76 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
               dropdownRender={(menu) => (
                 <>
                   {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    padding: '0 8px',
-                    justifyContent: 'flex-end'
-                  }}>
+                  <Divider style={{ margin: "8px 0" }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      padding: "0 8px",
+                      justifyContent: "flex-end",
+                    }}
+                  >
                     <Button
                       type="text"
-                      icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                      icon={
+                        <FiUserPlus
+                          style={{ fontSize: "16px", color: "#ffffff" }}
+                        />
+                      }
                       onClick={handleCreateUser}
                       style={{
-                        height: '36px',
-                        padding: '8px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px'
+                        height: "36px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background:
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
                       }}
                     >
                       Add New User
                     </Button>
                     <Button
                       type="text"
-                      icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                      icon={
+                        <FiShield
+                          style={{ fontSize: "16px", color: "#1890ff" }}
+                        />
+                      }
                       onClick={(e) => {
                         e.stopPropagation();
                         setTeamMembersOpen(false);
                       }}
                       style={{
-                        height: '36px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        background: '#ffffff',
-                        border: '1px solid #1890ff',
-                        color: '#1890ff',
-                        fontWeight: '500'
+                        height: "36px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        background: "#ffffff",
+                        border: "1px solid #1890ff",
+                        color: "#1890ff",
+                        fontWeight: "500",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#e6f4ff';
-                        e.currentTarget.style.borderColor = '#69b1ff';
+                        e.currentTarget.style.background = "#e6f4ff";
+                        e.currentTarget.style.borderColor = "#69b1ff";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#ffffff';
-                        e.currentTarget.style.borderColor = '#1890ff';
+                        e.currentTarget.style.background = "#ffffff";
+                        e.currentTarget.style.borderColor = "#1890ff";
                       }}
                     >
                       Done
@@ -525,99 +670,124 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                 </>
               )}
             >
-              {Array.isArray(users) && users.map(user => {
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleColor(userRole?.role_name);
+              {Array.isArray(users) &&
+                users.map((user) => {
+                  const userRole = rolesData?.data?.find(
+                    (role) => role.id === user.role_id
+                  );
+                  const roleStyle = getRoleColor(userRole?.role_name);
 
-                return (
-                  <Option key={user.id} value={user.id}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '4px 0'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: '#e6f4ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#1890ff',
-                        fontSize: '16px',
-                        fontWeight: '500',
-                        textTransform: 'uppercase'
-                      }}>
-                        {user.profilePic ? (
-                          <img
-                            src={user.profilePic}
-                            alt={user.username}
+                  return (
+                    <Option key={user.id} value={user.id}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          padding: "4px 0",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            background: "#e6f4ff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#1890ff",
+                            fontSize: "16px",
+                            fontWeight: "500",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {user.profilePic ? (
+                            <img
+                              src={user.profilePic}
+                              alt={user.username}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            user.username?.charAt(0) || <FiUser />
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            gap: "4px",
+                          }}
+                        >
+                          <span
                             style={{
-                              width: '100%',
-                              height: '100%',
-                              borderRadius: '50%',
-                              objectFit: 'cover'
+                              fontWeight: 500,
+                              color: "rgba(0, 0, 0, 0.85)",
+                              fontSize: "14px",
+                            }}
+                          >
+                            {user.username}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            marginLeft: "auto",
+                          }}
+                        >
+                          <div
+                            className="role-indicator"
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: roleStyle.color,
+                              boxShadow: `0 0 8px ${roleStyle.color}`,
+                              animation: "pulse 2s infinite",
                             }}
                           />
-                        ) : (
-                          user.username?.charAt(0) || <FiUser />
-                        )}
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              background: roleStyle.bg,
+                              color: roleStyle.color,
+                              border: `1px solid ${roleStyle.border}`,
+                              fontWeight: 500,
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {userRole?.role_name || "User"}
+                          </span>
+                        </div>
                       </div>
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '4px'
-                      }}>
-                        <span style={{
-                          fontWeight: 500,
-                          color: 'rgba(0, 0, 0, 0.85)',
-                          fontSize: '14px'
-                        }}>
-                          {user.username}
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginLeft: 'auto'
-                      }}>
-                        <div
-                          className="role-indicator"
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: roleStyle.color,
-                            boxShadow: `0 0 8px ${roleStyle.color}`,
-                            animation: 'pulse 2s infinite'
-                          }}
-                        />
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          background: roleStyle.bg,
-                          color: roleStyle.color,
-                          border: `1px solid ${roleStyle.border}`,
-                          fontWeight: 500,
-                          textTransform: 'capitalize'
-                        }}>
-                          {userRole?.role_name || 'User'}
-                        </span>
-                      </div>
-                    </div>
-                  </Option>
-                );
-              })}
+                    </Option>
+                  );
+                })}
             </Select>
           </Form.Item>
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Task Status</Text>
+        <div style={{ marginBottom: "24px" }}>
+          <Text
+            strong
+            style={{
+              fontSize: "16px",
+              color: "#1f2937",
+              display: "block",
+              marginBottom: "16px",
+            }}
+          >
+            Task Status
+          </Text>
           <Form.Item
             name="status"
             label={<span style={formItemStyle}>Status</span>}
@@ -628,32 +798,77 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
               suffixIcon={<FiChevronDown size={14} />}
             >
               <Option value="not_started">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#d9d9d9' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#d9d9d9",
+                    }}
+                  />
                   Not Started
                 </div>
               </Option>
               <Option value="in_progress">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#1890ff",
+                    }}
+                  />
                   In Progress
                 </div>
               </Option>
               <Option value="completed">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#52c41a",
+                    }}
+                  />
                   Completed
                 </div>
               </Option>
               <Option value="on_hold">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#faad14",
+                    }}
+                  />
                   On Hold
                 </div>
               </Option>
               <Option value="cancelled">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ff4d4f",
+                    }}
+                  />
                   Cancelled
                 </div>
               </Option>
@@ -661,14 +876,29 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
           </Form.Item>
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Reminder</Text>
+        <div style={{ marginBottom: "24px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "16px",
+            }}
+          >
+            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+              Reminder
+            </Text>
             <Switch checked={showReminder} onChange={setShowReminder} />
           </div>
 
           {showReminder && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "16px",
+              }}
+            >
               <Form.Item
                 name="reminder_date"
                 label={<span style={formItemStyle}>Reminder Date</span>}
@@ -677,7 +907,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                   format="DD/MM/YYYY"
                   style={{
                     ...inputStyle,
-                    width: '100%'
+                    width: "100%",
                   }}
                   suffixIcon={<FiCalendar style={{ color: "#4096ff" }} />}
                 />
@@ -691,7 +921,7 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                   format="hh:mm A"
                   style={{
                     ...inputStyle,
-                    width: '100%'
+                    width: "100%",
                   }}
                   use12Hours
                 />
@@ -700,16 +930,25 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
           )}
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Repeat</Text>
-            <Switch 
-              checked={repeatType !== 'none'} 
+        <div style={{ marginBottom: "24px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "16px",
+            }}
+          >
+            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+              Repeat
+            </Text>
+            <Switch
+              checked={repeatType !== "none"}
               onChange={handleRepeatToggle}
             />
           </div>
 
-          {repeatType !== 'none' && (
+          {repeatType !== "none" && (
             <div>
               <Form.Item
                 name="repeat"
@@ -730,20 +969,22 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                 </Select>
               </Form.Item>
 
-              {repeatType === 'custom' && (
-                <div style={{ 
-                  marginTop: '16px', 
-                  padding: '16px', 
-                  border: '1px solid #f0f0f0', 
-                  borderRadius: '8px',
-                  backgroundColor: '#f8fafc'
-                }}>
+              {repeatType === "custom" && (
+                <div
+                  style={{
+                    marginTop: "16px",
+                    padding: "16px",
+                    border: "1px solid #f0f0f0",
+                    borderRadius: "8px",
+                    backgroundColor: "#f8fafc",
+                  }}
+                >
                   <Form.Item
                     name="repeat_frequency"
                     label={<span style={formItemStyle}>Frequency</span>}
                   >
-                    <Select 
-                      defaultValue="weekly" 
+                    <Select
+                      defaultValue="weekly"
                       style={selectStyle}
                       onChange={(value) => setCustomFrequency(value)}
                       suffixIcon={<FiChevronDown size={14} />}
@@ -754,69 +995,96 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                     </Select>
                   </Form.Item>
 
-                  <Form.Item label={<span style={formItemStyle}>Repeat Every</span>}>
+                  <Form.Item
+                    label={<span style={formItemStyle}>Repeat Every</span>}
+                  >
                     <Input.Group compact>
-                      <Input 
-                        type="number" 
-                        min={1} 
+                      <Input
+                        type="number"
+                        min={1}
                         value={customRepeatInterval}
-                        onChange={(e) => setCustomRepeatInterval(e.target.value)}
-                        style={{ 
-                          width: '20%', 
+                        onChange={(e) =>
+                          setCustomRepeatInterval(e.target.value)
+                        }
+                        style={{
+                          width: "20%",
                           ...inputStyle,
                           borderTopRightRadius: 0,
-                          borderBottomRightRadius: 0
+                          borderBottomRightRadius: 0,
                         }}
                       />
-                      <div style={{ 
-                        lineHeight: '48px', 
-                        padding: '0 16px', 
-                        backgroundColor: '#f3f4f6',
-                        border: '1px solid #e6e8eb',
-                        borderLeft: 'none',
-                        borderTopRightRadius: '10px',
-                        borderBottomRightRadius: '10px'
-                      }}>
-                        {customFrequency === 'weekly' ? 'weeks' : customFrequency === 'monthly' ? 'months' : 'years'}
+                      <div
+                        style={{
+                          lineHeight: "48px",
+                          padding: "0 16px",
+                          backgroundColor: "#f3f4f6",
+                          border: "1px solid #e6e8eb",
+                          borderLeft: "none",
+                          borderTopRightRadius: "10px",
+                          borderBottomRightRadius: "10px",
+                        }}
+                      >
+                        {customFrequency === "weekly"
+                          ? "weeks"
+                          : customFrequency === "monthly"
+                          ? "months"
+                          : "years"}
                       </div>
                     </Input.Group>
                   </Form.Item>
 
-                  {customFrequency === 'weekly' && (
-                    <Form.Item label={<span style={formItemStyle}>On These Days</span>}>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                          <Button
-                            key={day}
-                            type={customRepeatDays.includes(index) ? 'primary' : 'default'}
-                            shape="circle"
-                            onClick={() => {
-                              const newDays = customRepeatDays.includes(index)
-                                ? customRepeatDays.filter(d => d !== index)
-                                : [...customRepeatDays, index];
-                              setCustomRepeatDays(newDays);
-                            }}
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              padding: 0,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              ...(customRepeatDays.includes(index) ? {
-                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                border: 'none'
-                              } : {})
-                            }}
-                          >
-                            {day}
-                          </Button>
-                        ))}
+                  {customFrequency === "weekly" && (
+                    <Form.Item
+                      label={<span style={formItemStyle}>On These Days</span>}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {["S", "M", "T", "W", "T", "F", "S"].map(
+                          (day, index) => (
+                            <Button
+                              key={day}
+                              type={
+                                customRepeatDays.includes(index)
+                                  ? "primary"
+                                  : "default"
+                              }
+                              shape="circle"
+                              onClick={() => {
+                                const newDays = customRepeatDays.includes(index)
+                                  ? customRepeatDays.filter((d) => d !== index)
+                                  : [...customRepeatDays, index];
+                                setCustomRepeatDays(newDays);
+                              }}
+                              style={{
+                                width: "40px",
+                                height: "40px",
+                                padding: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                ...(customRepeatDays.includes(index)
+                                  ? {
+                                      background:
+                                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                                      border: "none",
+                                    }
+                                  : {}),
+                              }}
+                            >
+                              {day}
+                            </Button>
+                          )
+                        )}
                       </div>
                     </Form.Item>
                   )}
 
-                  {customFrequency === 'monthly' && (
+                  {customFrequency === "monthly" && (
                     <Form.Item label={<span style={formItemStyle}>On</span>}>
                       <Space>
                         <Select style={{ width: 120 }} defaultValue="first">
@@ -839,14 +1107,17 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                     </Form.Item>
                   )}
 
-                  {customFrequency === 'yearly' && (
+                  {customFrequency === "yearly" && (
                     <Form.Item label={<span style={formItemStyle}>On</span>}>
                       <Space direction="vertical">
                         <Space>
                           <Select style={{ width: 120 }} defaultValue="1">
                             {Array.from({ length: 12 }, (_, i) => (
                               <Option key={i + 1} value={i + 1}>
-                                {new Date(2024, i, 1).toLocaleString('default', { month: 'long' })}
+                                {new Date(2024, i, 1).toLocaleString(
+                                  "default",
+                                  { month: "long" }
+                                )}
                               </Option>
                             ))}
                           </Select>
@@ -873,52 +1144,54 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
                 </div>
               )}
 
-              <div style={{
-                border: '1px solid #f0f0f0',
-                borderRadius: '8px',
-                padding: '16px',
-                marginTop: '16px',
-                backgroundColor: '#f8fafc'
-              }}>
+              <div
+                style={{
+                  border: "1px solid #f0f0f0",
+                  borderRadius: "8px",
+                  padding: "16px",
+                  marginTop: "16px",
+                  backgroundColor: "#f8fafc",
+                }}
+              >
                 <Form.Item
                   label={<span style={formItemStyle}>Ends</span>}
-                  style={{ marginBottom: '16px' }}
+                  style={{ marginBottom: "16px" }}
                 >
-                  <Radio.Group 
+                  <Radio.Group
                     value={repeatEndType}
                     onChange={(e) => setRepeatEndType(e.target.value)}
                   >
-                    <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space direction="vertical" style={{ width: "100%" }}>
                       <Radio value="never">Never</Radio>
                       <Radio value="after">
                         <Space align="center">
-                          After{' '}
+                          After{" "}
                           <Input
                             type="number"
                             min={1}
                             value={repeatTimes}
                             onChange={(e) => setRepeatTimes(e.target.value)}
-                            style={{ 
-                              width: '60px',
+                            style={{
+                              width: "60px",
                               ...inputStyle,
-                              height: '32px'
+                              height: "32px",
                             }}
-                            disabled={repeatEndType !== 'after'}
-                          />
-                          {' '}Times
+                            disabled={repeatEndType !== "after"}
+                          />{" "}
+                          Times
                         </Space>
                       </Radio>
                       <Radio value="on">
                         <Space align="center">
-                          On{' '}
+                          On{" "}
                           <DatePicker
                             value={repeatEndDate}
                             onChange={(date) => setRepeatEndDate(date)}
-                            disabled={repeatEndType !== 'on'}
+                            disabled={repeatEndType !== "on"}
                             format="DD/MM/YYYY"
                             style={{
                               ...inputStyle,
-                              height: '32px'
+                              height: "32px",
                             }}
                           />
                         </Space>
@@ -941,11 +1214,18 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
             style={{
               borderRadius: "10px",
               backgroundColor: "#f8fafc",
-              border: "1px solid #e6e8eb"
+              border: "1px solid #e6e8eb",
             }}
           />
         </Form.Item>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "24px",
+          }}
+        >
           <Button onClick={onCancel}>Cancel</Button>
           <Button type="primary" htmlType="submit">
             Update Task
@@ -956,4 +1236,4 @@ const EditFollowupTask = ({ open, onCancel, taskId, taskData, onSubmit }) => {
   );
 };
 
-export default EditFollowupTask; 
+export default EditFollowupTask;

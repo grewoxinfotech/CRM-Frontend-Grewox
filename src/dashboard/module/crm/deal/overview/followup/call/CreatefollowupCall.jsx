@@ -1,60 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, DatePicker, TimePicker, Select, Button, Typography, Tag, Divider, Checkbox, Space, Avatar, Radio, Switch, message } from 'antd';
-import { FiX, FiCalendar, FiPhone, FiUser, FiShield, FiBriefcase, FiChevronDown, FiUserPlus } from 'react-icons/fi';
-import dayjs from 'dayjs';
-import { useGetUsersQuery } from '../../../../../user-management/users/services/userApi';
-import { useGetRolesQuery } from '../../../../../hrm/role/services/roleApi';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../../../../auth/services/authSlice';
-import { useCreateFollowupCallMutation } from './services/followupCallApi';
+import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  Form,
+  Input,
+  DatePicker,
+  TimePicker,
+  Select,
+  Button,
+  Typography,
+  Tag,
+  Divider,
+  Checkbox,
+  Space,
+  Avatar,
+  Radio,
+  Switch,
+  message,
+} from "antd";
+import {
+  FiX,
+  FiCalendar,
+  FiPhone,
+  FiUser,
+  FiShield,
+  FiBriefcase,
+  FiChevronDown,
+  FiUserPlus,
+} from "react-icons/fi";
+import dayjs from "dayjs";
+import { useGetUsersQuery } from "../../../../../user-management/users/services/userApi";
+import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
+import { useCreateFollowupCallMutation } from "./services/followupCallApi";
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime, dealId }) => {
+const CreateFollowupCall = ({
+  open,
+  onCancel,
+  onSubmit,
+  initialDate,
+  initialTime,
+  dealId,
+}) => {
   const [form] = Form.useForm();
   const [selectedCallType, setSelectedCallType] = useState(null);
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
-  const [teamMembersOpen , setTeamMembersOpen] = useState(false);
+  const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
- 
 
-  const [createFollowupCall, { isLoading: followupCallResponseLoading }] = useCreateFollowupCallMutation();
+  const [createFollowupCall, { isLoading: followupCallResponseLoading }] =
+    useCreateFollowupCallMutation();
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+  const subclientRoleId = rolesData?.data?.find(
+    (role) => role?.role_name === "sub-client"
+  )?.id;
 
   // Filter users to get team members (excluding subclients)
-  const users = usersResponse?.data?.filter(user =>
-    user?.created_by === currentUser?.username &&
-    user?.role_id !== subclientRoleId
-  ) || [];
+  const users =
+    usersResponse?.data?.filter(
+      (user) =>
+        user?.created_by === currentUser?.username &&
+        user?.role_id !== subclientRoleId
+    ) || [];
 
   // Get role colors and icons
   const getRoleColor = (role) => {
     const roleColors = {
-      'employee': {
-        color: '#D46B08',
-        bg: '#FFF7E6',
-        border: '#FFD591'
+      employee: {
+        color: "#D46B08",
+        bg: "#FFF7E6",
+        border: "#FFD591",
       },
-      'admin': {
-        color: '#096DD9',
-        bg: '#E6F7FF',
-        border: '#91D5FF'
+      admin: {
+        color: "#096DD9",
+        bg: "#E6F7FF",
+        border: "#91D5FF",
       },
-      'manager': {
-        color: '#08979C',
-        bg: '#E6FFFB',
-        border: '#87E8DE'
+      manager: {
+        color: "#08979C",
+        bg: "#E6FFFB",
+        border: "#87E8DE",
       },
-      'default': {
-        color: '#531CAD',
-        bg: '#F9F0FF',
-        border: '#D3ADF7'
-      }
+      default: {
+        color: "#531CAD",
+        bg: "#F9F0FF",
+        border: "#D3ADF7",
+      },
     };
     return roleColors[role?.toLowerCase()] || roleColors.default;
   };
@@ -63,26 +100,31 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
     setIsCreateUserVisible(true);
   };
 
-
-
   const handleSubmit = async (values) => {
-    const assignedToArray = Array.isArray(values.assigned_to) ? values.assigned_to : [values.assigned_to].filter(Boolean);
+    const assignedToArray = Array.isArray(values.assigned_to)
+      ? values.assigned_to
+      : [values.assigned_to].filter(Boolean);
 
     try {
       const formattedValues = {
         ...values,
         assigned_to: {
-          assigned_to: assignedToArray
+          assigned_to: assignedToArray,
         },
-        call_type: 'scheduled',
-        call_start_date: values.call_start_date ? values.call_start_date.format('YYYY-MM-DD') : null,
-        call_start_time: values.call_start_time ? values.call_start_time.format('HH:mm:ss') : null,
+        call_type: "scheduled",
+        section: "deal",
+        call_start_date: values.call_start_date
+          ? values.call_start_date.format("YYYY-MM-DD")
+          : null,
+        call_start_time: values.call_start_time
+          ? values.call_start_time.format("HH:mm:ss")
+          : null,
+        call_status: "in_progress",
       };
 
-
-      await createFollowupCall({id: dealId, data: formattedValues});
+      await createFollowupCall({ id: dealId, data: formattedValues });
       // console.log('Call Data:', formattedValues);
-      message.success('Call scheduled successfully');
+      message.success("Call scheduled successfully");
       form.resetFields();
       onCancel();
 
@@ -90,8 +132,8 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
         onSubmit(formattedValues);
       }
     } catch (error) {
-      console.error('Error scheduling call:', error);
-      message.error('Failed to schedule call');
+      console.error("Error scheduling call:", error);
+      message.error("Failed to schedule call");
     }
   };
 
@@ -153,31 +195,37 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
           <FiX style={{ fontSize: "20px" }} />
         </Button>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{
-            width: "48px",
-            height: "48px",
-            borderRadius: "12px",
-            background: "rgba(255, 255, 255, 0.2)",
-            backdropFilter: "blur(8px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             <FiPhone style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
           <div>
-            <h2 style={{
-              margin: "0",
-              fontSize: "24px",
-              fontWeight: "600",
-              color: "#ffffff",
-            }}>
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#ffffff",
+              }}
+            >
               Schedule Call
             </h2>
-            <Text style={{
-              fontSize: "14px",
-              color: "rgba(255, 255, 255, 0.85)",
-            }}>
+            <Text
+              style={{
+                fontSize: "14px",
+                color: "rgba(255, 255, 255, 0.85)",
+              }}
+            >
               Add a new call to your deal
             </Text>
           </div>
@@ -198,7 +246,13 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
         {/* <Typography.Title level={5} style={{ marginBottom: '24px' }}>Schedule Call</Typography.Title> */}
 
         {/* Basic Call Information */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+          }}
+        >
           {/* <Form.Item
             name="call_for"
             label="Call For"
@@ -213,19 +267,16 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
               <Option value="lead">Lead</Option>
             </Select>
           </Form.Item> */}
-
-        
         </div>
 
         {/* Assignment Section */}
-      
 
         {/* Schedule Information */}
         <div style={{ display: "flex", gap: "16px", marginTop: "20px" }}>
           <Form.Item
             name="call_start_date"
             label="Call Date"
-            rules={[{ required: true, message: 'Please select date' }]}
+            rules={[{ required: true, message: "Please select date" }]}
             style={{ flex: 1 }}
           >
             <DatePicker
@@ -234,11 +285,11 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
               style={{ width: "100%", borderRadius: "10px", height: "48px" }}
             />
           </Form.Item>
-          
+
           <Form.Item
             name="call_start_time"
             label="Call Time"
-            rules={[{ required: true, message: 'Please select time' }]}
+            rules={[{ required: true, message: "Please select time" }]}
             style={{ flex: 1 }}
           >
             <TimePicker
@@ -251,7 +302,14 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
         </div>
 
         {/* Duration and Reminder */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+            marginTop: "20px",
+          }}
+        >
           {/* <Form.Item
             name="call_duration"
             label="Duration"
@@ -268,7 +326,7 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
               <Option value="60">1 hour</Option>
             </Select>
           </Form.Item> */}
-            {/* <Form.Item
+          {/* <Form.Item
             name="created_by"
             label="Call Owner"
             rules={[{ required: true, message: 'Please select creator' }]}
@@ -286,7 +344,11 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
 
           <Form.Item
             name="priority"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority</span>}
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Priority
+              </span>
+            }
             rules={[{ required: true, message: "Please select priority" }]}
           >
             <Select
@@ -294,26 +356,62 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
               style={{ width: "100%", borderRadius: "10px", height: "48px" }}
             >
               <Option value="highest">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ff4d4f' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ff4d4f",
+                    }}
+                  />
                   Highest - Urgent and Critical
                 </div>
               </Option>
               <Option value="high">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#faad14' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#faad14",
+                    }}
+                  />
                   High - Important
                 </div>
               </Option>
               <Option value="medium">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#1890ff' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#1890ff",
+                    }}
+                  />
                   Medium - Normal
                 </div>
               </Option>
               <Option value="low">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#52c41a' }} />
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#52c41a",
+                    }}
+                  />
                   Low - Can Wait
                 </div>
               </Option>
@@ -322,8 +420,12 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
 
           <Form.Item
             name="call_reminder"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Reminder</span>}
-            rules={[{ required: true, message: 'Please select reminder' }]}
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Reminder
+              </span>
+            }
+            rules={[{ required: true, message: "Please select reminder" }]}
           >
             <Select
               placeholder="Select reminder"
@@ -337,30 +439,42 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
             </Select>
           </Form.Item>
         </div>
-        <div style={{ marginBottom: '24px' }}>
-          <Text strong style={{ fontSize: '16px', color: '#1f2937', display: 'block', marginBottom: '16px' }}>Assignment</Text>
+        <div style={{ marginBottom: "24px" }}>
+          <Text
+            strong
+            style={{
+              fontSize: "16px",
+              color: "#1f2937",
+              display: "block",
+              marginBottom: "16px",
+            }}
+          >
+            Assignment
+          </Text>
           <Form.Item
             name="assigned_to"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Assign To
-            </span>}
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Assign To
+              </span>
+            }
           >
             <Select
               mode="multiple"
               placeholder="Select team members"
               style={{
-                width: '100%',
-                height: 'auto',
-                minHeight: '48px'
+                width: "100%",
+                height: "auto",
+                minHeight: "48px",
               }}
               listHeight={200}
               maxTagCount={2}
               maxTagTextLength={15}
               dropdownStyle={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
+                maxHeight: "300px",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollBehavior: "smooth",
               }}
               popupClassName="team-members-dropdown"
               showSearch
@@ -371,63 +485,76 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
               dropdownRender={(menu) => (
                 <>
                   {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    padding: '0 8px',
-                    justifyContent: 'flex-end'
-                  }}>
+                  <Divider style={{ margin: "8px 0" }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      padding: "0 8px",
+                      justifyContent: "flex-end",
+                    }}
+                  >
                     <Button
                       type="text"
-                      icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                      icon={
+                        <FiUserPlus
+                          style={{ fontSize: "16px", color: "#ffffff" }}
+                        />
+                      }
                       onClick={handleCreateUser}
                       style={{
-                        height: '36px',
-                        padding: '8px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px'
+                        height: "36px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background:
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
                       }}
                     >
                       Add New User
                     </Button>
                     <Button
                       type="text"
-                      icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                      icon={
+                        <FiShield
+                          style={{ fontSize: "16px", color: "#1890ff" }}
+                        />
+                      }
                       onClick={(e) => {
                         e.stopPropagation();
                         setTeamMembersOpen(false);
                       }}
                       style={{
-                        height: '36px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        background: '#ffffff',
-                        border: '1px solid #1890ff',
-                        color: '#1890ff',
-                        fontWeight: '500'
+                        height: "36px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        background: "#ffffff",
+                        border: "1px solid #1890ff",
+                        color: "#1890ff",
+                        fontWeight: "500",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#e6f4ff';
-                        e.currentTarget.style.borderColor = '#69b1ff';
+                        e.currentTarget.style.background = "#e6f4ff";
+                        e.currentTarget.style.borderColor = "#69b1ff";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#ffffff';
-                        e.currentTarget.style.borderColor = '#1890ff';
+                        e.currentTarget.style.background = "#ffffff";
+                        e.currentTarget.style.borderColor = "#1890ff";
                       }}
                     >
                       Done
@@ -436,102 +563,124 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
                 </>
               )}
             >
-              {Array.isArray(users) && users.map(user => {
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleColor(userRole?.role_name);
+              {Array.isArray(users) &&
+                users.map((user) => {
+                  const userRole = rolesData?.data?.find(
+                    (role) => role.id === user.role_id
+                  );
+                  const roleStyle = getRoleColor(userRole?.role_name);
 
-                return (
-                  <Option key={user.id} value={user.id}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '4px 0'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: '#e6f4ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#1890ff',
-                        fontSize: '16px',
-                        fontWeight: '500',
-                        textTransform: 'uppercase'
-                      }}>
-                        {user.profilePic ? (
-                          <img
-                            src={user.profilePic}
-                            alt={user.username}
+                  return (
+                    <Option key={user.id} value={user.id}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "12px",
+                          padding: "4px 0",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "50%",
+                            background: "#e6f4ff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#1890ff",
+                            fontSize: "16px",
+                            fontWeight: "500",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {user.profilePic ? (
+                            <img
+                              src={user.profilePic}
+                              alt={user.username}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            user.username?.charAt(0) || <FiUser />
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            gap: "4px",
+                          }}
+                        >
+                          <span
                             style={{
-                              width: '100%',
-                              height: '100%',
-                              borderRadius: '50%',
-                              objectFit: 'cover'
+                              fontWeight: 500,
+                              color: "rgba(0, 0, 0, 0.85)",
+                              fontSize: "14px",
+                            }}
+                          >
+                            {user.username}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            marginLeft: "auto",
+                          }}
+                        >
+                          <div
+                            className="role-indicator"
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: roleStyle.color,
+                              boxShadow: `0 0 8px ${roleStyle.color}`,
+                              animation: "pulse 2s infinite",
                             }}
                           />
-                        ) : (
-                          user.username?.charAt(0) || <FiUser />
-                        )}
+                          <span
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: "4px",
+                              fontSize: "12px",
+                              background: roleStyle.bg,
+                              color: roleStyle.color,
+                              border: `1px solid ${roleStyle.border}`,
+                              fontWeight: 500,
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {userRole?.role_name || "User"}
+                          </span>
+                        </div>
                       </div>
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '4px'
-                      }}>
-                        <span style={{
-                          fontWeight: 500,
-                          color: 'rgba(0, 0, 0, 0.85)',
-                          fontSize: '14px'
-                        }}>
-                          {user.username}
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginLeft: 'auto'
-                      }}>
-                        <div
-                          className="role-indicator"
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: roleStyle.color,
-                            boxShadow: `0 0 8px ${roleStyle.color}`,
-                            animation: 'pulse 2s infinite'
-                          }}
-                        />
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          background: roleStyle.bg,
-                          color: roleStyle.color,
-                          border: `1px solid ${roleStyle.border}`,
-                          fontWeight: 500,
-                          textTransform: 'capitalize'
-                        }}>
-                          {userRole?.role_name || 'User'}
-                        </span>
-                      </div>
-                    </div>
-                  </Option>
-                );
-              })}
+                    </Option>
+                  );
+                })}
             </Select>
           </Form.Item>
         </div>
         {/* Subject and Purpose */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: "20px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+            marginTop: "20px",
+          }}
+        >
           <Form.Item
             name="subject"
             label="Subject"
-            rules={[{ required: true, message: 'Please enter subject' }]}
+            rules={[{ required: true, message: "Please enter subject" }]}
           >
             <Input
               placeholder="e.g., Product Demo Call"
@@ -543,55 +692,15 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
           <Form.Item
             name="call_purpose"
             label="Purpose"
-            rules={[{ required: true, message: 'Please enter purpose' }]}
+            rules={[{ required: true, message: "Please enter purpose" }]}
           >
             <Input
               placeholder="Enter purpose"
-              size="large" 
+              size="large"
               style={{ borderRadius: "10px", height: "48px" }}
             />
           </Form.Item>
         </div>
-
-        {/* Call Status */}
-        <Form.Item
-          name="call_status"
-          label="Call Status"
-          initialValue="not_started"
-          rules={[{ required: true, message: 'Please select call status' }]}
-          style={{ marginTop: "20px" }}
-        >
-          <Select
-            placeholder="Select call status"
-            size="large"
-            style={{ width: "100%", borderRadius: "10px", height: "48px" }}
-          >
-            <Option value="not_started">
-              <Tag color="default">Not Started</Tag>
-            </Option>
-            <Option value="in_progress">
-              <Tag color="processing">In Progress</Tag>
-            </Option>
-            <Option value="completed">
-              <Tag color="success">Completed</Tag>
-            </Option>
-            <Option value="cancelled">
-              <Tag color="error">Cancelled</Tag>
-            </Option>
-            <Option value="no_answer">
-              <Tag color="warning">No Answer</Tag>
-            </Option>
-            <Option value="busy">
-              <Tag color="orange">Busy</Tag>
-            </Option>
-            <Option value="wrong_number">
-              <Tag color="red">Wrong Number</Tag>
-            </Option>
-            <Option value="voicemail">
-              <Tag color="purple">Voicemail</Tag>
-            </Option>
-          </Select>
-        </Form.Item>
 
         {/* Notes */}
         <Form.Item
@@ -605,18 +714,20 @@ const CreateFollowupCall = ({ open, onCancel, onSubmit, initialDate, initialTime
             style={{
               borderRadius: "10px",
               backgroundColor: "#f8fafc",
-              border: "1px solid #e6e8eb"
+              border: "1px solid #e6e8eb",
             }}
           />
         </Form.Item>
 
         {/* Action Buttons */}
-        <div style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "12px",
-          marginTop: "24px"
-        }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "12px",
+            marginTop: "24px",
+          }}
+        >
           <Button
             size="large"
             onClick={onCancel}

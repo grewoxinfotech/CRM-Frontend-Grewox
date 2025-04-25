@@ -215,11 +215,11 @@ const EditFollowupTask = ({ open, taskId, taskData, onCancel, onSubmit }) => {
       console.error('Error parsing repeat:', error);
     }
 
-    console.log('Parsed data:', {
-      assignedTo,
-      reminderData,
-      repeatData
-    });
+    // console.log('Parsed data:', {
+    //   assignedTo,
+    //   reminderData,
+    //   repeatData
+    // });
 
     // Set form values
     form.setFieldsValue({
@@ -278,6 +278,7 @@ const EditFollowupTask = ({ open, taskId, taskData, onCancel, onSubmit }) => {
       // Format the update payload
       const updateData = {
         subject: values.subject,
+        section: "deal",
         due_date: values.due_date?.format('YYYY-MM-DD'),
         priority: values.priority,
         task_reporter: values.task_reporter,
