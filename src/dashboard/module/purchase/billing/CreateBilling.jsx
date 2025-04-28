@@ -160,7 +160,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                 tax: Number(values.tax_amount || 0),
                 taxAmount: Number(values.tax_amount || 0),
                 total: Number(values.total_amount || 0),
-                status: values.status || 'pending'
+                status: values.status
             };
 
             await onSubmit(formattedData);
@@ -535,7 +535,7 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                 requiredMark={false}
                 initialValues={{
                     items: [{}],
-                    status: 'pending'
+                    status: "unpaid",
                 }}
                 style={{
                     padding: '24px',
@@ -681,7 +681,6 @@ const CreateBilling = ({ open, onCancel, onSubmit }) => {
                                 borderRadius: '10px',
                             }}
                         >
-                             <Option value="pending">Pending</Option>
                             <Option value="unpaid">Unpaid</Option>
                             <Option value="partially_paid">Partially Paid</Option>
                             <Option value="paid">Paid</Option>
