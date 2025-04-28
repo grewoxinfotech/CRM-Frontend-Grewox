@@ -27,25 +27,52 @@ import {
   FiBriefcase,
   FiUsers,
   FiCopy,
+  FiChevronDown,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./companyaccount.scss";
 import { useCreateCompanyAccountMutation } from "./services/companyAccountApi";
+import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsResponse,onsubmit }) => {
+// Find the Indian phone code ID
+const findIndianDefaults = (countries) => {
+  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  return {
+    defaultPhoneCode: indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL'
+  };
+};
+
+const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsResponse, onsubmit }) => {
   const [form] = Form.useForm();
   const [createCompanyAccount, { isLoading }] = useCreateCompanyAccountMutation();
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
 
+  // Get countries data
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { defaultPhoneCode } = findIndianDefaults(countries);
+
+  // Initialize form with default values
+  React.useEffect(() => {
+    form.setFieldsValue({
+      phoneCode: defaultPhoneCode
+    });
+  }, [defaultPhoneCode, form]);
+
   const handleSubmit = async (values) => {
     try {
+      // Get the selected country's phone code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+      const phoneNumber = values.phone_number ? values.phone_number.replace(/^0+/, '') : '';
+
       const companyData = {
         ...values,
-        account_owner: loggedInUser?.id
+        account_owner: loggedInUser?.id,
+        phone_code: selectedCountry?.id || "",
+        phone_number: phoneNumber,
       }
       await createCompanyAccount(companyData).unwrap();
       form.resetFields();
@@ -66,7 +93,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
         'billing_pincode',
         'billing_country'
       ]);
-      
+
       form.setFieldsValue({
         shipping_address: billingValues.billing_address,
         shipping_city: billingValues.billing_city,
@@ -96,7 +123,12 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
         },
       }}
     >
-      <div className="modal-header">
+      <div className="modal-header" style={{
+        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+        padding: "24px",
+        color: "#ffffff",
+        position: "relative",
+      }}>
         <Button
           type="text"
           onClick={onCancel}
@@ -106,7 +138,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
         </Button>
         <div className="header-content">
           <div className="header-icon">
-            {/* <FiBuilding /> */}
+            <FiBriefcase />
           </div>
           <div>
             <h2>Create Company Account</h2>
@@ -151,7 +183,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                 name="company_name"
                 label={
                   <span className="form-label">
-                    {/* <FiBuilding /> */}
+                    <FiBriefcase />
                     Company Name <span className="required">*</span>
                   </span>
                 }
@@ -187,19 +219,76 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
 
             <Col span={12}>
               <Form.Item
-                name="company_number"
+                name="phoneGroup"
                 label={
                   <span className="form-label">
                     <FiPhone />
-                    Company Number
+                    Company Number <span className="required">*</span>
                   </span>
                 }
+                className="combined-input-item"
+                required
               >
-                <Input
-                  placeholder="Enter company number"
-                  size="large"
-                  className="form-input"
-                />
+                <Input.Group compact className="phone-input-group">
+                  <Form.Item
+                    name="phoneCode"
+                    noStyle
+                    initialValue={defaultPhoneCode}
+                    rules={[{ required: true, message: 'Please select country code' }]}
+                  >
+                    <Select
+                      style={{ width: '120px' }}
+                      className="phone-code-select"
+                      dropdownMatchSelectWidth={120}
+                      suffixIcon={<FiChevronDown size={14} />}
+                      popupClassName="custom-select-dropdown"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option?.children?.props?.children[1]?.props?.children?.includes(input)
+                      }
+                    >
+                      {countries?.map((country) => (
+                        <Option key={country.id} value={country.id}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
+                            <span style={{ fontSize: '14px' }}>{country.phoneCode}</span>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="phone_number"
+                    noStyle
+                    rules={[
+                      { required: true, message: 'Please enter company number' },
+                      { pattern: /^\d+$/, message: 'Please enter only numbers' },
+                      { min: 10, message: 'Phone number must be at least 10 digits' },
+                      { max: 15, message: 'Phone number cannot exceed 15 digits' },
+                      {
+                        validator: (_, value) => {
+                          if (value && value.startsWith('0')) {
+                            return Promise.reject('Phone number should not start with 0');
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                    normalize={(value) => {
+                      if (!value) return value;
+                      // Remove any non-digit characters and leading zeros
+                      return value.replace(/\D/g, '').replace(/^0+/, '');
+                    }}
+                  >
+                    <Input
+                      style={{ width: 'calc(100% - 120px)' }}
+                      placeholder="Enter company number without leading zeros"
+                      className="form-input"
+                      maxLength={15}
+                    />
+                  </Form.Item>
+                </Input.Group>
               </Form.Item>
             </Col>
           </Row>
@@ -366,9 +455,9 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
           </Row>
         </div>
 
-        
+
         <div className="form-section">
-         
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
@@ -494,7 +583,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
             <Text strong className="section-title">Shipping Address</Text>
             <div className="copy-address-switch">
               <Text>Same as Billing Address</Text>
-              <Switch 
+              <Switch
                 checked={copyBillingToShipping}
                 onChange={handleCopyBillingToShipping}
                 size="small"
@@ -616,6 +705,89 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
           </Button>
         </div>
       </Form>
+
+      <style jsx global>{`
+        .company-account-form {
+          padding: 24px;
+
+          .phone-input-group {
+            display: flex !important;
+            
+            .phone-code-select {
+              .ant-select-selector {
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+                padding: 8px 8px !important;
+                height: 48px !important;
+              }
+              
+              .ant-select-selection-search {
+                input {
+                  height: 100% !important;
+                }
+              }
+
+              .ant-select-selection-item {
+                padding-right: 20px !important;
+                color: #1f2937 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+              }
+
+              .ant-select-selection-placeholder {
+                color: #9CA3AF !important;
+              }
+            }
+
+            .form-input {
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+            }
+          }
+
+          .phone-input-group .ant-select-selector .ant-select-selection-item div span:last-child {
+            color: white !important;
+          }
+
+          :where(.css-dev-only-do-not-override-240cud).ant-select-single {
+            height: 48px !important;
+          }
+
+          .ant-select-dropdown {
+            padding: 8px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+
+            .ant-select-item {
+              padding: 8px 12px !important;
+              border-radius: 6px !important;
+              min-height: 32px !important;
+              display: flex !important;
+              align-items: center !important;
+              color: #1f2937 !important;
+
+              &-option-selected {
+                background-color: #E6F4FF !important;
+                font-weight: 500 !important;
+                color: #1890ff !important;
+              }
+
+              &-option-active {
+                background-color: #F3F4F6 !important;
+              }
+            }
+
+            .ant-select-item-option-content {
+              font-size: 14px !important;
+            }
+
+            .ant-select-item-empty {
+              color: #9CA3AF !important;
+            }
+          }
+        }
+      `}</style>
     </Modal>
   );
 };

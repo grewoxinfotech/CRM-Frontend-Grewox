@@ -27,15 +27,25 @@ import {
   FiBriefcase,
   FiUsers,
   FiCopy,
+  FiChevronDown,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./companyaccount.scss";
 import { useGetUsersQuery } from "../../user-management/users/services/userApi";
 import { useUpdateCompanyAccountMutation } from "./services/companyAccountApi";
+import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 
 const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
+
+// Find the Indian phone code ID
+const findIndianDefaults = (countries) => {
+  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  return {
+    defaultPhoneCode: indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL'
+  };
+};
 
 const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
   const [form] = Form.useForm();
@@ -43,10 +53,14 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
   const { data: usersData } = useGetUsersQuery();
   const [updateCompanyAccount, { isLoading }] = useUpdateCompanyAccountMutation();
 
+  // Get countries data
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { defaultPhoneCode } = findIndianDefaults(countries);
+
   React.useEffect(() => {
     if (companyData) {
       console.log("companyData", companyData);
-      
+
       // Find the account owner's name from users data
       let accountOwnerName = companyData?.account_owner;
       if (usersData?.data) {
@@ -55,14 +69,16 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
           accountOwnerName = owner.username;
         }
       }
-      
+
       form.setFieldsValue({
         ...companyData,
         account_owner: accountOwnerName,
-        registrationDate: companyData.registrationDate ? dayjs(companyData.registrationDate) : null
+        registrationDate: companyData.registrationDate ? dayjs(companyData.registrationDate) : null,
+        phoneCode: companyData.phone_code || defaultPhoneCode,
+        company_number: companyData.company_number
       });
     }
-  }, [companyData, form, usersData]);
+  }, [companyData, form, usersData, defaultPhoneCode]);
 
   const handleCopyBillingToShipping = (checked) => {
     setCopyBillingToShipping(checked);
@@ -74,7 +90,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
         'billing_pincode',
         'billing_country'
       ]);
-      
+
       form.setFieldsValue({
         shipping_address: billingValues.billing_address,
         shipping_city: billingValues.billing_city,
@@ -95,18 +111,24 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
           accountOwnerId = owner.id;
         }
       }
-      
+
+      // Get the selected country's phone code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+      const phoneNumber = values.phone_number ? values.phone_number.replace(/^0+/, '') : '';
+
       const updatedCompanyData = {
         ...values,
         account_owner: accountOwnerId,
-        registrationDate: values.registrationDate ? values.registrationDate.format('YYYY-MM-DD') : null
+        registrationDate: values.registrationDate ? values.registrationDate.format('YYYY-MM-DD') : null,
+        phone_code: selectedCountry?.id || "",
+        phone_number: phoneNumber,
       };
 
-      await updateCompanyAccount({ 
-        id: companyData.id, 
-        data: updatedCompanyData 
+      await updateCompanyAccount({
+        id: companyData.id,
+        data: updatedCompanyData
       }).unwrap();
-      
+
       message.success("Company account updated successfully");
       onCancel();
     } catch (error) {
@@ -134,7 +156,12 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
         },
       }}
     >
-      <div className="modal-header">
+      <div className="modal-header" style={{
+        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+        padding: "24px",
+        color: "#ffffff",
+        position: "relative",
+      }}>
         <Button
           type="text"
           onClick={onCancel}
@@ -144,7 +171,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
         </Button>
         <div className="header-content">
           <div className="header-icon">
-            <FiFileText />
+            <FiBriefcase />
           </div>
           <div>
             <h2>Edit Company Account</h2>
@@ -172,7 +199,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                     Account Owner <span className="required">*</span>
                   </span>
                 }
-                
+
                 rules={[{ required: true, message: "Please enter account owner" }]}
               >
                 <Input
@@ -189,7 +216,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                 name="company_name"
                 label={
                   <span className="form-label">
-                    {/* <FiBuilding /> */}
+                    <FiBriefcase />
                     Company Name <span className="required">*</span>
                   </span>
                 }
@@ -225,19 +252,76 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
 
             <Col span={12}>
               <Form.Item
-                name="company_number"
+                name="phoneGroup"
                 label={
                   <span className="form-label">
                     <FiPhone />
-                    Company Number
+                    Company Number <span className="required">*</span>
                   </span>
                 }
+                className="combined-input-item"
+                required
               >
-                <Input
-                  placeholder="Enter company number"
-                  size="large"
-                  className="form-input"
-                />
+                <Input.Group compact className="phone-input-group">
+                  <Form.Item
+                    name="phoneCode"
+                    noStyle
+                    initialValue={defaultPhoneCode}
+                    rules={[{ required: true, message: 'Please select country code' }]}
+                  >
+                    <Select
+                      style={{ width: '120px' }}
+                      className="phone-code-select"
+                      dropdownMatchSelectWidth={120}
+                      suffixIcon={<FiChevronDown size={14} />}
+                      popupClassName="custom-select-dropdown"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option?.children?.props?.children[1]?.props?.children?.includes(input)
+                      }
+                    >
+                      {countries?.map((country) => (
+                        <Option key={country.id} value={country.id}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
+                            <span style={{ fontSize: '14px' }}>{country.phoneCode}</span>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="phone_number"
+                    noStyle
+                    rules={[
+                      { required: true, message: 'Please enter company number' },
+                      { pattern: /^\d+$/, message: 'Please enter only numbers' },
+                      { min: 10, message: 'Phone number must be at least 10 digits' },
+                      { max: 15, message: 'Phone number cannot exceed 15 digits' },
+                      {
+                        validator: (_, value) => {
+                          if (value && value.startsWith('0')) {
+                            return Promise.reject('Phone number should not start with 0');
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                    normalize={(value) => {
+                      if (!value) return value;
+                      // Remove any non-digit characters and leading zeros
+                      return value.replace(/\D/g, '').replace(/^0+/, '');
+                    }}
+                  >
+                    <Input
+                      style={{ width: 'calc(100% - 120px)' }}
+                      placeholder="Enter company number without leading zeros"
+                      className="form-input"
+                      maxLength={15}
+                    />
+                  </Form.Item>
+                </Input.Group>
               </Form.Item>
             </Col>
           </Row>
@@ -528,7 +612,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
             <Text strong className="section-title">Shipping Address</Text>
             <div className="copy-address-switch">
               <Text>Same as Billing Address</Text>
-              <Switch 
+              <Switch
                 checked={copyBillingToShipping}
                 onChange={handleCopyBillingToShipping}
                 size="small"
@@ -669,6 +753,89 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
           </Button>
         </div>
       </Form>
+
+      <style jsx global>{`
+        .company-account-form {
+          padding: 24px;
+
+          .phone-input-group {
+            display: flex !important;
+            
+            .phone-code-select {
+              .ant-select-selector {
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+                padding: 8px 8px !important;
+                height: 48px !important;
+              }
+              
+              .ant-select-selection-search {
+                input {
+                  height: 100% !important;
+                }
+              }
+
+              .ant-select-selection-item {
+                padding-right: 20px !important;
+                color: #1f2937 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+              }
+
+              .ant-select-selection-placeholder {
+                color: #9CA3AF !important;
+              }
+            }
+
+            .form-input {
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+            }
+          }
+
+          .ant-select-dropdown {
+            padding: 8px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+
+            .ant-select-item {
+              padding: 8px 12px !important;
+              border-radius: 6px !important;
+              min-height: 32px !important;
+              display: flex !important;
+              align-items: center !important;
+              color: #1f2937 !important;
+
+              &-option-selected {
+                background-color: #E6F4FF !important;
+                font-weight: 500 !important;
+                color: #1890ff !important;
+              }
+
+              
+              &-option-active {
+                background-color: #F3F4F6 !important;
+                }
+                }
+                
+                .ant-select-item-option-content {
+                  font-size: 14px !important;
+                  }
+                  
+                  .ant-select-item-empty {
+                    color: #9CA3AF !important;
+                    }
+                    }
+                    .phone-input-group .ant-select-selector .ant-select-selection-item div span:last-child {
+                      color: white !important;
+                    }
+          
+                    :where(.css-dev-only-do-not-override-240cud).ant-select-single {
+                      height: 48px !important;
+                    }
+        }
+      `}</style>
     </Modal>
   );
 };

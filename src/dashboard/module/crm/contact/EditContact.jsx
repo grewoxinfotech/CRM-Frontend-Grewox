@@ -10,6 +10,7 @@ import {
   Col,
   Divider,
   message,
+  InputNumber,
 } from "antd";
 import {
   FiFileText,
@@ -21,11 +22,13 @@ import {
   FiTag,
   FiGlobe,
   FiUsers,
+  FiChevronDown,
 } from "react-icons/fi";
-import AddCompanyModal from "../deal/AddCompanyModal";
+import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
 import { PlusOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 
 import "./contact.scss";
 import { useGetContactsQuery, useUpdateContactMutation } from "./services/contactApi";
@@ -36,6 +39,14 @@ const { Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+// Find the Indian phone code ID
+const findIndianDefaults = (countries) => {
+  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  return {
+    defaultPhoneCode: indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL'
+  };
+};
+
 const EditContact = ({ open, onCancel, contactData }) => {
 
   const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
@@ -44,6 +55,8 @@ const EditContact = ({ open, onCancel, contactData }) => {
   const [form] = Form.useForm();
   const [updateContact, { isLoading: isUpdateContactLoading }] = useUpdateContactMutation();
   const { data: usersData } = useGetUsersQuery();
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { defaultPhoneCode } = findIndianDefaults(countries);
 
   const loggedInUser = useSelector(selectCurrentUser);
 
@@ -76,20 +89,27 @@ const EditContact = ({ open, onCancel, contactData }) => {
 
       form.setFieldsValue({
         ...contactData,
-        contact_owner: contactOwnerName
+        contact_owner: contactOwnerName,
+        phoneCode: contactData.phone_code || defaultPhoneCode,
+        phone: contactData.phone
       });
     }
-  }, [contactData, form, usersData]);
+  }, [contactData, form, usersData, defaultPhoneCode]);
 
   const handleSubmit = async (values) => {
     try {
+      // Get the selected country's phone code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+      const phoneNumber = values.phone ? values.phone.replace(/^0+/, '') : '';
+
       const updatedContactData = {
         id: contactData.id,
         contact_owner: contactData.contact_owner,
         first_name: values.first_name || "",
         last_name: values.last_name || "",
         email: values.email || "",
-        phone: values.phone || "",
+        phone_code: selectedCountry?.id || "",
+        phone: phoneNumber,
         company_name: values.company_name || "",
         contact_source: values.contact_source || "",
         description: values.description || "",
@@ -148,7 +168,14 @@ const EditContact = ({ open, onCancel, contactData }) => {
           },
         }}
       >
-        <div className="modal-header">
+        <div className="modal-header"
+          style={{
+            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+            padding: "24px",
+            color: "#ffffff",
+            position: "relative",
+          }}
+        >
           <Button
             type="text"
             onClick={onCancel}
@@ -256,19 +283,76 @@ const EditContact = ({ open, onCancel, contactData }) => {
 
             <Col span={12}>
               <Form.Item
-                name="phone"
+                name="phoneGroup"
                 label={
                   <span className="form-label">
                     <FiPhone />
-                    Phone
+                    Phone Number <span className="required">*</span>
                   </span>
                 }
+                className="combined-input-item"
+                required
               >
-                <Input
-                  placeholder="Enter phone number"
-                  size="large"
-                  className="form-input"
-                />
+                <Input.Group compact className="phone-input-group">
+                  <Form.Item
+                    name="phoneCode"
+                    noStyle
+                    initialValue={defaultPhoneCode}
+                    rules={[{ required: true, message: 'Please select country code' }]}
+                  >
+                    <Select
+                      style={{ width: '120px' }}
+                      className="phone-code-select"
+                      dropdownMatchSelectWidth={120}
+                      suffixIcon={<FiChevronDown size={14} />}
+                      popupClassName="custom-select-dropdown"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option?.children?.props?.children[1]?.props?.children?.includes(input)
+                      }
+                    >
+                      {countries?.map((country) => (
+                        <Option key={country.id} value={country.id}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
+                            <span style={{ fontSize: '14px' }}>{country.phoneCode}</span>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="phone"
+                    noStyle
+                    rules={[
+                      { required: true, message: 'Please enter phone number' },
+                      { pattern: /^\d+$/, message: 'Please enter only numbers' },
+                      { min: 10, message: 'Phone number must be at least 10 digits' },
+                      { max: 15, message: 'Phone number cannot exceed 15 digits' },
+                      {
+                        validator: (_, value) => {
+                          if (value && value.startsWith('0')) {
+                            return Promise.reject('Phone number should not start with 0');
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                    normalize={(value) => {
+                      if (!value) return value;
+                      // Remove any non-digit characters and leading zeros
+                      return value.replace(/\D/g, '').replace(/^0+/, '');
+                    }}
+                  >
+                    <Input
+                      style={{ width: 'calc(100% - 120px)' }}
+                      placeholder="Enter phone number without leading zeros"
+                      className="form-input"
+                      maxLength={15}
+                    />
+                  </Form.Item>
+                </Input.Group>
               </Form.Item>
             </Col>
           </Row>
@@ -283,13 +367,13 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Company Name <span className="required">*</span>
                   </span>
                 }
-                // rules={[{ required: true, message: "Please select company" }]}
               >
                 <Select
                   placeholder="Select company"
                   size="large"
                   className="form-input"
                   showSearch
+                  allowClear
                   optionFilterProp="children"
                   filterOption={(input, option) =>
                     (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -479,7 +563,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
             </Button>
           </div>
         </Form>
-      </Modal>
+      </Modal >
 
       <AddCompanyModal
         open={isAddCompanyVisible}
@@ -489,6 +573,83 @@ const EditContact = ({ open, onCancel, contactData }) => {
         onSuccess={handleCompanyCreationSuccess}
         initialCompanyName={newCompanyName}
       />
+
+      <style jsx global>{`
+        .contact-form {
+          padding: 24px;
+.phone-input-group .ant-select-selector .ant-select-selection-item div span:last-child {
+    color: white !important;
+
+          .phone-input-group {
+            display: flex !important;
+            
+            .phone-code-select {
+              .ant-select-selector {
+                border-top-right-radius: 0 !important;
+                border-bottom-right-radius: 0 !important;
+                padding: 8px 8px !important;
+                height: 48px !important;
+              }
+              
+              .ant-select-selection-search {
+                input {
+                  height: 100% !important;
+                }
+              }
+
+              .ant-select-selection-item {
+                padding-right: 20px !important;
+                color: #1f2937 !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+              }
+
+              .ant-select-selection-placeholder {
+                color: #9CA3AF !important;
+              }
+            }
+
+            .form-input {
+              border-top-left-radius: 0 !important;
+              border-bottom-left-radius: 0 !important;
+            }
+          }
+
+          .ant-select-dropdown {
+            padding: 8px !important;
+            border-radius: 10px !important;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+
+            .ant-select-item {
+              padding: 8px 12px !important;
+              border-radius: 6px !important;
+              min-height: 32px !important;
+              display: flex !important;
+              align-items: center !important;
+              color: #1f2937 !important;
+
+              &-option-selected {
+                background-color: #E6F4FF !important;
+                font-weight: 500 !important;
+                color: #1890ff !important;
+              }
+
+              &-option-active {
+                background-color: #F3F4F6 !important;
+              }
+            }
+
+            .ant-select-item-option-content {
+              font-size: 14px !important;
+            }
+
+            .ant-select-item-empty {
+              color: #9CA3AF !important;
+            }
+          }
+        }
+      `}</style>
     </>
   );
 };

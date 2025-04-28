@@ -20,7 +20,8 @@ import {
   FiTag,
   FiLayers,
   FiStar,
-  FiCalendar
+  FiCalendar,
+  FiUser
 } from "react-icons/fi";
 import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
@@ -153,34 +154,74 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
         </div>
       ),
       onFilter: (value, record) =>
-        record.dealTitle.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
-      render: (text, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Avatar style={{
-            backgroundColor: record.status?.toLowerCase() === 'won' ? '#52c41a' : '#1890ff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {text?.[0]?.toUpperCase() || 'D'}
-          </Avatar>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Text strong style={{ fontSize: '14px' }}>
-                {text || 'Untitled Deal'}
-              </Text>
-              {record.status?.toLowerCase() === 'won' && (
-                <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
-              )}
+        record.dealTitle.toLowerCase().includes(value.toLowerCase()),
+      render: (text, record) => {
+        // Find company and contact details
+        const company = companyAccountsResponse?.data?.find(c => c.id === record.company_id);
+        const contact = contactsResponse?.data?.find(c => c.id === record.contact_id);
+
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Avatar style={{
+              backgroundColor: record.status?.toLowerCase() === 'won' ? '#52c41a' : '#1890ff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {text?.[0]?.toUpperCase() || 'D'}
+            </Avatar>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Text strong style={{ fontSize: '14px' }}>
+                  {text || 'Untitled Deal'}
+                </Text>
+                {record.status?.toLowerCase() === 'won' && (
+                  <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                {company && (
+                  <Tag
+                    icon={<FiBriefcase style={{ fontSize: '12px' }} />}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: '#e6f7ff',
+                      color: '#1890ff',
+                      border: 'none',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {company.company_name}
+                  </Tag>
+                )}
+                {contact && (
+                  <Tag
+                    icon={<FiUser style={{ fontSize: '12px' }} />}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: '#f3f4f6',
+                      color: '#4b5563',
+                      border: 'none',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {`${contact.first_name} ${contact.last_name || ''}`}
+                  </Tag>
+                )}
+              </div>
             </div>
-            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-              {record.company_name || ''}
-            </Text>
           </div>
-        </div>
-      ),
-      width: '25%',
+        );
+      },
+      width: '30%',
     },
     {
       title: "Source",

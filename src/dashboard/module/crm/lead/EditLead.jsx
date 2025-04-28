@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   Form,
@@ -9,6 +9,8 @@ import {
   Divider,
   message,
   InputNumber,
+  Tag,
+  Popconfirm,
 } from "antd";
 import {
   FiUser,
@@ -21,6 +23,9 @@ import {
   FiTag,
   FiUserPlus,
   FiShield,
+  FiUsers,
+  FiTrash2,
+  FiLayers,
 } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { useUpdateLeadMutation } from "./services/LeadApi";
@@ -29,10 +34,18 @@ import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import CreateUser from '../../user-management/users/CreateUser';
-import { useGetSourcesQuery, useGetStatusesQuery, useGetCategoriesQuery } from '../crmsystem/souce/services/SourceApi';
-import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
-import { PlusOutlined } from '@ant-design/icons';
+import { useGetSourcesQuery, useGetStatusesQuery, useGetCategoriesQuery, useDeleteSourceMutation, useDeleteCategoryMutation, useDeleteStatusMutation } from '../crmsystem/souce/services/SourceApi';
+import { useGetLeadStagesQuery, useDeleteLeadStageMutation, useUpdateLeadStageMutation } from '../crmsystem/leadstage/services/leadStageApi';
+import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
+import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
+import AddContactModal from "../contact/CreateContact";
+import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
+import { useGetContactsQuery } from '../contact/services/contactApi';
+import AddStageModal from "../crmsystem/leadstage/AddLeadStageModal";
+import AddSourceModal from "../crmsystem/souce/AddSourceModal";
+import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
+import AddStatusModal from "../crmsystem/souce/AddStatusModal";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -50,8 +63,28 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const selectRef = React.useRef(null);
   const [selectedPipeline, setSelectedPipeline] = useState(null);
   const { data: stagesData } = useGetLeadStagesQuery();
-  // Get sources data
-
+  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+  const { data: contactsData } = useGetContactsQuery();
+  const [isAddCompanyVisible, setIsAddCompanyVisible] = useState(false);
+  const [isAddContactVisible, setIsAddContactVisible] = useState(false);
+  const [contactMode, setContactMode] = useState('existing');
+  const [isAddStageVisible, setIsAddStageVisible] = useState(false);
+  const [deleteLeadStage] = useDeleteLeadStageMutation();
+  const [updateLeadStage] = useUpdateLeadStageMutation();
+  const [isSelectDefaultModalOpen, setIsSelectDefaultModalOpen] = useState(false);
+  const [stageToDelete, setStageToDelete] = useState(null);
+  const [isAddSourceVisible, setIsAddSourceVisible] = useState(false);
+  const [isAddCategoryVisible, setIsAddCategoryVisible] = useState(false);
+  const [deleteSource] = useDeleteSourceMutation();
+  const [deleteCategory] = useDeleteCategoryMutation();
+  const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const sourceSelectRef = React.useRef(null);
+  const categorySelectRef = React.useRef(null);
+  const [deleteStatus] = useDeleteStatusMutation();
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusSelectRef = React.useRef(null);
+  const [isAddStatusVisible, setIsAddStatusVisible] = useState(false);
 
   // Replace the hardcoded statuses with API data
   const statuses = statusesData?.data || [];
@@ -107,6 +140,12 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const filteredStages = stagesData?.filter(
     stage => stage.stageType === "lead" && stage.pipeline === selectedPipeline
   ) || [];
+
+  // Add getPipelineName function
+  const getPipelineName = (pipelineId) => {
+    const pipeline = pipelines.find(p => p.id === pipelineId);
+    return pipeline?.pipeline_name || 'Not assigned';
+  };
 
   // Handle pipeline selection change
   const handlePipelineChange = (value) => {
@@ -314,6 +353,239 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     }
   };
 
+  // Handler for company selection change
+  const handleCompanyChange = (companyId) => {
+    form.setFieldValue('company_id', companyId);
+
+    // If company is cleared, also clear the contact
+    if (!companyId) {
+      form.setFieldValue('contact_id', undefined);
+      return;
+    }
+
+    // If a contact is already selected, check if it belongs to the new company
+    const currentContactId = form.getFieldValue('contact_id');
+    if (currentContactId) {
+      const contact = contactsData?.data?.find(c => c.id === currentContactId);
+      if (contact?.company_name !== companyId) {
+        form.setFieldValue('contact_id', undefined);
+      }
+    }
+  };
+
+  // Handler for contact selection change
+  const handleContactChange = (contactId) => {
+    form.setFieldValue('contact_id', contactId);
+
+    if (!contactId) {
+      return;
+    }
+
+    // Get the selected contact's data
+    const contact = contactsData?.data?.find(c => c.id === contactId);
+    if (contact) {
+      // Update company if contact has one and no company is selected
+      if (contact.company_name && !form.getFieldValue('company_id')) {
+        form.setFieldValue('company_id', contact.company_name);
+      }
+    }
+  };
+
+  // Handler for adding new company
+  const handleAddCompanyClick = (e) => {
+    e.stopPropagation();
+    setIsAddCompanyVisible(true);
+  };
+
+  // Handler for adding new contact
+  const handleAddContactClick = (e) => {
+    e.stopPropagation();
+    setIsAddContactVisible(true);
+  };
+
+  // Handler for successful company creation
+  const handleCompanyCreationSuccess = (newCompany) => {
+    setIsAddCompanyVisible(false);
+    form.setFieldValue('company_id', newCompany.id);
+  };
+
+  // Handler for successful contact creation
+  const handleContactCreationSuccess = (newContact) => {
+    setIsAddContactVisible(false);
+    form.setFieldValue('contact_id', newContact.id);
+    if (newContact.company_name) {
+      form.setFieldValue('company_id', newContact.company_name);
+    }
+  };
+
+  // Add contact mode change handler
+  const handleContactModeChange = (mode) => {
+    setContactMode(mode);
+    // Clear form fields when switching modes
+    if (mode === 'new') {
+      form.setFieldsValue({
+        company_id: undefined,
+        contact_id: undefined,
+        firstName: '',
+        lastName: '',
+        email: '',
+        telephone: '',
+        address: ''
+      });
+    } else {
+      form.setFieldsValue({
+        firstName: '',
+        lastName: '',
+        email: '',
+        telephone: '',
+        address: ''
+      });
+    }
+  };
+
+  // Update the handler to properly stop event propagation
+  const handleAddStageClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAddStageVisible(true);
+  };
+
+  // Add handler for stage creation success
+  const handleStageCreationSuccess = (newStage) => {
+    setIsAddStageVisible(false);
+    form.setFieldValue('leadStage', newStage.id);
+  };
+
+  const handleDeleteStage = async (e, stageId, stageName) => {
+    e.stopPropagation();
+    const stage = filteredStages.find(s => s.id === stageId);
+
+    if (stage.isDefault) {
+      const otherStagesInPipeline = filteredStages.filter(s =>
+        s.pipeline === stage.pipeline && s.id !== stageId
+      );
+
+      if (otherStagesInPipeline.length > 0) {
+        setStageToDelete(stage);
+        setIsSelectDefaultModalOpen(true);
+      } else {
+        showDeleteConfirmation(stage);
+      }
+    } else {
+      showDeleteConfirmation(stage);
+    }
+  };
+
+  const showDeleteConfirmation = (stage) => {
+    Modal.confirm({
+      title: 'Delete Lead Stage',
+      content: 'Are you sure you want to delete this lead stage?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await deleteLeadStage(stage.id).unwrap();
+          message.success('Lead stage deleted successfully');
+          if (form.getFieldValue('leadStage') === stage.id) {
+            form.setFieldValue('leadStage', undefined);
+          }
+        } catch (error) {
+          message.error('Failed to delete lead stage');
+        }
+      },
+    });
+  };
+
+  const handleSetNewDefaultAndDelete = async (newDefaultStageId) => {
+    try {
+      const newDefaultStage = filteredStages.find(s => s.id === newDefaultStageId);
+      if (newDefaultStage) {
+        await updateLeadStage({
+          stageName: newDefaultStage.stageName,
+          pipeline: newDefaultStage.pipeline,
+          stageType: newDefaultStage.stageType,
+          isDefault: true,
+          id: newDefaultStage.id
+        }).unwrap();
+      }
+
+      await deleteLeadStage(stageToDelete.id).unwrap();
+      message.success('Lead stage deleted and new default stage set successfully');
+      setIsSelectDefaultModalOpen(false);
+      setStageToDelete(null);
+
+      if (form.getFieldValue('leadStage') === stageToDelete.id) {
+        form.setFieldValue('leadStage', undefined);
+      }
+    } catch (error) {
+      message.error('Failed to update stages');
+    }
+  };
+
+  // Add handler for source deletion
+  const handleDeleteSource = async (e, sourceId) => {
+    e.stopPropagation();
+    try {
+      await deleteSource(sourceId).unwrap();
+      message.success("Source deleted successfully");
+      if (form.getFieldValue('source') === sourceId) {
+        form.setFieldValue('source', undefined);
+      }
+    } catch (error) {
+      message.error(error.data?.message || "Failed to delete source");
+    }
+  };
+
+  // Add handler for category deletion
+  const handleDeleteCategory = async (e, categoryId) => {
+    e.stopPropagation();
+    try {
+      await deleteCategory(categoryId).unwrap();
+      message.success("Category deleted successfully");
+      if (form.getFieldValue('category') === categoryId) {
+        form.setFieldValue('category', undefined);
+      }
+    } catch (error) {
+      message.error(error.data?.message || "Failed to delete category");
+    }
+  };
+
+  // Add handler for adding new source
+  const handleAddSourceClick = (e) => {
+    e.stopPropagation();
+    setSourceDropdownOpen(false);
+    setIsAddSourceVisible(true);
+  };
+
+  // Add handler for adding new category
+  const handleAddCategoryClick = (e) => {
+    e.stopPropagation();
+    setCategoryDropdownOpen(false);
+    setIsAddCategoryVisible(true);
+  };
+
+  // Add handler for status deletion
+  const handleDeleteStatus = async (e, statusId) => {
+    e.stopPropagation();
+    try {
+      await deleteStatus(statusId).unwrap();
+      message.success("Status deleted successfully");
+      if (form.getFieldValue('status') === statusId) {
+        form.setFieldValue('status', undefined);
+      }
+    } catch (error) {
+      message.error(error.data?.message || "Failed to delete status");
+    }
+  };
+
+  // Add handler for adding new status
+  const handleAddStatusClick = (e) => {
+    e.stopPropagation();
+    setStatusDropdownOpen(false);
+    setIsAddStatusVisible(true);
+  };
+
   if (isLoading) {
     return (
       <Modal
@@ -473,43 +745,15 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
               onDropdownVisibleChange={setDropdownOpen}
               placeholder="Select pipeline"
               onChange={handlePipelineChange}
-              style={selectStyle}
-              suffixIcon={<FiChevronDown size={14} />}
-              dropdownRender={(menu) => (
-                <div onClick={(e) => e.stopPropagation()}>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div
-                    style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={handleAddPipelineClick}
-                      style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Add Pipeline
-                    </Button>
-                  </div>
-                </div>
-              )}
-              popupClassName="custom-select-dropdown"
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
+                }
+              }}
+              listHeight={350}
+              popupClassName="custom-select-dropdown sticky-add-button"
             >
               {pipelines.map((pipeline) => (
                 <Option key={pipeline.id} value={pipeline.id}>
@@ -527,13 +771,131 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             <Select
               placeholder={selectedPipeline ? "Select stage" : "Select pipeline first"}
               disabled={!selectedPipeline}
-              style={selectStyle}
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
+                }
+              }}
               suffixIcon={<FiChevronDown size={14} />}
-              popupClassName="custom-select-dropdown"
+              popupClassName="custom-select-dropdown sticky-add-button"
+              dropdownRender={(menu) => (
+                <div
+                  style={{
+                    position: 'relative',
+                    maxHeight: '400px'
+                  }}
+                >
+                  <div style={{
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    paddingBottom: '48px'
+                  }}>
+                    {menu}
+                  </div>
+                  <div style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    padding: '8px 12px',
+                    borderTop: '1px solid #f0f0f0',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddStageClick}
+                      disabled={!selectedPipeline}
+                      style={{
+                        width: '100%',
+                        background: selectedPipeline ? 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)' : '#f5f5f5',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: selectedPipeline ? '0 2px 8px rgba(24, 144, 255, 0.15)' : 'none',
+                        fontWeight: '500',
+                        opacity: selectedPipeline ? 1 : 0.5,
+                        cursor: selectedPipeline ? 'pointer' : 'not-allowed',
+                        color: selectedPipeline ? '#ffffff' : 'rgba(0, 0, 0, 0.25)'
+                      }}
+                    >
+                      Add Stage
+                    </Button>
+                  </div>
+                </div>
+              )}
             >
               {filteredStages.map((stage) => (
                 <Option key={stage.id} value={stage.id}>
-                  {stage.stageName}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '8px 0'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: stage.color || '#1890ff'
+                      }} />
+                      <span style={{ marginRight: '8px' }}>{stage.stageName}</span>
+                      {stage.isDefault && (
+                        <Tag
+                          color="blue"
+                          style={{
+                            margin: 0,
+                            fontSize: '12px',
+                            padding: '0 8px',
+                            borderRadius: '4px',
+                            background: '#e6f4ff',
+                            border: '1px solid #91caff',
+                            color: '#0958d9'
+                          }}
+                        >
+                          Default
+                        </Tag>
+                      )}
+                    </div>
+                    {form.getFieldValue('leadStage') !== stage.id && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ fontSize: '16px' }} />}
+                          onClick={(e) => handleDeleteStage(e, stage.id, stage.stageName)}
+                          className="delete-stage-btn"
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: '#ff4d4f',
+                            transition: 'all 0.2s'
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </Option>
               ))}
             </Select>
@@ -546,8 +908,14 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           >
             <Select
               placeholder="Select interest level"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
+                }
+              }}
+              popupClassName="custom-select-dropdown sticky-add-button"
             >
               {interestLevels.map((level) => (
                 <Option key={level.value} value={level.value}>
@@ -582,7 +950,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                   className="currency-select"
                   dropdownMatchSelectWidth={120}
                   suffixIcon={<FiChevronDown size={14} />}
-                  popupClassName="custom-select-dropdown"
+                  popupClassName="custom-select-dropdown sticky-add-button"
                   showSearch
                   optionFilterProp="children"
                   filterOption={(input, option) => {
@@ -628,22 +996,113 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             rules={[{ required: true, message: "Please select source" }]}
           >
             <Select
+              ref={sourceSelectRef}
+              open={sourceDropdownOpen}
+              onDropdownVisibleChange={setSourceDropdownOpen}
               placeholder="Select source"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
-            >
-              {sources.map((source) => (
-                <Option key={source.id} value={source.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
+                }
+              }}
+              popupClassName="custom-select-dropdown sticky-add-button"
+              dropdownRender={(menu) => (
+                <div
+                  style={{
+                    position: 'relative',
+                    maxHeight: '400px'
+                  }}
+                >
+                  <div style={{
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    paddingBottom: '48px'
+                  }}>
+                    {menu}
+                  </div>
+                  <div style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    padding: '8px 12px',
+                    borderTop: '1px solid #f0f0f0',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddSourceClick}
                       style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: source.color || '#1890ff'
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
                       }}
-                    />
-                    {source.name}
+                    >
+                      Add Source
+                    </Button>
+                  </div>
+                </div>
+              )}
+            >
+              {sourcesData?.data?.map((source) => (
+                <Option key={source.id} value={source.id}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: source.color || '#1890ff'
+                        }}
+                      />
+                      {source.name}
+                    </div>
+                    {form.getFieldValue('source') !== source.id && (
+                      <Popconfirm
+                        title="Delete Source"
+                        description="Are you sure you want to delete this source?"
+                        onConfirm={(e) => handleDeleteSource(e, source.id)}
+                        onCancel={(e) => e.stopPropagation()}
+                        okText="Yes"
+                        cancelText="No"
+                        placement="left"
+                      >
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.8,
+                            transition: 'opacity 0.2s',
+                            ':hover': {
+                              opacity: 1,
+                              backgroundColor: 'transparent'
+                            }
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
                   </div>
                 </Option>
               ))}
@@ -656,22 +1115,113 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             label={<span style={formItemStyle}>Status</span>}
           >
             <Select
+              ref={statusSelectRef}
+              open={statusDropdownOpen}
+              onDropdownVisibleChange={setStatusDropdownOpen}
               placeholder="Select status"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
-            >
-              {statuses.map((status) => (
-                <Option key={status.id} value={status.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
+                }
+              }}
+              popupClassName="custom-select-dropdown sticky-add-button"
+              dropdownRender={(menu) => (
+                <div
+                  style={{
+                    position: 'relative',
+                    maxHeight: '400px'
+                  }}
+                >
+                  <div style={{
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    paddingBottom: '48px'
+                  }}>
+                    {menu}
+                  </div>
+                  <div style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    padding: '8px 12px',
+                    borderTop: '1px solid #f0f0f0',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddStatusClick}
                       style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: status.color || '#1890ff'
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
                       }}
-                    />
-                    {status.name}
+                    >
+                      Add Status
+                    </Button>
+                  </div>
+                </div>
+              )}
+            >
+              {statusesData?.data?.map((status) => (
+                <Option key={status.id} value={status.id}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: status.color || '#1890ff'
+                        }}
+                      />
+                      {status.name}
+                    </div>
+                    {form.getFieldValue('status') !== status.id && (
+                      <Popconfirm
+                        title="Delete Status"
+                        description="Are you sure you want to delete this status?"
+                        onConfirm={(e) => handleDeleteStatus(e, status.id)}
+                        onCancel={(e) => e.stopPropagation()}
+                        okText="Yes"
+                        cancelText="No"
+                        placement="left"
+                      >
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.8,
+                            transition: 'opacity 0.2s',
+                            ':hover': {
+                              opacity: 1,
+                              backgroundColor: 'transparent'
+                            }
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
                   </div>
                 </Option>
               ))}
@@ -684,22 +1234,117 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
             label={<span style={formItemStyle}>Category</span>}
           >
             <Select
-              placeholder="Select category"
-              style={selectStyle}
-              popupClassName="custom-select-dropdown"
-            >
-              {categories.map((category) => (
-                <Option key={category.id} value={category.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div
+              ref={categorySelectRef}
+              open={categoryDropdownOpen}
+              onDropdownVisibleChange={setCategoryDropdownOpen}
+              placeholder="Select or type to filter categories"
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
+                }
+              }}
+              showSearch
+              allowClear
+              filterOption={(input, option) =>
+                option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
+              }
+              dropdownRender={(menu) => (
+                <div
+                  style={{
+                    position: 'relative',
+                    maxHeight: '400px'
+                  }}
+                >
+                  <div style={{
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    paddingBottom: '48px'
+                  }}>
+                    {menu}
+                  </div>
+                  <div style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    padding: '8px 12px',
+                    borderTop: '1px solid #f0f0f0',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddCategoryClick}
                       style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: category.color || '#1890ff'
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
                       }}
-                    />
-                    {category.name}
+                    >
+                      Add Category
+                    </Button>
+                  </div>
+                </div>
+              )}
+            >
+              {categoriesData?.data?.map((category) => (
+                <Option key={category.id} value={category.id}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: category.color || '#1890ff'
+                        }}
+                      />
+                      {category.name}
+                    </div>
+                    {form.getFieldValue('category') !== category.id && (
+                      <Popconfirm
+                        title="Delete Category"
+                        description="Are you sure you want to delete this category?"
+                        onConfirm={(e) => handleDeleteCategory(e, category.id)}
+                        onCancel={(e) => e.stopPropagation()}
+                        okText="Yes"
+                        cancelText="No"
+                        placement="left"
+                      >
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.8,
+                            transition: 'opacity 0.2s',
+                            ':hover': {
+                              opacity: 1,
+                              backgroundColor: 'transparent'
+                            }
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
                   </div>
                 </Option>
               ))}
@@ -722,7 +1367,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 height: 'auto',
                 minHeight: '48px'
               }}
-              popupClassName="custom-select-dropdown"
+              popupClassName="custom-select-dropdown sticky-add-button"
               showSearch
               optionFilterProp="children"
               maxTagCount={2}
@@ -896,125 +1541,389 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         <div className="section-title" style={{ marginBottom: '16px' }}>
           <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
         </div>
+
+        {/* Contact mode toggle */}
+        <div className="contact-mode-toggle" style={{
+          display: 'flex',
+          borderBottom: '1px solid #e5e7eb',
+          marginBottom: '24px'
+        }}>
+          <div
+            className={`mode-option ${contactMode === 'existing' ? 'active' : ''}`}
+            onClick={() => handleContactModeChange('existing')}
+            style={{
+              padding: '12px 24px',
+              cursor: 'pointer',
+              position: 'relative',
+              color: contactMode === 'existing' ? '#1890ff' : '#6b7280',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FiUsers style={{ fontSize: '16px' }} />
+            Select Existing
+            {contactMode === 'existing' && (
+              <div style={{
+                position: 'absolute',
+                bottom: '-1px',
+                left: 0,
+                right: 0,
+                height: '2px',
+                background: '#1890ff'
+              }} />
+            )}
+          </div>
+          <div
+            className={`mode-option ${contactMode === 'new' ? 'active' : ''}`}
+            onClick={() => handleContactModeChange('new')}
+            style={{
+              padding: '12px 24px',
+              cursor: 'pointer',
+              position: 'relative',
+              color: contactMode === 'new' ? '#1890ff' : '#6b7280',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FiUserPlus style={{ fontSize: '16px' }} />
+            Add New
+            {contactMode === 'new' && (
+              <div style={{
+                position: 'absolute',
+                bottom: '-1px',
+                left: 0,
+                right: 0,
+                height: '2px',
+                background: '#1890ff'
+              }} />
+            )}
+          </div>
+        </div>
+
+        {/* Form fields based on mode */}
         <div className="form-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '16px',
           marginBottom: '32px'
         }}>
-          <Form.Item
-            name="firstName"
-            label={<span style={formItemStyle}>First Name</span>}
-          >
-            <Input
-              prefix={<FiUser style={prefixIconStyle} />}
-              placeholder="Enter first name"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="lastName"
-            label={<span style={formItemStyle}>Last Name</span>}
-          >
-            <Input
-              prefix={<FiUser style={prefixIconStyle} />}
-              placeholder="Enter last name"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="email"
-            label={<span style={formItemStyle}>Email</span>}
-            rules={[
-              { type: "email", message: "Please enter a valid email" }
-            ]}
-          >
-            <Input
-              prefix={<FiMail style={prefixIconStyle} />}
-              placeholder="Enter email address"
-              style={inputStyle}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="phoneGroup"
-            label={<span style={formItemStyle}>Phone Number</span>}
-            className="combined-input-item"
-          >
-            <Input.Group compact className="phone-input-group">
+          {contactMode === 'existing' ? (
+            <>
               <Form.Item
-                name="phoneCode"
-                noStyle
-                initialValue={defaultPhoneCode}
-                rules={[{ required: true, message: 'Please select country code' }]}
+                name="company_id"
+                label={<span style={formItemStyle}>Company Name</span>}
               >
                 <Select
-                  style={{ width: '120px' }}
-                  className="phone-code-select"
-                  dropdownMatchSelectWidth={120}
-                  suffixIcon={<FiChevronDown size={14} />}
-                  popupClassName="custom-select-dropdown"
-                  showSearch
-                  optionFilterProp="children"
-                  filterOption={(input, option) => {
-                    const countryCode = option?.children?.props?.children?.[0]?.props?.children;
-                    const phoneCode = option?.children?.props?.children?.[1]?.props?.children;
-                    return (
-                      countryCode?.toString().toLowerCase().includes(input.toLowerCase()) ||
-                      phoneCode?.toString().toLowerCase().includes(input.toLowerCase())
-                    );
+                  placeholder="Select company"
+                  onChange={handleCompanyChange}
+                  style={{
+                    ...selectStyle,
+                    dropdownStyle: {
+                      maxHeight: '400px',
+                      overflow: 'hidden'
+                    }
                   }}
+                  allowClear
+                  suffixIcon={null}
+                  dropdownRender={(menu) => (
+                    <div
+                      style={{
+                        position: 'relative',
+                        maxHeight: '400px'
+                      }}
+                    >
+                      <div style={{
+                        maxHeight: '150px',
+                        overflowY: 'auto',
+                        paddingBottom: '48px'
+                      }}>
+                        {menu}
+                      </div>
+                      <div style={{
+                        position: 'sticky',
+                        bottom: 0,
+                        padding: '8px 12px',
+                        borderTop: '1px solid #f0f0f0',
+                        backgroundColor: '#ffffff',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddCompanyClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Company
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 >
-                  {countries?.map((country) => (
-                    <Option key={country.id} value={country.id}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
-                        <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
+                  {companyAccountsData?.data?.map((company) => (
+                    <Option key={company.id} value={company.id}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 0'
+                      }}>
+                        <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{
+                            fontWeight: '500',
+                            color: '#111827'
+                          }}>{company.company_name}</span>
+                          {company.company_site && (
+                            <span style={{
+                              fontSize: '12px',
+                              color: '#6B7280'
+                            }}>{company.company_site}</span>
+                          )}
+                        </div>
                       </div>
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
+
               <Form.Item
-                name="telephone"
-                noStyle
+                name="contact_id"
+                label={<span style={formItemStyle}>Contact Name</span>}
+              >
+                <Select
+                  placeholder="Select contact name"
+                  style={{
+                    ...selectStyle,
+                    dropdownStyle: {
+                      maxHeight: '400px',
+                      overflow: 'hidden'
+                    }
+                  }}
+                  suffixIcon={null}
+                  showSearch
+                  allowClear
+                  onChange={handleContactChange}
+                  filterOption={(input, option) => {
+                    const contact = contactsData?.data?.find(
+                      (c) => c.id === option.value
+                    );
+                    if (!contact) return false;
+                    const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
+                    const companyName = companyAccountsData?.data?.find(
+                      (c) => c.id === contact.company_name
+                    )?.company_name?.toLowerCase() || '';
+                    return fullName.includes(input.toLowerCase()) ||
+                      companyName.includes(input.toLowerCase());
+                  }}
+                  dropdownRender={(menu) => (
+                    <div
+                      style={{
+                        position: 'relative',
+                        maxHeight: '400px'
+                      }}
+                    >
+                      <div style={{
+                        maxHeight: '150px',
+                        overflowY: 'auto',
+                        paddingBottom: '48px'
+                      }}>
+                        {menu}
+                      </div>
+                      <div style={{
+                        position: 'sticky',
+                        bottom: 0,
+                        padding: '8px 12px',
+                        borderTop: '1px solid #f0f0f0',
+                        backgroundColor: '#ffffff',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddContactClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Contact
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                >
+                  {contactsData?.data?.map((contact) => {
+                    const companyName = companyAccountsData?.data?.find(
+                      (c) => c.id === contact.company_name
+                    )?.company_name || "No Company";
+
+                    return (
+                      <Option key={contact.id} value={contact.id}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '4px 0'
+                        }}>
+                          <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            flex: 1,
+                            minWidth: 0
+                          }}>
+                            <span style={{
+                              fontWeight: '500',
+                              color: '#111827',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
+                            <span style={{
+                              color: '#6B7280',
+                              fontSize: '12px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>
+                              <FiBriefcase style={{ fontSize: '12px' }} />
+                              {companyName}
+                            </span>
+                          </div>
+                        </div>
+                      </Option>
+                    );
+                  })}
+                </Select>
+              </Form.Item>
+            </>
+          ) : (
+            <>
+              <Form.Item
+                name="firstName"
+                label={<span style={formItemStyle}>First Name</span>}
+              >
+                <Input
+                  prefix={<FiUser style={prefixIconStyle} />}
+                  placeholder="Enter first name"
+                  style={inputStyle}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="lastName"
+                label={<span style={formItemStyle}>Last Name</span>}
+              >
+                <Input
+                  prefix={<FiUser style={prefixIconStyle} />}
+                  placeholder="Enter last name"
+                  style={inputStyle}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="email"
+                label={<span style={formItemStyle}>Email</span>}
                 rules={[
-                  { required: true, message: 'Please enter phone number' },
-                  { pattern: /^\d+$/, message: 'Please enter valid phone number' }
+                  {
+                    type: "email",
+                    message: "Please enter a valid email",
+                    validateTrigger: ['onChange', 'onBlur'],
+                    transform: (value) => value?.trim() || null
+                  }
                 ]}
               >
                 <Input
-                  style={{ width: 'calc(100% - 120px)' }}
-                  placeholder="Enter phone number"
-                  maxLength={15}
+                  prefix={<FiMail style={prefixIconStyle} />}
+                  placeholder="Enter email address"
+                  style={inputStyle}
                 />
               </Form.Item>
-            </Input.Group>
-          </Form.Item>
 
-          <Form.Item
-            name="company_name"
-            label={<span style={formItemStyle}>Company Name</span>}
-          >
-            <Input
-              prefix={<FiBriefcase style={prefixIconStyle} />}
-              placeholder="Enter company name"
-              style={inputStyle}
-            />
-          </Form.Item>
+              <Form.Item
+                name="phoneGroup"
+                label={<span style={formItemStyle}>Phone Number</span>}
+                className="combined-input-item"
+              >
+                <Input.Group compact className="phone-input-group">
+                  <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                    <Select
+                      style={{ width: '120px' }}
+                      className="phone-code-select"
+                      dropdownMatchSelectWidth={120}
+                      suffixIcon={<FiChevronDown size={14} />}
+                      popupClassName="custom-select-dropdown sticky-add-button"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option?.children?.props?.children[0]?.props?.children?.toLowerCase().includes(input.toLowerCase())
+                      }
+                    >
+                      {countries?.map((country) => (
+                        <Option key={country.id} value={country.id}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
+                            <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
+                          </div>
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item
+                    name="telephone"
+                    noStyle
+                  >
+                    <InputNumber
+                      style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
+                      placeholder="Enter phone number"
+                    />
+                  </Form.Item>
+                </Input.Group>
+              </Form.Item>
 
-          <Form.Item
-            name="address"
-            label={<span style={formItemStyle}>Address</span>}
-          >
-            <Input
-              prefix={<FiMapPin style={prefixIconStyle} />}
-              placeholder="Enter address"
-              style={inputStyle}
-            />
-          </Form.Item>
+              <Form.Item
+                name="address"
+                label={<span style={formItemStyle}>Address</span>}
+              >
+                <Input
+                  prefix={<FiMapPin style={prefixIconStyle} />}
+                  placeholder="Enter address"
+                  style={inputStyle}
+                />
+              </Form.Item>
+            </>
+          )}
         </div>
 
         <Divider style={{ margin: "24px 0" }} />
@@ -1075,6 +1984,196 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         isOpen={isAddPipelineVisible}
         onClose={() => setIsAddPipelineVisible(false)}
       />
+
+      <AddCompanyModal
+        open={isAddCompanyVisible}
+        onCancel={() => setIsAddCompanyVisible(false)}
+        onSuccess={handleCompanyCreationSuccess}
+      />
+
+      <AddContactModal
+        open={isAddContactVisible}
+        onCancel={() => setIsAddContactVisible(false)}
+        onSuccess={handleContactCreationSuccess}
+      />
+
+      <AddStageModal
+        isOpen={isAddStageVisible}
+        onClose={() => setIsAddStageVisible(false)}
+        onSuccess={handleStageCreationSuccess}
+        pipelineId={selectedPipeline}
+      />
+
+      <AddSourceModal
+        isOpen={isAddSourceVisible}
+        onClose={(success) => {
+          setIsAddSourceVisible(false);
+          if (success) {
+            setSourceDropdownOpen(true);
+          }
+        }}
+      />
+
+      <AddCategoryModal
+        isOpen={isAddCategoryVisible}
+        onClose={(success) => {
+          setIsAddCategoryVisible(false);
+          if (success) {
+            setCategoryDropdownOpen(true);
+          }
+        }}
+      />
+
+      <AddStatusModal
+        isOpen={isAddStatusVisible}
+        onClose={(success) => {
+          setIsAddStatusVisible(false);
+          if (success) {
+            setStatusDropdownOpen(true);
+          }
+        }}
+      />
+
+      <Modal
+        title={null}
+        open={isSelectDefaultModalOpen}
+        onCancel={() => {
+          setIsSelectDefaultModalOpen(false);
+          setStageToDelete(null);
+        }}
+        footer={null}
+        width={520}
+        destroyOnClose={true}
+        centered
+        closeIcon={null}
+        className="pro-modal custom-modal"
+      >
+        <div className="modal-header" style={{
+          background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+          padding: "24px",
+          color: "#ffffff",
+          position: "relative",
+        }}>
+          <Button
+            type="text"
+            onClick={() => {
+              setIsSelectDefaultModalOpen(false);
+              setStageToDelete(null);
+            }}
+            style={{
+              position: "absolute",
+              top: "16px",
+              right: "16px",
+              color: "#ffffff",
+              background: "rgba(255, 255, 255, 0.2)",
+              borderRadius: "8px",
+              border: "none",
+              width: "32px",
+              height: "32px",
+              display: "flex",
+              padding: 0,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <FiX style={{ fontSize: "20px" }} />
+          </Button>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <div style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <FiLayers style={{ fontSize: "24px", color: "#ffffff" }} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "24px", fontWeight: 600, color: "#ffffff" }}>
+                Select New Default Stage
+              </h2>
+              <Text style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.85)" }}>
+                Choose a new default stage for this pipeline
+              </Text>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '24px' }}>
+          <Text type="secondary" style={{ display: 'block', marginBottom: '20px' }}>
+            Since you're deleting a default stage, please select a new default stage for this pipeline:
+          </Text>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {filteredStages
+              .filter(s => s.pipeline === stageToDelete?.pipeline && s.id !== stageToDelete?.id)
+              .map(stage => (
+                <Button
+                  key={stage.id}
+                  onClick={() => handleSetNewDefaultAndDelete(stage.id)}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    padding: '16px',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    gap: '16px',
+                    border: '1px solid #e6e8eb',
+                    borderRadius: '10px',
+                    background: '#ffffff',
+                  }}
+                >
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ffffff',
+                  }}>
+                    <FiLayers style={{ fontSize: '20px' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '16px', fontWeight: 500, color: '#111827' }}>
+                      {stage.stageName}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#6B7280' }}>
+                      {getPipelineName(stage.pipeline)}
+                    </div>
+                  </div>
+                </Button>
+              ))}
+          </div>
+          <div style={{
+            marginTop: '24px',
+            paddingTop: '24px',
+            borderTop: '1px solid #f0f0f0',
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}>
+            <Button
+              onClick={() => {
+                setIsSelectDefaultModalOpen(false);
+                setStageToDelete(null);
+              }}
+              style={{
+                padding: '8px 24px',
+                height: '44px',
+                borderRadius: '10px',
+                border: '1px solid #e6e8eb',
+                fontWeight: 500,
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <style jsx global>{`
         .lead-form-modal {
@@ -1229,6 +2328,32 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
 
           .role-indicator {
             animation: pulse 2s infinite;
+          }
+
+          .ant-select-item {
+            &:hover {
+              .delete-stage-btn {
+                opacity: 1;
+                &:hover {
+                  background-color: #fff1f0;
+                }
+              }
+            }
+          }
+        }
+
+        .sticky-add-button {
+          .ant-select-dropdown-content {
+            position: relative;
+          }
+
+          .ant-select-item {
+            padding: 8px 12px;
+          }
+
+          .ant-select-item-option-content {
+            white-space: normal;
+            word-break: break-word;
           }
         }
       `}</style>

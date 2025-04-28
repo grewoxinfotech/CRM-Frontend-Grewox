@@ -135,8 +135,8 @@ const CreateLead = ({
   }, [initialValues, form, defaultCurrency, defaultPhoneCode]);
 
   useEffect(() => {
-    // Watch for changes in contact_name field
-    const contactId = form.getFieldValue('contact_name');
+    // Watch for changes in contact_id field
+    const contactId = form.getFieldValue('contact_id');
     if (contactId) {
       const selectedContact = contactsResponse?.data?.find(c => c.id === contactId);
       if (selectedContact) {
@@ -147,53 +147,19 @@ const CreateLead = ({
           email: selectedContact.email || '',
           telephone: selectedContact.phone || '',
           address: selectedContact.address || '',
-          company_name: selectedContact.company_name || undefined
+          company_id: selectedContact.company_name || undefined
         });
       }
     }
-  }, [form.getFieldValue('contact_name'), contactsResponse?.data]);
+  }, [form.getFieldValue('contact_id'), contactsResponse?.data]);
 
   const handleSubmit = async (values) => {
     try {
-      // If in "Add New" mode and any contact details are filled, create contact first
-      if (contactMode === 'new' &&
-        (values.firstName || values.lastName || values.email || values.telephone || values.address)) {
-
-        try {
-          // Create new contact using RTK Query mutation
-          const contactData = {
-            contact_owner: loggedInUser?.id || "",
-            first_name: values.firstName || "",
-            last_name: values.lastName || "",
-            company_name: values.company_name || "",
-            email: values.email || "",
-            phone: values.telephone ? values.telephone.toString() : "",  // Convert to string
-            contact_source: "",
-            description: "",
-            address: values.address || "",
-            city: "",
-            state: "",
-            country: "",
-            client_id: loggedInUser.client_id
-          };
-
-          const contactResponse = await createContact(contactData).unwrap();
-
-          // If contact was created successfully, use its ID
-          if (contactResponse?.data?.id) {
-            values.contact_name = contactResponse.data.id;
-          }
-        } catch (error) {
-          console.error('Error creating contact:', error);
-          message.error(error.data?.message || 'Failed to create contact');
-          return;
-        }
-      }
-
-      // Get the selected country's phone code
-      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+      let contactId = values.contact_id;
+      let leadData;
 
       // Format phone number with country code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
       const formattedPhone = values.telephone ?
         `+${selectedCountry?.phoneCode?.replace('+', '')} ${values.telephone}` :
         null;
@@ -201,21 +167,59 @@ const CreateLead = ({
       // Get default stage for selected pipeline
       const defaultStage = stages.find(stage => stage.pipeline === values.pipeline && stage.isDefault);
 
-      const formData = {
-        ...values,
-        inquiry_id: values.inquiry_id || initialValues?.inquiry_id || null,
-        telephone: formattedPhone,
+      // Prepare the base lead data
+      const leadFormData = {
+        leadTitle: values.leadTitle,
         leadStage: defaultStage?.id,
+        pipeline: values.pipeline,
+        currency: values.currency,
+        leadValue: values.leadValue,
+        source: values.source,
+        category: values.category || othersCategory?.id,
         status: pendingStatus?.id,
         interest_level: "medium",
-        lead_members: { lead_members: [] },
-        assigned: [],
-        files: values.files || [],
-        pipeline: values.pipeline,
-        category: values.category || "others" // Default to "others" if empty
+        inquiry_id: values.inquiry_id || initialValues?.inquiry_id || null,
+        company_id: values.company_id || null,
+        contact_id: null
       };
 
-      await createLead(formData).unwrap();
+      // If in "Add New" mode and any contact details are filled
+      if (contactMode === 'new' &&
+        (values.firstName || values.lastName || values.email || values.telephone || values.address)) {
+
+        try {
+          // Create contact first
+          const contactData = {
+            contact_owner: loggedInUser?.id || "",
+            first_name: values.firstName || "",
+            last_name: values.lastName || "",
+            company_name: values.company_id || "",
+            email: values.email || "",
+            phone_code: values.phoneCode || "",
+            phone: values.telephone ? values.telephone.toString() : "",
+            contact_source: "lead",
+            description: `Lead created from lead form by ${loggedInUser?.name} on ${new Date().toLocaleDateString()}`,
+            address: values.address || "",
+            client_id: loggedInUser.client_id
+          };
+
+          const contactResponse = await createContact(contactData).unwrap();
+          contactId = contactResponse.data.id;
+
+          // Update lead data with the new contact ID
+          leadFormData.contact_id = contactId;
+        } catch (error) {
+          console.error('Error creating contact:', error);
+          message.error(error.data?.message || 'Failed to create contact');
+          return;
+        }
+      } else {
+        // For existing contact, use the contact's ID
+        leadFormData.contact_id = values.contact_id;
+      }
+
+      // Create the lead with all the data
+      const leadResponse = await createLead(leadFormData).unwrap();
       message.success("Lead created successfully");
       form.resetFields();
       onCancel();
@@ -336,43 +340,62 @@ const CreateLead = ({
   const handleContactChange = (contactId) => {
     if (!contactId) {
       form.setFieldsValue({
-        contact_name: undefined,
-        company_name: undefined
-      });
-      return;
-    }
-
-    const selectedContact = contactsResponse?.data?.find(c => c.id === contactId);
-    if (selectedContact && selectedContact.company_name) {
-      form.setFieldsValue({
-        company_name: selectedContact.company_name
-      });
-    }
-  };
-
-  // Update handleCompanyChange to not clear contact fields if company was set by contact selection
-  const handleCompanyChange = (companyId) => {
-    // Only clear contact fields if the company was manually changed
-    if (form.getFieldValue('contact_name') === undefined) {
-      form.setFieldsValue({
-        company_name: companyId,
+        contact_id: undefined,
+        company_id: undefined,
         firstName: undefined,
         lastName: undefined,
         email: undefined,
         telephone: undefined,
         address: undefined,
       });
-    } else {
-      // If there's a contact selected, only update company
+      return;
+    }
+
+    const selectedContact = contactsResponse?.data?.find(c => c.id === contactId);
+    if (selectedContact) {
+      // Update form with contact details
       form.setFieldsValue({
-        company_name: companyId
+        contact_id: contactId,
+        firstName: selectedContact.first_name || '',
+        lastName: selectedContact.last_name || '',
+        email: selectedContact.email || '',
+        telephone: selectedContact.phone || '',
+        address: selectedContact.address || '',
+        company_id: selectedContact.company_name // Set company_id from contact's company_name
       });
     }
   };
 
+  const handleCompanyChange = (companyId) => {
+    if (!companyId) {
+      // If company is cleared and we're in existing contact mode
+      if (contactMode === 'existing') {
+        form.setFieldsValue({
+          company_id: undefined
+        });
+      } else {
+        // If in new contact mode, clear all contact fields
+        form.setFieldsValue({
+          company_id: undefined,
+          firstName: undefined,
+          lastName: undefined,
+          email: undefined,
+          telephone: undefined,
+          address: undefined,
+        });
+      }
+      return;
+    }
+
+    // Set the company ID
+    form.setFieldsValue({
+      company_id: companyId
+    });
+  };
+
   const handleClearCompany = () => {
     form.setFieldsValue({
-      company_name: undefined,
+      company_id: undefined,
       firstName: undefined,
       lastName: undefined,
       email: undefined,
@@ -650,7 +673,104 @@ const CreateLead = ({
             </Input.Group>
           </Form.Item>
 
-         
+          <Form.Item
+            name="source"
+            label={<span style={formItemStyle}>Source</span>}
+            rules={[{ required: true, message: "Please select source" }]}
+          >
+            <Select
+              ref={sourceSelectRef}
+              open={sourceDropdownOpen}
+              onDropdownVisibleChange={setSourceDropdownOpen}
+              placeholder="Select source"
+              style={selectStyle}
+              popupClassName="custom-select-dropdown"
+              dropdownRender={(menu) => (
+                <div onClick={(e) => e.stopPropagation()}>
+                  {menu}
+                  <Divider style={{ margin: '8px 0' }} />
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddSourceClick}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Add Source
+                    </Button>
+                  </div>
+                </div>
+              )}
+            >
+              {sourcesData?.data?.map((source) => (
+                <Option key={source.id} value={source.id}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: source.color || '#1890ff'
+                        }}
+                      />
+                      {source.name}
+                    </div>
+                    <Popconfirm
+                      title="Delete Source"
+                      description="Are you sure you want to delete this source?"
+                      onConfirm={(e) => handleDeleteSource(e, source.id)}
+                      onCancel={(e) => e.stopPropagation()}
+                      okText="Yes"
+                      cancelText="No"
+                      placement="left"
+                    >
+                      <Button
+                        type="text"
+                        icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
+                        size="small"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          opacity: 0.8,
+                          transition: 'opacity 0.2s',
+                          ':hover': {
+                            opacity: 1,
+                            backgroundColor: 'transparent'
+                          }
+                        }}
+                      />
+                    </Popconfirm>
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
 
           <Form.Item
             name="category"
@@ -768,7 +888,7 @@ const CreateLead = ({
               setContactMode(value);
               form.setFieldsValue({
                 company_name: undefined,
-                contact_name: undefined,
+                contact_id: undefined,
                 firstName: undefined,
                 lastName: undefined,
                 email: undefined,
@@ -822,214 +942,179 @@ const CreateLead = ({
             // Show existing contact/company selection fields
             <>
               <Form.Item
-                shouldUpdate={(prevValues, currentValues) =>
-                  prevValues.contact_name !== currentValues.contact_name
-                }
+                name="company_id"
+                label={<span style={formItemStyle}>Company Name</span>}
               >
-                {({ getFieldValue, setFieldsValue }) => (
-                  <Form.Item
-                    name="company_name"
-                    label={<span style={formItemStyle}>Company Name</span>}
-                  >
-                    <div style={{ position: 'relative' }}>
-                      <Select
-                        placeholder="Select company"
-                        onChange={handleCompanyChange}
-                        style={selectStyle}
-                        allowClear
-                        suffixIcon={null}
-                        value={getFieldValue('company_name')}
-                        dropdownRender={(menu) => (
-                          <div onClick={(e) => e.stopPropagation()}>
-                            {menu}
-                            <Divider style={{ margin: '8px 0' }} />
-                            <div style={{
-                              padding: '8px 12px',
-                              display: 'flex',
-                              justifyContent: 'center'
-                            }}>
-                              <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAddCompanyClick}
-                                style={{
-                                  width: '100%',
-                                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                  border: 'none',
-                                  height: '40px',
-                                  borderRadius: '8px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '8px',
-                                  boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                                  fontWeight: '500',
-                                }}
-                              >
-                                Add Company
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      >
-                        {companyAccountsResponse?.data?.map((company) => (
-                          <Option key={company.id} value={company.id}>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '4px 0'
-                            }}>
-                              <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{
-                                  fontWeight: '500',
-                                  color: '#111827'
-                                }}>{company.company_name}</span>
-                                {company.company_site && (
-                                  <span style={{
-                                    fontSize: '12px',
-                                    color: '#6B7280'
-                                  }}>{company.company_site}</span>
-                                )}
-                              </div>
-                            </div>
-                          </Option>
-                        ))}
-                      </Select>
+                <Select
+                  placeholder="Select company"
+                  onChange={handleCompanyChange}
+                  style={selectStyle}
+                  allowClear
+                  suffixIcon={null}
+                  value={form.getFieldValue('company_id')}
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{
+                        padding: '8px 12px',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddCompanyClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Company
+                        </Button>
+                      </div>
                     </div>
-                  </Form.Item>
-                )}
+                  )}
+                >
+                  {companyAccountsResponse?.data?.map((company) => (
+                    <Option key={company.id} value={company.id}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px 0'
+                      }}>
+                        <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{
+                            fontWeight: '500',
+                            color: '#111827'
+                          }}>{company.company_name}</span>
+                          {company.company_site && (
+                            <span style={{
+                              fontSize: '12px',
+                              color: '#6B7280'
+                            }}>{company.company_site}</span>
+                          )}
+                        </div>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
 
               <Form.Item
-                name="contact_name"
+                name="contact_id"
                 label={<span style={formItemStyle}>Contact Name</span>}
               >
-                <div style={{ position: 'relative' }}>
-                  <Select
-                    placeholder="Select contact name"
-                    style={selectStyle}
-                    suffixIcon={null}
-                    showSearch
-                    allowClear
-                    onChange={(value) => {
-                      if (!value) {
-                        form.setFieldsValue({
-                          contact_name: undefined,
-                          company_name: undefined
-                        });
-                        return;
-                      }
-
-                      const selectedContact = contactsResponse?.data?.find(c => c.id === value);
-                      if (selectedContact && selectedContact.company_name) {
-                        // Force immediate update of both fields
-                        form.setFields([
-                          {
-                            name: 'contact_name',
-                            value: value
-                          },
-                          {
-                            name: 'company_name',
-                            value: selectedContact.company_name
-                          }
-                        ]);
-                      }
-                    }}
-                    filterOption={(input, option) => {
-                      const contact = contactsResponse?.data?.find(
-                        (c) => c.id === option.value
-                      );
-                      if (!contact) return false;
-                      const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
-                      const companyName = companyAccountsResponse?.data?.find(
-                        (c) => c.id === contact.company_name
-                      )?.company_name?.toLowerCase() || '';
-                      return fullName.includes(input.toLowerCase()) ||
-                        companyName.includes(input.toLowerCase());
-                    }}
-                    dropdownRender={(menu) => (
-                      <div onClick={(e) => e.stopPropagation()}>
-                        {menu}
-                        <Divider style={{ margin: '8px 0' }} />
-                        <div style={{
-                          padding: '8px 12px',
-                          display: 'flex',
-                          justifyContent: 'center'
-                        }}>
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddContactClick}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                              border: 'none',
-                              height: '40px',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add Contact
-                          </Button>
-                        </div>
+                <Select
+                  placeholder="Select contact name"
+                  style={selectStyle}
+                  suffixIcon={null}
+                  showSearch
+                  allowClear
+                  onChange={handleContactChange}
+                  filterOption={(input, option) => {
+                    const contact = contactsResponse?.data?.find(
+                      (c) => c.id === option.value
+                    );
+                    if (!contact) return false;
+                    const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
+                    const companyName = companyAccountsResponse?.data?.find(
+                      (c) => c.id === contact.company_name
+                    )?.company_name?.toLowerCase() || '';
+                    return fullName.includes(input.toLowerCase()) ||
+                      companyName.includes(input.toLowerCase());
+                  }}
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{
+                        padding: '8px 12px',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddContactClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Contact
+                        </Button>
                       </div>
-                    )}
-                  >
-                    {contactsResponse?.data?.map((contact) => {
-                      const companyName = companyAccountsResponse?.data?.find(
-                        (c) => c.id === contact.company_name
-                      )?.company_name || "No Company";
+                    </div>
+                  )}
+                >
+                  {contactsResponse?.data?.map((contact) => {
+                    const companyName = companyAccountsResponse?.data?.find(
+                      (c) => c.id === contact.company_name
+                    )?.company_name || "No Company";
 
-                      return (
-                        <Option key={contact.id} value={contact.id}>
+                    return (
+                      <Option key={contact.id} value={contact.id}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '4px 0'
+                        }}>
+                          <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
-                            padding: '4px 0'
+                            flex: 1,
+                            minWidth: 0
                           }}>
-                            <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
-                            <div style={{
+                            <span style={{
+                              fontWeight: '500',
+                              color: '#111827',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
+                            <span style={{
+                              color: '#6B7280',
+                              fontSize: '12px',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '8px',
-                              flex: 1,
-                              minWidth: 0
+                              gap: '4px',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
                             }}>
-                              <span style={{
-                                fontWeight: '500',
-                                color: '#111827',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
-                              <span style={{
-                                color: '#6B7280',
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                <FiBriefcase style={{ fontSize: '12px' }} />
-                                {companyName}
-                              </span>
-                            </div>
+                              <FiBriefcase style={{ fontSize: '12px' }} />
+                              {companyName}
+                            </span>
                           </div>
-                        </Option>
-                      );
-                    })}
-                  </Select>
-                </div>
+                        </div>
+                      </Option>
+                    );
+                  })}
+                </Select>
               </Form.Item>
             </>
           ) : (
@@ -1249,7 +1334,7 @@ const CreateLead = ({
             }
 
             .ant-select-selection-placeholder {
-              color: #9CA3AF !important;
+              color: #fff !important;
             }
           }
 

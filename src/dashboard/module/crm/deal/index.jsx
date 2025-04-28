@@ -16,7 +16,7 @@ import DealList from './DealList';
 import EditDeal from './EditDeal';
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
-import { useDeleteDealMutation, useGetDealsQuery } from './services/DealApi';
+import { useDeleteDealMutation, useGetDealsQuery } from './services/dealApi';
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -44,7 +44,7 @@ const Deal = () => {
         if (!searchText) return data;
 
         const searchLower = searchText.toLowerCase();
-        return data.filter(deal => 
+        return data.filter(deal =>
             deal.dealTitle?.toLowerCase().includes(searchLower) ||
             deal.company_name?.toLowerCase().includes(searchLower)
         );
@@ -151,7 +151,7 @@ const Deal = () => {
             head: [Object.keys(data[0])],
             body: data.map((item) => Object.values(item)),
             margin: { top: 20 },
-            styles: { 
+            styles: {
                 fontSize: 8,
                 cellPadding: 3,
                 overflow: 'linebreak'
@@ -278,7 +278,7 @@ const Deal = () => {
                 onCancel={() => setIsModalOpen(false)}
                 pipelines={pipelines}
                 dealStages={dealStages}
-      
+
             />
 
             <EditDeal

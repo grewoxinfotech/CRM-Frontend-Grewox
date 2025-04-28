@@ -91,13 +91,13 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
         stageType: "deal",
         isDefault: isDefault
       };
-      await addDealStage(createData).unwrap();
+      const response = await addDealStage(createData).unwrap();
 
       message.success("Deal stage created successfully");
       form.resetFields();
       setIsDefault(false);
-      refetchStages(); // Refetch stages to update the list
-      onClose(true);
+      await refetchStages(); // Refetch stages to update the list
+      onClose(true, response); // Pass back the created stage data
     } catch (error) {
       message.error("Failed to create deal stage");
     }
@@ -234,6 +234,8 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
             name="pipeline"
             label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline</span>}
             rules={[{ required: true, message: "Please select a pipeline" }]}
+            initialValue={pipelineId}
+            style={{ display: pipelineId ? 'none' : 'block' }}
           >
             <Select
               ref={selectRef}
@@ -244,6 +246,7 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
                 width: "100%",
                 height: "48px",
               }}
+              disabled={!!pipelineId}
               dropdownRender={(menu) => (
                 <div onClick={(e) => e.stopPropagation()}>
                   {menu}

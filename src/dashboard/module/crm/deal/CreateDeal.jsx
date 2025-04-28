@@ -11,6 +11,7 @@ import {
   message,
   Spin,
   DatePicker,
+  Tabs,
 } from "antd";
 import {
   FiUser,
@@ -25,23 +26,21 @@ import {
   FiCalendar,
   FiInfo,
 } from "react-icons/fi";
-import { useCreateDealMutation } from "./services/dealApi";
+import { useCreateDealMutation, useGetDealsQuery } from "./services/dealApi";
 import { PlusOutlined } from "@ant-design/icons";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import "./Deal.scss";
-import { useGetSourcesQuery } from "../crmsystem/souce/services/SourceApi";
+import { useGetSourcesQuery, useGetCategoriesQuery } from "../crmsystem/souce/services/SourceApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDispatch, useSelector } from "react-redux";
-import { useGetProductsQuery } from "../../sales/product&services/services/productApi";
 import dayjs from "dayjs";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useUpdateLeadMutation } from "../lead/services/LeadApi";
-import { useGetContactsQuery } from "../contact/services/contactApi";
+import { useGetContactsQuery, useCreateContactMutation } from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
-
-import AddContactModal from "./AddContactModal";
-import AddCompanyModal from "./AddCompanyModal";
+import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
+import AddContactModal from "../contact/CreateContact";
 import {
   useGetAllCountriesQuery,
   useGetAllCurrenciesQuery,
@@ -54,7 +53,7 @@ const findIndianDefaults = (currencies, countries) => {
   const indiaCountry = countries?.find((c) => c.countryCode === "IN");
   return {
     defaultCurrency: inrCurrency?.currencyCode || "INR",
-    defaultPhoneCode: indiaCountry?.phoneCode?.replace("+", "") || "91",
+    defaultPhoneCode: indiaCountry?.id || undefined,
   };
 };
 
@@ -70,21 +69,21 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dispatch = useDispatch();
   const [manualValue, setManualValue] = useState(0);
-  const [selectedProductPrices, setSelectedProductPrices] = useState({});
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [newCompanyName, setNewCompanyName] = useState("");
 
   const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
+  const [createContact] = useCreateContactMutation();
 
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: dealStages } = useGetLeadStagesQuery();
   const { data: pipelinesData } = useGetPipelinesQuery();
   const pipelines = pipelinesData || [];
   const sources = sourcesData?.data || [];
-  const products = productsData?.data || [];
+  const categories = categoriesData?.data || [];
 
   const {
     data: companyAccountsResponse = { data: [] },
@@ -120,54 +119,33 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         (!selectedPipeline || stage.pipeline === selectedPipeline)
     ) || [];
 
+  // Get default stage for selected pipeline
+  const getDefaultStage = (pipelineId) => {
+    return dealStages?.find(
+      (stage) => stage.stageType === "deal" &&
+        stage.pipeline === pipelineId &&
+        stage.isDefault
+    )?.id;
+  };
+
   // Handle pipeline selection change
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
-
-    form.setFieldValue("stage", undefined);
+    // Set the default stage for this pipeline
+    const defaultStage = getDefaultStage(value);
+    form.setFieldsValue({
+      stage: defaultStage
+    });
   };
 
   // Handle manual value change
   const handleValueChange = (value) => {
     const numValue = parseFloat(value) || 0;
     setManualValue(numValue);
-
-    // Calculate total product prices
-    const productPricesTotal = Object.values(selectedProductPrices).reduce(
-      (sum, price) => sum + price,
-      0
-    );
-
-    // Set form value to manual value plus product prices
-    form.setFieldsValue({ value: numValue + productPricesTotal });
+    form.setFieldsValue({ value: numValue });
   };
 
-  // Handle products selection change
-  const handleProductsChange = (selectedProductIds) => {
-    const newSelectedPrices = {};
-
-    // Calculate prices for selected products
-    selectedProductIds.forEach((productId) => {
-      const product = products.find((p) => p.id === productId);
-      if (product) {
-        newSelectedPrices[productId] = product.price || 0;
-      }
-    });
-
-    // Update selected product prices
-    setSelectedProductPrices(newSelectedPrices);
-
-    // Calculate total of selected product prices
-    const productPricesTotal = Object.values(newSelectedPrices).reduce(
-      (sum, price) => sum + price,
-      0
-    );
-
-    // Update form value with manual value plus product prices
-    form.setFieldsValue({ value: manualValue + productPricesTotal });
-  };
-
-  // Modify the useEffect to remove automatic modal opening
+  // Modify the useEffect to handle lead conversion properly
   useEffect(() => {
     if (leadData && open) {
       // Find the country details
@@ -178,7 +156,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         (c) => c.company_name?.toLowerCase() === leadData.company?.toLowerCase()
       );
 
-      console.log("asdasdsa", leadData);
+      // Get default stage for the pipeline
+      const defaultStage = getDefaultStage(leadData.pipeline);
 
       form.setFieldsValue({
         dealTitle: leadData.leadTitle,
@@ -194,7 +173,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         company_name: existingCompany?.id || undefined,
         leadId: leadData.id,
         pipeline: leadData.pipeline,
-        stage: leadData.stage,
+        stage: defaultStage, // Use default deal stage instead of lead stage
       });
 
       // Set manual value for value field
@@ -222,11 +201,76 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     }
   }, [open, form]);
 
+  const { data: dealsData } = useGetDealsQuery();
+
   const handleSubmit = async (values) => {
     try {
-      // Format phone number with country code
-      const formattedPhone = values.phone
-        ? `+${values.phoneCode} ${values.phone}`
+      // Check if deal with same title already exists
+      const dealExists = dealsData?.data?.some(
+        deal => deal.dealTitle.toLowerCase() === values.dealTitle.toLowerCase()
+      );
+
+      if (dealExists) {
+        message.error("A deal with this title already exists");
+        return;
+      }
+
+      let contactId;
+      console.log('Form Values:', values); // Debug log
+
+      // Only proceed with contact creation if deal name is unique
+      if (contactMode === 'new' &&
+        (values.firstName || values.lastName || values.email || values.telephone || values.address)) {
+        try {
+          // Format phone with country code
+          let formattedPhone = '';
+          if (values.telephone && values.phoneCode) {
+            const selectedCountry = countries.find(c => c.id === values.phoneCode);
+            if (selectedCountry) {
+              formattedPhone = `+${selectedCountry.phoneCode.replace('+', '')} ${values.telephone}`;
+            }
+          }
+
+          // Create contact first
+          const contactData = {
+            first_name: values.firstName || "",
+            last_name: values.lastName || "",
+            company_name: values.company_name || null,
+            email: values.email || "",
+            phone: formattedPhone || "",
+            contact_source: "deal",
+            description: `Contact created from deal form by ${loggedInUser?.username || 'user'}`,
+            address: values.address || "",
+            client_id: loggedInUser?.client_id,
+            contact_owner: loggedInUser?.id
+          };
+
+          console.log('Creating contact with data:', contactData); // Debug log
+
+          const contactResponse = await createContact(contactData).unwrap();
+          console.log('Contact Creation Response:', contactResponse); // Debug log
+
+          if (contactResponse?.id) {
+            contactId = contactResponse.id;
+            message.success('Contact created successfully');
+          } else if (contactResponse?.data?.id) {
+            contactId = contactResponse.data.id;
+            message.success('Contact created successfully');
+          } else {
+            throw new Error('Contact creation failed - no ID returned');
+          }
+        } catch (error) {
+          console.error('Contact Creation Error:', error);
+          message.error(error.data?.message || 'Failed to create contact');
+          return;
+        }
+      } else if (contactMode === 'existing') {
+        contactId = values.firstName; // In existing mode, firstName field contains the contact ID
+      }
+
+      // Format phone number for deal
+      const formattedPhone = values.telephone
+        ? `+${values.phoneCode} ${values.telephone}`
         : null;
 
       const dealData = {
@@ -240,14 +284,15 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         closedDate: values.closedDate
           ? new Date(values.closedDate).toISOString()
           : null,
-        company_name: values.company_name,
         source: values.source,
-        products: { products: values.products || [] },
-        firstName: values.firstName,
-        lastName: values.lastName,
+        company_id: values.company_name || null,
+        contact_id: contactId || null,
+        category: values.category,
         address: values.address,
         leadId: leadData?.id,
       };
+
+      console.log('Creating deal with data:', dealData); // Debug log
 
       // Create the deal
       const dealResponse = await createDeal(dealData).unwrap();
@@ -270,17 +315,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         }
       }
 
-      // message.success("Deal created successfully");
+      message.success("Deal created successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
       console.error("Create Deal Error:", error);
-
-      if (error?.data?.message?.includes("already exists")) {
-        message.error("A deal with this title already exists");
-        return;
-      }
-
       message.error(
         error?.data?.message || "Failed to create deal. Please try again."
       );
@@ -371,6 +410,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       phone: undefined,
       address: undefined,
     });
+
+    // Filter contacts based on selected company
+    if (companyId && contactsResponse?.data) {
+      const filteredContacts = contactsResponse.data.filter(
+        contact => contact.company_name === companyId
+      );
+      setFilteredContacts(filteredContacts);
+    } else {
+      setFilteredContacts([]);
+    }
   };
 
   const handleFirstNameChange = (contactId) => {
@@ -387,8 +436,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         email: contact.email,
         phone: contact.phone?.replace(/^\+\+91\s/, ""),
         address: contact.address,
-        // Only update company_name if it's not already set
-        company_name: currentValues.company_name || contact.company_name,
+        // Only set company_name if contact has a company, otherwise clear it
+        company_name: contact.company_name || undefined,
       });
       setSelectedContact(contact);
     }
@@ -432,6 +481,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     message.success("Company added successfully");
     setNewCompanyName(""); // Reset the new company name
   };
+
+  // Add state to track contact mode
+  const [contactMode, setContactMode] = useState('existing');
 
   return (
     <>
@@ -549,18 +601,21 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 display: "grid",
                 gridTemplateColumns: "repeat(2, 1fr)",
                 gap: "16px",
-                // marginBottom: '32px'
               }}
             >
               <Form.Item
                 name="dealTitle"
-                label={<span style={formItemStyle}>Deal Title</span>}
+                label={<span style={formItemStyle}>Deal Title <span style={{ color: '#ff4d4f' }}>*</span></span>}
                 rules={[
-                  { required: true, message: "Please enter deal title" },
+                  { required: true, message: "Deal title is required" },
                   {
                     min: 3,
                     message: "Deal title must be at least 3 characters",
                   },
+                  {
+                    max: 100,
+                    message: "Deal title cannot exceed 100 characters",
+                  }
                 ]}
               >
                 <Input
@@ -571,8 +626,69 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               </Form.Item>
 
               <Form.Item
-                name="value"
-                label={<span style={formItemStyle}>Deal Value</span>}
+                name="pipeline"
+                label={<span style={formItemStyle}>Pipeline <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                rules={[{ required: true, message: "Pipeline is required" }]}
+              >
+                <Select
+                  ref={selectRef}
+                  open={dropdownOpen}
+                  onDropdownVisibleChange={setDropdownOpen}
+                  placeholder="Select pipeline"
+                  onChange={handlePipelineChange}
+                  style={selectStyle}
+                  suffixIcon={<FiChevronDown size={14} />}
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div
+                        style={{
+                          padding: '8px 12px',
+                          display: 'flex',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddPipelineClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
+                          }}
+                        >
+                          Add Pipeline
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                >
+                  {pipelines.map((pipeline) => (
+                    <Option key={pipeline.id} value={pipeline.id}>
+                      {pipeline.pipeline_name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              {/* Hidden stage field that will be set automatically */}
+              <Form.Item name="stage" hidden={true}>
+                <Input type="hidden" />
+              </Form.Item>
+
+              <Form.Item
+                name="dealValue"
+                label={<span style={formItemStyle}>Deal Value <span style={{ color: '#ff4d4f' }}>*</span></span>}
                 className="combined-input-item"
               >
                 <Input.Group compact className="value-input-group">
@@ -581,11 +697,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     noStyle
                     initialValue={defaultCurrency}
                     rules={[
-                      { required: true, message: "Please select currency" },
+                      { required: true, message: "Currency is required" },
                     ]}
                   >
                     <Select
-                      style={{ width: "90px" }}
+                      style={{ width: "120px" }}
                       className="currency-select"
                       dropdownMatchSelectWidth={false}
                       suffixIcon={<FiChevronDown size={14} />}
@@ -630,7 +746,12 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     name="value"
                     noStyle
                     rules={[
-                      { required: true, message: "Please enter deal value" },
+                      { required: true, message: "Deal value is required" },
+                      {
+                        type: 'number',
+                        min: 0,
+                        message: "Deal value must be greater than or equal to 0"
+                      }
                     ]}
                   >
                     <Input
@@ -644,134 +765,15 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
               </Form.Item>
 
               <Form.Item
-                name="pipeline"
-                label={<span style={formItemStyle}>Pipeline</span>}
-                rules={[
-                  { required: true, message: "Please select a pipeline" },
-                ]}
-              >
-                <Select
-                  ref={selectRef}
-                  open={dropdownOpen}
-                  onDropdownVisibleChange={setDropdownOpen}
-                  placeholder="Select pipeline"
-                  onChange={handlePipelineChange}
-                  style={selectStyle}
-                  suffixIcon={<FiChevronDown size={14} />}
-                  dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      {menu}
-                      <Divider style={{ margin: "8px 0" }} />
-                      <div
-                        style={{
-                          padding: "8px 12px",
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddPipelineClick}
-                          style={{
-                            width: "100%",
-                            background:
-                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                            border: "none",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Add Pipeline
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  popupClassName="custom-select-dropdown"
-                >
-                  {pipelines.map((pipeline) => (
-                    <Option key={pipeline.id} value={pipeline.id}>
-                      {pipeline.pipeline_name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="stage"
-                label={<span style={formItemStyle}>Stage</span>}
-                rules={[{ required: true, message: "Please select a stage" }]}
-              >
-                <Select
-                  placeholder={
-                    selectedPipeline ? "Select stage" : "Select pipeline first"
-                  }
-                  disabled={!selectedPipeline}
-                  style={selectStyle}
-                  suffixIcon={<FiChevronDown size={14} />}
-                  popupClassName="custom-select-dropdown"
-                  listHeight={100}
-                  dropdownStyle={{
-                    maxHeight: "100px",
-                    overflowY: "auto",
-                    scrollbarWidth: "thin",
-                    scrollBehavior: "smooth",
-                  }}
-                >
-                  {filteredStages.map((stage) => (
-                    <Option key={stage.id} value={stage.id}>
-                      {stage.stageName}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="closedDate"
-                label={<span style={formItemStyle}>Expected Close Date</span>}
-                rules={[
-                  {
-                    required: true,
-                    message: "Please select expected close date",
-                  },
-                ]}
-              >
-                <DatePicker
-                  size="large"
-                  format="DD-MM-YYYY"
-                  style={{
-                    width: "100%",
-                    borderRadius: "10px",
-                    height: "48px",
-                    backgroundColor: "#f8fafc",
-                    border: "1px solid #e6e8eb",
-                  }}
-                  disabledDate={(current) => {
-                    return current && current < dayjs().startOf("day");
-                  }}
-                  placeholder="Select date"
-                  suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
-                  superNextIcon={null}
-                  superPrevIcon={null}
-                />
-              </Form.Item>
-
-              <Form.Item
                 name="source"
-                label={<span style={formItemStyle}>Source</span>}
-                rules={[{ required: true, message: "Please select source" }]}
+                label={<span style={formItemStyle}>Source <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                rules={[{ required: true, message: "Source is required" }]}
               >
                 <Select
                   placeholder="Select source"
                   style={selectStyle}
                   popupClassName="custom-select-dropdown"
-                  listHeight={100} // Sets height to show 2 items
+                  listHeight={100}
                   dropdownStyle={{
                     maxHeight: "100px",
                     overflowY: "auto",
@@ -802,390 +804,412 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   ))}
                 </Select>
               </Form.Item>
-            </div>
 
-            <Form.Item
-              name="products"
-              label={<Text style={formItemStyle}>Products</Text>}
-              rules={[{ required: false, message: "Please select products" }]}
-            >
-              <Select
-                mode="multiple"
-                placeholder="Select products"
-                style={selectStyle}
-                // style={{
-                //   ...multiSelectStyle,
-                //   minHeight: '48px',
-                //   height: 'auto'
-                // }}
-                optionFilterProp="children"
-                showSearch
-                onChange={handleProductsChange}
-                listHeight={200}
-                maxTagCount={2}
-                maxTagTextLength={15}
-                dropdownStyle={{
-                  // maxHeight: '100px',
-                  overflowY: "auto",
-                  scrollbarWidth: "thin",
-                  scrollBehavior: "smooth",
-                }}
-                className="custom-multiple-select"
+              <Form.Item
+                name="category"
+                label={<span style={formItemStyle}>Category <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                rules={[{ required: true, message: "Category is required" }]}
               >
-                {products?.map((product) => (
-                  <Option key={product.id} value={product.id}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
+                <Select
+                  placeholder="Select category"
+                  style={selectStyle}
+                  allowClear
+                  popupClassName="custom-select-dropdown"
+                >
+                  {categories?.map((category) => (
+                    <Option key={category.id} value={category.id}>
                       <div
                         style={{
-                          width: "32px",
-                          borderRadius: "4px",
-                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
                         }}
                       >
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                            onError={(e) => (e.target.style.display = "none")}
-                          />
-                        ) : (
-                          <span
-                            style={{
-                              fontSize: "18px",
-                              color: "#1890ff",
-                              fontWeight: "500",
-                            }}
-                          >
-                            {product?.name?.charAt(0)}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontWeight: "500" }}>
-                          {product.name}
-                        </span>
-                        <span style={{ fontSize: "12px", color: "#6B7280" }}>
-                          {product.selling_price}
-                        </span>
-                      </div>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            {/* Contact Information Section */}
-            <div
-              className="section-title"
-              style={{ marginBottom: "16px", marginTop: "32px" }}
-            >
-              <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
-                Basic Information
-              </Text>
-            </div>
-
-            <div
-              className="form-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "16px",
-                marginBottom: "32px",
-              }}
-            >
-              <Form.Item
-                name="company_name"
-                label={<span style={formItemStyle}>Company Name</span>}
-              >
-                <div style={{ position: "relative" }}>
-                  <Select
-                    placeholder="Select company"
-                    onChange={handleCompanyChange}
-                    style={selectStyle}
-                    allowClear
-                    suffixIcon={<FiBriefcase style={prefixIconStyle} />}
-                    dropdownRender={(menu) => (
-                      <div onClick={(e) => e.stopPropagation()}>
-                        {menu}
-                        <Divider style={{ margin: "8px 0" }} />
                         <div
                           style={{
-                            padding: "8px 12px",
-                            display: "flex",
-                            justifyContent: "center",
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: category.color || "#1890ff",
                           }}
-                        >
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddCompanyClick}
-                            style={{
-                              width: "100%",
-                              background:
-                                "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                              border: "none",
-                              height: "40px",
-                              borderRadius: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "8px",
-                              boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                              fontWeight: "500",
-                            }}
-                          >
-                            Add Company
-                          </Button>
-                        </div>
+                        />
+                        {category.name}
                       </div>
-                    )}
-                  >
-                    {companyAccountsResponse?.data?.map((company) => (
-                      <Option key={company.id} value={company.id}>
-                        {company.company_name}
-                      </Option>
-                    ))}
-                  </Select>
-                  {form.getFieldValue("company_name") && (
-                    <Button
-                      type="text"
-                      icon={<FiX />}
-                      onClick={handleClearCompany}
-                      style={{
-                        position: "absolute",
-                        right: "40px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        zIndex: 2,
-                        padding: "4px",
-                        height: "auto",
-                        color: "#6B7280",
-                      }}
-                    />
-                  )}
-                </div>
-              </Form.Item>
-              <Form.Item
-                name="firstName"
-                label={<span style={formItemStyle}>First Name</span>}
-              >
-                <div style={{ position: "relative" }}>
-                  <Select
-                    placeholder="Select contact"
-                    onChange={handleFirstNameChange}
-                    style={selectStyle}
-                    suffixIcon={<FiUser style={prefixIconStyle} />}
-                    showSearch
-                    allowClear
-                    filterOption={(input, option) => {
-                      const contact = contactsResponse?.data?.find(
-                        (c) => c.id === option.value
-                      );
-                      return contact?.first_name
-                        ?.toLowerCase()
-                        .includes(input.toLowerCase());
-                    }}
-                    dropdownRender={(menu) => (
-                      <div onClick={(e) => e.stopPropagation()}>
-                        {menu}
-                        <Divider style={{ margin: "8px 0" }} />
-                        <div
-                          style={{
-                            padding: "8px 12px",
-                            display: "flex",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddContactClick}
-                            style={{
-                              width: "100%",
-                              background:
-                                "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                              border: "none",
-                              height: "40px",
-                              borderRadius: "8px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "8px",
-                              boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                              fontWeight: "500",
-                            }}
-                          >
-                            Add Contact
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  >
-                    {contactsResponse?.data?.map((contact) => (
-                      <Option key={contact.id} value={contact.id}>
-                        <div
-                          style={{ display: "flex", flexDirection: "column" }}
-                        >
-                          <span>{contact.first_name}</span>
-                          <span style={{ fontSize: "12px", color: "#6B7280" }}>
-                            {companyAccountsResponse?.data?.find(
-                              (c) => c.id === contact.company_name
-                            )?.company_name || "No Company"}
-                          </span>
-                        </div>
-                      </Option>
-                    ))}
-                  </Select>
-                  {form.getFieldValue("firstName") && (
-                    <Button
-                      type="text"
-                      icon={<FiX />}
-                      onClick={handleClearContact}
-                      style={{
-                        position: "absolute",
-                        right: "40px",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        zIndex: 2,
-                        padding: "4px",
-                        height: "auto",
-                        color: "#6B7280",
-                      }}
-                    />
-                  )}
-                </div>
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
 
               <Form.Item
-                name="lastName"
-                label={<span style={formItemStyle}>Last Name</span>}
-              >
-                <Input
-                  prefix={<FiUser style={prefixIconStyle} />}
-                  placeholder="Last name will auto-fill"
-                  style={{
-                    ...inputStyle,
-                    backgroundColor: "#f8fafc",
-                  }}
-                  readOnly
-                  value={selectedContact?.last_name || ""}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="email"
-                label={<span style={formItemStyle}>Email</span>}
+                name="closedDate"
+                label={<span style={formItemStyle}>Expected Close Date <span style={{ color: '#ff4d4f' }}>*</span></span>}
                 rules={[
                   {
-                    type: "email",
-                    message: "Please enter a valid email address",
-                  },
+                    required: true,
+                    message: "Expected close date is required"
+                  }
                 ]}
               >
-                <Input
-                  prefix={<FiMail style={prefixIconStyle} />}
-                  placeholder="Enter email address"
+                <DatePicker
+                  size="large"
+                  format="DD-MM-YYYY"
                   style={{
-                    ...inputStyle,
+                    width: "100%",
+                    borderRadius: "10px",
+                    height: "48px",
                     backgroundColor: "#f8fafc",
+                    border: "1px solid #e6e8eb",
                   }}
+                  disabledDate={(current) => {
+                    return current && current < dayjs().startOf("day");
+                  }}
+                  placeholder="Select date"
+                  suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
+                  superNextIcon={null}
+                  superPrevIcon={null}
                 />
               </Form.Item>
+            </div>
 
-              <Form.Item
-                name="phoneGroup"
-                label={<span style={formItemStyle}>Phone Number</span>}
-                className="combined-input-item"
-              >
-                <Input.Group compact className="phone-input-group">
+            {/* Basic Information Section */}
+            <div style={{ margin: '24px 0' }}>
+              <Text strong style={{ fontSize: '16px', color: '#1f2937', marginBottom: '16px', display: 'block' }}>
+                Basic Information
+              </Text>
+
+              <Tabs
+                activeKey={contactMode}
+                onChange={(value) => {
+                  setContactMode(value);
+                  form.setFieldsValue({
+                    company_name: undefined,
+                    firstName: undefined,
+                    lastName: undefined,
+                    email: undefined,
+                    phone: undefined,
+                    address: undefined,
+                  });
+                }}
+                items={[
+                  {
+                    key: 'existing',
+                    label: (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px'
+                      }}>
+                        <FiUserPlus style={{ fontSize: '16px' }} />
+                        <span>Select Existing</span>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'new',
+                    label: (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '4px'
+                      }}>
+                        <FiUser style={{ fontSize: '16px' }} />
+                        <span>Add New</span>
+                      </div>
+                    ),
+                  }
+                ]}
+                style={{
+                  marginBottom: '24px'
+                }}
+              />
+            </div>
+
+            <div className="form-grid" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '16px',
+              marginBottom: '32px'
+            }}>
+              {contactMode === 'existing' ? (
+                // Show existing contact/company selection fields
+                <>
                   <Form.Item
-                    name="phoneCode"
-                    noStyle
-                    initialValue={defaultPhoneCode}
+                    name="company_name"
+                    label={<span style={formItemStyle}>Company Name</span>}
                   >
                     <Select
-                      style={{ width: "90px" }}
-                      dropdownMatchSelectWidth={false}
-                      showSearch
-                      optionFilterProp="children"
-                      className="phone-code-select"
-                      suffixIcon={<FiChevronDown size={14} />}
-                      filterOption={(input, option) => {
-                        const countryData = countries.find(
-                          (c) => c.phoneCode.replace("+", "") === option.value
-                        );
-                        return (
-                          countryData?.countryName
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase()) ||
-                          countryData?.countryCode
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase()) ||
-                          countryData?.phoneCode?.includes(input)
-                        );
-                      }}
-                      dropdownStyle={{ minWidth: "200px" }}
-                      popupClassName="custom-select-dropdown"
+                      placeholder="Select company"
+                      onChange={handleCompanyChange}
+                      style={selectStyle}
+                      allowClear
+                      suffixIcon={null}
+                      dropdownRender={(menu) => (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          {menu}
+                          <Divider style={{ margin: '8px 0' }} />
+                          <div style={{
+                            padding: '8px 12px',
+                            display: 'flex',
+                            justifyContent: 'center'
+                          }}>
+                            <Button
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={handleAddCompanyClick}
+                              style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                border: 'none',
+                                height: '40px',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Add Company
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     >
-                      {countries?.map((country) => (
-                        <Option
-                          key={country.id}
-                          value={country.phoneCode.replace("+", "")}
-                        >
-                          <div className="phone-code-option">
-                            <div className="phone-code-main">
-                              <span className="phone-code">
-                                +{country.phoneCode.replace("+", "")}
-                              </span>
-                              <span className="country-code">
-                                {country.countryCode}
-                              </span>
+                      {companyAccountsResponse?.data?.map((company) => (
+                        <Option key={company.id} value={company.id}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '4px 0'
+                          }}>
+                            <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{
+                                fontWeight: '500',
+                                color: '#111827'
+                              }}>{company.company_name}</span>
+                              {company.company_site && (
+                                <span style={{
+                                  fontSize: '12px',
+                                  color: '#6B7280'
+                                }}>{company.company_site}</span>
+                              )}
                             </div>
-                            <span className="country-name">
-                              {country.countryName}
-                            </span>
                           </div>
                         </Option>
                       ))}
                     </Select>
                   </Form.Item>
-                  <Form.Item name="phone" noStyle>
-                    <Input
-                      style={{
-                        width: "calc(100% - 120px)",
-                        backgroundColor: "#f8fafc",
+
+                  <Form.Item
+                    name="firstName"
+                    label={<span style={formItemStyle}>Contact Name</span>}
+                  >
+                    <Select
+                      placeholder="Select contact name"
+                      style={selectStyle}
+                      suffixIcon={null}
+                      showSearch
+                      allowClear
+                      onChange={handleFirstNameChange}
+                      filterOption={(input, option) => {
+                        const contact = contactsResponse?.data?.find(
+                          (c) => c.id === option.value
+                        );
+                        if (!contact) return false;
+                        const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
+                        const companyName = companyAccountsResponse?.data?.find(
+                          (c) => c.id === contact.company_name
+                        )?.company_name?.toLowerCase() || '';
+                        return fullName.includes(input.toLowerCase()) ||
+                          companyName.includes(input.toLowerCase());
                       }}
-                      placeholder="Enter phone number"
-                    // prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
+                      dropdownRender={(menu) => (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          {menu}
+                          <Divider style={{ margin: '8px 0' }} />
+                          <div style={{
+                            padding: '8px 12px',
+                            display: 'flex',
+                            justifyContent: 'center'
+                          }}>
+                            <Button
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={handleAddContactClick}
+                              style={{
+                                width: '100%',
+                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                border: 'none',
+                                height: '40px',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                fontWeight: '500',
+                              }}
+                            >
+                              Add Contact
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    >
+                      {contactsResponse?.data?.map((contact) => {
+                        const companyName = companyAccountsResponse?.data?.find(
+                          (c) => c.id === contact.company_name
+                        )?.company_name || "No Company";
+
+                        return (
+                          <Option key={contact.id} value={contact.id}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '4px 0'
+                            }}>
+                              <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                flex: 1,
+                                minWidth: 0
+                              }}>
+                                <span style={{
+                                  fontWeight: '500',
+                                  color: '#111827',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
+                                <span style={{
+                                  color: '#6B7280',
+                                  fontSize: '12px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}>
+                                  <FiBriefcase style={{ fontSize: '12px' }} />
+                                  {companyName}
+                                </span>
+                              </div>
+                            </div>
+                          </Option>
+                        );
+                      })}
+                    </Select>
+                  </Form.Item>
+                </>
+              ) : (
+                // Show manual entry fields
+                <>
+                  <Form.Item
+                    name="firstName"
+                    label={<span style={formItemStyle}>First Name</span>}
+                  >
+                    <Input
+                      prefix={<FiUser style={prefixIconStyle} />}
+                      placeholder="Enter first name"
+                      style={inputStyle}
                     />
                   </Form.Item>
-                </Input.Group>
-              </Form.Item>
 
-              <Form.Item
-                name="address"
-                label={<span style={formItemStyle}>Address</span>}
-              >
-                <Input
-                  prefix={<FiMapPin style={prefixIconStyle} />}
-                  placeholder="Enter address"
-                  style={{
-                    ...inputStyle,
-                    backgroundColor: "#f8fafc",
-                  }}
-                />
-              </Form.Item>
+                  <Form.Item
+                    name="lastName"
+                    label={<span style={formItemStyle}>Last Name</span>}
+                  >
+                    <Input
+                      prefix={<FiUser style={prefixIconStyle} />}
+                      placeholder="Enter last name"
+                      style={inputStyle}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="email"
+                    label={<span style={formItemStyle}>Email</span>}
+                    rules={[
+                      {
+                        type: "email",
+                        message: "Please enter a valid email",
+                      }
+                    ]}
+                  >
+                    <Input
+                      prefix={<FiMail style={prefixIconStyle} />}
+                      placeholder="Enter email address"
+                      style={inputStyle}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="phoneGroup"
+                    label={<span style={formItemStyle}>Phone Number</span>}
+                    className="combined-input-item"
+                  >
+                    <Input.Group compact className="phone-input-group">
+                      <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                        <Select
+                          style={{ width: '120px' }}
+                          className="phone-code-select"
+                          dropdownMatchSelectWidth={false}
+                          suffixIcon={<FiChevronDown size={14} />}
+                          popupClassName="custom-select-dropdown"
+                          showSearch
+                          optionFilterProp="children"
+                          filterOption={(input, option) => {
+                            const country = countries?.find(c => c.id === option.value);
+                            return (
+                              country?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
+                              country?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
+                              country?.phoneCode?.includes(input)
+                            );
+                          }}
+                        >
+                          {countries?.map((country) => (
+                            <Option key={country.id} value={country.id}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
+                                <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
+                              </div>
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item
+                        name="telephone"
+                        noStyle
+                      >
+                        <Input
+                          style={{ width: 'calc(100% - 120px)', padding: '0 16px' }}
+                          placeholder="Enter phone number"
+                        />
+                      </Form.Item>
+                    </Input.Group>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="address"
+                    label={<span style={formItemStyle}>Address</span>}
+                  >
+                    <Input
+                      prefix={<FiMapPin style={prefixIconStyle} />}
+                      placeholder="Enter address"
+                      style={inputStyle}
+                    />
+                  </Form.Item>
+                </>
+              )}
             </div>
 
             <Divider style={{ margin: "24px 0" }} />
@@ -1275,15 +1299,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 height: 100% !important;
               }
             }
+              
 
             .ant-select-selection-item {
               padding-right: 20px !important;
               font-weight: 500 !important;
             }
 
-            .ant-select-selection-placeholder {
-              color: #9ca3af !important;
-            }
+              .ant-select-selection-placeholder {
+                color: #9ca3af !important;
+              }
           }
 
           .currency-select .ant-select-selector {

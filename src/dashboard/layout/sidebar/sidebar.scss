@@ -14,6 +14,7 @@
     transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-right: 1px solid rgba($border-color, 0.8);
 
+
     &.collapsed {
         width: 70px;
 
@@ -393,5 +394,11 @@
                 background: $error-color;
             }
         }
+    }
+}
+
+.superadmin-sidebar {
+    .icon {
+        color: #000;
     }
 }

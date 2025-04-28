@@ -1700,15 +1700,16 @@
     &:hover {
         transform: translateY(-1px);
         filter: brightness(95%);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     &.completed {
         background-color: #d1d5db;
         color: #4b5563;
         z-index: 1;
-         &:hover {
-             filter: brightness(90%);
+
+        &:hover {
+            filter: brightness(90%);
         }
     }
 
@@ -1726,31 +1727,33 @@
 
 
         &:first-child {
-             padding-left: 17px; // Adjusted padding for first child current
-             // Adjusted clip-path for first child current
-             clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%);
-        }
-        &:last-child {
-            padding-right: 17px; // Adjusted padding for last child current
-             // Adjusted clip-path for last child current
-             clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 10px 50%);
+            padding-left: 17px; // Adjusted padding for first child current
+            // Adjusted clip-path for first child current
+            clip-path: polygon(0% 0%, calc(100% - 10px) 0%, 100% 50%, calc(100% - 10px) 100%, 0% 100%);
         }
 
-         &:hover {
+        &:last-child {
+            padding-right: 17px; // Adjusted padding for last child current
+            // Adjusted clip-path for last child current
+            clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 10px 50%);
+        }
+
+        &:hover {
             filter: brightness(105%);
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     }
 
     &:disabled {
-       cursor: wait;
-       opacity: 0.7;
-       &:hover {
-          transform: none;
-          box-shadow: none;
-          filter: none;
-       }
+        cursor: wait;
+        opacity: 0.7;
+
+        &:hover {
+            transform: none;
+            box-shadow: none;
+            filter: none;
+        }
     }
 }
 

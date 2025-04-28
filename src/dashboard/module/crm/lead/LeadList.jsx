@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Input } from "antd";
+import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Input, Tooltip } from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -11,13 +11,16 @@ import {
   FiLink,
   FiInfo,
   FiCheck,
-  FiBarChart2
+  FiBarChart2,
+  FiBriefcase,
+  FiUser
 } from "react-icons/fi";
 import { useDeleteLeadMutation } from "./services/LeadApi";
 import { useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
 import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
 import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
 import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
+import { useGetContactsQuery } from '../contact/services/contactApi';
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from '../../../../auth/services/authSlice';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -42,19 +45,18 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
   const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
+  const { data: contactsResponse } = useGetContactsQuery();
 
   // Filter and prepare data
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
   const sources = sourcesData?.data || [];
   const statuses = statusesData?.data || [];
+  const contacts = contactsResponse?.data || [];
 
   // Handle automatic form opening
   useEffect(() => {
     if (location.state?.openCreateForm) {
-      // Call the create lead handler with the initial data
       onCreateLead?.(location.state.initialFormData);
-
-      // Clear the state after handling
       navigate(location.pathname, {
         replace: true,
         state: {}
@@ -73,8 +75,92 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
     }
   };
 
-  const getDropdownItems = (record) => {
+  const getContactName = (record) => {
+    // First check direct contact
+    if (record.contact_id) {
+      const contact = contacts.find(c => c.id === record.contact_id);
+      if (contact) {
+        return {
+          name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim(),
+          contact: contact
+        };
+      }
+    }
 
+    // If no direct contact, check for related contacts
+    const relatedContact = contacts.find(c => c.related_id === record.id);
+    if (relatedContact) {
+      return {
+        name: `${relatedContact.first_name || ''} ${relatedContact.last_name || ''}`.trim(),
+        contact: relatedContact
+      };
+    }
+
+    return {
+      name: 'No Contact',
+      contact: null
+    };
+  };
+
+  const getCompanyName = (record) => {
+    if (record.company_id) {
+      const company = companyAccountsResponse?.data?.find(c => c.id === record.company_id);
+      return company?.company_name || 'Unknown Company';
+    }
+    return null;
+  };
+
+  const getRandomColor = (text) => {
+    const colors = ['#1890ff', '#52c41a', '#722ed1', '#eb2f96', '#fa8c16', '#13c2c2', '#2f54eb'];
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = text.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
+
+  const getCompanyTooltip = (record) => {
+    const company = companyAccountsResponse?.data?.find(c => c.id === record.company_id);
+    if (!company) return null;
+
+    return (
+      <div style={{ padding: '8px' }}>
+        <div style={{ marginBottom: '4px', fontWeight: '500' }}>
+          {company.company_name}
+        </div>
+        {company.company_site && (
+          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+            {company.company_site}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const getContactTooltip = (record) => {
+    const contact = contacts.find(c => c.id === record.contact_id);
+    if (!contact) return null;
+
+    return (
+      <div style={{ padding: '8px' }}>
+        <div style={{ marginBottom: '4px', fontWeight: '500' }}>
+          {`${contact.first_name || ''} ${contact.last_name || ''}`.trim()}
+        </div>
+        {contact.email && (
+          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+            {contact.email}
+          </div>
+        )}
+        {contact.phone && (
+          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+            {contact.phone}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const getDropdownItems = (record) => {
     const shouldShowEditDelete = record.is_converted === false;
     return {
       items: [
@@ -143,17 +229,21 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
         </div>
       ),
       onFilter: (value, record) => {
-        const companyName = companyAccountsResponse?.data?.find(c => c.id === record.company_name)?.company_name || '';
+        const companyName = getCompanyName(record) || '';
+        const contactName = getContactName(record).name;
         return record.leadTitle.toLowerCase().includes(value.toLowerCase()) ||
-          companyName.toLowerCase().includes(value.toLowerCase());
+          companyName.toLowerCase().includes(value.toLowerCase()) ||
+          contactName.toLowerCase().includes(value.toLowerCase());
       },
       render: (text, record) => {
-        const companyName = companyAccountsResponse?.data?.find(c => c.id === record.company_name)?.company_name || 'No Company';
+        const companyName = getCompanyName(record);
+        const { name: contactName, contact } = getContactName(record);
+        const avatarColor = getRandomColor(text);
 
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Avatar style={{
-              backgroundColor: record.is_converted ? '#52c41a' : '#1890ff',
+              backgroundColor: record.is_converted ? '#52c41a' : avatarColor,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -169,9 +259,84 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
                   <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
                 )}
               </div>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>
-                {companyName}
-              </Text>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#6B7280',
+                fontSize: '12px'
+              }}>
+                {companyName && (
+                  <Tooltip title={getCompanyTooltip(record)} placement="bottom">
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '2px 8px',
+                        background: 'rgba(24, 144, 255, 0.1)',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(24, 144, 255, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(24, 144, 255, 0.1)';
+                      }}
+                    >
+                      <FiBriefcase style={{ fontSize: '12px', color: '#1890ff' }} />
+                      {companyName}
+                    </span>
+                  </Tooltip>
+                )}
+                {companyName && contact && (
+                  <span style={{
+                    width: '4px',
+                    height: '4px',
+                    backgroundColor: '#D1D5DB',
+                    borderRadius: '50%'
+                  }} />
+                )}
+                {contact ? (
+                  <Tooltip title={getContactTooltip(record)} placement="bottom">
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: '2px 8px',
+                        background: 'rgba(82, 196, 26, 0.1)',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(82, 196, 26, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(82, 196, 26, 0.1)';
+                      }}
+                    >
+                      <FiUser style={{ fontSize: '12px', color: '#52c41a' }} />
+                      {contactName}
+                    </span>
+                  </Tooltip>
+                ) : (!companyName && (
+                  <span style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '2px 8px',
+                    background: 'rgba(107, 114, 128, 0.1)',
+                    borderRadius: '4px'
+                  }}>
+                    <FiUser style={{ fontSize: '12px' }} />
+                    No Contact
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -258,6 +423,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
 
         return (
           <Tag style={{
+            width: 'fit-content',
             color: interestStyle.color,
             backgroundColor: interestStyle.bg,
             border: 'none',

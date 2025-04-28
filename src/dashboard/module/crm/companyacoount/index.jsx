@@ -30,6 +30,7 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import CompanyAccountDetails from "./CompanyAccountDetails";
 import moment from "moment";
+import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
 
 const { Title, Text } = Typography;
 
@@ -43,7 +44,8 @@ const CompanyAccount = () => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteCompanyAccount] = useDeleteCompanyAccountMutation();
   const [createCompanyAccount] = useCreateCompanyAccountMutation();
-  const { data: companyAccountsResponse = { data: [] }, isLoading:isCompanyAccountsLoading  } = useGetCompanyAccountsQuery();
+  const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+  const { data: countries = [] } = useGetAllCountriesQuery();
 
   const companyTypes = [
     { key: 'all', label: 'All Types' },
@@ -239,10 +241,10 @@ const CompanyAccount = () => {
               onChange={(e) => setSearchText(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ width: 350}}
+              style={{ width: 350 }}
             />
-            <Dropdown 
-              overlay={filterMenu} 
+            <Dropdown
+              overlay={filterMenu}
               trigger={['click']}
               placement="bottomRight"
             >
@@ -287,32 +289,32 @@ const CompanyAccount = () => {
           searchText={searchText}
           loggedInUser={loggedInUser}
           companyAccountsResponse={companyAccountsResponse}
-        
           isCompanyAccountsLoading={isCompanyAccountsLoading}
-       />
+          countries={countries}
+        />
       </Card>
 
       <CreateCompanyAccount
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
-   
+
         loggedInUser={loggedInUser}
         companyAccountsResponse={companyAccountsResponse}
-    
+
         isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
 
       <EditCompanyAccount
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
-          
-          companyData={selectedCompany}
+
+        companyData={selectedCompany}
         loggedInUser={loggedInUser}
         companyAccountsResponse={companyAccountsResponse}
-     
+
         isCompanyAccountsLoading={isCompanyAccountsLoading}
       />
-     
+
     </div>
   );
 };

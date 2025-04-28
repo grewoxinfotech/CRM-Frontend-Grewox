@@ -20,86 +20,49 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
   const selectRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const showDefaultWarning = (selectedPipeline, callback) => {
-    const existingDefaultStage = stages.find(
-      stage => stage.pipeline === selectedPipeline &&
-        stage.isDefault &&
-        stage.stageType === "lead"
-    );
-
-    if (existingDefaultStage) {
-      confirm({
-        title: 'Change Default Stage',
-        icon: <ExclamationCircleOutlined />,
-        content: `"${existingDefaultStage.stageName}" is currently set as default. Setting this stage as default will remove the default status from "${existingDefaultStage.stageName}". Do you want to continue?`,
-        okText: 'Yes',
-        okType: 'primary',
-        cancelText: 'No',
-        onOk() {
-          callback(true, existingDefaultStage);
-        },
-        onCancel() {
-          setIsDefault(false);
-          callback(false);
-        },
-      });
-    } else {
-      callback(true);
-    }
-  };
-
   const handleSubmit = async (values) => {
     try {
       const selectedPipeline = values.pipeline || pipelineId;
-
-      if (isDefault) {
-        showDefaultWarning(selectedPipeline, async (proceed, existingDefaultStage) => {
-          if (proceed) {
-            // If there's an existing default stage, update it first
-            if (existingDefaultStage) {
-              try {
-                const updateData = {
-                  stageName: existingDefaultStage.stageName,
-                  pipeline: existingDefaultStage.pipeline,
-                  stageType: existingDefaultStage.stageType,
-                  isDefault: false,
-                  id: existingDefaultStage.id
-                };
-                await updateLeadStage(updateData).unwrap();
-              } catch (error) {
-                message.error("Failed to update existing default stage");
-                return;
-              }
-            }
-            // Then create the new stage as default
-            await submitStage(values, selectedPipeline);
-          }
-        });
-      } else {
-        await submitStage(values, selectedPipeline);
-      }
-    } catch (error) {
-      message.error("Failed to add lead stage: " + error.message);
-    }
-  };
-
-  const submitStage = async (values, selectedPipeline) => {
-    try {
       const createData = {
         stageName: values.name,
         pipeline: selectedPipeline,
         stageType: "lead",
         isDefault: isDefault
       };
-      await addLeadStage(createData).unwrap();
 
+      // If there's an existing default stage and this is set as default,
+      // update the existing default stage silently
+      if (isDefault) {
+        const existingDefaultStage = stages.find(
+          stage => stage.pipeline === selectedPipeline &&
+            stage.isDefault &&
+            stage.stageType === "lead"
+        );
+
+        if (existingDefaultStage) {
+          try {
+            await updateLeadStage({
+              stageName: existingDefaultStage.stageName,
+              pipeline: existingDefaultStage.pipeline,
+              stageType: existingDefaultStage.stageType,
+              isDefault: false,
+              id: existingDefaultStage.id
+            }).unwrap();
+          } catch (error) {
+            console.error("Failed to update existing default stage:", error);
+          }
+        }
+      }
+
+      // Create the new stage
+      await addLeadStage(createData).unwrap();
       message.success("Lead stage created successfully");
       form.resetFields();
       setIsDefault(false);
-      refetchStages(); // Refetch stages to update the list
+      refetchStages();
       onClose(true);
     } catch (error) {
-      message.error("Failed to create lead stage");
+      message.error("Failed to add lead stage: " + error.message);
     }
   };
 
@@ -110,7 +73,6 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
   };
 
   const handlePipelineChange = (value) => {
-    // Reset isDefault when pipeline changes
     setIsDefault(false);
   };
 
@@ -284,11 +246,32 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
                 onChange={(checked) => {
                   const selectedPipeline = form.getFieldValue('pipeline') || pipelineId;
                   if (checked && selectedPipeline) {
-                    showDefaultWarning(selectedPipeline, (proceed) => {
-                      setIsDefault(proceed);
-                    });
+                    const existingDefaultStage = stages.find(
+                      stage => stage.pipeline === selectedPipeline &&
+                        stage.isDefault &&
+                        stage.stageType === "lead"
+                    );
+
+                    if (existingDefaultStage) {
+                      confirm({
+                        title: 'Change Default Stage',
+                        icon: <ExclamationCircleOutlined />,
+                        content: `"${existingDefaultStage.stageName}" is currently set as default. Setting this stage as default will remove the default status from "${existingDefaultStage.stageName}". Do you want to continue?`,
+                        okText: 'Yes',
+                        okType: 'primary',
+                        cancelText: 'No',
+                        onOk() {
+                          setIsDefault(true);
+                        },
+                        onCancel() {
+                          setIsDefault(false);
+                        },
+                      });
+                    } else {
+                      setIsDefault(true);
+                    }
                   } else {
-                    setIsDefault(checked);
+                    setIsDefault(false);
                   }
                 }}
               />
