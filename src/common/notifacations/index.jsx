@@ -186,7 +186,7 @@ const NotificationsComponent = () => {
 
   const handleNotificationClick = (notification) => {
     // Handle redirection based on section and IDs
-    if (notification.section && notification.parent_id) {
+    if (notification.section) {
       if (notification.section === "lead") {
         // Navigate to lead overview with the lead ID
         navigate(`/dashboard/crm/lead/${notification.parent_id}`);
@@ -205,6 +205,15 @@ const NotificationsComponent = () => {
       } else if (notification.section === "announcement") {
         // Navigate to announcement with the announcement ID
         navigate(`/dashboard/hrm/announcement`);
+      } else if (notification.section === "products") {
+        // Navigate to product details with the product ID
+        if (notification.related_id) {
+          navigate(`/dashboard/sales/product-services`, {
+            state: { selectedProduct: notification.related_id },
+          });
+        } else {
+          navigate(`/dashboard/sales/product-services`);
+        }
       }
     }
   };
@@ -276,16 +285,48 @@ const NotificationsComponent = () => {
                             <BiBell className="notification-icon info" />
                           </div>
                           <div className="notification-details">
-                            <Typography.Text strong>
-                              {/* {notification.title} */}
-                            </Typography.Text>
-                            <Typography.Text type="secondary">
+                            <Typography.Text
+                              type="secondary"
+                              className="message-text"
+                            >
                               {notification.message}
                             </Typography.Text>
                             {notification.description && (
-                              <Typography.Text className="notification-description">
-                                {notification.description}
-                              </Typography.Text>
+                              <div className="notification-description">
+                                {notification.description
+                                  .split(",")
+                                  .map((detail, index) => (
+                                    <div
+                                      key={index}
+                                      className="description-item"
+                                    >
+                                      {detail.trim()}
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                            {(notification.date || notification.time) && (
+                              <div className="notification-time">
+                                {notification.date && (
+                                  <span>
+                                    {new Date(
+                                      notification.date
+                                    ).toLocaleDateString("en-GB")}
+                                  </span>
+                                )}
+                                {notification.time && (
+                                  <span style={{ fontWeight: 500 }}>
+                                    {" "}
+                                    {new Date(
+                                      `2000-01-01 ${notification.time}`
+                                    ).toLocaleTimeString("en-US", {
+                                      hour: "numeric",
+                                      minute: "numeric",
+                                      hour12: true,
+                                    })}
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -358,23 +399,46 @@ const NotificationsComponent = () => {
                           <BiCalendarEvent className="notification-icon reminder" />
                         </div>
                         <div className="notification-details">
-                          <Typography.Text strong>
-                            {/* {reminder.title} */}
-                          </Typography.Text>
-                          <Typography.Text type="secondary">
+                          <Typography.Text
+                            type="secondary"
+                            className="message-text"
+                          >
                             {reminder.message}
                           </Typography.Text>
                           {reminder.description && (
-                            <Typography.Text className="notification-description">
-                              {reminder.description}
-                            </Typography.Text>
+                            <div className="notification-description">
+                              {reminder.description
+                                .split("\n")
+                                .filter(
+                                  (line) =>
+                                    line.includes("• Title:") ||
+                                    line.includes("• Time:")
+                                )
+                                .map((line, index) => (
+                                  <div key={index} className="description-item">
+                                    {line.trim()}
+                                  </div>
+                                ))}
+                            </div>
                           )}
                           <div className="reminder-time">
                             <span>
-                              Due:{" "}
-                              {new Date(reminder.date).toLocaleDateString()}
+                              <BiCalendarEvent style={{ marginRight: "4px" }} />
+                              {new Date(reminder.date).toLocaleDateString(
+                                "en-GB"
+                              )}
                             </span>
-                            <span>{reminder.time}</span>
+                            {reminder.time && (
+                              <span>
+                                {new Date(
+                                  `2000-01-01 ${reminder.time}`
+                                ).toLocaleTimeString("en-US", {
+                                  hour: "numeric",
+                                  minute: "numeric",
+                                  hour12: true,
+                                })}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

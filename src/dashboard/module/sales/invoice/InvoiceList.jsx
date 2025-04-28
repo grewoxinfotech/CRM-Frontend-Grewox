@@ -1,5 +1,16 @@
 import React, { useState } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message, Space, Input, DatePicker } from "antd";
+import {
+  Table,
+  Button,
+  Tag,
+  Dropdown,
+  Typography,
+  Modal,
+  message,
+  Space,
+  Input,
+  DatePicker,
+} from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -8,7 +19,7 @@ import {
   FiDownload,
   FiPlus,
   FiSearch,
-  FiSend
+  FiSend,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -17,7 +28,7 @@ import {
   useUpdateInvoiceMutation,
 } from "./services/invoiceApi";
 import EditInvoice from "./EditInvoice";
-import ViewInvoice from './ViewInvoice';
+import ViewInvoice from "./ViewInvoice";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
@@ -26,9 +37,12 @@ import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/co
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
-const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
- 
-
+const InvoiceList = ({
+  searchText = "",
+  invoices,
+  isLoading,
+  filters = {},
+}) => {
   // const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery(id);
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [deleteInvoice] = useDeleteInvoiceMutation();
@@ -38,33 +52,31 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   // const invoices = invoicesdata?.data || [];
   const { data: customersData } = useGetCustomersQuery();
-  const { data: contactsData } = useGetContactsQuery();
-  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
   const statuses = [
-    { id: 'paid', name: 'Paid' },
-    { id: 'unpaid', name: 'Unpaid' },
-    { id: 'partial', name: 'Partial' },
-   
+    { id: "paid", name: "Paid" },
+    { id: "unpaid", name: "Unpaid" },
+    { id: "partial", name: "Partial" },
   ];
-  
 
   // Filter invoices based on search text and date range
   const filteredInvoices = React.useMemo(() => {
     return invoices?.filter((invoice) => {
       const searchLower = searchText.toLowerCase();
       const invoiceNumber = invoice?.salesInvoiceNumber?.toLowerCase() || "";
-      const customerName = invoice?.customerName?.toLowerCase() || "";
+      const customerName = invoice?.customer?.toLowerCase() || "";
       const total = invoice?.total?.toString().toLowerCase() || "";
       const status = invoice?.payment_status?.toLowerCase() || "";
 
-      const matchesSearch = !searchText ||
+      const matchesSearch =
+        !searchText ||
         invoiceNumber.includes(searchLower) ||
         customerName.includes(searchLower) ||
         total.includes(searchLower) ||
         status.includes(searchLower);
 
-      const matchesDateRange = !filters.dateRange?.length ||
+      const matchesDateRange =
+        !filters.dateRange?.length ||
         (dayjs(invoice?.issueDate).isAfter(filters.dateRange[0]) &&
           dayjs(invoice?.dueDate).isBefore(filters.dateRange[1]));
 
@@ -78,7 +90,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       pending: "#2563eb",
       paid: "#059669",
       unpaid: "#dc2626",
-      partially_paid: "#7c3aed"
+      partially_paid: "#7c3aed",
     };
 
     const statusBgColors = {
@@ -86,7 +98,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       pending: "#dbeafe",
       paid: "#d1fae5",
       unpaid: "#fee2e2",
-      partially_paid: "#ede9fe"
+      partially_paid: "#ede9fe",
     };
 
     return (
@@ -151,22 +163,21 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       let items = [];
       try {
         // Parse items if it's a string
-        if (typeof record.items === 'string') {
+        if (typeof record.items === "string") {
           items = JSON.parse(record.items);
         } else if (Array.isArray(record.items)) {
           items = record.items;
         }
 
         // Format items to ensure consistent structure
-        items = items.map(item => ({
+        items = items.map((item) => ({
           item_name: item.item_name || item.name || item.description,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price || item.rate) || 0,
           description: item.description || item.item_name || item.name,
         }));
-
       } catch (error) {
-        console.error('Error parsing invoice items:', error);
+        console.error("Error parsing invoice items:", error);
         items = [];
       }
 
@@ -191,19 +202,19 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
     items: [
       {
         key: "view",
-        icon: <FiEye style={{ fontSize: '14px' }} />,
+        icon: <FiEye style={{ fontSize: "14px" }} />,
         label: "View Invoice",
         onClick: () => handleView(record),
       },
       {
         key: "edit",
-        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
+        icon: <FiEdit2 style={{ fontSize: "14px" }} />,
         label: "Edit Invoice",
         onClick: () => handleEdit(record),
       },
       {
-        key:"send_invoice",
-        icon:<FiSend style={{ fontSize: '14px' }} />,
+        key: "send_invoice",
+        icon: <FiSend style={{ fontSize: "14px" }} />,
         label: "Send Invoice to Customer",
         onClick: () => handleSendInvoice(record),
       },
@@ -226,31 +237,11 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
     ],
   });
 
-  const getCustomerName = (customerId, category) => {
+  const getCustomerName = (customerId) => {
     if (!customerId) return "N/A";
 
-    switch (category) {
-      case 'customer':
-        const customer = customersData?.data?.find(c => c.id === customerId);
-        return customer?.name || "N/A";
-      
-      case 'contact':
-        const contact = contactsData?.data?.find(c => c.id === customerId);
-        return contact?.name || 
-          `${contact?.first_name || ''} ${contact?.last_name || ''}`.trim() ||
-          contact?.contact_name ||
-          "N/A";
-      
-      case 'company_account':
-        const company = companyAccountsData?.data?.find(c => c.id === customerId);
-        return company?.company_name ||
-          company?.name ||
-          company?.account_name ||
-          "N/A";
-      
-      default:
-        return "N/A";
-    }
+    const customer = customersData?.data?.find((c) => c.id === customerId);
+    return customer?.name || "N/A";
   };
 
   const columns = [
@@ -258,14 +249,21 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       title: "Invoice Number",
       dataIndex: "salesInvoiceNumber",
       key: "salesInvoiceNumber",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search invoice number"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -276,20 +274,30 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
         </div>
       ),
       onFilter: (value, record) => {
-        const invoiceNumber = record?.salesInvoiceNumber?.toLowerCase() || '';
-        const customerName = record?.customerName?.toLowerCase() || '';
-        return invoiceNumber.includes(value.toLowerCase()) || 
-               customerName.includes(value.toLowerCase());
+        const invoiceNumber = record?.salesInvoiceNumber?.toLowerCase() || "";
+        const customerName = record?.customerName?.toLowerCase() || "";
+        return (
+          invoiceNumber.includes(value.toLowerCase()) ||
+          customerName.includes(value.toLowerCase())
+        );
       },
       render: (text, record) => (
-        <Text strong style={{ color: '#1890ff', cursor: 'pointer' }} onClick={() => handleView(record)}>
+        <Text
+          strong
+          style={{ color: "#1890ff", cursor: "pointer" }}
+          onClick={() => handleView(record)}
+        >
           {text}
         </Text>
       ),
@@ -299,18 +307,23 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       dataIndex: "customer",
       key: "customer",
       render: (customerId, record) => (
-        <Text>
-          {getCustomerName(customerId, record.category)}
-        </Text>
+        <Text>{getCustomerName(customerId, record.category)}</Text>
       ),
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search customer"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -321,14 +334,20 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
         </div>
       ),
       onFilter: (value, record) => {
-        const customerName = getCustomerName(record?.customer, record?.category)?.toLowerCase() || '';
+        const customerName =
+          getCustomerName(record?.customer, record?.category)?.toLowerCase() ||
+          "";
         return customerName.includes(value.toLowerCase());
       },
     },
@@ -352,13 +371,17 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       key: "total",
       render: (amount, record) => {
         // Get currency details from the record
-        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
-        const currencyIcon = currencyDetails?.currencyIcon || '₹';
-        
+        const currencyDetails = currenciesData?.find(
+          (curr) => curr.id === record.currency
+        );
+        const currencyIcon = currencyDetails?.currencyIcon || "₹";
+
         return (
           <Text strong>
             {currencyIcon}
-            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {Number(amount).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         );
       },
@@ -370,13 +393,17 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       key: "amount",
       render: (amount, record) => {
         // Get currency details from the record
-        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
-        const currencyIcon = currencyDetails?.currencyIcon || '₹';
-        
+        const currencyDetails = currenciesData?.find(
+          (curr) => curr.id === record.currency
+        );
+        const currencyIcon = currencyDetails?.currencyIcon || "₹";
+
         return (
           <Text strong>
             {currencyIcon}
-            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {Number(amount).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         );
       },
@@ -387,12 +414,12 @@ const InvoiceList = ({ searchText = "",invoices, isLoading, filters = {} }) => {
       title: "Status",
       dataIndex: "payment_status",
       key: "payment_status",
-      filters: statuses.map(status => ({
+      filters: statuses.map((status) => ({
         text: status.name,
-        value: status.id
+        value: status.id,
       })),
       onFilter: (value, record) => record.payment_status === value,
-      render: (status) => getStatusTag(status)
+      render: (status) => getStatusTag(status),
     },
     {
       title: "Action",
