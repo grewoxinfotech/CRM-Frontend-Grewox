@@ -465,171 +465,6 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     }, 500);
   };
 
-  const openInvoiceInNewWindow = () => {
-    const content = document.getElementById("invoice-content");
-    const newWindow = window.open("", "_blank");
-
-    newWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice?.salesInvoiceNumber}</title>
-          <style>
-            @page {
-              size: A4;
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              padding: 20px;
-              font-family: 'Segoe UI', sans-serif;
-              background: #f0f2f5;
-            }
-            .invoice-container {
-              width: 210mm;
-              min-height: 297mm;
-              margin: 20px auto;
-              background: white;
-              box-shadow: 0 0 10px rgba(0,0,0,0.1);
-              padding: 30px;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 30px;
-            }
-            .logo {
-              height: 50px;
-            }
-            .company-info {
-              text-align: right;
-            }
-            .company-info h2 {
-              margin: 0;
-              color: #0066ff;
-            }
-            .details {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 30px;
-            }
-            .details-column {
-              width: 45%;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-            }
-            th {
-              background: #f0f4fa;
-              text-align: left;
-              padding: 12px;
-              border-bottom: 1px solid #eaeaea;
-            }
-            td {
-              padding: 12px;
-              border-bottom: 1px solid #eaeaea;
-            }
-            .text-right {
-              text-align: right;
-            }
-            .status-tag {
-              display: inline-block;
-              padding: 4px 12px;
-              border-radius: 6px;
-              font-size: 12px;
-            }
-            .status-paid { color: #059669; background: #d1fae5; }
-            .status-unpaid { color: #dc2626; background: #fee2e2; }
-            .status-partial { color: #7c3aed; background: #ede9fe; }
-            .status-draft { color: #d97706; background: #fef3c7; }
-            .status-pending { color: #2563eb; background: #dbeafe; }
-            .qr-section {
-              text-align: center;
-              margin-top: 30px;
-              padding: 20px;
-              background: #f8fafc;
-              border-radius: 12px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-            }
-            .qr-container {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            }
-            .qr-box {
-              background: white;
-              padding: 12px;
-              border-radius: 12px;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            }
-            .qr-text {
-              margin-top: 12px;
-              text-align: center;
-            }
-            .qr-text p {
-              margin: 4px 0;
-            }
-            .scan-text {
-              font-size: 13px;
-              font-weight: 500;
-              color: #4b5563;
-            }
-            .amount-text {
-              font-size: 12px;
-              color: #6b7280;
-            }
-            .footer {
-              text-align: center;
-              margin-top: 40px;
-              color: #777;
-              font-size: 12px;
-            }
-            .credit-note {
-              color: #dc2626;
-            }
-            @media print {
-              body {
-                background: white;
-              }
-              .invoice-container {
-                box-shadow: none;
-                margin: 0;
-                padding: 20px;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-container">
-            ${content.innerHTML}
-          </div>
-          <script>
-            // Add print button
-            const printButton = document.createElement('div');
-            printButton.style.position = 'fixed';
-            printButton.style.top = '20px';
-            printButton.style.right = '20px';
-            printButton.style.padding = '10px 20px';
-            printButton.style.background = '#1890ff';
-            printButton.style.color = 'white';
-            printButton.style.borderRadius = '6px';
-            printButton.style.cursor = 'pointer';
-            printButton.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
-            printButton.innerHTML = 'Print Invoice';
-            printButton.onclick = () => window.print();
-            document.body.appendChild(printButton);
-          </script>
-        </body>
-      </html>
-    `);
-
-    newWindow.document.close();
-  };
-
   const handleSendInvoice = async () => {
     try {
       const category = invoice.category || "customer";
@@ -870,7 +705,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         open={open}
         onCancel={onCancel}
         footer={null}
-        width={900}
+        width={1000}
         destroyOnClose={true}
         centered
         closeIcon={null}
@@ -1067,8 +902,12 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                       <thead>
                         <tr>
                           <th style={{ fontWeight: 700 }}>Item</th>
+                          <th style={{ fontWeight: 700 }}>HSN/SAC</th>
                           <th style={{ fontWeight: 700 }}>Qty</th>
                           <th style={{ fontWeight: 700 }}>Rate</th>
+                          <th style={{ fontWeight: 700 }}>Tax %</th>
+                          <th style={{ fontWeight: 700 }}>Tax Amount</th>
+                          <th style={{ fontWeight: 700 }}>Discount</th>
                           <th style={{ fontWeight: 700 }}>Amount</th>
                         </tr>
                       </thead>
@@ -1077,13 +916,20 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                           invoice.items.map((item, index) => {
                             const quantity = Number(item.quantity) || 0;
                             const rate = Number(item.unit_price || item.rate) || 0;
-                            const amount = quantity * rate;
+                            const taxRate = Number(item.tax_rate) || 0;
+                            const taxAmount = Number(item.tax_amount) || 0;
+                            const discount = item.discount ? `${item.discount}${item.discount_type === 'percentage' ? '%' : '₹'}` : '-';
+                            const amount = Number(item.amount) || 0;
 
                             return (
                               <tr key={index}>
-                                <td>{item.item_name || item.name || item.description}</td>
+                                <td>{item.name || item.description || '-'}</td>
+                                <td>{item.hsn_sac || '-'}</td>
                                 <td>{quantity}</td>
                                 <td>₹{rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                <td>{taxRate}%</td>
+                                <td>₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                <td>{discount}</td>
                                 <td>₹{amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
                               </tr>
                             );
@@ -1112,7 +958,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                   </div>
 
                   <div className="bill-footer">
-                    <div className="payment-section" style={{ display: 'flex', justifyContent: 'space-between', }}>
+                    <div className="payment-section" style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <div className="qr-code" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                         <div>
                           <QRCodeSVG
@@ -1133,7 +979,13 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                         </div>
                       </div>
 
-                      <div className="bank-details" style={{ flex: 1, paddingLeft: '24px', backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                      <div className="bank-details" style={{ flex: 1, paddingLeft: '24px', backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb', position: 'relative' }}>
+                        {invoice?.payment_status === 'paid' && (
+                          <div className="paid-stamp">
+                            <div className="paid-icon">✓</div>
+                            <div className="paid-text">PAID</div>
+                          </div>
+                        )}
                         <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <FiCreditCard style={{ fontSize: '18px' }} /> Bank Details
                         </h4>
@@ -2139,6 +1991,39 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           .items-table {
             margin-bottom: 0;
             border-bottom: none;
+          }
+
+          .bank-details {
+            position: relative;
+            overflow: hidden;
+          }
+
+          .paid-stamp {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            padding: 8px 16px;
+            border-bottom-left-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+          }
+
+          .paid-icon {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1;
+          }
+
+          .paid-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
           }
         }
       `}</style>

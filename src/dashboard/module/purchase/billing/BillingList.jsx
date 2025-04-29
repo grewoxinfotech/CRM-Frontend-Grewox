@@ -357,27 +357,16 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
         }}
       />
 
-      <Modal
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          setSelectedBill(null);
-        }}
-        width={800}
-        footer={null}
-        styles={{
-          body: {
-            marginTop: "15px",
-            padding: "40px",
-            height: "100%",
-            borderRadius: "100%",
-            width: "100%",
-            fontFamily: "'Segoe UI', sans-serif",
-          },
-        }}
-      >
-        {selectedBill && <ViewBilling data={selectedBill} />}
-      </Modal>
+      {selectedBill && (
+        <ViewBilling
+          data={selectedBill}
+          isOpen={isModalVisible}
+          onClose={() => {
+            setIsModalVisible(false);
+            setSelectedBill(null);
+          }}
+        />
+      )}
     </>
   );
 };

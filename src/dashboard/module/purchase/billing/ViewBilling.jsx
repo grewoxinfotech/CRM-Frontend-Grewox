@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Spin, Button, Space, message } from 'antd';
+import { Spin, Button, Space, message, Modal, Typography, Divider, Dropdown } from 'antd';
 import { useGetVendorsQuery } from './services/billingApi';
 import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
 import { useGetDebitNotesQuery } from '../debitnote/services/debitnoteApi';
 import { QRCodeSVG } from 'qrcode.react';
-import { FiDownload, FiPrinter, FiMail, FiShare2 } from 'react-icons/fi';
+import { FiDownload, FiPrinter, FiMail, FiShare2, FiX, FiFileText, FiPhone, FiGlobe, FiCreditCard, FiCopy } from 'react-icons/fi';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import dayjs from 'dayjs';
 import './billing.scss';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
+
+const { Text } = Typography;
 
 // Add a helper function for safe number formatting
 const formatNumber = (value) => {
   return Number(value || 0).toFixed(2);
 };
 
-const ViewBilling = ({ data }) => {
+const ViewBilling = ({ data, isOpen, onClose }) => {
+  // Get logged in user data
+  const loggedInUser = useSelector(selectCurrentUser);
+
   // Fetch vendors data
   const { data: vendorsData } = useGetVendorsQuery();
   const { data: settingsData, isLoading: isSettingsLoading } = useGetAllSettingsQuery();
@@ -22,38 +30,77 @@ const ViewBilling = ({ data }) => {
 
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
-  const [companyName, setCompanyName] = useState('Grewox CRM');
-  const [companyEmail, setCompanyEmail] = useState('contact@grewox.com');
-  const [companyWebsite, setCompanyWebsite] = useState('www.grewox.com');
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [companyWebsite, setCompanyWebsite] = useState('');
   const [merchantUpiId, setMerchantUpiId] = useState('');
+  const [companyAddress, setCompanyAddress] = useState('');
+  const [companyPhone, setCompanyPhone] = useState('');
+  const [companyGSTIN, setCompanyGSTIN] = useState('');
+
+  // State for bank details
+  const [bankName, setBankName] = useState('');
+  const [accountType, setAccountType] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [bankBranch, setBankBranch] = useState('');
 
   // State for debit note amount
   const [debitNoteAmount, setDebitNoteAmount] = useState(0);
 
-  // Get company settings from general settings
+  // Share menu items
+  const shareItems = {
+    items: [
+      {
+        key: 'email',
+        icon: <FiMail />,
+        label: 'Share via Email',
+        onClick: () => handleShareViaEmail(),
+      },
+      {
+        key: 'copy',
+        icon: <FiCopy />,
+        label: 'Copy Link',
+        onClick: () => handleCopyLink(),
+      },
+    ],
+  };
+
+  const maskAccountNumber = (accountNumber) => {
+    if (!accountNumber) return "XXXX XXXX XXXX";
+
+    // Convert to string if it's a number
+    const accountStr = accountNumber.toString();
+    const last4Digits = accountStr.slice(-4);
+    return `XXXX XXXX XXXX ${last4Digits}`;
+  };
+
+  // Set company information from logged in user
+  useEffect(() => {
+    if (loggedInUser) {
+      setCompanyName(loggedInUser.username || 'Grewox CRM');
+      setCompanyEmail(loggedInUser.email || '');
+      setCompanyWebsite(loggedInUser.website || '');
+      setCompanyAddress(loggedInUser.address || '');
+      setCompanyPhone(loggedInUser.phone || '');
+      setCompanyGSTIN(loggedInUser.gstIn || '');
+      setCompanyLogo(loggedInUser.profilePic || null);
+
+      // Set bank details from loggedInUser
+      setBankName(loggedInUser.bank_name || '');
+      setAccountType(loggedInUser.account_type || '');
+      setAccountNumber(loggedInUser.account_number || '');
+      setIfscCode(loggedInUser.ifsc_code || '');
+      setBankBranch(loggedInUser.bank_branch || '');
+    }
+  }, [loggedInUser]);
+
+  // Get UPI ID from settings if available
   useEffect(() => {
     if (settingsData?.success && settingsData?.data && settingsData.data.length > 0) {
       const settings = settingsData.data[0];
-
-      // Set company logo if available
-      if (settings.companylogo) {
-        setCompanyLogo(settings.companylogo);
-      }
-
-      // Set company name if available
-      if (settings.companyName) {
-        setCompanyName(settings.companyName);
-      }
-
-      // Set merchant name as email if available
-      if (settings.merchant_name) {
-        setCompanyEmail(settings.merchant_name);
-      }
-
-      // Set merchant UPI ID if available
       if (settings.merchant_upi_id) {
         setMerchantUpiId(settings.merchant_upi_id);
-        setCompanyWebsite(settings.merchant_upi_id);
       }
     }
   }, [settingsData]);
@@ -63,7 +110,7 @@ const ViewBilling = ({ data }) => {
     if (debitNotesData?.data && data?.id) {
       // Filter debit notes for current bill
       const currentBillDebitNotes = debitNotesData.data.filter(
-        note => note.bill === data.id
+        note => note.bill === data.id || note.bill === data._id
       );
 
       // Calculate total amount of filtered debit notes
@@ -128,6 +175,68 @@ const ViewBilling = ({ data }) => {
     return data.upiLink || `https://grewox.com/bill/${data.billNumber}`;
   };
 
+  // Handle print function
+  const handlePrint = () => {
+    const content = document.getElementById("invoice-content");
+    const printWindow = window.open("", "_blank");
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice ${invoice?.salesInvoiceNumber}</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 20px;
+              font-family: 'Segoe UI', sans-serif;
+              background: white;
+            }
+            .invoice-content {
+              padding: 40px;
+              background: white;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-content">
+            ${content.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
+  // Handle share via email
+  const handleShareViaEmail = () => {
+    const subject = `Bill #${data?.billNumber || ''}`;
+    const body = `Please find the bill details for ${companyName}.\n\nAmount: ₹${Number(data?.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  // Handle copy link
+  const handleCopyLink = () => {
+    const billUrl = `${window.location.origin}/bill/${data?.billNumber}`;
+    navigator.clipboard.writeText(billUrl)
+      .then(() => {
+        message.success('Bill link copied to clipboard');
+      })
+      .catch(() => {
+        message.error('Failed to copy bill link');
+      });
+  };
+
   const handleDownload = async () => {
     try {
       const element = document.getElementById('billing-content');
@@ -135,10 +244,8 @@ const ViewBilling = ({ data }) => {
 
       message.loading({ content: 'Generating PDF...', key: 'download' });
 
-      // Add necessary styles before generating PDF
       const styleContent = `
-        .bill-card {
-          padding: 40px;
+      .bill-card.invoice-container {
           background: white;
           width: 100%;
         }
@@ -216,7 +323,6 @@ const ViewBilling = ({ data }) => {
         .payment-section {
           display: flex;
           gap: 40px;
-          margin-top: 30px;
           padding: 20px;
           background: #f8f9fa;
           border-radius: 8px;
@@ -248,6 +354,8 @@ const ViewBilling = ({ data }) => {
                 border-radius: 4px;
                 font-size: 14px;
                 font-weight: 500;
+        text-align: center;
+        min-width: 100px;
               }
               .status-paid {
                 background-color: #e6f4ea;
@@ -334,175 +442,728 @@ const ViewBilling = ({ data }) => {
       message.error({ content: 'Failed to download bill', key: 'download' });
     }
   };
-
   return (
-    <div className="view-billing-container">
-
-
-      <div className="view-billing-content">
-        <div className="bill-card" id="billing-content">
-          <div className="bill-header">
-            <div className="company-info">
-              {companyLogo ? (
-                <img
-                  src={companyLogo}
-                  alt={`${companyName} Logo`}
-                  className="company-logo"
-                />
-              ) : (
-                <img
-                  src="https://grewox.com/assets/logo.png"
-                  alt="Grewox Logo"
-                  className="company-logo"
-                />
-              )}
-              <div className="company-details">
-                <h3>{companyName}</h3>
-                <p>{companyWebsite} | {companyEmail}</p>
-              </div>
-            </div>
-
+    <Modal
+      title={null}
+      open={isOpen}
+      onCancel={onClose}
+      footer={null}
+      width={1000}
+      destroyOnClose={true}
+      centered
+      closeIcon={null}
+      className="pro-modal custom-modal billing-modal"
+      maskClosable={false}
+      styles={{
+        body: {
+          padding: 0,
+          borderRadius: "8px",
+          overflow: "hidden",
+        },
+        mask: {
+          backgroundColor: "rgba(0, 0, 0, 0.45)",
+        },
+        content: {
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+        },
+      }}
+    >
+      <div
+        className="modal-header"
+        style={{
+          background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+          padding: "24px",
+          color: "#ffffff",
+          position: "relative",
+        }}
+      >
+        <Button
+          type="text"
+          icon={<FiX />}
+          onClick={onClose}
+          style={{
+            color: "#ffffff",
+            position: "absolute",
+            right: "24px",
+            top: "24px",
+          }}
+        />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <FiFileText style={{ fontSize: "24px", color: "#ffffff" }} />
           </div>
-
-          <div className="bill-details">
-            <div className="bill-section">
-              <div className="bill-to">
-                <h4>Bill To:</h4>
-                <div className="vendor-info">
-                  <h5>{vendorDetails?.name || 'N/A'}</h5>
-                  <p>{formatVendorAddress()}</p>
-                  {vendorDetails?.email && <p>Email: {vendorDetails.email}</p>}
-                  {vendorDetails?.contact && <p>Contact: {vendorDetails.contact}</p>}
-                  {vendorDetails?.taxNumber && <p>Tax Number: {vendorDetails.taxNumber}</p>}
-                </div>
-              </div>
-              <div className="bill-info">
-                <div className="info-row">
-                  <span className="label">Bill No:</span>
-                  <span className="value">{data?.billNumber}</span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Date:</span>
-                  <span className="value">{data?.billDate ? new Date(data?.billDate).toLocaleDateString() : ''}</span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Status:</span>
-                  <span className={`status-badge ${getColor(data?.status || data?.bill_status)}`}>
-                    {data?.status === 'partially_paid' ? 'Partially paid' : data?.status || data?.bill_status}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bill-items">
-            <table className="items-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>HSN/SAC</th>
-                  <th>Qty</th>
-                  <th>Unit Price</th>
-                  <th className="text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.isArray(items) && items.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.itemName || item.name}</td>
-                    <td>{item.hsnSac}</td>
-                    <td>{item.quantity}</td>
-                    <td>₹{formatNumber(item.unitPrice || item.price)}</td>
-                    <td className="text-right">
-                      ₹{formatNumber(item.amount || (item.quantity * (item.unitPrice || item.price)))}
-                    </td>
-                  </tr>
-                ))}
-                {Number(data?.discount) > 0 && (
-                  <tr className="summary-row">
-                    <td colSpan="4">Discount</td>
-                    <td className="text-right">
-                      ₹{formatNumber(data.discount)}
-                    </td>
-                  </tr>
-                )}
-                {Number(data?.tax) > 0 && (
-                  <tr className="summary-row">
-                    <td colSpan="4">Tax</td>
-                    <td className="text-right">
-                      ₹{formatNumber(data.tax)}
-                    </td>
-                  </tr>
-                )}
-                <tr className="total-row">
-                  <td colSpan="4">Total Amount</td>
-                  <td className="text-right total-amount">
-                    ₹{formatNumber(data?.total)}
-                  </td>
-                </tr>
-                <tr className="summary-row">
-                  <td colSpan="4" className="text-right">Debit Note</td>
-                  <td className="text-right debit-note" style={{ color: '#ff4d4f' }}>
-                    - ₹{Number(debitNoteAmount || 0)}
-                  </td>
-                </tr>
-                <tr className="summary-row">
-                  <td colSpan="4" className="text-right">Final Amount</td>
-                  <td className="text-right ">
-                    ₹{formatNumber(data?.amount)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="bill-footer">
-            <div className="payment-section">
-              <div className="qr-code">
-                <QRCodeSVG
-                  value={getPaymentUrl()}
-                  size={120}
-                  level="H"
-                  includeMargin={true}
-                />
-                <div className="qr-info">
-                  <p>Scan to Pay</p>
-                  <p className="amount">₹{formatNumber(data?.amount)}</p>
-                </div>
-              </div>
-              <div className="payment-info">
-                <h4>Payment Information</h4>
-                <p>Thank you for your business!</p>
-                <p>Please make payment to the following account:</p>
-                <div className="bank-details">
-                  <p><strong>Bank:</strong> Example Bank</p>
-                  <p><strong>Account:</strong> 1234567890</p>
-                  <p><strong>IFSC:</strong> EXAMPLE123</p>
-                </div>
-              </div>
-            </div>
-            <div className="bill-notes">
-              <h4>Notes</h4>
-              <p>{'Thank you for your payment!'}</p>
-              <p>Computer Generated E-signature</p>
-              <p className="powered-by">Powered by {companyName} | {companyWebsite}</p>
-            </div>
+          <div>
+            <h2
+              style={{
+                margin: "0",
+                fontSize: "24px",
+                fontWeight: "600",
+                color: "#ffffff",
+              }}
+            >
+              View Bill
+            </h2>
+            <Text
+              style={{
+                fontSize: "14px",
+                color: "rgba(255, 255, 255, 0.85)",
+              }}
+            >
+              {data?.billNumber}
+            </Text>
           </div>
         </div>
-        <div style={{ marginTop: '20px', textAlign: 'right' }}>
-          <Space>
+      </div>
+
+      <div style={{ padding: "24px" }}>
+        <Spin spinning={isSettingsLoading}>
+          <div className="view-billing-container">
+            <div className="view-billing-content">
+              <div className="bill-card billing-container" id="billing-content">
+                <div className="billing-header">
+                  <div className="company-info">
+                    <div className="company-left">
+                      <img src={loggedInUser?.profilePic} alt="Company Logo" className="company-logo" />
+                      <div>
+                        <div className="company-name">{loggedInUser?.username || 'Company Name'}</div>
+                        <div className="company-address">{loggedInUser?.address}</div>
+                      </div>
+                    </div>
+                    <div className="company-right">
+                      <div>
+                        <FiPhone style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                        {loggedInUser?.phone || "N/A"}
+                      </div>
+                      <div>
+                        <FiMail style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                        {loggedInUser?.email || "N/A"}
+                      </div>
+                      <div>
+                        <FiGlobe style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                        {loggedInUser?.website || "N/A"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="billing-title">
+                    <div className="title-text">TAX BILL</div>
+                    <div className="gstin-text">GSTIN: <span style={{ fontWeight: 900 }}>{loggedInUser?.gstIn || '29ABCDE1234F1Z5'}</span></div>
+                  </div>
+                </div>
+
+                <div className="billing-details">
+                  <div className="details-grid">
+                    <div className="detail-item">
+                      <span className="detail-label">Bill No</span>
+                      <span className="detail-value">{data?.billNumber}</span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Bill Date</span>
+                      <span className="detail-value">
+                        {data?.billDate ? dayjs(data.billDate).format('DD/MM/YYYY') : '-'}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Vendor No</span>
+                      <span className="detail-value">{vendorDetails?.id ? `#VEN${String(vendorsData?.data?.length || 1).padStart(1, '0')}` : '-'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="vendor-details">
+                  <div className="vendor-header">
+                    <span>Vendor Details</span>
+                  </div>
+                  <div className="vendor-grid">
+                    <div className="info-group">
+                      <div className="info-row">
+                        <span className="label">Name</span>
+                        <span className="value">{vendorDetails?.name || '-'}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Contact</span>
+                        <span className="value">{vendorDetails?.contact || '-'}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">GSTIN</span>
+                        <span className="value">{vendorDetails?.taxNumber || '-'}</span>
+                      </div>
+                    </div>
+                    <div className="info-group">
+                      <div className="info-row">
+                        <span className="label">Address</span>
+                        <span className="value address-value">
+                          {formatVendorAddress() || '-'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bill-items" style={{ margin: '20px' }}>
+                  <table className="items-table">
+                    <thead>
+                      <tr>
+                        <th style={{ fontWeight: 700 }}>Item</th>
+                        <th style={{ fontWeight: 700 }}>HSN/SAC</th>
+                        <th style={{ fontWeight: 700 }}>Qty</th>
+                        <th style={{ fontWeight: 700 }}>Rate</th>
+                        <th style={{ fontWeight: 700 }}>Tax %</th>
+                        <th style={{ fontWeight: 700 }}>Tax Amount</th>
+                        <th style={{ fontWeight: 700 }}>Discount</th>
+                        <th style={{ fontWeight: 700 }}>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.isArray(items) && items.map((item, index) => {
+                        const quantity = Number(item.quantity) || 0;
+                        const rate = Number(item.unitPrice || item.price) || 0;
+                        const taxPercent = Number(item.tax) || 0;
+                        const taxAmount = Number(item.taxAmount) || 0;
+                        const discount = item.discountValue ? `${item.discountValue}${item.discountType === 'percentage' ? '%' : '₹'}` : '-';
+                        const amount = Number(item.amount) || 0;
+
+                        return (
+                          <tr key={index}>
+                            <td>{item.itemName || item.name}</td>
+                            <td>{item.hsnSac || '-'}</td>
+                            <td>{quantity}</td>
+                            <td>₹{rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            <td>{taxPercent}%</td>
+                            <td>₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            <td>{discount}</td>
+                            <td>₹{amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  <div className="totals-section">
+                    <div className="total-row">
+                      <div className="total-label">Sub Total</div>
+                      <div className="total-value">₹{Number(data?.subtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div className="total-row">
+                      <div className="total-label">Tax</div>
+                      <div className="total-value">₹{Number(data?.tax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div className="total-row">
+                      <div className="total-label">Discount</div>
+                      <div className="total-value">₹{Number(data?.discount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div className="total-row">
+                      <div className="total-label">Total Amount</div>
+                      <div className="total-value">₹{Number(data?.total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    {debitNoteAmount > 0 && (
+                      <div className="total-row debit-note-row">
+                        <div className="total-label">Debit Note</div>
+                        <div className="total-value debit-note">-₹{Number(debitNoteAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                      </div>
+                    )}
+                    <div className="total-row final-amount">
+                      <div className="total-label">Final Amount</div>
+                      <div className="total-value">₹{Number(data?.total - debitNoteAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bill-footer">
+                  <div className="payment-section" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div className="qr-code" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      <div>
+                        <QRCodeSVG
+                          value={getPaymentUrl()}
+                          size={200}
+                          level="H"
+                          includeMargin={true}
+                          style={{ padding: '0px' }}
+                        />
+                        <div className="qr-info">
+                          <p className="scan-text">Scan to Pay</p>
+                          <p className="amount-text">
+                            ₹{Number(data?.amount || 0).toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bank-details" style={{ flex: 1, paddingLeft: '24px', backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb', position: 'relative' }}>
+                      {data?.status === 'paid' && (
+                        <div className="paid-stamp">
+                          <div className="paid-icon">✓</div>
+                          <div className="paid-text">PAID</div>
+                        </div>
+                      )}
+                      <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FiCreditCard style={{ fontSize: '18px' }} /> Bank Details
+                      </h4>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '12px 24px', fontSize: '14px' }}>
+                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Bank:</span>
+                        <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.bankname || "N/A"}</span>
+
+                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Account Type:</span>
+                        <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.accounttype || "N/A"}</span>
+
+                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Account No:</span>
+                        <span style={{ color: '#111827', fontWeight: 500, fontFamily: 'monospace' }}>
+                          {loggedInUser?.accountnumber ? maskAccountNumber(loggedInUser.accountnumber) : "N/A"}
+                        </span>
+
+                        <span style={{ color: '#6b7280', fontWeight: 500 }}>IFSC:</span>
+                        <span style={{ color: '#111827', fontWeight: 500, fontFamily: 'monospace' }}>{loggedInUser?.ifsc || "N/A"}</span>
+
+                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Branch:</span>
+                        <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.banklocation || "N/A"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="powered-by" style={{ margin: '12px', textAlign: 'center', color: '#9CA3AF', fontSize: '12px', lineHeight: '1.5', letterSpacing: '0.5px' }}>
+                    Powered by <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#1890ff' }}>Grewox CRM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Divider style={{ margin: "24px 0" }} />
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "12px",
+            }}
+          >
+            <Button
+              icon={<FiPrinter />}
+              onClick={handlePrint}
+              size="large"
+              style={{
+                padding: "8px 24px",
+                height: "44px",
+                borderRadius: "10px",
+                border: "1px solid #e6e8eb",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+              }}
+            >
+              Print
+            </Button>
+            <Dropdown menu={shareItems} trigger={["click"]} placement="topRight">
+              <Button
+                icon={<FiShare2 />}
+                size="large"
+                style={{
+                  padding: "8px 24px",
+                  height: "44px",
+                  borderRadius: "10px",
+                  border: "1px solid #e6e8eb",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                }}
+              >
+                Share
+              </Button>
+            </Dropdown>
             <Button
               type="primary"
               icon={<FiDownload />}
               onClick={handleDownload}
+              size="large"
+              style={{
+                padding: "8px 24px",
+                height: "44px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                border: "none",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+              }}
             >
               Download
             </Button>
-          </Space>
-        </div>
+          </div>
+        </Spin>
       </div>
-    </div>
+
+      <style jsx global>{`
+        .billing-modal {
+          .ant-modal-content {
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+
+          .view-billing-container {
+            background: #ffffff;
+          }
+
+          .billing-header {
+            background: #F0F7FF;
+            padding: 24px;
+            border-bottom: 1px solid #E5E7EB;
+          }
+
+          .company-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+          }
+
+          .company-left {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+          }
+
+          .company-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: white;
+            padding: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          }
+
+          .company-name {
+            font-size: 32px;
+            font-weight: 900;
+            color: #1F2937;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+          }
+
+          .company-address {
+            color: #6B7280;
+            font-size: 14px;
+          }
+
+          .company-right {
+            text-align: right;
+            font-size: 14px;
+            color: #1F2937;
+
+            div {
+              margin-bottom: 4px;
+            }
+          }
+
+          .billing-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+          }
+
+          .title-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1F2937;
+          }
+
+          .gstin-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1F2937;
+
+            span {
+              font-weight: 900;
+              font-size: 20px;
+            }
+          }
+
+          .billing-details {
+            padding: 12px 24px;
+            background: #fff;
+            border-bottom: 1px solid #E5E7EB;
+          }
+
+          .details-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+          }
+
+          .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+          }
+
+          .detail-label {
+            font-size: 13px;
+            color: #6B7280;
+            font-weight: 500;
+          }
+
+          .detail-value {
+            font-size: 13px;
+            color: #111827;
+            font-weight: 600;
+          }
+
+          .vendor-details {
+            background: #fff;
+            border-bottom: 1px solid #E5E7EB;
+          }
+
+          .vendor-header {
+            background: #f9fafb;
+            padding: 8px 24px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            border-bottom: 1px solid #E5E7EB;
+          }
+
+          .vendor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 16px 24px;
+            gap: 24px;
+          }
+
+          .info-group {
+            display: flex;
+            flex-direction: column;
+          }
+
+          .info-row {
+            display: flex;
+            align-items: flex-start;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+          }
+
+          .label {
+            width: 60px;
+            color: #6B7280;
+            font-weight: 500;
+          }
+
+          .value {
+            flex: 1;
+            color: #111827;
+            padding-left: 12px;
+          }
+
+          .address-value {
+            line-height: 1.5;
+          }
+
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+
+            th, td {
+              padding: 8px 12px;
+              border: 1px solid #E5E7EB;
+              text-align: left;
+            }
+
+            th {
+              background: #F9FAFB;
+              font-weight: 600;
+              color: #374151;
+              font-size: 13px;
+            }
+
+            td {
+              font-size: 13px;
+              color: #1F2937;
+            }
+
+            tr:hover td {
+              background: #F9FAFB;
+            }
+          }
+
+          .totals-section {
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #E5E7EB;
+            
+            &:last-child {
+              border-bottom: none;
+            }
+          }
+
+          .total-label {
+            color: #6B7280;
+            font-weight: 500;
+          }
+
+          .total-value {
+            font-weight: 600;
+            color: #111827;
+
+            &.debit-note {
+              color: #DC2626;
+            }
+          }
+
+          .final-amount {
+            background-color: #F9FAFB;
+            
+            .total-label, .total-value {
+              font-weight: 700;
+              color: #111827;
+            }
+          }
+
+          .payment-section {
+            background: #F9FAFB;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 24px;
+            border: 1px solid #E5E7EB;
+            margin: 16px 0;
+          }
+
+          .qr-code {
+            text-align: center;
+
+            svg {
+              padding: 16px;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+          }
+
+          .qr-info {
+            margin-top: 12px;
+            text-align: center;
+          }
+
+          .scan-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: #6B7280;
+            margin: 4px 0;
+          }
+
+          .amount-text {
+            font-weight: 600;
+            font-size: 16px;
+            color: #111827;
+            margin: 4px 0;
+          }
+
+          .bank-details {
+            position: relative;
+            overflow: hidden;
+          }
+
+          .paid-stamp {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            padding: 8px 16px;
+            border-bottom-left-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+
+          .paid-icon {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1;
+          }
+
+          .paid-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+          }
+
+          .powered-by {
+            text-align: center;
+            color: #9CA3AF;
+            font-size: 12px;
+            margin-top: 16px;
+
+            span {
+              font-weight: bold;
+              font-size: 14px;
+              color: #1890FF;
+            }
+          }
+
+          .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+          }
+
+          .action-button {
+            padding: 8px 24px;
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid #E6E8EB;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            &.primary {
+              background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+              border: none;
+              color: white;
+            }
+          }
+        }
+      `}</style>
+    </Modal>
   );
 };
 
 export default ViewBilling;
+

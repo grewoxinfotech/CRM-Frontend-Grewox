@@ -175,6 +175,11 @@ const InvoiceList = ({
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price || item.rate) || 0,
           description: item.description || item.item_name || item.name,
+          hsn_sac: item.hsn_sac || item.hsnSac || item.hsn,
+          tax_rate: item.tax_rate || item.taxRate,
+          tax_amount: item.tax_amount || item.taxAmount,
+          discount: item.discount || 0,
+          amount: item.amount || 0,
         }));
       } catch (error) {
         console.error("Error parsing invoice items:", error);
