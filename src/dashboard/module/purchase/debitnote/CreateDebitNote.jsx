@@ -58,6 +58,15 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
     );
 
     if (selectedBill) {
+      const billAmount = selectedBill.amount || selectedBill.total || 0;
+
+      // Enhanced validation for bill amount
+      if (billAmount <= 0) {
+        message.error("Cannot create debit note for bill with zero amount");
+        form.resetFields(["bill", "amount", "currency", "currency_icon"]);
+        return;
+      }
+
       // Parse items to get currency icon
       let currencyIcon = "";
       try {
@@ -78,20 +87,11 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
         setSelectedCurrencyId(currencyDetails.id?.toString());
       }
 
-      const billAmount = selectedBill.amount || selectedBill.amount || 0;
-
-      // Check if bill amount is 0
-      if (billAmount <= 0) {
-        message.error("Cannot create debit note for bill with zero amount");
-        form.resetFields(["bill"]);
-        return;
-      }
-
       form.setFieldsValue({
         amount: billAmount,
         max_amount: billAmount,
         currency: selectedBill.currency,
-        currency_icon: currencyIcon || currencyDetails?.currencyIcon, // Use currency icon from items or fallback to currency details
+        currency_icon: currencyIcon || currencyDetails?.currencyIcon,
       });
     }
   };
@@ -284,14 +284,23 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                 }
               >
                 {billsData?.data
-                  ?.filter((bill) => bill.status !== "paid")
+                  ?.filter(
+                    (bill) =>
+                      // Filter out paid bills
+                      bill.status !== "paid" &&
+                      // Filter out bills with zero or invalid amount
+                      (bill.amount > 0 || bill.total > 0)
+                  )
                   .map((bill) => {
+                    const billAmount = bill.amount || bill.total || 0;
                     return (
                       <Option
                         key={bill.id || bill._id}
                         value={bill.id || bill._id}
+                        disabled={billAmount <= 0}
                       >
-                        {bill.billNumber || bill.bill_number}
+                        {bill.billNumber || bill.bill_number} (
+                        {selectedCurrency} {billAmount})
                       </Option>
                     );
                   })}

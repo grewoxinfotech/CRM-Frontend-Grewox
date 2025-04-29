@@ -56,18 +56,31 @@ const CreateCreditNotes = ({ open, onCancel }) => {
   const handleInvoiceChange = (value) => {
     const selectedInvoice = invoices?.find((inv) => inv.id === value);
     if (selectedInvoice) {
+      // Calculate remaining amount
+      const remainingAmount =
+        Number(selectedInvoice.amount || 0) -
+        Number(selectedInvoice.creditNoteAmount || 0);
+
+      // Validate if invoice can be used for credit note
+      if (remainingAmount <= 0) {
+        message.error("This invoice has no remaining amount for credit note");
+        form.setFieldValue("invoice", undefined);
+        return;
+      }
+
+      if (selectedInvoice.payment_status === "paid") {
+        message.error("Cannot create credit note for paid invoice");
+        form.setFieldValue("invoice", undefined);
+        return;
+      }
+
       // Find customer name from customer data
       const customerDetails = customers?.find(
         (cust) => cust.id === selectedInvoice.customer
       );
 
-      // Calculate due amount (total - credit notes)
-      const dueAmount =
-        Number(selectedInvoice.amount || 0) -
-        Number(selectedInvoice.creditNoteAmount || 0);
-
-      // Set amount from invoice due amount
-      form.setFieldValue("amount", dueAmount);
+      // Set amount from invoice remaining amount
+      form.setFieldValue("amount", remainingAmount);
 
       // Set currency from invoice
       form.setFieldValue("currency", selectedInvoice.currency);
@@ -84,8 +97,8 @@ const CreateCreditNotes = ({ open, onCancel }) => {
         setSelectedCurrency(currencyDetails.currencyIcon || "₹");
       }
 
-      // Store selected invoice due amount for validation
-      form.setFieldValue("max_amount", dueAmount);
+      // Store selected invoice remaining amount for validation
+      form.setFieldValue("max_amount", remainingAmount);
     }
   };
 
@@ -93,13 +106,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
     try {
       // Check if amount is 0 or less
       if (!values.amount || values.amount <= 0) {
-        message.error("Credit note amount must be greater than zero");
+        message.error("માન્ય રકમ દાખલ કરો");
         return;
       }
 
-      // Check if credit note amount exceeds due amount
-      if (parseFloat(values.amount) > parseFloat(values.max_amount)) {
-        message.error("Credit note amount cannot exceed due amount");
+      // Check if credit note amount exceeds remaining amount
+      const remainingAmount = form.getFieldValue("max_amount");
+      if (parseFloat(values.amount) > parseFloat(remainingAmount)) {
+        message.error("ક્રેડિટ નોટની રકમ બાકી રકમ કરતાં વધુ હોઈ શકતી નથી");
         return;
       }
 
@@ -113,14 +127,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
       };
 
       await createCreditNote(creditNoteData).unwrap();
-      message.success("Credit note created successfully");
+      message.success("ક્રેડિટ નોટ સફળતાપૂર્વક બનાવવામાં આવ્યું");
       // Refetch invoices data to update the list
       await refetchInvoices();
       form.resetFields();
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error(error?.data?.message || "Failed to create credit note");
+      message.error(error?.data?.message || "ક્રેડિટ નોટ બનાવવામાં નિષ્ફળ");
     }
   };
 
@@ -258,12 +272,41 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 }}
               >
                 {invoices
-                  ?.filter((invoice) => invoice.payment_status !== "paid")
-                  .map((invoice) => (
-                    <Option key={invoice.id} value={invoice.id}>
-                      {invoice.salesInvoiceNumber}
-                    </Option>
-                  ))}
+                  ?.filter((invoice) => {
+                    // Check if invoice is not paid
+                    const isNotPaid = invoice.payment_status !== "paid";
+
+                    // Calculate remaining amount (amount - credit notes)
+                    const remainingAmount =
+                      Number(invoice.amount || 0) -
+                      Number(invoice.creditNoteAmount || 0);
+
+                    // Only show invoices that are not paid and have remaining amount greater than 0
+                    return isNotPaid && remainingAmount > 0;
+                  })
+                  .map((invoice) => {
+                    // Calculate remaining amount for display
+                    const remainingAmount =
+                      Number(invoice.amount || 0) -
+                      Number(invoice.creditNoteAmount || 0);
+
+                    return (
+                      <Option key={invoice.id} value={invoice.id}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <span>{invoice.salesInvoiceNumber}</span>
+                          <span style={{ color: "#1890ff" }}>
+                            Remaining: {selectedCurrency}
+                            {remainingAmount.toFixed(2)}
+                          </span>
+                        </div>
+                      </Option>
+                    );
+                  })}
               </Select>
             </Form.Item>
           </Col>

@@ -62,7 +62,7 @@ const CreateInvoice = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [createInvoice, { isLoading }] = useCreateInvoiceMutation();
+  const [createInvoicee, { isLoading }] = useCreateInvoiceMutation();
   const { data: custdata } = useGetCustomersQuery();
   const customers = custdata?.data;
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -78,10 +78,11 @@ const CreateInvoice = ({
   const { data: contactsData } = useGetContactsQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
-  const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery({
-    page: 1,
-    limit: 100,
-  });
+  const { data: countries = [], isLoading: countriesLoading } =
+    useGetAllCountriesQuery({
+      page: 1,
+      limit: 100,
+    });
 
   const id = loggedInUser?.id;
   const { data: invoicesData, error } = useGetInvoicesQuery();
@@ -256,14 +257,16 @@ const CreateInvoice = ({
       // Format items for backend
       const formattedItems = values.items?.map((item) => {
         // Find the selected tax from taxesData
-        const selectedTax = taxesData?.data?.find((tax) => tax.id === item.taxId);
-        
+        const selectedTax = taxesData?.data?.find(
+          (tax) => tax.id === item.taxId
+        );
+
         return {
           product_id: item.id,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
           tax_rate: selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0,
-          tax_name: selectedTax ? selectedTax.gstName : '',
+          tax_name: selectedTax ? selectedTax.gstName : "",
           tax_amount: calculateItemTaxAmount(item),
           discount: Number(item.discount) || 0,
           discount_type: item.discount_type || "percentage",
@@ -294,7 +297,7 @@ const CreateInvoice = ({
         payment_status: values.status || "unpaid",
       };
 
-      await createInvoice({ id: id, data: payload }).unwrap();
+      await createInvoicee({ id: id, data: payload }).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
       setCreateModalVisible(false);
@@ -569,7 +572,7 @@ const CreateInvoice = ({
                       }}
                     >
                       <span>
-                      {country.countryCode} {country.phoneCode}
+                        {country.countryCode} {country.phoneCode}
                       </span>
                     </div>
                   </Option>
@@ -916,11 +919,14 @@ const CreateInvoice = ({
                 </>
               )}
               onChange={(value) => {
-                const selectedCustomer = customers?.find(c => c.id === value);
+                const selectedCustomer = customers?.find((c) => c.id === value);
                 if (selectedCustomer) {
-                  form.setFieldValue('tax_number', selectedCustomer.tax_number || '');
+                  form.setFieldValue(
+                    "tax_number",
+                    selectedCustomer.tax_number || ""
+                  );
                 }
-                form.setFieldValue('customer', value);
+                form.setFieldValue("customer", value);
               }}
             >
               {getOptionsBasedOnCategory().map((option) => (
@@ -952,7 +958,7 @@ const CreateInvoice = ({
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
                 <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                Tax Number
+                GSTIN
               </span>
             }
           >
@@ -1261,6 +1267,7 @@ const CreateInvoice = ({
                             <InputNumber
                               className="price-input"
                               min={0}
+                              disabled={true}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
                               }
@@ -1279,6 +1286,7 @@ const CreateInvoice = ({
                             <Input
                               placeholder="HSN/SAC"
                               className="hsn-input"
+                              disabled={true}
                             />
                           </Form.Item>
                         </td>

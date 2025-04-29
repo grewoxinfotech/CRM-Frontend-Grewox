@@ -883,6 +883,7 @@ const CreateInvoice = ({
                           >
                             <InputNumber
                               className="price-input"
+                              disabled={true}
                               min={0}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))

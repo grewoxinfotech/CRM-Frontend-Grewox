@@ -73,10 +73,11 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
 
-  const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery({
-    page: 1,
-    limit: 100,
-  });
+  const { data: countries = [], isLoading: countriesLoading } =
+    useGetAllCountriesQuery({
+      page: 1,
+      limit: 100,
+    });
 
   const handleCustomerChange = (value) => {
     const selectedCustomer = customers?.find((c) => c.id === value);
@@ -131,7 +132,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         items: items.map((item) => {
           // Find the tax from taxesData that matches the tax_name
           const matchingTax = taxesData?.data?.find(
-            tax => tax.gstName === item.tax_name
+            (tax) => tax.gstName === item.tax_name
           );
 
           return {
@@ -362,8 +363,10 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       // Format items for backend
       const formattedItems = values.items?.map((item) => {
         // Find the selected tax details
-        const selectedTax = taxesData?.data?.find(tax => tax.id === item.taxId);
-        
+        const selectedTax = taxesData?.data?.find(
+          (tax) => tax.id === item.taxId
+        );
+
         // Calculate tax amount for this item
         const quantity = Number(item.quantity) || 0;
         const price = Number(item.unit_price) || 0;
@@ -396,13 +399,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
           tax_rate: Number(item.tax) || 0,
-          tax_name: selectedTax ? selectedTax.gstName : '',
+          tax_name: selectedTax ? selectedTax.gstName : "",
           tax_id: item.taxId || null,
           discount: Number(item.discount) || 0,
           discount_type: item.discount_type || "percentage",
           hsn_sac: item.hsn_sac || "",
           tax_amount: taxAmount,
-          amount: finalAmount
+          amount: finalAmount,
         };
       });
 
@@ -601,20 +604,20 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
 
         <Form.Item
           name="phone"
-        label={
-          <span style={{ fontSize: "14px", fontWeight: "500" }}>
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
               Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
-          </span>
-        }
+            </span>
+          }
         >
           <Input.Group
             compact
             className="phone-input-group"
-          style={{
-                        display: "flex",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                borderRadius: "10px",
+            style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
               border: "1px solid #e6e8eb",
               overflow: "hidden",
             }}
@@ -922,11 +925,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 borderRadius: "10px",
               }}
               onChange={(value) => {
-                const selectedCustomer = customers?.find(c => c.id === value);
+                const selectedCustomer = customers?.find((c) => c.id === value);
                 if (selectedCustomer) {
-                  form.setFieldValue('tax_number', selectedCustomer.tax_number || '');
+                  form.setFieldValue(
+                    "tax_number",
+                    selectedCustomer.tax_number || ""
+                  );
                 }
-                form.setFieldValue('customer', value);
+                form.setFieldValue("customer", value);
                 handleCustomerChange(value);
               }}
               dropdownRender={(menu) => (
@@ -981,7 +987,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
                 <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                Tax Number
+                GSTIN
               </span>
             }
           >
@@ -1298,6 +1304,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                 calculateTotals(form.getFieldValue("items"))
                               }
                               defaultValue={0}
+                              disabled={true}
                             />
                           </Form.Item>
                         </td>
@@ -1306,6 +1313,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             <Input
                               placeholder="HSN/SAC"
                               className="item-input"
+                              disabled={true}
                             />
                           </Form.Item>
                         </td>
@@ -1416,26 +1424,32 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               disabled={!isTaxEnabled}
                               onChange={(value, option) => {
                                 const items = form.getFieldValue("items") || [];
-                                const selectedTax = taxesData?.data?.find(tax => tax.id === value);
+                                const selectedTax = taxesData?.data?.find(
+                                  (tax) => tax.id === value
+                                );
                                 if (selectedTax) {
                                   items[index] = {
                                     ...items[index],
                                     tax: selectedTax.gstPercentage,
                                     taxId: selectedTax.id,
-                                    tax_name: selectedTax.gstName
+                                    tax_name: selectedTax.gstName,
                                   };
                                 } else {
                                   items[index] = {
                                     ...items[index],
                                     tax: 0,
                                     taxId: null,
-                                    tax_name: ''
+                                    tax_name: "",
                                   };
                                 }
                                 form.setFieldsValue({ items });
                                 calculateTotals(items);
                               }}
-                              value={form.getFieldValue(['items', index, 'taxId'])}
+                              value={form.getFieldValue([
+                                "items",
+                                index,
+                                "taxId",
+                              ])}
                             >
                               {taxesData?.data?.map((tax) => (
                                 <Option

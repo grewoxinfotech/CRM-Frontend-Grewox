@@ -40,7 +40,7 @@ import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import CreateVendor from "../vendor/CreateVendor";
 import { useCreateVendorMutation } from "../vendor/services/vendorApi";
-import { useGetAllCountriesQuery } from '../../settings/services/settingsApi';
+import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -60,7 +60,8 @@ const EditBilling = ({ open, onCancel, initialData }) => {
   const [updateBilling] = useUpdateBillingMutation();
 
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const { data: countries = [], loading: countriesLoading } = useGetAllCountriesQuery();
+  const { data: countries = [], loading: countriesLoading } =
+    useGetAllCountriesQuery();
 
   // Add this to fetch vendors
   const {
@@ -128,6 +129,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
           items?.length > 0
             ? items.map((item) => ({
                 item_name: item.itemName,
+                product_id: item.product_id,
                 quantity: item.quantity,
                 unit_price: Number(item.unitPrice || 0),
                 selling_price: Number(item.unitPrice || 0),
@@ -135,7 +137,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 taxId: item.taxId,
                 tax: item.tax,
                 discount: item.discount || 0,
-                discountType: item.discountType || discountType, // Use item's discount type or default
+                discountType: item.discountType || discountType,
                 currency: item.currency || initialData.currency,
                 currencyIcon:
                   item.currencyIcon || selectedCurrencyData?.currencyIcon,
@@ -175,13 +177,15 @@ const EditBilling = ({ open, onCancel, initialData }) => {
 
   useEffect(() => {
     if (countries.length > 0) {
-        const india = countries.find(country => country.countryName === 'India');
-        if (india) {
-            setSelectedCountry(india);
-            vendorForm.setFieldValue('phonecode', india.phoneCode);
-        }
+      const india = countries.find(
+        (country) => country.countryName === "India"
+      );
+      if (india) {
+        setSelectedCountry(india);
+        vendorForm.setFieldValue("phonecode", india.phoneCode);
+      }
     }
-}, [countries]);
+  }, [countries]);
 
   // Handle currency change
   const handleCurrencyChange = (value, option) => {
@@ -224,12 +228,13 @@ const EditBilling = ({ open, onCancel, initialData }) => {
         currencyIcon: selectedCurrencyData?.currencyIcon || selectedCurrency,
         items: values.items?.map((item) => ({
           itemName: item.item_name,
+          product_id: item.product_id,
           quantity: Number(item.quantity),
           unitPrice: Number(item.selling_price || item.unit_price),
           hsnSac: item.hsn_sac || "",
           discount: Number(item.discount || 0),
-          discountType: selectedDiscountType, // Store the selected discount type
-          discountValue: Number(item.discount || 0), // Store the discount value
+          discountType: selectedDiscountType,
+          discountValue: Number(item.discount || 0),
           tax: Number(item.tax || 0),
           taxId: item.taxId,
           taxAmount: calculateItemTaxAmount(item),
@@ -259,6 +264,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
         remaining_amount: Number(values.remaining_amount || 0),
       };
 
+      console.log(formattedData);
       const response = await updateBilling({
         id: initialData.id,
         data: formattedData,
@@ -352,13 +358,15 @@ const EditBilling = ({ open, onCancel, initialData }) => {
 
   const handleCreateVendor = async (values) => {
     try {
-        const selectedCountry = countries?.find(c => c.phoneCode === values.phoneCode);
-        if (!selectedCountry) {
-            message.error('Please select a valid phone code');
-            return;
-        }
+      const selectedCountry = countries?.find(
+        (c) => c.phoneCode === values.phoneCode
+      );
+      if (!selectedCountry) {
+        message.error("Please select a valid phone code");
+        return;
+      }
 
-        const { phoneCode, phoneNumber, ...otherValues } = values;
+      const { phoneCode, phoneNumber, ...otherValues } = values;
       const result = await createVendor({
         name: values.name,
         contact: values.contact,
@@ -546,93 +554,94 @@ const EditBilling = ({ open, onCancel, initialData }) => {
         </Form.Item>
 
         <Form.Item
-                    name="contact"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Phone Number <span style={{ color: '#ff4d4f' }}>*</span>
-                        </span>
-                    }
-                >
-                    <Input.Group compact className="phone-input-group" style={{
-                        display: 'flex',
-                        height: '48px',
-                        backgroundColor: '#f8fafc',
-                        borderRadius: '10px',
-                        border: '1px solid #e6e8eb',
-                        overflow: 'hidden'
-                    }}>
-                        <Form.Item
-                            name="phoneCode"
-                            noStyle
-                            initialValue="+91"
-                        >
-                            <Select
-                                size="large"
-                                style={{
-                                    width: '80px',
-                                    height: '48px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    backgroundColor: 'white',
-                                    cursor: 'pointer',
-                                }}
-                                loading={countriesLoading}
-                                className="phone-code-select"
-                                dropdownStyle={{
-                                    padding: '8px',
-                                    borderRadius: '10px',
-                                    backgroundColor: 'white',
-                                }}
-                                showSearch
-                                optionFilterProp="children"
-                                defaultValue="+91"
-                            >
-                                {countries?.map(country => (
-                                    <Option 
-                                        key={country.id} 
-                                        value={country.phoneCode}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        <div style={{ 
-                                            display: 'flex', 
-                                            alignItems: 'center', 
-                                            justifyContent: 'center',
-                                            color: '#262626',
-                                            cursor: 'pointer',
-                                        }}>
-                                            <span>
-                                                {country.phoneCode} {country.countryCode}
-                                            </span>
-                                        </div>
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                        <Form.Item
-                            name="contact"
-                            noStyle
-                        >
-                            <Input
-                                size="large"
-                                type="number"
-                                style={{
-                                    flex: 1,
-                                    border: 'none',
-                                    borderLeft: '1px solid #e6e8eb',
-                                    borderRadius: 0,
-                                    height: '46px',
-                                    backgroundColor: 'transparent',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                }}
-                                placeholder="Enter phone number"
-                            />
-                        </Form.Item>
-                    </Input.Group>
-                </Form.Item>
+          name="contact"
+          label={
+            <span
+              style={{
+                fontSize: "14px",
+                fontWeight: "500",
+              }}
+            >
+              Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
+            </span>
+          }
+        >
+          <Input.Group
+            compact
+            className="phone-input-group"
+            style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              overflow: "hidden",
+            }}
+          >
+            <Form.Item name="phoneCode" noStyle initialValue="+91">
+              <Select
+                size="large"
+                style={{
+                  width: "90px",
+                  height: "48px",
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  cursor: "pointer",
+                }}
+                loading={countriesLoading}
+                className="phone-code-select"
+                dropdownStyle={{
+                  padding: "8px",
+                  borderRadius: "10px",
+                  backgroundColor: "white",
+                }}
+                showSearch
+                optionFilterProp="children"
+                defaultValue="+91"
+              >
+                {countries?.map((country) => (
+                  <Option
+                    key={country.id}
+                    value={country.phoneCode}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#262626",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span>
+                        {country.countryCode} {country.phoneCode}
+                      </span>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item name="contact" noStyle>
+              <Input
+                size="large"
+                type="number"
+                style={{
+                  flex: 1,
+                  border: "none",
+                  borderLeft: "1px solid #e6e8eb",
+                  borderRadius: 0,
+                  height: "46px",
+                  backgroundColor: "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                placeholder="Enter phone number"
+              />
+            </Form.Item>
+          </Input.Group>
+        </Form.Item>
 
         <div
           style={{
@@ -675,39 +684,6 @@ const EditBilling = ({ open, onCancel, initialData }) => {
       </Form>
     </Modal>
   );
-
-  // Update the product selection handler
-  const handleProductChange = (value, option) => {
-    const items = form.getFieldValue("items") || [];
-    const newItems = [...items];
-    const lastIndex = newItems.length - 1;
-
-    // Get the selected product's details
-    const selectedProduct = productsData?.data?.find((p) => p.id === value);
-
-    if (selectedProduct) {
-      newItems[lastIndex] = {
-        ...newItems[lastIndex],
-        item_name: selectedProduct.name,
-        unit_price: Number(selectedProduct.selling_price || 0),
-        selling_price: Number(selectedProduct.selling_price || 0),
-        hsn_sac: selectedProduct.hsn_sac,
-        profilePic: selectedProduct.image,
-      };
-
-      form.setFieldsValue({
-        items: newItems,
-        [`items[${lastIndex}].unit_price`]: Number(
-          selectedProduct.selling_price || 0
-        ),
-        [`items[${lastIndex}].selling_price`]: Number(
-          selectedProduct.selling_price || 0
-        ),
-      });
-
-      calculateTotals(newItems);
-    }
-  };
 
   return (
     <>
@@ -1017,78 +993,13 @@ const EditBilling = ({ open, onCancel, initialData }) => {
               </div>
             </div>
 
-            <Form.Item
-              name="product_id"
-              rules={[{ required: true, message: "Please select product" }]}
-            >
-              <Select
-                placeholder="Select Product"
-                size="large"
-                loading={productsLoading}
-                style={{
-                  width: "30%",
-                  marginLeft: "16px",
-                  marginRight: "16px",
-                  marginTop: "16px",
-                  marginBottom: "16px",
-                  borderRadius: "10px",
-                }}
-                value={form.getFieldValue("items")?.[0]?.item_name}
-                onChange={handleProductChange}
-              >
-                {productsData?.data?.map((product) => (
-                  <Option
-                    key={product.id}
-                    value={product.id}
-                    label={product.name}
-                    selling_price={product.selling_price}
-                    hsn_sac={product.hsn_sac}
-                    profilePic={product.image}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "30px",
-                          height: "30px",
-                          borderRadius: "4px",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontWeight: 500 }}>{product.name}</span>
-                        {/* <span style={{ fontSize: '12px', color: '#666' }}>
-                                                    {product.price}
-                                                </span> */}
-                      </div>
-                    </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
             <Form.List name="items" style={{ marginTop: "20px" }}>
               {(fields, { add, remove }) => (
                 <>
                   <table className="proposal-items-table">
                     <thead>
                       <tr>
-                        <th>Item</th>
+                        <th>Product/Item</th>
                         <th>Quantity</th>
                         <th>Unit Price</th>
                         <th>HSN/SAC</th>
@@ -1106,16 +1017,94 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                 {...field}
                                 name={[field.name, "item_name"]}
                               >
-                                <Input
-                                  placeholder="Item Name"
-                                  className="item-input"
-                                  style={{
-                                    textAlign: "center",
-                                    "::placeholder": {
-                                      textAlign: "center",
-                                    },
+                                <Select
+                                  placeholder="Select Product"
+                                  loading={productsLoading}
+                                  style={{ width: "100%" }}
+                                  onChange={(value, option) => {
+                                    const selectedProduct =
+                                      productsData?.data?.find(
+                                        (p) => p.id === value
+                                      );
+                                    if (selectedProduct) {
+                                      const items =
+                                        form.getFieldValue("items") || [];
+                                      items[index] = {
+                                        ...items[index],
+                                        item_name: selectedProduct.name,
+                                        product_id: selectedProduct.id,
+                                        unit_price: Number(
+                                          selectedProduct.selling_price || 0
+                                        ),
+                                        selling_price: Number(
+                                          selectedProduct.selling_price || 0
+                                        ),
+                                        hsn_sac: selectedProduct.hsn_sac,
+                                        profilePic: selectedProduct.image,
+                                      };
+                                      form.setFieldsValue({
+                                        items,
+                                        [`items[${index}].unit_price`]: Number(
+                                          selectedProduct.selling_price || 0
+                                        ),
+                                        [`items[${index}].selling_price`]:
+                                          Number(
+                                            selectedProduct.selling_price || 0
+                                          ),
+                                        [`items[${index}].hsn_sac`]:
+                                          selectedProduct.hsn_sac,
+                                        [`items[${index}].product_id`]:
+                                          selectedProduct.id,
+                                      });
+                                      calculateTotals(items);
+                                    }
                                   }}
-                                />
+                                >
+                                  {productsData?.data?.map((product) => (
+                                    <Option
+                                      key={product.id}
+                                      value={product.id}
+                                      label={product.name}
+                                    >
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          alignItems: "center",
+                                          gap: "10px",
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            width: "30px",
+                                            height: "30px",
+                                            borderRadius: "4px",
+                                            overflow: "hidden",
+                                          }}
+                                        >
+                                          <img
+                                            src={product.image}
+                                            alt={product.name}
+                                            style={{
+                                              width: "100%",
+                                              height: "100%",
+                                              objectFit: "cover",
+                                            }}
+                                          />
+                                        </div>
+                                        <div
+                                          style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                          }}
+                                        >
+                                          <span style={{ fontWeight: 500 }}>
+                                            {product.name}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </Option>
+                                  ))}
+                                </Select>
                               </Form.Item>
                             </td>
                             <td>
