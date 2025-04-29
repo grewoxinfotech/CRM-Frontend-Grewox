@@ -32,7 +32,7 @@ const CustomerList = ({
   onDelete,
   onView,
   onCustomerClick,
-  onCustomerRevenueClick, 
+  onCustomerRevenueClick,
   custdata,
   searchText = "",
   //   customers = [],
@@ -82,15 +82,6 @@ const CustomerList = ({
   const getDropdownItems = (record) => ({
     items: [
       {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: (e) => {
-          e.domEvent.stopPropagation();
-          onView?.(record);
-        },
-      },
-      {
         key: "edit",
         icon: <FiEdit2 />,
         label: "Edit",
@@ -117,14 +108,21 @@ const CustomerList = ({
       title: "Customer Name",
       dataIndex: "name",
       key: "name",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search customer name"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -135,7 +133,11 @@ const CustomerList = ({
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
@@ -144,7 +146,7 @@ const CustomerList = ({
       onFilter: (value, record) =>
         record.name.toLowerCase().includes(value.toLowerCase()) ||
         record.company?.toLowerCase().includes(value.toLowerCase()),
-    
+
       render: (text, record) => (
         <Text
           strong
@@ -155,7 +157,7 @@ const CustomerList = ({
         </Text>
       ),
     },
-   
+
     {
       title: "Email",
       dataIndex: "email",
@@ -164,7 +166,9 @@ const CustomerList = ({
       render: (email) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiMail style={{ color: "#1890ff" }} />
-          <a href={`mailto:${email}`} onClick={(e) => e.stopPropagation()}>{email}</a>
+          <a href={`mailto:${email}`} onClick={(e) => e.stopPropagation()}>
+            {email}
+          </a>
         </div>
       ),
     },
@@ -176,11 +180,13 @@ const CustomerList = ({
       render: (contact) => (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <FiPhone style={{ color: "#1890ff" }} />
-          <a href={`tel:${contact}`} onClick={(e) => e.stopPropagation()}>{contact}</a>
+          <a href={`tel:${contact}`} onClick={(e) => e.stopPropagation()}>
+            {contact}
+          </a>
         </div>
       ),
     },
-    
+
     {
       title: "tax_number ",
       dataIndex: "tax_number",
@@ -194,7 +200,7 @@ const CustomerList = ({
       width: 80,
       align: "center",
       render: (_, record) => (
-        <div onClick={e => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={getDropdownItems(record)}
             trigger={["click"]}
@@ -229,13 +235,15 @@ const CustomerList = ({
         }}
         onRow={(record) => ({
           onClick: (e) => {
-            if (!e.target.closest('.ant-dropdown-menu') && 
-                !e.target.closest('.action-dropdown-button') &&
-                !e.target.closest('a')) {
+            if (
+              !e.target.closest(".ant-dropdown-menu") &&
+              !e.target.closest(".action-dropdown-button") &&
+              !e.target.closest("a")
+            ) {
               onCustomerRevenueClick(record);
             }
           },
-          style: { cursor: 'pointer' }
+          style: { cursor: "pointer" },
         })}
         className="customer-table"
       />

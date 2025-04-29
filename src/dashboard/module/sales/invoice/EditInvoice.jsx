@@ -634,7 +634,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={1100}
+      width={1300}
       destroyOnClose={true}
       centered
       closeIcon={null}
@@ -1001,61 +1001,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             </div>
           </div>
 
-          <Form.Item
-            name="product_id"
-            rules={[{ required: true, message: "Please select product" }]}
-          >
-            <Select
-              placeholder="Select Product"
-              size="large"
-              loading={productsLoading}
-              style={{
-                width: "30%",
-                marginLeft: "16px",
-                marginRight: "16px",
-                marginTop: "16px",
-                marginBottom: "16px",
-                borderRadius: "10px",
-              }}
-              value={form.getFieldValue("product_id")}
-              onChange={handleProductSelect}
-            >
-              {productsData?.data?.map((product) => (
-                <Option key={product.id} value={product.id}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "30px",
-                        height: "30px",
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ fontWeight: 500 }}>{product.name}</span>
-                    </div>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
@@ -1081,10 +1026,90 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             name={[name, "item_name"]}
                             rules={[{ required: true, message: "Required" }]}
                           >
-                            <Input
-                              placeholder="Item Name"
-                              className="item-input"
-                            />
+                            <Select
+                              showSearch
+                              placeholder="Select Product"
+                              optionFilterProp="children"
+                              style={{ width: "100%" }}
+                              onChange={(value) => {
+                                const selectedProduct =
+                                  productsData?.data?.find(
+                                    (product) => product.id === value
+                                  );
+                                if (selectedProduct) {
+                                  const productCurrency = currenciesData?.find(
+                                    (c) => c.id === selectedProduct.currency
+                                  );
+                                  if (productCurrency) {
+                                    setSelectedProductCurrency(productCurrency);
+                                    setSelectedCurrency(
+                                      productCurrency.currencyIcon
+                                    );
+                                    setSelectedCurrencyId(productCurrency.id);
+                                    setIsCurrencyDisabled(true);
+                                  }
+
+                                  const items =
+                                    form.getFieldValue("items") || [];
+                                  items[index] = {
+                                    ...items[index],
+                                    id: selectedProduct.id,
+                                    item_name: selectedProduct.name,
+                                    unit_price: selectedProduct.selling_price,
+                                    hsn_sac: selectedProduct.hsn_sac,
+                                    tax: selectedProduct.tax,
+                                    profilePic: selectedProduct.image,
+                                    currency: selectedProduct.currency,
+                                  };
+                                  form.setFieldsValue({
+                                    items,
+                                    currency: selectedProduct.currency,
+                                  });
+                                  calculateTotals(items);
+                                }
+                              }}
+                            >
+                              {productsData?.data?.map((product) => (
+                                <Option key={product.id} value={product.id}>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "10px",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "4px",
+                                        overflow: "hidden",
+                                      }}
+                                    >
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        style={{
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 500 }}>
+                                        {product.name}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </Option>
+                              ))}
+                            </Select>
                           </Form.Item>
                         </td>
                         <td>
@@ -1307,18 +1332,30 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
               }}
             >
-              <Text style={{ marginTop: "10px" }}>Sub Total</Text>
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Sub Total
+              </Text>
               <Form.Item name="subtotal" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
@@ -1333,18 +1370,30 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
               }}
             >
-              <Text style={{ marginTop: "10px" }}>Total Tax</Text>
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Total Tax
+              </Text>
               <Form.Item name="total_tax" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
@@ -1355,17 +1404,37 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 />
               </Form.Item>
             </div>
-            <Divider style={{ margin: "12px 0" }} />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <Text style={{ marginTop: "10px" }}>Total Amount</Text>
+            <Divider style={{ margin: "20px 0", borderColor: "#e5e7eb" }} />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "16px",
+                background:
+                  "linear-gradient(135deg, #1890ff08 0%, #096dd908 100%)",
+                borderRadius: "8px",
+                alignItems: "center",
+                border: "1px solid #1890ff20",
+              }}
+            >
+              <Text
+                style={{ fontSize: "16px", color: "#1f2937", fontWeight: 600 }}
+              >
+                Total Amount
+              </Text>
               <Form.Item name="total" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#1890ff",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
