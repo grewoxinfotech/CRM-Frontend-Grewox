@@ -44,6 +44,9 @@ import { useGetProductsQuery } from "../../../../sales/product&services/services
 import { useGetContactsQuery } from "../../../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../../../crm/companyacoount/services/companyAccountApi";
 import { useGetAllCountriesQuery } from "../../../../../../superadmin/module/settings/services/settingsApi";
+import { useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
+import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -76,10 +79,55 @@ const CreateInvoice = ({
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
-  const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery({
-    page: 1,
-    limit: 100
-  });
+  const loggedInUser = useSelector(selectCurrentUser);
+
+  const { data: countries = [], isLoading: countriesLoading } =
+    useGetAllCountriesQuery({
+      page: 1,
+      limit: 100,
+    });
+
+  const id = dealId;
+
+  const { data: invoicesData, error } = useGetInvoicesQuery();
+  const invoices = (invoicesData?.data || []).filter(
+    (invoice) => invoice.client_id === loggedInUser?.id
+  );
+
+  console.log(invoices, "invoices");
+  const getNextInvoiceNumber = () => {
+    // If no invoices exist or invoices array is empty, start from 1
+    if (!invoices || invoices.length === 0) {
+      return "S-INV-#1";
+    }
+
+    // Filter invoices based on client_id match with either related_id or loggedInUser's client_id
+    const filteredInvoices = invoices.filter(
+      (invoice) =>
+        invoice.client_id === loggedInUser?.client_id ||
+        invoice.client_id === loggedInUser?.id
+    );
+
+    if (filteredInvoices.length === 0) {
+      return "S-INV-#1";
+    }
+
+    // Find the highest invoice number from filtered invoices
+    let highestNumber = 0;
+    filteredInvoices.forEach((invoice) => {
+      if (invoice.salesInvoiceNumber) {
+        // Extract number from invoice number format "S-INV-#X"
+        const numberPart = invoice.salesInvoiceNumber.split("#")[1];
+        const currentNumber = parseInt(numberPart);
+        if (!isNaN(currentNumber) && currentNumber > highestNumber) {
+          highestNumber = currentNumber;
+        }
+      }
+    });
+
+    // Return next invoice number
+    return `S-INV-#${highestNumber + 1}`;
+  };
 
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
@@ -209,43 +257,54 @@ const CreateInvoice = ({
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
+
+      // Format items for backend
       const formattedItems = values.items?.map((item) => ({
         product_id: item.id,
-        name: item.item_name,
         quantity: Number(item.quantity) || 0,
         unit_price: Number(item.unit_price) || 0,
         tax_rate: Number(item.tax) || 0,
         discount: Number(item.discount) || 0,
         discount_type: item.discount_type || "percentage",
         hsn_sac: item.hsn_sac || "",
-        tax_amount: calculateItemTaxAmount(item),
+        taxAmount: calculateItemTaxAmount(item),
         amount: calculateItemTotal(item),
+        currency: item.currency || values.currency,
+        currencyIcon: item.currencyIcon || selectedCurrency,
       }));
 
+      // Get next invoice number
+
       const payload = {
-        category: "customer",
+        salesInvoiceNumber: getNextInvoiceNumber(),
+        category: values.category,
         customer: values.customer,
+        section: "sales-invoice",
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
-        currency: values.currency,
+        currency: selectedCurrencyId || values.currency,
+        currencyCode: selectedCurrency,
+        currencyIcon: selectedCurrency,
         items: formattedItems,
         subtotal: Number(values.subtotal) || 0,
         tax: Number(values.tax) || 0,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid",
+        deal_id: dealId, // Add deal_id to the payload
       };
 
-      const result = await createInvoice({
-        id: dealId,
-        data: payload,
-      }).unwrap();
+      await createInvoice({ id: id, data: payload }).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
       setCreateModalVisible(false);
       onCancel();
     } catch (error) {
-      console.error("Submit Error:", error);
-      message.error(error?.data?.message || "Failed to create invoice");
+      const errorMessage =
+        error?.data?.message ||
+        error?.data?.error ||
+        error?.message ||
+        "Failed to create invoice";
+      message.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -254,16 +313,18 @@ const CreateInvoice = ({
   const handleCreateCustomer = async (values) => {
     try {
       // Find the country ID from the selected phone code
-      const selectedCountry = countries?.find(c => c.phoneCode === values.phonecode);
+      const selectedCountry = countries?.find(
+        (c) => c.phoneCode === values.phonecode
+      );
       if (!selectedCountry) {
-        message.error('Please select a valid phone code');
+        message.error("Please select a valid phone code");
         return;
       }
 
       const result = await createCustomer({
         name: values.name,
         contact: values.contact,
-        phonecode: selectedCountry.id // Use country ID instead of phone code
+        phonecode: selectedCountry.id, // Use country ID instead of phone code
       }).unwrap();
 
       message.success("Customer created successfully");
@@ -1187,80 +1248,79 @@ const CreateInvoice = ({
               },
             ]}
           >
-            <Input.Group compact className="phone-input-group" style={{
-                display: 'flex',
-                height: '48px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '10px',
-                border: '1px solid #e6e8eb',
-                overflow: 'hidden'
-            }}>
-                <Form.Item
-                    name="phonecode"
-                    noStyle
-                    initialValue="+91"
+            <Input.Group
+              compact
+              className="phone-input-group"
+              style={{
+                display: "flex",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                borderRadius: "10px",
+                border: "1px solid #e6e8eb",
+                overflow: "hidden",
+              }}
+            >
+              <Form.Item name="phonecode" noStyle initialValue="+91">
+                <Select
+                  size="large"
+                  style={{
+                    width: "80px",
+                    height: "48px",
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "white",
+                    cursor: "pointer",
+                  }}
+                  loading={countriesLoading}
+                  className="phone-code-select"
+                  dropdownStyle={{
+                    padding: "8px",
+                    borderRadius: "10px",
+                    backgroundColor: "white",
+                  }}
+                  showSearch
+                  optionFilterProp="children"
+                  defaultValue="+91"
                 >
-                    <Select
-                        size="large"
-                        style={{
-                            width: '80px',
-                            height: '48px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            backgroundColor: 'white',
-                            cursor: 'pointer',
-                        }}
-                        loading={countriesLoading}
-                        className="phone-code-select"
-                        dropdownStyle={{
-                            padding: '8px',
-                            borderRadius: '10px',
-                            backgroundColor: 'white',
-                        }}
-                        showSearch
-                        optionFilterProp="children"
-                        defaultValue="+91"
+                  {countries?.map((country) => (
+                    <Option
+                      key={country.id}
+                      value={country.phoneCode}
+                      style={{ cursor: "pointer" }}
                     >
-                        {countries?.map(country => (
-                            <Option 
-                                key={country.id} 
-                                value={country.phoneCode}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                <div style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    justifyContent: 'center',
-                                    color: '#262626',
-                                    cursor: 'pointer',
-                                }}>
-                                    <span>{country.phoneCode}</span>
-                                </div>
-                            </Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-                <Form.Item
-                    name="contact"
-                    noStyle
-                >
-                    <Input
-                        size="large"
-                        type="number"
+                      <div
                         style={{
-                            flex: 1,
-                            border: 'none',
-                            borderLeft: '1px solid #e6e8eb',
-                            borderRadius: 0,
-                            height: '46px',
-                            backgroundColor: 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#262626",
+                          cursor: "pointer",
                         }}
-                        placeholder="Enter 10-digit phone number"
-                        maxLength={10}
-                    />
-                </Form.Item>
+                      >
+                        <span>{country.phoneCode}</span>
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item name="contact" noStyle>
+                <Input
+                  size="large"
+                  type="number"
+                  style={{
+                    flex: 1,
+                    border: "none",
+                    borderLeft: "1px solid #e6e8eb",
+                    borderRadius: 0,
+                    height: "46px",
+                    backgroundColor: "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  placeholder="Enter 10-digit phone number"
+                  maxLength={10}
+                />
+              </Form.Item>
             </Input.Group>
           </Form.Item>
 

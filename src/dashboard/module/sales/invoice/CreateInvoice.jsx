@@ -32,7 +32,10 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./invoice.scss";
-import { useCreateInvoiceMutation } from "./services/invoiceApi";
+import {
+  useCreateInvoiceMutation,
+  useGetInvoicesQuery,
+} from "./services/invoiceApi";
 import {
   useGetCustomersQuery,
   useCreateCustomerMutation,
@@ -76,6 +79,45 @@ const CreateInvoice = ({
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
 
   const id = loggedInUser?.id;
+  const { data: invoicesData, error } = useGetInvoicesQuery();
+  const invoices = (invoicesData?.data || []).filter(
+    (invoice) => invoice.client_id === id
+  );
+
+  console.log(invoices, "invoices");
+  const getNextInvoiceNumber = () => {
+    // If no invoices exist or invoices array is empty, start from 1
+    if (!invoices || invoices.length === 0) {
+      return "S-INV-#1";
+    }
+
+    // Filter invoices based on client_id match with either related_id or loggedInUser's client_id
+    const filteredInvoices = invoices.filter(
+      (invoice) =>
+        invoice.client_id === loggedInUser?.client_id ||
+        invoice.client_id === loggedInUser?.id
+    );
+
+    if (filteredInvoices.length === 0) {
+      return "S-INV-#1";
+    }
+
+    // Find the highest invoice number from filtered invoices
+    let highestNumber = 0;
+    filteredInvoices.forEach((invoice) => {
+      if (invoice.salesInvoiceNumber) {
+        // Extract number from invoice number format "S-INV-#X"
+        const numberPart = invoice.salesInvoiceNumber.split("#")[1];
+        const currentNumber = parseInt(numberPart);
+        if (!isNaN(currentNumber) && currentNumber > highestNumber) {
+          highestNumber = currentNumber;
+        }
+      }
+    });
+
+    // Return next invoice number
+    return `S-INV-#${highestNumber + 1}`;
+  };
 
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
@@ -221,7 +263,12 @@ const CreateInvoice = ({
         currencyIcon: item.currencyIcon || selectedCurrency,
       }));
 
+      // Get the next invoice number
+      const nextInvoiceNumber = getNextInvoiceNumber();
+      console.log("Generated Invoice Number:", nextInvoiceNumber);
+
       const payload = {
+        salesInvoiceNumber: nextInvoiceNumber,
         category: values.category,
         customer: values.customer,
         section: "sales-invoice",
@@ -1221,7 +1268,8 @@ const CreateInvoice = ({
                                   />
                                 </Form.Item>
                                 <Text style={{ marginLeft: "4px" }}>
-                                  {form.getFieldValue("items")?.[index]?.discount_type === "fixed" 
+                                  {form.getFieldValue("items")?.[index]
+                                    ?.discount_type === "fixed"
                                     ? selectedCurrency
                                     : "%"}
                                 </Text>

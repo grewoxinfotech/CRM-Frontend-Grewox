@@ -327,6 +327,7 @@ const Billing = () => {
 
             <CreateBilling
                 open={isCreateModalVisible}
+                billings={billings?.data || []}
                 onCancel={() => setIsCreateModalVisible(false)}
                 onSubmit={handleCreateBilling}
             />

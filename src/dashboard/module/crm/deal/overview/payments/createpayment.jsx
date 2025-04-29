@@ -31,36 +31,42 @@ const { Text } = Typography;
 const { Option } = Select;
 
 const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
-
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [createPayment] = useCreateDealPaymentMutation();
   const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
-    limit: 100
+    limit: 100,
   });
-  const { data: invoicesResponse = { data: [] } } = useGetInvoicesQuery();
+  const { data: invoicesResponse = { data: [] }, refetch: refetchInvoices } =
+    useGetInvoicesQuery();
   const invoicessData = invoicesResponse.data;
-  const invoicesData = invoicessData.filter(invoice => invoice.related_id === dealId);
-  const [selectedCurrency, setSelectedCurrency] = useState('₹');
+  const invoicesData = invoicessData.filter(
+    (invoice) => invoice.related_id === dealId
+  );
+
+  console.log("invoicesData", invoicesData);
+  const [selectedCurrency, setSelectedCurrency] = useState("₹");
 
   const handleInvoiceChange = (value) => {
-    const selectedInvoice = invoicesData.find(invoice => invoice.id === value);
+    const selectedInvoice = invoicesData.find(
+      (invoice) => invoice.id === value
+    );
     if (selectedInvoice) {
-      // Set amount from invoice total
       form.setFieldsValue({
         amount: selectedInvoice.total,
-        currency: selectedInvoice.currency
+        currency: selectedInvoice.currency,
       });
 
-      // Update selected currency icon
-      const currencyDetails = currencies.find(curr => curr.id === selectedInvoice.currency);
+      const currencyDetails = currencies.find(
+        (curr) => curr.id === selectedInvoice.currency
+      );
       if (currencyDetails) {
-        setSelectedCurrency(currencyDetails.currencyIcon || '₹');
+        setSelectedCurrency(currencyDetails.currencyIcon || "₹");
       }
 
-      // Store selected invoice amount for validation
-      form.setFieldValue('max_amount', selectedInvoice.total);
+      // Store invoice total for validation
+      form.setFieldValue("invoice_total", selectedInvoice.total);
     }
   };
 
@@ -68,9 +74,30 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
     try {
       setLoading(true);
 
-      // Check if payment amount exceeds invoice amount
-      if (parseFloat(values.amount) > parseFloat(values.max_amount)) {
-        message.error("Payment amount cannot exceed invoice amount");
+      const selectedInvoice = invoicesData.find(
+        (invoice) => invoice.id === values.invoice
+      );
+      if (!selectedInvoice) {
+        message.error("Invoice not found");
+        return;
+      }
+
+      // Validate payment amount
+      const paymentAmount = parseFloat(values.amount);
+      const invoiceTotal = parseFloat(selectedInvoice.total);
+
+      if (paymentAmount > invoiceTotal) {
+        message.error("Payment amount cannot exceed invoice total amount");
+        return;
+      }
+      if (paymentAmount < invoiceTotal) {
+        message.error(
+          "Payment amount cannot be less than invoice total amount"
+        );
+        return;
+      }
+      if (paymentAmount < 0) {
+        message.error("Payment amount cannot be negative");
         return;
       }
 
@@ -86,8 +113,9 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
           created_by: currentUser?.name || "Unknown User",
         },
       }).unwrap();
-      
+
       message.success("Payment created successfully");
+      await refetchInvoices();
       form.resetFields();
       onCancel();
     } catch (error) {
@@ -214,7 +242,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Invoice <span style={{ color: '#ff4d4f' }}>*</span>
+                  Invoice <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select invoice" }]}
@@ -230,11 +258,13 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
                   borderRadius: "10px",
                 }}
               >
-                {invoicesData?.filter(invoice => invoice.payment_status !== 'paid').map((invoice) => (
-                  <Option key={invoice.id} value={invoice.id}>
-                    {invoice.salesInvoiceNumber} 
-                  </Option>
-                ))}
+                {invoicesData
+                  ?.filter((invoice) => invoice.payment_status !== "paid")
+                  .map((invoice) => (
+                    <Option key={invoice.id} value={invoice.id}>
+                      {invoice.salesInvoiceNumber}
+                    </Option>
+                  ))}
               </Select>
             </Form.Item>
           </Col>
@@ -244,8 +274,10 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               name="paidOn"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Paid On <span style={{ color: '#ff4d4f' }}>*</span>
+                  <FiCalendar
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Paid On <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select date" }]}
@@ -271,8 +303,10 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               name="currency"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Currency <span style={{ color: '#ff4d4f' }}>*</span>
+                  <FiCreditCard
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Currency <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
@@ -301,19 +335,33 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               name="amount"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiDollarSign style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Amount <span style={{ color: '#ff4d4f' }}>*</span>
+                  <FiDollarSign
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Amount <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[
                 { required: true, message: "Please enter amount" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    const maxAmount = getFieldValue('max_amount');
-                    if (!value || !maxAmount || parseFloat(value) <= parseFloat(maxAmount)) {
+                    const invoiceTotal = getFieldValue("invoice_total");
+                    if (!value || !invoiceTotal) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('Amount cannot exceed invoice amount'));
+                    const valueFloat = parseFloat(value);
+                    const totalFloat = parseFloat(invoiceTotal);
+                    if (valueFloat < totalFloat) {
+                      return Promise.reject(
+                        new Error("Amount cannot be less than invoice total")
+                      );
+                    }
+                    if (valueFloat > totalFloat) {
+                      return Promise.reject(
+                        new Error("Amount cannot exceed invoice total")
+                      );
+                    }
+                    return Promise.resolve();
                   },
                 }),
               ]}
@@ -327,6 +375,8 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
                 }
                 placeholder="Enter amount"
                 size="large"
+                min={0}
+                max={form.getFieldValue("invoice_total")}
                 style={{
                   borderRadius: "10px",
                   padding: "8px 16px",
@@ -346,11 +396,15 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               name="paymentMethod"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiCreditCard style={{ marginRight: "8px", color: "#1890ff" }} />
-                  Payment Method <span style={{ color: '#ff4d4f' }}>*</span>
+                  <FiCreditCard
+                    style={{ marginRight: "8px", color: "#1890ff" }}
+                  />
+                  Payment Method <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select payment method" }]}
+              rules={[
+                { required: true, message: "Please select payment method" },
+              ]}
             >
               <Select
                 size="large"
@@ -375,7 +429,9 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
           name="remark"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiMessageSquare style={{ marginRight: "8px", color: "#1890ff" }} />
+              <FiMessageSquare
+                style={{ marginRight: "8px", color: "#1890ff" }}
+              />
               Remark
             </span>
           }
@@ -390,11 +446,6 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
               border: "1px solid #e6e8eb",
             }}
           />
-        </Form.Item>
-
-        {/* Hidden field to store max_amount for validation */}
-        <Form.Item name="max_amount" hidden>
-          <Input />
         </Form.Item>
 
         <Divider style={{ margin: "24px 0" }} />
