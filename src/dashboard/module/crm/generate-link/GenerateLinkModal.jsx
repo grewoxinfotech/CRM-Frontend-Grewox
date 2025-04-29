@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Modal, Button, message } from 'antd';
 import { FiDownload } from 'react-icons/fi';
 import QRCode from 'qrcode';
 import dayjs from 'dayjs';
+import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
 import './GenerateLink.scss';
 
 const GenerateLinkModal = ({ open, onCancel, formData }) => {
@@ -11,6 +12,21 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
     const formUrl = `${baseUrl}/forms/${formData?.id}`;
     const startDate = dayjs().format('MMM DD');
     const endDate = dayjs().add(1, 'month').format('MMM DD, YYYY');
+    const { data: settingsData } = useGetAllSettingsQuery();
+    const [companyLogo, setCompanyLogo] = useState(null);
+    const [companyName, setCompanyName] = useState('Grewox CRM');
+
+    useEffect(() => {
+        if (settingsData?.success && settingsData?.data && settingsData.data.length > 0) {
+            const settings = settingsData.data[0];
+            if (settings.companylogo) {
+                setCompanyLogo(settings.companylogo);
+            }
+            if (settings.companyName) {
+                setCompanyName(settings.companyName);
+            }
+        }
+    }, [settingsData]);
 
     useEffect(() => {
         if (open && qrCanvasRef.current) {
@@ -145,7 +161,7 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
             <div className="qr-preview-container">
                 <div className="wave-bg" />
                 <div className="preview-header">
-                    <img src="/logo.png" alt="Grewox" className="header-logo" />
+                    <img src={companyLogo || "/logo.png"} alt={companyName} className="header-logo" />
                     <h2>{formData?.title || 'CRM Software Inquiry Session'}</h2>
                     <div className="event-type">Online/Virtual Meeting</div>
                     <div className="date-range">
@@ -154,11 +170,11 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
                 </div>
                 <div className="qr-card">
                     <canvas ref={qrCanvasRef} />
-                    <img src="/logo.png" alt="Grewox" className="qr-logo" />
+                    <img src={companyLogo || "/logo.png"} alt={companyName} className="qr-logo" />
                 </div>
                 <div className="scan-text">Scan to access form</div>
                 <div className="powered-by">
-                    Powered by <span className="grewox">Grewox CRM</span>
+                    Powered by <span className="grewox">{companyName}</span>
                 </div>
             </div>
 

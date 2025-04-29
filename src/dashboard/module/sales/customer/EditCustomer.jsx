@@ -408,7 +408,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                           color: '#262626',
                           cursor: 'pointer',
                         }}>
-                          <span>{country.phoneCode}</span>
+                          <span>{country.phoneCode} {country.countryCode}</span>
                         </div>
                       </Option>
                     ))}

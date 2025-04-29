@@ -105,6 +105,63 @@ const CustomerList = ({
 
   const columns = [
     {
+      title: "Customer Number",
+      dataIndex: "customerNumber",
+      key: "customerNumber",
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search customer number"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) => {
+        const customerNumber = record?.customerNumber?.toLowerCase() || "";
+        const customerName = record?.name?.toLowerCase() || "";
+        return (
+          customerNumber.includes(value.toLowerCase()) ||
+          customerName.includes(value.toLowerCase())
+        );
+      },
+      render: (text, record) => (
+        <Text
+          strong
+          style={{ color: "#1890ff", cursor: "pointer" }}
+          onClick={() => handleView(record)}
+        >
+          {text}
+        </Text>
+      ),
+    },
+    {
       title: "Customer Name",
       dataIndex: "name",
       key: "name",
