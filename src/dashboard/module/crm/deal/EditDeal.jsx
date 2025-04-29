@@ -193,14 +193,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
   useEffect(() => {
     if (initialValues) {
-      // Find the currency object from the currencies array
-      const currencyObj = currencies?.find(c => c.currencyCode === initialValues.currency) ||
-        currencies?.find(c => c.currencyCode === 'INR');
-
-      console.log('Initial Currency:', initialValues.currency);
-      console.log('Found Currency Object:', currencyObj);
-      console.log('Available Currencies:', currencies);
-
       // Parse assigned_to if it's a string
       let assignedTo = initialValues.assigned_to;
       if (typeof assignedTo === "string") {
@@ -222,68 +214,76 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         }
       }
 
-      // Parse phone number to separate code and number
-      let phoneCode = defaultPhoneCode;
-      let phoneNumber = "";
-      if (initialValues.phone) {
-        const phoneMatch = initialValues.phone.match(/\+(\d{1,3})\s*(.+)/);
-        if (phoneMatch) {
-          const countryWithCode = countries?.find(c => c.phoneCode === phoneMatch[1]);
-          phoneCode = countryWithCode?.id || defaultPhoneCode;
-          phoneNumber = phoneMatch[2];
-        }
-      }
+      // Set contact mode based on whether there's an existing contact
+      setContactMode(initialValues.contact_id ? 'existing' : 'new');
 
-      // Parse the closed date
-      const closedDate = initialValues.closedDate
-        ? dayjs(initialValues.closedDate)
-        : null;
+      // Find the currency object from the currencies array
+      const currencyObj = currencies?.find(c => c.id === initialValues.currency) ||
+        currencies?.find(c => c.currencyCode === 'INR');
 
       const formValues = {
         dealTitle: initialValues.dealTitle,
-        dealName: `${initialValues.firstName} ${initialValues.lastName}`,
-        email: initialValues.email,
-        phoneCode: phoneCode,
-        telephone: phoneNumber,
-        currency: currencyObj?.currencyCode || 'INR',
         value: initialValues.value || 0,
+        currency: currencyObj?.currencyCode || 'INR',
         pipeline: initialValues.pipeline,
         stage: initialValues.stage,
         company_id: initialValues.company_id,
         contact_id: initialValues.contact_id,
-        address: initialValues.address,
         source: initialValues.source,
         category: initialValues.category,
         products: selectedProducts,
-        closedDate: closedDate,
+        closedDate: initialValues.closedDate ? dayjs(initialValues.closedDate) : null,
         status: initialValues.status || "pending",
         assigned_to: assignedTo?.assigned_to || [],
         is_won: initialValues.is_won,
+        // Add contact details for 'new' mode
+        firstName: initialValues.firstName || "",
+        lastName: initialValues.lastName || "",
+        email: initialValues.email || "",
+        phoneCode: initialValues.phoneCode || defaultPhoneCode,
+        telephone: initialValues.telephone || "",
+        address: initialValues.address || ""
       };
 
       // Set the selected pipeline for stage filtering
       setSelectedPipeline(initialValues.pipeline);
-      form.setFieldValue("currency", currencyObj?.currencyCode || 'INR');
-      form.setFieldValue("category", initialValues.category);
-
-      // Calculate product prices if needed
-      const initialProductPrices = {};
-      selectedProducts.forEach((productId) => {
-        const product = products.find((p) => p.id === productId);
-        if (product) {
-          initialProductPrices[productId] = product.price || 0;
-        }
-      });
-      setSelectedProductPrices(initialProductPrices);
 
       // Set form values
       form.setFieldsValue(formValues);
 
-      // Debug log to verify category value
-      console.log('Setting category value:', initialValues.category);
-      console.log('Available categories:', categories);
+      // Debug logs
+      console.log('Setting initial values:', {
+        company_id: initialValues.company_id,
+        contact_id: initialValues.contact_id,
+        formValues
+      });
     }
-  }, [initialValues, form, products, currencies, countries, defaultPhoneCode, categories]);
+  }, [initialValues, form, currencies, defaultPhoneCode]);
+
+  // Add a new useEffect to handle data loading
+  useEffect(() => {
+    if (companyAccountsData?.data && contactsData?.data && initialValues) {
+      // Verify the company and contact exist in the loaded data
+      const companyExists = companyAccountsData.data.some(company => company.id === initialValues.company_id);
+      const contactExists = contactsData.data.some(contact => contact.id === initialValues.contact_id);
+
+      if (companyExists && contactExists) {
+        form.setFieldsValue({
+          company_id: initialValues.company_id,
+          contact_id: initialValues.contact_id
+        });
+        setContactMode('existing');
+      }
+
+      // Debug logs
+      console.log('Data loaded:', {
+        companyExists,
+        contactExists,
+        company_id: initialValues.company_id,
+        contact_id: initialValues.contact_id
+      });
+    }
+  }, [companyAccountsData?.data, contactsData?.data, initialValues, form]);
 
   const getRoleColor = (role) => {
     const roleColors = {
@@ -1587,52 +1587,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     }}
                     allowClear
                     suffixIcon={null}
-                    dropdownRender={(menu) => (
-                      <div
-                        style={{
-                          position: 'relative',
-                          maxHeight: '400px'
-                        }}
-                      >
-                        <div style={{
-                          maxHeight: '150px',
-                          overflowY: 'auto',
-                          paddingBottom: '48px'
-                        }}>
-                          {menu}
-                        </div>
-                        <div style={{
-                          position: 'sticky',
-                          bottom: 0,
-                          padding: '8px 12px',
-                          borderTop: '1px solid #f0f0f0',
-                          backgroundColor: '#ffffff',
-                          display: 'flex',
-                          justifyContent: 'center'
-                        }}>
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddCompanyClick}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                              border: 'none',
-                              height: '40px',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add Company
-                          </Button>
-                        </div>
-                      </div>
-                    )}
+                    value={form.getFieldValue('company_id')}
                   >
                     {companyAccountsData?.data?.map((company) => (
                       <Option key={company.id} value={company.id}>
@@ -1678,6 +1633,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     showSearch
                     allowClear
                     onChange={handleContactChange}
+                    value={form.getFieldValue('contact_id')}
                     filterOption={(input, option) => {
                       const contact = contactsData?.data?.find(
                         (c) => c.id === option.value
@@ -1690,52 +1646,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                       return fullName.includes(input.toLowerCase()) ||
                         companyName.includes(input.toLowerCase());
                     }}
-                    dropdownRender={(menu) => (
-                      <div
-                        style={{
-                          position: 'relative',
-                          maxHeight: '400px'
-                        }}
-                      >
-                        <div style={{
-                          maxHeight: '150px',
-                          overflowY: 'auto',
-                          paddingBottom: '48px'
-                        }}>
-                          {menu}
-                        </div>
-                        <div style={{
-                          position: 'sticky',
-                          bottom: 0,
-                          padding: '8px 12px',
-                          borderTop: '1px solid #f0f0f0',
-                          backgroundColor: '#ffffff',
-                          display: 'flex',
-                          justifyContent: 'center'
-                        }}>
-                          <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddContactClick}
-                            style={{
-                              width: '100%',
-                              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                              border: 'none',
-                              height: '40px',
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '8px',
-                              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                              fontWeight: '500',
-                            }}
-                          >
-                            Add Contact
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                   >
                     {contactsData?.data?.map((contact) => {
                       const companyName = companyAccountsData?.data?.find(

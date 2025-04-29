@@ -316,7 +316,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
             width: '100px',
             fixed: 'right',
             render: (_, record) => (
-                <div className="action-cell">
+                <div style={{ display: 'flex', gap: '10px' }}>
                     <Button
                         type="primary"
                         icon={<FiLogIn />}

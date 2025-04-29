@@ -19,14 +19,14 @@ const ViewBilling = ({ data }) => {
   const { data: vendorsData } = useGetVendorsQuery();
   const { data: settingsData, isLoading: isSettingsLoading } = useGetAllSettingsQuery();
   const { data: debitNotesData } = useGetDebitNotesQuery();
-  
+
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
   const [companyName, setCompanyName] = useState('Grewox CRM');
   const [companyEmail, setCompanyEmail] = useState('contact@grewox.com');
   const [companyWebsite, setCompanyWebsite] = useState('www.grewox.com');
   const [merchantUpiId, setMerchantUpiId] = useState('');
-  
+
   // State for debit note amount
   const [debitNoteAmount, setDebitNoteAmount] = useState(0);
 
@@ -34,28 +34,28 @@ const ViewBilling = ({ data }) => {
   useEffect(() => {
     if (settingsData?.success && settingsData?.data && settingsData.data.length > 0) {
       const settings = settingsData.data[0];
-      
+
       // Set company logo if available
       if (settings.companylogo) {
         setCompanyLogo(settings.companylogo);
       }
-      
+
       // Set company name if available
       if (settings.companyName) {
         setCompanyName(settings.companyName);
-      } 
-      
+      }
+
       // Set merchant name as email if available
       if (settings.merchant_name) {
         setCompanyEmail(settings.merchant_name);
       }
-      
+
       // Set merchant UPI ID if available
       if (settings.merchant_upi_id) {
         setMerchantUpiId(settings.merchant_upi_id);
         setCompanyWebsite(settings.merchant_upi_id);
       }
-    } 
+    }
   }, [settingsData]);
 
   // Calculate total debit note amount for current bill
@@ -65,12 +65,12 @@ const ViewBilling = ({ data }) => {
       const currentBillDebitNotes = debitNotesData.data.filter(
         note => note.bill === data.id
       );
-      
+
       // Calculate total amount of filtered debit notes
       const totalAmount = currentBillDebitNotes.reduce((sum, note) => {
         return sum + Number(note.amount || 0);
       }, 0);
-      
+
       setDebitNoteAmount(totalAmount);
     } else {
       setDebitNoteAmount(0);
@@ -95,7 +95,7 @@ const ViewBilling = ({ data }) => {
 
   const getColor = (status) => {
     const normalizedStatus = status?.toLowerCase() || '';
-    
+
     if (normalizedStatus === 'paid') return 'status-paid';
     if (normalizedStatus === 'unpaid') return 'status-unpaid';
     if (normalizedStatus === 'partially_paid' || normalizedStatus === 'partially paid') return 'status-partial';
@@ -113,17 +113,17 @@ const ViewBilling = ({ data }) => {
   // Get payment URL for QR code
   const getPaymentUrl = () => {
     if (!data) return '';
-    
+
     // If there's a UPI ID, create a UPI payment URL
     if (merchantUpiId) {
       const amount = Number(data?.amount || 0);
       const tr = data?.billNumber || '';
       const pn = companyName || 'Merchant';
-      
+
       // Create UPI URL with parameters
       return `upi://pay?pa=${merchantUpiId}&pn=${encodeURIComponent(pn)}&am=${amount}&tr=${tr}&tn=Bill%20Payment`;
     }
-    
+
     // Fallback to bill link if no UPI ID
     return data.upiLink || `https://grewox.com/bill/${data.billNumber}`;
   };
@@ -167,9 +167,6 @@ const ViewBilling = ({ data }) => {
           margin: 0;
           color: #666;
         }
-        .bill-details {
-          margin: 30px 0;
-        }
         .bill-section {
           display: flex;
           justify-content: space-between;
@@ -194,7 +191,6 @@ const ViewBilling = ({ data }) => {
         .items-table {
           width: 100%;
           border-collapse: collapse;
-          margin: 20px 0;
         }
         .items-table th {
           background: #f8f9fa;
@@ -216,7 +212,6 @@ const ViewBilling = ({ data }) => {
         .payment-section {
           display: flex;
           gap: 40px;
-          margin-top: 30px;
           padding: 20px;
           background: #f8f9fa;
           border-radius: 8px;
@@ -302,7 +297,7 @@ const ViewBilling = ({ data }) => {
           const clonedStyle = document.createElement('style');
           clonedStyle.textContent = styleContent;
           clonedElement.appendChild(clonedStyle);
-          
+
           // Ensure images are visible
           const clonedImages = clonedElement.getElementsByTagName('img');
           Array.from(clonedImages).forEach(img => {
@@ -337,22 +332,22 @@ const ViewBilling = ({ data }) => {
 
   return (
     <div className="view-billing-container">
-     
+
 
       <div className="view-billing-content">
         <div className="bill-card" id="billing-content">
           <div className="bill-header">
             <div className="company-info">
               {companyLogo ? (
-                <img 
-                  src={companyLogo} 
-                  alt={`${companyName} Logo`} 
+                <img
+                  src={companyLogo}
+                  alt={`${companyName} Logo`}
                   className="company-logo"
                 />
               ) : (
-                <img 
-                  src="https://grewox.com/assets/logo.png" 
-                  alt="Grewox Logo" 
+                <img
+                  src="https://grewox.com/assets/logo.png"
+                  alt="Grewox Logo"
                   className="company-logo"
                 />
               )}
@@ -399,7 +394,7 @@ const ViewBilling = ({ data }) => {
             <table className="items-table">
               <thead>
                 <tr>
-                  <th>Description</th>
+                  <th>Item</th>
                   <th>HSN/SAC</th>
                   <th>Qty</th>
                   <th>Unit Price</th>
@@ -449,7 +444,7 @@ const ViewBilling = ({ data }) => {
                 <tr className="summary-row">
                   <td colSpan="4" className="text-right">Final Amount</td>
                   <td className="text-right ">
-                    ₹{formatNumber(data?.amount )}
+                    ₹{formatNumber(data?.amount)}
                   </td>
                 </tr>
               </tbody>
@@ -483,7 +478,7 @@ const ViewBilling = ({ data }) => {
             </div>
             <div className="bill-notes">
               <h4>Notes</h4>
-              <p>{ 'Thank you for your payment!'}</p>
+              <p>{'Thank you for your payment!'}</p>
               <p>Computer Generated E-signature</p>
               <p className="powered-by">Powered by {companyName} | {companyWebsite}</p>
             </div>
@@ -491,9 +486,9 @@ const ViewBilling = ({ data }) => {
         </div>
         <div style={{ marginTop: '20px', textAlign: 'right' }}>
           <Space>
-            <Button 
-              type="primary" 
-              icon={<FiDownload />} 
+            <Button
+              type="primary"
+              icon={<FiDownload />}
               onClick={handleDownload}
             >
               Download

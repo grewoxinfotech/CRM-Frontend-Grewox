@@ -333,18 +333,24 @@ const LeadOverviewContent = ({
                 {localLeadData?.company_id && companyData?.data?.[0] && localLeadData?.contact_id && contactData?.data ? (
                   <div className="combined-info">
                     <div className="info-section company-section">
-                      <FiBriefcase className="icon" />
+                      <div className="icon-wrapper company">
+                        <FiBriefcase className="icon" />
+                      </div>
                       <span className="name">{companyData.data[0].company_name}</span>
                       {companyData.data[0].company_site && (
                         <a href={companyData.data[0].company_site} target="_blank" rel="noopener noreferrer" className="website">
-                          <FiGlobe className="icon" />
+                          <div className="icon-wrapper website">
+                            <FiGlobe className="icon" />
+                          </div>
                           {companyData.data[0].company_site}
                         </a>
                       )}
                     </div>
                     <span className="separator">•</span>
                     <div className="info-section contact-section">
-                      <FiUser className="icon" />
+                      <div className="icon-wrapper contact">
+                        <FiUser className="icon" />
+                      </div>
                       <span className="name">
                         {contactData.data.find(c => c.id === localLeadData.contact_id)?.first_name} {contactData.data.find(c => c.id === localLeadData.contact_id)?.last_name}
                       </span>
@@ -352,25 +358,33 @@ const LeadOverviewContent = ({
                   </div>
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (
                   <div className="company-info">
-                    <FiBriefcase className="icon" />
+                    <div className="icon-wrapper company">
+                      <FiBriefcase className="icon" />
+                    </div>
                     <span className="name">{companyData.data[0].company_name}</span>
                     {companyData.data[0].company_site && (
                       <a href={companyData.data[0].company_site} target="_blank" rel="noopener noreferrer" className="website">
-                        <FiGlobe className="icon" />
+                        <div className="icon-wrapper website">
+                          <FiGlobe className="icon" />
+                        </div>
                         {companyData.data[0].company_site}
                       </a>
                     )}
                   </div>
                 ) : localLeadData?.contact_id && contactData?.data ? (
                   <div className="contact-info">
-                    <FiUser className="icon" />
+                    <div className="icon-wrapper contact">
+                      <FiUser className="icon" />
+                    </div>
                     <span className="name">
                       {contactData.data.find(c => c.id === localLeadData.contact_id)?.first_name} {contactData.data.find(c => c.id === localLeadData.contact_id)?.last_name}
                     </span>
                   </div>
                 ) : (
                   <div className="no-info">
-                    <FiUser className="icon" />
+                    <div className="icon-wrapper default">
+                      <FiUser className="icon" />
+                    </div>
                     <span>No Company or Contact Associated</span>
                   </div>
                 )}
@@ -523,63 +537,104 @@ const LeadOverviewContent = ({
             gap: 12px;
             background: rgba(255, 255, 255, 0.9);
             padding: 8px 16px;
-            border-radius: 10px;
+            border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
           }
 
           .info-section {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 4px 0;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
           }
 
-          .company-section .icon {
+          .info-section:hover {
+            background: rgba(0, 0, 0, 0.02);
+          }
+
+          .company-section .name {
             color: #1890ff;
+            font-weight: 600;
           }
 
-          .contact-section .icon {
+          .contact-section .name {
             color: #52c41a;
+            font-weight: 600;
           }
 
           .separator {
             color: #d9d9d9;
-            font-size: 16px;
-          }
-
-          .company-info, .contact-info, .no-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 16px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          }
-
-          .icon {
-            color: #8c8c8c;
-            transition: color 0.3s ease;
+            font-size: 20px;
+            margin: 0 4px;
           }
 
           .website {
-            margin-left: 16px;
-            color: #1890ff;
-            text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 6px;
+            background: rgba(114, 46, 209, 0.1);
+            color: #722ed1;
+            text-decoration: none;
             transition: all 0.3s ease;
+            margin-left: 8px;
           }
 
           .website:hover {
-            color: #096dd9;
-            text-decoration: underline;
+            background: rgba(114, 46, 209, 0.15);
+            transform: translateY(-1px);
           }
 
-          .name {
-            font-weight: 500;
-            color: #1f2937;
+          .company-info, .contact-info, .no-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f0f0f0;
+          }
+
+          .icon-wrapper {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+          }
+
+          .icon-wrapper.company {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+          }
+
+          .icon-wrapper.contact {
+            background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+            box-shadow: 0 4px 12px rgba(82, 196, 26, 0.15);
+          }
+
+          .icon-wrapper.website {
+            background: linear-gradient(135deg, #722ed1 0%, #531dab 100%);
+            box-shadow: 0 4px 12px rgba(114, 46, 209, 0.15);
+            width: 24px;
+            height: 24px;
+          }
+
+          .icon-wrapper.default {
+            background: linear-gradient(135deg, #f5222d 0%, #cf1322 100%);
+            box-shadow: 0 4px 12px rgba(245, 34, 45, 0.15);
+          }
+
+          .icon {
+            color: white;
+            font-size: ${props => props.size || '16px'};
           }
 
           .profile-stats {

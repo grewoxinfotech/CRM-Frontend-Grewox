@@ -218,6 +218,23 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
     const contactData = contactsData || [];
     const companies = companyData?.data || [];
 
+
+
+    const formatCurrencyValue = (value, currencyId) => {
+        const currencyDetails = currencies?.find(
+            (c) => c.id === currencyId || c.currencyCode === currencyId
+        );
+        if (!currencyDetails) return `${value}`;
+
+        return new Intl.NumberFormat("en-US", {
+            style: "decimal",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        })
+            .format(value)
+            .replace(/^/, currencyDetails.currencyIcon + " ");
+    };
+
     // Update localDeal when initialDeal changes
     React.useEffect(() => {
         setLocalDeal(initialDeal);
@@ -804,9 +821,14 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                             <FiDollarSign />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Deal Value</div>
+                            <div className="metric-label">Lead Value</div>
                             <div className="metric-value">
-                                {localDeal?.value ? formatCurrency(localDeal.value, localDeal.currency) : '-'}
+                                {localDeal?.value
+                                    ? formatCurrencyValue(
+                                        localDeal.value,
+                                        localDeal.currency
+                                    )
+                                    : "-"}
                             </div>
                         </div>
                     </Card>
