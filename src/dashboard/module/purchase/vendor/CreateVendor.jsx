@@ -198,7 +198,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                                     <Select
                                         size="large"
                                         style={{
-                                            width: '80px',
+                                            width: '90px',
                                             height: '48px',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -229,7 +229,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                                                     color: '#262626',
                                                     cursor: 'pointer',
                                                 }}>
-                                                    <span>{country.phoneCode}</span>
+                                                    <span>{country.countryCode} {country.phoneCode}</span>
                                                 </div>
                                             </Option>
                                         ))}

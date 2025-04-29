@@ -64,7 +64,7 @@ const Mail = () => {
     // Then filter by menu type
     switch (selectedMenu) {
       case 'inbox':
-        filteredEmails = filteredEmails.filter(email => email.type !== 'trash');
+        filteredEmails = filteredEmails.filter(email => !email.isTrash);
         break;
       case 'sent':
         filteredEmails = filteredEmails.filter(email => email.type === 'sent');
@@ -83,7 +83,7 @@ const Mail = () => {
         );
         break;
       case 'trash':
-        filteredEmails = filteredEmails.filter(email => email.type === 'trash');
+        filteredEmails = filteredEmails.filter(email => email.isTrash);
         break;
       default:
         break;
@@ -200,22 +200,17 @@ const Mail = () => {
 
   const handleDelete = async (email) => {
     try {
-      if (email.type === 'trash') {
-        await deleteEmail({ id: email.id });
-        message.success('Email permanently deleted');
-      } else {
-        await moveToTrash({ id: email.id });
-        message.success('Email moved to trash');
-      }
+      await moveToTrash({ id: email.id, isTrash: true });
+      message.success('Email moved to trash');
     } catch (error) {
-      message.error('Failed to delete email');
+      message.error('Failed to move email to trash');
     }
   };
 
   const handleRestore = async (email) => {
     try {
-      await moveToTrash({ id: email.id, restore: true });
-      message.success('Email restored from trash');
+      await moveToTrash({ id: email.id, isTrash: false });
+      message.success('Email restored to inbox');
     } catch (error) {
       message.error('Failed to restore email');
     }

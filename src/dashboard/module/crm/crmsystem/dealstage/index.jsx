@@ -153,7 +153,22 @@ const DealStages = () => {
           >
             <FiLayers />
           </div>
-          <span>{text}</span>
+          <div>
+            <span>{text}</span>
+            {record.isDefault && (
+              <span style={{
+                fontSize: '11px',
+                padding: '2px 6px',
+                background: '#e6f7ff',
+                color: '#1890ff',
+                borderRadius: '4px',
+                fontWeight: '500',
+                marginLeft: '8px'
+              }}>
+                Default
+              </span>
+            )}
+          </div>
         </div>
       ),
     },
@@ -282,7 +297,21 @@ const DealStages = () => {
                             <FiLayers />
                           </div>
                           <div className="stage-info">
-                            <h3>{stage.stageName}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <h3>{stage.stageName}</h3>
+                              {stage.isDefault && (
+                                <span style={{
+                                  fontSize: '11px',
+                                  padding: '2px 6px',
+                                  background: '#e6f7ff',
+                                  color: '#1890ff',
+                                  borderRadius: '4px',
+                                  fontWeight: '500'
+                                }}>
+                                  Default
+                                </span>
+                              )}
+                            </div>
                             <p className="pipeline-name">
                               {getPipelineName(stage.pipeline)}
                             </p>
@@ -508,9 +537,23 @@ const DealStages = () => {
                     <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1f36' }}>
                       {stage.stageName}
                     </h3>
-                    <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>
-                      {getPipelineName(stage.pipeline)}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>
+                        {getPipelineName(stage.pipeline)}
+                      </p>
+                      {stage.isDefault && (
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '2px 6px',
+                          background: '#e6f7ff',
+                          color: '#1890ff',
+                          borderRadius: '4px',
+                          fontWeight: '500'
+                        }}>
+                          Default
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Button>
               ))}

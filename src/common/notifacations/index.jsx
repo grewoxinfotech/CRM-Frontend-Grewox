@@ -214,7 +214,17 @@ const NotificationsComponent = () => {
         } else {
           navigate(`/dashboard/sales/product-services`);
         }
+      } else if (notification.section === "meeting") {
+        // Navigate to meeting with the meeting ID
+        navigate(`/dashboard/hrm/meeting`);
+      } else if (notification.section === "calendar") {
+        // Navigate to calendar with the calendar ID
+        navigate(`/dashboard/hrm/calendar`);
+      } else if (notification.section === "contact") {
+        // Navigate to contact with the contact ID
+        navigate(`/dashboard/crm/contact`);
       }
+
     }
   };
 

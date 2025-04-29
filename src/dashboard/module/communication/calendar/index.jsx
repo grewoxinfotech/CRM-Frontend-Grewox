@@ -16,6 +16,8 @@ const CalendarPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [events, setEvents] = useState([]);
     const [upcomingEvents, setUpcomingEvents] = useState([]);
+
+    console.log('Upcoming Events:', upcomingEvents);
     
     const { data: calendarEvents, isLoading, isError } = useGetAllCalendarEventsQuery();
     const [deleteCalendarEvent, { isLoading: isDeleting }] = useDeleteCalendarEventMutation();

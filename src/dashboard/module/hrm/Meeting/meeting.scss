@@ -476,4 +476,91 @@
             }
         }
     }
+}
+
+.meeting-form-modal {
+    .ant-select {
+        &.ant-select-multiple {
+            .ant-select-selector {
+                background-color: #ffffff !important;
+                border: 1px solid #d1d5db !important;
+                border-radius: 8px !important;
+                min-height: 42px !important;
+                // padding: 4px 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                flex-wrap: wrap !important;
+                gap: 4px !important;
+            }
+
+            .ant-select-selection-overflow {
+                flex-wrap: wrap !important;
+                gap: 4px !important;
+                // padding: 2px !important;
+            }
+
+            .ant-select-selection-overflow-item {
+                margin: 0 !important;
+            }
+
+            .ant-select-selection-placeholder {
+                padding: 0 8px !important;
+            }
+        }
+
+        &.ant-select-focused:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {
+            border-color: #1890ff !important;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+        }
+    }
+
+    .ant-select-dropdown {
+        padding: 8px !important;
+        border-radius: 12px !important;
+        border: 1px solid #e5e7eb !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        
+        .ant-select-item {
+            padding: 8px !important;
+            border-radius: 8px !important;
+            margin: 2px 0 !important;
+            
+            &-option-selected {
+                background-color: #E6F4FF !important;
+                font-weight: 500 !important;
+            }
+            
+            &-option-active {
+                background-color: #F0F7FF !important;
+            }
+            
+            &:hover {
+                background-color: #F0F7FF !important;
+            }
+        }
+    }
+
+    .role-wrapper {
+        position: relative;
+        padding-left: 12px;
+    }
+
+    .role-indicator {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: translateY(-50%) scale(1.2);
+            opacity: 0.8;
+        }
+        100% {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+    }
 } 

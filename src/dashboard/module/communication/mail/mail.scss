@@ -103,7 +103,7 @@ $radius-full: 9999px;
         height: 52px;
         border-radius: $radius-full;
         font-weight: 600;
-        background: linear-gradient(135deg, $primary-color 0%, $primary-light 100%);
+        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);     
         border: none;
         box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2);
         margin-bottom: 32px;
@@ -664,7 +664,7 @@ $radius-full: 9999px;
   }
 
   .ant-modal-header {
-    background: linear-gradient(135deg, $primary-color, $primary-light);
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
     border-bottom: none;
     padding: 16px 24px;
     

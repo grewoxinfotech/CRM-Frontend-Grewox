@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Space, Button, Tag, message, Modal, Dropdown, Input, DatePicker } from 'antd';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiCalendar } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiCalendar, FiPlus } from 'react-icons/fi';
 import { useGetMeetingsQuery, useUpdateMeetingMutation, useDeleteMeetingMutation } from './services/meetingApi';
 import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import dayjs from 'dayjs';
 import CreateMeeting from './CreateMeeting';
+import EditMeeting from './EditMeeting';
 
 const MeetingList = ({ searchText }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingMeeting, setEditingMeeting] = useState(null);
 
     // API calls
@@ -19,8 +21,8 @@ const MeetingList = ({ searchText }) => {
     // Create a map of department IDs to names
     const departmentMap = useMemo(() => {
         const map = {};
-        if (departmentsData?.data) {
-            departmentsData.data.forEach(dept => {
+        if (departmentsData) {
+            departmentsData.forEach(dept => {
                 if (dept && dept.id) {
                     map[dept.id] = dept.department_name;
                 }
@@ -62,12 +64,13 @@ const MeetingList = ({ searchText }) => {
         // Format the dates before setting them in the form
         const formattedRecord = {
             ...record,
-            date: record.date && dayjs(record.date),
-            startTime: record.startTime && dayjs(record.startTime, 'HH:mm'),
-            endTime: record.endTime && dayjs(record.endTime, 'HH:mm'),
+            date: record.date ? dayjs(record.date, 'YYYY-MM-DD') : null,
+            startTime: record.startTime ? dayjs(record.startTime, 'HH:mm:ss') : null,
+            endTime: record.endTime ? dayjs(record.endTime, 'HH:mm:ss') : null,
+            // employees: record.employee ? (Array.isArray(record.employee) ? record.employee : JSON.parse(record.employee)) : [],
         };
         setEditingMeeting(formattedRecord);
-        setIsModalOpen(true);
+        setIsEditModalOpen(true);
     };
 
     // Handle delete
@@ -93,12 +96,23 @@ const MeetingList = ({ searchText }) => {
     // Handle update
     const handleUpdate = async (values) => {
         try {
+            const formatTime = (timeValue) => {
+                if (!timeValue) return null;
+                if (typeof timeValue === 'string') {
+                    if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(timeValue)) {
+                        return timeValue;
+                    }
+                    return dayjs(timeValue, 'HH:mm:ss').format('HH:mm:ss');
+                }
+                return dayjs(timeValue).format('HH:mm:ss');
+            };
+
             const formattedValues = {
                 ...values,
-                // Use proper dayjs validation and formatting
-                date: values.date && dayjs(values.date).format('YYYY-MM-DD'),
-                startTime: values.startTime && dayjs(values.startTime).format('HH:mm'),
-                endTime: values.endTime && dayjs(values.endTime).format('HH:mm'),
+                date: values.date ? dayjs(values.date).format('YYYY-MM-DD') : null,
+                startTime: formatTime(values.startTime),
+                endTime: formatTime(values.endTime),
+                // employee: values.employees || [],
                 client_id: localStorage.getItem('client_id'),
             };
 
@@ -108,7 +122,7 @@ const MeetingList = ({ searchText }) => {
             }).unwrap();
 
             message.success('Meeting updated successfully');
-            setIsModalOpen(false);
+            setIsEditModalOpen(false);
             setEditingMeeting(null);
         } catch (error) {
             message.error(error?.data?.message || 'Failed to update meeting');
@@ -320,16 +334,20 @@ const MeetingList = ({ searchText }) => {
                 }}
             />
 
-            {/* Edit Modal */}
             <CreateMeeting
-                open={isModalOpen}
+                open={isCreateModalOpen}
+                onCancel={() => setIsCreateModalOpen(false)}
+            />
+
+            <EditMeeting
+                open={isEditModalOpen}
                 onCancel={() => {
-                    setIsModalOpen(false);
+                    setIsEditModalOpen(false);
                     setEditingMeeting(null);
                 }}
                 onSubmit={handleUpdate}
                 initialValues={editingMeeting}
-                isEditing={true}
+                loading={isLoading}
             />
         </div>
     );

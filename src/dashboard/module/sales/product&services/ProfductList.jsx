@@ -296,24 +296,33 @@ const ProductList = ({
       ),
     },
     {
-      title: "Pricing",
-      key: "pricing",
-      width: "20%",
+      title: "Selling Price",
+      key: "selling_price",
+      width: "15%",
       sorter: (a, b) => a.selling_price - b.selling_price,
       render: (_, record) => (
         <div>
-          <Text strong style={{ display: "block", color: "#52c41a" }}>
-            {/* <FiDollarSign style={{ marginRight: "4px" }} /> */}
-            Selling: {formatPrice(record.selling_price, record.currency)}
-          </Text>
-          <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
-            Buying: {formatPrice(record.buying_price, record.currency)}
+          <Text strong style={{ display: "block"}}>
+            {formatPrice(record.selling_price, record.currency)}
           </Text>
           {record.tax && (
             <Text type="secondary" style={{ fontSize: "12px" }}>
               Tax: {record.tax}%
             </Text>
           )}
+        </div>
+      ),
+    },
+    {
+      title: "Buying Price",
+      key: "buying_price",
+      width: "15%",
+      sorter: (a, b) => a.buying_price - b.buying_price,
+      render: (_, record) => (
+        <div>
+          <Text strong style={{ display: "block" }}>
+            {formatPrice(record.buying_price, record.currency)}
+          </Text>
         </div>
       ),
     },

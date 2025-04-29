@@ -150,48 +150,19 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       // Set initial category
       setSelectedCategory(initialValues.category || "customer");
 
-      // Find the selected entity and its name based on category
-      let selectedEntity;
-      let entityName = "";
-
-      switch (initialValues.category) {
-        case "customer":
-          selectedEntity = customers?.find(
-            (c) => c.id === initialValues.customer
-          );
-          entityName = selectedEntity?.name || "";
-          break;
-        case "contact":
-          selectedEntity = contacts?.find(
-            (c) => c.id === initialValues.customer
-          );
-          entityName =
-            selectedEntity?.name ||
-            `${selectedEntity?.first_name || ""} ${
-              selectedEntity?.last_name || ""
-            }`.trim() ||
-            selectedEntity?.contact_name ||
-            "";
-          break;
-        case "company_account":
-          selectedEntity = companyAccounts?.find(
-            (c) => c.id === initialValues.customer
-          );
-          entityName =
-            selectedEntity?.company_name ||
-            selectedEntity?.name ||
-            selectedEntity?.account_name ||
-            "";
-          break;
-        default:
-          break;
-      }
+      // Find the selected customer and get their tax number
+      const selectedCustomer = customers?.find(
+        (c) => c.id === initialValues.customer
+      );
+      const customerName = selectedCustomer?.name || "";
+      const taxNumber = selectedCustomer?.tax_number || "";
 
       // Format initial values for the form
       const formattedValues = {
         category: initialValues.category,
         customer: initialValues.customer,
-        customerName: entityName,
+        customerName: customerName,
+        tax_number: taxNumber,
         issueDate: initialValues.issueDate
           ? dayjs(initialValues.issueDate, "YYYY-MM-DD")
           : null,
@@ -679,7 +650,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               <Select
                 size="large"
                 style={{
-                  width: "80px",
+                  width: "90px",
                   height: "48px",
                   display: "flex",
                   alignItems: "center",
@@ -712,7 +683,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                         cursor: "pointer",
                       }}
                     >
-                      <span>{country.phoneCode}</span>
+                      <span>{country.countryCode} {country.phoneCode}</span>
                     </div>
                   </Option>
                 ))}
@@ -964,7 +935,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 width: "100%",
                 borderRadius: "10px",
               }}
-              onChange={handleCustomerChange}
+              onChange={(value) => {
+                const selectedCustomer = customers?.find(c => c.id === value);
+                if (selectedCustomer) {
+                  form.setFieldValue('tax_number', selectedCustomer.tax_number || '');
+                }
+                form.setFieldValue('customer', value);
+                handleCustomerChange(value);
+              }}
               dropdownRender={(menu) => (
                 <>
                   {menu}
@@ -1023,6 +1001,28 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+          <Form.Item
+            name="tax_number"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                Tax Number
+              </span>
+            }
+          >
+            <Input
+              disabled
+              placeholder="Tax number"
+              size="large"
+              style={{
+                borderRadius: "10px",
+                padding: "8px 16px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                border: "1px solid #e6e8eb",
+              }}
+            />
           </Form.Item>
           <Form.Item
             name="currency"

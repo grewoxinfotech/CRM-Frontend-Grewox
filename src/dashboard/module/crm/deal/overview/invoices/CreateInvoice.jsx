@@ -534,6 +534,13 @@ const CreateInvoice = ({
                 borderRadius: "10px",
                 height: "48px",
               }}
+              onChange={(value) => {
+                const selectedCustomer = customers?.find(c => c.id === value);
+                if (selectedCustomer) {
+                  form.setFieldValue('tax_number', selectedCustomer.tax_number || '');
+                }
+                form.setFieldValue('customer', value);
+              }}
               dropdownRender={(menu) => (
                 <>
                   {menu}
@@ -570,6 +577,29 @@ const CreateInvoice = ({
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="tax_number"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                Tax Number
+              </span>
+            }
+          >
+            <Input
+              disabled
+              placeholder="Tax number"
+              size="large"
+              style={{
+                borderRadius: "10px",
+                padding: "8px 16px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                border: "1px solid #e6e8eb",
+              }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -1321,7 +1351,7 @@ const CreateInvoice = ({
                 <Select
                   size="large"
                   style={{
-                    width: "80px",
+                    width: "90px",
                     height: "48px",
                     display: "flex",
                     alignItems: "center",
@@ -1354,7 +1384,7 @@ const CreateInvoice = ({
                           cursor: "pointer",
                         }}
                       >
-                        <span>{country.phoneCode}</span>
+                        <span>{country.countryCode} {country.phoneCode}</span>
                       </div>
                     </Option>
                   ))}

@@ -79,9 +79,8 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
       form.setFieldsValue({
         name: initialValues.name,
         category: initialValues.category,
-        buying_price: parseFloat(initialValues.buying_price) || 0,
-        selling_price: parseFloat(initialValues.selling_price) || 0,
-
+        buying_price: Number(initialValues.buying_price) || 0,
+        selling_price: Number(initialValues.selling_price) || 0,
         currency: initialValues.currency,
         sku: initialValues.sku,
         tax: initialValues.tax,
@@ -164,6 +163,96 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
     },
     onChange: ({ fileList }) => setFileList(fileList),
     fileList,
+  };
+
+  // Add validation rules for stock quantities
+  const validateStockQuantities = {
+    max_stock_level: [
+      { required: true, message: "Please enter maximum stock level" },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          const stockQuantity = getFieldValue("stock_quantity");
+          if (!value || !stockQuantity || value >= stockQuantity) {
+            return Promise.resolve();
+          }
+          return Promise.reject(
+            new Error(
+              "Maximum stock level must be greater than current stock quantity"
+            )
+          );
+        },
+      }),
+    ],
+    stock_quantity: [
+      { required: true, message: "Please enter stock quantity" },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          const maxStock = getFieldValue("max_stock_level");
+          const minStock = getFieldValue("min_stock_level");
+
+          if (maxStock && value > maxStock) {
+            return Promise.reject(
+              new Error("Stock quantity cannot exceed maximum stock level")
+            );
+          }
+          if (minStock && value < minStock) {
+            return Promise.reject(
+              new Error(
+                "Stock quantity cannot be less than minimum stock level"
+              )
+            );
+          }
+          return Promise.resolve();
+        },
+      }),
+    ],
+    min_stock_level: [
+      { required: true, message: "Please enter minimum stock level" },
+      // { max: 20, message: "Minimum stock level cannot be more than 20" },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          if (!value) return Promise.resolve();
+
+          const stockQuantity = getFieldValue("stock_quantity");
+          const reorderQuantity = getFieldValue("reorder_quantity");
+
+          if (value > stockQuantity) {
+            return Promise.reject(
+              new Error(
+                "Minimum stock level cannot be greater than current stock quantity"
+              )
+            );
+          }
+          if (reorderQuantity && value < reorderQuantity) {
+            return Promise.reject(
+              new Error(
+                "Minimum stock level must be greater than reorder quantity"
+              )
+            );
+          }
+          return Promise.resolve();
+        },
+      }),
+    ],
+    reorder_quantity: [
+      { required: true, message: "Please enter reorder quantity" },
+      // { max: 20, message: "Reorder quantity cannot be more than 20" },
+      ({ getFieldValue }) => ({
+        validator(_, value) {
+          if (!value) return Promise.resolve();
+
+          const minStock = getFieldValue("min_stock_level");
+          if (minStock && value > minStock) {
+            return Promise.reject(
+              new Error(
+                "Reorder quantity must be less than minimum stock level"
+              )
+            );
+          }
+          return Promise.resolve();
+        },
+      }),
+    ],
   };
 
   const stockStatusOptions = [
@@ -311,7 +400,6 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                   Product Name
                 </span>
               }
-              rules={[{ required: true, message: "Please enter product name" }]}
             >
               <Input
                 prefix={
@@ -333,7 +421,6 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
             <Form.Item
               name="category"
               label={<span style={{ color: '#374151', fontWeight: 500 }}>Category</span>}
-              rules={[{ required: true, message: "Please select a category" }]}
             >
               <Select
                 listHeight={100}
@@ -408,7 +495,16 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
          <Form.Item
             name="buying_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Buying Price</span>}
-            rules={[{ required: true, message: "Please enter buying price" }]}
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (value && value % 1 !== 0) {
+                    return Promise.reject('Decimal values are not allowed in buying price');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <div className="price-input-group" style={{
               display: 'flex',
@@ -419,29 +515,25 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
               overflow: 'hidden',
               marginBottom: 0
             }}>
-              <Form.Item
-                name="currency"
-                noStyle
-                rules={[{ required: true }]}
-              >
+              <Form.Item name="currency" noStyle>
                 <div style={{
-                  width: '100px',
-                  height: '48px',
-                  background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '10px 0 0 10px',
-                  fontWeight: 500
+                  width: "100px",
+                  height: "48px",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "10px 0 0 10px",
+                  fontWeight: 500,
                 }}>
-                  <span>₹</span>
+                  <span>{selectedCurrency?.currencyIcon || '₹'}</span>
+                  <span style={{ marginLeft: '4px' }}>{selectedCurrency?.currencyCode || 'INR'}</span>
                 </div>
               </Form.Item>
               <Form.Item
                 name="buying_price"
                 noStyle
-                rules={[{ required: true, message: 'Please enter buying price' }]}
               >
                 <InputNumber
                   placeholder="Enter buying price"
@@ -456,8 +548,12 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                     padding: '0 16px',
                   }}
                   min={0}
-                  precision={2}
+                  precision={0}
                   className="price-input"
+                  parser={value => {
+                    const parsedValue = parseInt(value);
+                    return isNaN(parsedValue) ? '' : parsedValue;
+                  }}
                 />
               </Form.Item>
             </div>
@@ -467,7 +563,15 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
             name="selling_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
             rules={[
-              { required: true, message: "Please enter selling price" },
+             
+              {
+                validator: (_, value) => {
+                  if (value && value % 1 !== 0) {
+                    return Promise.reject('Decimal values are not allowed in selling price');
+                  }
+                  return Promise.resolve();
+                }
+              },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   const buyingPrice = getFieldValue('buying_price');
@@ -490,27 +594,25 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
               overflow: 'hidden',
               marginBottom: 0
             }}>
-              <Select
-                value="BEzBBPneRQq6rbGYiwYj45k"
-                size="large"
-                style={{
-                  width: '100px',
-                  height: '48px'
-                }}
-                className="currency-select"
-                disabled
-              >
-                <Option value="BEzBBPneRQq6rbGYiwYj45k">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span>₹</span>
-                   
-                  </div>
-                </Option>
-              </Select>
+              <Form.Item name="currency" noStyle>
+                <div style={{
+                  width: "100px",
+                  height: "48px",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "10px 0 0 10px",
+                  fontWeight: 500,
+                }}>
+                  <span>{selectedCurrency?.currencyIcon || '₹'}</span>
+                  <span style={{ marginLeft: '4px' }}>{selectedCurrency?.currencyCode || 'INR'}</span>
+                </div>
+              </Form.Item>
               <Form.Item
                 name="selling_price"
                 noStyle
-                rules={[{ required: true, message: 'Please enter selling price' }]}
               >
                 <InputNumber
                   placeholder="Enter selling price"
@@ -525,8 +627,12 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                     padding: '0 16px',
                   }}
                   min={0}
-                  precision={2}
+                  precision={0}
                   className="price-input"
+                  parser={value => {
+                    const parsedValue = parseInt(value);
+                    return isNaN(parsedValue) ? '' : parsedValue;
+                  }}
                 />
               </Form.Item>
             </div>
@@ -620,7 +726,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
           <Form.Item
             name="stock_quantity"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Stock Quantity</span>}
-            rules={[{ required: true, message: "Please enter stock quantity" }]}
+            rules={ validateStockQuantities.stock_quantity}
           >
             <InputNumber
               placeholder="Enter quantity"
@@ -639,6 +745,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
           <Form.Item
             name="min_stock_level"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Minimum Stock Level</span>}
+            rules={validateStockQuantities.min_stock_level}
           >
             <InputNumber
               placeholder="Enter minimum stock level"
@@ -657,6 +764,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
           <Form.Item
             name="max_stock_level"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Maximum Stock Level</span>}
+            rules={validateStockQuantities.max_stock_level}
           >
             <InputNumber
               placeholder="Enter maximum stock level"
@@ -675,6 +783,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
           <Form.Item
             name="reorder_quantity"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Reorder Quantity</span>}
+            rules={validateStockQuantities.reorder_quantity}
           >
             <InputNumber
               placeholder="Enter reorder quantity"
@@ -699,6 +808,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
         <Form.Item
           name="description"
           label={<span style={{ color: '#374151', fontWeight: 500 }}>Description</span>}
+          initialValue={initialValues?.description}
         >
           <TextArea
             placeholder="Enter product description"

@@ -96,9 +96,10 @@ const Meeting = () => {
         // Convert date strings to dayjs objects before editing
         const formattedMeeting = {
             ...meeting,
-            date: dayjs(meeting.date),
-            startTime: dayjs(meeting.startTime, 'HH:mm'),
-            endTime: meeting.endTime ? dayjs(meeting.endTime, 'HH:mm') : null
+            date: meeting.date ? dayjs(meeting.date, 'YYYY-MM-DD') : null,
+            startTime: meeting.startTime ? dayjs(meeting.startTime, 'HH:mm:ss') : null,
+            endTime: meeting.endTime ? dayjs(meeting.endTime, 'HH:mm:ss') : null,
+            // employees: meeting.employee ? (Array.isArray(meeting.employee) ? meeting.employee : JSON.parse(meeting.employee)) : [],
         };
         setSelectedMeeting(formattedMeeting);
         setIsEditing(true);
@@ -128,11 +129,25 @@ const Meeting = () => {
     const handleFormSubmit = async (formData) => {
         try {
             setLoading(true);
+            const formatTime = (timeValue) => {
+                if (!timeValue) return null;
+                if (typeof timeValue === 'string') {
+                    if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(timeValue)) {
+                        return timeValue;
+                    }
+                    return dayjs(timeValue, 'HH:mm:ss').format('HH:mm:ss');
+                }
+                return dayjs(timeValue).format('HH:mm:ss');
+            };
+
             const processedData = {
                 ...formData,
-                date: formData.date ? dayjs(formData.date) : null,
-                startTime: formData.startTime ? dayjs(formData.startTime, 'HH:mm') : null,
-                endTime: formData.endTime ? dayjs(formData.endTime, 'HH:mm') : null
+                date: formData.date ? dayjs(formData.date).format('YYYY-MM-DD') : null,
+                startTime: formatTime(formData.startTime),
+                endTime: formatTime(formData.endTime),
+                // employee: formData.employees || [],
+                // updated_by: formData.updated_by,
+                // updated_at: formData.updated_at
             };
 
             if (isEditing) {

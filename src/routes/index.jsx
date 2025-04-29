@@ -209,7 +209,11 @@ const routes = createBrowserRouter([
           {
             path: "holiday",
             element: <Holiday />
-          }
+          },
+          {
+            path: "calendar",
+            element: <Calendar />,
+          },
         ],
       },
       {
@@ -398,10 +402,7 @@ const routes = createBrowserRouter([
             path: "mail",
             element: <Mail />,
           },
-          {
-            path: "calendar",
-            element: <Calendar />,
-          },
+         
         ],
       },
       {

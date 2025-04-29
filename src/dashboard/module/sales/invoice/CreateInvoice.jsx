@@ -47,6 +47,7 @@ import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import { useGetAllCountriesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -77,6 +78,10 @@ const CreateInvoice = ({
   const { data: contactsData } = useGetContactsQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+  const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery({
+    page: 1,
+    limit: 100,
+  });
 
   const id = loggedInUser?.id;
   const { data: invoicesData, error } = useGetInvoicesQuery();
@@ -249,19 +254,25 @@ const CreateInvoice = ({
       setLoading(true);
 
       // Format items for backend
-      const formattedItems = values.items?.map((item) => ({
-        product_id: item.id,
-        quantity: Number(item.quantity) || 0,
-        unit_price: Number(item.unit_price) || 0,
-        tax_rate: Number(item.tax) || 0,
-        discount: Number(item.discount) || 0,
-        discount_type: item.discount_type || "percentage",
-        hsn_sac: item.hsn_sac || "",
-        taxAmount: calculateItemTaxAmount(item),
-        amount: calculateItemTotal(item),
-        currency: item.currency || values.currency,
-        currencyIcon: item.currencyIcon || selectedCurrency,
-      }));
+      const formattedItems = values.items?.map((item) => {
+        // Find the selected tax from taxesData
+        const selectedTax = taxesData?.data?.find((tax) => tax.id === item.taxId);
+        
+        return {
+          product_id: item.id,
+          quantity: Number(item.quantity) || 0,
+          unit_price: Number(item.unit_price) || 0,
+          tax_rate: selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0,
+          tax_name: selectedTax ? selectedTax.gstName : '',
+          tax_amount: calculateItemTaxAmount(item),
+          discount: Number(item.discount) || 0,
+          discount_type: item.discount_type || "percentage",
+          hsn_sac: item.hsn_sac || "",
+          amount: calculateItemTotal(item),
+          // currency: item.currency || values.currency,
+          // currencyIcon: item.currencyIcon || selectedCurrency,
+        };
+      });
 
       // Get the next invoice number
       const nextInvoiceNumber = getNextInvoiceNumber();
@@ -303,9 +314,19 @@ const CreateInvoice = ({
 
   const handleCreateCustomer = async (values) => {
     try {
+      // Find the country ID from the selected phone code
+      const selectedCountry = countries?.find(
+        (c) => c.phoneCode === values.phonecode
+      );
+      if (!selectedCountry) {
+        message.error("Please select a valid phone code");
+        return;
+      }
+
       const result = await createCustomer({
         name: values.name,
         contact: values.contact,
+        phonecode: selectedCountry.id, // Use country ID instead of phone code
       }).unwrap();
 
       message.success("Customer created successfully");
@@ -491,22 +512,89 @@ const CreateInvoice = ({
         </Form.Item>
 
         <Form.Item
-          name="contact"
-          label="Phone Number"
-          rules={[
-            { required: true, message: "Please enter phone number" },
-            {
-              pattern: /^\d{10}$/,
-              message: "Please enter a valid 10-digit phone number",
-            },
-          ]}
+          name="phone"
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
+            </span>
+          }
         >
-          <Input
-            prefix={<FiPhone style={{ color: "#1890ff" }} />}
-            placeholder="Enter phone number"
-            size="large"
-            style={{ borderRadius: "8px" }}
-          />
+          <Input.Group
+            compact
+            className="phone-input-group"
+            style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              overflow: "hidden",
+            }}
+          >
+            <Form.Item name="phonecode" noStyle initialValue="+91">
+              <Select
+                size="large"
+                style={{
+                  width: "90px",
+                  height: "48px",
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  cursor: "pointer",
+                }}
+                loading={countriesLoading}
+                className="phone-code-select"
+                dropdownStyle={{
+                  padding: "8px",
+                  borderRadius: "10px",
+                  backgroundColor: "white",
+                }}
+                showSearch
+                optionFilterProp="children"
+                defaultValue="+91"
+              >
+                {countries?.map((country) => (
+                  <Option
+                    key={country.id}
+                    value={country.phoneCode}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#262626",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span>
+                      {country.countryCode} {country.phoneCode}
+                      </span>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item name="contact" noStyle>
+              <Input
+                size="large"
+                type="number"
+                style={{
+                  flex: 1,
+                  border: "none",
+                  borderLeft: "1px solid #e6e8eb",
+                  borderRadius: 0,
+                  height: "46px",
+                  backgroundColor: "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                placeholder="Enter 10-digit phone number"
+                maxLength={10}
+              />
+            </Form.Item>
+          </Input.Group>
         </Form.Item>
 
         <div
@@ -827,6 +915,13 @@ const CreateInvoice = ({
                   )}
                 </>
               )}
+              onChange={(value) => {
+                const selectedCustomer = customers?.find(c => c.id === value);
+                if (selectedCustomer) {
+                  form.setFieldValue('tax_number', selectedCustomer.tax_number || '');
+                }
+                form.setFieldValue('customer', value);
+              }}
             >
               {getOptionsBasedOnCategory().map((option) => (
                 <Option key={option.value} value={option.value}>
@@ -850,6 +945,29 @@ const CreateInvoice = ({
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="tax_number"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                Tax Number
+              </span>
+            }
+          >
+            <Input
+              disabled
+              placeholder="Tax number"
+              size="large"
+              style={{
+                borderRadius: "10px",
+                padding: "8px 16px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                border: "1px solid #e6e8eb",
+              }}
+            />
           </Form.Item>
 
           <Form.Item
