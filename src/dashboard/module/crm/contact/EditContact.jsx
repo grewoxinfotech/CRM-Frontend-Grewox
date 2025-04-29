@@ -117,6 +117,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
         city: values.city || "",
         state: values.state || "",
         country: values.country || "",
+        section: "contact",
       };
 
       // Call the update API

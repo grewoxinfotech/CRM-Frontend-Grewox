@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector } from 'react-redux';
@@ -56,7 +56,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
   const [isJobOpen, setJobOpen] = useState(false);
   const [isSalesOpen, setSalesOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
-
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const floatingDropdownRef = useRef(null);
 
   const handleLogout = useLogout();
 
@@ -130,6 +131,29 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
     const newCollapsedState = !isCollapsed;
     setIsCollapsed(newCollapsedState);
     onCollapsedChange(newCollapsedState);
+  };
+
+  // Handle click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (floatingDropdownRef.current && 
+        !floatingDropdownRef.current.contains(event.target) &&
+        !event.target.closest('.nav-item.dropdown-trigger')) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
+
+  const handleFloatingDropdownClose = () => {
+    setOpenDropdown(null);
   };
 
   const menuItems = [
@@ -517,66 +541,90 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
     </NavLink>
   );
 
-  const renderDropdown = (item, isOpen, setIsOpen) => (
-    <div className={`nav-dropdown ${isOpen ? "open" : ""}`}>
-      <div
-        className={`nav-item dropdown-trigger ${isOpen ? "open" : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="nav-item-content">
-          <span className="icon">{item.icon}</span>
-          {!isCollapsed && (
-            <>
-              <span className="title">{item.title}</span>
-              <FiChevronRight className="arrow" />
-            </>
-          )}
-        </div>
-      </div>
-      {!isCollapsed && (
-        <motion.div
-          className="dropdown-menu"
-          initial={false}
-          animate={
-            isOpen
-              ? {
-                opacity: 1,
-                height: "auto",
-                marginTop: "4px",
-                marginBottom: "4px",
-                y: 0,
-              }
-              : {
-                opacity: 0,
-                height: 0,
-                marginTop: 0,
-                marginBottom: 0,
-                y: -5,
-              }
-          }
-          transition={{
-            height: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
-            opacity: { duration: 0.25, ease: "easeInOut" },
+  const renderDropdown = (item, isOpen, setIsOpen) => {
+    const isSubItemActive = item.subItems.some(subItem => {
+      const currentPath = window.location.pathname;
+      return currentPath === subItem.path;
+    });
+
+    return (
+      <div className={`nav-dropdown ${isOpen ? 'open' : ''}`}>
+        <div
+          className={`nav-item dropdown-trigger ${isOpen || isSubItemActive ? 'active' : ''}`}
+          onClick={() => {
+            if (isCollapsed) {
+              setOpenDropdown(openDropdown === item.title ? null : item.title);
+            } else {
+              setIsOpen(!isOpen);
+            }
           }}
         >
-          {item.subItems.map((subItem, index) => (
-            <NavLink
-              key={subItem.path || `${item.title}-${index}`}
-              to={subItem.path}
-              className={({ isActive }) =>
-                `nav-item sub-item ${isActive ? "active" : ""}`
-              }
+          <div className="nav-item-content">
+            <span
+              className="icon"
+              onClick={() => {
+                if (isCollapsed) {
+                  setOpenDropdown(openDropdown === item.title ? null : item.title);
+                } else {
+                  setIsOpen(!isOpen);
+                }
+              }}
             >
-              <div className="nav-item-content">
-                <span className="icon">{subItem.icon}</span>
-                <span className="title">{subItem.title}</span>
-              </div>
-            </NavLink>
-          ))}
-        </motion.div>
-      )}
-    </div>
-  );
+              {item.icon}
+            </span>
+            {!isCollapsed && (
+              <>
+                <span className="title">{item.title}</span>
+                <FiChevronRight className="arrow" />
+              </>
+            )}
+          </div>
+        </div>
+        {!isCollapsed && (
+          <motion.div
+            className="dropdown-menu"
+            initial={false}
+            animate={
+              isOpen
+                ? {
+                  opacity: 1,
+                  height: "auto",
+                  marginTop: "4px",
+                  marginBottom: "4px",
+                  y: 0,
+                }
+                : {
+                  opacity: 0,
+                  height: 0,
+                  marginTop: 0,
+                  marginBottom: 0,
+                  y: -5,
+                }
+            }
+            transition={{
+              height: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+              opacity: { duration: 0.25, ease: "easeInOut" },
+            }}
+          >
+            {item.subItems.map((subItem, index) => (
+              <NavLink
+                key={subItem.path || `${item.title}-${index}`}
+                to={subItem.path}
+                className={({ isActive }) =>
+                  `nav-item sub-item ${isActive ? "active" : ""}`
+                }
+              >
+                <div className="nav-item-content">
+                  <span className="icon">{subItem.icon}</span>
+                  <span className="title">{subItem.title}</span>
+                </div>
+              </NavLink>
+            ))}
+          </motion.div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <motion.aside
@@ -621,6 +669,54 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           </motion.div>
         ))}
       </nav>
+
+      {isCollapsed && openDropdown && (
+        <motion.div
+          ref={floatingDropdownRef}
+          className="floating-dropdown"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{
+            duration: 0.2,
+            ease: [0.4, 0, 0.2, 1]
+          }}
+          style={{
+            position: "fixed",
+            top: `${100 + (menuItems.findIndex(item => item.title === openDropdown) * 48)}px`,
+            left: "70px",
+            zIndex: 1000,
+          }}
+        >
+          {menuItems
+            .find((item) => item.title === openDropdown)
+            ?.subItems.map((subItem, idx) => (
+              <motion.div
+                key={subItem.path || idx}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  duration: 0.2,
+                  delay: idx * 0.05,
+                  ease: "easeOut"
+                }}
+              >
+                <NavLink
+                  to={subItem.path}
+                  className={({ isActive }) =>
+                    `floating-dropdown-item ${isActive ? 'active' : ''}`
+                  }
+                  onClick={() => {
+                    setOpenDropdown(null);
+                  }}
+                >
+                  <span className="icon">{subItem.icon}</span>
+                  <span className="title">{subItem.title}</span>
+                </NavLink>
+              </motion.div>
+            ))}
+        </motion.div>
+      )}
 
       <div className="sidebar-footer">
         <NavLink to="/dashboard/profile" className="nav-item profile-btn">

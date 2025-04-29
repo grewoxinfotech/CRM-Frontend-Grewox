@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -27,6 +27,8 @@ import './sidebar.scss';
 const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     const [isCollapsed, setIsCollapsed] = useState(collapsed);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [openDropdown, setOpenDropdown] = useState(null);
+    const floatingDropdownRef = useRef(null);
     const handleLogout = useLogout();
 
     // Sync local state with props
@@ -118,83 +120,112 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         </NavLink>
     );
 
-    const renderSettingsDropdown = (item) => (
-        <div className={`nav-dropdown ${isSettingsOpen ? 'open' : ''}`}>
-            <div
-                className={`nav-item dropdown-trigger ${isSettingsOpen ? 'open' : ''}`}
-                onClick={() => !isCollapsed && setIsSettingsOpen(!isSettingsOpen)}
-            >
-                <div className="nav-item-content">
-                    <span className="icon">{item.icon}</span>
-                    {!isCollapsed && (
-                        <>
-                            <span className="title">{item.title}</span>
-                            <FiChevronRight className="arrow" />
-                        </>
-                    )}
-                </div>
-            </div>
-            {!isCollapsed && (
-                <motion.div
-                    className="dropdown-menu"
-                    initial={false}
-                    animate={isSettingsOpen ?
-                        {
-                            opacity: 1,
-                            height: 'auto',
-                            marginTop: '4px',
-                            marginBottom: '4px',
-                            y: 0
-                        } :
-                        {
-                            opacity: 0,
-                            height: 0,
-                            marginTop: 0,
-                            marginBottom: 0,
-                            y: -5
-                        }
-                    }
-                    transition={{
-                        height: {
-                            duration: 0.4,
-                            ease: [0.4, 0, 0.2, 1]
-                        },
-                        opacity: {
-                            duration: 0.25,
-                            ease: "easeInOut"
-                        },
-                        y: {
-                            duration: 0.3,
-                            ease: [0.4, 0, 0.2, 1]
-                        },
-                        marginTop: {
-                            duration: 0.25,
-                            ease: "easeInOut"
-                        },
-                        marginBottom: {
-                            duration: 0.25,
-                            ease: "easeInOut"
+    const renderSettingsDropdown = (item) => {
+        const isSubItemActive = item.subItems.some(subItem => {
+            const currentPath = window.location.pathname;
+            return currentPath === subItem.path;
+        });
+
+        return (
+            <div className={`nav-dropdown ${isSettingsOpen ? 'open' : ''}`}>
+                <div
+                    className={`nav-item dropdown-trigger ${isSettingsOpen || isSubItemActive ? 'active' : ''}`}
+                    onClick={() => {
+                        if (isCollapsed) {
+                            setOpenDropdown(openDropdown === item.title ? null : item.title);
+                        } else {
+                            setIsSettingsOpen(!isSettingsOpen);
                         }
                     }}
                 >
-                    {item.subItems.map((subItem, index) => (
-                        <NavLink
-                            key={subItem.path}
-                            to={subItem.path}
-                            className={({ isActive }) =>
-                                `nav-item sub-item ${isActive ? 'active' : ''}`
+                    <div className="nav-item-content">
+                        <span className="icon">{item.icon}</span>
+                        {!isCollapsed && (
+                            <>
+                                <span className="title">{item.title}</span>
+                                <FiChevronRight className="arrow" />
+                            </>
+                        )}
+                    </div>
+                </div>
+                {!isCollapsed && (
+                    <motion.div
+                        className="dropdown-menu"
+                        initial={false}
+                        animate={isSettingsOpen ?
+                            {
+                                opacity: 1,
+                                height: 'auto',
+                                marginTop: '4px',
+                                marginBottom: '4px',
+                                y: 0
+                            } :
+                            {
+                                opacity: 0,
+                                height: 0,
+                                marginTop: 0,
+                                marginBottom: 0,
+                                y: -5
                             }
-                        >
-                            <div className="nav-item-content">
-                                <span className="icon">{subItem.icon}</span>
-                                <span className="title">{subItem.title}</span>
-                            </div>
-                        </NavLink>
-                    ))}
-                </motion.div>
-            )}
-        </div>
-    );
+                        }
+                        transition={{
+                            height: {
+                                duration: 0.4,
+                                ease: [0.4, 0, 0.2, 1]
+                            },
+                            opacity: {
+                                duration: 0.25,
+                                ease: "easeInOut"
+                            },
+                            y: {
+                                duration: 0.3,
+                                ease: [0.4, 0, 0.2, 1]
+                            },
+                            marginTop: {
+                                duration: 0.25,
+                                ease: "easeInOut"
+                            },
+                            marginBottom: {
+                                duration: 0.25,
+                                ease: "easeInOut"
+                            }
+                        }}
+                    >
+                        {item.subItems.map((subItem, index) => (
+                            <NavLink
+                                key={subItem.path}
+                                to={subItem.path}
+                                className={({ isActive }) =>
+                                    `nav-item sub-item ${isActive ? 'active' : ''}`
+                                }
+                            >
+                                <div className="nav-item-content">
+                                    <span className="icon">{subItem.icon}</span>
+                                    <span className="title">{subItem.title}</span>
+                                </div>
+                            </NavLink>
+                        ))}
+                    </motion.div>
+                )}
+            </div>
+        );
+    };
+
+    const handleDropdownToggle = (item) => {
+        if (isCollapsed) {
+            if (item.isDropdown) {
+                setOpenDropdown(openDropdown === item.title ? null : item.title);
+            }
+        } else {
+            if (item.isDropdown) {
+                setIsSettingsOpen(!isSettingsOpen);
+            }
+        }
+    };
+
+    const handleFloatingDropdownClose = () => {
+        setOpenDropdown(null);
+    };
 
     return (
         <motion.aside
@@ -224,6 +255,54 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 ))}
             </nav>
 
+            {isCollapsed && openDropdown && (
+                <motion.div
+                    ref={floatingDropdownRef}
+                    className="floating-dropdown"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{
+                        duration: 0.2,
+                        ease: [0.4, 0, 0.2, 1]
+                    }}
+                    style={{
+                        position: "fixed",
+                        top: `${100 + (menuItems.findIndex(item => item.title === openDropdown) * 48)}px`,
+                        left: "70px",
+                        zIndex: 1000,
+                    }}
+                >
+                    {menuItems
+                        .find((item) => item.title === openDropdown)
+                        ?.subItems.map((subItem, idx) => (
+                            <motion.div
+                                key={subItem.path || idx}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{
+                                    duration: 0.2,
+                                    delay: idx * 0.05,
+                                    ease: "easeOut"
+                                }}
+                            >
+                                <NavLink
+                                    to={subItem.path}
+                                    className={({ isActive }) =>
+                                        `floating-dropdown-item ${isActive ? 'active' : ''}`
+                                    }
+                                    onClick={() => {
+                                        setOpenDropdown(null);
+                                    }}
+                                >
+                                    <span className="icon">{subItem.icon}</span>
+                                    <span className="title">{subItem.title}</span>
+                                </NavLink>
+                            </motion.div>
+                        ))}
+                </motion.div>
+            )}
+
             <div className="sidebar-footer">
                 <NavLink to="/superadmin/profile" className="nav-item profile-btn">
                     <div className="nav-item-content">
@@ -249,5 +328,3 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
 };
 
 export default Sidebar;
-
-

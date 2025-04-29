@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Card,
     Row,
@@ -40,6 +40,7 @@ import {
     QrcodeOutlined
 } from '@ant-design/icons';
 import { jsPDF } from 'jspdf';
+import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
 
 const { Title, Text } = Typography;
 
@@ -49,6 +50,12 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
     const [selectedFormTitle, setSelectedFormTitle] = useState('');
     const [selectedForm, setSelectedForm] = useState(null);
     const navigate = useNavigate();
+    const { data: settingsData } = useGetAllSettingsQuery();
+
+
+    const companyLogo = settingsData?.data[0]?.companylogo;
+    const companyName = settingsData?.data[0]?.companyName;
+    
 
     const showQrCode = (form) => {
         const formUrl = `${window.location.origin}/forms/${form.id}`;
@@ -111,133 +118,145 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
             ctx.closePath();
             ctx.fill();
 
-            // Load and draw Grewox logo
+            // Load and draw company logo
             const logo = new Image();
             const smallLogo = new Image();
+
+            // Set crossOrigin attribute for both images
+            logo.crossOrigin = "anonymous";
+            smallLogo.crossOrigin = "anonymous";
 
             Promise.all([
                 new Promise(resolve => {
                     logo.onload = resolve;
-                    logo.src = '/src/assets/logo/Group 48096906.png';
+                    logo.src = companyLogo || '/src/assets/logo/Group 48096906.png';
                 }),
                 new Promise(resolve => {
                     smallLogo.onload = resolve;
-                    smallLogo.src = '/src/assets/icons/icon-96x96.png';
+                    smallLogo.src = companyLogo || '/src/assets/icons/icon-96x96.png';
                 })
             ]).then(() => {
-                // Draw logo at the top
-                const logoHeight = 80;
-                const logoWidth = (logo.width / logo.height) * logoHeight;
-                const logoX = (500 - logoWidth) / 2;
-                ctx.drawImage(logo, logoX, 20, logoWidth, logoHeight);
+                try {
+                    // Draw logo at the top
+                    const logoHeight = 80;
+                    const logoWidth = (logo.width / logo.height) * logoHeight;
+                    const logoX = (500 - logoWidth) / 2;
+                    ctx.drawImage(logo, logoX, 20, logoWidth, logoHeight);
 
-                // Title text
-                ctx.textAlign = 'center';
-                ctx.font = '600 24px "Poppins"';
-                ctx.fillStyle = '#1890ff';
-                ctx.fillText(selectedForm.event_name, 250, 160);
+                    // Title text
+                    ctx.textAlign = 'center';
+                    ctx.font = '600 24px "Poppins"';
+                    ctx.fillStyle = '#1890ff';
+                    ctx.fillText(selectedForm.event_name, 250, 160);
 
-                // Location text
-                ctx.font = '400 15px "Poppins"';
-                ctx.fillStyle = '#666666';
-                ctx.fillText(selectedForm.event_location, 250, 190);
+                    // Location text
+                    ctx.font = '400 15px "Poppins"';
+                    ctx.fillStyle = '#666666';
+                    ctx.fillText(selectedForm.event_location, 250, 190);
 
-                // Date text
-                const dateText = `${dayjs(selectedForm.start_date).format('MMM D')} - ${dayjs(selectedForm.end_date).format('MMM D, YYYY')}`;
-                ctx.fillText(dateText, 250, 215);
+                    // Date text
+                    const dateText = `${dayjs(selectedForm.start_date).format('MMM D')} - ${dayjs(selectedForm.end_date).format('MMM D, YYYY')}`;
+                    ctx.fillText(dateText, 250, 215);
 
-                // Draw QR code container with enhanced quality
-                const qrCanvas = document.getElementById('qr-code-canvas');
-                if (qrCanvas) {
-                    const qrSize = 280;
-                    const x = (500 - qrSize) / 2;
-                    const y = 270;
+                    // Draw QR code container with enhanced quality
+                    const qrCanvas = document.getElementById('qr-code-canvas');
+                    if (qrCanvas) {
+                        const qrSize = 280;
+                        const x = (500 - qrSize) / 2;
+                        const y = 270;
 
-                    // Draw card shadow and background
-                    ctx.save();
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
-                    ctx.shadowBlur = 30;
-                    ctx.shadowOffsetY = 6;
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.beginPath();
-                    ctx.roundRect(x - 20, y - 20, qrSize + 40, qrSize + 40, 16);
-                    ctx.fill();
-                    ctx.restore();
+                        // Draw card shadow and background
+                        ctx.save();
+                        ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+                        ctx.shadowBlur = 30;
+                        ctx.shadowOffsetY = 6;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.beginPath();
+                        ctx.roundRect(x - 20, y - 20, qrSize + 40, qrSize + 40, 16);
+                        ctx.fill();
+                        ctx.restore();
 
-                    // Add subtle border
-                    ctx.strokeStyle = 'rgba(24, 144, 255, 0.1)';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.roundRect(x - 20, y - 20, qrSize + 40, qrSize + 40, 16);
-                    ctx.stroke();
+                        // Add subtle border
+                        ctx.strokeStyle = 'rgba(24, 144, 255, 0.1)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.roundRect(x - 20, y - 20, qrSize + 40, qrSize + 40, 16);
+                        ctx.stroke();
 
-                    // Draw QR code
-                    ctx.drawImage(qrCanvas, x, y, qrSize, qrSize);
+                        // Draw QR code
+                        ctx.drawImage(qrCanvas, x, y, qrSize, qrSize);
 
-                    // Draw small Grewox logo in center of QR code
-                    const qrLogoSize = 45;
-                    const qrLogoX = x + (qrSize - qrLogoSize) / 2;
-                    const qrLogoY = y + (qrSize - qrLogoSize) / 2;
+                        // Draw small company logo in center of QR code
+                        const qrLogoSize = 45;
+                        const qrLogoX = x + (qrSize - qrLogoSize) / 2;
+                        const qrLogoY = y + (qrSize - qrLogoSize) / 2;
 
-                    // Draw white background for QR logo
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(qrLogoX - 3, qrLogoY - 3, qrLogoSize + 6, qrLogoSize + 6);
+                        // Draw white background for QR logo
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(qrLogoX - 3, qrLogoY - 3, qrLogoSize + 6, qrLogoSize + 6);
 
-                    // Draw the small logo
-                    ctx.drawImage(smallLogo, qrLogoX, qrLogoY, qrLogoSize, qrLogoSize);
+                        // Draw the small logo
+                        ctx.drawImage(smallLogo, qrLogoX, qrLogoY, qrLogoSize, qrLogoSize);
+                    }
+
+                    // Bottom text
+                    ctx.font = '500 15px "Poppins"';
+                    ctx.fillStyle = '#666666';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Scan to access form', 250, 600);
+
+                    // Powered by text
+                    ctx.font = '400 13px "Poppins"';
+                    ctx.fillStyle = '#999999';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('Powered by', 235, 630);
+
+                    // Company name text with gradient
+                    const gradient = ctx.createLinearGradient(240, 630, 300, 630);
+                    gradient.addColorStop(0, '#1890ff');
+                    gradient.addColorStop(1, '#096dd9');
+                    ctx.fillStyle = gradient;
+                    ctx.font = '600 13px "Poppins"';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(companyName, 245, 630);
+
+                    // Convert to PDF with maximum quality
+                    pdf.addImage(
+                        tempCanvas.toDataURL('image/jpeg', 1.0),
+                        'JPEG',
+                        0,
+                        0,
+                        5,
+                        7,
+                        undefined,
+                        'FAST'
+                    );
+
+                    // Download with better quality
+                    const pdfOutput = pdf.output('blob');
+                    const fileName = `${selectedForm.title || 'form'}-qr.pdf`;
+
+                    // Use direct download
+                    const url = window.URL.createObjectURL(pdfOutput);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+
+                    // Clean up
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                    }, 100);
+                    message.success('QR Code downloaded successfully!');
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    message.error('Failed to generate PDF. Please try again.');
                 }
-
-                // Bottom text
-                ctx.font = '500 15px "Poppins"';
-                ctx.fillStyle = '#666666';
-                ctx.textAlign = 'center';
-                ctx.fillText('Scan to access form', 250, 600);
-
-                // Powered by text
-                ctx.font = '400 13px "Poppins"';
-                ctx.fillStyle = '#999999';
-                ctx.textAlign = 'right';
-                ctx.fillText('Powered by', 235, 630);
-
-                // Grewox CRM text with gradient
-                const gradient = ctx.createLinearGradient(240, 630, 300, 630);
-                gradient.addColorStop(0, '#1890ff');
-                gradient.addColorStop(1, '#096dd9');
-                ctx.fillStyle = gradient;
-                ctx.font = '600 13px "Poppins"';
-                ctx.textAlign = 'left';
-                ctx.fillText('Grewox CRM', 245, 630);
-
-                // Convert to PDF with maximum quality
-                pdf.addImage(
-                    tempCanvas.toDataURL('image/jpeg', 1.0),
-                    'JPEG',
-                    0,
-                    0,
-                    5,
-                    7,
-                    undefined,
-                    'FAST'
-                );
-
-                // Download with better quality
-                const pdfOutput = pdf.output('blob');
-                const fileName = `${selectedForm.title || 'form'}-qr.pdf`;
-
-                // Use direct download
-                const url = window.URL.createObjectURL(pdfOutput);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-
-                // Clean up
-                setTimeout(() => {
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                }, 100);
-                message.success('QR Code downloaded successfully!');
+            }).catch(error => {
+                console.error('Error loading images:', error);
+                message.error('Failed to load images. Please try again.');
             });
         }
     };
@@ -540,8 +559,8 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
                             zIndex: 1
                         }}>
                             <img
-                                src="/src/assets/logo/Group 48096906.png"
-                                alt="Grewox Logo"
+                                src={companyLogo || "/src/assets/logo/Group 48096906.png"}
+                                alt={companyName}
                                 style={{
                                     height: "80px",
                                     objectFit: "contain",
@@ -605,7 +624,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
                                 level="H"
                                 includeMargin={true}
                                 imageSettings={{
-                                    src: "/src/assets/icons/icon-96x96.png",
+                                    src: companyLogo || "/src/assets/icons/icon-96x96.png",
                                     x: undefined,
                                     y: undefined,
                                     height: 50,
@@ -640,7 +659,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
                                 alignItems: "center",
                                 gap: "4px"
                             }}>
-                                Powered by <span style={{ fontWeight: 600, background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Grewox CRM</span>
+                                Powered by <span style={{ fontWeight: 600, background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{companyName}</span>
                             </Text>
                         </div>
                     </div>

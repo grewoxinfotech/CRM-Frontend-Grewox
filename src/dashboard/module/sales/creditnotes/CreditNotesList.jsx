@@ -10,7 +10,7 @@ import {
   message,
   Input,
   Space,
-  DatePicker
+  DatePicker,
 } from "antd";
 import {
   FiEdit2,
@@ -42,14 +42,9 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
   const { data: invdata } = useGetInvoicesQuery();
   const invoices = invdata?.data;
 
-console.log("invoices",invoices);
-
-  
-
-
   const getCurrencyIcon = (currencyId) => {
-    const currency = currenciesData?.find(curr => curr.id === currencyId);
-    return currency?.currencyIcon || '₹';
+    const currency = currenciesData?.find((curr) => curr.id === currencyId);
+    return currency?.currencyIcon || "₹";
   };
 
   const filteredCreditNotes = React.useMemo(() => {
@@ -104,18 +99,6 @@ console.log("invoices",invoices);
   const getDropdownItems = (record) => ({
     items: [
       {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onView?.(record),
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => handleEdit(record),
-      },
-      {
         key: "delete",
         icon: <FiTrash2 />,
         label: "Delete",
@@ -130,14 +113,21 @@ console.log("invoices",invoices);
       title: "Invoice",
       dataIndex: "invoice",
       key: "invoice",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search invoice"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -148,7 +138,11 @@ console.log("invoices",invoices);
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
@@ -158,9 +152,9 @@ console.log("invoices",invoices);
         record.invoice.toLowerCase().includes(value.toLowerCase()) ||
         record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (invoice) => {
-        const invoiceData = invoices?.find(inv => inv.id === invoice);
+        const invoiceData = invoices?.find((inv) => inv.id === invoice);
         return (
-          <Text style={{  fontWeight: 500 }}>
+          <Text style={{ fontWeight: 500 }}>
             {invoiceData?.salesInvoiceNumber || "N/A"}
           </Text>
         );
@@ -193,9 +187,7 @@ console.log("invoices",invoices);
         );
       },
     },
-    
-   
-    
+
     {
       title: "Description",
       dataIndex: "description",
@@ -218,47 +210,70 @@ console.log("invoices",invoices);
       title: "Date",
       dataIndex: "date",
       key: "date",
-      render: (date) => dayjs(date).format('DD-MM-YYYY'),
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-          <div style={{ padding: 8 }}>
-              <DatePicker
-                  value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-                  onChange={(date) => {
-                      const dateStr = date ? date.format('YYYY-MM-DD') : null;
-                      setSelectedKeys(dateStr ? [dateStr] : []);
-                  }}
-                  style={{ marginBottom: 8, display: 'block' }}
-              />
-              <Space>
-                  <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Filter
-                  </Button>
-                  <Button
-                      onClick={() => clearFilters()}
-                      size="small"
-                      style={{ width: 90 }}
-                  >
-                      Reset
-                  </Button>
-              </Space>
-          </div>
+      render: (date) => dayjs(date).format("DD-MM-YYYY"),
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
+        <div style={{ padding: 8 }}>
+          <DatePicker
+            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
+            onChange={(date) => {
+              const dateStr = date ? date.format("YYYY-MM-DD") : null;
+              setSelectedKeys(dateStr ? [dateStr] : []);
+            }}
+            style={{ marginBottom: 8, display: "block" }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
       ),
       onFilter: (value, record) => {
-          if (!value || !record.date) return false;
-          return dayjs(record.date).format('YYYY-MM-DD') === value;
+        if (!value || !record.date) return false;
+        return dayjs(record.date).format("YYYY-MM-DD") === value;
       },
-      filterIcon: filtered => (
-          <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
-      )
+      filterIcon: (filtered) => (
+        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
+      ),
     },
-    
-
-    
+    {
+      title: "Action",
+      key: "actions",
+      width: 80,
+      align: "center",
+      render: (_, record) => (
+        <Dropdown
+          menu={getDropdownItems(record)}
+          trigger={["click"]}
+          placement="bottomRight"
+          overlayClassName="invoice-actions-dropdown"
+        >
+          <Button
+            type="text"
+            icon={<FiMoreVertical />}
+            className="action-dropdown-button"
+            onClick={(e) => e.preventDefault()}
+          />
+        </Dropdown>
+      ),
+    },
   ];
 
   return (

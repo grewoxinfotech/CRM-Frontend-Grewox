@@ -68,6 +68,7 @@ const Header = () => {
         { title: "Meetings", path: "/dashboard/hrm/meeting", parent: "HRM" },
         { title: "Attendance", path: "/dashboard/hrm/attendance", parent: "HRM" },
         { title: "Holidays", path: "/dashboard/hrm/holiday", parent: "HRM" },
+        { title: "Calendar", path: "/dashboard/hrm/calendar", parent: "HRM" },
 
         // Job
         { title: "Jobs", path: "/dashboard/job/jobs", parent: "Job" },
@@ -92,7 +93,7 @@ const Header = () => {
         // Communication
         { title: "Chat", path: "/dashboard/communication/chat", parent: "Communication" },
         { title: "Mail", path: "/dashboard/communication/mail", parent: "Communication" },
-        { title: "Calendar", path: "/dashboard/communication/calendar", parent: "Communication" },
+        // { title: "Calendar", path: "/dashboard/hrm/calendar", parent: "Communication" },
 
         // Support
         { title: "Tickets", path: "/dashboard/support/ticket", parent: "Support" },

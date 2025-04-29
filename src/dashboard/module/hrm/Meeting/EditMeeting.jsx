@@ -25,7 +25,6 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useGetEmployeesQuery } from '../Employee/services/employeeApi';
 import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
 import { useGetAllSubclientsQuery } from '../../user-management/subclient/services/subClientApi';
-import { useCreateMeetingMutation } from './services/meetingApi';
 import { useSelector } from 'react-redux';
 import { useGetRolesQuery } from '../role/services/roleApi';
 
@@ -34,19 +33,22 @@ dayjs.extend(customParseFormat);
 const { Text } = Typography;
 const { TextArea } = Input;
 
-const CreateMeeting = ({
+const EditMeeting = ({
     open,
     onCancel,
+    onSubmit,
+    initialValues,
     loading
 }) => {
     const [form] = Form.useForm();
-    
-    const [createMeeting, { isLoading: isCreating }] = useCreateMeetingMutation();
     
     const { data: subClientsData, isLoading: subClientsLoading } = useGetAllSubclientsQuery();
     const { data: departmentsData, isLoading: departmentsLoading } = useGetAllDepartmentsQuery();
     const { data: employeesData, isLoading: employeesLoading } = useGetEmployeesQuery();
     const { data: rolesData } = useGetRolesQuery();
+
+    // Add this to get client_id from Redux state
+    const auth = useSelector((state) => state.auth);
 
     // Transform subclients data
     const subclients = React.useMemo(() => {
@@ -69,43 +71,6 @@ const CreateMeeting = ({
             username: emp.username
         }));
     }, [employeesData]);
-
-
-    useEffect(() => {
-        form.resetFields();
-    }, [form]);
-
-    const handleSubmit = async (values) => {
-        try {
-            const formattedValues = {
-                title: values.title,
-                department: values.department,
-                section: "meeting",
-                employee: values.employees || [],
-                description: values.notes,
-                date: values.date && dayjs(values.date).format('YYYY-MM-DD'),
-                startTime: values.startTime && dayjs(values.startTime).format('HH:mm'),
-                endTime: values.endTime && dayjs(values.endTime).format('HH:mm'),
-                meetingLink: values.meetingLink || null,
-                status: values.status || 'scheduled',
-                client: values.client,
-            };
-
-            console.log('Submitting meeting with data:', formattedValues);
-
-            const response = await createMeeting(formattedValues).unwrap();
-            if (response.success) {
-                message.success('Meeting scheduled successfully');
-                form.resetFields();
-                onCancel();
-            } else {
-                throw new Error(response.message || 'Failed to create meeting');
-            }
-        } catch (error) {
-            console.error('Meeting creation error:', error);
-            message.error(error?.data?.message || 'Failed to schedule meeting');
-        }
-    };
 
     // Helper for role badge color (similar to members UI)
     const getRoleStyle = (role) => {
@@ -139,6 +104,104 @@ const CreateMeeting = ({
         const foundRole = rolesData.data.find(role => role.id === role_id);
         return foundRole ? foundRole.role_name : 'Employee';
     };
+
+    // Define meeting types
+    const meetingTypes = [
+        { value: 'team_meeting', label: 'Team Meeting' },
+        { value: 'client_meeting', label: 'Client Meeting' },
+        { value: 'board_meeting', label: 'Board Meeting' },
+        { value: 'project_meeting', label: 'Project Meeting' },
+    ];
+
+    // Define locations
+    const locations = [
+        { value: 'conference_room_1', label: 'Conference Room 1' },
+        { value: 'conference_room_2', label: 'Conference Room 2' },
+        { value: 'meeting_room_1', label: 'Meeting Room 1' },
+        { value: 'virtual', label: 'Virtual Meeting' },
+    ];
+
+    useEffect(() => {
+        if (initialValues) {
+            // Convert employee data to array if it's not already
+            let employeeIds = [];
+            if (initialValues.employee) {
+                if (Array.isArray(initialValues.employee)) {
+                    employeeIds = initialValues.employee;
+                } else if (typeof initialValues.employee === 'string') {
+                    try {
+                        employeeIds = JSON.parse(initialValues.employee);
+                    } catch (e) {
+                        // If it's a comma-separated string
+                        employeeIds = initialValues.employee.split(',').map(id => id.trim());
+                    }
+                } else {
+                    employeeIds = [initialValues.employee];
+                }
+            }
+
+            // Get employee IDs for the selected employees
+            const selectedEmployeeIds = employeeIds.map(id => {
+                const emp = employeesData?.data?.find(e => e.id === id);
+                return emp ? emp.id : id;
+            });
+
+            const formattedValues = {
+                ...initialValues,
+                date: initialValues.date ? dayjs(initialValues.date, 'YYYY-MM-DD') : null,
+                startTime: initialValues.startTime ? dayjs(initialValues.startTime, 'HH:mm:ss') : null,
+                endTime: initialValues.endTime ? dayjs(initialValues.endTime, 'HH:mm:ss') : null,
+                employees: selectedEmployeeIds,
+                notes: initialValues.description || '',
+            };
+
+            form.setFieldsValue(formattedValues);
+        }
+    }, [initialValues, form, employeesData]);
+
+    const handleSubmit = async (values) => {
+        try {
+            // Format time values properly
+            const formatTime = (timeValue) => {
+                if (!timeValue) return null;
+                if (typeof timeValue === 'string') {
+                    // If it's already in HH:mm:ss format, return as is
+                    if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(timeValue)) {
+                        return timeValue;
+                    }
+                    // If it's a different format, try to parse it
+                    return dayjs(timeValue, 'HH:mm:ss').format('HH:mm:ss');
+                }
+                // If it's a dayjs object, format it
+                return dayjs(timeValue).format('HH:mm:ss');
+            };
+
+            const formattedValues = {
+                title: values.title,
+                department: values.department,
+                section: "meeting",
+                employee: values.employees || [],
+                description: values.notes || '',
+                date: values.date ? dayjs(values.date).format('YYYY-MM-DD') : null,
+                startTime: formatTime(values.startTime),
+                endTime: formatTime(values.endTime),
+                meetingLink: values.meetingLink || null,
+                status: values.status || 'scheduled',
+                client: values.client,
+                updated_by: auth?.user?.id,
+                updated_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            };
+
+            console.log('Submitting meeting with data:', formattedValues);
+
+            await onSubmit(formattedValues);
+        } catch (error) {
+            console.error('Meeting update error:', error);
+            message.error(error?.data?.message || 'Failed to update meeting');
+        }
+    };
+
+    
 
     return (
         <Modal
@@ -230,7 +293,7 @@ const CreateMeeting = ({
                                 color: '#ffffff',
                             }}
                         >
-                            Schedule New Meeting
+                            Edit Meeting
                         </h2>
                         <Text
                             style={{
@@ -238,7 +301,7 @@ const CreateMeeting = ({
                                 color: 'rgba(255, 255, 255, 0.85)',
                             }}
                         >
-                            Fill in the information to schedule meeting
+                            Update meeting information
                         </Text>
                     </div>
                 </div>
@@ -248,6 +311,7 @@ const CreateMeeting = ({
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
+                initialValues={initialValues}
                 requiredMark={false}
                 style={{
                     padding: '24px',
@@ -262,7 +326,6 @@ const CreateMeeting = ({
                                     Meeting Title
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please enter meeting title' }]}
                         >
                             <Input
                                 prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -287,7 +350,6 @@ const CreateMeeting = ({
                                     Department
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please select department' }]}
                         >
                             <Select
                                 placeholder="Select department"
@@ -324,7 +386,6 @@ const CreateMeeting = ({
                                     Employees
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please select employees' }]}
                         >
                             <Select
                                 mode="multiple"
@@ -358,7 +419,7 @@ const CreateMeeting = ({
                                         color: '#7c3aed',
                                         fontWeight: 500,
                                         fontSize: 13,
-                                        border: '1px solidrgb(9, 12, 24)',
+                                        border: '1px solid #e0e7ff',
                                         marginLeft: 4,
                                         display: 'inline-block'
                                     }}>
@@ -419,7 +480,6 @@ const CreateMeeting = ({
                                     Client
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please select client' }]}
                         >
                             <Select
                                 placeholder="Select client"
@@ -452,7 +512,6 @@ const CreateMeeting = ({
                         <Form.Item
                             name="date"
                             label="Meeting Date"
-                            rules={[{ required: true, message: 'Please select date' }]}
                         >
                             <DatePicker 
                                 format="DD-MM-YYYY"
@@ -464,7 +523,6 @@ const CreateMeeting = ({
                         <Form.Item
                             name="startTime"
                             label="Start Time"
-                            rules={[{ required: true, message: 'Please select start time' }]}
                         >
                             <TimePicker 
                                 format="HH:mm"
@@ -476,7 +534,6 @@ const CreateMeeting = ({
                         <Form.Item
                             name="endTime"
                             label="End Time"
-                            rules={[{ required: true, message: 'Please select end time' }]}
                         >
                             <TimePicker 
                                 format="HH:mm"
@@ -492,7 +549,6 @@ const CreateMeeting = ({
                                     Status
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please select status' }]}
                         >
                             <Select
                                 placeholder="Select status"
@@ -539,7 +595,6 @@ const CreateMeeting = ({
                             Meeting Description
                         </span>
                     }
-                    rules={[{ required: true, message: 'Please enter meeting description' }]}
                 >
                     <TextArea
                         placeholder="Enter meeting description"
@@ -584,7 +639,7 @@ const CreateMeeting = ({
                         size="large"
                         type="primary"
                         htmlType="submit"
-                        loading={isCreating}
+                        loading={loading}
                         style={{
                             padding: '8px 32px',
                             height: '44px',
@@ -598,7 +653,7 @@ const CreateMeeting = ({
                             justifyContent: 'center',
                         }}
                     >
-                        Schedule Meeting
+                        Update Meeting
                     </Button>
                 </div>
             </Form>
@@ -606,4 +661,4 @@ const CreateMeeting = ({
     );
 };
 
-export default CreateMeeting;
+export default EditMeeting;

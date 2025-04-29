@@ -37,12 +37,11 @@ const ContactList = ({ onEdit, onView, searchText = "", contactsResponse, isLoad
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const navigate = useNavigate();
+  const [deleteContact] = useDeleteContactMutation();
 
   // Fetch countries data
   const { data: countriesData } = useGetAllCountriesQuery();
 
-  // Delete contact mutation
-  const [deleteContact, { isLoading: isDeleting }] = useDeleteContactMutation();
 
   // Safely handle contacts data
   const contacts = React.useMemo(() => {

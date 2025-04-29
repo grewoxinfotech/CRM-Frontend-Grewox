@@ -32,7 +32,10 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import "./invoice.scss";
-import { useCreateInvoiceMutation } from "./services/invoiceApi";
+import {
+  useCreateInvoiceMutation,
+  useGetInvoicesQuery,
+} from "./services/invoiceApi";
 import {
   useGetCustomersQuery,
   useCreateCustomerMutation,
@@ -44,6 +47,7 @@ import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import { useGetAllCountriesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -58,7 +62,7 @@ const CreateInvoice = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [createInvoice, { isLoading }] = useCreateInvoiceMutation();
+  const [createInvoicee, { isLoading }] = useCreateInvoiceMutation();
   const { data: custdata } = useGetCustomersQuery();
   const customers = custdata?.data;
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
@@ -74,8 +78,52 @@ const CreateInvoice = ({
   const { data: contactsData } = useGetContactsQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
+  const { data: countries = [], isLoading: countriesLoading } =
+    useGetAllCountriesQuery({
+      page: 1,
+      limit: 100,
+    });
 
   const id = loggedInUser?.id;
+  const { data: invoicesData, error } = useGetInvoicesQuery();
+  const invoices = (invoicesData?.data || []).filter(
+    (invoice) => invoice.client_id === id
+  );
+
+  // console.log(invoices, "invoices");
+  const getNextInvoiceNumber = () => {
+    // If no invoices exist or invoices array is empty, start from 1
+    if (!invoices || invoices.length === 0) {
+      return "S-INV-#1";
+    }
+
+    // Filter invoices based on client_id match with either related_id or loggedInUser's client_id
+    const filteredInvoices = invoices.filter(
+      (invoice) =>
+        invoice.client_id === loggedInUser?.client_id ||
+        invoice.client_id === loggedInUser?.id
+    );
+
+    if (filteredInvoices.length === 0) {
+      return "S-INV-#1";
+    }
+
+    // Find the highest invoice number from filtered invoices
+    let highestNumber = 0;
+    filteredInvoices.forEach((invoice) => {
+      if (invoice.salesInvoiceNumber) {
+        // Extract number from invoice number format "S-INV-#X"
+        const numberPart = invoice.salesInvoiceNumber.split("#")[1];
+        const currentNumber = parseInt(numberPart);
+        if (!isNaN(currentNumber) && currentNumber > highestNumber) {
+          highestNumber = currentNumber;
+        }
+      }
+    });
+
+    // Return next invoice number
+    return `S-INV-#${highestNumber + 1}`;
+  };
 
   const contacts = contactsData?.data;
   const companyAccounts = companyAccountsData?.data;
@@ -207,21 +255,33 @@ const CreateInvoice = ({
       setLoading(true);
 
       // Format items for backend
-      const formattedItems = values.items?.map((item) => ({
-        product_id: item.id,
-        quantity: Number(item.quantity) || 0,
-        unit_price: Number(item.unit_price) || 0,
-        tax_rate: Number(item.tax) || 0,
-        discount: Number(item.discount) || 0,
-        discount_type: item.discount_type || "percentage",
-        hsn_sac: item.hsn_sac || "",
-        taxAmount: calculateItemTaxAmount(item),
-        amount: calculateItemTotal(item),
-        currency: item.currency || values.currency,
-        currencyIcon: item.currencyIcon || selectedCurrency,
-      }));
+      const formattedItems = values.items?.map((item) => {
+        // Find the selected tax from taxesData
+        const selectedTax = taxesData?.data?.find(
+          (tax) => tax.id === item.taxId
+        );
+
+        return {
+          product_id: item.id,
+          quantity: Number(item.quantity) || 0,
+          unit_price: Number(item.unit_price) || 0,
+          tax_rate: selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0,
+          tax_name: selectedTax ? selectedTax.gstName : "",
+          tax_amount: calculateItemTaxAmount(item),
+          discount: Number(item.discount) || 0,
+          discount_type: item.discount_type || "percentage",
+          hsn_sac: item.hsn_sac || "",
+          amount: calculateItemTotal(item),
+          // currency: item.currency || values.currency,
+          // currencyIcon: item.currencyIcon || selectedCurrency,
+        };
+      });
+
+      // Get the next invoice number
+      const nextInvoiceNumber = getNextInvoiceNumber();
 
       const payload = {
+        salesInvoiceNumber: nextInvoiceNumber,
         category: values.category,
         customer: values.customer,
         section: "sales-invoice",
@@ -237,7 +297,7 @@ const CreateInvoice = ({
         payment_status: values.status || "unpaid",
       };
 
-      await createInvoice({ id: id, data: payload }).unwrap();
+      await createInvoicee({ id: id, data: payload }).unwrap();
       message.success("Invoice created successfully");
       form.resetFields();
       setCreateModalVisible(false);
@@ -257,9 +317,19 @@ const CreateInvoice = ({
 
   const handleCreateCustomer = async (values) => {
     try {
+      // Find the country ID from the selected phone code
+      const selectedCountry = countries?.find(
+        (c) => c.phoneCode === values.phonecode
+      );
+      if (!selectedCountry) {
+        message.error("Please select a valid phone code");
+        return;
+      }
+
       const result = await createCustomer({
         name: values.name,
         contact: values.contact,
+        phonecode: selectedCountry.id, // Use country ID instead of phone code
       }).unwrap();
 
       message.success("Customer created successfully");
@@ -445,22 +515,89 @@ const CreateInvoice = ({
         </Form.Item>
 
         <Form.Item
-          name="contact"
-          label="Phone Number"
-          rules={[
-            { required: true, message: "Please enter phone number" },
-            {
-              pattern: /^\d{10}$/,
-              message: "Please enter a valid 10-digit phone number",
-            },
-          ]}
+          name="phone"
+          label={
+            <span style={{ fontSize: "14px", fontWeight: "500" }}>
+              Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
+            </span>
+          }
         >
-          <Input
-            prefix={<FiPhone style={{ color: "#1890ff" }} />}
-            placeholder="Enter phone number"
-            size="large"
-            style={{ borderRadius: "8px" }}
-          />
+          <Input.Group
+            compact
+            className="phone-input-group"
+            style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              overflow: "hidden",
+            }}
+          >
+            <Form.Item name="phonecode" noStyle initialValue="+91">
+              <Select
+                size="large"
+                style={{
+                  width: "90px",
+                  height: "48px",
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  cursor: "pointer",
+                }}
+                loading={countriesLoading}
+                className="phone-code-select"
+                dropdownStyle={{
+                  padding: "8px",
+                  borderRadius: "10px",
+                  backgroundColor: "white",
+                }}
+                showSearch
+                optionFilterProp="children"
+                defaultValue="+91"
+              >
+                {countries?.map((country) => (
+                  <Option
+                    key={country.id}
+                    value={country.phoneCode}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#262626",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span>
+                        {country.countryCode} {country.phoneCode}
+                      </span>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item name="contact" noStyle>
+              <Input
+                size="large"
+                type="number"
+                style={{
+                  flex: 1,
+                  border: "none",
+                  borderLeft: "1px solid #e6e8eb",
+                  borderRadius: 0,
+                  height: "46px",
+                  backgroundColor: "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                placeholder="Enter 10-digit phone number"
+                maxLength={10}
+              />
+            </Form.Item>
+          </Input.Group>
         </Form.Item>
 
         <div
@@ -566,7 +703,7 @@ const CreateInvoice = ({
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={1100}
+      width={1300}
       destroyOnClose={true}
       centered
       closeIcon={null}
@@ -781,6 +918,16 @@ const CreateInvoice = ({
                   )}
                 </>
               )}
+              onChange={(value) => {
+                const selectedCustomer = customers?.find((c) => c.id === value);
+                if (selectedCustomer) {
+                  form.setFieldValue(
+                    "tax_number",
+                    selectedCustomer.tax_number || ""
+                  );
+                }
+                form.setFieldValue("customer", value);
+              }}
             >
               {getOptionsBasedOnCategory().map((option) => (
                 <Option key={option.value} value={option.value}>
@@ -804,6 +951,29 @@ const CreateInvoice = ({
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="tax_number"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                GSTIN
+              </span>
+            }
+          >
+            <Input
+              disabled
+              placeholder="Tax number"
+              size="large"
+              style={{
+                borderRadius: "10px",
+                padding: "8px 16px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                border: "1px solid #e6e8eb",
+              }}
+            />
           </Form.Item>
 
           <Form.Item
@@ -962,99 +1132,6 @@ const CreateInvoice = ({
             </div>
           </div>
 
-          <Form.Item
-            name="product_id"
-            rules={[{ required: true, message: "Please select product" }]}
-          >
-            <Select
-              placeholder="Select Product"
-              size="large"
-              loading={productsLoading}
-              style={{
-                width: "30%",
-                marginLeft: "16px",
-                marginRight: "16px",
-                marginTop: "16px",
-                marginBottom: "16px",
-                borderRadius: "10px",
-              }}
-              value={form.getFieldValue("items")?.[0]?.item_name}
-              onChange={(value, option) => {
-                const selectedProduct = productsData?.data?.find(
-                  (product) => product.id === value
-                );
-                if (selectedProduct) {
-                  // Get the product's currency from currencies list
-                  const productCurrency = currenciesData?.find(
-                    (c) => c.id === selectedProduct.currency
-                  );
-                  if (productCurrency) {
-                    setSelectedCurrency(productCurrency.currencyIcon);
-                    setSelectedCurrencyId(productCurrency.id);
-                    setIsCurrencyDisabled(true);
-                  }
-
-                  // Update the items list
-                  const items = form.getFieldValue("items") || [];
-                  const newItems = [...items];
-                  const lastIndex = newItems.length - 1;
-                  newItems[lastIndex] = {
-                    ...newItems[lastIndex],
-                    id: selectedProduct.id,
-                    item_name: selectedProduct.name,
-                    unit_price: selectedProduct.selling_price,
-                    hsn_sac: selectedProduct.hsn_sac,
-                    tax: selectedProduct.tax,
-                    profilePic: selectedProduct.image,
-                    currency: selectedProduct.currency,
-                  };
-                  form.setFieldsValue({
-                    items: newItems,
-                    currency: selectedProduct.currency,
-                  });
-                  calculateTotals(newItems);
-                }
-              }}
-            >
-              {productsData?.data?.map((product) => (
-                <Option key={product.id} value={product.id}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "30px",
-                        height: "30px",
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ fontWeight: 500 }}>{product.name}</span>
-                      {/* <span style={{ fontSize: '12px', color: '#666' }}>
-                        Price: {selectedCurrency} {product.selling_price}
-                      </span> */}
-                    </div>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
@@ -1080,10 +1157,89 @@ const CreateInvoice = ({
                             name={[name, "item_name"]}
                             rules={[{ required: true, message: "Required" }]}
                           >
-                            <Input
-                              placeholder="Item Name"
-                              className="item-input"
-                            />
+                            <Select
+                              showSearch
+                              placeholder="Select Product"
+                              optionFilterProp="children"
+                              style={{ width: "100%" }}
+                              onChange={(value) => {
+                                const selectedProduct =
+                                  productsData?.data?.find(
+                                    (product) => product.id === value
+                                  );
+                                if (selectedProduct) {
+                                  const productCurrency = currenciesData?.find(
+                                    (c) => c.id === selectedProduct.currency
+                                  );
+                                  if (productCurrency) {
+                                    setSelectedCurrency(
+                                      productCurrency.currencyIcon
+                                    );
+                                    setSelectedCurrencyId(productCurrency.id);
+                                    setIsCurrencyDisabled(true);
+                                  }
+
+                                  const items =
+                                    form.getFieldValue("items") || [];
+                                  items[index] = {
+                                    ...items[index],
+                                    id: selectedProduct.id,
+                                    item_name: selectedProduct.name,
+                                    unit_price: selectedProduct.selling_price,
+                                    hsn_sac: selectedProduct.hsn_sac,
+                                    tax: selectedProduct.tax,
+                                    profilePic: selectedProduct.image,
+                                    currency: selectedProduct.currency,
+                                  };
+                                  form.setFieldsValue({
+                                    items,
+                                    currency: selectedProduct.currency,
+                                  });
+                                  calculateTotals(items);
+                                }
+                              }}
+                            >
+                              {productsData?.data?.map((product) => (
+                                <Option key={product.id} value={product.id}>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "10px",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "4px",
+                                        overflow: "hidden",
+                                      }}
+                                    >
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        style={{
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 500 }}>
+                                        {product.name}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </Option>
+                              ))}
+                            </Select>
                           </Form.Item>
                         </td>
                         <td>
@@ -1111,6 +1267,7 @@ const CreateInvoice = ({
                             <InputNumber
                               className="price-input"
                               min={0}
+                              disabled={true}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
                               }
@@ -1129,6 +1286,7 @@ const CreateInvoice = ({
                             <Input
                               placeholder="HSN/SAC"
                               className="hsn-input"
+                              disabled={true}
                             />
                           </Form.Item>
                         </td>
@@ -1221,7 +1379,8 @@ const CreateInvoice = ({
                                   />
                                 </Form.Item>
                                 <Text style={{ marginLeft: "4px" }}>
-                                  {form.getFieldValue("items")?.[index]?.discount_type === "fixed" 
+                                  {form.getFieldValue("items")?.[index]
+                                    ?.discount_type === "fixed"
                                     ? selectedCurrency
                                     : "%"}
                                 </Text>
@@ -1305,18 +1464,30 @@ const CreateInvoice = ({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
               }}
             >
-              <Text style={{ marginTop: "10px" }}>Sub Total</Text>
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Sub Total
+              </Text>
               <Form.Item name="subtotal" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
@@ -1331,18 +1502,30 @@ const CreateInvoice = ({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
               }}
             >
-              <Text>Tax</Text>
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Tax
+              </Text>
               <Form.Item name="tax" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
@@ -1353,17 +1536,37 @@ const CreateInvoice = ({
                 />
               </Form.Item>
             </div>
-            <Divider style={{ margin: "12px 0" }} />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <Text strong>Total Amount</Text>
+            <Divider style={{ margin: "20px 0", borderColor: "#e5e7eb" }} />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "16px",
+                background:
+                  "linear-gradient(135deg, #1890ff08 0%, #096dd908 100%)",
+                borderRadius: "8px",
+                alignItems: "center",
+                border: "1px solid #1890ff20",
+              }}
+            >
+              <Text
+                style={{ fontSize: "16px", color: "#1f2937", fontWeight: 600 }}
+              >
+                Total Amount
+              </Text>
               <Form.Item name="total" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#1890ff",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(

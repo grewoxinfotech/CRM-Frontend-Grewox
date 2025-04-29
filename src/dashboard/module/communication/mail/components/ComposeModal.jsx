@@ -303,9 +303,10 @@ const ComposeModal = ({
           display: flex;
           align-items: center;
           gap: 12px;
-          margin: -6px 0;
-          background: linear-gradient(135deg, #6366F1, #8B5CF6);
-          margin: -20px -24px 20px;
+          height: 120px;
+          // margin: -6px 0;
+          background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+          margin: -25px -24px -24px -25px ;
           padding: 20px 24px;
           border-radius: 12px 12px 0 0;
           color: white;
@@ -415,7 +416,7 @@ const ComposeModal = ({
         }
 
         .field-icon {
-          color: #6366F1;
+          color: #096dd9;
           font-size: 16px;
         }
 

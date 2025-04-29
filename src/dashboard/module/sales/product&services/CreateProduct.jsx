@@ -59,6 +59,7 @@ const CreateProduct = ({
   const [createProduct] = useCreateProductMutation();
   const [addCategoryVisible, setAddCategoryVisible] = useState(false);
   const { data: categoriesData } = useGetCategoriesQuery(currentUser?.id);
+  const [selectedCurrency, setSelectedCurrency] = useState(null);
 
   const categories =
     categoriesData?.data?.filter((item) => item.lableType === "category") || [];
@@ -89,13 +90,16 @@ const CreateProduct = ({
     form.getFieldValue("min_stock_level"),
   ]);
 
-  // Initialize form with INR currency
+  // Find INR currency and set as default
   useEffect(() => {
     if (currenciesData) {
-      const inrCurrency = currenciesData.find((c) => c.currencyCode === "INR");
+      const inrCurrency = currenciesData.find(c => c.currencyCode === 'INR');
       if (inrCurrency) {
+        setSelectedCurrency(inrCurrency);
         form.setFieldsValue({
           currency: inrCurrency.id,
+          currencyIcon: inrCurrency.currencyIcon,
+          currencyCode: inrCurrency.currencyCode
         });
       }
     }
@@ -133,7 +137,9 @@ const CreateProduct = ({
       formData.append("category", values.category);
       formData.append("buying_price", values.buying_price);
       formData.append("selling_price", values.selling_price);
-      formData.append("currency", values.currency || "BEzBBPneRQq6rbGYiwYj45k"); // Default to INR if not set
+      formData.append("currency", selectedCurrency?.id || values.currency);
+      formData.append("currencyIcon", selectedCurrency?.currencyIcon || '₹');
+      formData.append("currencyCode", selectedCurrency?.currencyCode || 'INR');
       formData.append("sku", values.sku || "");
       formData.append("tax", values.tax || "");
       formData.append("hsn_sac", values.hsn_sac || "");
@@ -188,7 +194,7 @@ const CreateProduct = ({
   // Add validation rules for stock quantities
   const validateStockQuantities = {
     max_stock_level: [
-      { required: false },
+      { required: true, message: "Please enter maximum stock level" },
       ({ getFieldValue }) => ({
         validator(_, value) {
           const stockQuantity = getFieldValue("stock_quantity");
@@ -227,7 +233,7 @@ const CreateProduct = ({
       }),
     ],
     min_stock_level: [
-      { required: false },
+      { required: true, message: "Please enter minimum stock level" },
       // { max: 20, message: "Minimum stock level cannot be more than 20" },
       ({ getFieldValue }) => ({
         validator(_, value) {
@@ -255,7 +261,7 @@ const CreateProduct = ({
       }),
     ],
     reorder_quantity: [
-      { required: false },
+      { required: true, message: "Please enter reorder quantity" },
       // { max: 20, message: "Reorder quantity cannot be more than 20" },
       ({ getFieldValue }) => ({
         validator(_, value) {
@@ -508,62 +514,63 @@ const CreateProduct = ({
                 Buying Price
               </span>
             }
-            rules={[{ required: true, message: "Please enter buying price" }]}
+            rules={[
+              { required: true, message: "Please enter buying price" },
+              {
+                validator: (_, value) => {
+                  if (value && value % 1 !== 0) {
+                    return Promise.reject('Decimal values are not allowed in buying price');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
-            <div
-              className="price-input-group"
-              style={{
-                display: "flex",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                borderRadius: "10px",
-                border: "1px solid #e6e8eb",
-                overflow: "hidden",
-                marginBottom: 0,
-              }}
-            >
-              <Form.Item name="currency" noStyle rules={[{ required: true }]}>
-                <div
-                  style={{
-                    width: "100px",
-                    height: "48px",
-                    background:
-                      "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                    color: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "10px 0 0 10px",
-                    fontWeight: 500,
-                  }}
-                >
-                  <span>₹</span>
+            <div className="price-input-group" style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              overflow: "hidden",
+              marginBottom: 0,
+            }}>
+              <Form.Item name="currency" noStyle>
+                <div style={{
+                  width: "100px",
+                  height: "48px",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "10px 0 0 10px",
+                  fontWeight: 500,
+                }}>
+                  <span>{selectedCurrency?.currencyIcon || '₹'}</span>
+                  <span style={{ marginLeft: '4px' }}>{selectedCurrency?.currencyCode || 'INR'}</span>
                 </div>
               </Form.Item>
-              <Form.Item
-                name="buying_price"
-                noStyle
-                rules={[
-                  { required: true, message: "Please enter buying price" },
-                ]}
-              >
-                <InputNumber
-                  placeholder="Enter buying price"
-                  size="large"
-                  style={{
-                    flex: 1,
-                    width: "100%",
-                    border: "none",
-                    borderLeft: "1px solid #e6e8eb",
-                    borderRadius: 0,
-                    height: "48px",
-                    padding: "0 16px",
-                  }}
-                  min={0}
-                  precision={2}
-                  className="price-input"
-                />
-              </Form.Item>
+              <InputNumber
+                placeholder="Enter buying price"
+                size="large"
+                style={{
+                  flex: 1,
+                  width: "100%",
+                  border: "none",
+                  borderLeft: "1px solid #e6e8eb",
+                  borderRadius: 0,
+                  height: "48px",
+                  padding: "0 16px",
+                }}
+                min={0}
+                className="price-input"
+                parser={value => {
+                  const parsedValue = parseFloat(value);
+                  if (isNaN(parsedValue)) return '';
+                  return parsedValue % 1 === 0 ? parsedValue : value;
+                }}
+              />
             </div>
           </Form.Item>
 
@@ -576,6 +583,14 @@ const CreateProduct = ({
             }
             rules={[
               { required: true, message: "Please enter selling price" },
+              {
+                validator: (_, value) => {
+                  if (value && value % 1 !== 0) {
+                    return Promise.reject('Decimal values are not allowed in selling price');
+                  }
+                  return Promise.resolve();
+                }
+              },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   const buyingPrice = getFieldValue('buying_price');
@@ -589,20 +604,17 @@ const CreateProduct = ({
               }),
             ]}
           >
-            <div
-              className="price-input-group"
-              style={{
-                display: "flex",
-                height: "48px",
-                backgroundColor: "#f8fafc",
-                borderRadius: "10px",
-                border: "1px solid #e6e8eb",
-                overflow: "hidden",
-                marginBottom: 0,
-              }}
-            >
-              <Select
-                value="BEzBBPneRQq6rbGYiwYj45k"
+            <div className="price-input-group" style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              overflow: "hidden",
+              marginBottom: 0,
+            }}>
+              {/* <Select
+                value={selectedCurrency?.id}
                 size="large"
                 style={{
                   width: "100px",
@@ -611,42 +623,49 @@ const CreateProduct = ({
                 className="currency-select"
                 disabled
               >
-                <Option value="BEzBBPneRQq6rbGYiwYj45k">
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>₹</span>
+                <Option value={selectedCurrency?.id}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>{selectedCurrency?.currencyIcon || '₹'}</span>
+                    <span>{selectedCurrency?.currencyCode || 'INR'}</span>
                   </div>
                 </Option>
-              </Select>
-              <Form.Item
-                name="selling_price"
-                noStyle
-                rules={[
-                  { required: true, message: "Please enter selling price" },
-                ]}
-              >
-                <InputNumber
-                  placeholder="Enter selling price"
-                  size="large"
-                  style={{
-                    flex: 1,
-                    width: "100%",
-                    border: "none",
-                    borderLeft: "1px solid #e6e8eb",
-                    borderRadius: 0,
-                    height: "48px",
-                    padding: "0 16px",
-                  }}
-                  min={0}
-                  precision={2}
-                  className="price-input"
-                />
+              </Select> */}
+               <Form.Item name="currency" noStyle>
+                <div style={{
+                  width: "100px",
+                  height: "48px",
+                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "10px 0 0 10px",
+                  fontWeight: 500,
+                }}>
+                  <span>{selectedCurrency?.currencyIcon || '₹'}</span>
+                  <span style={{ marginLeft: '4px' }}>{selectedCurrency?.currencyCode || 'INR'}</span>
+                </div>
               </Form.Item>
+              <InputNumber
+                placeholder="Enter selling price"
+                size="large"
+                style={{
+                  flex: 1,
+                  width: "100%",
+                  border: "none",
+                  borderLeft: "1px solid #e6e8eb",
+                  borderRadius: 0,
+                  height: "48px",
+                  padding: "0 16px",
+                }}
+                min={0}
+                className="price-input"
+                parser={value => {
+                  const parsedValue = parseFloat(value);
+                  if (isNaN(parsedValue)) return '';
+                  return parsedValue % 1 === 0 ? parsedValue : value;
+                }}
+              />
             </div>
           </Form.Item>
 
@@ -657,6 +676,7 @@ const CreateProduct = ({
                 HSN/SAC Code
               </span>
             }
+            rules={[{ required: true, message: "Please enter HSN/SAC code" }]}
           >
             <Input placeholder="Enter HSN/SAC code" style={{ width: "100%" }} />
           </Form.Item>
@@ -665,6 +685,7 @@ const CreateProduct = ({
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>SKU</span>
             }
+            rules={[{ required: true, message: "Please enter SKU" }]}
           >
             <Input placeholder="Enter SKU" style={{ width: "100%" }} />
           </Form.Item>
@@ -694,6 +715,7 @@ const CreateProduct = ({
                 Stock Status
               </span>
             }
+            rules={[{ required: true, message: "Please select stock status" }]}
           >
             <Select
               placeholder="Select status"
@@ -735,7 +757,7 @@ const CreateProduct = ({
                 </span>
               </div>
             }
-            rules={validateStockQuantities.stock_quantity}
+            rules={ validateStockQuantities.stock_quantity}
           >
             <InputNumber
               placeholder="Enter quantity"
@@ -860,6 +882,7 @@ const CreateProduct = ({
               Description
             </span>
           }
+          rules={[{ required: true, message: "Please enter product description" }]}
         >
           <TextArea
             placeholder="Enter product description"
@@ -875,6 +898,7 @@ const CreateProduct = ({
               Product Image
             </span>
           }
+          rules={[{ required: true, message: "Please upload product image" }]}
         >
           <Upload {...uploadProps}>
             <Button icon={<FiUpload />}>Click to upload</Button>

@@ -167,6 +167,9 @@ const ViewBilling = ({ data }) => {
           margin: 0;
           color: #666;
         }
+        .bill-details {
+          margin: 30px 0;
+        }
         .bill-section {
           display: flex;
           justify-content: space-between;
@@ -191,6 +194,7 @@ const ViewBilling = ({ data }) => {
         .items-table {
           width: 100%;
           border-collapse: collapse;
+          margin: 20px 0;
         }
         .items-table th {
           background: #f8f9fa;
@@ -212,6 +216,7 @@ const ViewBilling = ({ data }) => {
         .payment-section {
           display: flex;
           gap: 40px;
+          margin-top: 30px;
           padding: 20px;
           background: #f8f9fa;
           border-radius: 8px;
@@ -394,7 +399,7 @@ const ViewBilling = ({ data }) => {
             <table className="items-table">
               <thead>
                 <tr>
-                  <th>Item</th>
+                  <th>Description</th>
                   <th>HSN/SAC</th>
                   <th>Qty</th>
                   <th>Unit Price</th>

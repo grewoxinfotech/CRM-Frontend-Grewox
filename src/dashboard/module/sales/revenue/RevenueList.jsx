@@ -77,14 +77,27 @@ const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
   // Process revenue data to include parsed products
   const processedRevenue = useMemo(() => {
     try {
-      return (revdata || []).map((revenue) => ({
-        ...revenue,
-        parsedProducts: revenue?.products
-          ? typeof revenue.products === "string"
-            ? JSON.parse(revenue.products)
-            : revenue.products
-          : [],
-      }));
+      return (revdata || []).map((revenue) => {
+        let parsedProducts = [];
+        try {
+          if (revenue?.products) {
+            parsedProducts =
+              typeof revenue.products === "string"
+                ? JSON.parse(revenue.products)
+                : Array.isArray(revenue.products)
+                ? revenue.products
+                : [];
+          }
+        } catch (error) {
+          console.error("Error parsing products:", error);
+          parsedProducts = [];
+        }
+
+        return {
+          ...revenue,
+          parsedProducts,
+        };
+      });
     } catch (error) {
       console.error("Error processing revenue data:", error);
       return [];
@@ -96,7 +109,10 @@ const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
     try {
       const revenueMap = new Map();
       (processedRevenue || []).forEach((revenue) => {
-        (revenue?.parsedProducts || []).forEach((product) => {
+        const products = Array.isArray(revenue?.parsedProducts)
+          ? revenue.parsedProducts
+          : [];
+        products.forEach((product) => {
           if (!product?.product_id) return;
 
           const existing = revenueMap.get(product.product_id) || {
@@ -159,9 +175,12 @@ const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
   const filteredRevenue = useMemo(() => {
     return processedRevenue
       .filter((revenue) => {
+        const products = Array.isArray(revenue?.parsedProducts)
+          ? revenue.parsedProducts
+          : [];
         const matchesProduct =
           !selectedProduct ||
-          revenue.parsedProducts.some((p) => p.product_id === selectedProduct);
+          products.some((p) => p.product_id === selectedProduct);
         const matchesCustomer =
           !selectedCustomer || revenue.customer === selectedCustomer;
         const matchesSearch =
@@ -174,9 +193,13 @@ const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
         return matchesProduct && matchesCustomer && matchesSearch;
       })
       .map((revenue) => {
+        const products = Array.isArray(revenue?.parsedProducts)
+          ? revenue.parsedProducts
+          : [];
+
         // If product is selected, only show that product's profit
         if (selectedProduct) {
-          const selectedProducts = revenue.parsedProducts.filter(
+          const selectedProducts = products.filter(
             (p) => p.product_id === selectedProduct
           );
           const productTotal = selectedProducts.reduce(
@@ -207,7 +230,7 @@ const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
         }
         return {
           ...revenue,
-          parsedProducts: revenue.parsedProducts.map((product) => ({
+          parsedProducts: products.map((product) => ({
             ...product,
             profit:
               Number(product.total) -

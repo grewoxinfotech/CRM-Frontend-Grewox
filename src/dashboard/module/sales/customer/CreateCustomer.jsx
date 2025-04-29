@@ -24,6 +24,7 @@ import {
   FiCopy,
 } from "react-icons/fi";
 import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
+import { useGetCustomersQuery } from "./services/custApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -34,6 +35,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
   const [fileList, setFileList] = useState([]);
   const { data: countries = [], loading: countriesLoading } = useGetAllCountriesQuery();
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const { data: customersData } = useGetCustomersQuery();
 
   // Find India in countries array and set as default
   useEffect(() => {
@@ -46,8 +48,32 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
     }
   }, [countries]);
 
+  // Add function to generate next customer number
+  const getNextCustomerNumber = () => {
+    const customers = customersData?.data || [];
+    
+    // If no customers exist, start from 1
+    if (!customers || customers.length === 0) {
+      return "CUST-#1";
+    }
 
-  
+    // Find the highest customer number
+    let highestNumber = 0;
+    customers.forEach((customer) => {
+      if (customer.customerNumber) {
+        // Extract number from customer number format "CUST-#X"
+        const numberPart = customer.customerNumber.split("#")[1];
+        const currentNumber = parseInt(numberPart);
+        if (!isNaN(currentNumber) && currentNumber > highestNumber) {
+          highestNumber = currentNumber;
+        }
+      }
+    });
+
+    // Return next customer number
+    return `CUST-#${highestNumber + 1}`;
+  };
+
   const handleSubmit = async (values) => {
     try {
       // Find the country ID from the selected phone code
@@ -59,7 +85,11 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
 
       const { phoneCode, phoneNumber, ...otherValues } = values;
       
+      const nextCustomerNumber = getNextCustomerNumber();
       const customerData = {
+        // Add customer number
+        customerNumber: nextCustomerNumber,
+        
         // Basic Information
         name: otherValues.name || "",
         contact: phoneNumber || "",
@@ -338,7 +368,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                       <Select
                           size="large"
                           style={{
-                              width: '80px',
+                              width: '90px',
                               height: '48px',
                               display: 'flex',
                               alignItems: 'center',
@@ -369,7 +399,9 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                                       color: '#262626',
                                       cursor: 'pointer',
                                   }}>
-                                      <span>{country.phoneCode}</span>
+                                      <span>
+                                      {country.countryCode} {country.phoneCode} 
+                                      </span>
                                   </div>
                               </Option>
                           ))}

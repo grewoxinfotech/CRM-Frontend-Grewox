@@ -374,7 +374,7 @@ const EmailList = ({
           align-items: center;
           justify-content: space-between;
           padding: 16px 24px;
-          background: linear-gradient(135deg, #4361ee, #4895ef);
+         background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%),
           color: white;
           border-radius: 8px 8px 0 0;
         }

@@ -83,6 +83,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         city: values.city || "",
         state: values.state || "",
         country: values.country || "",
+        section: "contact",
       };
 
       await createContact(contactData);

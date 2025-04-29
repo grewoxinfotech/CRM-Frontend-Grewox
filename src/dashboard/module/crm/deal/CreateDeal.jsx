@@ -31,13 +31,19 @@ import { PlusOutlined } from "@ant-design/icons";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import "./Deal.scss";
-import { useGetSourcesQuery, useGetCategoriesQuery } from "../crmsystem/souce/services/SourceApi";
+import {
+  useGetSourcesQuery,
+  useGetCategoriesQuery,
+} from "../crmsystem/souce/services/SourceApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useUpdateLeadMutation } from "../lead/services/LeadApi";
-import { useGetContactsQuery, useCreateContactMutation } from "../contact/services/contactApi";
+import {
+  useGetContactsQuery,
+  useCreateContactMutation,
+} from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
 import AddContactModal from "../contact/CreateContact";
@@ -122,7 +128,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   // Get default stage for selected pipeline
   const getDefaultStage = (pipelineId) => {
     return dealStages?.find(
-      (stage) => stage.stageType === "deal" &&
+      (stage) =>
+        stage.stageType === "deal" &&
         stage.pipeline === pipelineId &&
         stage.isDefault
     )?.id;
@@ -134,7 +141,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     // Set the default stage for this pipeline
     const defaultStage = getDefaultStage(value);
     form.setFieldsValue({
-      stage: defaultStage
+      stage: defaultStage,
     });
   };
 
@@ -207,7 +214,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     try {
       // Check if deal with same title already exists
       const dealExists = dealsData?.data?.some(
-        deal => deal.dealTitle.toLowerCase() === values.dealTitle.toLowerCase()
+        (deal) =>
+          deal.dealTitle.toLowerCase() === values.dealTitle.toLowerCase()
       );
 
       if (dealExists) {
@@ -216,18 +224,29 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       }
 
       let contactId;
-      console.log('Form Values:', values); // Debug log
+      console.log("Form Values:", values); // Debug log
 
       // Only proceed with contact creation if deal name is unique
-      if (contactMode === 'new' &&
-        (values.firstName || values.lastName || values.email || values.telephone || values.address)) {
+      if (
+        contactMode === "new" &&
+        (values.firstName ||
+          values.lastName ||
+          values.email ||
+          values.telephone ||
+          values.address)
+      ) {
         try {
           // Format phone with country code
-          let formattedPhone = '';
+          let formattedPhone = "";
           if (values.telephone && values.phoneCode) {
-            const selectedCountry = countries.find(c => c.id === values.phoneCode);
+            const selectedCountry = countries.find(
+              (c) => c.id === values.phoneCode
+            );
             if (selectedCountry) {
-              formattedPhone = `+${selectedCountry.phoneCode.replace('+', '')} ${values.telephone}`;
+              formattedPhone = `+${selectedCountry.phoneCode.replace(
+                "+",
+                ""
+              )} ${values.telephone}`;
             }
           }
 
@@ -239,32 +258,34 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             email: values.email || "",
             phone: formattedPhone || "",
             contact_source: "deal",
-            description: `Contact created from deal form by ${loggedInUser?.username || 'user'}`,
+            description: `Contact created from deal form by ${
+              loggedInUser?.username || "user"
+            }`,
             address: values.address || "",
             client_id: loggedInUser?.client_id,
-            contact_owner: loggedInUser?.id
+            contact_owner: loggedInUser?.id,
           };
 
-          console.log('Creating contact with data:', contactData); // Debug log
+          console.log("Creating contact with data:", contactData); // Debug log
 
           const contactResponse = await createContact(contactData).unwrap();
-          console.log('Contact Creation Response:', contactResponse); // Debug log
+          console.log("Contact Creation Response:", contactResponse); // Debug log
 
           if (contactResponse?.id) {
             contactId = contactResponse.id;
-            message.success('Contact created successfully');
+            message.success("Contact created successfully");
           } else if (contactResponse?.data?.id) {
             contactId = contactResponse.data.id;
-            message.success('Contact created successfully');
+            message.success("Contact created successfully");
           } else {
-            throw new Error('Contact creation failed - no ID returned');
+            throw new Error("Contact creation failed - no ID returned");
           }
         } catch (error) {
-          console.error('Contact Creation Error:', error);
-          message.error(error.data?.message || 'Failed to create contact');
+          console.error("Contact Creation Error:", error);
+          message.error(error.data?.message || "Failed to create contact");
           return;
         }
-      } else if (contactMode === 'existing') {
+      } else if (contactMode === "existing") {
         contactId = values.firstName; // In existing mode, firstName field contains the contact ID
       }
 
@@ -292,7 +313,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         leadId: leadData?.id,
       };
 
-      console.log('Creating deal with data:', dealData); // Debug log
+      console.log("Creating deal with data:", dealData); // Debug log
 
       // Create the deal
       const dealResponse = await createDeal(dealData).unwrap();
@@ -414,7 +435,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     // Filter contacts based on selected company
     if (companyId && contactsResponse?.data) {
       const filteredContacts = contactsResponse.data.filter(
-        contact => contact.company_name === companyId
+        (contact) => contact.company_name === companyId
       );
       setFilteredContacts(filteredContacts);
     } else {
@@ -483,7 +504,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   };
 
   // Add state to track contact mode
-  const [contactMode, setContactMode] = useState('existing');
+  const [contactMode, setContactMode] = useState("existing");
 
   return (
     <>
@@ -605,7 +626,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             >
               <Form.Item
                 name="dealTitle"
-                label={<span style={formItemStyle}>Deal Title <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Deal Title <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[
                   { required: true, message: "Deal title is required" },
                   {
@@ -615,7 +640,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   {
                     max: 100,
                     message: "Deal title cannot exceed 100 characters",
-                  }
+                  },
                 ]}
               >
                 <Input
@@ -627,7 +652,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="pipeline"
-                label={<span style={formItemStyle}>Pipeline <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Pipeline <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[{ required: true, message: "Pipeline is required" }]}
               >
                 <Select
@@ -641,12 +670,12 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   dropdownRender={(menu) => (
                     <div onClick={(e) => e.stopPropagation()}>
                       {menu}
-                      <Divider style={{ margin: '8px 0' }} />
+                      <Divider style={{ margin: "8px 0" }} />
                       <div
                         style={{
-                          padding: '8px 12px',
-                          display: 'flex',
-                          justifyContent: 'center'
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
                         }}
                       >
                         <Button
@@ -654,17 +683,18 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                           icon={<PlusOutlined />}
                           onClick={handleAddPipelineClick}
                           style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            height: '40px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                            fontWeight: '500',
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
                           }}
                         >
                           Add Pipeline
@@ -688,7 +718,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="dealValue"
-                label={<span style={formItemStyle}>Deal Value <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Deal Value <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 className="combined-input-item"
               >
                 <Input.Group compact className="value-input-group">
@@ -748,10 +782,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     rules={[
                       { required: true, message: "Deal value is required" },
                       {
-                        type: 'number',
+                        type: "number",
                         min: 0,
-                        message: "Deal value must be greater than or equal to 0"
-                      }
+                        message:
+                          "Deal value must be greater than or equal to 0",
+                      },
                     ]}
                   >
                     <Input
@@ -766,7 +801,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="source"
-                label={<span style={formItemStyle}>Source <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Source <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[{ required: true, message: "Source is required" }]}
               >
                 <Select
@@ -807,7 +846,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="category"
-                label={<span style={formItemStyle}>Category <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Category <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[{ required: true, message: "Category is required" }]}
               >
                 <Select
@@ -842,12 +885,17 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="closedDate"
-                label={<span style={formItemStyle}>Expected Close Date <span style={{ color: '#ff4d4f' }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Expected Close Date{" "}
+                    <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[
                   {
                     required: true,
-                    message: "Expected close date is required"
-                  }
+                    message: "Expected close date is required",
+                  },
                 ]}
               >
                 <DatePicker
@@ -872,8 +920,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             </div>
 
             {/* Basic Information Section */}
-            <div style={{ margin: '24px 0' }}>
-              <Text strong style={{ fontSize: '16px', color: '#1f2937', marginBottom: '16px', display: 'block' }}>
+            <div style={{ margin: "24px 0" }}>
+              <Text
+                strong
+                style={{
+                  fontSize: "16px",
+                  color: "#1f2937",
+                  marginBottom: "16px",
+                  display: "block",
+                }}
+              >
                 Basic Information
               </Text>
 
@@ -892,47 +948,54 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 }}
                 items={[
                   {
-                    key: 'existing',
+                    key: "existing",
                     label: (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '4px'
-                      }}>
-                        <FiUserPlus style={{ fontSize: '16px' }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "4px",
+                        }}
+                      >
+                        <FiUserPlus style={{ fontSize: "16px" }} />
                         <span>Select Existing</span>
                       </div>
                     ),
                   },
                   {
-                    key: 'new',
+                    key: "new",
                     label: (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '4px'
-                      }}>
-                        <FiUser style={{ fontSize: '16px' }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "4px",
+                        }}
+                      >
+                        <FiUser style={{ fontSize: "16px" }} />
                         <span>Add New</span>
                       </div>
                     ),
-                  }
+                  },
                 ]}
                 style={{
-                  marginBottom: '24px'
+                  marginBottom: "24px",
                 }}
               />
             </div>
 
-            <div className="form-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '16px',
-              marginBottom: '32px'
-            }}>
-              {contactMode === 'existing' ? (
+            <div
+              className="form-grid"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "16px",
+                marginBottom: "32px",
+              }}
+            >
+              {contactMode === "existing" ? (
                 // Show existing contact/company selection fields
                 <>
                   <Form.Item
@@ -948,28 +1011,31 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                       dropdownRender={(menu) => (
                         <div onClick={(e) => e.stopPropagation()}>
                           {menu}
-                          <Divider style={{ margin: '8px 0' }} />
-                          <div style={{
-                            padding: '8px 12px',
-                            display: 'flex',
-                            justifyContent: 'center'
-                          }}>
+                          <Divider style={{ margin: "8px 0" }} />
+                          <div
+                            style={{
+                              padding: "8px 12px",
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
                             <Button
                               type="primary"
                               icon={<PlusOutlined />}
                               onClick={handleAddCompanyClick}
                               style={{
-                                width: '100%',
-                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                border: 'none',
-                                height: '40px',
-                                borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                                fontWeight: '500',
+                                width: "100%",
+                                background:
+                                  "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                                border: "none",
+                                height: "40px",
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "8px",
+                                boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                                fontWeight: "500",
                               }}
                             >
                               Add Company
@@ -980,23 +1046,40 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     >
                       {companyAccountsResponse?.data?.map((company) => (
                         <Option key={company.id} value={company.id}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '4px 0'
-                          }}>
-                            <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{
-                                fontWeight: '500',
-                                color: '#111827'
-                              }}>{company.company_name}</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "4px 0",
+                            }}
+                          >
+                            <FiBriefcase
+                              style={{ color: "#1890FF", fontSize: "16px" }}
+                            />
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontWeight: "500",
+                                  color: "#111827",
+                                }}
+                              >
+                                {company.company_name}
+                              </span>
                               {company.company_site && (
-                                <span style={{
-                                  fontSize: '12px',
-                                  color: '#6B7280'
-                                }}>{company.company_site}</span>
+                                <span
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#6B7280",
+                                  }}
+                                >
+                                  {company.company_site}
+                                </span>
                               )}
                             </div>
                           </div>
@@ -1021,38 +1104,46 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                           (c) => c.id === option.value
                         );
                         if (!contact) return false;
-                        const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
-                        const companyName = companyAccountsResponse?.data?.find(
-                          (c) => c.id === contact.company_name
-                        )?.company_name?.toLowerCase() || '';
-                        return fullName.includes(input.toLowerCase()) ||
-                          companyName.includes(input.toLowerCase());
+                        const fullName = `${contact.first_name || ""} ${
+                          contact.last_name || ""
+                        }`.toLowerCase();
+                        const companyName =
+                          companyAccountsResponse?.data
+                            ?.find((c) => c.id === contact.company_name)
+                            ?.company_name?.toLowerCase() || "";
+                        return (
+                          fullName.includes(input.toLowerCase()) ||
+                          companyName.includes(input.toLowerCase())
+                        );
                       }}
                       dropdownRender={(menu) => (
                         <div onClick={(e) => e.stopPropagation()}>
                           {menu}
-                          <Divider style={{ margin: '8px 0' }} />
-                          <div style={{
-                            padding: '8px 12px',
-                            display: 'flex',
-                            justifyContent: 'center'
-                          }}>
+                          <Divider style={{ margin: "8px 0" }} />
+                          <div
+                            style={{
+                              padding: "8px 12px",
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
                             <Button
                               type="primary"
                               icon={<PlusOutlined />}
                               onClick={handleAddContactClick}
                               style={{
-                                width: '100%',
-                                background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                                border: 'none',
-                                height: '40px',
-                                borderRadius: '8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '8px',
-                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                                fontWeight: '500',
+                                width: "100%",
+                                background:
+                                  "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                                border: "none",
+                                height: "40px",
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "8px",
+                                boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                                fontWeight: "500",
                               }}
                             >
                               Add Contact
@@ -1062,44 +1153,57 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                       )}
                     >
                       {contactsResponse?.data?.map((contact) => {
-                        const companyName = companyAccountsResponse?.data?.find(
-                          (c) => c.id === contact.company_name
-                        )?.company_name || "No Company";
+                        const companyName =
+                          companyAccountsResponse?.data?.find(
+                            (c) => c.id === contact.company_name
+                          )?.company_name || "No Company";
 
                         return (
                           <Option key={contact.id} value={contact.id}>
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '4px 0'
-                            }}>
-                              <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                flex: 1,
-                                minWidth: 0
-                              }}>
-                                <span style={{
-                                  fontWeight: '500',
-                                  color: '#111827',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
-                                <span style={{
-                                  color: '#6B7280',
-                                  fontSize: '12px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}>
-                                  <FiBriefcase style={{ fontSize: '12px' }} />
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                padding: "4px 0",
+                              }}
+                            >
+                              <FiUser
+                                style={{ color: "#1890FF", fontSize: "16px" }}
+                              />
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                  flex: 1,
+                                  minWidth: 0,
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    fontWeight: "500",
+                                    color: "#111827",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >{`${contact.first_name || ""} ${
+                                  contact.last_name || ""
+                                }`}</span>
+                                <span
+                                  style={{
+                                    color: "#6B7280",
+                                    fontSize: "12px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                  }}
+                                >
+                                  <FiBriefcase style={{ fontSize: "12px" }} />
                                   {companyName}
                                 </span>
                               </div>
@@ -1142,7 +1246,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                       {
                         type: "email",
                         message: "Please enter a valid email",
-                      }
+                      },
                     ]}
                   >
                     <Input
@@ -1158,9 +1262,13 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     className="combined-input-item"
                   >
                     <Input.Group compact className="phone-input-group">
-                      <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                      <Form.Item
+                        name="phoneCode"
+                        noStyle
+                        initialValue={defaultPhoneCode}
+                      >
                         <Select
-                          style={{ width: '120px' }}
+                          style={{ width: "120px" }}
                           className="phone-code-select"
                           dropdownMatchSelectWidth={false}
                           suffixIcon={<FiChevronDown size={14} />}
@@ -1168,30 +1276,46 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                           showSearch
                           optionFilterProp="children"
                           filterOption={(input, option) => {
-                            const country = countries?.find(c => c.id === option.value);
+                            const country = countries?.find(
+                              (c) => c.id === option.value
+                            );
                             return (
-                              country?.countryName?.toLowerCase().includes(input.toLowerCase()) ||
-                              country?.countryCode?.toLowerCase().includes(input.toLowerCase()) ||
+                              country?.countryName
+                                ?.toLowerCase()
+                                .includes(input.toLowerCase()) ||
+                              country?.countryCode
+                                ?.toLowerCase()
+                                .includes(input.toLowerCase()) ||
                               country?.phoneCode?.includes(input)
                             );
                           }}
                         >
                           {countries?.map((country) => (
                             <Option key={country.id} value={country.id}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
-                                <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                <span style={{ fontSize: "14px" }}>
+                                  {country.countryCode}
+                                </span>
+                                <span style={{ fontSize: "14px" }}>
+                                  +{country.phoneCode.replace("+", "")}
+                                </span>
                               </div>
                             </Option>
                           ))}
                         </Select>
                       </Form.Item>
-                      <Form.Item
-                        name="telephone"
-                        noStyle
-                      >
+                      <Form.Item name="telephone" noStyle>
                         <Input
-                          style={{ width: 'calc(100% - 120px)', padding: '0 16px' }}
+                          style={{
+                            width: "calc(100% - 120px)",
+                            padding: "0 16px",
+                          }}
                           placeholder="Enter phone number"
                         />
                       </Form.Item>
@@ -1299,16 +1423,15 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 height: 100% !important;
               }
             }
-              
 
             .ant-select-selection-item {
               padding-right: 20px !important;
               font-weight: 500 !important;
             }
 
-              .ant-select-selection-placeholder {
-                color: #9ca3af !important;
-              }
+            .ant-select-selection-placeholder {
+              color: #9ca3af !important;
+            }
           }
 
           .currency-select .ant-select-selector {

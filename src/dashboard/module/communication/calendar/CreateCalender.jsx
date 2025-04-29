@@ -66,6 +66,7 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
             // Create event data
             const eventData = {
                 name: values.name.trim(),
+                section: "calendar",
                 startDate: dayjs(`${formattedDate} ${values.startDate.format('HH:mm')}`).toISOString(),
                 endDate: dayjs(`${formattedDate} ${values.endDate.format('HH:mm')}`).toISOString(),
                 label: values.label || 'other',

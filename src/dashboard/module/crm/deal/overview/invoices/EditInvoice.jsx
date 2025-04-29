@@ -67,10 +67,11 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const [selectedCategory, setSelectedCategory] = useState("customer");
   const { data: contactsData } = useGetContactsQuery();
   const { data: companyAccountsData } = useGetCompanyAccountsQuery();
-  const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery({
-    page: 1,
-    limit: 100
-  });
+  const { data: countries = [], isLoading: countriesLoading } =
+    useGetAllCountriesQuery({
+      page: 1,
+      limit: 100,
+    });
 
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
@@ -149,48 +150,19 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       // Set initial category
       setSelectedCategory(initialValues.category || "customer");
 
-      // Find the selected entity and its name based on category
-      let selectedEntity;
-      let entityName = "";
-
-      switch (initialValues.category) {
-        case "customer":
-          selectedEntity = customers?.find(
-            (c) => c.id === initialValues.customer
-          );
-          entityName = selectedEntity?.name || "";
-          break;
-        case "contact":
-          selectedEntity = contacts?.find(
-            (c) => c.id === initialValues.customer
-          );
-          entityName =
-            selectedEntity?.name ||
-            `${selectedEntity?.first_name || ""} ${
-              selectedEntity?.last_name || ""
-            }`.trim() ||
-            selectedEntity?.contact_name ||
-            "";
-          break;
-        case "company_account":
-          selectedEntity = companyAccounts?.find(
-            (c) => c.id === initialValues.customer
-          );
-          entityName =
-            selectedEntity?.company_name ||
-            selectedEntity?.name ||
-            selectedEntity?.account_name ||
-            "";
-          break;
-        default:
-          break;
-      }
+      // Find the selected customer and get their tax number
+      const selectedCustomer = customers?.find(
+        (c) => c.id === initialValues.customer
+      );
+      const customerName = selectedCustomer?.name || "";
+      const taxNumber = selectedCustomer?.tax_number || "";
 
       // Format initial values for the form
       const formattedValues = {
         category: initialValues.category,
         customer: initialValues.customer,
-        customerName: entityName,
+        customerName: customerName,
+        tax_number: taxNumber,
         issueDate: initialValues.issueDate
           ? dayjs(initialValues.issueDate, "YYYY-MM-DD")
           : null,
@@ -488,16 +460,18 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const handleCreateCustomer = async (values) => {
     try {
       // Find the country ID from the selected phone code
-      const selectedCountry = countries?.find(c => c.phoneCode === values.phonecode);
+      const selectedCountry = countries?.find(
+        (c) => c.phoneCode === values.phonecode
+      );
       if (!selectedCountry) {
-        message.error('Please select a valid phone code');
+        message.error("Please select a valid phone code");
         return;
       }
 
       const result = await createCustomer({
         name: values.name,
         contact: values.contact,
-        phonecode: selectedCountry.id // Use country ID instead of phone code
+        phonecode: selectedCountry.id, // Use country ID instead of phone code
       }).unwrap();
 
       message.success("Customer created successfully");
@@ -660,80 +634,79 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             },
           ]}
         >
-          <Input.Group compact className="phone-input-group" style={{
-              display: 'flex',
-              height: '48px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '10px',
-              border: '1px solid #e6e8eb',
-              overflow: 'hidden'
-          }}>
-              <Form.Item
-                  name="phonecode"
-                  noStyle
-                  initialValue="+91"
+          <Input.Group
+            compact
+            className="phone-input-group"
+            style={{
+              display: "flex",
+              height: "48px",
+              backgroundColor: "#f8fafc",
+              borderRadius: "10px",
+              border: "1px solid #e6e8eb",
+              overflow: "hidden",
+            }}
+          >
+            <Form.Item name="phonecode" noStyle initialValue="+91">
+              <Select
+                size="large"
+                style={{
+                  width: "90px",
+                  height: "48px",
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "white",
+                  cursor: "pointer",
+                }}
+                loading={countriesLoading}
+                className="phone-code-select"
+                dropdownStyle={{
+                  padding: "8px",
+                  borderRadius: "10px",
+                  backgroundColor: "white",
+                }}
+                showSearch
+                optionFilterProp="children"
+                defaultValue="+91"
               >
-                  <Select
-                      size="large"
-                      style={{
-                          width: '80px',
-                          height: '48px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          backgroundColor: 'white',
-                          cursor: 'pointer',
-                      }}
-                      loading={countriesLoading}
-                      className="phone-code-select"
-                      dropdownStyle={{
-                          padding: '8px',
-                          borderRadius: '10px',
-                          backgroundColor: 'white',
-                      }}
-                      showSearch
-                      optionFilterProp="children"
-                      defaultValue="+91"
+                {countries?.map((country) => (
+                  <Option
+                    key={country.id}
+                    value={country.phoneCode}
+                    style={{ cursor: "pointer" }}
                   >
-                      {countries?.map(country => (
-                          <Option 
-                              key={country.id} 
-                              value={country.phoneCode}
-                              style={{ cursor: 'pointer' }}
-                          >
-                              <div style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  justifyContent: 'center',
-                                  color: '#262626',
-                                  cursor: 'pointer',
-                              }}>
-                                  <span>{country.phoneCode}</span>
-                              </div>
-                          </Option>
-                      ))}
-                  </Select>
-              </Form.Item>
-              <Form.Item
-                  name="contact"
-                  noStyle
-              >
-                  <Input
-                      size="large"
-                      type="number"
+                    <div
                       style={{
-                          flex: 1,
-                          border: 'none',
-                          borderLeft: '1px solid #e6e8eb',
-                          borderRadius: 0,
-                          height: '46px',
-                          backgroundColor: 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#262626",
+                        cursor: "pointer",
                       }}
-                      placeholder="Enter 10-digit phone number"
-                      maxLength={10}
-                  />
-              </Form.Item>
+                    >
+                      <span>{country.countryCode} {country.phoneCode}</span>
+                    </div>
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item name="contact" noStyle>
+              <Input
+                size="large"
+                type="number"
+                style={{
+                  flex: 1,
+                  border: "none",
+                  borderLeft: "1px solid #e6e8eb",
+                  borderRadius: 0,
+                  height: "46px",
+                  backgroundColor: "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+                placeholder="Enter 10-digit phone number"
+                maxLength={10}
+              />
+            </Form.Item>
           </Input.Group>
         </Form.Item>
 
@@ -812,7 +785,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       open={open}
       onCancel={handleCancel}
       footer={null}
-      width={1100}
+      width={1300}
       destroyOnClose={true}
       centered
       closeIcon={null}
@@ -962,7 +935,14 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 width: "100%",
                 borderRadius: "10px",
               }}
-              onChange={handleCustomerChange}
+              onChange={(value) => {
+                const selectedCustomer = customers?.find(c => c.id === value);
+                if (selectedCustomer) {
+                  form.setFieldValue('tax_number', selectedCustomer.tax_number || '');
+                }
+                form.setFieldValue('customer', value);
+                handleCustomerChange(value);
+              }}
               dropdownRender={(menu) => (
                 <>
                   {menu}
@@ -1021,6 +1001,28 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+          <Form.Item
+            name="tax_number"
+            label={
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                <FiHash style={{ marginRight: "8px", color: "#1890ff" }} />
+                Tax Number
+              </span>
+            }
+          >
+            <Input
+              disabled
+              placeholder="Tax number"
+              size="large"
+              style={{
+                borderRadius: "10px",
+                padding: "8px 16px",
+                height: "48px",
+                backgroundColor: "#f8fafc",
+                border: "1px solid #e6e8eb",
+              }}
+            />
           </Form.Item>
           <Form.Item
             name="currency"
@@ -1171,61 +1173,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             </div>
           </div>
 
-          <Form.Item
-            name="product_id"
-            rules={[{ required: true, message: "Please select product" }]}
-          >
-            <Select
-              placeholder="Select Product"
-              size="large"
-              loading={productsLoading}
-              style={{
-                width: "30%",
-                marginLeft: "16px",
-                marginRight: "16px",
-                marginTop: "16px",
-                marginBottom: "16px",
-                borderRadius: "10px",
-              }}
-              value={form.getFieldValue("items")?.[0]?.item_name}
-              onChange={handleProductSelect}
-            >
-              {productsData?.data?.map((product) => (
-                <Option key={product.id} value={product.id}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "30px",
-                        height: "30px",
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ fontWeight: 500 }}>{product.name}</span>
-                    </div>
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
@@ -1235,7 +1182,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                       <th>Item</th>
                       <th>Quantity</th>
                       <th>Unit Price</th>
-                      <th>HSN/SAC</th>
                       <th>Discount</th>
                       <th>Tax</th>
                       <th>Amount</th>
@@ -1251,10 +1197,90 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             name={[name, "item_name"]}
                             rules={[{ required: true, message: "Required" }]}
                           >
-                            <Input
-                              placeholder="Item Name"
-                              className="item-input"
-                            />
+                            <Select
+                              showSearch
+                              placeholder="Select Product"
+                              optionFilterProp="children"
+                              style={{ width: "100%" }}
+                              onChange={(value) => {
+                                const selectedProduct =
+                                  productsData?.data?.find(
+                                    (product) => product.id === value
+                                  );
+                                if (selectedProduct) {
+                                  const productCurrency = currenciesData?.find(
+                                    (c) => c.id === selectedProduct.currency
+                                  );
+                                  if (productCurrency) {
+                                    setSelectedProductCurrency(productCurrency);
+                                    setSelectedCurrency(
+                                      productCurrency.currencyIcon
+                                    );
+                                    setSelectedCurrencyId(productCurrency.id);
+                                    setIsCurrencyDisabled(true);
+                                  }
+
+                                  const items =
+                                    form.getFieldValue("items") || [];
+                                  items[index] = {
+                                    ...items[index],
+                                    id: selectedProduct.id,
+                                    item_name: selectedProduct.name,
+                                    unit_price: selectedProduct.selling_price,
+                                    hsn_sac: selectedProduct.hsn_sac,
+                                    tax: selectedProduct.tax,
+                                    profilePic: selectedProduct.image,
+                                    currency: selectedProduct.currency,
+                                  };
+                                  form.setFieldsValue({
+                                    items,
+                                    currency: selectedProduct.currency,
+                                  });
+                                  calculateTotals(items);
+                                }
+                              }}
+                            >
+                              {productsData?.data?.map((product) => (
+                                <Option key={product.id} value={product.id}>
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "10px",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        width: "30px",
+                                        height: "30px",
+                                        borderRadius: "4px",
+                                        overflow: "hidden",
+                                      }}
+                                    >
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        style={{
+                                          width: "100%",
+                                          height: "100%",
+                                          objectFit: "cover",
+                                        }}
+                                      />
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 500 }}>
+                                        {product.name}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </Option>
+                              ))}
+                            </Select>
                           </Form.Item>
                         </td>
                         <td>
@@ -1281,6 +1307,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           >
                             <InputNumber
                               className="price-input"
+                              disabled={true}
                               min={0}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
@@ -1292,14 +1319,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                 )
                               }
                               parser={(value) => value.replace(/[^\d.]/g, "")}
-                            />
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <Form.Item {...restField} name={[name, "hsn_sac"]}>
-                            <Input
-                              placeholder="HSN/SAC"
-                              className="hsn-input"
                             />
                           </Form.Item>
                         </td>
@@ -1470,18 +1489,30 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
               }}
             >
-              <Text style={{ marginTop: "10px" }}>Sub Total</Text>
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Sub Total
+              </Text>
               <Form.Item name="subtotal" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
@@ -1496,18 +1527,30 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
               }}
             >
-              <Text style={{ marginTop: "10px" }}>Total Tax</Text>
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Total Tax
+              </Text>
               <Form.Item name="total_tax" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(
@@ -1518,17 +1561,37 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 />
               </Form.Item>
             </div>
-            <Divider style={{ margin: "12px 0" }} />
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <Text style={{ marginTop: "10px" }}>Total Amount</Text>
+            <Divider style={{ margin: "20px 0", borderColor: "#e5e7eb" }} />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "16px",
+                background:
+                  "linear-gradient(135deg, #1890ff08 0%, #096dd908 100%)",
+                borderRadius: "8px",
+                alignItems: "center",
+                border: "1px solid #1890ff20",
+              }}
+            >
+              <Text
+                style={{ fontSize: "16px", color: "#1f2937", fontWeight: 600 }}
+              >
+                Total Amount
+              </Text>
               <Form.Item name="total" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"
                   style={{
-                    width: "120px",
+                    width: "150px",
                     borderRadius: "8px",
-                    height: "40px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    color: "#1890ff",
                   }}
                   formatter={(value) =>
                     `${selectedCurrency}${value}`.replace(

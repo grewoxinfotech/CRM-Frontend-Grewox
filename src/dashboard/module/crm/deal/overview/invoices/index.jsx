@@ -39,6 +39,7 @@ const Invoice = () => {
   const idd = useParams();
 
   const id = idd.dealId;
+  console.log("id", id);
   const loggedInUser = useSelector(selectCurrentUser);
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -51,9 +52,10 @@ const Invoice = () => {
     (invoice) => invoice.related_id === id
   );
 
+  console.log("invoices", invoices);
+
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
-
 
   const handleExport = async (type) => {
     try {

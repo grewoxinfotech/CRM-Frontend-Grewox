@@ -11,12 +11,11 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
- 
   useDeleteInvoiceMutation,
   useUpdateInvoiceMutation,
 } from "../../../../sales/invoice/services/invoiceApi";
 import EditInvoice from "./EditInvoice";
-import ViewInvoice from '../../../../sales/invoice/ViewInvoice';
+import ViewInvoice from "../../../../sales/invoice/ViewInvoice";
 import { useGetAllCurrenciesQuery } from "../../../../../../superadmin/module/settings/services/settingsApi";
 import { useGetCustomersQuery } from "../../../../sales/customer/services/custApi";
 import { useGetContactsQuery } from "../../../../crm/contact/services/contactApi";
@@ -24,8 +23,8 @@ import { useGetCompanyAccountsQuery } from "../../../../crm/companyacoount/servi
 
 const { Text } = Typography;
 
-const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
- 
+const InvoiceList = ({ searchText = "", invoices, isLoading }) => {
+
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [deleteInvoice] = useDeleteInvoiceMutation();
   const [updateInvoice] = useUpdateInvoiceMutation();
@@ -62,7 +61,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       pending: "#2563eb",
       paid: "#059669",
       unpaid: "#dc2626",
-      partially_paid: "#7c3aed"
+      partially_paid: "#7c3aed",
     };
 
     const statusBgColors = {
@@ -70,7 +69,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       pending: "#dbeafe",
       paid: "#d1fae5",
       unpaid: "#fee2e2",
-      partially_paid: "#ede9fe"
+      partially_paid: "#ede9fe",
     };
 
     return (
@@ -135,22 +134,21 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       let items = [];
       try {
         // Parse items if it's a string
-        if (typeof record.items === 'string') {
+        if (typeof record.items === "string") {
           items = JSON.parse(record.items);
         } else if (Array.isArray(record.items)) {
           items = record.items;
         }
 
         // Format items to ensure consistent structure
-        items = items.map(item => ({
+        items = items.map((item) => ({
           item_name: item.item_name || item.name || item.description,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price || item.rate) || 0,
           description: item.description || item.item_name || item.name,
         }));
-
       } catch (error) {
-        console.error('Error parsing invoice items:', error);
+        console.error("Error parsing invoice items:", error);
         items = [];
       }
 
@@ -175,13 +173,13 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
     items: [
       {
         key: "view",
-        icon: <FiEye style={{ fontSize: '14px' }} />,
+        icon: <FiEye style={{ fontSize: "14px" }} />,
         label: "View Invoice",
         onClick: () => handleView(record),
       },
       {
         key: "edit",
-        icon: <FiEdit2 style={{ fontSize: '14px' }} />,
+        icon: <FiEdit2 style={{ fontSize: "14px" }} />,
         label: "Edit Invoice",
         onClick: () => handleEdit(record),
       },
@@ -205,24 +203,30 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
     if (!customerId) return "N/A";
 
     switch (category) {
-      case 'customer':
-        const customer = customersData?.data?.find(c => c.id === customerId);
+      case "customer":
+        const customer = customersData?.data?.find((c) => c.id === customerId);
         return customer?.name || "N/A";
-      
-      case 'contact':
-        const contact = contactsData?.data?.find(c => c.id === customerId);
-        return contact?.name || 
-          `${contact?.first_name || ''} ${contact?.last_name || ''}`.trim() ||
+
+      case "contact":
+        const contact = contactsData?.data?.find((c) => c.id === customerId);
+        return (
+          contact?.name ||
+          `${contact?.first_name || ""} ${contact?.last_name || ""}`.trim() ||
           contact?.contact_name ||
-          "N/A";
-      
-      case 'company_account':
-        const company = companyAccountsData?.data?.find(c => c.id === customerId);
-        return company?.company_name ||
+          "N/A"
+        );
+
+      case "company_account":
+        const company = companyAccountsData?.data?.find(
+          (c) => c.id === customerId
+        );
+        return (
+          company?.company_name ||
           company?.name ||
           company?.account_name ||
-          "N/A";
-      
+          "N/A"
+        );
+
       default:
         return "N/A";
     }
@@ -236,7 +240,11 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       sorter: (a, b) =>
         a.salesInvoiceNumber.localeCompare(b.salesInvoiceNumber),
       render: (text, record) => (
-        <Text strong style={{ color: '#1890ff', cursor: 'pointer' }} onClick={() => handleView(record)}>
+        <Text
+          strong
+          style={{ color: "#1890ff", cursor: "pointer" }}
+          onClick={() => handleView(record)}
+        >
           {text}
         </Text>
       ),
@@ -246,9 +254,7 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       dataIndex: "customer",
       key: "customer",
       render: (customerId, record) => (
-        <Text>
-          {getCustomerName(customerId, record.category)}
-        </Text>
+        <Text>{getCustomerName(customerId, record.category)}</Text>
       ),
       sorter: (a, b) => {
         const nameA = getCustomerName(a.customer, a.category);
@@ -276,13 +282,17 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       key: "total",
       render: (amount, record) => {
         // Get currency details from the record
-        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
-        const currencyIcon = currencyDetails?.currencyIcon || '₹';
-        
+        const currencyDetails = currenciesData?.find(
+          (curr) => curr.id === record.currency
+        );
+        const currencyIcon = currencyDetails?.currencyIcon || "₹";
+
         return (
           <Text strong>
             {currencyIcon}
-            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {Number(amount).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         );
       },
@@ -294,13 +304,17 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       key: "amount",
       render: (amount, record) => {
         // Get currency details from the record
-        const currencyDetails = currenciesData?.find(curr => curr.id === record.currency);
-        const currencyIcon = currencyDetails?.currencyIcon || '₹';
-        
+        const currencyDetails = currenciesData?.find(
+          (curr) => curr.id === record.currency
+        );
+        const currencyIcon = currencyDetails?.currencyIcon || "₹";
+
         return (
           <Text strong>
             {currencyIcon}
-            {Number(amount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {Number(amount).toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         );
       },
@@ -313,7 +327,6 @@ const InvoiceList = ({ searchText = "",invoices, isLoading }) => {
       key: "payment_status",
       sorter: (a, b) => a.payment_status.localeCompare(b.payment_status),
       render: (payment_status) => getStatusTag(payment_status),
-    
     },
     {
       title: "Action",
