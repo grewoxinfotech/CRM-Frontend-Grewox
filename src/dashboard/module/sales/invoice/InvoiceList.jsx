@@ -180,6 +180,7 @@ const InvoiceList = ({
           tax_amount: item.tax_amount || item.taxAmount,
           discount: item.discount || 0,
           amount: item.amount || 0,
+          discount_type: item.discount_type || item.discountType,
         }));
       } catch (error) {
         console.error("Error parsing invoice items:", error);

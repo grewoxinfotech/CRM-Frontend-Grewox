@@ -65,7 +65,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     // refetch: refetchSettings,
   } = useGetAllSettingsQuery(id);
 
-  console.log("settingsData", settingsData);
+  console.log("invoice", invoice);
 
   const [sendInvoiceEmail] = useSendInvoiceEmailMutation();
   // State for company information
@@ -111,7 +111,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     if (invoice?.customer) {
       const data = customersData?.data?.find((c) => c.id === invoice.customer);
       if (data) {
-        console.log('Customer data found:', data); // Add this for debugging
+        console.log("Customer data found:", data); // Add this for debugging
         setBillingData({
           name: data.name,
           email: data.email,
@@ -119,7 +119,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           tax_number: data.tax_number,
           customerNumber: data.customerNumber,
           billing_address: data.billing_address,
-          shipping_address: data.shipping_address
+          shipping_address: data.shipping_address,
         });
       } else {
         setBillingData(null);
@@ -574,8 +574,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         name:
           customerData.name ||
           customerData.company_name ||
-          `${customerData.first_name || ""} ${customerData.last_name || ""
-            }`.trim(),
+          `${customerData.first_name || ""} ${
+            customerData.last_name || ""
+          }`.trim(),
         email: customerData.email,
         contact:
           customerData.contact || customerData.phone || customerData.mobile,
@@ -778,7 +779,10 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           <Spin spinning={isLoadingSettings}>
             <div className="view-billing-container">
               <div className="view-billing-content">
-                <div className="bill-card invoice-container" id="invoice-content">
+                <div
+                  className="bill-card invoice-container"
+                  id="invoice-content"
+                >
                   <div className="invoice-header">
                     <div className="company-info">
                       <div className="company-left">
@@ -799,21 +803,43 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                           }} />
                         </div>
                         <div>
-                          <div className="company-name">{loggedInUser?.username || 'Company Name'}</div>
-                          <div className="company-address">{loggedInUser?.address}</div>
+                          <div className="company-name">
+                            {loggedInUser?.username || "Company Name"}
+                          </div>
+                          <div className="company-address">
+                            {loggedInUser?.address}
+                          </div>
                         </div>
                       </div>
                       <div className="company-right">
                         <div>
-                          <FiPhone style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                          <FiPhone
+                            style={{
+                              marginRight: "8px",
+                              display: "inline",
+                              color: "#1F2937",
+                            }}
+                          />
                           {loggedInUser?.phone || "N/A"}
                         </div>
                         <div>
-                          <FiMail style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                          <FiMail
+                            style={{
+                              marginRight: "8px",
+                              display: "inline",
+                              color: "#1F2937",
+                            }}
+                          />
                           {loggedInUser?.email || "N/A"}
                         </div>
                         <div>
-                          <FiGlobe style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                          <FiGlobe
+                            style={{
+                              marginRight: "8px",
+                              display: "inline",
+                              color: "#1F2937",
+                            }}
+                          />
                           {loggedInUser?.website || "N/A"}
                         </div>
                       </div>
@@ -821,7 +847,12 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
                     <div className="invoice-title">
                       <div className="title-text">TAX INVOICE</div>
-                      <div className="gstin-text">GSTIN: <span style={{ fontWeight: 900 }}>{loggedInUser?.gstIn || '29ABCDE1234F1Z5'}</span></div>
+                      <div className="gstin-text">
+                        GSTIN:{" "}
+                        <span style={{ fontWeight: 900 }}>
+                          {loggedInUser?.gstIn || "29ABCDE1234F1Z5"}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -829,23 +860,31 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                     <div className="details-grid">
                       <div className="detail-item">
                         <span className="detail-label">Invoice No</span>
-                        <span className="detail-value">{invoice?.salesInvoiceNumber}</span>
+                        <span className="detail-value">
+                          {invoice?.salesInvoiceNumber}
+                        </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Issue Date</span>
                         <span className="detail-value">
-                          {invoice?.issueDate ? dayjs(invoice.issueDate).format('DD/MM/YYYY') : '-'}
+                          {invoice?.issueDate
+                            ? dayjs(invoice.issueDate).format("DD/MM/YYYY")
+                            : "-"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Due Date</span>
                         <span className="detail-value">
-                          {invoice?.dueDate ? dayjs(invoice.dueDate).format('DD/MM/YYYY') : '-'}
+                          {invoice?.dueDate
+                            ? dayjs(invoice.dueDate).format("DD/MM/YYYY")
+                            : "-"}
                         </span>
                       </div>
                       <div className="detail-item">
                         <span className="detail-label">Customer No</span>
-                        <span className="detail-value">{billingData?.customerNumber || '1'}</span>
+                        <span className="detail-value">
+                          {billingData?.customerNumber || "1"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -858,15 +897,21 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                       <div className="info-group">
                         <div className="info-row">
                           <span className="label">Name</span>
-                          <span className="value">{billingData?.name || '-'}</span>
+                          <span className="value">
+                            {billingData?.name || "-"}
+                          </span>
                         </div>
                         <div className="info-row">
                           <span className="label">Contact</span>
-                          <span className="value">{billingData?.contact || '-'}</span>
+                          <span className="value">
+                            {billingData?.contact || "-"}
+                          </span>
                         </div>
                         <div className="info-row">
                           <span className="label">GSTIN</span>
-                          <span className="value">{billingData?.tax_number || '-'}</span>
+                          <span className="value">
+                            {billingData?.tax_number || "-"}
+                          </span>
                         </div>
                       </div>
                       <div className="info-group">
@@ -876,17 +921,21 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                             {(() => {
                               try {
                                 if (billingData?.billing_address) {
-                                  const addr = JSON.parse(billingData.billing_address);
+                                  const addr = JSON.parse(
+                                    billingData.billing_address
+                                  );
                                   return addr.street ? (
                                     <>
                                       {addr.street},<br />
                                       {addr.city} {addr.postal_code},<br />
                                       {addr.state}
                                     </>
-                                  ) : '-';
+                                  ) : (
+                                    "-"
+                                  );
                                 }
-                              } catch (e) { }
-                              return billingData?.billing_address || '-';
+                              } catch (e) {}
+                              return billingData?.billing_address || "-";
                             })()}
                           </span>
                         </div>
@@ -894,7 +943,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                     </div>
                   </div>
 
-                  <div className="bill-items" style={{ margin: '16px' }}>
+                  <div className="bill-items" style={{ margin: "16px" }}>
                     <table className="items-table">
                       <thead>
                         <tr>
@@ -912,22 +961,44 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                         {Array.isArray(invoice.items) &&
                           invoice.items.map((item, index) => {
                             const quantity = Number(item.quantity) || 0;
-                            const rate = Number(item.unit_price || item.rate) || 0;
+                            const rate =
+                              Number(item.unit_price || item.rate) || 0;
                             const taxRate = Number(item.tax_rate) || 0;
                             const taxAmount = Number(item.tax_amount) || 0;
-                            const discount = item.discount ? `${item.discount}${item.discount_type === 'percentage' ? '%' : '₹'}` : '-';
+                            const discount = item.discount
+                              ? `${item.discount}${
+                                  item.discount_type === "percentage"
+                                    ? "%"
+                                    : "₹"
+                                }`
+                              : "-";
                             const amount = Number(item.amount) || 0;
 
                             return (
                               <tr key={index}>
-                                <td>{item.name || item.description || '-'}</td>
-                                <td>{item.hsn_sac || '-'}</td>
+                                <td>{item.name || item.description || "-"}</td>
+                                <td>{item.hsn_sac || "-"}</td>
                                 <td>{quantity}</td>
-                                <td>₹{rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                <td>
+                                  ₹
+                                  {rate.toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                  })}
+                                </td>
                                 <td>{taxRate}%</td>
-                                <td>₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                <td>
+                                  ₹
+                                  {taxAmount.toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                  })}
+                                </td>
                                 <td>{discount}</td>
-                                <td>₹{amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                                <td>
+                                  ₹
+                                  {amount.toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                  })}
+                                </td>
                               </tr>
                             );
                           })}
@@ -937,26 +1008,62 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                     <div className="totals-section">
                       <div className="total-row">
                         <div className="total-label">Discount</div>
-                        <div className="total-value">₹{Number(invoice?.discount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                        <div className="total-value">
+                          ₹
+                          {Number(invoice?.discount || 0).toLocaleString(
+                            "en-IN",
+                            { minimumFractionDigits: 2 }
+                          )}
+                        </div>
                       </div>
                       <div className="total-row">
                         <div className="total-label">Total Amount</div>
-                        <div className="total-value">₹{Number(invoice?.total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                        <div className="total-value">
+                          ₹
+                          {Number(invoice?.total || 0).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </div>
                       </div>
                       <div className="total-row">
                         <div className="total-label">Credit Note</div>
-                        <div className="total-value credit-note">-₹{Number(creditNoteAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                        <div className="total-value credit-note">
+                          -₹
+                          {Number(creditNoteAmount || 0).toLocaleString(
+                            "en-IN",
+                            { minimumFractionDigits: 2 }
+                          )}
+                        </div>
                       </div>
                       <div className="total-row">
                         <div className="total-label">Final Amount</div>
-                        <div className="total-value">₹{Number(invoice?.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                        <div className="total-value">
+                          ₹
+                          {Number(invoice?.amount || 0).toLocaleString(
+                            "en-IN",
+                            { minimumFractionDigits: 2 }
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="bill-footer">
-                    <div className="payment-section" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div className="qr-code" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div
+                      className="payment-section"
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div
+                        className="qr-code"
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
                         <div>
                           <QRCodeSVG
                             value={getPaymentUrl()}
@@ -965,49 +1072,151 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                             includeMargin={true}
                             padding={0}
                           />
-                          <div style={{ textAlign: 'center', marginTop: '12px' }}>
-                            <p style={{ margin: '4px 0', fontSize: '16px', fontWeight: '700', color: '#6B7280' }}>Scan to Pay</p>
-                            <p style={{ margin: '4px 0', fontWeight: '600', fontSize: '16px', color: '#111827' }}>
-                              ₹{Number(invoice?.amount || 0).toLocaleString("en-IN", {
-                                minimumFractionDigits: 2,
-                              })}
+                          <div
+                            style={{ textAlign: "center", marginTop: "12px" }}
+                          >
+                            <p
+                              style={{
+                                margin: "4px 0",
+                                fontSize: "16px",
+                                fontWeight: "700",
+                                color: "#6B7280",
+                              }}
+                            >
+                              Scan to Pay
+                            </p>
+                            <p
+                              style={{
+                                margin: "4px 0",
+                                fontWeight: "600",
+                                fontSize: "16px",
+                                color: "#111827",
+                              }}
+                            >
+                              ₹
+                              {Number(invoice?.amount || 0).toLocaleString(
+                                "en-IN",
+                                {
+                                  minimumFractionDigits: 2,
+                                }
+                              )}
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="bank-details" style={{ flex: 1, paddingLeft: '24px', backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb', position: 'relative' }}>
-                        {invoice?.payment_status === 'paid' && (
+                      <div
+                        className="bank-details"
+                        style={{
+                          flex: 1,
+                          paddingLeft: "24px",
+                          backgroundColor: "#f8f9fa",
+                          padding: "20px",
+                          borderRadius: "8px",
+                          border: "1px solid #e5e7eb",
+                          position: "relative",
+                        }}
+                      >
+                        {invoice?.payment_status === "paid" && (
                           <div className="paid-stamp">
                             <div className="paid-icon">✓</div>
                             <div className="paid-text">PAID</div>
                           </div>
                         )}
-                        <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FiCreditCard style={{ fontSize: '18px' }} /> Bank Details
+                        <h4
+                          style={{
+                            marginBottom: "16px",
+                            fontSize: "16px",
+                            fontWeight: 600,
+                            color: "#1f2937",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <FiCreditCard style={{ fontSize: "18px" }} /> Bank
+                          Details
                         </h4>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '12px 24px', fontSize: '14px' }}>
-                          <span style={{ color: '#6b7280', fontWeight: 500 }}>Bank:</span>
-                          <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.bankname || "N/A"}</span>
-
-                          <span style={{ color: '#6b7280', fontWeight: 500 }}>Account Type:</span>
-                          <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.accounttype || "N/A"}</span>
-
-                          <span style={{ color: '#6b7280', fontWeight: 500 }}>Account No:</span>
-                          <span style={{ color: '#111827', fontWeight: 500, fontFamily: 'monospace' }}>
-                            {loggedInUser?.accountnumber ? maskAccountNumber(loggedInUser.accountnumber) : "N/A"}
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "auto 1fr",
+                            gap: "12px 24px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                            Bank:
+                          </span>
+                          <span style={{ color: "#111827", fontWeight: 500 }}>
+                            {loggedInUser?.bankname || "N/A"}
                           </span>
 
-                          <span style={{ color: '#6b7280', fontWeight: 500 }}>IFSC:</span>
-                          <span style={{ color: '#111827', fontWeight: 500, fontFamily: 'monospace' }}>{loggedInUser?.ifsc || "N/A"}</span>
+                          <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                            Account Type:
+                          </span>
+                          <span style={{ color: "#111827", fontWeight: 500 }}>
+                            {loggedInUser?.accounttype || "N/A"}
+                          </span>
 
-                          <span style={{ color: '#6b7280', fontWeight: 500 }}>Branch:</span>
-                          <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.banklocation || "N/A"}</span>
+                          <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                            Account No:
+                          </span>
+                          <span
+                            style={{
+                              color: "#111827",
+                              fontWeight: 500,
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {loggedInUser?.accountnumber
+                              ? maskAccountNumber(loggedInUser.accountnumber)
+                              : "N/A"}
+                          </span>
+
+                          <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                            IFSC:
+                          </span>
+                          <span
+                            style={{
+                              color: "#111827",
+                              fontWeight: 500,
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {loggedInUser?.ifsc || "N/A"}
+                          </span>
+
+                          <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                            Branch:
+                          </span>
+                          <span style={{ color: "#111827", fontWeight: 500 }}>
+                            {loggedInUser?.banklocation || "N/A"}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <div className="powered-by" style={{ margin: '12px', textAlign: 'center', color: '#9CA3AF', fontSize: '12px', lineHeight: '1.5', letterSpacing: '0.5px' }}>
-                      Powered by <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#1890ff' }}>Grewox CRM</span>
+                    <div
+                      className="powered-by"
+                      style={{
+                        margin: "12px",
+                        textAlign: "center",
+                        color: "#9CA3AF",
+                        fontSize: "12px",
+                        lineHeight: "1.5",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Powered by{" "}
+                      <span
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                          color: "#1890ff",
+                        }}
+                      >
+                        Grewox CRM
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1041,7 +1250,11 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
               >
                 Print
               </Button>
-              <Dropdown menu={shareItems} trigger={["click"]} placement="topRight">
+              <Dropdown
+                menu={shareItems}
+                trigger={["click"]}
+                placement="topRight"
+              >
                 <Button
                   icon={<FiShare2 />}
                   size="large"
@@ -1069,7 +1282,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                   padding: "8px 24px",
                   height: "44px",
                   borderRadius: "10px",
-                  background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  background:
+                    "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                   border: "none",
                   fontWeight: "500",
                   display: "flex",
@@ -1145,7 +1359,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
             margin-bottom: 32px;
           }
 
-          .bill-to, .bill-info {
+          .bill-to,
+          .bill-info {
             h4 {
               font-size: 16px;
               font-weight: 600;
@@ -1262,7 +1477,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
             .qr-info {
               margin-top: 12px;
-              
+
               p {
                 margin: 4px 0;
                 color: #4b5563;
@@ -1292,10 +1507,10 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
             .bank-details {
               margin-top: 16px;
-              
+
               p {
                 margin: 8px 0;
-                
+
                 strong {
                   color: #4b5563;
                   font-weight: 500;
@@ -1326,7 +1541,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
               margin: 12px 0 0 0;
               padding: 8px;
               text-align: center;
-              color: #9CA3AF;
+              color: #9ca3af;
               font-size: 12px;
               line-height: 1.5;
               letter-spacing: 0.5px;
@@ -1378,8 +1593,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           }
 
           .company-header {
-            background: #F5F9FF;
-            color: #1B2434;
+            background: #f5f9ff;
+            color: #1b2434;
             padding: 12px;
             margin-bottom: 8px;
           }
@@ -1403,7 +1618,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
             .company-name-logo {
               flex-shrink: 0;
-              
+
               .company-logo {
                 height: 40px;
                 width: 40px;
@@ -1417,7 +1632,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                 height: 40px;
                 width: 40px;
                 background: white;
-                color: #1B2434;
+                color: #1b2434;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1429,9 +1644,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
             .company-details {
               padding-top: 2px;
-              
+
               h2 {
-                color: #1B2434;
+                color: #1b2434;
                 font-size: 20px;
                 font-weight: 600;
                 margin: 0 0 2px 0;
@@ -1439,7 +1654,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
               }
 
               .company-address {
-                color: #1B2434;
+                color: #1b2434;
                 font-size: 13px;
                 line-height: 1.2;
               }
@@ -1462,17 +1677,17 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                 line-height: 1.5;
 
                 .contact-icon {
-                  color: #2563EB;
+                  color: #2563eb;
                   font-size: 14px;
                 }
 
                 .contact-label {
-                  color: #2563EB;
+                  color: #2563eb;
                   font-weight: 600;
                 }
 
                 .contact-value {
-                  color: #1B2434;
+                  color: #1b2434;
                 }
               }
             }
@@ -1609,13 +1824,13 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
           .items-table {
             font-size: 12px;
-            
+
             th {
               padding: 8px;
               font-size: 11px;
               font-weight: 00;
             }
-            
+
             td {
               padding: 6px 8px;
               font-size: 12px;
@@ -1638,7 +1853,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           }
 
           .customer-label {
-            color: #6B7280;
+            color: #6b7280;
             font-weight: 500;
             width: 60px;
           }
@@ -1650,12 +1865,12 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           }
 
           .customer-separator {
-            color: #D1D5DB;
+            color: #d1d5db;
             margin: 0 8px;
           }
 
           .divider {
-            color: #D1D5DB;
+            color: #d1d5db;
             margin: 0 12px;
           }
 
@@ -1680,9 +1895,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           }
 
           .invoice-header {
-            background: #F0F7FF;
+            background: #f0f7ff;
             padding: 24px;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 1px solid #e5e7eb;
           }
 
           .company-info {
@@ -1704,28 +1919,27 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
             border-radius: 20px;
             background: white;
             padding: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
           }
 
           .company-name {
             font-size: 32px;
             font-weight: 900;
-            color: #1F2937;
+            color: #1f2937;
             margin-bottom: 4px;
             text-transform: uppercase;
           }
 
           .company-address {
-            color: #6B7280;
+            color: #6b7280;
             font-size: 14px;
           }
 
           .company-right {
             text-align: right;
             font-size: 14px;
-            color: #1F2937;
+            color: #1f2937;
           }
-            
 
           .invoice-title {
             display: flex;
@@ -1737,11 +1951,11 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           .title-text {
             font-size: 24px;
             font-weight: 700;
-            color: #1F2937;
+            color: #1f2937;
           }
 
           .gstin-text {
-            color: #1F2937;
+            color: #1f2937;
             font-size: 18px;
             font-weight: 700;
             margin-top: 10px;
@@ -1750,12 +1964,12 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           .gstin-text span {
             font-weight: 900;
             font-size: 20px;
-            color: #1F2937;
+            color: #1f2937;
           }
 
           .customer-details {
             background: #fff;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 1px solid #e5e7eb;
           }
 
           .details-content {
@@ -1781,30 +1995,30 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
           .info-label {
             width: 80px;
-            color: #6B7280;
+            color: #6b7280;
             font-weight: 500;
           }
 
           .info-value {
             flex: 1;
-            color: #1F2937;
+            color: #1f2937;
             padding-left: 16px;
           }
 
           .address-info {
             padding-left: 16px;
-            border-left: 1px solid #E5E7EB;
+            border-left: 1px solid #e5e7eb;
           }
 
           .address-title {
-            color: #6B7280;
+            color: #6b7280;
             font-weight: 500;
             font-size: 14px;
             margin-bottom: 8px;
           }
 
           .address-value {
-            color: #1F2937;
+            color: #1f2937;
             font-size: 14px;
             line-height: 1.5;
           }
@@ -1999,7 +2213,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
             position: absolute;
             top: 0;
             right: 0;
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             padding: 8px 16px;
             border-bottom-left-radius: 16px;
             display: flex;

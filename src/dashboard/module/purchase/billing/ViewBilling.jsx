@@ -1,17 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { Spin, Button, Space, message, Modal, Typography, Divider, Dropdown } from 'antd';
-import { useGetVendorsQuery } from './services/billingApi';
-import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/general/services/settingApi';
-import { useGetDebitNotesQuery } from '../debitnote/services/debitnoteApi';
-import { QRCodeSVG } from 'qrcode.react';
-import { FiDownload, FiPrinter, FiMail, FiShare2, FiX, FiFileText, FiPhone, FiGlobe, FiCreditCard, FiCopy } from 'react-icons/fi';
+import React, { useEffect, useState } from "react";
+import {
+  Spin,
+  Button,
+  Space,
+  message,
+  Modal,
+  Typography,
+  Divider,
+  Dropdown,
+} from "antd";
+import { useGetVendorsQuery } from "./services/billingApi";
+import { useGetAllSettingsQuery } from "../../../../superadmin/module/settings/general/services/settingApi";
+import { useGetDebitNotesQuery } from "../debitnote/services/debitnoteApi";
+import { QRCodeSVG } from "qrcode.react";
+import {
+  FiDownload,
+  FiPrinter,
+  FiMail,
+  FiShare2,
+  FiX,
+  FiFileText,
+  FiPhone,
+  FiGlobe,
+  FiCreditCard,
+  FiCopy,
+} from "react-icons/fi";
 import { PiBuildingsFill } from "react-icons/pi";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import dayjs from 'dayjs';
-import './billing.scss';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import dayjs from "dayjs";
+import "./billing.scss";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
 
 const { Text } = Typography;
 
@@ -26,42 +47,48 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
   // Fetch vendors data
   const { data: vendorsData } = useGetVendorsQuery();
-  const { data: settingsData, isLoading: isSettingsLoading } = useGetAllSettingsQuery();
+  const { data: settingsData, isLoading: isSettingsLoading } =
+    useGetAllSettingsQuery();
   const { data: debitNotesData } = useGetDebitNotesQuery();
 
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
-  const [companyName, setCompanyName] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [companyWebsite, setCompanyWebsite] = useState('');
-  const [merchantUpiId, setMerchantUpiId] = useState('');
-  const [companyAddress, setCompanyAddress] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-  const [companyGSTIN, setCompanyGSTIN] = useState('');
+  const [companyName, setCompanyName] = useState("");
+  const [companyEmail, setCompanyEmail] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
+  const [merchantUpiId, setMerchantUpiId] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyGSTIN, setCompanyGSTIN] = useState("");
 
   // State for bank details
-  const [bankName, setBankName] = useState('');
-  const [accountType, setAccountType] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [ifscCode, setIfscCode] = useState('');
-  const [bankBranch, setBankBranch] = useState('');
+  const [bankName, setBankName] = useState("");
+  const [accountType, setAccountType] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  const [bankBranch, setBankBranch] = useState("");
+  const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
 
   // State for debit note amount
   const [debitNoteAmount, setDebitNoteAmount] = useState(0);
+
+  console.log("data", data);
+
+  console.log("taxesData", taxesData);
 
   // Share menu items
   const shareItems = {
     items: [
       {
-        key: 'email',
+        key: "email",
         icon: <FiMail />,
-        label: 'Share via Email',
+        label: "Share via Email",
         onClick: () => handleShareViaEmail(),
       },
       {
-        key: 'copy',
+        key: "copy",
         icon: <FiCopy />,
-        label: 'Copy Link',
+        label: "Copy Link",
         onClick: () => handleCopyLink(),
       },
     ],
@@ -79,26 +106,30 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
   // Set company information from logged in user
   useEffect(() => {
     if (loggedInUser) {
-      setCompanyName(loggedInUser.username || 'Grewox CRM');
-      setCompanyEmail(loggedInUser.email || '');
-      setCompanyWebsite(loggedInUser.website || '');
-      setCompanyAddress(loggedInUser.address || '');
-      setCompanyPhone(loggedInUser.phone || '');
-      setCompanyGSTIN(loggedInUser.gstIn || '');
+      setCompanyName(loggedInUser.username || "Grewox CRM");
+      setCompanyEmail(loggedInUser.email || "");
+      setCompanyWebsite(loggedInUser.website || "");
+      setCompanyAddress(loggedInUser.address || "");
+      setCompanyPhone(loggedInUser.phone || "");
+      setCompanyGSTIN(loggedInUser.gstIn || "");
       setCompanyLogo(loggedInUser.profilePic || null);
 
       // Set bank details from loggedInUser
-      setBankName(loggedInUser.bank_name || '');
-      setAccountType(loggedInUser.account_type || '');
-      setAccountNumber(loggedInUser.account_number || '');
-      setIfscCode(loggedInUser.ifsc_code || '');
-      setBankBranch(loggedInUser.bank_branch || '');
+      setBankName(loggedInUser.bank_name || "");
+      setAccountType(loggedInUser.account_type || "");
+      setAccountNumber(loggedInUser.account_number || "");
+      setIfscCode(loggedInUser.ifsc_code || "");
+      setBankBranch(loggedInUser.bank_branch || "");
     }
   }, [loggedInUser]);
 
   // Get UPI ID from settings if available
   useEffect(() => {
-    if (settingsData?.success && settingsData?.data && settingsData.data.length > 0) {
+    if (
+      settingsData?.success &&
+      settingsData?.data &&
+      settingsData.data.length > 0
+    ) {
       const settings = settingsData.data[0];
       if (settings.merchant_upi_id) {
         setMerchantUpiId(settings.merchant_upi_id);
@@ -111,7 +142,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
     if (debitNotesData?.data && data?.id) {
       // Filter debit notes for current bill
       const currentBillDebitNotes = debitNotesData.data.filter(
-        note => note.bill === data.id || note.bill === data._id
+        (note) => note.bill === data.id || note.bill === data._id
       );
 
       // Calculate total amount of filtered debit notes
@@ -130,24 +161,27 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
   }
 
   // Find vendor details using vendor ID
-  const vendorDetails = vendorsData?.data?.find(vendor => vendor.id === data.vendor) || {};
+  const vendorDetails =
+    vendorsData?.data?.find((vendor) => vendor.id === data.vendor) || {};
 
   // Format vendor address
   const formatVendorAddress = () => {
-    if (!vendorDetails) return '';
-    const addressParts = [
-      vendorDetails.address,
-    ].filter(Boolean);
-    return addressParts.join(', ');
+    if (!vendorDetails) return "";
+    const addressParts = [vendorDetails.address].filter(Boolean);
+    return addressParts.join(", ");
   };
 
   const getColor = (status) => {
-    const normalizedStatus = status?.toLowerCase() || '';
+    const normalizedStatus = status?.toLowerCase() || "";
 
-    if (normalizedStatus === 'paid') return 'status-paid';
-    if (normalizedStatus === 'unpaid') return 'status-unpaid';
-    if (normalizedStatus === 'partially_paid' || normalizedStatus === 'partially paid') return 'status-partial';
-    return 'status-gray';
+    if (normalizedStatus === "paid") return "status-paid";
+    if (normalizedStatus === "unpaid") return "status-unpaid";
+    if (
+      normalizedStatus === "partially_paid" ||
+      normalizedStatus === "partially paid"
+    )
+      return "status-partial";
+    return "status-gray";
   };
 
   // Parse items safely
@@ -160,16 +194,18 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
   // Get payment URL for QR code
   const getPaymentUrl = () => {
-    if (!data) return '';
+    if (!data) return "";
 
     // If there's a UPI ID, create a UPI payment URL
     if (merchantUpiId) {
       const amount = Number(data?.amount || 0);
-      const tr = data?.billNumber || '';
-      const pn = companyName || 'Merchant';
+      const tr = data?.billNumber || "";
+      const pn = companyName || "Merchant";
 
       // Create UPI URL with parameters
-      return `upi://pay?pa=${merchantUpiId}&pn=${encodeURIComponent(pn)}&am=${amount}&tr=${tr}&tn=Bill%20Payment`;
+      return `upi://pay?pa=${merchantUpiId}&pn=${encodeURIComponent(
+        pn
+      )}&am=${amount}&tr=${tr}&tn=Bill%20Payment`;
     }
 
     // Fallback to bill link if no UPI ID
@@ -221,29 +257,34 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
   // Handle share via email
   const handleShareViaEmail = () => {
-    const subject = `Bill #${data?.billNumber || ''}`;
-    const body = `Please find the bill details for ${companyName}.\n\nAmount: ₹${Number(data?.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const subject = `Bill #${data?.billNumber || ""}`;
+    const body = `Please find the bill details for ${companyName}.\n\nAmount: ₹${Number(
+      data?.amount || 0
+    ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+    window.location.href = `mailto:?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
   };
 
   // Handle copy link
   const handleCopyLink = () => {
     const billUrl = `${window.location.origin}/bill/${data?.billNumber}`;
-    navigator.clipboard.writeText(billUrl)
+    navigator.clipboard
+      .writeText(billUrl)
       .then(() => {
-        message.success('Bill link copied to clipboard');
+        message.success("Bill link copied to clipboard");
       })
       .catch(() => {
-        message.error('Failed to copy bill link');
+        message.error("Failed to copy bill link");
       });
   };
 
   const handleDownload = async () => {
     try {
-      const element = document.getElementById('billing-content');
+      const element = document.getElementById("billing-content");
       if (!element) return;
 
-      message.loading({ content: 'Generating PDF...', key: 'download' });
+      message.loading({ content: "Generating PDF...", key: "download" });
 
       const styleContent = `
       .bill-card.invoice-container {
@@ -377,70 +418,75 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
       `;
 
       // Create a temporary style element
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = styleContent;
       element.appendChild(style);
 
       // Wait for all images to load
-      const images = element.getElementsByTagName('img');
-      await Promise.all(Array.from(images).map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = () => {
-            if (img.classList.contains('company-logo')) {
-              img.src = 'https://grewox.com/assets/logo.png';
-              resolve();
-            } else {
-              reject();
-            }
-          };
-        });
-      }));
+      const images = element.getElementsByTagName("img");
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = () => {
+              if (img.classList.contains("company-logo")) {
+                img.src = "https://grewox.com/assets/logo.png";
+                resolve();
+              } else {
+                reject();
+              }
+            };
+          });
+        })
+      );
 
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         imageTimeout: 15000,
         onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.getElementById('billing-content');
+          const clonedElement = clonedDoc.getElementById("billing-content");
           // Add the same styles to cloned element
-          const clonedStyle = document.createElement('style');
+          const clonedStyle = document.createElement("style");
           clonedStyle.textContent = styleContent;
           clonedElement.appendChild(clonedStyle);
 
           // Ensure images are visible
-          const clonedImages = clonedElement.getElementsByTagName('img');
-          Array.from(clonedImages).forEach(img => {
-            img.style.display = 'block';
-            img.crossOrigin = 'anonymous';
+          const clonedImages = clonedElement.getElementsByTagName("img");
+          Array.from(clonedImages).forEach((img) => {
+            img.style.display = "block";
+            img.crossOrigin = "anonymous";
           });
-        }
+        },
       });
 
       // Remove the temporary style element
       element.removeChild(style);
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Bill-${data?.billNumber || 'download'}.pdf`);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Bill-${data?.billNumber || "download"}.pdf`);
 
-      message.success({ content: 'Bill downloaded successfully!', key: 'download' });
+      message.success({
+        content: "Bill downloaded successfully!",
+        key: "download",
+      });
     } catch (error) {
-      console.error('Error downloading bill:', error);
-      message.error({ content: 'Failed to download bill', key: 'download' });
+      console.error("Error downloading bill:", error);
+      message.error({ content: "Failed to download bill", key: "download" });
     }
   };
   return (
@@ -541,38 +587,64 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                 <div className="billing-header">
                   <div className="company-info">
                     <div className="company-left">
-                      <div style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '20px',
-                        background: '#f0f7ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid #e6f4ff'
-                      }}>
-                        <PiBuildingsFill style={{
-                          width: '80px',
-                          height: '80px',
-                          color: '#1f2937'
-                        }} />
+                      <div
+                        style={{
+                          width: "80px",
+                          height: "80px",
+                          borderRadius: "20px",
+                          background: "#f0f7ff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "1px solid #e6f4ff",
+                        }}
+                      >
+                        <PiBuildingsFill
+                          style={{
+                            width: "80px",
+                            height: "80px",
+                            color: "#1f2937",
+                          }}
+                        />
                       </div>
                       <div>
-                        <div className="company-name">{loggedInUser?.username || 'Company Name'}</div>
-                        <div className="company-address">{loggedInUser?.address}</div>
+                        <div className="company-name">
+                          {loggedInUser?.username || "Company Name"}
+                        </div>
+                        <div className="company-address">
+                          {loggedInUser?.address}
+                        </div>
                       </div>
                     </div>
                     <div className="company-right">
                       <div>
-                        <FiPhone style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                        <FiPhone
+                          style={{
+                            marginRight: "8px",
+                            display: "inline",
+                            color: "#1F2937",
+                          }}
+                        />
                         {loggedInUser?.phone || "N/A"}
                       </div>
                       <div>
-                        <FiMail style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                        <FiMail
+                          style={{
+                            marginRight: "8px",
+                            display: "inline",
+                            color: "#1F2937",
+                          }}
+                        />
                         {loggedInUser?.email || "N/A"}
                       </div>
                       <div>
-                        <FiGlobe style={{ marginRight: "8px", display: "inline", color: "#1F2937" }} />
+                        <FiGlobe
+                          style={{
+                            marginRight: "8px",
+                            display: "inline",
+                            color: "#1F2937",
+                          }}
+                        />
                         {loggedInUser?.website || "N/A"}
                       </div>
                     </div>
@@ -580,7 +652,12 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
                   <div className="billing-title">
                     <div className="title-text">TAX BILL</div>
-                    <div className="gstin-text">GSTIN: <span style={{ fontWeight: 900 }}>{loggedInUser?.gstIn || '29ABCDE1234F1Z5'}</span></div>
+                    <div className="gstin-text">
+                      GSTIN:{" "}
+                      <span style={{ fontWeight: 900 }}>
+                        {loggedInUser?.gstIn || "29ABCDE1234F1Z5"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -593,12 +670,20 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="detail-item">
                       <span className="detail-label">Bill Date</span>
                       <span className="detail-value">
-                        {data?.billDate ? dayjs(data.billDate).format('DD/MM/YYYY') : '-'}
+                        {data?.billDate
+                          ? dayjs(data.billDate).format("DD/MM/YYYY")
+                          : "-"}
                       </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Vendor No</span>
-                      <span className="detail-value">{vendorDetails?.id ? `#VEN${String(vendorsData?.data?.length || 1).padStart(1, '0')}` : '-'}</span>
+                      <span className="detail-value">
+                        {vendorDetails?.id
+                          ? `#VEN${String(
+                              vendorsData?.data?.length || 1
+                            ).padStart(1, "0")}`
+                          : "-"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -611,29 +696,35 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="info-group">
                       <div className="info-row">
                         <span className="label">Name</span>
-                        <span className="value">{vendorDetails?.name || '-'}</span>
+                        <span className="value">
+                          {vendorDetails?.name || "-"}
+                        </span>
                       </div>
                       <div className="info-row">
                         <span className="label">Contact</span>
-                        <span className="value">{vendorDetails?.contact || '-'}</span>
+                        <span className="value">
+                          {vendorDetails?.contact || "-"}
+                        </span>
                       </div>
                       <div className="info-row">
                         <span className="label">GSTIN</span>
-                        <span className="value">{vendorDetails?.taxNumber || '-'}</span>
+                        <span className="value">
+                          {vendorDetails?.taxNumber || "-"}
+                        </span>
                       </div>
                     </div>
                     <div className="info-group">
                       <div className="info-row">
                         <span className="label">Address</span>
                         <span className="value address-value">
-                          {formatVendorAddress() || '-'}
+                          {formatVendorAddress() || "-"}
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="bill-items" style={{ margin: '20px' }}>
+                <div className="bill-items" style={{ margin: "20px" }}>
                   <table className="items-table">
                     <thead>
                       <tr>
@@ -648,75 +739,165 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {Array.isArray(items) && items.map((item, index) => {
-                        const quantity = Number(item.quantity) || 0;
-                        const rate = Number(item.unitPrice || item.price) || 0;
-                        const taxPercent = Number(item.tax) || 0;
-                        const taxAmount = Number(item.taxAmount) || 0;
-                        const discount = item.discountValue ? `${item.discountValue}${item.discountType === 'percentage' ? '%' : '₹'}` : '-';
-                        const amount = Number(item.amount) || 0;
+                      {Array.isArray(items) &&
+                        items.map((item, index) => {
+                          const quantity = Number(item.quantity) || 0;
+                          const rate =
+                            Number(item.unitPrice || item.price) || 0;
+                          // Find tax percentage from taxesData
+                          const taxData = taxesData?.data?.find(
+                            (tax) => tax.id === item.tax
+                          );
+                          const taxPercent = taxData
+                            ? Number(taxData.gstPercentage)
+                            : 0;
+                          const taxAmount = Number(item.taxAmount) || 0;
+                          const discount = item.discountValue
+                            ? `${item.discountValue}${
+                                item.discountType === "percentage" ? "%" : "₹"
+                              }`
+                            : "-";
+                          const amount = Number(item.amount) || 0;
 
-                        return (
-                          <tr key={index}>
-                            <td>{item.itemName || item.name}</td>
-                            <td>{item.hsnSac || '-'}</td>
-                            <td>{quantity}</td>
-                            <td>₹{rate.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                            <td>{taxPercent}%</td>
-                            <td>₹{taxAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                            <td>{discount}</td>
-                            <td>₹{amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-                          </tr>
-                        );
-                      })}
+                          return (
+                            <tr key={index}>
+                              <td>{item.itemName || item.name}</td>
+                              <td>{item.hsnSac || "-"}</td>
+                              <td>{quantity}</td>
+                              <td>
+                                ₹
+                                {rate.toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td>
+                                {taxData
+                                  ? `${taxData.gstName} (${taxData.gstPercentage}%)`
+                                  : "None (0%)"}
+                              </td>
+                              <td>
+                                ₹
+                                {taxAmount.toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </td>
+                              <td>{discount}</td>
+                              <td>
+                                ₹
+                                {amount.toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                })}
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
 
                   <div className="totals-section">
                     <div className="total-row">
                       <div className="total-label">Sub Total</div>
-                      <div className="total-value">₹{Number(data?.subtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                      <div className="total-value">
+                        ₹
+                        {Number(data?.subtotal || 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </div>
                     </div>
                     <div className="total-row">
                       <div className="total-label">Tax</div>
-                      <div className="total-value">₹{Number(data?.tax || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                      <div className="total-value">
+                        ₹
+                        {Number(data?.tax || 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </div>
                     </div>
                     <div className="total-row">
                       <div className="total-label">Discount</div>
-                      <div className="total-value">₹{Number(data?.discount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                      <div className="total-value">
+                        {data?.discountType === "percentage" ? (
+                          <span>
+                            {data?.discount || 0}% (₹
+                            {Number(data?.discountValue || 0).toLocaleString(
+                              "en-IN",
+                              {
+                                minimumFractionDigits: 2,
+                              }
+                            )}
+                            )
+                          </span>
+                        ) : (
+                          <span>
+                            ₹
+                            {Number(data?.discountValue || 0).toLocaleString(
+                              "en-IN",
+                              {
+                                minimumFractionDigits: 2,
+                              }
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="total-row">
                       <div className="total-label">Total Amount</div>
-                      <div className="total-value">₹{Number(data?.total || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                      <div className="total-value">
+                        ₹
+                        {Number(data?.total || 0).toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </div>
                     </div>
                     {debitNoteAmount > 0 && (
                       <div className="total-row debit-note-row">
                         <div className="total-label">Debit Note</div>
-                        <div className="total-value debit-note">-₹{Number(debitNoteAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                        <div className="total-value debit-note">
+                          -₹
+                          {Number(debitNoteAmount).toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </div>
                       </div>
                     )}
                     <div className="total-row final-amount">
                       <div className="total-label">Final Amount</div>
-                      <div className="total-value">₹{Number(data?.total - debitNoteAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                      <div className="total-value">
+                        ₹
+                        {Number(
+                          data?.total - debitNoteAmount || 0
+                        ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="bill-footer">
-                  <div className="payment-section" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div className="qr-code" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <div
+                    className="payment-section"
+                    style={{ display: "flex", justifyContent: "space-between" }}
+                  >
+                    <div
+                      className="qr-code"
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
                       <div>
                         <QRCodeSVG
                           value={getPaymentUrl()}
                           size={200}
                           level="H"
                           includeMargin={true}
-                          style={{ padding: '0px' }}
+                          style={{ padding: "0px" }}
                         />
                         <div className="qr-info">
                           <p className="scan-text">Scan to Pay</p>
                           <p className="amount-text">
-                            ₹{Number(data?.amount || 0).toLocaleString("en-IN", {
+                            ₹
+                            {Number(data?.amount || 0).toLocaleString("en-IN", {
                               minimumFractionDigits: 2,
                             })}
                           </p>
@@ -724,38 +905,118 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                       </div>
                     </div>
 
-                    <div className="bank-details" style={{ flex: 1, paddingLeft: '24px', backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #e5e7eb', position: 'relative' }}>
-                      {data?.status === 'paid' && (
+                    <div
+                      className="bank-details"
+                      style={{
+                        flex: 1,
+                        paddingLeft: "24px",
+                        backgroundColor: "#f8f9fa",
+                        padding: "20px",
+                        borderRadius: "8px",
+                        border: "1px solid #e5e7eb",
+                        position: "relative",
+                      }}
+                    >
+                      {data?.status === "paid" && (
                         <div className="paid-stamp">
                           <div className="paid-icon">✓</div>
                           <div className="paid-text">PAID</div>
                         </div>
                       )}
-                      <h4 style={{ marginBottom: '16px', fontSize: '16px', fontWeight: 600, color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FiCreditCard style={{ fontSize: '18px' }} /> Bank Details
+                      <h4
+                        style={{
+                          marginBottom: "16px",
+                          fontSize: "16px",
+                          fontWeight: 600,
+                          color: "#1f2937",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <FiCreditCard style={{ fontSize: "18px" }} /> Bank
+                        Details
                       </h4>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '12px 24px', fontSize: '14px' }}>
-                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Bank:</span>
-                        <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.bankname || "N/A"}</span>
-
-                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Account Type:</span>
-                        <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.accounttype || "N/A"}</span>
-
-                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Account No:</span>
-                        <span style={{ color: '#111827', fontWeight: 500, fontFamily: 'monospace' }}>
-                          {loggedInUser?.accountnumber ? maskAccountNumber(loggedInUser.accountnumber) : "N/A"}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "auto 1fr",
+                          gap: "12px 24px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                          Bank:
+                        </span>
+                        <span style={{ color: "#111827", fontWeight: 500 }}>
+                          {loggedInUser?.bankname || "N/A"}
                         </span>
 
-                        <span style={{ color: '#6b7280', fontWeight: 500 }}>IFSC:</span>
-                        <span style={{ color: '#111827', fontWeight: 500, fontFamily: 'monospace' }}>{loggedInUser?.ifsc || "N/A"}</span>
+                        <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                          Account Type:
+                        </span>
+                        <span style={{ color: "#111827", fontWeight: 500 }}>
+                          {loggedInUser?.accounttype || "N/A"}
+                        </span>
 
-                        <span style={{ color: '#6b7280', fontWeight: 500 }}>Branch:</span>
-                        <span style={{ color: '#111827', fontWeight: 500 }}>{loggedInUser?.banklocation || "N/A"}</span>
+                        <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                          Account No:
+                        </span>
+                        <span
+                          style={{
+                            color: "#111827",
+                            fontWeight: 500,
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {loggedInUser?.accountnumber
+                            ? maskAccountNumber(loggedInUser.accountnumber)
+                            : "N/A"}
+                        </span>
+
+                        <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                          IFSC:
+                        </span>
+                        <span
+                          style={{
+                            color: "#111827",
+                            fontWeight: 500,
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          {loggedInUser?.ifsc || "N/A"}
+                        </span>
+
+                        <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                          Branch:
+                        </span>
+                        <span style={{ color: "#111827", fontWeight: 500 }}>
+                          {loggedInUser?.banklocation || "N/A"}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="powered-by" style={{ margin: '12px', textAlign: 'center', color: '#9CA3AF', fontSize: '12px', lineHeight: '1.5', letterSpacing: '0.5px' }}>
-                    Powered by <span style={{ fontWeight: 'bold', fontSize: '14px', color: '#1890ff' }}>Grewox CRM</span>
+                  <div
+                    className="powered-by"
+                    style={{
+                      margin: "12px",
+                      textAlign: "center",
+                      color: "#9CA3AF",
+                      fontSize: "12px",
+                      lineHeight: "1.5",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Powered by{" "}
+                    <span
+                      style={{
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                        color: "#1890ff",
+                      }}
+                    >
+                      Grewox CRM
+                    </span>
                   </div>
                 </div>
               </div>
@@ -789,7 +1050,11 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             >
               Print
             </Button>
-            <Dropdown menu={shareItems} trigger={["click"]} placement="topRight">
+            <Dropdown
+              menu={shareItems}
+              trigger={["click"]}
+              placement="topRight"
+            >
               <Button
                 icon={<FiShare2 />}
                 size="large"
@@ -845,9 +1110,9 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
           }
 
           .billing-header {
-            background: #F0F7FF;
+            background: #f0f7ff;
             padding: 24px;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 1px solid #e5e7eb;
           }
 
           .company-info {
@@ -869,26 +1134,26 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             border-radius: 20px;
             background: white;
             padding: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
           }
 
           .company-name {
             font-size: 32px;
             font-weight: 900;
-            color: #1F2937;
+            color: #1f2937;
             margin-bottom: 4px;
             text-transform: uppercase;
           }
 
           .company-address {
-            color: #6B7280;
+            color: #6b7280;
             font-size: 14px;
           }
 
           .company-right {
             text-align: right;
             font-size: 14px;
-            color: #1F2937;
+            color: #1f2937;
 
             div {
               margin-bottom: 4px;
@@ -905,13 +1170,13 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
           .title-text {
             font-size: 24px;
             font-weight: 700;
-            color: #1F2937;
+            color: #1f2937;
           }
 
           .gstin-text {
             font-size: 18px;
             font-weight: 700;
-            color: #1F2937;
+            color: #1f2937;
 
             span {
               font-weight: 900;
@@ -922,7 +1187,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
           .billing-details {
             padding: 12px 24px;
             background: #fff;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 1px solid #e5e7eb;
           }
 
           .details-grid {
@@ -939,7 +1204,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
           .detail-label {
             font-size: 13px;
-            color: #6B7280;
+            color: #6b7280;
             font-weight: 500;
           }
 
@@ -951,7 +1216,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
           .vendor-details {
             background: #fff;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 1px solid #e5e7eb;
           }
 
           .vendor-header {
@@ -960,7 +1225,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             font-size: 14px;
             font-weight: 700;
             color: #374151;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 1px solid #e5e7eb;
           }
 
           .vendor-grid {
@@ -985,7 +1250,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
           .label {
             width: 60px;
-            color: #6B7280;
+            color: #6b7280;
             font-weight: 500;
           }
 
@@ -1004,14 +1269,15 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             border-collapse: collapse;
             margin: 16px 0;
 
-            th, td {
+            th,
+            td {
               padding: 8px 12px;
-              border: 1px solid #E5E7EB;
+              border: 1px solid #e5e7eb;
               text-align: left;
             }
 
             th {
-              background: #F9FAFB;
+              background: #f9fafb;
               font-weight: 600;
               color: #374151;
               font-size: 13px;
@@ -1019,16 +1285,16 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
             td {
               font-size: 13px;
-              color: #1F2937;
+              color: #1f2937;
             }
 
             tr:hover td {
-              background: #F9FAFB;
+              background: #f9fafb;
             }
           }
 
           .totals-section {
-            border: 1px solid #E5E7EB;
+            border: 1px solid #e5e7eb;
             border-radius: 8px;
             overflow: hidden;
           }
@@ -1037,15 +1303,15 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             display: flex;
             justify-content: space-between;
             padding: 10px;
-            border-bottom: 1px solid #E5E7EB;
-            
+            border-bottom: 1px solid #e5e7eb;
+
             &:last-child {
               border-bottom: none;
             }
           }
 
           .total-label {
-            color: #6B7280;
+            color: #6b7280;
             font-weight: 500;
           }
 
@@ -1054,26 +1320,27 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             color: #111827;
 
             &.debit-note {
-              color: #DC2626;
+              color: #dc2626;
             }
           }
 
           .final-amount {
-            background-color: #F9FAFB;
-            
-            .total-label, .total-value {
+            background-color: #f9fafb;
+
+            .total-label,
+            .total-value {
               font-weight: 700;
               color: #111827;
             }
           }
 
           .payment-section {
-            background: #F9FAFB;
+            background: #f9fafb;
             padding: 20px;
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 24px;
-            border: 1px solid #E5E7EB;
+            border: 1px solid #e5e7eb;
             margin: 16px 0;
           }
 
@@ -1084,7 +1351,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
               padding: 16px;
               background: white;
               border-radius: 8px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
           }
 
@@ -1096,7 +1363,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
           .scan-text {
             font-size: 16px;
             font-weight: 700;
-            color: #6B7280;
+            color: #6b7280;
             margin: 4px 0;
           }
 
@@ -1116,7 +1383,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             position: absolute;
             top: 0;
             right: 0;
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             padding: 8px 16px;
             border-bottom-left-radius: 16px;
             display: flex;
@@ -1141,14 +1408,14 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
           .powered-by {
             text-align: center;
-            color: #9CA3AF;
+            color: #9ca3af;
             font-size: 12px;
             margin-top: 16px;
 
             span {
               font-weight: bold;
               font-size: 14px;
-              color: #1890FF;
+              color: #1890ff;
             }
           }
 
@@ -1162,7 +1429,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             padding: 8px 24px;
             height: 44px;
             border-radius: 10px;
-            border: 1px solid #E6E8EB;
+            border: 1px solid #e6e8eb;
             font-weight: 500;
             display: flex;
             align-items: center;
@@ -1182,4 +1449,3 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 };
 
 export default ViewBilling;
-

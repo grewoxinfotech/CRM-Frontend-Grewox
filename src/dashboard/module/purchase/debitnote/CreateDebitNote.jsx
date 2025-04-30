@@ -59,10 +59,13 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
 
     if (selectedBill) {
       const billAmount = selectedBill.amount || selectedBill.total || 0;
+      const remainingAmount = billAmount - (selectedBill.debitNoteAmount || 0);
 
       // Enhanced validation for bill amount
-      if (billAmount <= 0) {
-        message.error("Cannot create debit note for bill with zero amount");
+      if (remainingAmount <= 0) {
+        message.error(
+          "Cannot create debit note for bill with no remaining amount"
+        );
         form.resetFields(["bill", "amount", "currency", "currency_icon"]);
         return;
       }
@@ -88,8 +91,8 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
       }
 
       form.setFieldsValue({
-        amount: billAmount,
-        max_amount: billAmount,
+        amount: remainingAmount,
+        max_amount: remainingAmount,
         currency: selectedBill.currency,
         currency_icon: currencyIcon || currencyDetails?.currencyIcon,
       });
@@ -293,14 +296,29 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                   )
                   .map((bill) => {
                     const billAmount = bill.amount || bill.total || 0;
+                    const remainingAmount =
+                      billAmount - (bill.debitNoteAmount || 0);
+
                     return (
                       <Option
                         key={bill.id || bill._id}
                         value={bill.id || bill._id}
-                        disabled={billAmount <= 0}
+                        disabled={remainingAmount <= 0}
                       >
-                        {bill.billNumber || bill.bill_number} (
-                        {selectedCurrency} {billAmount})
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <span>{bill.billNumber || bill.bill_number}</span>
+                          <span
+                            style={{ color: "#1890ff", paddingLeft: "100px" }}
+                          >
+                            Remaining: {selectedCurrency}
+                            {remainingAmount.toFixed(2)}
+                          </span>
+                        </div>
                       </Option>
                     );
                   })}

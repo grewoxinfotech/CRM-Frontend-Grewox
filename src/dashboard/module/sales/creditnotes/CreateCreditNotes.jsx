@@ -113,7 +113,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
       // Check if credit note amount exceeds remaining amount
       const remainingAmount = form.getFieldValue("max_amount");
       if (parseFloat(values.amount) > parseFloat(remainingAmount)) {
-        message.error("ક્રેડિટ નોટની રકમ બાકી રકમ કરતાં વધુ હોઈ શકતી નથી");
+        message.error("Credit note amount cannot exceed remaining amount");
         return;
       }
 
@@ -127,14 +127,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
       };
 
       await createCreditNote(creditNoteData).unwrap();
-      message.success("ક્રેડિટ નોટ સફળતાપૂર્વક બનાવવામાં આવ્યું");
+      message.success("Credit note created successfully");
       // Refetch invoices data to update the list
       await refetchInvoices();
       form.resetFields();
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error(error?.data?.message || "ક્રેડિટ નોટ બનાવવામાં નિષ્ફળ");
+      message.error(error?.data?.message || "Failed to create credit note");
     }
   };
 
@@ -299,7 +299,9 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                           }}
                         >
                           <span>{invoice.salesInvoiceNumber}</span>
-                          <span style={{ color: "#1890ff" }}>
+                          <span
+                            style={{ color: "#1890ff", paddingLeft: "100px" }}
+                          >
                             Remaining: {selectedCurrency}
                             {remainingAmount.toFixed(2)}
                           </span>

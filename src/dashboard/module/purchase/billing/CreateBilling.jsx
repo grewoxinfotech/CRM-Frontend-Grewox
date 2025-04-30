@@ -147,6 +147,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
           profilePic: selectedProduct.image,
           currency: selectedProduct.currency,
           currencyIcon: productCurrency.currencyIcon,
+          item_discount: 0,
+          item_discount_type: "percentage",
         };
         form.setFieldsValue({
           items: newItems,
@@ -220,6 +222,30 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
 
       // Get the selected discount type
       const selectedDiscountType = values.discount_type || "percentage";
+      const totalDiscount = Number(values.discount || 0);
+      const subTotal = Number(values.sub_total || 0);
+
+      // Format the items data
+      const formattedItems = values.items?.map((item) => {
+        const quantity = Number(item.quantity) || 0;
+        const unitPrice = Number(item.unit_price) || 0;
+        const itemAmount = quantity * unitPrice;
+        const itemTax = Number(item.tax || 0);
+        const itemTaxAmount = isTaxEnabled ? (itemAmount * itemTax) / 100 : 0;
+
+        return {
+          product_id: item.product_id,
+          itemName: item.item_name,
+          quantity: quantity,
+          unitPrice: unitPrice,
+          hsnSac: item.hsn_sac || "",
+          tax: item.taxId,
+          taxAmount: itemTaxAmount,
+          amount: itemAmount + itemTaxAmount,
+          currency: item.currency || values.currency,
+          currencyIcon: item.currencyIcon || selectedCurrencyData?.currencyIcon,
+        };
+      });
 
       // Get next bill number
       const nextBillNumber = getNextBillNumber();
@@ -234,28 +260,14 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
         discription: values.discription || "",
         status: values.status,
         discount: Number(values.discount || 0),
+        discountType: selectedDiscountType,
+        discountValue: Number(form.getFieldValue("discount_value") || 0),
         tax: Number(values.tax_amount || 0),
         currency: selectedCurrencyData?.id || values.currency,
-        currencyCode: selectedCurrencyData?.currencyCode || values.currency,
-        currencyIcon: selectedCurrencyData?.currencyIcon || selectedCurrency,
-        items: values.items?.map((item) => ({
-          product_id: item.product_id,
-          itemName: item.item_name,
-          quantity: Number(item.quantity),
-          unitPrice: Number(item.selling_price || item.unit_price),
-          hsnSac: item.hsn_sac || "",
-          tax: Number(item.tax || 0),
-          taxId: item.taxId,
-          taxAmount: calculateItemTaxAmount(item),
-          amount: calculateItemTotal(item),
-          currency: item.currency || values.currency,
-          currencyIcon: item.currencyIcon || selectedCurrency,
-          discountType: selectedDiscountType,
-          discountValue: Number(values.discount || 0),
-        })),
+        currencyCode: selectedCurrencyData?.currencyCode,
+        currencyIcon: selectedCurrencyData?.currencyIcon,
+        items: formattedItems,
         subTotal: Number(values.sub_total || 0),
-        discountType: selectedDiscountType,
-        discountValue: Number(values.discount || 0),
         taxAmount: Number(values.tax_amount || 0),
         total: Number(values.total_amount || 0),
       };
@@ -304,18 +316,16 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
     items.forEach((item) => {
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.unit_price) || 0;
-      let itemTaxAmount = 0;
+      const itemSubTotal = quantity * price;
 
+      let itemTaxAmount = 0;
       if (isTaxEnabled && item.tax) {
-        itemTaxAmount = calculateItemTaxAmount(item);
+        itemTaxAmount = (itemSubTotal * Number(item.tax)) / 100;
         totalTaxAmount += itemTaxAmount;
       }
 
-      // Calculate item amount including tax
-      const itemAmount = quantity * price + itemTaxAmount;
-
       // Add to subtotal
-      subTotal += itemAmount;
+      subTotal += itemSubTotal;
     });
 
     const discountType = form.getFieldValue("discount_type") || "percentage";
@@ -328,13 +338,14 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
       discountAmount = discountValue;
     }
 
-    // Total amount is subtotal minus discount
-    const totalAmount = subTotal - discountAmount;
+    // Total amount is subtotal minus discount plus tax
+    const totalAmount = subTotal - discountAmount + totalTaxAmount;
 
     form.setFieldsValue({
       sub_total: subTotal.toFixed(2),
       tax_amount: isTaxEnabled ? totalTaxAmount.toFixed(2) : "0.00",
       total_amount: totalAmount.toFixed(2),
+      discount_value: discountAmount.toFixed(2),
     });
   };
 
@@ -604,7 +615,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={1000}
+      width={1300}
       destroyOnClose={true}
       centered
       closeIcon={null}
@@ -1287,6 +1298,32 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                   )}
                 </Form.Item>
               </Space>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "12px",
+              }}
+            >
+              <Text style={{ marginTop: "10px" }}>Discount Value</Text>
+              <Form.Item name="discount_value" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
+                    width: "120px",
+                    borderRadius: "8px",
+                    height: "40px",
+                  }}
+                  formatter={(value) =>
+                    `${selectedCurrency}${value}`.replace(
+                      /\B(?=(\d{3})+(?!\d))/g,
+                      ","
+                    )
+                  }
+                />
+              </Form.Item>
             </div>
             <div
               style={{
