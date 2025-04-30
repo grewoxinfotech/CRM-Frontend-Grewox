@@ -1,249 +1,249 @@
 .project-invoices {
-    .ant-card {
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  .ant-card {
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
-        .ant-card-head {
-            border-bottom: 1px solid #f0f0f0;
-            padding: 16px 24px;
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 16px 24px;
 
-            .ant-card-head-title {
-                font-size: 16px;
-                font-weight: 600;
-            }
+      .ant-card-head-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
 
-            .ant-card-extra {
-                .ant-btn {
-                    border-radius: 8px;
-                    height: 40px;
-                    padding: 0 16px;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-                    border: none;
-
-                    &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                    }
-                }
-            }
-        }
-
-        .ant-card-body {
-            padding: 0;
-        }
-    }
-
-    .invoice-info {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-
-        .invoice-icon {
-            font-size: 20px;
-            color: #1890ff;
-            margin-top: 2px;
-        }
-
-        .invoice-details {
-            h4 {
-                margin: 0 0 4px;
-                font-size: 14px;
-                font-weight: 500;
-                color: #1f2937;
-            }
-
-            p {
-                margin: 0;
-                font-size: 12px;
-                color: #6b7280;
-            }
-        }
-    }
-
-    .amount-info,
-    .date-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #1f2937;
-        font-size: 14px;
-
-        svg {
-            color: #6b7280;
-            font-size: 16px;
-        }
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 8px;
-
+      .ant-card-extra {
         .ant-btn {
-            padding: 4px 8px;
-            height: auto;
+          border-radius: 8px;
+          height: 40px;
+          padding: 0 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+          border: none;
 
-            &.view-button {
-                color: #1890ff;
-
-                &:hover {
-                    background: rgba(24, 144, 255, 0.1);
-                }
-            }
-
-            &.download-button {
-                color: #52c41a;
-
-                &:hover {
-                    background: rgba(82, 196, 26, 0.1);
-                }
-            }
-
-            &.send-button {
-                color: #722ed1;
-
-                &:hover {
-                    background: rgba(114, 46, 209, 0.1);
-                }
-            }
+          &:hover {
+            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+          }
         }
+      }
     }
 
-    .ant-table {
-        .ant-table-thead>tr>th {
-            background: #f8fafc;
-            font-weight: 500;
-            color: #4b5563;
-        }
+    .ant-card-body {
+      padding: 0;
+    }
+  }
 
-        .ant-table-tbody>tr>td {
-            padding: 16px 24px;
-        }
+  .invoice-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 
-        .ant-tag {
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 12px;
-        }
+    .invoice-icon {
+      font-size: 20px;
+      color: #1890ff;
+      margin-top: 2px;
     }
 
-    .status-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+    .invoice-details {
+      h4 {
+        margin: 0 0 4px;
+        font-size: 14px;
         font-weight: 500;
-        transition: all 0.3s ease;
-        
-        &.draft {
-            background-color: #fef3c7 !important;
-            color: #d97706 !important;
-        }
-        
-        &.pending {
-            background-color: #dbeafe !important;
-            color: #2563eb !important;
-        }
-        
-        &.paid {
-            background-color: #d1fae5 !important;
-            color: #059669 !important;
-        }
-        
-        &.overdue {
-            background-color: #fee2e2 !important;
-            color: #dc2626 !important;
-        }
+        color: #1f2937;
+      }
+
+      p {
+        margin: 0;
+        font-size: 12px;
+        color: #6b7280;
+      }
+    }
+  }
+
+  .amount-info,
+  .date-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1f2937;
+    font-size: 14px;
+
+    svg {
+      color: #6b7280;
+      font-size: 16px;
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+
+    .ant-btn {
+      padding: 4px 8px;
+      height: auto;
+
+      &.view-button {
+        color: #1890ff;
 
         &:hover {
-            transform: translateY(-1px);
+          background: rgba(24, 144, 255, 0.1);
         }
+      }
+
+      &.download-button {
+        color: #52c41a;
+
+        &:hover {
+          background: rgba(82, 196, 26, 0.1);
+        }
+      }
+
+      &.send-button {
+        color: #722ed1;
+
+        &:hover {
+          background: rgba(114, 46, 209, 0.1);
+        }
+      }
     }
+  }
+
+  .ant-table {
+    .ant-table-thead>tr>th {
+      background: #f8fafc;
+      font-weight: 500;
+      color: #4b5563;
+    }
+
+    .ant-table-tbody>tr>td {
+      padding: 16px 24px;
+    }
+
+    .ant-tag {
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+    }
+  }
+
+  .status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &.draft {
+      background-color: #fef3c7 !important;
+      color: #d97706 !important;
+    }
+
+    &.pending {
+      background-color: #dbeafe !important;
+      color: #2563eb !important;
+    }
+
+    &.paid {
+      background-color: #d1fae5 !important;
+      color: #059669 !important;
+    }
+
+    &.overdue {
+      background-color: #fee2e2 !important;
+      color: #dc2626 !important;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+  }
 }
 
 // Modal styles
 .ant-modal {
-    .ant-modal-content {
-        border-radius: 12px;
+  .ant-modal-content {
+    border-radius: 12px;
 
-        .ant-modal-header {
-            border-bottom: 1px solid #f0f0f0;
-            padding: 16px 24px;
+    .ant-modal-header {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 16px 24px;
 
-            .ant-modal-title {
-                font-size: 16px;
-                font-weight: 600;
-            }
-        }
-
-        .ant-modal-body {
-            padding: 24px;
-
-            .form-row {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-            }
-
-            .ant-form-item {
-                margin-bottom: 16px;
-
-                .ant-input-prefix {
-                    color: #1890ff;
-                    margin-right: 8px;
-                }
-
-                .ant-input,
-                .ant-input-number,
-                .ant-select-selector,
-                .ant-picker {
-                    border-radius: 8px;
-                    border-color: #e5e7eb;
-
-
-                }
-            }
-        }
-
-        .ant-modal-footer {
-            border-top: 1px solid #f0f0f0;
-            padding: 16px 24px;
-
-            .ant-btn {
-                border-radius: 8px;
-                height: 40px;
-                padding: 0 16px;
-            }
-        }
+      .ant-modal-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
     }
+
+    .ant-modal-body {
+      padding: 24px;
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .ant-form-item {
+        margin-bottom: 16px;
+
+        .ant-input-prefix {
+          color: #1890ff;
+          margin-right: 8px;
+        }
+
+        .ant-input,
+        .ant-input-number,
+        .ant-select-selector,
+        .ant-picker {
+          border-radius: 8px;
+          border-color: #e5e7eb;
+
+
+        }
+      }
+    }
+
+    .ant-modal-footer {
+      border-top: 1px solid #f0f0f0;
+      padding: 16px 24px;
+
+      .ant-btn {
+        border-radius: 8px;
+        height: 40px;
+        padding: 0 16px;
+      }
+    }
+  }
 }
 
 // Responsive styles
 @media (max-width: 768px) {
-    .project-invoices {
-        .form-row {
-            grid-template-columns: 1fr !important;
-        }
-
-        .invoice-info {
-            flex-direction: column;
-            gap: 8px;
-
-            .invoice-icon {
-                display: none;
-            }
-        }
-
-        .action-buttons {
-            flex-direction: column;
-            gap: 4px;
-
-            .ant-btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
+  .project-invoices {
+    .form-row {
+      grid-template-columns: 1fr !important;
     }
+
+    .invoice-info {
+      flex-direction: column;
+      gap: 8px;
+
+      .invoice-icon {
+        display: none;
+      }
+    }
+
+    .action-buttons {
+      flex-direction: column;
+      gap: 4px;
+
+      .ant-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
 }
 
 // Product selection styles
@@ -397,11 +397,11 @@
   gap: 8px;
   font-weight: 500;
   font-size: 14px;
-  
+
   .icon {
     color: #1890ff;
   }
-  
+
   .required {
     color: #ff4d4f;
   }
@@ -420,7 +420,8 @@
     border-collapse: separate;
     border-spacing: 0;
 
-    th, td {
+    th,
+    td {
       padding: 12px 16px;
       text-align: left;
       border-bottom: 1px solid #f0f0f0;
@@ -442,12 +443,12 @@
       &:hover {
         background-color: #f9fafb;
       }
-      
+
       &:last-child td {
         border-bottom: none;
       }
     }
-    
+
     .item-row {
       transition: all 0.2s ease;
     }
@@ -459,8 +460,9 @@
       border-color: #e5e7eb;
       transition: all 0.3s;
       background-color: #f9fafb;
-      
-      &:hover, &:focus {
+
+      &:hover,
+      &:focus {
         background-color: #ffffff;
         border-color: #1890ff;
       }
@@ -474,34 +476,36 @@
       transition: all 0.3s;
       background-color: #f9fafb;
       padding: 0 16px;
-      
-      &:hover, &:focus {
+
+      &:hover,
+      &:focus {
         background-color: #ffffff;
         border-color: #1890ff;
       }
-      
+
       .ant-input-number-input {
         height: 36px;
       }
     }
-    
+
     .table-select {
       width: 100%;
-      
+
       .ant-select-selector {
         border-radius: 6px !important;
-        height: 36px !important;
+        height: 48px !important;
         border-color: #e5e7eb !important;
         background-color: #f9fafb !important;
         transition: all 0.3s !important;
         padding: 0 11px !important;
-        
+
         .ant-select-selection-item {
           line-height: 36px !important;
         }
       }
-      
-      &:hover .ant-select-selector, &.ant-select-focused .ant-select-selector {
+
+      &:hover .ant-select-selector,
+      &.ant-select-focused .ant-select-selector {
         background-color: #ffffff !important;
         border-color: #1890ff !important;
       }
@@ -515,7 +519,7 @@
       justify-content: center;
       border-radius: 50%;
       transition: all 0.2s;
-      
+
       &:hover {
         background-color: #fff1f0;
       }
@@ -555,12 +559,12 @@
   background-color: #f0f9ff;
   border-radius: 6px;
   padding: 8px 12px;
-  
+
   .currency-symbol {
     margin-right: 4px;
     color: #666;
   }
-  
+
   .amount-value {
     font-weight: 600;
     // color: #1890ff;
@@ -572,16 +576,16 @@
   .ant-select-item {
     padding: 8px 12px;
     transition: all 0.2s ease;
-    
+
     &-option {
       border-radius: 4px;
       margin: 4px 8px;
-      
+
       &-selected {
         background-color: #e6f7ff !important;
         font-weight: 500;
       }
-      
+
       &-active {
         background-color: #f0f7ff !important;
       }
@@ -600,7 +604,7 @@
   .summary-content {
     max-width: 400px;
     margin-left: auto;
-    
+
     .ant-divider {
       margin: 16px 0;
     }
@@ -645,13 +649,13 @@
   .modal-header {
     background: #1890ff;
   }
-  
+
   .form-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
   }
-  
+
   .form-grid-3 {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;

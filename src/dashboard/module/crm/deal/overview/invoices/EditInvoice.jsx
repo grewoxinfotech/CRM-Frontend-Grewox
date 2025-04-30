@@ -904,8 +904,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 {selectedCategory === "customer"
                   ? "Customer"
                   : selectedCategory === "contact"
-                  ? "Contact"
-                  : "Company Account"}{" "}
+                    ? "Contact"
+                    : "Company Account"}{" "}
                 <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
@@ -921,13 +921,12 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 scrollbarWidth: "thin",
                 scrollBehavior: "smooth",
               }}
-              placeholder={`Select ${
-                selectedCategory === "customer"
-                  ? "Customer"
-                  : selectedCategory === "contact"
+              placeholder={`Select ${selectedCategory === "customer"
+                ? "Customer"
+                : selectedCategory === "contact"
                   ? "Contact"
                   : "Company Account"
-              }`}
+                }`}
               showSearch
               optionFilterProp="children"
               size="large"
@@ -1395,7 +1394,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                   onChange={(value) => {
                                     form
                                       .validateFields([[name, "discount"]])
-                                      .catch(() => {});
+                                      .catch(() => { });
                                     calculateTotals(
                                       form.getFieldValue("items")
                                     );
@@ -1409,8 +1408,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               </Form.Item>
                               {form.getFieldValue("items")?.[index]
                                 ?.discount_type === "percentage" && (
-                                <Text style={{ marginTop: "10px" }}>%</Text>
-                              )}
+                                  <Text style={{ marginTop: "10px" }}>%</Text>
+                                )}
                             </Space>
                           </Form.Item>
                         </td>

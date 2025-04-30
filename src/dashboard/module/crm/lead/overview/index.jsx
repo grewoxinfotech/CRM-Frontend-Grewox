@@ -357,7 +357,7 @@ const LeadOverviewContent = ({
                     </div>
                   </div>
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (
-                  <div className="company-info">
+                  <div className=".company-infoo">
                     <div className="icon-wrapper company">
                       <FiBriefcase className="icon" />
                     </div>
@@ -589,7 +589,7 @@ const LeadOverviewContent = ({
             transform: translateY(-1px);
           }
 
-          .company-info, .contact-info, .no-info {
+          .company-infoo, .contact-info, .no-info {
             display: inline-flex;
             align-items: center;
             gap: 8px;

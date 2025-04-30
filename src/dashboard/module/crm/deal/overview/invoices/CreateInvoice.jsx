@@ -971,7 +971,7 @@ const CreateInvoice = ({
                                   onChange={(value) => {
                                     form
                                       .validateFields([[name, "discount"]])
-                                      .catch(() => {});
+                                      .catch(() => { });
                                     calculateTotals(
                                       form.getFieldValue("items")
                                     );
@@ -985,8 +985,8 @@ const CreateInvoice = ({
                               </Form.Item>
                               {form.getFieldValue("items")?.[index]
                                 ?.discount_type === "percentage" && (
-                                <Text style={{ marginTop: "10px" }}>%</Text>
-                              )}
+                                  <Text style={{ marginTop: "10px" }}>%</Text>
+                                )}
                             </Space>
                           </Form.Item>
                         </td>

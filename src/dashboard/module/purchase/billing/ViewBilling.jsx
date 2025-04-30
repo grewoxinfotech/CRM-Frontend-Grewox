@@ -5,6 +5,7 @@ import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/g
 import { useGetDebitNotesQuery } from '../debitnote/services/debitnoteApi';
 import { QRCodeSVG } from 'qrcode.react';
 import { FiDownload, FiPrinter, FiMail, FiShare2, FiX, FiFileText, FiPhone, FiGlobe, FiCreditCard, FiCopy } from 'react-icons/fi';
+import { PiBuildingsFill } from "react-icons/pi";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import dayjs from 'dayjs';
@@ -540,7 +541,22 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                 <div className="billing-header">
                   <div className="company-info">
                     <div className="company-left">
-                      <img src={loggedInUser?.profilePic} alt="Company Logo" className="company-logo" />
+                      <div style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '20px',
+                        background: '#f0f7ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '1px solid #e6f4ff'
+                      }}>
+                        <PiBuildingsFill style={{
+                          width: '80px',
+                          height: '80px',
+                          color: '#1f2937'
+                        }} />
+                      </div>
                       <div>
                         <div className="company-name">{loggedInUser?.username || 'Company Name'}</div>
                         <div className="company-address">{loggedInUser?.address}</div>

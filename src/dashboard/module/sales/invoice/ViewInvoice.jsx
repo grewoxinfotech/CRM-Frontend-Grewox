@@ -28,6 +28,7 @@ import {
   FiGlobe,
   FiCreditCard,
 } from "react-icons/fi";
+import { PiBuildingsFill } from "react-icons/pi";
 import dayjs from "dayjs";
 import styled from "styled-components";
 import html2canvas from "html2canvas";
@@ -349,31 +350,12 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         }
       `;
 
-      // Create a temporary style element
+      // Add style element to the DOM
       const style = document.createElement("style");
       style.textContent = styleContent;
       element.appendChild(style);
 
-      // Wait for all images to load
-      const images = element.getElementsByTagName("img");
-
-      await Promise.all(
-        Array.from(images).map((img) => {
-          if (img.complete) return Promise.resolve();
-          return new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = () => {
-              if (img.classList.contains("company-logo")) {
-                img.src = "https://grewox.com/assets/logo.png";
-                resolve();
-              } else {
-                reject();
-              }
-            };
-          });
-        })
-      );
-
+      // Generate canvas from the element
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -800,7 +782,22 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                   <div className="invoice-header">
                     <div className="company-info">
                       <div className="company-left">
-                        <img src={loggedInUser?.profilePic} alt="Company Logo" className="company-logo" />
+                        <div style={{
+                          width: '80px',
+                          height: '80px',
+                          borderRadius: '20px',
+                          background: '#f0f7ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '1px solid #e6f4ff'
+                        }}>
+                          <PiBuildingsFill style={{
+                            width: '80px',
+                            height: '80px',
+                            color: '#1f2937'
+                          }} />
+                        </div>
                         <div>
                           <div className="company-name">{loggedInUser?.username || 'Company Name'}</div>
                           <div className="company-address">{loggedInUser?.address}</div>
