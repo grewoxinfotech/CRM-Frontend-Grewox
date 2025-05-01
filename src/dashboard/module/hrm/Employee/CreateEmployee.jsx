@@ -24,6 +24,7 @@ import {
   FiDollarSign,
   FiLock,
   FiPlus,
+  FiChevronDown,
 } from "react-icons/fi";
 import {
   useCreateEmployeeMutation,
@@ -46,6 +47,16 @@ dayjs.extend(customParseFormat);
 
 const { Text } = Typography;
 const { Option } = Select;
+
+// Update the findIndianDefaults function to return IDs instead of codes
+const findIndianDefaults = (currencies, countries) => {
+    const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
+    const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+    return {
+        defaultCurrency: inrCurrency?.id || '',  // Changed to return ID instead of code
+        defaultPhoneCode: indiaCountry?.id || ''
+    };
+};
 
 const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
@@ -79,12 +90,16 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
   const { data: departmentsData } = useGetAllDepartmentsQuery();
   const { data: designationsData } = useGetAllDesignationsQuery();
 
-  // Add this useEffect to set default currency when form is initialized
-  React.useEffect(() => {
-    form.setFieldsValue({
-      currency: "₹",
-    });
-  }, [form]);
+    // Get default currency and phone code
+    const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
+
+    // Add this useEffect to set default currency when form is initialized
+    React.useEffect(() => {
+        form.setFieldsValue({
+            currency: defaultCurrency,
+            phoneCode: defaultPhoneCode
+        });
+    }, [form, defaultCurrency, defaultPhoneCode]);
 
   // Transform branch data
   const branches = React.useMemo(() => {
@@ -251,7 +266,28 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
     try {
       const values = await form.validateFields();
 
-      const response = await createEmployee(values).unwrap();
+      // Find the country from the selected phone code ID
+      const selectedCountry = countries?.find(c => c.id === values.phoneCode);
+      if (!selectedCountry) {
+        message.error('Please select a valid phone code');
+        return;
+      }
+
+      // Find the currency from the selected currency ID
+      const selectedCurrency = currencies?.find(c => c.id === values.currency);
+      if (!selectedCurrency) {
+        message.error('Please select a valid currency');
+        return;
+      }
+
+      const formData = {
+        ...values,
+        phoneCode: values.phoneCode, // Already storing ID
+        currency: values.currency,   // Now storing currency ID
+        phone: values.phone
+      };
+
+      const response = await createEmployee(formData).unwrap();
 
       if (response.success) {
         setEmployeeFormData(values);
@@ -268,7 +304,8 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         message.error(response.message || "Failed to create employee");
       }
     } catch (error) {
-      message.error(error?.data?.message || "Failed to create employee");
+      console.error('Create error:', error);
+      message.error(error?.data?.message || 'Failed to create employee');
     }
   };
 
@@ -848,7 +885,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   </span>
                 }
                 required
-                // style={{ gridColumn: '1 / 2' }}
               >
                 <Input.Group
                   compact
@@ -866,12 +902,12 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     name="phoneCode"
                     noStyle
                     rules={[{ required: true, message: "Required" }]}
-                    initialValue="91"
+                    initialValue="+91"
                   >
                     <Select
                       size="large"
                       style={{
-                        width: "80px",
+                        width: "90px",
                         height: "48px",
                         display: "flex",
                         alignItems: "center",
@@ -887,11 +923,12 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                       }}
                       showSearch
                       optionFilterProp="children"
+                      defaultValue="+91"
                     >
                       {countries?.map((country) => (
                         <Option
-                          key={country.phoneCode}
-                          value={country.phoneCode}
+                          key={country.id}
+                          value={country.id}
                           style={{ cursor: "pointer" }}
                         >
                           <div
@@ -903,7 +940,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                               cursor: "pointer",
                             }}
                           >
-                            <span>{country.phoneCode}</span>
+                            <span>{country.countryCode} {country.phoneCode}</span>
                           </div>
                         </Option>
                       ))}
@@ -926,6 +963,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   >
                     <Input
                       size="large"
+                      type="number"
                       style={{
                         flex: 1,
                         border: "none",
@@ -1163,66 +1201,60 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
               <Form.Item
                 name="salary_group"
                 label={
-                  <span
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                  }}>
                     Salary
                   </span>
                 }
                 style={{ flex: 1 }}
               >
-                <Input.Group
-                  compact
-                  className="price-input-group"
-                  style={{
-                    display: "flex",
-                    height: "48px",
-                    backgroundColor: "#f8fafc",
-                    borderRadius: "10px",
-                    border: "1px solid #e6e8eb",
-                    overflow: "hidden",
-                    marginBottom: 0,
-                  }}
-                >
+                <Input.Group compact className="price-input-group" style={{
+                  display: 'flex',
+                  height: '48px',
+                  backgroundColor: '#f8fafc',
+                  borderRadius: '10px',
+                  border: '1px solid #e6e8eb',
+                  overflow: 'hidden',
+                  marginBottom: 0
+                }}>
                   <Form.Item
                     name="currency"
                     noStyle
                     rules={[{ required: true }]}
-                    initialValue="INR"
+                    initialValue={defaultCurrency}
                   >
                     <Select
                       size="large"
                       style={{
-                        width: "100px",
-                        height: "48px",
+                        width: '120px',
+                        height: '48px'
                       }}
                       loading={currenciesLoading}
                       className="currency-select"
                       dropdownStyle={{
-                        padding: "8px",
-                        borderRadius: "10px",
+                        padding: '8px',
+                        borderRadius: '10px',
                       }}
                       showSearch
                       optionFilterProp="children"
-                      defaultValue="INR"
+                      suffixIcon={<FiChevronDown size={14} />}
+                      popupClassName="custom-select-dropdown"
+                      filterOption={(input, option) => {
+                        const currency = currencies?.find(c => c.id === option.value);
+                        return currency?.currencyCode.toLowerCase().includes(input.toLowerCase());
+                      }}
                     >
                       {currencies?.map((currency) => (
                         <Option
-                          key={currency.currencyCode}
-                          value={currency.currencyCode}
+                          key={currency.id}
+                          value={currency.id}
                           selected={currency.currencyCode === "INR"}
                         >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                            }}
-                          >
-                            <span>{currency.currencyIcon}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
+                            <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
                           </div>
                         </Option>
                       ))}
@@ -1231,18 +1263,19 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   <Form.Item
                     name="salary"
                     noStyle
-                    rules={[{ required: true, message: "Please enter salary" }]}
+                    rules={[{ required: true, message: 'Please enter salary' }]}
                   >
-                    <Input
+                    <InputNumber
                       placeholder="Enter salary"
                       size="large"
                       style={{
                         flex: 1,
-                        width: "100%",
-                        border: "none",
-                        borderLeft: "1px solid #e6e8eb",
+                        width: 'calc(100% - 100px)',
+                        border: 'none',
+                        borderLeft: '1px solid #e6e8eb',
                         borderRadius: 0,
-                        height: "48px",
+                        height: '48px',
+                        padding: '0 16px'
                       }}
                       min={0}
                       precision={2}
@@ -1472,6 +1505,75 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         onCancel={() => setIsCreateDesignationModalOpen(false)}
         onSuccess={handleCreateDesignationSuccess}
       />
+
+      <style jsx global>{`
+        .price-input-group {
+          display: flex !important;
+          align-items: stretch !important;
+
+          .ant-select {
+            .ant-select-selector {
+              height: 100% !important;
+              border-top-right-radius: 0 !important;
+              border-bottom-right-radius: 0 !important;
+            }
+          }
+
+          .ant-input-number {
+            border-top-left-radius: 0 !important;
+            border-bottom-left-radius: 0 !important;
+          }
+        }
+
+        .currency-select {
+          cursor: pointer;
+          .ant-select-selector {
+            padding: 8px 8px !important;
+            height: 48px !important;
+          }
+          
+          .ant-select-selection-search {
+            input {
+              height: 100% !important;
+            }
+          }
+
+          .ant-select-selection-item {
+            padding-right: 20px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+          }
+        }
+
+        .ant-select-dropdown {
+          padding: 8px !important;
+          border-radius: 10px !important;
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+
+          .ant-select-item {
+            padding: 8px 12px !important;
+            border-radius: 6px !important;
+            min-height: 32px !important;
+            display: flex !important;
+            align-items: center !important;
+
+            &-option-selected {
+              background-color: #E6F4FF !important;
+              font-weight: 500 !important;
+              color: #1890ff !important;
+            }
+
+            &-option-active {
+              background-color: #F3F4F6 !important;
+            }
+          }
+
+          .ant-select-item-option-content {
+            font-size: 14px !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

@@ -96,7 +96,6 @@ export default function ForgotPassword() {
             setShowOtpVerification(true);
             setTimer(30);
         } catch (error) {
-            console.error('Reset password error:', error);
             message.error({
                 content: error?.data?.message || 'Failed to send verification code. Please try again.',
                 icon: <span className="error-icon">×</span>

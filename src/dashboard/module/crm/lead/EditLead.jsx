@@ -193,7 +193,6 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         console.error('Error parsing lead_members:', error);
       }
 
-      console.log(initialValues, "initialValues")
       form.setFieldsValue({
         ...initialValues,
         phoneCode: countryId,
@@ -277,7 +276,6 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       message.success("Lead updated successfully");
       onCancel();
     } catch (error) {
-      console.error("Update Lead Error:", error);
       message.error(
         error.data?.message || "Failed to update lead"
       );

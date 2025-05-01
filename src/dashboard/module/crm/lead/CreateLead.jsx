@@ -209,7 +209,6 @@ const CreateLead = ({
           // Update lead data with the new contact ID
           leadFormData.contact_id = contactId;
         } catch (error) {
-          console.error('Error creating contact:', error);
           message.error(error.data?.message || 'Failed to create contact');
           return;
         }
@@ -224,7 +223,6 @@ const CreateLead = ({
       form.resetFields();
       onCancel();
     } catch (error) {
-      console.error('Error creating lead:', error);
       message.error(error.data?.message || "Failed to create lead");
     }
   };
@@ -310,11 +308,14 @@ const CreateLead = ({
   };
 
   // Handle source deletion
-  const handleDeleteSource = async (e, sourceId) => {
-    e.stopPropagation();
+  const handleDeleteSource = async ( sourceId) => {
     try {
       await deleteSource(sourceId).unwrap();
       message.success("Source deleted successfully");
+       // Clear the category field if the deleted category was selected
+       if (form.getFieldValue('source') === sourceId) {
+        form.setFieldValue('source', undefined);
+      }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete source");
     }
@@ -327,11 +328,14 @@ const CreateLead = ({
   };
 
   // Handle category deletion
-  const handleDeleteCategory = async (e, categoryId) => {
-    e.stopPropagation();
+  const handleDeleteCategory = async (categoryId) => {
     try {
       await deleteCategory(categoryId).unwrap();
       message.success("Category deleted successfully");
+      // Clear the category field if the deleted category was selected
+      if (form.getFieldValue('category') === categoryId) {
+        form.setFieldValue('category', undefined);
+      }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete category");
     }
@@ -739,33 +743,37 @@ const CreateLead = ({
                       />
                       {source.name}
                     </div>
-                    <Popconfirm
-                      title="Delete Source"
-                      description="Are you sure you want to delete this source?"
-                      onConfirm={(e) => handleDeleteSource(e, source.id)}
-                      onCancel={(e) => e.stopPropagation()}
-                      okText="Yes"
-                      cancelText="No"
-                      placement="left"
-                    >
-                      <Button
-                        type="text"
-                        icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                        size="small"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          opacity: 0.8,
-                          transition: 'opacity 0.2s',
-                          ':hover': {
-                            opacity: 1,
-                            backgroundColor: 'transparent'
-                          }
+                    {form.getFieldValue('source') !== source.id && (
+                      <Popconfirm
+                        title="Delete Source"
+                        description="Are you sure you want to delete this source?"
+                        onConfirm={(e) => {
+                          e?.stopPropagation?.();
+                          handleDeleteSource(source.id);
                         }}
-                      />
-                    </Popconfirm>
+                        okText="Yes"
+                        cancelText="No"
+                        placement="left"
+                      >
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: 0.8,
+                            transition: "opacity 0.2s",
+                            "&:hover": {
+                              opacity: 1,
+                              backgroundColor: "transparent"
+                            }
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
                   </div>
                 </Option>
               ))}
@@ -842,33 +850,37 @@ const CreateLead = ({
                       />
                       {category.name}
                     </div>
-                    <Popconfirm
-                      title="Delete Category"
-                      description="Are you sure you want to delete this category?"
-                      onConfirm={(e) => handleDeleteCategory(e, category.id)}
-                      onCancel={(e) => e.stopPropagation()}
-                      okText="Yes"
-                      cancelText="No"
-                      placement="left"
-                    >
-                      <Button
-                        type="text"
-                        icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
-                        size="small"
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          opacity: 0.8,
-                          transition: 'opacity 0.2s',
-                          ':hover': {
-                            opacity: 1,
-                            backgroundColor: 'transparent'
-                          }
+                    {form.getFieldValue('category') !== category.id && (
+                      <Popconfirm
+                        title="Delete Category"
+                        description="Are you sure you want to delete this category?"
+                        onConfirm={(e) => {
+                          e?.stopPropagation?.();
+                          handleDeleteCategory(category.id);
                         }}
-                      />
-                    </Popconfirm>
+                        okText="Yes"
+                        cancelText="No"
+                        placement="left"
+                      >
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            opacity: 0.8,
+                            transition: "opacity 0.2s",
+                            "&:hover": {
+                              opacity: 1,
+                              backgroundColor: "transparent"
+                            }
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
                   </div>
                 </Option>
               ))}

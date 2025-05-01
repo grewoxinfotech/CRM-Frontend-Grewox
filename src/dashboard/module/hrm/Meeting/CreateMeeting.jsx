@@ -91,7 +91,6 @@ const CreateMeeting = ({
                 client: values.client,
             };
 
-            console.log('Submitting meeting with data:', formattedValues);
 
             const response = await createMeeting(formattedValues).unwrap();
             if (response.success) {
@@ -102,7 +101,6 @@ const CreateMeeting = ({
                 throw new Error(response.message || 'Failed to create meeting');
             }
         } catch (error) {
-            console.error('Meeting creation error:', error);
             message.error(error?.data?.message || 'Failed to schedule meeting');
         }
     };

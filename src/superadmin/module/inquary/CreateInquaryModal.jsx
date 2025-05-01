@@ -10,6 +10,7 @@ import {
     Typography,
 } from "antd";
 import { useCreateInquiryMutation, useUpdateInquiryMutation } from './services/inquaryApi';
+import { useGetAllCountriesQuery } from '../settings/services/settingsApi';
 import moment from "moment";
 import {
     FiX,
@@ -23,22 +24,29 @@ import {
 
 const { TextArea } = Input;
 const { Text } = Typography;
+const { Option } = Select;
 
 const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues }) => {
     const [form] = Form.useForm();
     const [createInquiry] = useCreateInquiryMutation();
     const [updateInquiry] = useUpdateInquiryMutation();
+    const { data: countries = [], isLoading: countriesLoading } = useGetAllCountriesQuery();
 
     // Set form values when editing
     React.useEffect(() => {
         if (initialValues) {
+            // Find the phone code from country ID
+            const country = countries?.find(c => c.id === initialValues.phonecode);
+            const phoneCode = country?.phoneCode || '+91';
+
             form.setFieldsValue({
                 ...initialValues,
+                phonecode: phoneCode // Set the phone code instead of ID
             });
         } else {
             form.resetFields();
         }
-    }, [initialValues, form]);
+    }, [initialValues, form, countries]);
 
     const handleCancel = () => {
         form.resetFields();
@@ -47,10 +55,18 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
 
     const onFinish = async (values) => {
         try {
+            // Find the country ID from the selected phone code
+            const selectedCountry = countries?.find(c => c.phoneCode === values.phonecode);
+            if (!selectedCountry) {
+                message.error('Please select a valid phone code');
+                return;
+            }
+
             const formattedValues = {
                 name: values.name,
                 email: values.email,
                 phone: values.phone,
+                phonecode: selectedCountry.id, // Use country ID as phonecode
                 subject: values.subject,
                 message: values.message
             };
@@ -241,28 +257,91 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                 </Form.Item>
 
                 <Form.Item
-                    name="phone"
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                            Phone
+                            Phone Number
                         </span>
                     }
-                    rules={[
-                        {
-                            required: true,
-                            message: "Please input the phone number!",
-                        },
-                    ]}
+                    required
                 >
-                    <Input
-                        prefix={<FiPhone style={{ color: "#1890ff", fontSize: "16px" }} />}
-                        placeholder="Enter phone number"
-                        size="large"
-                        style={{
-                            borderRadius: "10px",
-                            padding: "8px 16px",
-                        }}
-                    />
+                    <Input.Group compact className="phone-input-group" style={{
+                        display: 'flex',
+                        height: '48px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '10px',
+                        border: '1px solid #e6e8eb',
+                        overflow: 'hidden'
+                    }}>
+                        <Form.Item
+                            name="phonecode"
+                            noStyle
+                            rules={[{ required: true, message: 'Required' }]}
+                            initialValue="+91"
+                        >
+                            <Select
+                                size="large"
+                                style={{
+                                    width: '90px',
+                                    height: '48px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer',
+                                }}
+                                loading={countriesLoading}
+                                className="phone-code-select"
+                                dropdownStyle={{
+                                    padding: '8px',
+                                    borderRadius: '10px',
+                                    backgroundColor: 'white',
+                                }}
+                                showSearch
+                                optionFilterProp="children"
+                                defaultValue="+91"
+                            >
+                                {countries?.map(country => (
+                                    <Option 
+                                        key={country.id} 
+                                        value={country.phoneCode}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            color: '#262626',
+                                            cursor: 'pointer',
+                                        }}>
+                                            <span>{country.countryCode} {country.phoneCode}</span>
+                                        </div>
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="phone"
+                            noStyle
+                            rules={[
+                                { required: true, message: 'Please enter phone number' }
+                            ]}
+                        >
+                            <Input
+                                size="large"
+                                type="number"
+                                style={{
+                                    flex: 1,
+                                    border: 'none',
+                                    borderLeft: '1px solid #e6e8eb',
+                                    borderRadius: 0,
+                                    height: '46px',
+                                    backgroundColor: 'transparent',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                }}
+                                placeholder="Enter phone number"
+                            />
+                        </Form.Item>
+                    </Input.Group>
                 </Form.Item>
 
                 <Form.Item

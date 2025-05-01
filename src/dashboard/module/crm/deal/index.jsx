@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Input,
-    Dropdown, Menu, Space, Breadcrumb, Modal, message
+    Dropdown, Menu, Space, Breadcrumb, Modal, message, Row, Col
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -214,61 +214,70 @@ const Deal = () => {
 
             <div className="page-header">
                 <div className="header-left">
-                    <h2>Deals</h2>
-                    <Text className="subtitle">Manage your deals</Text>
+                    <Title level={2}>Deals</Title>
+                    <p className="subtitle">Manage all deals in the system</p>
                 </div>
-
-                <div className="header-right">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#9CA3AF' }} />}
-                        placeholder="Search deals..."
-                        className="search-input"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
-                    />
-                    <div className="view-buttons">
-                        <div className="view-toggle">
-                            <Button
-                                type={viewMode === 'table' ? 'primary' : 'default'}
-                                icon={<FiList />}
-                                onClick={() => setViewMode('table')}
+                <Row justify="center" className="header-actions-wrapper">
+                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
+                        <div className="header-actions">
+                            <Input
+                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                                placeholder="Search deals"
+                                allowClear
+                                onChange={(e) => setSearchText(e.target.value)}
+                                value={searchText}
+                                className="search-input"
                             />
-                            <Button
-                                type={viewMode === 'card' ? 'primary' : 'default'}
-                                icon={<FiGrid />}
-                                onClick={() => setViewMode('card')}
-                            />
+                            <div className="action-buttons">
+                                <Button.Group className="view-toggle">
+                                    <Button
+                                        type={viewMode === 'table' ? 'primary' : 'default'}
+                                        icon={<FiList size={16} />}
+                                        onClick={() => setViewMode('table')}
+                                    />
+                                    <Button
+                                        type={viewMode === 'card' ? 'primary' : 'default'}
+                                        icon={<FiGrid size={16} />}
+                                        onClick={() => setViewMode('card')}
+                                    />
+                                </Button.Group>
+                                <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                    <Button className="export-button">
+                                        <FiDownload size={16} />
+                                        <span>Export</span>
+                                        <FiChevronDown size={14} />
+                                    </Button>
+                                </Dropdown>
+                                <Button
+                                    type="primary"
+                                    icon={<FiPlus size={16} />}
+                                    onClick={handleCreate}
+                                    className="add-button"
+                                >
+                                    Add Deal
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                    <Dropdown menu={exportMenu} trigger={['click']}>
-                        <Button>
-                            <FiDownload /> Export <FiChevronDown />
-                        </Button>
-                    </Dropdown>
-                    <Button type="primary" icon={<FiPlus />} onClick={handleCreate}>
-                        Add Deal
-                    </Button>
-                </div>
+                    </Col>
+                </Row>
             </div>
 
             <Card className="deal-content">
-                {viewMode === 'card' ? (
-                    <DealCard
+                {viewMode === "table" ? (
+                    <DealList
+                        deals={filteredDeals}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onView={handleView}
                         onDealClick={handleDealClick}
-                        deals={filteredDeals}
                     />
                 ) : (
-                    <DealList
+                    <DealCard
+                        deals={filteredDeals}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
                         onView={handleView}
                         onDealClick={handleDealClick}
-                        deals={filteredDeals}
-                        searchText={searchText}
                     />
                 )}
             </Card>

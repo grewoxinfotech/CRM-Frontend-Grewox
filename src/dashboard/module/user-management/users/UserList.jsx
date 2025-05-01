@@ -9,6 +9,9 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
 
+    // Filter out users with "employee" role
+    const filteredUsers = users?.filter(user => user.role_name?.toLowerCase() !== 'employee') || [];
+
     const handleAdminLogin = async (user) => {
         try {
             const response = await adminLogin({
@@ -380,14 +383,14 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
 
     return (
         <Table
-            dataSource={users}
+            dataSource={filteredUsers}
             columns={columns}
             // loading={loading}
             rowKey="id"
             pagination={{
                 current: currentPage,
                 pageSize: 10,
-                total: users.length,
+                total: filteredUsers.length,
                 showSizeChanger: true,
                 showQuickJumper: false,
                 onChange: onPageChange,

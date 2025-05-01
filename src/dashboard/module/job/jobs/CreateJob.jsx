@@ -944,6 +944,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                     <InputNumber
                                         placeholder="Enter salary amount"
                                         size="large"
+                                        defaultValue={initialValues?.expectedSalary}
                                         min={0}
                                         precision={0}
                                         style={{

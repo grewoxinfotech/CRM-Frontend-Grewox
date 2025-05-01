@@ -15,6 +15,7 @@ import {
 import { FiUser, FiMail, FiPhone, FiX, FiUpload } from 'react-icons/fi';
 import { useCreateTicketMutation, useUpdateTicketMutation } from './services/ticketApi';
 import { useGetEmployeesQuery } from '../../hrm/Employee/services/employeeApi';
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -40,19 +41,39 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
     const [updateTicket, { isLoading: isUpdating }] = useUpdateTicketMutation();
     
     const { data: employeesData, isLoading: isLoadingEmployees, error: employeesError } = useGetEmployeesQuery();
+    const { data: rolesData } = useGetRolesQuery();
     
     const employees = React.useMemo(() => {
-        if (!employeesData) return [];
-        return Array.isArray(employeesData) 
-            ? employeesData 
-            : employeesData.data || [];
-    }, [employeesData]);
+        if (!employeesData || !rolesData?.data) return [];
+        
+        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+        const employeesList = Array.isArray(employeesData) ? employeesData : employeesData.data || [];
+
+        return employeesList.map(employee => {
+            const userRole = rolesList.find(role => role.id === employee.role_id);
+            return {
+                ...employee,
+                role: userRole
+            };
+        });
+    }, [employeesData, rolesData]);
     
     useEffect(() => {
         if (open) {
             form.resetFields();
             if (initialValues) {
-                form.setFieldsValue(initialValues);
+                // Format the initial values for editing
+                const formattedValues = {
+                    ...initialValues,
+                    // Map ticketSubject to subject for form display
+                    subject: initialValues.ticketSubject || initialValues.subject,
+                    requestor: initialValues.requestor,
+                    priority: initialValues.priority || 'medium',
+                    agent: initialValues.agent,
+                    status: initialValues.status || 'open',
+                    description: initialValues.description
+                };
+                form.setFieldsValue(formattedValues);
             }
         }
     }, [open, form, initialValues]);
@@ -243,27 +264,125 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                         rules={[{ required: true, message: 'Please select an employee as requestor' }]}
                     >
                         <Select
-                            placeholder="Select employee"
-                            size="large"
-                            loading={isLoadingEmployees}
                             showSearch
-                            optionFilterProp="children"
-                            filterOption={(input, option) =>
-                                (option?.children?.toString() || '').toLowerCase().includes(input.toLowerCase())
-                            }
+                            placeholder="Select employee"
+                            optionFilterProp="label"
+                            size="large"
+                            listHeight={100}
+                            dropdownStyle={{
+                                height: '100px',
+                                overflowY: 'auto',
+                                scrollbarWidth: 'thin',
+                                scrollBehavior: 'smooth'
+                            }}
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
                             }}
-                        >
-                            {employees.map(employee => (
-                                <Option key={employee.id} value={employee.id}>
-                                    {employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
-                                </Option>
-                            ))}
-                        </Select>
+                            filterOption={(input, option) => {
+                                const label = option?.label?.toString() || '';
+                                return label.toLowerCase().includes(input.toLowerCase());
+                            }}
+                            options={employees.map(employee => {
+                                const roleStyles = {
+                                    'employee': {
+                                        color: '#D46B08',
+                                        bg: '#FFF7E6',
+                                        border: '#FFD591'
+                                    },
+                                    'default': {
+                                        color: '#531CAD',
+                                        bg: '#F9F0FF',
+                                        border: '#D3ADF7'
+                                    }
+                                };
+
+                                const roleStyle = roleStyles[employee.role?.role_name?.toLowerCase()] || roleStyles.default;
+
+                                return {
+                                    label: (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '12px',
+                                            padding: '4px 0'
+                                        }}>
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '50%',
+                                                background: '#e6f4ff',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: '#1890ff',
+                                                fontSize: '16px',
+                                                fontWeight: '500',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                {employee.profilePic ? (
+                                                    <img
+                                                        src={employee.profilePic}
+                                                        alt={employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '100%',
+                                                            borderRadius: '50%',
+                                                            objectFit: 'cover'
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <FiUser style={{ fontSize: '20px' }} />
+                                                )}
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                flex: 1
+                                            }}>
+                                                <span style={{
+                                                    fontWeight: 500,
+                                                    color: 'rgba(0, 0, 0, 0.85)',
+                                                    fontSize: '14px'
+                                                }}>
+                                                    {employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`}
+                                                </span>
+                                            </div>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}>
+                                                <div
+                                                    className="role-indicator"
+                                                    style={{
+                                                        width: '8px',
+                                                        height: '8px',
+                                                        borderRadius: '50%',
+                                                        background: roleStyle.color,
+                                                        boxShadow: `0 0 8px ${roleStyle.color}`,
+                                                        animation: 'pulse 2s infinite'
+                                                    }}
+                                                />
+                                                <span style={{
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '12px',
+                                                    background: roleStyle.bg,
+                                                    color: roleStyle.color,
+                                                    border: `1px solid ${roleStyle.border}`,
+                                                    fontWeight: 500,
+                                                    textTransform: 'capitalize'
+                                                }}>
+                                                    {employee.role?.role_name || 'User'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ),
+                                    value: employee.id
+                                };
+                            })}
+                        />
                     </Form.Item>
 
                     <Form.Item

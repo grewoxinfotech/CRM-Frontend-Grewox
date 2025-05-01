@@ -154,7 +154,11 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   };
 
   const handleEdit = (record) => {
-    setSelectedSalary(record);
+    setSelectedSalary({
+      ...record,
+      salary_date: record.salary_date ? dayjs(record.salary_date) : null,
+      payment_date: record.payment_date ? dayjs(record.payment_date) : null,
+    });
     setEditModalVisible(true);
   };
 

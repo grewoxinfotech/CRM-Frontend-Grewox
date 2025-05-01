@@ -191,12 +191,8 @@ const EditMeeting = ({
                 updated_by: auth?.user?.id,
                 updated_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             };
-
-            console.log('Submitting meeting with data:', formattedValues);
-
             await onSubmit(formattedValues);
         } catch (error) {
-            console.error('Meeting update error:', error);
             message.error(error?.data?.message || 'Failed to update meeting');
         }
     };

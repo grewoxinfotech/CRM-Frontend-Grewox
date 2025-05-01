@@ -239,7 +239,7 @@ const CreateTask = ({
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={600}
+      width={800}
       destroyOnClose={true}
       centered
       closeIcon={null}

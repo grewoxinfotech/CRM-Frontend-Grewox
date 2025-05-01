@@ -500,6 +500,33 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
             border-radius: 8px;
             overflow: hidden;
 
+            .ant-table-container {
+              overflow: hidden;
+              border-radius: 8px;
+            }
+
+            .ant-table-content {
+              overflow: auto;
+
+              &::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+                background-color: #f5f5f5;
+              }
+
+              &::-webkit-scrollbar-thumb {
+                background: #1890ff;
+                border-radius: 10px;
+              }
+
+              &::-webkit-scrollbar-track {
+                background: #f5f5f5;
+                border-radius: 10px;
+              }
+            }
+
+           
+
             .ant-table-thead > tr > th {
               background: #fafafa !important;
               color: #1f2937;
@@ -552,6 +579,22 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
               overflow-y: auto;
               padding: 4px;
               border-radius: 6px;
+
+              &::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+                background-color: #f5f5f5;
+              }
+
+              &::-webkit-scrollbar-thumb {
+                background: #1890ff;
+                border-radius: 10px;
+              }
+
+              &::-webkit-scrollbar-track {
+                background: #f5f5f5;
+                border-radius: 10px;
+              }
             }
 
             .ant-input {

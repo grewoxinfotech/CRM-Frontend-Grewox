@@ -79,8 +79,7 @@ export default function OTPVerification() {
                 throw new Error('Please enter complete OTP');
             }
 
-            // Add your OTP verification logic here
-            console.log('Verifying OTP:', otpString);
+        
 
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -93,7 +92,6 @@ export default function OTPVerification() {
             // Navigate to next step
             navigate('/reset-password');
         } catch (error) {
-            console.error('OTP verification error:', error);
             message.error({
                 content: error?.message || 'Failed to verify OTP. Please try again.',
                 icon: <span className="error-icon">×</span>

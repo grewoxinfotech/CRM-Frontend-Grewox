@@ -447,7 +447,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                                 <Select
                                     size="large"
                                     style={{
-                                        width: '80px',
+                                        width: '90px',
                                         height: '48px'
                                     }}
                                     loading={countriesLoading}

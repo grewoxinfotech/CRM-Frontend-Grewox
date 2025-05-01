@@ -216,9 +216,9 @@ const Leave = () => {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               style={{ 
-                width: '300px', 
-                borderRadius: '20px',
-                height: '38px'
+                width: '300px',
+                borderRadius: '40px',
+                height: '40px'
               }}
             />
             <RangePicker

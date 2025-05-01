@@ -16,6 +16,7 @@ import { FiFileText, FiX, FiCalendar, FiUser, FiTag } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useCreateLeaveMutation } from "./services/LeaveApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import "./leave.scss";
 
 const { Text } = Typography;
@@ -27,7 +28,21 @@ const CreateLeave = ({ open, onCancel }) => {
   const [createLeave, { isLoading }] = useCreateLeaveMutation();
   const { data: employeesData, isLoading: isLoadingEmployees } =
     useGetEmployeesQuery();
-  const employees = employeesData?.data || [];
+  const { data: rolesData } = useGetRolesQuery();
+  const employees = React.useMemo(() => {
+    if (!employeesData?.data || !rolesData?.data) return [];
+    
+    const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+    const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
+
+    return employeesList.map(employee => {
+        const userRole = rolesList.find(role => role.id === employee.role_id);
+        return {
+            ...employee,
+            role: userRole
+        };
+    });
+  }, [employeesData, rolesData]);
 
   const handleSubmit = async (values) => {
     try {
@@ -45,7 +60,6 @@ const CreateLeave = ({ open, onCancel }) => {
       form.resetFields();
       onCancel();
     } catch (error) {
-      console.error("Submit Error:", error);
       message.error(error?.data?.message || "Failed to create leave request");
     }
   };
@@ -166,46 +180,132 @@ const CreateLeave = ({ open, onCancel }) => {
               name="employeeId"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
                   Employee <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
+              rules={[{ required: true, message: "Please select an employee" }]}
             >
               <Select
-                placeholder="Select Employee"
-                size="large"
-                loading={isLoadingEmployees}
-                listHeight={100}
-              dropdownStyle={{
-                Height: '100px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                  scrollBehavior: "smooth",
-                }}
                 showSearch
+                placeholder="Select employee"
+                optionFilterProp="label"
                 allowClear
+                size="large"
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
                 style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
+                  width: '100%',
+                  borderRadius: '10px',
                 }}
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  option?.children?.toLowerCase().includes(input.toLowerCase())
-                }
-                onChange={(value) => {
-                  console.log("Selected value:", value);
-                  form.validateFields(["employeeId"]);
+                filterOption={(input, option) => {
+                  const label = option?.label?.toString() || '';
+                  return label.toLowerCase().includes(input.toLowerCase());
                 }}
-              >
-                {Array.isArray(employees) &&
-                  employees.map((employee) => (
-                    <Option key={employee.id} value={employee.id}>
-                      {`${employee.firstName} ${employee.lastName}`}
-                    </Option>
-                  ))}
-              </Select>
+                options={employees.map(employee => {
+                  const roleStyles = {
+                    'employee': {
+                      color: '#D46B08',
+                      bg: '#FFF7E6',
+                      border: '#FFD591'
+                    },
+                    'default': {
+                      color: '#531CAD',
+                      bg: '#F9F0FF',
+                      border: '#D3ADF7'
+                    }
+                  };
+
+                  const roleStyle = roleStyles[employee.role?.role_name?.toLowerCase()] || roleStyles.default;
+
+                  return {
+                    label: (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '4px 0'
+                      }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: '#e6f4ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#1890ff',
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          textTransform: 'uppercase'
+                        }}>
+                          {employee.profilePic ? (
+                            <img
+                              src={employee.profilePic}
+                              alt={employee.firstName + ' ' + employee.lastName}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          ) : (
+                            <FiUser style={{ fontSize: '20px' }} />
+                          )}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flex: 1
+                        }}>
+                          <span style={{
+                            fontWeight: 500,
+                            color: 'rgba(0, 0, 0, 0.85)',
+                            fontSize: '14px'
+                          }}>
+                            {`${employee.firstName} ${employee.lastName}`}
+                          </span>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <div
+                            className="role-indicator"
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              background: roleStyle.color,
+                              boxShadow: `0 0 8px ${roleStyle.color}`,
+                              animation: 'pulse 2s infinite'
+                            }}
+                          />
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            background: roleStyle.bg,
+                            color: roleStyle.color,
+                            border: `1px solid ${roleStyle.border}`,
+                            fontWeight: 500,
+                            textTransform: 'capitalize'
+                          }}>
+                            {employee.role?.role_name || 'User'}
+                          </span>
+                        </div>
+                      </div>
+                    ),
+                    value: employee.id
+                  };
+                })}
+              />
             </Form.Item>
           </Col>
 

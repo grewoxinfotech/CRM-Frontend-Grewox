@@ -404,7 +404,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
         {
           title: "Calendar",
           icon: <FiCalendar />,
-          path: "/dashboard/communication/calendar",
+          path: "/dashboard/hrm/calendar",
 
         },
         {

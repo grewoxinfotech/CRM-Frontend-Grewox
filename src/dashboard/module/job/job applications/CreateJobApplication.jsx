@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Modal,
     Form,
@@ -48,6 +48,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
     const [updateJobApplication, { isLoading: isUpdating }] = useUpdateJobApplicationMutation();
     const { data: jobs, isLoading: isLoadingJobs } = useGetAllJobsQuery();
     const { data: countries, isLoading: countriesLoading } = useGetAllCountriesQuery();
+    const [fileList, setFileList] = useState([]);
 
     const getFieldRules = (fieldName) => {
         if (!isEditing) {
@@ -60,6 +61,20 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
         if (open) {
             form.resetFields();
             if (initialValues) {
+                // Handle file list
+                if (initialValues.cv_path) {
+                    setFileList([
+                        {
+                            uid: '-1',
+                            name: initialValues.cv_path.split('/').pop(),
+                            status: 'done',
+                            url: initialValues.cv_path
+                        }
+                    ]);
+                } else {
+                    setFileList([]);
+                }
+
                 // Parse the phone object if it exists
                 let phoneCode = '+91'; // Default to India's code
                 let phoneNumber = '';
@@ -86,6 +101,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                 };
                 form.setFieldsValue(formattedValues);
             } else {
+                setFileList([]); // Clear file list for new applications
                 // Set default values for new application
                 form.setFieldsValue({
                     phoneCode: '+91', // Set default phone code for new applications
@@ -151,6 +167,10 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
             console.error('Operation failed:', error);
             message.error(error?.data?.message || `Failed to ${isEditing ? 'update' : 'create'} job application`);
         }
+    };
+
+    const handleFileChange = (info) => {
+        setFileList(info.fileList.slice(-1));
     };
 
     const statusOptions = [
@@ -373,7 +393,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                 <Select
                                     size="large"
                                     style={{
-                                        width: '80px',
+                                        width: '90px',
                                         height: '48px',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -404,7 +424,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                                 color: '#262626',
                                                 cursor: 'pointer',
                                             }}>
-                                                <span>{country.phoneCode}</span>
+                                                <span> {country.countryCode} {country.phoneCode}</span>
                                             </div>
                                         </Option>
                                     ))}
@@ -568,7 +588,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                 <Form.Item
                     name="cv_path"
                     label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Resume/CV {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
-                    rules={getFieldRules('status')}
+                    rules={getFieldRules('resume')}
                     className="full-width"  
                 >
                     <Upload.Dragger
@@ -577,6 +597,8 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                         beforeUpload={() => false}
                         maxCount={1}
                         accept=".pdf,.doc,.docx"
+                        fileList={fileList}
+                        onChange={handleFileChange}
                     >
                         <p className="ant-upload-drag-icon">
                             <FiUpload style={{ fontSize: '24px', color: '#1890ff' }} />

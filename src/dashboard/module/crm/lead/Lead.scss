@@ -280,6 +280,77 @@
         border: none;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
     }
+
+    .table-container {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+
+        .ant-table-wrapper {
+            overflow: hidden;
+        }
+
+        .ant-table {
+            background: #fff;
+        }
+
+        .ant-table-container {
+            padding-bottom: 0;
+        }
+
+        .ant-table-header {
+            background: #fff;
+        }
+
+        .ant-table-body {
+            overflow-x: auto !important;
+            overflow-y: auto !important;
+            max-height: calc(100vh - 280px) !important;
+            min-height: 400px;
+        }
+
+        .ant-table-thead > tr > th {
+            background: #fafafa !important;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ant-table-tbody > tr > td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ant-table-tbody > tr:hover > td {
+            background: #fafafa !important;
+        }
+
+        /* Pagination Styles */
+        .ant-pagination {
+            margin: 16px 0 !important;
+            padding: 0 24px;
+        }
+
+        .ant-pagination-total-text {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .ant-pagination-item {
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .ant-pagination-item-active {
+            background: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .ant-pagination-item-active a {
+            color: #fff;
+        }
+    }
 }
 
 // Responsive styles

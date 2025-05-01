@@ -251,12 +251,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       // Set form values
       form.setFieldsValue(formValues);
 
-      // Debug logs
-      console.log('Setting initial values:', {
-        company_id: initialValues.company_id,
-        contact_id: initialValues.contact_id,
-        formValues
-      });
+     
     }
   }, [initialValues, form, currencies, defaultPhoneCode]);
 
@@ -275,13 +270,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         setContactMode('existing');
       }
 
-      // Debug logs
-      console.log('Data loaded:', {
-        companyExists,
-        contactExists,
-        company_id: initialValues.company_id,
-        contact_id: initialValues.contact_id
-      });
+     
     }
   }, [companyAccountsData?.data, contactsData?.data, initialValues, form]);
 
@@ -314,11 +303,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const handleSubmit = async (values) => {
     try {
       let contactId;
-      console.log('Form Values:', values); // Debug log
 
       if (contactMode === 'existing') {
         contactId = values.contact_id;
-        console.log('Using existing contact:', contactId); // Debug log
       } else if (contactMode === 'new') {
         // Validate required fields for new contact
         if (!values.firstName && !values.lastName) {
@@ -327,7 +314,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         }
 
         try {
-          console.log('Creating new contact...'); // Debug log
 
           // Format phone with country code
           let formattedPhone = '';
@@ -352,10 +338,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             client_id: loggedInUser?.client_id
           };
 
-          console.log('Contact Data:', contactData); // Debug log
 
           const response = await createContact(contactData).unwrap();
-          console.log('Contact Creation Response:', response); // Debug log
 
           if (response?.data?.id) {
             contactId = response.data.id;
@@ -364,7 +348,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             throw new Error('Contact creation failed - no ID returned');
           }
         } catch (error) {
-          console.error('Contact Creation Error:', error);
           message.error(error.data?.message || 'Failed to create contact');
           return;
         }
@@ -392,7 +375,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         is_won: values.status === "won" ? true : values.status === "lost" ? false : null,
       };
 
-      console.log('Deal Update Data:', dealData); // Debug log
 
       // Update the deal
       await updateDeal(dealData).unwrap();
@@ -400,7 +382,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       await refetch();
       onCancel();
     } catch (error) {
-      console.error("Deal Update Error:", error);
       message.error(error.data?.message || "Failed to update deal");
     }
   };

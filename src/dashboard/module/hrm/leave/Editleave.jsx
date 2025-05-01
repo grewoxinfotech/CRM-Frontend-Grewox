@@ -16,6 +16,7 @@ import { FiFileText, FiX, FiCalendar, FiUser, FiTag } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useUpdateLeaveMutation } from "./services/LeaveApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
+import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import "./leave.scss";
 
 const { Text } = Typography;
@@ -27,7 +28,21 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
   const [updateLeave, { isLoading }] = useUpdateLeaveMutation();
   const { data: employeesData, isLoading: isLoadingEmployees } =
     useGetEmployeesQuery();
-  const employees = employeesData?.data || [];
+  const { data: rolesData } = useGetRolesQuery();
+  const employees = React.useMemo(() => {
+    if (!employeesData?.data || !rolesData?.data) return [];
+    
+    const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+    const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
+
+    return employeesList.map(employee => {
+        const userRole = rolesList.find(role => role.id === employee.role_id);
+        return {
+            ...employee,
+            role: userRole
+        };
+    });
+  }, [employeesData, rolesData]);
 
   useEffect(() => {
     if (initialValues) {
@@ -46,8 +61,8 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
     try {
       const payload = {
         employeeId: values.employeeId,
-        startDate: values.startDate.format("YYYY-MM-DD"),
-        endDate: values.endDate.format("YYYY-MM-DD"),
+        startDate: values.startDate.format("DD-MM-YYYY"),
+        endDate: values.endDate.format("DD-MM-YYYY"),
         leaveType: values.leaveType,
         reason: values.reason,
         isHalfDay: values.isHalfDay || false,
@@ -58,7 +73,6 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
       form.resetFields();
       onCancel();
     } catch (error) {
-      console.error("Submit Error:", error);
       message.error(error?.data?.message || "Failed to update leave request");
     }
   };
@@ -179,43 +193,131 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
               name="employeeId"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
                   Employee <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select employee" }]}
+              rules={[{ required: true, message: "Please select an employee" }]}
             >
               <Select
-              listHeight={100}
-              dropdownStyle={{
-                Height: '100px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
-                placeholder="Select Employee"
-                size="large"
-                loading={isLoadingEmployees}
                 showSearch
-                allowClear
-                style={{
-                  width: "100%",
-                  borderRadius: "10px",
-                  height: "48px",
-                  backgroundColor: "#f8fafc",
+                placeholder="Select employee"
+                optionFilterProp="label"
+                size="large"
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
                 }}
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  option?.children?.toLowerCase().includes(input.toLowerCase())
-                }
-              >
-                {Array.isArray(employees) &&
-                  employees.map((employee) => (
-                    <Option key={employee.id} value={employee.id}>
-                      {`${employee.firstName} ${employee.lastName}`}
-                    </Option>
-                  ))}
-              </Select>
+                style={{
+                  width: '100%',
+                  borderRadius: '10px',
+                }}
+                filterOption={(input, option) => {
+                  const label = option?.label?.toString() || '';
+                  return label.toLowerCase().includes(input.toLowerCase());
+                }}
+                options={employees.map(employee => {
+                  const roleStyles = {
+                    'employee': {
+                      color: '#D46B08',
+                      bg: '#FFF7E6',
+                      border: '#FFD591'
+                    },
+                    'default': {
+                      color: '#531CAD',
+                      bg: '#F9F0FF',
+                      border: '#D3ADF7'
+                    }
+                  };
+
+                  const roleStyle = roleStyles[employee.role?.role_name?.toLowerCase()] || roleStyles.default;
+
+                  return {
+                    label: (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '4px 0'
+                      }}>
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: '#e6f4ff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#1890ff',
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          textTransform: 'uppercase'
+                        }}>
+                          {employee.profilePic ? (
+                            <img
+                              src={employee.profilePic}
+                              alt={employee.firstName + ' ' + employee.lastName}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '50%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          ) : (
+                            <FiUser style={{ fontSize: '20px' }} />
+                          )}
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          flex: 1
+                        }}>
+                          <span style={{
+                            fontWeight: 500,
+                            color: 'rgba(0, 0, 0, 0.85)',
+                            fontSize: '14px'
+                          }}>
+                            {`${employee.firstName} ${employee.lastName}`}
+                          </span>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <div
+                            className="role-indicator"
+                            style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              background: roleStyle.color,
+                              boxShadow: `0 0 8px ${roleStyle.color}`,
+                              animation: 'pulse 2s infinite'
+                            }}
+                          />
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            background: roleStyle.bg,
+                            color: roleStyle.color,
+                            border: `1px solid ${roleStyle.border}`,
+                            fontWeight: 500,
+                            textTransform: 'capitalize'
+                          }}>
+                            {employee.role?.role_name || 'User'}
+                          </span>
+                        </div>
+                      </div>
+                    ),
+                    value: employee.id
+                  };
+                })}
+              />
             </Form.Item>
           </Col>
 
@@ -277,7 +379,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
                   borderRadius: "10px",
                 }}
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </Form.Item>
           </Col>
@@ -301,7 +403,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
                   borderRadius: "10px",
                 }}
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </Form.Item>
           </Col>

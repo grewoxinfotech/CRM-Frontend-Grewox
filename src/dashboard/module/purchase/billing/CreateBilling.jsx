@@ -169,10 +169,10 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
         return;
       }
 
-      const { phoneCode, phoneNumber, ...otherValues } = values;
       const result = await createVendor({
         name: values.name,
         contact: values.contact,
+        phonecode: selectedCountry.id
       }).unwrap();
 
       message.success("Vendor created successfully");

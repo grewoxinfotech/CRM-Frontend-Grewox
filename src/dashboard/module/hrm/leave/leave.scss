@@ -65,30 +65,94 @@
         .header-actions {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 16px;
+            width: 100%;
+            max-width: 800px;
 
-            .search-input {
-                width: 300px;
+            .search-filter-group {
+                flex: 1;
+                max-width: 620px;
+                min-width: 200px;
 
                 .ant-input-affix-wrapper {
-                    border-radius: 8px;
+                    border-radius: 40px;
+                    height: 40px;
+                    padding: 4px 16px;
+                    transition: all 0.3s ease;
+                    border: 1px solid $border-color;
+                    width: 100%;
+
+                    .anticon {
+                        color: $text-color-light;
+                        margin-right: 8px;
+                        font-size: 16px;
+                    }
+
+                    .ant-input {
+                        font-size: 14px;
+                        background: transparent;
+                        border: none;
+                        padding: 0;
+                        margin: 0 4px;
+
+                        &::placeholder {
+                            color: rgba($text-color, 0.45);
+                        }
+                    }
+
+                    &:hover,
+                    &:focus,
+                    &-focused {
+                        border-color: #1677ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
                 }
             }
 
             .action-buttons {
                 display: flex;
-                gap: 8px;
+                align-items: center;
+                gap: 12px;
+                flex-shrink: 0;
+
+                .export-button,
+                .add-button {
+                    height: 40px;
+                    padding: 0 20px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+
+                    svg {
+                        font-size: 16px;
+                    }
+                }
 
                 .export-button {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+                    border: 1px solid $border-color;
+                    background: white;
+
+                    &:hover {
+                        color: #1677ff;
+                        border-color: #1677ff;
+                        transform: translateY(-2px);
+                    }
                 }
 
                 .add-button {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
+                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                    border: none;
+                    color: white;
+
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                        transform: translateY(-2px);
+                    }
                 }
             }
         }
@@ -397,6 +461,42 @@
                     a {
                         color: #1890ff;
                     }
+                }
+            }
+        }
+    }
+}
+
+// Add dropdown styles
+.ant-dropdown {
+    .ant-dropdown-menu {
+        padding: 4px;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #374151;
+
+            &:hover {
+                background-color: #f3f4f6;
+            }
+
+            svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            &.ant-dropdown-menu-item-danger {
+                color: #ff4d4f;
+
+                &:hover {
+                    background-color: #fff1f0;
                 }
             }
         }

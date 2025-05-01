@@ -262,7 +262,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
               name="name"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Customer Name
+                  Customer Name <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
               rules={[

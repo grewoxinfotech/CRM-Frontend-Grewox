@@ -1,8 +1,8 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Table, Button, Tag, Dropdown, Menu, Avatar, message, Input, Space, Switch } from 'antd';
+import React, { useMemo } from 'react';
+import { Table, Button, Tag, Dropdown, Menu, Avatar, message, Input, Space } from 'antd';
 import {
     FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiUser, FiEye, FiShield, FiBriefcase, FiUsers, FiLogIn,
-    FiGitBranch, FiGrid, FiAward, FiMapPin, FiLayers, FiCpu, FiDollarSign
+    FiGitBranch, FiGrid, FiAward, FiMapPin, FiLayers, FiCpu
 } from 'react-icons/fi';
 import moment from 'moment';
 import { useGetRolesQuery } from '../role/services/roleApi'; // Adjust the import path as needed
@@ -12,56 +12,10 @@ import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi'
 import { useGetAllDesignationsQuery } from '../Designation/services/designationApi';
 import { useNavigate } from 'react-router-dom';
 import { useAdminLoginMutation } from '../../../../auth/services/authApi';
-import { useGetSalaryQuery, useUpdateSalaryMutation } from '../payRoll/services/salaryApi';
-
-// Define styles outside the component
-const switchStyles = `
-  .status-switch.ant-switch {
-    min-width: 40px;
-    height: 22px;
-    background: #faad14;
-    padding: 0 2px;
-  }
-
-  .status-switch.ant-switch .ant-switch-handle {
-    width: 18px;
-    height: 18px;
-    top: 2px;
-    left: 2px;
-    transition: all 0.2s ease-in-out;
-  }
-
-  .status-switch.ant-switch.ant-switch-checked .ant-switch-handle {
-    left: calc(100% - 20px);
-  }
-
-  .status-switch.ant-switch.paid {
-    background: #52c41a;
-  }
-
-  .status-switch.ant-switch:not(.ant-switch-disabled) {
-    background-color: #faad14;
-  }
-
-  .status-switch.ant-switch.paid:not(.ant-switch-disabled) {
-    background: #52c41a;
-  }
-
-  .status-switch.ant-switch:focus {
-    box-shadow: none;
-  }
-
-  .status-switch.ant-switch .ant-switch-handle::before {
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-`;
 
 const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
-    const [loading, setLoading] = useState(false);
-    const [updateSalary] = useUpdateSalaryMutation();
 
     // Fetch roles data
     const { data: rolesData } = useGetRolesQuery();
@@ -70,7 +24,6 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     const { data: branchesData } = useGetAllBranchesQuery();
     const { data: departmentsData } = useGetAllDepartmentsQuery();
     const { data: designationsData } = useGetAllDesignationsQuery();
-    const { data: salaryData } = useGetSalaryQuery();
 
     // Function to get role name from role_id
     const getRoleName = (role_id) => {
@@ -176,32 +129,6 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         }
     };
 
-    const handleSalaryStatusChange = async (checked, salaryId) => {
-        try {
-            setLoading(true);
-            const response = await updateSalary({
-                id: salaryId,
-                data: {
-                    status: checked ? 'paid' : 'unpaid'
-                }
-            }).unwrap();
-
-            if (response.success) {
-                message.success(`Payment status updated to ${checked ? 'paid' : 'unpaid'}`);
-            }
-        } catch (error) {
-            console.error('Error updating payment status:', error);
-            message.error(error?.data?.message || 'Failed to update payment status');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const getEmployeeSalary = (employeeId) => {
-        if (!salaryData?.data) return null;
-        return salaryData.data.find(salary => salary.employeeId === employeeId);
-    };
-
     const getActionMenu = (record) => (
         <Menu className="action-menu">
             <Menu.Item
@@ -291,29 +218,29 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'name',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search name"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+                  <Input
+                    placeholder="Search name"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
                 </div>
-            ),
-            onFilter: (value, record) =>
+              ),
+              onFilter: (value, record) =>
                 record.name.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => (
@@ -332,29 +259,29 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'role_id',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search role"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+                  <Input
+                    placeholder="Search role"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
                 </div>
-            ),
-            onFilter: (value, record) =>
+              ),
+              onFilter: (value, record) =>
                 record.roleName.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (role_id) => {
@@ -389,7 +316,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
                     </div>
                 );
             },
-
+           
         },
         {
             title: 'Branch',
@@ -397,29 +324,29 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'branch',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search branch"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+                  <Input
+                    placeholder="Search branch"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
                 </div>
-            ),
-            onFilter: (value, record) =>
+              ),
+              onFilter: (value, record) =>
                 record.branchName.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (branchId) => {
@@ -454,29 +381,29 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'department',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search department"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+                  <Input
+                    placeholder="Search department"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
                 </div>
-            ),
-            onFilter: (value, record) =>
+              ),
+              onFilter: (value, record) =>
                 record.departmentName.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (departmentId) => {
@@ -511,29 +438,29 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             key: 'designation',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search designation"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+                  <Input
+                    placeholder="Search designation"
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => confirm()}
+                    style={{ width: 188, marginBottom: 8, display: 'block' }}
+                  />
+                  <Space>
+                    <Button
+                      type="primary"
+                      onClick={() => confirm()}
+                      size="small"
+                      style={{ width: 90 }}
+                    >
+                      Filter
+                    </Button>
+                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                      Reset
+                    </Button>
+                  </Space>
                 </div>
-            ),
-            onFilter: (value, record) =>
+              ),
+              onFilter: (value, record) =>
                 record.designationName.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (designationId) => {
@@ -563,70 +490,46 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             },
         },
         {
-            title: 'Salary Status',
-            key: 'salaryStatus',
-            width: 200,
-            render: (_, record) => {
-                const salaryInfo = getEmployeeSalary(record.id);
-                return (
-                    <div className="salary-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {salaryInfo ? (
-                            <>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <span style={{ color: '#52c41a', fontSize: '14px' }}>₹</span>
-                                    <span style={{ fontWeight: 500 }}>
-                                        {Number(salaryInfo.salary || 0).toLocaleString('en-IN', {
-                                            maximumFractionDigits: 2,
-                                            minimumFractionDigits: 2
-                                        })}
-                                    </span>
-                                    <span style={{ color: '#8c8c8c', fontSize: '13px' }}>INR</span>
-                                </div>
-                                <Switch
-                                    size="small"
-                                    checked={salaryInfo.status === 'paid'}
-                                    onChange={(checked) => handleSalaryStatusChange(checked, salaryInfo.id)}
-                                    loading={loading}
-                                    className={`status-switch ${salaryInfo.status === 'paid' ? 'paid' : ''}`}
-                                />
-                                <Tag
-                                    color={salaryInfo.status === 'paid' ? 'success' : 'warning'}
-                                    style={{
-                                        margin: 0,
-                                        textTransform: 'capitalize',
-                                        borderRadius: '12px',
-                                        fontSize: '12px',
-                                        padding: '0 8px',
-                                        height: '22px',
-                                        display: 'flex',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    {salaryInfo.status}
-                                </Tag>
-                            </>
-                        ) : (
-                            <Tag
-                                color="default"
-                                style={{
-                                    margin: 0,
-                                    borderRadius: '12px',
-                                    fontSize: '12px',
-                                    padding: '0 8px',
-                                    height: '22px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    background: '#f5f5f5',
-                                    border: 'none',
-                                    color: '#8c8c8c'
-                                }}
-                            >
-                                No Salary Info
-                            </Tag>
-                        )}
-                    </div>
-                );
-            }
+            title: 'Created At',
+            dataIndex: 'created_at',
+            key: 'created_at',
+            render: (date) => (
+                <div className="date-cell">
+                    <span className="date">
+                        {moment(date).format('MMM DD, YYYY')}
+                    </span>
+                    <span className="time">
+                        {moment(date).format('h:mm A')}
+                    </span>
+                </div>
+            ),
+            sorter: (a, b) => moment(a.created_at).unix() - moment(b.created_at).unix(),
+        },
+        {
+            title: 'Updated At',
+            dataIndex: 'updated_at',
+            key: 'updated_at',
+            render: (date) => (
+                <div className="date-cell">
+                    {date ? (
+                        <>
+                            <span className="date">
+                                {moment(date).format('MMM DD, YYYY')}
+                            </span>
+                            <span className="time">
+                                {moment(date).format('h:mm A')}
+                            </span>
+                        </>
+                    ) : (
+                        <span className="no-date">-</span>
+                    )}
+                </div>
+            ),
+            sorter: (a, b) => {
+                if (!a.updated_at) return -1;
+                if (!b.updated_at) return 1;
+                return moment(a.updated_at).unix() - moment(b.updated_at).unix();
+            },
         },
         {
             title: 'Actions',
@@ -690,18 +593,6 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             roleName: getRoleName(emp.role_id) // Add role name to transformed data
         }));
     }, [employees, branchesData, departmentsData, designationsData, rolesData]); // Add rolesData to dependencies
-
-    useEffect(() => {
-        // Add styles to head
-        const styleElement = document.createElement('style');
-        styleElement.innerHTML = switchStyles;
-        document.head.appendChild(styleElement);
-
-        return () => {
-            // Cleanup styles on unmount
-            document.head.removeChild(styleElement);
-        };
-    }, []);
 
     return (
         <Table

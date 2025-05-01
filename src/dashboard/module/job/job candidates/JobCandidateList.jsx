@@ -141,18 +141,7 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 return a.applied_source.localeCompare(b.applied_source);
             },
         },
-        {
-            title: 'Cover Letter',
-            dataIndex: 'cover_letter',
-            key: 'cover_letter',
-            render: (date) => date ? date.slice(0, 10) : 'N/A',
-            sorter: (a, b) => {
-                if (!a.cover_letter && !b.cover_letter) return 0;
-                if (!a.cover_letter) return -1;
-                if (!b.cover_letter) return 1;
-                return moment(a.cover_letter).unix() - moment(b.cover_letter).unix();
-            },
-        },
+        
         {
             title: 'Status',
             dataIndex: 'status',
