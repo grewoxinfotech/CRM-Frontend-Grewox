@@ -8,6 +8,7 @@ import {
   Divider,
   message,
   Select,
+  Col,
 } from "antd";
 import { FiUser, FiFileText, FiUsers, FiAlignLeft, FiX } from "react-icons/fi";
 import {
@@ -17,6 +18,8 @@ import {
 } from "./services/notesApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
+import { useGetEmployeesQuery } from "../../../dashboard/module/hrm/Employee/services/employeeApi";
+import { useGetRolesQuery } from "../../../dashboard/module/hrm/role/services/roleApi";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -31,15 +34,39 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
     user?.id || ""
   );
 
+    const { data: employeesData, isLoading: isLoadingEmployees } =
+    useGetEmployeesQuery();
+    const { data: rolesData } = useGetRolesQuery();
+
+      const employees = React.useMemo(() => {
+    if (!employeesData?.data || !rolesData?.data) return [];
+    
+    const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+    const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
+
+    // Filter only employees with 'employee' role
+    return employeesList
+      .filter(employee => {
+        const userRole = rolesList.find(role => role.id === employee.role_id);
+        return userRole?.role_name?.toLowerCase() === 'employee';
+      })
+      .map(employee => {
+        const userRole = rolesList.find(role => role.id === employee.role_id);
+        return {
+          ...employee,
+          role: userRole
+        };
+      });
+  }, [employeesData, rolesData]);
+
+   
   const handleSubmit = async (values) => {
     try {
       // Transform form values to match Joi validation schema
       const payload = {
         note_title: values.note_title,
         notetype: values.notetype,
-        employees: {
-          employee: "John Doe", // Sending single employee to avoid SQL syntax issues
-        },
+        employees: { employee: values.employee },
         description: values.description,
       };
 
@@ -50,7 +77,6 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
         await createNotes({ id: user?.id || "", data: payload }).unwrap();
         message.success("Note created successfully");
       }
-      // Refetch notes after successful creation/update
       await refetchNotes();
       form.resetFields();
       onCancel();
@@ -184,7 +210,7 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
                 fontWeight: "500",
               }}
             >
-              Note Title
+              Note Title <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please enter note title" }]}
@@ -215,7 +241,7 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
                 fontWeight: "500",
               }}
             >
-              Note Type
+              Note Type <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please select note type" }]}
@@ -235,31 +261,105 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
           </Select>
         </Form.Item>
 
-        <Form.Item
-          name="employees"
-          label={
-            <span
-              style={{
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
+         <Col span={24}>
+            <Form.Item
+              name="employee"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  Employee <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please select an employee" }]}
             >
-              Employees
-            </span>
-          }
-        >
-          <Select
-            mode="multiple"
-            placeholder="Select employees"
-            size="large"
-            style={{
-              width: "100%",
-              borderRadius: "10px",
-            }}
-          >
-            {/* Add employee options here */}
-          </Select>
-        </Form.Item>
+              <Select
+                showSearch
+                placeholder="Select employee"
+                optionFilterProp="label"
+                size="large"
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
+                style={{
+                  width: '100%',
+                  borderRadius: '10px',
+                }}
+                filterOption={(input, option) => {
+                  const label = option?.label?.toString() || '';
+                  return label.toLowerCase().includes(input.toLowerCase());
+                }}
+                options={employees.map(employee => ({
+                  label: (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '4px 0'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        background: '#e6f4ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#1890ff',
+                        fontSize: '16px',
+                        fontWeight: '500',
+                        textTransform: 'uppercase'
+                      }}>
+                        {employee.profilePic ? (
+                          <img
+                            src={employee.profilePic}
+                            alt={employee.firstName + ' ' + employee.lastName}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '50%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        ) : (
+                          <FiUser style={{ fontSize: '20px' }} />
+                        )}
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flex: 1
+                      }}>
+                        <span style={{
+                          fontWeight: 500,
+                          color: 'rgba(0, 0, 0, 0.85)',
+                          fontSize: '14px'
+                        }}>
+                          {`${employee.firstName} ${employee.lastName}`}
+                        </span>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          background: '#F9F0FF',
+                          color: '#531CAD',
+                          border: '1px solid #D3ADF7',
+                          fontWeight: 500,
+                          textTransform: 'capitalize'
+                        }}>
+                          {employee.role?.role_name || 'User'}
+                        </span>
+                      </div>
+                    </div>
+                  ),
+                  value: employee.id
+                }))}
+              />
+            </Form.Item>
+          </Col>
 
         <Form.Item
           name="description"

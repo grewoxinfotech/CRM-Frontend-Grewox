@@ -166,7 +166,7 @@ const CreateCompanyInquiry = ({ open, onCancel, onSubmit, loading }) => {
                             label={
                                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                                     <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
-                                    Full Name <span style={{ color: '#ff4d4f' }}>*</span>
+                                    Full Name <span style={{ color: '#ff4d4f', marginTop: "4px" }}>*</span>
                                 </span>
                             }
                             rules={[{ required: true, message: "Please enter full name" }]}

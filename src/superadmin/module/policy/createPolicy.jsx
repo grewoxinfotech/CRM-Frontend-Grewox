@@ -165,7 +165,7 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                             fontSize: '14px',
                             fontWeight: '500',
                         }}>
-                            Policy Title
+                            Policy Title <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter policy title' }]}
@@ -192,7 +192,7 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                             fontSize: '14px',
                             fontWeight: '500',
                         }}>
-                            Description
+                            Description <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter policy description' }]}
@@ -219,9 +219,10 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                             fontSize: '14px',
                             fontWeight: '500',
                         }}>
-                            Policy File
+                            Policy File <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
+                    rules={[{ required: true, message: 'Please upload a policy file' }]}
                 >
                     <Upload
                         beforeUpload={beforeUpload}

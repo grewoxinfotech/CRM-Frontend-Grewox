@@ -297,7 +297,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                 name="title"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Title
+                    Title <span style={{ color: "#ff4d4f" }}>*</span>
                   </span>
                 }
                 rules={[
@@ -331,8 +331,8 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                 name="branch"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Branches
-                  </span>
+                    Branches <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span> 
                 }
                 rules={[
                   {
@@ -373,7 +373,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                 name="date"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Date
+                    Date <span style={{ color: "#ff4d4f" }}>*</span>
                   </span>
                 }
                 rules={[{ required: true, message: "Please select date" }]}
@@ -401,7 +401,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                 name="time"
                 label={
                   <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                    Time
+                    Time <span style={{ color: "#ff4d4f" }}>*</span>
                   </span>
                 }
                 rules={[{ required: true, message: "Please select time" }]}
@@ -428,7 +428,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
             name="description"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Description
+                Description <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please enter description" }]}

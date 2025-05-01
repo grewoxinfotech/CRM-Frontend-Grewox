@@ -149,6 +149,13 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
     }
   };
 
+   // Add formItemStyle constant
+   const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#1f2937",
+  };
+
   return (
     <Modal
       title={null}
@@ -249,7 +256,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
         <div style={{ display: "flex", gap: "16px" }}>
           <Form.Item
             name="call_start_date"
-            label="Call Start Date"
+            label={<span style={formItemStyle}>Call Start Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: 'Please select start date' }]}
             style={{ flex: 1 }}
           >
@@ -262,7 +269,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
           
           <Form.Item
             name="call_start_time"
-            label="Call Start Time"
+            label={<span style={formItemStyle}>Call Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: 'Please select start time' }]}
             style={{ flex: 1 }}
           >
@@ -277,7 +284,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
 
           <Form.Item
             name="call_end_time"
-            label="Call End Time"
+            label={<span style={formItemStyle}>Call End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: 'Please select end time' }]}
             style={{ flex: 1 }}
           >
@@ -355,7 +362,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
 
           <Form.Item
             name="call_duration"
-            label="Call Duration"
+            label={<span style={formItemStyle}>Call Duration <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: 'Call duration will be calculated automatically' }]}
           >
             <Input
@@ -563,7 +570,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <Form.Item
                       name="subject"
-                      label="Subject"
+                      label={<span style={formItemStyle}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
                       rules={[{ required: true, message: 'Please enter subject' }]}
                   >
                       <Input
@@ -575,7 +582,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
 
                   <Form.Item
                       name="call_purpose"
-                      label="Call Purpose"
+                      label={<span style={formItemStyle}>Call Purpose <span style={{ color: "#ff4d4f" }}>*</span></span>}
                       rules={[{ required: true, message: 'Please select call purpose' }]}
                   >
                       <Select
@@ -597,7 +604,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
 
                   <Form.Item
                       name="call_notes"
-                      label="Notes"
+                      label={<span style={formItemStyle}>Notes <span style={{ color: "#ff4d4f" }}>*</span></span>}
                       rules={[{ required: true, message: 'Please enter call notes' }]}
                       style={{ gridColumn: "1 / -1" }}
                   >

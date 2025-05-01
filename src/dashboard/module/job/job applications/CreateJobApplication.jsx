@@ -372,7 +372,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Phone Number {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
+                                Phone Number
                             </span>
                         }
                         // rules={getFieldRules('phone')}
@@ -561,7 +561,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="status"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Status {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Status </span>}
                         rules={getFieldRules('status')}
                         initialValue="pending"
                     >

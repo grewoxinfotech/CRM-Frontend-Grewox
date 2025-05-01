@@ -36,9 +36,10 @@ const CompanyContactList = ({
   } = useGetCompanyAccountsQuery();
   const navigate = useNavigate();
 
-  const allContacts = Array.isArray(contactsResponsee.data)
-    ? contactsResponsee.data
-    : [];
+  const allContacts = React.useMemo(() => {
+    if (!contactsResponsee?.data) return [];
+    return Array.isArray(contactsResponsee.data) ? contactsResponsee.data : [];
+  }, [contactsResponsee]);
 
   const contactsResponse = allContacts.filter(
     (contact) => contact.company_name === company?.id

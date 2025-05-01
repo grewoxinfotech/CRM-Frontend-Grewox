@@ -30,6 +30,7 @@ const AddContractTypeModal = ({ isOpen, onClose }) => {
   };
 
   return (
+    <>
     <Modal
       title={null}
       open={isOpen}
@@ -119,7 +120,7 @@ const AddContractTypeModal = ({ isOpen, onClose }) => {
       >
         <Form.Item
           name="name"
-          label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Contract Type Name</span>}
+          label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Contract Type Name <span style={{ color: "#ff4d4f" }}>*</span></span>}
           rules={[{ required: true, message: 'Please enter the contract type name' }]}
         >
           <Input
@@ -171,6 +172,14 @@ const AddContractTypeModal = ({ isOpen, onClose }) => {
         </div>
       </Form>
     </Modal>
+    <style>
+      {`
+        .ant-form-item-required::before {
+          display: none !important;
+        }
+      `}
+    </style>
+    </>
   );
 };
 

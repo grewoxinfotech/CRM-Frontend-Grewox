@@ -209,7 +209,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                     name="name"
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                            Name
+                            Name {!isEditing && <span style={{ color: "#ff4d4f" }}>*</span>}
                         </span>
                     }
                     rules={[
@@ -234,7 +234,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                     name="email"
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                            Email
+                            Email {!isEditing && <span style={{ color: "#ff4d4f" }}>*</span>}
                         </span>
                     }
                     rules={[
@@ -259,7 +259,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                 <Form.Item
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                            Phone Number
+                            Phone Number {!isEditing && <span style={{ color: "#ff4d4f" }}>*</span>}
                         </span>
                     }
                     required
@@ -348,7 +348,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                     name="subject"
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                            Subject
+                            Subject {!isEditing && <span style={{ color: "#ff4d4f" }}>*</span>}
                         </span>
                     }
                     rules={[
@@ -373,7 +373,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                     name="message"
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                            Message
+                            Message {!isEditing && <span style={{ color: "#ff4d4f" }}>*</span>}
                         </span>
                     }
                     rules={[

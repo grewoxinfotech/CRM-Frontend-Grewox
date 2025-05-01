@@ -733,8 +733,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
           <Form.Item
             name="vendor_id"
             label={
-              <span className="form-label">
-                Vendor <span className="required"></span>
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Vendor <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select vendor" }]}
@@ -799,9 +799,12 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
 
           <Form.Item
             name="billDate"
+            style={{
+              height: "100%",
+            }}
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Bill Date <span style={{ color: "#ff4d4f" }}></span>
+                Bill Date <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select bill date" }]}
@@ -813,6 +816,9 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                 width: "100%",
                 borderRadius: "10px",
                 backgroundColor: "#f8fafc",
+                border: "1px solid #e6e8eb",
+                height: "48px",
+                padding: "8px 16px",
               }}
               suffixIcon={<FiCalendar style={{ color: "#1890ff" }} />}
             />
@@ -829,8 +835,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
           <Form.Item
             name="currency"
             label={
-              <span className="form-label">
-                Currency <span className="required"></span>
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Currency <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select currency" }]}
@@ -871,7 +877,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
             name="status"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Status <span style={{ color: "#ff4d4f" }}></span>
+                Status 
               </span>
             }
             rules={[{ required: true, message: "Please select status" }]}
@@ -881,6 +887,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
               size="large"
               style={{
                 width: "100%",
+                height: "48px",
                 borderRadius: "10px",
               }}
             >
@@ -957,12 +964,6 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                             <Form.Item
                               {...field}
                               name={[field.name, "item_name"]}
-                              rules={[
-                                {
-                                  required: true,
-                                  message: "Please select or enter item",
-                                },
-                              ]}
                             >
                               <Select
                                 showSearch
@@ -1058,12 +1059,6 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                               {...field}
                               name={[field.name, "quantity"]}
                               initialValue={1}
-                              rules={[
-                                {
-                                  required: true,
-                                  message: "Required",
-                                },
-                              ]}
                             >
                               <InputNumber
                                 min={1}
@@ -1081,12 +1076,6 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                             <Form.Item
                               {...field}
                               name={[field.name, "unit_price"]}
-                              rules={[
-                                {
-                                  required: true,
-                                  message: "Required",
-                                },
-                              ]}
                             >
                               <InputNumber
                                 className="price-input"

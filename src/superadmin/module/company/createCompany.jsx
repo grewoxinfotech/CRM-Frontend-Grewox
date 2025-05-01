@@ -371,7 +371,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Username
+                                Username <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[{ required: true, message: 'Please enter username' }]}
@@ -398,7 +398,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Email
+                                Email <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[
@@ -428,7 +428,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Password
+                                Password <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[

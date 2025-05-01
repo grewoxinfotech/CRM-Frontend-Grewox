@@ -436,7 +436,7 @@ const CreatefollowupTask = ({
             >
               <Form.Item
                 name="subject"
-                label={<span style={formItemStyle}>Subject</span>}
+                label={<span style={formItemStyle}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
                 rules={[{ required: true, message: "Please enter subject" }]}
               >
                 <Input placeholder="Enter subject" style={inputStyle} />
@@ -444,7 +444,7 @@ const CreatefollowupTask = ({
 
               <Form.Item
                 name="due_date"
-                label={<span style={formItemStyle}>Due Date</span>}
+                label={<span style={formItemStyle}>Due Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
                 rules={[{ required: true, message: "Please select due date" }]}
               >
                 <DatePicker
@@ -461,7 +461,7 @@ const CreatefollowupTask = ({
 
               <Form.Item
                 name="priority"
-                label={<span style={formItemStyle}>Priority</span>}
+                label={<span style={formItemStyle}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
                 rules={[{ required: true, message: "Please select priority" }]}
               >
                 <Select
@@ -1292,6 +1292,14 @@ const CreatefollowupTask = ({
         }}
         onSuccess={handleCreateUserSuccess}
       />
+
+      <style>
+        {`
+          .ant-form-item-required::before {
+            display: none !important;
+          }
+        `}
+      </style>
     </>
   );
 };

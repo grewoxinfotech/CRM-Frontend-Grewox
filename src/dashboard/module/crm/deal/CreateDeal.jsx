@@ -851,7 +851,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
               name="source"
-              label={<span style={formItemStyle}>Source</span>}
+              label={<span style={formItemStyle}>Source <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Source is required" }]}
             >
               <Select
@@ -946,7 +946,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
             <Form.Item
               name="category"
-              label={<span style={formItemStyle}>Category</span>}
+              label={<span style={formItemStyle}>Category <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Category is required" }]}
             >
               <Select

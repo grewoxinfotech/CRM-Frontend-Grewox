@@ -347,7 +347,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         <Form.Item
                             name="name"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Plan Name</span>}
-                            rules={[{ required: true, message: 'Please enter plan name' }]}
                         >
                             <Input
                                 prefix={<FiPackage style={{ color: '#1890ff' }} />}
@@ -389,7 +388,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 <Form.Item
                                     name={['price_group', 'currency']}
                                     noStyle
-                                    rules={[{ required: true }]}
                                 >
                                     <Select
                                         size="large"
@@ -428,7 +426,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 <Form.Item
                                     name={['price_group', 'price']}
                                     noStyle
-                                    rules={[{ required: true, message: 'Please enter price' }]}
                                 >
                                     <InputNumber
                                         placeholder="Enter price"
@@ -461,7 +458,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                     Duration
                                 </span>
                             }
-                            rules={[{ required: true }]}
                             style={{ flex: 1 }}
                         >
                             <Dropdown
@@ -506,7 +502,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Trial Period (Days)
                             </span>
                         }
-                        rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
                         <InputNumber
@@ -533,7 +528,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Storage Limit
                             </span>
                         }
-                        rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
                         <Input.Group compact className="storage-input-group" style={{
@@ -608,7 +602,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Users
                             </span>
                         }
-                        rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
                         <InputNumber
@@ -635,7 +628,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Clients
                             </span>
                         }
-                        rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
                         <InputNumber
@@ -664,7 +656,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Vendors
                             </span>
                         }
-                        rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
                         <InputNumber
@@ -691,7 +682,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Customers
                             </span>
                         }
-                        rules={[{ required: true }]}
                         style={{ flex: 1 }}
                     >
                         <InputNumber

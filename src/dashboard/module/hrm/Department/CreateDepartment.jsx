@@ -222,7 +222,7 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                         name="department_name"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Department Name
+                                Department Name <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[
@@ -249,7 +249,7 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                         name="branch"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Branch
+                                Branch <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[{ required: true, message: 'Please select a branch' }]}

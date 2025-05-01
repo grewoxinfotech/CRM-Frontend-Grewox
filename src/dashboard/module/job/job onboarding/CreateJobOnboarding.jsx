@@ -426,7 +426,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="salary_type"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Salary Type {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
+                                Salary Type 
                             </span>
                         }
                         rules={getFieldRules('salary type')}
@@ -470,7 +470,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         name="status"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Status {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
+                                Status
                             </span>
                         }
                         rules={getFieldRules('status')}

@@ -196,7 +196,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                 label={
                   <span className="form-label">
                     <FiUser />
-                    Account Owner <span className="required">*</span>
+                    Account Owner 
                   </span>
                 }
 
@@ -217,7 +217,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                 label={
                   <span className="form-label">
                     <FiBriefcase />
-                    Company Name <span className="required">*</span>
+                    Company Name 
                   </span>
                 }
                 rules={[{ required: true, message: "Please enter company name" }]}

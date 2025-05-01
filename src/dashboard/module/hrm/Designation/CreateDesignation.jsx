@@ -250,7 +250,7 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                         name="designation_name"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Designation Name
+                                Designation Name <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[
@@ -276,7 +276,7 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                         name="branch"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Branch
+                                Branch <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[{ required: true, message: 'Please select a branch' }]}

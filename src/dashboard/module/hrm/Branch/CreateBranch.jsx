@@ -255,7 +255,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                         name="branchName"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Branch Name
+                                Branch Name <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         
@@ -289,7 +289,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                                 width: '100%'
                             }}>
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Branch Manager
+                                    Branch Manager <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             </div>
                         }
@@ -433,7 +433,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                         name="branchAddress"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                Address
+                                Address <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[{ required: true, message: 'Please enter address' }]}

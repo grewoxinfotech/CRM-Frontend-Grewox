@@ -20,6 +20,7 @@ const AddPipelineModal = ({ isOpen, onClose }) => {
   };
 
   return (
+    <>
     <Modal
       title={null}
       open={isOpen}
@@ -115,7 +116,7 @@ const AddPipelineModal = ({ isOpen, onClose }) => {
       >
         <Form.Item
           name="name"
-          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline Name</span>}
+          label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline Name <span style={{ color: "#ff4d4f" }}>*</span></span>}
           rules={[{ required: true, message: "Please enter the pipeline name" }]}
         >
           <Input
@@ -169,6 +170,14 @@ const AddPipelineModal = ({ isOpen, onClose }) => {
         </div>
       </Form>
     </Modal>
+    <style>
+      {`
+        .ant-form-item-required::before {
+          display: none !important;
+        }
+      `}
+    </style>
+    </>
   );
 };
 

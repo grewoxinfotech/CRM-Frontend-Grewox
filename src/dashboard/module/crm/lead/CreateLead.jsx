@@ -557,7 +557,7 @@ const CreateLead = ({
         }}>
           <Form.Item
             name="leadTitle"
-            label={<span style={formItemStyle}>Lead Title</span>}
+            label={<span style={formItemStyle}>Lead Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[
               { required: true, message: "Please enter lead title" },
               { min: 3, message: "Lead title must be at least 3 characters" },
@@ -572,7 +572,7 @@ const CreateLead = ({
 
           <Form.Item
             name="pipeline"
-            label={<span style={formItemStyle}>Pipeline</span>}
+            label={<span style={formItemStyle}>Pipeline <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select pipeline" }]}
           >
             <Select
@@ -627,7 +627,7 @@ const CreateLead = ({
 
           <Form.Item
             name="leadValueGroup"
-            label={<span style={formItemStyle}>Lead Value</span>}
+            label={<span style={formItemStyle}>Lead Value <span style={{ color: "#ff4d4f" }}>*</span></span>}
             className="combined-input-item"
             required
           >
@@ -679,7 +679,7 @@ const CreateLead = ({
 
           <Form.Item
             name="source"
-            label={<span style={formItemStyle}>Source</span>}
+            label={<span style={formItemStyle}>Source <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select source" }]}
           >
             <Select
@@ -1612,6 +1612,20 @@ const CreateLead = ({
               }
             }
           }
+
+          .ant-form-item-required::before {
+          display: none !important;
+        }
+        
+        .ant-form-item-required::after {
+          display: inline-block;
+          margin-left: 4px;
+          color: #ff4d4f;
+          font-size: 14px;
+          font-family: SimSun, sans-serif;
+          line-height: 1;
+          content: '*';
+        }
 
           .ant-select-dropdown {
             .ant-select-item-option-content {

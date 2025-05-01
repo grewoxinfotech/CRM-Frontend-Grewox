@@ -241,7 +241,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="subject"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Subject</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please enter subject' }]}
                     >
                         <Input
@@ -260,7 +260,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
 
                     <Form.Item
                         name="requestor"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Requestor</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Requestor <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select an employee as requestor' }]}
                     >
                         <Select
@@ -454,7 +454,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
 
                 <Form.Item
                     name="description"
-                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Description</span>}
+                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Description <span style={{ color: "#ff4d4f" }}>*</span></span>}
                     rules={[{ required: true, message: 'Please enter description' }]}
                 >
                     <TextArea

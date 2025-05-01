@@ -270,7 +270,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="job"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select a job position' }]}
                     >
                         <Select
@@ -297,7 +297,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
 
                     <Form.Item
                         name="candidate"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Candidate</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Job Candidate <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select a candidate' }]}
                     >
                         <Select
@@ -326,7 +326,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
 
                     <Form.Item
                         name="interviewer"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interviewer</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interviewer <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select interviewer' }]}
                     >
                         <Select
@@ -454,7 +454,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
 
                     <Form.Item
                         name="round"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interview Round</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interview Round <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select interview rounds' }]}
                     >
                         <Select
@@ -478,7 +478,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
 
                     <Form.Item
                         name="interview_type"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interview Type</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Interview Type <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select interview type' }]}
                     >
                         <Select
@@ -513,7 +513,7 @@ const CreateInterview = ({ open, onCancel, selectedDate }) => {
 
                     <Form.Item
                         name="start_time"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select time' }]}
                     >
                         <TimePicker

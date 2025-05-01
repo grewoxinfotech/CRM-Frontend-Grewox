@@ -181,7 +181,7 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
         >
           <Form.Item
             name="name"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Stage Name</span>}
+            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Stage Name <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please enter stage name" }]}
           >
             <Input
@@ -199,7 +199,7 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
           {!pipelineId && (
             <Form.Item
               name="pipeline"
-              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline</span>}
+              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Please select a pipeline" }]}
             >
               <Select

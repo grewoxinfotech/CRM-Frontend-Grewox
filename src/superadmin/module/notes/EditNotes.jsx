@@ -1,7 +1,9 @@
 import React from "react";
 import { Modal, Form, Input, Button, Typography, message, Select } from "antd";
-import { FiX, FiFileText } from "react-icons/fi";
-import { useUpdateNotesMutation } from "./services/NotesApi";
+import { FiX, FiFileText, FiUser } from "react-icons/fi";
+import { useUpdateNotesMutation } from "./services/notesApi";
+import { useGetEmployeesQuery } from "../../../dashboard/module/hrm/Employee/services/employeeApi";
+import { useGetRolesQuery } from "../../../dashboard/module/hrm/role/services/roleApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -10,44 +12,55 @@ const { TextArea } = Input;
 const EditNotes = ({ visible, onCancel, initialValues, loading }) => {
   const [form] = Form.useForm();
   const [updateNotes, { isLoading: isUpdating }] = useUpdateNotesMutation();
+  const { data: employeesData } = useGetEmployeesQuery();
+  const { data: rolesData } = useGetRolesQuery();
+
+  const employees = React.useMemo(() => {
+    if (!employeesData?.data || !rolesData?.data) return [];
+    
+    const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+    const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
+
+    // Filter only employees with 'employee' role
+    return employeesList
+      .filter(employee => {
+        const userRole = rolesList.find(role => role.id === employee.role_id);
+        return userRole?.role_name?.toLowerCase() === 'employee';
+      })
+      .map(employee => {
+        const userRole = rolesList.find(role => role.id === employee.role_id);
+        return {
+          ...employee,
+          role: userRole
+        };
+      });
+  }, [employeesData, rolesData]);
 
   React.useEffect(() => {
     if (visible && initialValues) {
-      console.log("Modal opened with initialValues:", initialValues);
-
       // Reset form first
       form.resetFields();
 
       try {
-        // Parse the employees JSON string if it exists
-        let employeeIds = [];
-        if (initialValues.employees) {
-          const employeesData =
-            typeof initialValues.employees === "string"
-              ? JSON.parse(initialValues.employees)
-              : initialValues.employees;
+        // Get employee ID directly from employees field
+        const employeeId = initialValues.employees; // It's directly the ID now
+        
+        console.log("Initial Values:", initialValues);
+        console.log("Employee ID:", employeeId);
 
-          employeeIds = employeesData?.employees?.employee || [];
-          // Ensure employeeIds is always an array
-          employeeIds = Array.isArray(employeeIds)
-            ? employeeIds
-            : [employeeIds];
-        }
-
-        // Set all form values at once
-        form.setFieldsValue({
-          note_title: initialValues.note_title || "",
-          notetype: initialValues.notetype || "",
+        // Create form values object with the correct field names
+        const formValues = {
+          note_title: initialValues.title || "", // Using title from initialValues
+          notetype: initialValues.type || "", // Using type from initialValues
           description: initialValues.description || "",
-          employee_ids: employeeIds,
-        });
+          employee: employeeId // Set employee ID directly
+        };
 
-        console.log("Form values set:", {
-          note_title: initialValues.note_title,
-          notetype: initialValues.notetype,
-          description: initialValues.description,
-          employee_ids: employeeIds,
-        });
+        console.log("Setting form values:", formValues);
+
+        // Set form values
+        form.setFieldsValue(formValues);
+
       } catch (error) {
         console.error("Error setting form values:", error);
       }
@@ -58,18 +71,15 @@ const EditNotes = ({ visible, onCancel, initialValues, loading }) => {
     form.validateFields().then((values) => {
       // Transform the form values to match the backend schema
       const formattedData = {
-        note_title: values.note_title,
-        notetype: values.notetype,
-        description: values.description,
-        employees:
-          values.employee_ids?.length > 0
-            ? {
-                employees: {
-                  employee: values.employee_ids,
-                },
-              }
-            : null,
+        note_title: values.note_title || "",
+        notetype: values.notetype || "",
+        description: values.description || "",
+        employees: {
+          employee: values.employee  // Match the API structure
+        }
       };
+
+      console.log("Formatted Data:", formattedData);
 
       updateNotes({ id: initialValues.id, data: formattedData })
         .unwrap()
@@ -215,7 +225,6 @@ const EditNotes = ({ visible, onCancel, initialValues, loading }) => {
                 Note Title
               </span>
             }
-            rules={[{ required: true, message: "Please enter note title" }]}
           >
             <Input
               prefix={
@@ -246,7 +255,6 @@ const EditNotes = ({ visible, onCancel, initialValues, loading }) => {
                 Note Type
               </span>
             }
-            rules={[{ required: true, message: "Please select note type" }]}
           >
             <Select
               placeholder="Select note type"
@@ -293,33 +301,101 @@ const EditNotes = ({ visible, onCancel, initialValues, loading }) => {
           </Form.Item>
 
           <Form.Item
-            name="employee_ids"
+            name="employee"
             label={
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                }}
-              >
-                Assigned Employees
+              <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                Employee 
               </span>
             }
+            rules={[{ required: true, message: "Please select an employee" }]}
           >
             <Select
-              mode="multiple"
-              placeholder="Select employees"
+              showSearch
+              placeholder="Select employee"
+              optionFilterProp="label"
               size="large"
-              style={{
-                width: "100%",
-              }}
+              listHeight={100}
               dropdownStyle={{
-                padding: "8px",
-                borderRadius: "10px",
+                Height: '100px',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollBehavior: 'smooth'
               }}
-            >
-              <Option value="bhhnjh">Employee 1</Option>
-              <Option value="uhyhgh">Employee 2</Option>
-            </Select>
+              style={{
+                width: '100%',
+                borderRadius: '10px',
+              }}
+              filterOption={(input, option) => {
+                const label = option?.label?.toString() || '';
+                return label.toLowerCase().includes(input.toLowerCase());
+              }}
+              options={employees.map(employee => ({
+                label: (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '4px 0'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: '#e6f4ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1890ff',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      textTransform: 'uppercase'
+                    }}>
+                      {employee.profilePic ? (
+                        <img
+                          src={employee.profilePic}
+                          alt={employee.firstName + ' ' + employee.lastName}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        <FiUser style={{ fontSize: '20px' }} />
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      flex: 1
+                    }}>
+                      <span style={{
+                        fontWeight: 500,
+                        color: 'rgba(0, 0, 0, 0.85)',
+                        fontSize: '14px'
+                      }}>
+                        {`${employee.firstName} ${employee.lastName}`}
+                      </span>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        background: '#F9F0FF',
+                        color: '#531CAD',
+                        border: '1px solid #D3ADF7',
+                        fontWeight: 500,
+                        textTransform: 'capitalize'
+                      }}>
+                        {employee.role?.role_name || 'User'}
+                      </span>
+                    </div>
+                  </div>
+                ),
+                value: employee.id
+              }))}
+            />
           </Form.Item>
         </div>
 

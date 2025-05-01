@@ -74,6 +74,13 @@ const CreateLog = ({
         user?.role_id !== subclientRoleId
     ) || [];
 
+     // Add formItemStyle constant
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500",
+    color: "#1f2937",
+  };
+
   // Get role colors and icons
   const getRoleColor = (role) => {
     const roleColors = {
@@ -307,7 +314,7 @@ const CreateLog = ({
         <div style={{ display: "flex", gap: "16px" }}>
           <Form.Item
             name="call_start_date"
-            label="Call Start Date"
+            label={<span style={formItemStyle}>Call Start Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select start date" }]}
             style={{ flex: 1 }}
           >
@@ -320,7 +327,7 @@ const CreateLog = ({
 
           <Form.Item
             name="call_start_time"
-            label="Call Start Time"
+            label={<span style={formItemStyle}>Call Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select start time" }]}
             style={{ flex: 1 }}
           >
@@ -335,7 +342,7 @@ const CreateLog = ({
 
           <Form.Item
             name="call_end_time"
-            label="Call End Time"
+            label={<span style={formItemStyle}>Call End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select end time" }]}
             style={{ flex: 1 }}
           >
@@ -359,7 +366,7 @@ const CreateLog = ({
         >
           <Form.Item
             name="call_status"
-            label="Call Status"
+            label={<span style={formItemStyle}>Call Status <span style={{ color: "#ff4d4f" }}>*</span></span>}
             initialValue="not_started"
             rules={[{ required: true, message: "Please select call status" }]}
           >
@@ -397,7 +404,7 @@ const CreateLog = ({
 
           <Form.Item
             name="priority"
-            label="Priority"
+            label={<span style={formItemStyle}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
             initialValue="medium"
             rules={[{ required: true, message: "Please select priority" }]}
           >
@@ -420,7 +427,7 @@ const CreateLog = ({
 
           <Form.Item
             name="call_duration"
-            label="Call Duration"
+            label={<span style={formItemStyle}>Call Duration <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[
               {
                 required: true,
@@ -681,7 +688,7 @@ const CreateLog = ({
         >
           <Form.Item
             name="subject"
-            label="Subject"
+            label={<span style={formItemStyle}>Subject <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please enter subject" }]}
           >
             <Input
@@ -693,7 +700,7 @@ const CreateLog = ({
 
           <Form.Item
             name="call_purpose"
-            label="Call Purpose"
+            label={<span style={formItemStyle}>Call Purpose <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select call purpose" }]}
           >
             <Select
@@ -715,7 +722,7 @@ const CreateLog = ({
 
           <Form.Item
             name="call_notes"
-            label="Notes"
+            label={<span style={formItemStyle}>Notes <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please enter call notes" }]}
             style={{ gridColumn: "1 / -1" }}
           >

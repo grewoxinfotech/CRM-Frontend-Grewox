@@ -479,7 +479,7 @@ const CreateOfferLetter = ({ open, onCancel, loading, initialValues }) => {
                     name="description"
                     label={
                         <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                            Description
+                            Description <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter description' }]}
@@ -499,7 +499,11 @@ const CreateOfferLetter = ({ open, onCancel, loading, initialValues }) => {
 
                     <Form.Item
                         name="file"
-                        label="Offer Letter Document"
+                        label={
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                Offer Letter Document <span style={{ color: "#ff4d4f" }}>*</span>
+                            </span>
+                        }
                         rules={[{ required: true, message: 'Please upload offer letter document' }]}
                         className="full-width"
                     >

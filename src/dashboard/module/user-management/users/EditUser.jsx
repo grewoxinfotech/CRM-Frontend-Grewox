@@ -46,6 +46,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
     }, [visible, initialValues, form]);
 
     return (
+        <>
         <Modal
             title={null}
             open={visible}
@@ -306,6 +307,14 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
                 </Form>
             </div>
         </Modal>
+        <style>
+            {`
+            .ant-form-item-required::before {
+                display: none !important;
+            }
+            `}
+        </style>
+        </>
     );
 };
 

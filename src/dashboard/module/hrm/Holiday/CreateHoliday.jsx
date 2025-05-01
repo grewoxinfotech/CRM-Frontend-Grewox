@@ -163,7 +163,7 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
           name="holiday_name"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Holiday Name
+              Holiday Name <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[
@@ -192,7 +192,7 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
           name="leave_type"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Leave Type
+              Leave Type <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please select leave type" }]}
@@ -216,7 +216,7 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
           name="start_date"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Start Date
+              Start Date <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please select start date" }]}
@@ -243,7 +243,7 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
           name="end_date"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              End Date
+              End Date <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[

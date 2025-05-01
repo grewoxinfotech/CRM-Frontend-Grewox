@@ -230,7 +230,7 @@ const CreateDocument = ({
               name="name"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Document Name
+                  Document Name <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[
@@ -259,7 +259,7 @@ const CreateDocument = ({
               name="role"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Role
+                  Role <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select a role" }]}
@@ -285,7 +285,7 @@ const CreateDocument = ({
           name="description"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Description
+              Description <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please enter description" }]}
@@ -311,7 +311,7 @@ const CreateDocument = ({
           name="file"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Upload Document
+              Upload Document <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[

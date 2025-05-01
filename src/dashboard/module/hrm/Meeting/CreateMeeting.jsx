@@ -257,7 +257,7 @@ const CreateMeeting = ({
                             name="title"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Meeting Title
+                                    Meeting Title <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please enter meeting title' }]}
@@ -282,7 +282,7 @@ const CreateMeeting = ({
                             name="department"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Department
+                                    Department <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select department' }]}
@@ -319,7 +319,7 @@ const CreateMeeting = ({
                             name="employees"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Employees
+                                    Employees <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select employees' }]}
@@ -414,7 +414,7 @@ const CreateMeeting = ({
                             name="client"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Client
+                                    Client <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select client' }]}
@@ -449,7 +449,11 @@ const CreateMeeting = ({
                     <Col span={12}>
                         <Form.Item
                             name="date"
-                            label="Meeting Date"
+                            label={
+                                <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                    Meeting Date <span style={{ color: "#ff4d4f" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: 'Please select date' }]}
                         >
                             <DatePicker 
@@ -461,7 +465,11 @@ const CreateMeeting = ({
                     <Col span={12}>
                         <Form.Item
                             name="startTime"
-                            label="Start Time"
+                            label={
+                                <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                    Start Time <span style={{ color: "#ff4d4f" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: 'Please select start time' }]}
                         >
                             <TimePicker 
@@ -473,7 +481,11 @@ const CreateMeeting = ({
                     <Col span={12}>
                         <Form.Item
                             name="endTime"
-                            label="End Time"
+                            label={
+                                <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                    End Time <span style={{ color: "#ff4d4f" }}>*</span>
+                                </span>
+                            }
                             rules={[{ required: true, message: 'Please select end time' }]}
                         >
                             <TimePicker 
@@ -487,7 +499,7 @@ const CreateMeeting = ({
                             name="status"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Status
+                                    Status <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select status' }]}
@@ -534,7 +546,7 @@ const CreateMeeting = ({
                     name="notes"
                     label={
                         <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                            Meeting Description
+                            Meeting Description <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter meeting description' }]}

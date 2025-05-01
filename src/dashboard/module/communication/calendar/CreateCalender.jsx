@@ -218,7 +218,7 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
                     {/* Event Title Field */}
                     <Form.Item
                         name="name"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Event Title</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Event Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please enter event title' }]}
                         style={{ gridColumn: 'span 2' }}
                     >
@@ -272,7 +272,7 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
                         <Col span={12}>
                             <Form.Item
                                 name="startDate"
-                                label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
+                                label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                                 rules={[{ required: true, message: 'Please select start time' }]}
                             >
                                 <TimePicker
@@ -293,7 +293,7 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
                         <Col span={12}>
                             <Form.Item
                                 name="endDate"
-                                label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time</span>}
+                                label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                                 rules={[
                                     { required: true, message: 'Please select end time' },
                                     ({ getFieldValue }) => ({

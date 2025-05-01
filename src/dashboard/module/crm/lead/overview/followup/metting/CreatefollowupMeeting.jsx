@@ -455,7 +455,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="title"
-            label="Title"
+            label={<span style={formItemStyle}>Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please enter meeting title" }]}
           >
             <Input
@@ -470,7 +470,7 @@ const CreateMeeting = ({
 
           <Form.Item
             name="meeting_type"
-            label="Meeting Type"
+            label={<span style={formItemStyle}>Meeting Type <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[{ required: true, message: "Please select meeting type" }]}
           >
             <Select
@@ -509,7 +509,7 @@ const CreateMeeting = ({
               <>
                 <Form.Item
                   name="venue"
-                  label="Meeting Venue"
+                  label={<span style={formItemStyle}>Meeting Venue <span style={{ color: "#ff4d4f" }}>*</span></span>}
                   rules={[
                     { required: true, message: "Please select meeting venue" },
                   ]}
@@ -532,7 +532,7 @@ const CreateMeeting = ({
                 {venueType && (
                   <Form.Item
                     name="location"
-                    label="Location"
+                    label={<span style={formItemStyle}>Location <span style={{ color: "#ff4d4f" }}>*</span></span>}
                     rules={[
                       {
                         required: true,
@@ -557,7 +557,7 @@ const CreateMeeting = ({
             {meetingType === "online" && (
               <Form.Item
                 name="meeting_link"
-                label="Meeting Link"
+                label={<span style={formItemStyle}>Meeting Link <span style={{ color: "#ff4d4f" }}>*</span></span>}
                 rules={[
                   { required: true, message: "Please enter meeting link" },
                 ]}
@@ -587,7 +587,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="from_date"
-            label="Meeting Start Date"
+            label={<span style={formItemStyle}>Meeting Start Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[
               { required: true, message: "Please select meeting start date" },
             ]}
@@ -607,7 +607,7 @@ const CreateMeeting = ({
 
           <Form.Item
             name="from_time"
-            label="Meeting Start Time"
+            label={<span style={formItemStyle}>Meeting Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[
               { required: true, message: "Please select meeting start time" },
             ]}
@@ -636,7 +636,7 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="to_date"
-            label="Meeting End Date"
+            label={<span style={formItemStyle}>Meeting End Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[
               { required: true, message: "Please select meeting end date" },
             ]}
@@ -664,7 +664,7 @@ const CreateMeeting = ({
 
           <Form.Item
             name="to_time"
-            label="Meeting End Time"
+            label={<span style={formItemStyle}>Meeting End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
             rules={[
               { required: true, message: "Please select meeting end date" },
             ]}
@@ -695,7 +695,7 @@ const CreateMeeting = ({
             name="priority"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Priority
+                Priority <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select priority" }]}
@@ -772,7 +772,7 @@ const CreateMeeting = ({
             name="assigned_to"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Participants
+                Participants <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[

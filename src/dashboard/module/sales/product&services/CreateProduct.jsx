@@ -399,10 +399,11 @@ const CreateProduct = ({
             name="name"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Product Name
+                Product Name <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please enter product name" }]}
+            // colon={false}
           >
             <Input
               prefix={<FiBox style={{ color: "#9CA3AF" }} />}
@@ -415,7 +416,7 @@ const CreateProduct = ({
             name="category"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Category
+                Category <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select a category" }]}
@@ -511,7 +512,7 @@ const CreateProduct = ({
             name="buying_price"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Buying Price
+                Buying Price <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[
@@ -578,7 +579,7 @@ const CreateProduct = ({
             name="selling_price"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Selling Price
+                Selling Price <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[
@@ -673,7 +674,7 @@ const CreateProduct = ({
             name="hsn_sac"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                HSN/SAC Code
+                HSN/SAC Code <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please enter HSN/SAC code" }]}
@@ -683,7 +684,7 @@ const CreateProduct = ({
           <Form.Item
             name="sku"
             label={
-              <span style={{ color: "#374151", fontWeight: 500 }}>SKU</span>
+              <span style={{ color: "#374151", fontWeight: 500 }}>SKU <span style={{ color: "#ff4d4f" }}>*</span></span>
             }
             rules={[{ required: true, message: "Please enter SKU" }]}
           >
@@ -712,7 +713,7 @@ const CreateProduct = ({
             name="stock_status"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Stock Status
+                Stock Status <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select stock status" }]}
@@ -753,7 +754,7 @@ const CreateProduct = ({
                 style={{ display: "flex", alignItems: "center", gap: "4px" }}
               >
                 <span style={{ color: "#374151", fontWeight: 500 }}>
-                  Stock Quantity
+                  Stock Quantity <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               </div>
             }
@@ -786,7 +787,7 @@ const CreateProduct = ({
             name="min_stock_level"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Minimum Stock Level
+                Minimum Stock Level <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={validateStockQuantities.min_stock_level}
@@ -816,7 +817,7 @@ const CreateProduct = ({
             name="max_stock_level"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Maximum Stock Level
+                Maximum Stock Level <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={validateStockQuantities.max_stock_level}
@@ -844,7 +845,7 @@ const CreateProduct = ({
             name="reorder_quantity"
             label={
               <span style={{ color: "#374151", fontWeight: 500 }}>
-                Reorder Quantity
+                Reorder Quantity <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={validateStockQuantities.reorder_quantity}
@@ -879,7 +880,7 @@ const CreateProduct = ({
           name="description"
           label={
             <span style={{ color: "#374151", fontWeight: 500 }}>
-              Description
+              Description <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please enter product description" }]}
@@ -895,7 +896,7 @@ const CreateProduct = ({
           name="image"
           label={
             <span style={{ color: "#374151", fontWeight: 500 }}>
-              Product Image
+              Product Image <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please upload product image" }]}
@@ -1090,6 +1091,20 @@ const CreateProduct = ({
             border-color: #1890ff;
             box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
           }
+        }
+
+        .ant-form-item-required::before {
+          display: none !important;
+        }
+        
+        .ant-form-item-required::after {
+          display: inline-block;
+          margin-left: 4px;
+          color: #ff4d4f;
+          font-size: 14px;
+          font-family: SimSun, sans-serif;
+          line-height: 1;
+          content: '*';
         }
       `}</style>
     </Modal>

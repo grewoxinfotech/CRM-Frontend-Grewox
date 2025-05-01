@@ -215,7 +215,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
             >
                 <Form.Item
                     name="employee"
-                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Employee</span>}
+                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Employee <span style={{ color: "#ff4d4f" }}>*</span></span>}
                     rules={[{ required: true, message: 'Please select an employee' }]}
                 >
                     <Select
@@ -324,7 +324,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
 
                 <Form.Item
                     name="date"
-                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Date</span>}
+                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
                     rules={[{ required: true, message: 'Please select date' }]}
                 >
                     <DatePicker
@@ -345,7 +345,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                     <Form.Item
                         name="startTime"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select start time' }]}
                     >
                         <TimePicker
@@ -365,7 +365,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
 
                     <Form.Item
                         name="endTime"
-                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time</span>}
+                        label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select end time' }]}
                     >
                         <TimePicker
@@ -386,7 +386,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
 
                 <Form.Item
                     name="comment"
-                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Comment</span>}
+                    label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Comment </span>}
                 >
                     <TextArea
                         placeholder="Add a comment (optional)"

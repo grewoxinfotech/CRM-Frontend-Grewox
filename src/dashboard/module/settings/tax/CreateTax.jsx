@@ -205,7 +205,7 @@ const CreateTax = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="gstName"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                GST Name
+                                GST Name <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[
@@ -225,7 +225,7 @@ const CreateTax = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         name="gstPercentage"
                         label={
                             <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                GST Percentage
+                                GST Percentage <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         rules={[

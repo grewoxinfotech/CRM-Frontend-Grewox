@@ -349,7 +349,7 @@ const CreateTask = ({
           name="taskName"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task Name
+              Task Name <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[
@@ -378,7 +378,7 @@ const CreateTask = ({
               name="startDate"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Start Date
+                  Start Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select start date" }]}
@@ -401,7 +401,7 @@ const CreateTask = ({
               name="dueDate"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Due Date
+                  Due Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
               rules={[{ required: true, message: "Please select due date" }]}
@@ -425,7 +425,7 @@ const CreateTask = ({
           <Col span={12}>
             <Form.Item
               name="priority"
-              label={<span style={formItemStyle}>Priority</span>}
+              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Please select priority" }]}
             >
               <Select
@@ -515,7 +515,7 @@ const CreateTask = ({
           <Col span={12}>
             <Form.Item
               name="status"
-              label={<span style={formItemStyle}>Status</span>}
+              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Status <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Please select status" }]}
             >
               <Select
@@ -627,7 +627,7 @@ const CreateTask = ({
           name="assignTo"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Assign To
+              Assign To <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please select assignees" }]}
@@ -846,7 +846,7 @@ const CreateTask = ({
           name="task_reporter"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task Reporter
+              Task Reporter <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please select task reporter" }]}
@@ -981,7 +981,7 @@ const CreateTask = ({
               name="reminder_date"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Reminder Date
+                  Reminder Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
             >
@@ -1024,7 +1024,7 @@ const CreateTask = ({
           name="file"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task File
+              Task File <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           valuePropName="fileList"

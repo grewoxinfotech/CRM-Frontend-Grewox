@@ -161,7 +161,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                     <Col span={12}>
                         <Form.Item
                             name="name"
-                            label="Name"
+                            label={<span style={{ color: "#374151", fontWeight: 500 }}>Name <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             rules={[{ required: true, message: 'Please enter name' }]}
                         >
                             <Input
@@ -177,7 +177,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                     </Col>
                     <Col span={12}>
                         <Form.Item
-                            label="Contact"
+                            label={<span style={{ color: "#374151", fontWeight: 500 }}>Contact <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             style={{ marginBottom: 0 }}
                             required
                         >

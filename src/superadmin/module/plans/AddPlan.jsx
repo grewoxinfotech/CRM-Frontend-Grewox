@@ -332,7 +332,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             fontSize: '14px',
                             fontWeight: '500',
                         }}>
-                            Plan Name
+                            Plan Name <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter plan name' }]}
@@ -360,7 +360,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 fontSize: '14px',
                                 fontWeight: '500',
                             }}>
-                                Price
+                                Price <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
                         style={{ flex: 1 }}

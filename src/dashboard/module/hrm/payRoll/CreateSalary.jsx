@@ -24,8 +24,8 @@ import {
 import dayjs from "dayjs";
 import { useCreateSalaryMutation } from "./services/salaryApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
-import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
+import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import "./salary.scss";
 
 const { Text } = Typography;
@@ -36,8 +36,8 @@ const CreateSalary = ({ open, onCancel }) => {
   const [createSalary, { isLoading }] = useCreateSalaryMutation();
   const { data: employeesData, isLoading: isLoadingEmployees } =
     useGetEmployeesQuery();
+    const { data: rolesData } = useGetRolesQuery();
   const { data: currenciesData, isLoading: isLoadingCurrencies } = useGetAllCurrenciesQuery();
-  const { data: rolesData } = useGetRolesQuery();
   const employees = React.useMemo(() => {
     if (!employeesData?.data || !rolesData?.data) return [];
     
@@ -57,10 +57,13 @@ const CreateSalary = ({ open, onCancel }) => {
 
   const handleSubmit = async (values) => {
     try {
+      const selectedCurrency = currencies.find(curr => curr.currencyCode === values.salary_group?.currency);
+      
       const payload = {
         employeeId: values.employeeId,
         payslipType: values.payslipType,
-        currency: values.salary_group?.currency || values.net_salary_group?.currency,
+        currency: selectedCurrency?.id || values.salary_group?.currency,
+        currencyCode: values.salary_group?.currency,
         salary: values.salary_group?.amount?.toString() || '0',
         netSalary: values.net_salary_group?.amount?.toString() || '0',
         bankAccount: values.bankAccount,
