@@ -15,7 +15,10 @@ import {
   useClearAllNotificationsMutation,
 } from "./services/notificationApi";
 import "./notifications.scss";
-import { selectCurrentUser } from "../../auth/services/authSlice";
+import {
+  selectCurrentUser,
+  selectUserRole,
+} from "../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import moment from "moment";
@@ -53,7 +56,10 @@ const { Title } = Typography;
 const NotificationsComponent = () => {
   const navigate = useNavigate();
   const loggedInUser = useSelector(selectCurrentUser);
+  const userRole = useSelector(selectUserRole);
   const id = loggedInUser?.id;
+
+  const isSuperAdmin = userRole === "super-admin";
 
   const {
     data: notificationsData,
@@ -69,13 +75,15 @@ const NotificationsComponent = () => {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [processedNotifications] = useState(new Set());
-  // Poll for new notifications every 5 seconds
+  // Poll for new notifications every 5 seconds only if not super admin
   useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 20000);
-    return () => clearInterval(interval);
-  }, [refetch]);
+    if (!isSuperAdmin) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 20000);
+      return () => clearInterval(interval);
+    }
+  }, [refetch, isSuperAdmin]);
   // Filter notifications
   const notifications = notificationsData?.data || [];
   const unreadNotifications = notifications.filter((n) => {
@@ -224,7 +232,6 @@ const NotificationsComponent = () => {
         // Navigate to contact with the contact ID
         navigate(`/dashboard/crm/contact`);
       }
-
     }
   };
 

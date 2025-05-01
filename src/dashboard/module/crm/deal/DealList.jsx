@@ -136,10 +136,7 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
             Delete Deal
           </Text>
         ),
-        onClick: (e) => {
-          e.stopPropagation();
-          onDelete(record);
-        },
+        onClick: () => onDelete(record),
       },
     ],
   });

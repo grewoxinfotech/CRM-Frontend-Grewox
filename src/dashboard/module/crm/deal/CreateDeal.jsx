@@ -13,6 +13,9 @@ import {
   DatePicker,
   Tabs,
   InputNumber,
+  Row,
+  Col,
+  Popconfirm,
 } from "antd";
 import {
   FiUser,
@@ -53,8 +56,11 @@ import {
   useGetAllCountriesQuery,
   useGetAllCurrenciesQuery,
 } from "../../settings/services/settingsApi";
-import { useGetCategoriesQuery, useDeleteCategoryMutation } from "../crmsystem/souce/services/SourceApi";
-import AddSourceModal from "../crmsystem/souce/AddSourceModal"
+import {
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation,
+} from "../crmsystem/souce/services/SourceApi";
+import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
 const { Text } = Typography;
 const { Option } = Select;
@@ -69,7 +75,6 @@ const findIndianDefaults = (currencies, countries) => {
 };
 
 const CreateDeal = ({ open, onCancel, leadData }) => {
-
   console.log("leadData", leadData);
   const loggedInUser = useSelector(selectCurrentUser);
 
@@ -85,7 +90,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [newCompanyName, setNewCompanyName] = useState("");
-
 
   const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
@@ -131,7 +135,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const sourceSelectRef = useRef(null);
   const categorySelectRef = useRef(null);
-
 
   // Add state to track selected pipeline
   const [selectedPipeline, setSelectedPipeline] = useState(null);
@@ -190,8 +193,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       await deleteSource(sourceId).unwrap();
       message.success("Source deleted successfully");
       // Clear the source field if the deleted source was selected
-      if (form.getFieldValue('source') === sourceId) {
-        form.setFieldValue('source', undefined);
+      if (form.getFieldValue("source") === sourceId) {
+        form.setFieldValue("source", undefined);
       }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete source");
@@ -204,8 +207,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
       await deleteCategory(categoryId).unwrap();
       message.success("Category deleted successfully");
       // Clear the category field if the deleted category was selected
-      if (form.getFieldValue('category') === categoryId) {
-        form.setFieldValue('category', undefined);
+      if (form.getFieldValue("category") === categoryId) {
+        form.setFieldValue("category", undefined);
       }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete category");
@@ -239,18 +242,20 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         pipeline: leadData.pipeline || null,
         stage: defaultStage || null,
         currency: leadData.currency || defaultCurrency,
-        company_name: leadData.company_id || null
+        company_name: leadData.company_id || null,
       };
 
       // If contact exists, set contact-related fields
       if (existingContact) {
         formValues.firstName = existingContact.id;
         formValues.email = existingContact.email || "";
-        formValues.telephone = existingContact.phone ? existingContact.phone.replace(/^\+\d+\s/, '') : "";
+        formValues.telephone = existingContact.phone
+          ? existingContact.phone.replace(/^\+\d+\s/, "")
+          : "";
         formValues.phoneCode = existingContact.phone_code || defaultPhoneCode;
         formValues.address = existingContact.address || "";
         setSelectedContact(existingContact);
-        setContactMode('existing');
+        setContactMode("existing");
       }
 
       // If company exists, set company-related fields
@@ -278,7 +283,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         setFilteredContacts(filteredContacts);
       }
 
-      setContactMode(existingContact ? 'existing' : 'new');
+      setContactMode(existingContact ? "existing" : "new");
     }
   }, [
     leadData,
@@ -290,7 +295,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     contactsResponse?.data,
     defaultCurrency,
     defaultPhoneCode,
-    getDefaultStage
+    getDefaultStage,
   ]);
 
   // Reset form when modal closes
@@ -316,7 +321,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         return;
       }
 
-      let contactId;// Debug log
+      let contactId; // Debug log
 
       // Only proceed with contact creation if deal name is unique
       if (
@@ -350,13 +355,13 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             email: values.email || "",
             phone: formattedPhone || "",
             contact_source: "deal",
-            description: `Contact created from deal form by ${loggedInUser?.username || "user"
-              }`,
+            description: `Contact created from deal form by ${
+              loggedInUser?.username || "user"
+            }`,
             address: values.address || "",
             client_id: loggedInUser?.client_id,
             contact_owner: loggedInUser?.id,
           };
-
 
           const contactResponse = await createContact(contactData).unwrap();
 
@@ -400,7 +405,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         address: values.address,
         leadId: leadData?.id,
       };
-
 
       // Create the deal
       const dealResponse = await createDeal(dealData).unwrap();
@@ -505,7 +509,6 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   };
 
   const handleCompanyChange = (companyId) => {
-
     // Set the company_name field with the selected company ID
     form.setFieldsValue({
       company_name: companyId,
@@ -593,9 +596,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   // Update the currency select options rendering
   const renderCurrencyOption = (currency) => (
     <Option key={currency.id} value={currency.id}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
-        <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ fontSize: "14px" }}>{currency.currencyIcon}</span>
+        <span style={{ fontSize: "14px" }}>{currency.currencyCode}</span>
       </div>
     </Option>
   );
@@ -604,9 +607,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const getCurrencyDisplay = (currencyId) => {
     const currency = currencies?.find((c) => c.id === currencyId);
     return currency ? (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
-        <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ fontSize: "14px" }}>{currency.currencyIcon}</span>
+        <span style={{ fontSize: "14px" }}>{currency.currencyCode}</span>
       </div>
     ) : null;
   };
@@ -841,10 +844,12 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     name="currency"
                     noStyle
                     initialValue={leadData?.currency || defaultCurrency}
-                    rules={[{ required: true, message: 'Please select currency' }]}
+                    rules={[
+                      { required: true, message: "Please select currency" },
+                    ]}
                   >
                     <Select
-                      style={{ width: '120px' }}
+                      style={{ width: "120px" }}
                       className="currency-select"
                       dropdownMatchSelectWidth={120}
                       suffixIcon={<FiChevronDown size={14} />}
@@ -852,14 +857,26 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                       showSearch
                       optionFilterProp="value"
                       filterOption={(input, option) =>
-                        (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                        (option?.value ?? "")
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
                       }
                     >
                       {currencies?.map((currency) => (
                         <Option key={currency.id} value={currency.id}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
-                            <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <span style={{ fontSize: "14px" }}>
+                              {currency.currencyIcon}
+                            </span>
+                            <span style={{ fontSize: "14px" }}>
+                              {currency.currencyCode}
+                            </span>
                           </div>
                         </Option>
                       ))}
@@ -870,12 +887,16 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     noStyle
                     initialValue={leadData?.value || leadData?.leadValue || 0}
                     rules={[
-                      { required: true, message: 'Please enter deal value' },
-                      { type: 'number', min: 0, message: 'Value must be greater than or equal to 0' }
+                      { required: true, message: "Please enter deal value" },
+                      {
+                        type: "number",
+                        min: 0,
+                        message: "Value must be greater than or equal to 0",
+                      },
                     ]}
                   >
                     <InputNumber
-                      style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
+                      style={{ width: "calc(100% - 100px)", padding: "0 16px" }}
                       placeholder="Enter amount"
                       min={0}
                       value={manualValue}
@@ -887,7 +908,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="source"
-                label={<span style={formItemStyle}>Source <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Source <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[{ required: true, message: "Source is required" }]}
               >
                 <Select
@@ -900,24 +925,31 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   dropdownRender={(menu) => (
                     <div onClick={(e) => e.stopPropagation()}>
                       {menu}
-                      <Divider style={{ margin: '8px 0' }} />
-                      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
                         <Button
                           type="primary"
                           icon={<PlusOutlined />}
                           onClick={handleAddSourceClick}
                           style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            height: '40px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                            fontWeight: '500',
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
                           }}
                         >
                           Add Source
@@ -928,22 +960,32 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 >
                   {sources.map((source) => (
                     <Option key={source.id} value={source.id}>
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <div style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: source.color || "#1890ff"
-                          }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              backgroundColor: source.color || "#1890ff",
+                            }}
+                          />
                           {source.name}
                         </div>
-                        {form.getFieldValue('source') !== source.id && (
+                        {form.getFieldValue("source") !== source.id && (
                           <Popconfirm
                             title="Delete Source"
                             description="Are you sure you want to delete this source?"
@@ -968,8 +1010,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                                 transition: "opacity 0.2s",
                                 "&:hover": {
                                   opacity: 1,
-                                  backgroundColor: "transparent"
-                                }
+                                  backgroundColor: "transparent",
+                                },
                               }}
                             />
                           </Popconfirm>
@@ -982,7 +1024,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
               <Form.Item
                 name="category"
-                label={<span style={formItemStyle}>Category <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                label={
+                  <span style={formItemStyle}>
+                    Category <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
                 rules={[{ required: true, message: "Category is required" }]}
               >
                 <Select
@@ -995,29 +1041,38 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   showSearch
                   allowClear
                   filterOption={(input, option) =>
-                    option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
+                    option.children.props.children[0].props.children[1]
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
                   }
                   dropdownRender={(menu) => (
                     <div onClick={(e) => e.stopPropagation()}>
                       {menu}
-                      <Divider style={{ margin: '8px 0' }} />
-                      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
                         <Button
                           type="primary"
                           icon={<PlusOutlined />}
                           onClick={handleAddCategoryClick}
                           style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            height: '40px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                            fontWeight: '500',
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
                           }}
                         >
                           Add Category
@@ -1028,22 +1083,32 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 >
                   {categories?.map((category) => (
                     <Option key={category.id} value={category.id}>
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <div style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: category.color || "#1890ff"
-                          }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              backgroundColor: category.color || "#1890ff",
+                            }}
+                          />
                           {category.name}
                         </div>
-                        {form.getFieldValue('category') !== category.id && (
+                        {form.getFieldValue("category") !== category.id && (
                           <Popconfirm
                             title="Delete Category"
                             description="Are you sure you want to delete this category?"
@@ -1068,8 +1133,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                                 transition: "opacity 0.2s",
                                 "&:hover": {
                                   opacity: 1,
-                                  backgroundColor: "transparent"
-                                }
+                                  backgroundColor: "transparent",
+                                },
                               }}
                             />
                           </Popconfirm>
@@ -1301,8 +1366,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                           (c) => c.id === option.value
                         );
                         if (!contact) return false;
-                        const fullName = `${contact.first_name || ""} ${contact.last_name || ""
-                          }`.toLowerCase();
+                        const fullName = `${contact.first_name || ""} ${
+                          contact.last_name || ""
+                        }`.toLowerCase();
                         const companyName =
                           companyAccountsResponse?.data
                             ?.find((c) => c.id === contact.company_name)
@@ -1384,8 +1450,9 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                   }}
-                                >{`${contact.first_name || ""} ${contact.last_name || ""
-                                  }`}</span>
+                                >{`${contact.first_name || ""} ${
+                                  contact.last_name || ""
+                                }`}</span>
                                 <span
                                   style={{
                                     color: "#6B7280",
@@ -1651,7 +1718,11 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
           .currency-select {
             .ant-select-selector {
-              background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+              background: linear-gradient(
+                135deg,
+                #1890ff 0%,
+                #096dd9 100%
+              ) !important;
               border: none !important;
               padding: 0 8px !important;
 
@@ -1660,7 +1731,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                 display: flex !important;
                 align-items: center !important;
                 gap: 8px !important;
-                
+
                 span {
                   color: white !important;
                 }
