@@ -12,7 +12,7 @@ import {
   Spin,
   DatePicker,
   Tabs,
-  Popconfirm,
+  InputNumber,
 } from "antd";
 import {
   FiUser,
@@ -69,6 +69,8 @@ const findIndianDefaults = (currencies, countries) => {
 };
 
 const CreateDeal = ({ open, onCancel, leadData }) => {
+
+  console.log("leadData", leadData);
   const loggedInUser = useSelector(selectCurrentUser);
 
   const [form] = Form.useForm();
@@ -83,7 +85,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [newCompanyName, setNewCompanyName] = useState("");
-  
+
 
   const [createDeal, { isLoading: isCreatingDeal }] = useCreateDealMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
@@ -169,8 +171,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     form.setFieldsValue({ value: numValue });
   };
 
-   // Add handlers for source and category
-   const handleAddSourceClick = (e) => {
+  // Add handlers for source and category
+  const handleAddSourceClick = (e) => {
     e.stopPropagation();
     setSourceDropdownOpen(false);
     setIsAddSourceVisible(true);
@@ -213,41 +215,70 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   // Modify the useEffect to handle lead conversion properly
   useEffect(() => {
     if (leadData && open) {
-      // Find the country details
-      const countryDetails = countries.find((c) => c.id === leadData.phoneCode);
+      console.log("Setting form values with leadData:", leadData);
+
+      // Find the contact if contact_id exists
+      const existingContact = contactsResponse?.data?.find(
+        (c) => c.id === leadData.contact_id
+      );
 
       // Find if the company exists in companyAccounts
       const existingCompany = companyAccountsResponse?.data?.find(
-        (c) => c.company_name?.toLowerCase() === leadData.company?.toLowerCase()
+        (c) => c.id === leadData.company_id
       );
 
       // Get default stage for the pipeline
       const defaultStage = getDefaultStage(leadData.pipeline);
 
-      form.setFieldsValue({
-        dealTitle: leadData.leadTitle,
-        currency: leadData.currency,
-        phoneCode: countryDetails?.phoneCode?.replace("+", ""),
-        value: leadData.value,
-        source: leadData.source,
-        firstName: leadData.firstName,
-        lastName: leadData.lastName,
-        email: leadData.email,
-        phone: leadData.phone?.replace(/^\+\d+\s/, ""),
-        address: leadData.address,
-        company_name: existingCompany?.id || undefined,
-        leadId: leadData.id,
-        pipeline: leadData.pipeline,
-        stage: defaultStage, // Use default deal stage instead of lead stage
-      });
+      // Set form values
+      const formValues = {
+        dealTitle: leadData.leadTitle || "",
+        value: leadData.value || leadData.leadValue || 0, // Try both value and leadValue
+        source: leadData.source || null,
+        category: leadData.category || null,
+        pipeline: leadData.pipeline || null,
+        stage: defaultStage || null,
+        currency: leadData.currency || defaultCurrency,
+        company_name: leadData.company_id || null
+      };
+
+      // If contact exists, set contact-related fields
+      if (existingContact) {
+        formValues.firstName = existingContact.id;
+        formValues.email = existingContact.email || "";
+        formValues.telephone = existingContact.phone ? existingContact.phone.replace(/^\+\d+\s/, '') : "";
+        formValues.phoneCode = existingContact.phone_code || defaultPhoneCode;
+        formValues.address = existingContact.address || "";
+        setSelectedContact(existingContact);
+        setContactMode('existing');
+      }
+
+      // If company exists, set company-related fields
+      if (existingCompany) {
+        formValues.company_name = existingCompany.id;
+        setNewCompanyName(existingCompany.company_name || "");
+      }
+
+      // Set form values
+      form.setFieldsValue(formValues);
 
       // Set manual value for value field
-      setManualValue(leadData.value || 0);
+      setManualValue(leadData.value || leadData.leadValue || 0);
 
       // Set selected pipeline if lead data has pipeline
       if (leadData.pipeline) {
         setSelectedPipeline(leadData.pipeline);
       }
+
+      // Filter contacts if company is selected
+      if (existingCompany && contactsResponse?.data) {
+        const filteredContacts = contactsResponse.data.filter(
+          (contact) => contact.company_name === existingCompany.id
+        );
+        setFilteredContacts(filteredContacts);
+      }
+
+      setContactMode(existingContact ? 'existing' : 'new');
     }
   }, [
     leadData,
@@ -256,6 +287,10 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
     currencies,
     countries,
     companyAccountsResponse?.data,
+    contactsResponse?.data,
+    defaultCurrency,
+    defaultPhoneCode,
+    getDefaultStage
   ]);
 
   // Reset form when modal closes
@@ -315,9 +350,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             email: values.email || "",
             phone: formattedPhone || "",
             contact_source: "deal",
-            description: `Contact created from deal form by ${
-              loggedInUser?.username || "user"
-            }`,
+            description: `Contact created from deal form by ${loggedInUser?.username || "user"
+              }`,
             address: values.address || "",
             client_id: loggedInUser?.client_id,
             contact_owner: loggedInUser?.id,
@@ -556,6 +590,33 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
   // Add state to track contact mode
   const [contactMode, setContactMode] = useState("existing");
 
+  // Update the currency select options rendering
+  const renderCurrencyOption = (currency) => (
+    <Option key={currency.id} value={currency.id}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
+        <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
+      </div>
+    </Option>
+  );
+
+  // Add this function to get currency display info
+  const getCurrencyDisplay = (currencyId) => {
+    const currency = currencies?.find((c) => c.id === currencyId);
+    return currency ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
+        <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
+      </div>
+    ) : null;
+  };
+
+  // Move getCurrencyCode inside component where currencies is available
+  const getCurrencyCode = (currencyId) => {
+    const currency = currencies?.find((c) => c.id === currencyId);
+    return currency?.currencyCode || "INR";
+  };
+
   return (
     <>
       <Modal
@@ -779,48 +840,26 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   <Form.Item
                     name="currency"
                     noStyle
-                    initialValue={defaultCurrency}
-                    rules={[
-                      { required: true, message: "Currency is required" },
-                    ]}
+                    initialValue={leadData?.currency || defaultCurrency}
+                    rules={[{ required: true, message: 'Please select currency' }]}
                   >
                     <Select
-                      style={{ width: "120px" }}
+                      style={{ width: '120px' }}
                       className="currency-select"
-                      dropdownMatchSelectWidth={false}
+                      dropdownMatchSelectWidth={120}
                       suffixIcon={<FiChevronDown size={14} />}
-                      showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) => {
-                        const currencyData = currencies.find(
-                          (c) => c.currencyCode === option.value
-                        );
-                        return (
-                          currencyData?.currencyName
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase()) ||
-                          currencyData?.currencyCode
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        );
-                      }}
-                      dropdownStyle={{ minWidth: "180px" }}
                       popupClassName="custom-select-dropdown"
+                      showSearch
+                      optionFilterProp="value"
+                      filterOption={(input, option) =>
+                        (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
                     >
                       {currencies?.map((currency) => (
-                        <Option key={currency.id} value={currency.currencyCode}>
-                          <div className="currency-option">
-                            <span className="currency-icon">
-                              {currency.currencyIcon}
-                            </span>
-                            <div className="currency-details">
-                              <span className="currency-code">
-                                {currency.currencyCode}
-                              </span>
-                              <span className="currency-name">
-                                {currency.currencyName}
-                              </span>
-                            </div>
+                        <Option key={currency.id} value={currency.id}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px' }}>{currency.currencyIcon}</span>
+                            <span style={{ fontSize: '14px' }}>{currency.currencyCode}</span>
                           </div>
                         </Option>
                       ))}
@@ -829,220 +868,217 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                   <Form.Item
                     name="value"
                     noStyle
+                    initialValue={leadData?.value || leadData?.leadValue || 0}
                     rules={[
-                      { required: true, message: "Deal value is required" },
-                      {
-                        type: "number",
-                        min: 0,
-                        message:
-                          "Deal value must be greater than or equal to 0",
-                      },
+                      { required: true, message: 'Please enter deal value' },
+                      { type: 'number', min: 0, message: 'Value must be greater than or equal to 0' }
                     ]}
                   >
-                    <Input
-                      style={{ width: "calc(100% - 120px)" }}
+                    <InputNumber
+                      style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
                       placeholder="Enter amount"
-                      type="number"
-                      onChange={(e) => handleValueChange(e.target.value)}
+                      min={0}
+                      value={manualValue}
+                      onChange={handleValueChange}
                     />
                   </Form.Item>
                 </Input.Group>
               </Form.Item>
 
               <Form.Item
-              name="source"
-              label={<span style={formItemStyle}>Source <span style={{ color: "#ff4d4f" }}>*</span></span>}
-              rules={[{ required: true, message: "Source is required" }]}
-            >
-              <Select
-                ref={sourceSelectRef}
-                open={sourceDropdownOpen}
-                onDropdownVisibleChange={setSourceDropdownOpen}
-                placeholder="Select source"
-                style={selectStyle}
-                popupClassName="custom-select-dropdown"
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddSourceClick}
-                        style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Add Source
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                name="source"
+                label={<span style={formItemStyle}>Source <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                rules={[{ required: true, message: "Source is required" }]}
               >
-                {sources.map((source) => (
-                  <Option key={source.id} value={source.id}>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          backgroundColor: source.color || "#1890ff"
-                        }} />
-                        {source.name}
-                      </div>
-                      {form.getFieldValue('source') !== source.id && (
-                        <Popconfirm
-                          title="Delete Source"
-                          description="Are you sure you want to delete this source?"
-                          onConfirm={(e) => {
-                            e?.stopPropagation?.();
-                            handleDeleteSource(source.id);
+                <Select
+                  ref={sourceSelectRef}
+                  open={sourceDropdownOpen}
+                  onDropdownVisibleChange={setSourceDropdownOpen}
+                  placeholder="Select source"
+                  style={selectStyle}
+                  popupClassName="custom-select-dropdown"
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddSourceClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
                           }}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="left"
                         >
-                          <Button
-                            type="text"
-                            icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                            size="small"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              opacity: 0.8,
-                              transition: "opacity 0.2s",
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: "transparent"
-                              }
-                            }}
-                          />
-                        </Popconfirm>
-                      )}
+                          Add Source
+                        </Button>
+                      </div>
                     </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+                  )}
+                >
+                  {sources.map((source) => (
+                    <Option key={source.id} value={source.id}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: source.color || "#1890ff"
+                          }} />
+                          {source.name}
+                        </div>
+                        {form.getFieldValue('source') !== source.id && (
+                          <Popconfirm
+                            title="Delete Source"
+                            description="Are you sure you want to delete this source?"
+                            onConfirm={(e) => {
+                              e?.stopPropagation?.();
+                              handleDeleteSource(source.id);
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="left"
+                          >
+                            <Button
+                              type="text"
+                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                              size="small"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                opacity: 0.8,
+                                transition: "opacity 0.2s",
+                                "&:hover": {
+                                  opacity: 1,
+                                  backgroundColor: "transparent"
+                                }
+                              }}
+                            />
+                          </Popconfirm>
+                        )}
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-            <Form.Item
-              name="category"
-              label={<span style={formItemStyle}>Category <span style={{ color: "#ff4d4f" }}>*</span></span>}
-              rules={[{ required: true, message: "Category is required" }]}
-            >
-              <Select
-                ref={categorySelectRef}
-                open={categoryDropdownOpen}
-                onDropdownVisibleChange={setCategoryDropdownOpen}
-                placeholder="Select or type to filter categories"
-                style={selectStyle}
-                popupClassName="custom-select-dropdown"
-                showSearch
-                allowClear
-                filterOption={(input, option) =>
-                  option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
-                }
-                dropdownRender={(menu) => (
-                  <div onClick={(e) => e.stopPropagation()}>
-                    {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAddCategoryClick}
-                        style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
-                        }}
-                      >
-                        Add Category
-                      </Button>
-                    </div>
-                  </div>
-                )}
+              <Form.Item
+                name="category"
+                label={<span style={formItemStyle}>Category <span style={{ color: "#ff4d4f" }}>*</span></span>}
+                rules={[{ required: true, message: "Category is required" }]}
               >
-                {categories?.map((category) => (
-                  <Option key={category.id} value={category.id}>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          backgroundColor: category.color || "#1890ff"
-                        }} />
-                        {category.name}
-                      </div>
-                      {form.getFieldValue('category') !== category.id && (
-                        <Popconfirm
-                          title="Delete Category"
-                          description="Are you sure you want to delete this category?"
-                          onConfirm={(e) => {
-                            e?.stopPropagation?.();
-                            handleDeleteCategory(category.id);
+                <Select
+                  ref={categorySelectRef}
+                  open={categoryDropdownOpen}
+                  onDropdownVisibleChange={setCategoryDropdownOpen}
+                  placeholder="Select or type to filter categories"
+                  style={selectStyle}
+                  popupClassName="custom-select-dropdown"
+                  showSearch
+                  allowClear
+                  filterOption={(input, option) =>
+                    option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
+                  }
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddCategoryClick}
+                          style={{
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                            fontWeight: '500',
                           }}
-                          okText="Yes"
-                          cancelText="No"
-                          placement="left"
                         >
-                          <Button
-                            type="text"
-                            icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                            size="small"
-                            onClick={(e) => e.stopPropagation()}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              opacity: 0.8,
-                              transition: "opacity 0.2s",
-                              "&:hover": {
-                                opacity: 1,
-                                backgroundColor: "transparent"
-                              }
-                            }}
-                          />
-                        </Popconfirm>
-                      )}
+                          Add Category
+                        </Button>
+                      </div>
                     </div>
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
+                  )}
+                >
+                  {categories?.map((category) => (
+                    <Option key={category.id} value={category.id}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%"
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: category.color || "#1890ff"
+                          }} />
+                          {category.name}
+                        </div>
+                        {form.getFieldValue('category') !== category.id && (
+                          <Popconfirm
+                            title="Delete Category"
+                            description="Are you sure you want to delete this category?"
+                            onConfirm={(e) => {
+                              e?.stopPropagation?.();
+                              handleDeleteCategory(category.id);
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="left"
+                          >
+                            <Button
+                              type="text"
+                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                              size="small"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                opacity: 0.8,
+                                transition: "opacity 0.2s",
+                                "&:hover": {
+                                  opacity: 1,
+                                  backgroundColor: "transparent"
+                                }
+                              }}
+                            />
+                          </Popconfirm>
+                        )}
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
               <Form.Item
                 name="closedDate"
@@ -1265,9 +1301,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                           (c) => c.id === option.value
                         );
                         if (!contact) return false;
-                        const fullName = `${contact.first_name || ""} ${
-                          contact.last_name || ""
-                        }`.toLowerCase();
+                        const fullName = `${contact.first_name || ""} ${contact.last_name || ""
+                          }`.toLowerCase();
                         const companyName =
                           companyAccountsResponse?.data
                             ?.find((c) => c.id === contact.company_name)
@@ -1349,9 +1384,8 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                   }}
-                                >{`${contact.first_name || ""} ${
-                                  contact.last_name || ""
-                                }`}</span>
+                                >{`${contact.first_name || ""} ${contact.last_name || ""
+                                  }`}</span>
                                 <span
                                   style={{
                                     color: "#6B7280",
@@ -1569,7 +1603,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         onsubmit={handleAddContactClick}
       />
 
-            <AddSourceModal
+      <AddSourceModal
         isOpen={isAddSourceVisible}
         onClose={(success) => {
           setIsAddSourceVisible(false);
@@ -1615,16 +1649,22 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
             }
           }
 
-          .currency-select .ant-select-selector {
-            background: linear-gradient(
-              135deg,
-              #1890ff 0%,
-              #096dd9 100%
-            ) !important;
-            border: none !important;
+          .currency-select {
+            .ant-select-selector {
+              background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+              border: none !important;
+              padding: 0 8px !important;
 
-            .ant-select-selection-item {
-              color: white !important;
+              .ant-select-selection-item {
+                color: white !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                
+                span {
+                  color: white !important;
+                }
+              }
             }
           }
 

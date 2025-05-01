@@ -20,6 +20,8 @@ import DealsTable from "./DashboardComponents/DealsTable";
 import TasksTable from "./DashboardComponents/TasksTable";
 import MeetingsTable from './DashboardComponents/MeetingsTable';
 import Analytics from "./DashboardComponents/Analytics/index.jsx";
+import { useGetRevenueQuery } from "./module/sales/revenue/services/revenueApi";
+
 
 const { Text } = Typography;
 
@@ -50,16 +52,21 @@ export default function Dashboard() {
   const [meetingsDateFilter, setMeetingsDateFilter] = useState('all');
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-  // Dummy revenue data
-  const dummyRevenue = {
-    total: 450000,
-    pending: 171000,
-    symbol: '₹'
+  const { data: revenueData } = useGetRevenueQuery();
+
+  // Calculate real revenue data
+  const calculateRevenue = () => {
+    if (!revenueData?.data) return { total: 0, pending: 0 };
+
+    const total = revenueData.data.reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0);
+    const pending = revenueData.data
+      .filter(rev => rev.status?.toLowerCase() === 'pending')
+      .reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0);
+
+    return { total, pending };
   };
 
-  // Use dummy revenue instead of API data
-  const totalRevenue = dummyRevenue.total;
-  const openRevenue = dummyRevenue.pending;
+  const { total: totalRevenue, pending: openRevenue } = calculateRevenue();
 
   useEffect(() => {
     // Remove the existing useEffect since we're using dummy data
@@ -73,16 +80,30 @@ export default function Dashboard() {
     deal.status && deal.status.toLowerCase() !== 'closed'
   ).length : 0;
 
+  // Add this after other useEffect hooks
+  const getActiveCustomersCount = () => {
+    if (!revenueData?.data) return 0;
+
+    // Get unique customer IDs from invoices
+    const uniqueCustomers = new Set(
+      revenueData.data.map(invoice => invoice.customer)
+    );
+
+    return uniqueCustomers.size;
+  };
+
+  const activeCustomers = getActiveCustomersCount();
+
   const stats = [
     {
-      title: "Companies",
-      value: 500,
-      description: "Total companies",
+      title: "Customers",
+      value: activeCustomers,
+      description: "Active customers",
       icon: <FiUsers className="stats-icon" />,
       gradient: "linear-gradient(145deg, #ffffff, #f0f2ff)",
       iconGradient: "linear-gradient(135deg, #7c3aed, #a78bfa)",
       color: "#7c3aed",
-      tag: "Active: 500",
+      tag: `Total customers with orders: ${activeCustomers}`,
       link: "/dashboard/crm/companies"
     },
     {
@@ -108,15 +129,15 @@ export default function Dashboard() {
       link: "/dashboard/crm/deal"
     },
     {
-      title: "Revenue",
-      value: openRevenue,
-      description: "Pending revenue",
+      title: "TOTAL REVENUE",
+      value: totalRevenue,
+      description: "Total revenue",
       currencySymbol: '₹',
       icon: <FiDollarSign className="stats-icon" />,
       gradient: "linear-gradient(145deg, #ffffff, #f0fff4)",
       iconGradient: "linear-gradient(135deg, #52c41a, #95de64)",
       color: "#52c41a",
-      tag: `Total: ₹${totalRevenue.toLocaleString()}`,
+      tag: `Profit: ₹10`,
       link: "/dashboard/sales/revenue",
       format: "currency"
     }

@@ -193,6 +193,12 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         console.error('Error parsing lead_members:', error);
       }
 
+      // Find contact and its company if contact_id exists
+      const existingContact = contactsData?.data?.find(c => c.id === initialValues.contact_id);
+      const company_id = existingContact?.company_name || initialValues.company_id || null;
+
+      console.log("Setting form with contact:", existingContact, "company_id:", company_id);
+
       form.setFieldsValue({
         ...initialValues,
         phoneCode: countryId,
@@ -201,7 +207,9 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         leadValue: initialValues.leadValue,
         lead_members: leadMembers,
         pipeline: initialValues.pipeline,
-        leadStage: initialValues.leadStage
+        leadStage: initialValues.leadStage,
+        company_id: company_id,
+        contact_id: initialValues.contact_id
       });
 
       if (initialValues.profilePic) {
@@ -214,8 +222,11 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           },
         ]);
       }
+
+      // Set contact mode based on whether we have a contact
+      setContactMode(initialValues.contact_id ? 'existing' : 'new');
     }
-  }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies]);
+  }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies, contactsData]);
 
   const handleSubmit = async (values) => {
     try {
@@ -238,6 +249,10 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         lead_members: values.lead_members || []
       };
 
+      // Get company_id from contact if available
+      const selectedContact = contactsData?.data?.find(c => c.id === values.contact_id);
+      const company_id = selectedContact?.company_name || values.company_id || null;
+
       // Format the payload with all required fields
       const formData = {
         id: initialValues.id,
@@ -246,7 +261,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         lastName: values.lastName || '',
         email: values.email || '',
         telephone: formattedPhone,
-        company_name: values.company_name || '',
+        company_id: company_id,
+        contact_id: values.contact_id || null,
         address: values.address || '',
         leadValue: leadValue,
         currency: selectedCurrency?.currencyCode || defaultCurrency,
@@ -259,7 +275,6 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         interest_level: values.interest_level || 'medium',
         assigned: values.assigned || [],
         files: values.files || [],
-        tags: values.tags || [],
         profilePic: fileList[0]?.url || initialValues?.profilePic || '',
         created_by: loggedInUser?.username || '',
         updated_by: loggedInUser?.username || ''
@@ -271,6 +286,8 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
           delete formData[key];
         }
       });
+
+      console.log("Submitting form data:", formData);
 
       await updateLead({ id: initialValues.id, data: formData }).unwrap();
       message.success("Lead updated successfully");
@@ -382,10 +399,17 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     // Get the selected contact's data
     const contact = contactsData?.data?.find(c => c.id === contactId);
     if (contact) {
-      // Update company if contact has one and no company is selected
-      if (contact.company_name && !form.getFieldValue('company_id')) {
+      // Update company if contact has one
+      if (contact.company_name) {
         form.setFieldValue('company_id', contact.company_name);
       }
+
+      // Set other contact-related fields if needed
+      form.setFieldsValue({
+        email: contact.email || '',
+        telephone: contact.phone ? contact.phone.replace(/^\+\d+\s/, '') : '',
+        address: contact.address || ''
+      });
     }
   };
 
@@ -483,7 +507,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       cancelText: 'No',
       onOk: async () => {
         try {
-          await deleteLeadStage(stage.id).unwrap();
+          await deleteLeadStage({ id: stage.id }).unwrap();
           message.success('Lead stage deleted successfully');
           if (form.getFieldValue('leadStage') === stage.id) {
             form.setFieldValue('leadStage', undefined);
@@ -508,7 +532,11 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         }).unwrap();
       }
 
-      await deleteLeadStage(stageToDelete.id).unwrap();
+      await deleteLeadStage({
+        id: stageToDelete.id,
+        newDefaultId: newDefaultStageId
+      }).unwrap();
+
       message.success('Lead stage deleted and new default stage set successfully');
       setIsSelectDefaultModalOpen(false);
       setStageToDelete(null);

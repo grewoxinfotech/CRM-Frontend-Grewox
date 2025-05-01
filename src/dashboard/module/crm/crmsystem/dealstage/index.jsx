@@ -9,7 +9,9 @@ import {
 } from "./services/dealStageApi";
 import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
 import "./dealstage.scss";
-import { Button, Modal, message, Table, Tooltip, Dropdown, Select, Typography } from "antd";
+import { Button, Modal, message, Table, Tooltip, Dropdown, Select, Typography, Space, Tag } from "antd";
+import { useGetLeadsQuery } from "../../lead/services/LeadApi";
+import { useGetDealsQuery } from "../../deal/services/dealApi";
 
 const { Text } = Typography;
 
@@ -22,12 +24,23 @@ const DealStages = () => {
   const pageSize = 10;
   const [selectedPipeline, setSelectedPipeline] = useState('all');
   const [isSelectDefaultModalOpen, setIsSelectDefaultModalOpen] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [stageToDelete, setStageToDelete] = useState(null);
+  const [remainingStages, setRemainingStages] = useState([]);
+  const [newDefaultId, setNewDefaultId] = useState(null);
 
   const { data: stagesData = [], isLoading } = useGetDealStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: leadsResponse } = useGetLeadsQuery();
+  const { data: dealsResponse } = useGetDealsQuery();
   const [deleteDealStage] = useDeleteDealStageMutation();
   const [updateDealStage] = useUpdateDealStageMutation();
+
+  // Ensure data is always an array
+  const leadsData = Array.isArray(leadsResponse?.data) ? leadsResponse.data :
+    Array.isArray(leadsResponse) ? leadsResponse : [];
+  const dealsData = Array.isArray(dealsResponse?.data) ? dealsResponse.data :
+    Array.isArray(dealsResponse) ? dealsResponse : [];
 
   // Filter for deal stages only
   const dealStages = stagesData?.filter(stage => stage?.stageType === "deal") || [];
@@ -37,9 +50,20 @@ const DealStages = () => {
     ? dealStages
     : dealStages.filter(stage => stage.pipeline === selectedPipeline);
 
+  // Check stage usage in leads and deals
+  const getStageUsage = (stageId) => {
+    const usedInDeals = dealsData.some(deal => deal.stage === stageId);
+    return { type: 'deals', label: 'Used in Deals' };
+  };
+
+  const isStageInUse = (stageId) => {
+    const usedInDeals = dealsData.some(deal => deal.stage === stageId);
+    return usedInDeals;
+  };
+
   const getPipelineName = (pipelineId) => {
     const pipeline = pipelines.find(p => p.id === pipelineId);
-    return pipeline?.pipeline_name || 'Not assigned';
+    return pipeline?.pipeline_name || '...';
   };
 
   const handleEdit = (stage) => {
@@ -47,24 +71,72 @@ const DealStages = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (stage) => {
-    setStageToDelete(stage);
+  const handleDelete = async (stage) => {
+    try {
+      if (stage.isDefault) {
+        // Get other stages from the same pipeline that could be set as default
+        const otherStagesInPipeline = dealStages.filter(s =>
+          s.pipeline === stage.pipeline && s.id !== stage.id
+        );
 
-    if (stage.isDefault) {
-      // Get other stages from the same pipeline that could be set as default
-      const otherStagesInPipeline = dealStages.filter(s =>
-        s.pipeline === stage.pipeline && s.id !== stage.id
-      );
-
-      if (otherStagesInPipeline.length > 0) {
-        setIsSelectDefaultModalOpen(true);
+        if (otherStagesInPipeline.length > 0) {
+          setStageToDelete(stage);
+          setRemainingStages(otherStagesInPipeline);
+          setIsSelectDefaultModalOpen(true);
+        } else {
+          // If no other stages in pipeline, just confirm deletion
+          showDeleteConfirmation(stage);
+        }
       } else {
-        // If no other stages in pipeline, just confirm deletion
+        // For non-default stages, just show normal confirmation
         showDeleteConfirmation(stage);
       }
-    } else {
-      // For non-default stages, just show normal confirmation
-      showDeleteConfirmation(stage);
+    } catch (error) {
+      message.error(error.data?.message || "Failed to delete stage");
+    }
+  };
+
+  const handleSetNewDefaultAndDelete = async (newDefaultStageId) => {
+    if (!stageToDelete || !newDefaultStageId) {
+      message.error('Invalid stage selection');
+      return;
+    }
+
+    try {
+      // First set the new default stage
+      const newDefaultStage = dealStages.find(s => s.id === newDefaultStageId);
+      if (!newDefaultStage) {
+        message.error('Selected stage not found');
+        return;
+      }
+
+      // Update the new default stage
+      await updateDealStage({
+        id: newDefaultStageId,
+        stageName: newDefaultStage.stageName,
+        pipeline: newDefaultStage.pipeline,
+        stageType: "deal",
+        isDefault: true
+      }).unwrap();
+
+      // Then delete the old default stage
+      const deleteResponse = await deleteDealStage({
+        id: stageToDelete.id,
+        newDefaultId: newDefaultStageId
+      }).unwrap();
+
+      if (deleteResponse.success) {
+        message.success('Stage updated and deleted successfully');
+        setIsSelectDefaultModalOpen(false);
+        setStageToDelete(null);
+      } else {
+        message.error(deleteResponse.message || 'Failed to complete the operation');
+      }
+    } catch (error) {
+      console.error('Stage operation error:', error);
+      message.error(error?.data?.message || 'Failed to update stages');
+      setIsSelectDefaultModalOpen(false);
+      setStageToDelete(null);
     }
   };
 
@@ -80,57 +152,45 @@ const DealStages = () => {
       },
       onOk: async () => {
         try {
-          await deleteDealStage(stage.id).unwrap();
-          message.success('Deal stage deleted successfully');
+          const response = await deleteDealStage({
+            id: stage.id,
+            newDefaultId: null
+          }).unwrap();
+
+          if (response.success) {
+            message.success('Deal stage deleted successfully');
+          } else {
+            message.error(response.message || 'Failed to delete stage');
+          }
         } catch (error) {
-          message.error(error?.data?.message || 'Failed to delete deal stage');
+          message.error(error?.data?.message || 'Failed to delete stage');
         }
       },
     });
   };
 
-  const handleSetNewDefaultAndDelete = async (newDefaultStageId) => {
-    try {
-      // First set the new default stage
-      const newDefaultStage = dealStages.find(s => s.id === newDefaultStageId);
-      if (newDefaultStage) {
-        await updateDealStage({
-          stageName: newDefaultStage.stageName,
-          pipeline: newDefaultStage.pipeline,
-          stageType: newDefaultStage.stageType,
-          isDefault: true,
-          id: newDefaultStage.id
-        }).unwrap();
-      }
-
-      // Then delete the old default stage
-      await deleteDealStage(stageToDelete.id).unwrap();
-
-      message.success('Deal stage deleted and new default stage set successfully');
-      setIsSelectDefaultModalOpen(false);
-      setStageToDelete(null);
-    } catch (error) {
-      message.error('Failed to update stages: ' + (error?.data?.message || error.message));
-    }
+  const actionMenu = (record) => {
+    const isUsed = isStageInUse(record.id);
+    return {
+      items: [
+        {
+          key: 'edit',
+          label: 'Edit',
+          icon: <FiEdit2 />,
+          onClick: () => handleEdit(record),
+          disabled: isUsed,
+        },
+        {
+          key: 'delete',
+          label: 'Delete',
+          icon: <FiTrash2 />,
+          danger: true,
+          onClick: () => handleDelete(record),
+          disabled: isUsed,
+        },
+      ],
+    };
   };
-
-  const actionMenu = (record) => ({
-    items: [
-      {
-        key: 'edit',
-        label: 'Edit',
-        icon: <FiEdit2 />,
-        onClick: () => handleEdit(record),
-      },
-      {
-        key: 'delete',
-        label: 'Delete',
-        icon: <FiTrash2 />,
-        danger: true,
-        onClick: () => handleDelete(record),
-      },
-    ],
-  });
 
   const columns = [
     {
@@ -144,7 +204,7 @@ const DealStages = () => {
               width: '32px',
               height: '32px',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+              background: record.color || 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -153,21 +213,73 @@ const DealStages = () => {
           >
             <FiLayers />
           </div>
-          <div>
-            <span>{text}</span>
-            {record.isDefault && (
-              <span style={{
-                fontSize: '11px',
-                padding: '2px 6px',
-                background: '#e6f7ff',
-                color: '#1890ff',
-                borderRadius: '4px',
-                fontWeight: '500',
-                marginLeft: '8px'
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: '16px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '180px'
+              }}>{text}</h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <Text style={{
+                fontSize: '13px',
+                color: '#64748b',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '120px',
+                opacity: pipelines.length ? 1 : 0.6,
+                cursor: 'help'
               }}>
-                Default
-              </span>
-            )}
+                <Tooltip title={getPipelineName(record.pipeline)}>
+                  <span>{getPipelineName(record.pipeline)}</span>
+                </Tooltip>
+                {!pipelines.length && <span className="loading-dots">...</span>}
+              </Text>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                {record.isDefault && (
+                  <Tag color="blue" style={{
+                    margin: 0,
+                    padding: '0 8px',
+                    fontSize: '12px',
+                    borderRadius: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    height: '22px',
+                    fontWeight: 500,
+                  }}>
+                    Default
+                  </Tag>
+                )}
+                {isStageInUse(record.id) && (
+                  <Tooltip title="This stage is currently being used in deals">
+                    <Tag className="stage-label" style={{
+                      margin: 0,
+                      padding: '2px 8px',
+                      fontSize: '11px',
+                      borderRadius: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      height: '20px',
+                      fontWeight: 500,
+                      background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%',
+                      color: 'white',
+                      border: 'none',
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
+                      cursor: 'help'
+                    }}>
+                      Used
+                    </Tag>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ),
@@ -181,27 +293,30 @@ const DealStages = () => {
     {
       title: 'Actions',
       key: 'actions',
-      width: 80,
-      render: (_, record) => (
-        <Dropdown
-          menu={actionMenu(record)}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-button"
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const isUsed = isStageInUse(record.id);
+        return (
+          <Space size="middle">
+            {!isUsed && (
+              <>
+                <Button
+                  type="text"
+                  icon={<FiEdit2 />}
+                  onClick={() => handleEdit(record)}
+                  className="edit-button"
+                />
+                <Button
+                  type="text"
+                  danger
+                  icon={<FiTrash2 />}
+                  onClick={() => handleDelete(record)}
+                  className="delete-button"
+                />
+              </>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -288,53 +403,114 @@ const DealStages = () => {
           <>
             <div className="stage-grid">
               {filteredStages && filteredStages.length > 0 ? (
-                filteredStages.map((stage) => (
-                  <div key={stage.id} className="stage-card">
-                    <div className="stage-content">
-                      <div className="stage-header">
-                        <div className="stage-info-wrapper">
-                          <div className="stage-icon">
-                            <FiLayers />
-                          </div>
-                          <div className="stage-info">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <h3>{stage.stageName}</h3>
-                              {stage.isDefault && (
-                                <span style={{
-                                  fontSize: '11px',
-                                  padding: '2px 6px',
-                                  background: '#e6f7ff',
-                                  color: '#1890ff',
-                                  borderRadius: '4px',
-                                  fontWeight: '500'
-                                }}>
-                                  Default
-                                </span>
-                              )}
+                filteredStages.map((stage) => {
+                  const usage = getStageUsage(stage.id);
+                  const isUsed = usage.type !== 'none';
+                  return (
+                    <div key={stage.id} className="stage-card">
+                      <div className="pipeline-header" style={{
+                        margin: '-12px -24px 12px -24px',
+                        padding: '0 24px 12px 24px',
+                        fontSize: '13px',
+                        color: '#1890ff',
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        borderBottom: '1px solid #f0f0f0',
+                        cursor: 'help'
+                      }}>
+                        <Tooltip title={getPipelineName(stage.pipeline)}>
+                          <span>{getPipelineName(stage.pipeline)}</span>
+                        </Tooltip>
+                        {!pipelines.length && <span className="loading-dots" style={{ color: '#1890ff' }}>...</span>}
+                      </div>
+                      <div className="stage-content">
+                        <div className="stage-header">
+                          <div className="stage-info-wrapper">
+                            <div className="stage-icon">
+                              <FiLayers />
                             </div>
-                            <p className="pipeline-name">
-                              {getPipelineName(stage.pipeline)}
-                            </p>
+                            <div className="stage-info">
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <h3 style={{
+                                    margin: 0,
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    maxWidth: '180px'
+                                  }}>{stage.stageName}</h3>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                    {stage.isDefault && (
+                                      <Tag color="blue" style={{
+                                        margin: 0,
+                                        padding: '0 8px',
+                                        fontSize: '12px',
+                                        borderRadius: '4px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        height: '22px',
+                                        fontWeight: 500,
+                                      }}>
+                                        Default
+                                      </Tag>
+                                    )}
+                                    {isStageInUse(stage.id) && (
+                                      <Tooltip title="This stage is currently being used in deals">
+                                        <Tag className="stage-label" style={{
+                                          margin: 0,
+                                          padding: '2px 8px',
+                                          fontSize: '11px',
+                                          borderRadius: '12px',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          height: '20px',
+                                          fontWeight: 500,
+                                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%',
+                                          color: 'white',
+                                          border: 'none',
+                                          letterSpacing: '0.02em',
+                                          textTransform: 'uppercase',
+                                          cursor: 'help'
+                                        }}>
+                                          Used
+                                        </Tag>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="stage-actions">
-                          <Button
-                            type="text"
-                            icon={<FiEdit2 />}
-                            onClick={() => handleEdit(stage)}
-                            className="edit-button"
-                          />
-                          <Button
-                            type="text"
-                            icon={<FiTrash2 />}
-                            onClick={() => handleDelete(stage)}
-                            className="delete-button"
-                          />
+                          <div className="stage-actions">
+                            {!isStageInUse(stage.id) && (
+                              <>
+                                <Button
+                                  type="text"
+                                  icon={<FiEdit2 />}
+                                  onClick={() => handleEdit(stage)}
+                                  className="edit-button"
+                                />
+                                <Button
+                                  type="text"
+                                  danger
+                                  icon={<FiTrash2 />}
+                                  onClick={() => handleDelete(stage)}
+                                  className="delete-button"
+                                />
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="no-stages">
                   <FiLayers size={48} />
@@ -364,16 +540,9 @@ const DealStages = () => {
           <Table
             columns={columns}
             dataSource={filteredStages}
+            loading={isLoading}
+            pagination={false}
             rowKey="id"
-            pagination={{
-              total: filteredStages.length,
-              pageSize: pageSize,
-              position: ['bottomRight'],
-              showSizeChanger: false,
-              showQuickJumper: false,
-              showTotal: false,
-            }}
-            className="stage-table"
           />
         )}
       </div>
@@ -493,70 +662,56 @@ const DealStages = () => {
             </Text>
           </div>
           <div className="stage-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {dealStages
-              .filter(s => s.pipeline === stageToDelete?.pipeline && s.id !== stageToDelete?.id)
-              .map(stage => (
-                <Button
-                  key={stage.id}
-                  onClick={() => handleSetNewDefaultAndDelete(stage.id)}
-                  className="stage-card"
+            {remainingStages.map(stage => (
+              <Button
+                key={stage.id}
+                onClick={() => handleSetNewDefaultAndDelete(stage.id)}
+                className="stage-card"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  margin: 0,
+                  padding: '16px',
+                  textAlign: 'left',
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  gap: '16px',
+                  border: '1px solid rgba(24, 144, 255, 0.1)',
+                  borderRadius: '12px',
+                  background: 'white',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(24, 144, 255, 0.02)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+              >
+                <div
+                  className="stage-icon"
                   style={{
-                    width: '100%',
-                    height: 'auto',
-                    margin: 0,
-                    padding: '16px',
-                    textAlign: 'left',
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
                     display: 'flex',
-                    justifyContent: 'flex-start',
                     alignItems: 'center',
-                    gap: '16px',
-                    border: '1px solid rgba(24, 144, 255, 0.1)',
-                    borderRadius: '12px',
-                    background: 'white',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(24, 144, 255, 0.02)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    justifyContent: 'center',
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
                   }}
                 >
-                  <div
-                    className="stage-icon"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                    }}
-                  >
-                    <FiLayers style={{ fontSize: '20px' }} />
+                  <FiLayers style={{ fontSize: '20px' }} />
+                </div>
+                <div className="stage-info">
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1f36' }}>
+                    {stage.stageName}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>
+                      {getPipelineName(stage.pipeline)}
+                    </p>
                   </div>
-                  <div className="stage-info">
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1f36' }}>
-                      {stage.stageName}
-                    </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b' }}>
-                        {getPipelineName(stage.pipeline)}
-                      </p>
-                      {stage.isDefault && (
-                        <span style={{
-                          fontSize: '11px',
-                          padding: '2px 6px',
-                          background: '#e6f7ff',
-                          color: '#1890ff',
-                          borderRadius: '4px',
-                          fontWeight: '500'
-                        }}>
-                          Default
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Button>
-              ))}
+                </div>
+              </Button>
+            ))}
           </div>
           <div
             style={{
@@ -591,4 +746,3 @@ const DealStages = () => {
 };
 
 export default DealStages;
-

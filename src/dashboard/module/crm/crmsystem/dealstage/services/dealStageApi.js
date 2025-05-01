@@ -7,52 +7,98 @@ export const dealStageApi = createApi({
   tagTypes: ["DealStage"],
   endpoints: (builder) => ({
     getDealStages: builder.query({
-      query: () => "stages",
+      query: () => ({
+        url: "stages",
+        method: "GET",
+        params: {
+          stageType: "deal",
+          client_id: true
+        }
+      }),
       transformResponse: (response) => {
-        // Handle different response structures
-        if (Array.isArray(response)) {
-          return response;
+        try {
+          if (Array.isArray(response)) {
+            return response;
+          }
+          if (response?.stages && Array.isArray(response.stages)) {
+            return response.stages;
+          }
+          if (response?.data && Array.isArray(response.data)) {
+            return response.data;
+          }
+          console.warn('Unexpected deal stage response format:', response);
+          return [];
+        } catch (error) {
+          console.error('Error transforming deal stage response:', error);
+          return [];
         }
-        if (response?.stages && Array.isArray(response.stages)) {
-          return response.stages;
-        }
-        if (response?.data && Array.isArray(response.data)) {
-          return response.data;
-        }
-        return [];
       },
       providesTags: ["DealStage"],
     }),
 
     getDealStagesByPipeline: builder.query({
-      query: (pipelineId) => `stages/pipeline/${pipelineId}`,
-      providesTags: ["DealStage"],
+      query: (pipelineId) => ({
+        url: `stages/pipeline/${pipelineId}`,
+        method: "GET",
+        params: {
+          stageType: "deal",
+          client_id: true
+        }
+      }),
+      transformResponse: (response) => {
+        try {
+          const stages = Array.isArray(response) ? response :
+            response?.stages || response?.data || [];
+          return stages.filter(stage => stage.stageType === 'deal');
+        } catch (error) {
+          console.error('Error transforming pipeline stages:', error);
+          return [];
+        }
+      },
+      providesTags: (result, error, pipelineId) => [
+        "DealStage",
+        { type: "DealStage", id: `pipeline-${pipelineId}` }
+      ],
     }),
 
     addDealStage: builder.mutation({
       query: (body) => ({
         url: "stages",
         method: "POST",
-        body,
+        body: {
+          ...body,
+          stageType: "deal",
+          client_id: true
+        }
       }),
       invalidatesTags: ["DealStage"],
     }),
 
     updateDealStage: builder.mutation({
-      query: ({ id, ...body }) => ({
-        url: `stages/${id}`,
+      query: (data) => ({
+        url: `stages/${data.id}`,
         method: "PUT",
-        body,
+        body: {
+          stageName: data.stageName,
+          pipeline: data.pipeline,
+          stageType: "deal",
+          isDefault: data.isDefault,
+          client_id: true
+        }
       }),
-      invalidatesTags: ["DealStage"],
+      invalidatesTags: ["DealStage"]
     }),
 
     deleteDealStage: builder.mutation({
-      query: (id) => ({
+      query: ({ id, newDefaultId }) => ({
         url: `stages/${id}`,
         method: "DELETE",
+        body: {
+          newDefaultId,
+          client_id: true
+        }
       }),
-      invalidatesTags: ["DealStage"],
+      invalidatesTags: ["DealStage"]
     }),
   }),
 });

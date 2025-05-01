@@ -29,34 +29,58 @@ const { Title, Text } = Typography;
 const DealDetail = () => {
     const { dealId } = useParams();
     const navigate = useNavigate();
-    const { data, isLoading } = useGetDealsQuery();
+    const { data, isLoading, refetch } = useGetDealsQuery();
     const [updateDeal] = useUpdateDealMutation();
-    
+
     // Get deals array first
     const deals = Array.isArray(data) ? data : [];
     // Then find the deal
     const deal = deals.find(deal => deal.id === dealId);
-    
-    // Use useEffect to update currentStatus when deal data changes
+
+    // Local state for deal and status
+    const [localDeal, setLocalDeal] = useState(deal);
     const [currentStatus, setCurrentStatus] = useState('pending');
-    
+
     React.useEffect(() => {
-        if (deal?.status) {
-            setCurrentStatus(deal.status);
+        if (deal) {
+            setLocalDeal(deal);
+            setCurrentStatus(deal.status || 'pending');
         }
     }, [deal]);
 
     const handleStatusChange = async (status) => {
         try {
-            await updateDeal({
+            const updatePayload = {
                 id: dealId,
                 status: status,
-                is_won: status === 'won'
-            }).unwrap();
-            
+                is_won: status === 'won' ? true : status === 'lost' ? false : null
+            };
+
+            // Update local state immediately for instant UI feedback
             setCurrentStatus(status);
-            message.success(`Deal status updated to ${status}`);
+            setLocalDeal(prev => ({
+                ...prev,
+                status: status,
+                is_won: status === 'won' ? true : status === 'lost' ? false : null
+            }));
+
+            // Make the API call
+            const result = await updateDeal(updatePayload).unwrap();
+
+            if (result?.data) {
+                // Update local state with server response
+                setLocalDeal(result.data);
+                setCurrentStatus(result.data.status);
+            }
+
+            message.success(`Deal marked as ${status}`);
+
+            // Refresh the deals data in the background
+            refetch();
         } catch (error) {
+            // Revert local state if API call fails
+            setCurrentStatus(deal?.status || 'pending');
+            setLocalDeal(deal);
             message.error('Failed to update deal status');
         }
     };
@@ -64,7 +88,7 @@ const DealDetail = () => {
     // Function to check if buttons should be shown
     const shouldShowStatusButtons = () => {
         // Show buttons only if is_won is null (not yet marked as won or lost)
-        return deal?.is_won === null;
+        return localDeal?.is_won === null;
     };
 
     const items = [
@@ -75,7 +99,11 @@ const DealDetail = () => {
                     <FiBriefcase className="nav-icon" /> Overview
                 </span>
             ),
-            children: <DealOverview deal={deal} currentStatus={currentStatus} />,
+            children: <DealOverview
+                deal={localDeal}
+                currentStatus={currentStatus}
+                onStatusChange={handleStatusChange}
+            />,
         },
         {
             key: 'members',
@@ -84,7 +112,7 @@ const DealDetail = () => {
                     <FiUsers className="nav-icon" /> Deal Members
                 </span>
             ),
-            children: <DealMember deal={deal} />,
+            children: <DealMember deal={localDeal} />,
         },
         {
             key: 'files',
@@ -93,7 +121,7 @@ const DealDetail = () => {
                     <FiFile className="nav-icon" /> Files
                 </span>
             ),
-            children: <DealFiles deal={deal} />,
+            children: <DealFiles deal={localDeal} />,
         },
         // {
         //     key: 'tasks',
@@ -102,7 +130,7 @@ const DealDetail = () => {
         //             <FiCheckSquare /> Tasks
         //         </span>
         //     ),
-        //     children: <DealTasks deal={deal} />,
+        //     children: <DealTasks deal={localDeal} />,
         // },
         {
             key: 'invoices',
@@ -111,7 +139,7 @@ const DealDetail = () => {
                     <FiFileText className="nav-icon" /> Invoices
                 </span>
             ),
-            children: <DealInvoices deal={deal} />,
+            children: <DealInvoices deal={localDeal} />,
         },
 
         {
@@ -121,7 +149,7 @@ const DealDetail = () => {
                     <FiCreditCard className="nav-icon" /> Payments
                 </span>
             ),
-            children: <DealPayments deal={deal} />,
+            children: <DealPayments deal={localDeal} />,
         },
         {
             key: 'notes',
@@ -130,7 +158,7 @@ const DealDetail = () => {
                     <FiBookmark className="nav-icon" /> Notes
                 </span>
             ),
-            children: <DealNotes deal={deal} />,
+            children: <DealNotes deal={localDeal} />,
         },
         {
             key: 'activity',
@@ -139,7 +167,7 @@ const DealDetail = () => {
                     <FiActivity className="nav-icon" /> Activity
                 </span>
             ),
-            children: <DealActivity deal={deal} />,
+            children: <DealActivity deal={localDeal} />,
         },
         {
             key: 'followup',
@@ -148,7 +176,7 @@ const DealDetail = () => {
                     <FiActivity className="nav-icon" /> Follow-up
                 </span>
             ),
-            children: <DealFollowup deal={deal} />,
+            children: <DealFollowup deal={localDeal} />,
         },
     ];
 
@@ -167,14 +195,14 @@ const DealDetail = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        {deal?.data?.deal_name || 'Deal Details'}
+                        {localDeal?.data?.deal_name || 'Deal Details'}
                     </Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
             <div className="page-header">
                 <div className="header-left">
-                    <Title level={2}>{deal?.data?.deal_name || 'Deal Details'}</Title>
+                    <Title level={2}>{localDeal?.data?.deal_name || 'Deal Details'}</Title>
                     <Text type="secondary" className="subtitle">
                         Manage deal details and activities
                     </Text>

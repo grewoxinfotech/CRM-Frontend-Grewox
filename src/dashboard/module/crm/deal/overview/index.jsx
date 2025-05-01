@@ -33,7 +33,7 @@ import '../../lead/overview/LeadOverview.scss';
 
 const { Title, Text } = Typography;
 
-const DealStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, isLoading, dealStatus }) => {
+const DealStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, isLost, isLoading, dealStatus }) => {
     if (!stages || stages.length === 0) {
         return null;
     }
@@ -43,14 +43,16 @@ const DealStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, i
         e.preventDefault();
         e.stopPropagation();
 
-        if (isLoading || stageId === currentStageId || isWon || !onStageClick) {
+        if (isLoading || stageId === currentStageId || isWon || isLost || !onStageClick) {
             return;
         }
         onStageClick(stageId);
     };
 
+    const isConverted = isWon || isLost;
+
     return (
-        <div className={`lead-stage-progress-container ${isWon ? 'converted' : ''}`}>
+        <div className={`lead-stage-progress-container ${isConverted ? 'converted' : ''}`}>
             {stages.map((stage, index) => {
                 const isCompleted = currentStageIndex > -1 && index < currentStageIndex;
                 const isCurrent = stage.id === currentStageId;
@@ -64,19 +66,19 @@ const DealStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, i
                 return (
                     <button
                         key={stage.id}
-                        className={`stage-item ${statusClass} ${isLoading ? 'loading' : ''} ${isWon ? 'converted' : ''}`}
+                        className={`stage-item ${statusClass} ${isLoading ? 'loading' : ''} ${isConverted ? 'converted' : ''}`}
                         onClick={(e) => handleItemClick(stage.id, e)}
-                        disabled={isLoading || isWon}
+                        disabled={isLoading || isConverted}
                         type="button"
                         aria-label={`Set stage to ${stage.stageName}`}
                         aria-current={isCurrent ? 'step' : undefined}
-                        style={{ cursor: isLoading || isWon ? 'not-allowed' : 'pointer' }}
+                        style={{ cursor: isLoading || isConverted ? 'not-allowed' : 'pointer' }}
                     >
                         <span className="stage-name">{stage.stageName}</span>
                         {isLoading && isCurrent && <span className="loading-indicator">Updating...</span>}
-                        {isWon && isCurrent && (
+                        {isConverted && isCurrent && (
                             <span className="converted-indicator">
-                                {dealStatus === 'won' ? 'Won' : dealStatus === 'lost' ? 'Lost' : ''}
+                                {isWon ? 'Won' : 'Lost'}
                             </span>
                         )}
                     </button>
@@ -191,7 +193,7 @@ const DealStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, i
                 }
 
                 .stage-item.converted.current {
-                    background: ${dealStatus === 'won' ? '#52c41a' : dealStatus === 'lost' ? '#ff4d4f' : '#1890ff'};
+                    background: ${isWon ? '#52c41a' : isLost ? '#ff4d4f' : '#1890ff'};
                 }
             `}</style>
         </div>
@@ -199,7 +201,11 @@ const DealStageProgress = ({ stages = [], currentStageId, onStageClick, isWon, i
 };
 
 const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
-    const [localDeal, setLocalDeal] = useState(initialDeal);
+    const [localDeal, setLocalDeal] = useState({
+        ...initialDeal,
+        status: currentStatus,
+        is_won: currentStatus === 'won' ? true : currentStatus === 'lost' ? false : null
+    });
     const navigate = useNavigate();
     const loggedInUser = useSelector(selectCurrentUser);
     const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -218,8 +224,6 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
     const contactData = contactsData || [];
     const companies = companyData?.data || [];
 
-
-
     const formatCurrencyValue = (value, currencyId) => {
         const currencyDetails = currencies?.find(
             (c) => c.id === currencyId || c.currencyCode === currencyId
@@ -235,10 +239,13 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             .replace(/^/, currencyDetails.currencyIcon + " ");
     };
 
-    // Update localDeal when initialDeal changes
     React.useEffect(() => {
-        setLocalDeal(initialDeal);
-    }, [initialDeal]);
+        setLocalDeal(prev => ({
+            ...initialDeal,
+            status: currentStatus,
+            is_won: currentStatus === 'won' ? true : currentStatus === 'lost' ? false : null
+        }));
+    }, [initialDeal, currentStatus]);
 
     if (!localDeal) return <div>Deal not found</div>;
 
@@ -255,7 +262,6 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
     const company = getCompanyDetails();
     const contact = getContactDetails();
 
-    // Filter and sort stages using same logic as LeadOverview
     const filteredStages = useMemo(() => {
         if (!localDeal?.pipeline || !dealStages) return [];
         const stagesArray = Array.isArray(dealStages) ? dealStages : [];
@@ -290,37 +296,40 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
     }, [localDeal?.pipeline, dealStages, savedStageOrder]);
 
     const handleStageChange = async (stageId) => {
-        // Optimistically update the local state
+        if (localDeal?.is_won !== null) {
+            return;
+        }
+
         const updatedDeal = { ...localDeal, stage: stageId };
+
         setLocalDeal(updatedDeal);
 
         try {
-            // Create a complete update payload with all necessary fields
+            let formattedDealMembers = localDeal.deal_members;
+            if (typeof localDeal.deal_members === 'string') {
+                try {
+                    formattedDealMembers = JSON.parse(localDeal.deal_members);
+                } catch (e) {
+                    formattedDealMembers = { deal_members: [] };
+                }
+            } else if (!localDeal.deal_members) {
+                formattedDealMembers = { deal_members: [] };
+            }
+
             const updatePayload = {
-                id: localDeal.id,
-                stage: stageId,
-                dealTitle: localDeal.dealTitle,
-                pipeline: localDeal.pipeline,
-                value: localDeal.value,
-                currency: localDeal.currency,
-                status: localDeal.status,
-                is_won: localDeal.is_won,
-                company_id: localDeal.company_id,
-                contact_id: localDeal.contact_id,
-                source: localDeal.source,
-                category: localDeal.category,
-                closedDate: localDeal.closedDate,
-                deal_members: localDeal.deal_members,
-                description: localDeal.description,
-                createdAt: localDeal.createdAt,
+                ...updatedDeal,
+                deal_members: formattedDealMembers,
                 updatedAt: new Date().toISOString()
             };
 
             const result = await updateDeal(updatePayload).unwrap();
 
-            // Update local state with the response from the server
             if (result?.data) {
-                setLocalDeal(result.data);
+                setLocalDeal(prev => ({
+                    ...result.data,
+                    status: currentStatus,
+                    is_won: currentStatus === 'won' ? true : currentStatus === 'lost' ? false : null
+                }));
             }
 
             message.success('Deal stage updated successfully');
@@ -328,8 +337,11 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                 onStageUpdate(stageId);
             }
         } catch (error) {
-            // Revert the optimistic update on error
-            setLocalDeal(initialDeal);
+            setLocalDeal(prev => ({
+                ...initialDeal,
+                status: currentStatus,
+                is_won: currentStatus === 'won' ? true : currentStatus === 'lost' ? false : null
+            }));
             message.error(error?.data?.message || 'Failed to update deal stage');
         }
     };
@@ -351,9 +363,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
         return country ? `${country.phoneCode} ${phoneNumber}` : phoneNumber;
     };
 
-
-    const getStatusStyle = (status) => {
-        // First check is_won flag
+    const getStatusStyle = () => {
         if (localDeal?.is_won === true) {
             return {
                 background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
@@ -370,7 +380,6 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             };
         }
 
-        // Default to pending if is_won is null - changed to yellow
         return {
             background: 'linear-gradient(135deg, #faad14 0%, #d48806 100%)',
             color: '#faad14',
@@ -379,7 +388,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
         };
     };
 
-    const statusStyle = getStatusStyle(currentStatus || localDeal?.status);
+    const statusStyle = getStatusStyle();
 
     const getSourceName = (sourceId) => {
         if (!sourceId) return '-';
@@ -400,9 +409,10 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                     stages={filteredStages}
                     currentStageId={localDeal?.stage}
                     onStageClick={handleStageChange}
-                    isWon={localDeal?.is_won !== null}
+                    isWon={localDeal?.is_won === true}
+                    isLost={localDeal?.is_won === false}
                     isLoading={isUpdating}
-                    dealStatus={localDeal?.is_won === true ? 'won' : localDeal?.is_won === false ? 'lost' : 'pending'}
+                    dealStatus={localDeal?.status}
                 />
             </div>
 
@@ -834,7 +844,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className={`metric-card status-card ${currentStatus || localDeal?.status}`}>
+                    <Card className={`metric-card status-card ${localDeal?.status}`}>
                         <div
                             className="metric-icon"
                             style={{

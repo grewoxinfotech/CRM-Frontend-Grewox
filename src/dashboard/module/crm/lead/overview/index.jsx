@@ -951,24 +951,20 @@ const LeadOverview = () => {
     return {
       id: localLeadData.id,
       leadTitle: localLeadData.leadTitle,
-      firstName: localLeadData.firstName,
-      lastName: localLeadData.lastName,
-      email: localLeadData.email,
-      phone: localLeadData.telephone?.split(" ")[1] || "",
-      phoneCode: localLeadData.phoneCode,
-      company: localLeadData.company_name,
+      contact_id: localLeadData.contact_id,
+      company_id: localLeadData.company_id,
       source: localLeadData.source,
       pipeline: localLeadData.pipeline,
       stage: localLeadData.leadStage,
       currency: localLeadData.currency,
       value: localLeadData.leadValue,
       category: localLeadData.category,
-      address: localLeadData.address,
       status: localLeadData.status,
       interest_level: localLeadData.interest_level,
       lead_members: localLeadData.lead_members
         ? JSON.parse(localLeadData.lead_members).lead_members
         : [],
+      is_converted: localLeadData.is_converted
     };
   }, [localLeadData]);
 

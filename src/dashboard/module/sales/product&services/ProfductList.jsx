@@ -10,7 +10,9 @@ import {
   message,
   Input,
   Space,
+  Avatar,
 } from "antd";
+import "./ProductList.scss";
 import {
   FiEdit2,
   FiTrash2,
@@ -227,17 +229,21 @@ const ProductList = ({
         record.name.toLowerCase().includes(value.toLowerCase()) ||
         record.category?.toLowerCase().includes(value.toLowerCase()),
       render: (name, record) => (
-        <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-          {record.image && (
-            <img
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          {record.image ? (
+            <Avatar
               src={record.image}
               alt={name}
-              style={{
-                width: "40px",
-                height: "40px",
-                objectFit: "cover",
-                borderRadius: "4px",
-              }}
+              size={40}
+              shape="square"
+              style={{ backgroundColor: "#f0f7ff" }}
+            />
+          ) : (
+            <Avatar
+              size={40}
+              shape="square"
+              style={{ backgroundColor: "#f0f7ff" }}
+              icon={<FiBox style={{ color: "#1890ff" }} />}
             />
           )}
           <div>
@@ -273,15 +279,15 @@ const ProductList = ({
                 record.stock_status === "in_stock"
                   ? "success"
                   : record.stock_status === "low_stock"
-                  ? "warning"
-                  : "error"
+                    ? "warning"
+                    : "error"
               }
             >
               {record.stock_status === "in_stock"
                 ? "In Stock"
                 : record.stock_status === "low_stock"
-                ? "Low Stock"
-                : "Out of Stock"}
+                  ? "Low Stock"
+                  : "Out of Stock"}
             </Tag>
           </div>
           <Text type="secondary" style={{ fontSize: "12px", display: "block" }}>
@@ -302,7 +308,7 @@ const ProductList = ({
       sorter: (a, b) => a.selling_price - b.selling_price,
       render: (_, record) => (
         <div>
-          <Text strong style={{ display: "block"}}>
+          <Text strong style={{ display: "block" }}>
             {formatPrice(record.selling_price, record.currency)}
           </Text>
           {record.tax && (

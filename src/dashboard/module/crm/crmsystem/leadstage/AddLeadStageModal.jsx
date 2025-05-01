@@ -215,12 +215,20 @@ const AddLeadStageModal = ({ isOpen, onClose, pipelineId }) => {
                     <Divider style={{ margin: "8px 0" }} />
                     <Button
                       type="text"
-                      icon={<PlusOutlined />}
+                      icon={<PlusOutlined style={{ color: '#ffffff' }} />}
                       onClick={handleAddPipelineClick}
                       style={{
                         width: "100%",
                         textAlign: "left",
                         padding: "8px 12px",
+                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginBottom: "4px",
                       }}
                     >
                       Add Pipeline

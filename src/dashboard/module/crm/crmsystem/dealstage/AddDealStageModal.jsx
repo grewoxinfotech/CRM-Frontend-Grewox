@@ -20,86 +20,49 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
   const selectRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const showDefaultWarning = (selectedPipeline, callback) => {
-    const existingDefaultStage = stages.find(
-      stage => stage.pipeline === selectedPipeline &&
-        stage.isDefault &&
-        stage.stageType === "deal"
-    );
-
-    if (existingDefaultStage) {
-      confirm({
-        title: 'Change Default Stage',
-        icon: <ExclamationCircleOutlined />,
-        content: `"${existingDefaultStage.stageName}" is currently set as default. Setting this stage as default will remove the default status from "${existingDefaultStage.stageName}". Do you want to continue?`,
-        okText: 'Yes',
-        okType: 'primary',
-        cancelText: 'No',
-        onOk() {
-          callback(true, existingDefaultStage);
-        },
-        onCancel() {
-          setIsDefault(false);
-          callback(false);
-        },
-      });
-    } else {
-      callback(true);
-    }
-  };
-
   const handleSubmit = async (values) => {
     try {
       const selectedPipeline = values.pipeline || pipelineId;
-
-      if (isDefault) {
-        showDefaultWarning(selectedPipeline, async (proceed, existingDefaultStage) => {
-          if (proceed) {
-            // If there's an existing default stage, update it first
-            if (existingDefaultStage) {
-              try {
-                const updateData = {
-                  stageName: existingDefaultStage.stageName,
-                  pipeline: existingDefaultStage.pipeline,
-                  stageType: existingDefaultStage.stageType,
-                  isDefault: false,
-                  id: existingDefaultStage.id
-                };
-                await updateDealStage(updateData).unwrap();
-              } catch (error) {
-                message.error("Failed to update existing default stage");
-                return;
-              }
-            }
-            // Then create the new stage as default
-            await submitStage(values, selectedPipeline);
-          }
-        });
-      } else {
-        await submitStage(values, selectedPipeline);
-      }
-    } catch (error) {
-      message.error("Failed to add deal stage: " + error.message);
-    }
-  };
-
-  const submitStage = async (values, selectedPipeline) => {
-    try {
       const createData = {
         stageName: values.name,
         pipeline: selectedPipeline,
         stageType: "deal",
         isDefault: isDefault
       };
-      const response = await addDealStage(createData).unwrap();
 
+      // If there's an existing default stage and this is set as default,
+      // update the existing default stage silently
+      if (isDefault) {
+        const existingDefaultStage = stages.find(
+          stage => stage.pipeline === selectedPipeline &&
+            stage.isDefault &&
+            stage.stageType === "deal"
+        );
+
+        if (existingDefaultStage) {
+          try {
+            await updateDealStage({
+              stageName: existingDefaultStage.stageName,
+              pipeline: existingDefaultStage.pipeline,
+              stageType: existingDefaultStage.stageType,
+              isDefault: false,
+              id: existingDefaultStage.id
+            }).unwrap();
+          } catch (error) {
+            console.error("Failed to update existing default stage:", error);
+          }
+        }
+      }
+
+      // Create the new stage
+      await addDealStage(createData).unwrap();
       message.success("Deal stage created successfully");
       form.resetFields();
       setIsDefault(false);
-      await refetchStages(); // Refetch stages to update the list
-      onClose(true, response); // Pass back the created stage data
+      refetchStages();
+      onClose(true);
     } catch (error) {
-      message.error("Failed to create deal stage");
+      message.error("Failed to add deal stage: " + error.message);
     }
   };
 
@@ -110,7 +73,6 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
   };
 
   const handlePipelineChange = (value) => {
-    // Reset isDefault when pipeline changes
     setIsDefault(false);
   };
 
@@ -149,7 +111,11 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
         >
           <Button
             type="text"
-            onClick={onClose}
+            onClick={() => {
+              form.resetFields();
+              setIsDefault(false);
+              onClose();
+            }}
             style={{
               position: "absolute",
               top: "16px",
@@ -230,65 +196,54 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
             />
           </Form.Item>
 
-          <Form.Item
-            name="pipeline"
-            label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline <span style={{ color: "#ff4d4f" }}>*</span></span>}
-            rules={[{ required: true, message: "Please select a pipeline" }]}
-            initialValue={pipelineId}
-            style={{ display: pipelineId ? 'none' : 'block' }}
-          >
-            <Select
-              ref={selectRef}
-              open={dropdownOpen}
-              onDropdownVisibleChange={setDropdownOpen}
-              placeholder="Select pipeline"
-              style={{
-                width: "100%",
-                height: "48px",
-              }}
-              disabled={!!pipelineId}
-              dropdownRender={(menu) => (
-                <div onClick={(e) => e.stopPropagation()}>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div
-                    style={{
-                      padding: '8px 12px',
-                      display: 'flex',
-                      justifyContent: 'center'
-                    }}
-                  >
+          {!pipelineId && (
+            <Form.Item
+              name="pipeline"
+              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Pipeline</span>}
+              rules={[{ required: true, message: "Please select a pipeline" }]}
+            >
+              <Select
+                ref={selectRef}
+                placeholder="Select pipeline"
+                style={{ width: "100%" }}
+                onDropdownVisibleChange={setDropdownOpen}
+                onChange={handlePipelineChange}
+                open={dropdownOpen}
+                dropdownRender={(menu) => (
+                  <div>
+                    {menu}
+                    <Divider style={{ margin: "8px 0" }} />
                     <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
+                      type="text"
+                      icon={<PlusOutlined style={{ color: '#ffffff' }} />}
                       onClick={handleAddPipelineClick}
                       style={{
-                        width: '100%',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                        fontWeight: '500',
+                        width: "100%",
+                        textAlign: "left",
+                        padding: "8px 12px",
+                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginBottom: "4px",
                       }}
                     >
                       Add Pipeline
                     </Button>
                   </div>
-                </div>
-              )}
-            >
-              {pipelines.map((pipeline) => (
-                <Select.Option key={pipeline.id} value={pipeline.id}>
-                  {pipeline.pipeline_name}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+                )}
+              >
+                {pipelines.map((pipeline) => (
+                  <Select.Option key={pipeline.id} value={pipeline.id}>
+                    {pipeline.pipeline_name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
 
           <Form.Item
             label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Default Stage</span>}
@@ -299,11 +254,32 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
                 onChange={(checked) => {
                   const selectedPipeline = form.getFieldValue('pipeline') || pipelineId;
                   if (checked && selectedPipeline) {
-                    showDefaultWarning(selectedPipeline, (proceed) => {
-                      setIsDefault(proceed);
-                    });
+                    const existingDefaultStage = stages.find(
+                      stage => stage.pipeline === selectedPipeline &&
+                        stage.isDefault &&
+                        stage.stageType === "deal"
+                    );
+
+                    if (existingDefaultStage) {
+                      confirm({
+                        title: 'Change Default Stage',
+                        icon: <ExclamationCircleOutlined />,
+                        content: `"${existingDefaultStage.stageName}" is currently set as default. Setting this stage as default will remove the default status from "${existingDefaultStage.stageName}". Do you want to continue?`,
+                        okText: 'Yes',
+                        okType: 'primary',
+                        cancelText: 'No',
+                        onOk() {
+                          setIsDefault(true);
+                        },
+                        onCancel() {
+                          setIsDefault(false);
+                        },
+                      });
+                    } else {
+                      setIsDefault(true);
+                    }
                   } else {
-                    setIsDefault(checked);
+                    setIsDefault(false);
                   }
                 }}
               />
@@ -322,7 +298,11 @@ const AddDealStageModal = ({ isOpen, onClose, pipelineId }) => {
             }}
           >
             <Button
-              onClick={onClose}
+              onClick={() => {
+                form.resetFields();
+                setIsDefault(false);
+                onClose();
+              }}
               style={{
                 padding: "8px 24px",
                 height: "44px",

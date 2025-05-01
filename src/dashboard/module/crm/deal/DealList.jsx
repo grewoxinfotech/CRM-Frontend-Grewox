@@ -39,7 +39,7 @@ import { formatCurrency } from '../../../utils/currencyUtils';
 
 const { Text } = Typography;
 
-const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
+const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteDeal] = useDeleteDealMutation();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
@@ -49,6 +49,7 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: contactsResponse, isLoading: isContactsLoading, error: contactsError } = useGetContactsQuery();
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+  const navigate = useNavigate();
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
@@ -92,14 +93,17 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
   const getDropdownItems = (record) => ({
     items: [
       {
-        key: "view",
+        key: "overview",
         icon: <FiEye style={{ color: '#1890ff' }} />,
         label: (
           <Text style={{ color: '#1890ff', fontWeight: '500' }}>
             Overview
           </Text>
         ),
-        onClick: () => onDealClick(record),
+        onClick: (e) => {
+          e.stopPropagation();
+          navigate(`/dashboard/crm/deals/${record.id}`);
+        },
       },
       {
         key: "edit",
@@ -109,7 +113,10 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
             Edit Deal
           </Text>
         ),
-        onClick: () => onEdit(record),
+        onClick: (e) => {
+          e.stopPropagation();
+          onEdit(record);
+        },
       },
       {
         key: "delete",
@@ -119,7 +126,10 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
             Delete Deal
           </Text>
         ),
-        onClick: () => handleDelete(record),
+        onClick: (e) => {
+          e.stopPropagation();
+          onDelete(record);
+        },
       }
     ],
   });
@@ -369,6 +379,7 @@ const DealList = ({ onEdit, onView, onDealClick, deals = [] }) => {
             menu={getDropdownItems(record)}
             trigger={["click"]}
             placement="bottomRight"
+            arrow
           >
             <Button
               type="text"

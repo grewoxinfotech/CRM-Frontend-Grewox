@@ -35,28 +35,19 @@ const Deal = () => {
     // Fetch pipelines and deal stages
     const { data: pipelines = [] } = useGetPipelinesQuery();
     const { data: dealStages = [] } = useGetLeadStagesQuery();
-    const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
+    const [deleteDeal] = useDeleteDealMutation();
     const { data, isLoading, error } = useGetDealsQuery();
 
     // Filter deals based on search text
     const filteredDeals = React.useMemo(() => {
         if (!data) return [];
         if (!searchText) return data;
-
-        const searchLower = searchText.toLowerCase();
         return data.filter(deal =>
-            deal.dealTitle?.toLowerCase().includes(searchLower) ||
-            deal.company_name?.toLowerCase().includes(searchLower)
+            deal.dealTitle?.toLowerCase().includes(searchText.toLowerCase())
         );
     }, [data, searchText]);
 
-    const handleDealClick = (deal) => {
-        navigate(`/dashboard/crm/deals/${deal.id}`);
-    };
-
-
     const handleCreate = () => {
-        setSelectedDeal(null);
         setIsModalOpen(true);
     };
 
@@ -72,10 +63,19 @@ const Deal = () => {
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
-            onOk: () => {
-                deleteDeal(deal.id);
+            onOk: async () => {
+                try {
+                    await deleteDeal(deal.id).unwrap();
+                    message.success('Deal deleted successfully');
+                } catch (error) {
+                    message.error('Failed to delete deal');
+                }
             },
         });
+    };
+
+    const handleDealClick = (deal) => {
+        navigate(`/dashboard/crm/deals/${deal.id}`);
     };
 
     const handleView = (deal) => {
@@ -287,7 +287,6 @@ const Deal = () => {
                 onCancel={() => setIsModalOpen(false)}
                 pipelines={pipelines}
                 dealStages={dealStages}
-
             />
 
             <EditDeal

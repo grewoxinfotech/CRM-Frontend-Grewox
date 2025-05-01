@@ -9,7 +9,9 @@ import {
 } from "./services/leadStageApi";
 import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
 import "./leadstage.scss";
-import { Button, Modal, message, Table, Tooltip, Dropdown, Select, Typography } from "antd";
+import { Button, Modal, message, Table, Tooltip, Dropdown, Select, Typography, Space, Tag } from "antd";
+import { useGetLeadsQuery } from "../../lead/services/LeadApi";
+import { useGetDealsQuery } from "../../deal/services/dealApi";
 
 const { Text } = Typography;
 
@@ -26,8 +28,16 @@ const LeadStages = () => {
 
   const { data: stagesData = [], isLoading } = useGetLeadStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: leadsResponse } = useGetLeadsQuery();
+  const { data: dealsResponse } = useGetDealsQuery();
   const [deleteLeadStage] = useDeleteLeadStageMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
+
+  // Ensure data is always an array
+  const leadsData = Array.isArray(leadsResponse?.data) ? leadsResponse.data :
+    Array.isArray(leadsResponse) ? leadsResponse : [];
+  const dealsData = Array.isArray(dealsResponse?.data) ? dealsResponse.data :
+    Array.isArray(dealsResponse) ? dealsResponse : [];
 
   // Filter for lead stages only
   const leadStages = stagesData?.filter(stage => stage?.stageType === "lead") || [];
@@ -37,9 +47,20 @@ const LeadStages = () => {
     ? leadStages
     : leadStages.filter(stage => stage.pipeline === selectedPipeline);
 
+  // Check stage usage in leads and deals
+  const getStageUsage = (stageId) => {
+    const usedInLeads = leadsData.some(lead => lead.leadStage === stageId);
+    return { type: 'leads', label: 'Used in Leads' };
+  };
+
+  const isStageInUse = (stageId) => {
+    const usedInLeads = leadsData.some(lead => lead.leadStage === stageId);
+    return usedInLeads;
+  };
+
   const getPipelineName = (pipelineId) => {
     const pipeline = pipelines.find(p => p.id === pipelineId);
-    return pipeline?.pipeline_name || 'Not assigned';
+    return pipeline?.pipeline_name || '...';
   };
 
   const handleEdit = (stage) => {
@@ -68,6 +89,50 @@ const LeadStages = () => {
     }
   };
 
+  const handleSetNewDefaultAndDelete = async (newDefaultStageId) => {
+    if (!stageToDelete || !newDefaultStageId) {
+      message.error('Invalid stage selection');
+      return;
+    }
+
+    try {
+      // First set the new default stage
+      const newDefaultStage = leadStages.find(s => s.id === newDefaultStageId);
+      if (!newDefaultStage) {
+        message.error('Selected stage not found');
+        return;
+      }
+
+      // Update the new default stage
+      await updateLeadStage({
+        id: newDefaultStageId,
+        stageName: newDefaultStage.stageName,
+        pipeline: newDefaultStage.pipeline,
+        stageType: "lead",
+        isDefault: true
+      }).unwrap();
+
+      // Then delete the old default stage
+      const deleteResponse = await deleteLeadStage({
+        id: stageToDelete.id,
+        newDefaultId: newDefaultStageId
+      }).unwrap();
+
+      if (deleteResponse.success) {
+        message.success('Stage updated and deleted successfully');
+        setIsSelectDefaultModalOpen(false);
+        setStageToDelete(null);
+      } else {
+        message.error(deleteResponse.message || 'Failed to complete the operation');
+      }
+    } catch (error) {
+      console.error('Stage operation error:', error);
+      message.error(error?.data?.message || 'Failed to update stages');
+      setIsSelectDefaultModalOpen(false);
+      setStageToDelete(null);
+    }
+  };
+
   const showDeleteConfirmation = (stage) => {
     Modal.confirm({
       title: 'Delete Lead Stage',
@@ -80,38 +145,21 @@ const LeadStages = () => {
       },
       onOk: async () => {
         try {
-          await deleteLeadStage(stage.id).unwrap();
-          message.success('Lead stage deleted successfully');
+          const response = await deleteLeadStage({
+            id: stage.id,
+            newDefaultId: null
+          }).unwrap();
+
+          if (response.success) {
+            message.success('Lead stage deleted successfully');
+          } else {
+            message.error(response.message || 'Failed to delete stage');
+          }
         } catch (error) {
-          message.error(error?.data?.message || 'Failed to delete lead stage');
+          message.error(error?.data?.message || 'Failed to delete stage');
         }
       },
     });
-  };
-
-  const handleSetNewDefaultAndDelete = async (newDefaultStageId) => {
-    try {
-      // First set the new default stage
-      const newDefaultStage = leadStages.find(s => s.id === newDefaultStageId);
-      if (newDefaultStage) {
-        await updateLeadStage({
-          stageName: newDefaultStage.stageName,
-          pipeline: newDefaultStage.pipeline,
-          stageType: newDefaultStage.stageType,
-          isDefault: true,
-          id: newDefaultStage.id
-        }).unwrap();
-      }
-
-      // Then delete the old default stage
-      await deleteLeadStage(stageToDelete.id).unwrap();
-
-      message.success('Lead stage deleted and new default stage set successfully');
-      setIsSelectDefaultModalOpen(false);
-      setStageToDelete(null);
-    } catch (error) {
-      message.error('Failed to update stages: ' + (error?.data?.message || error.message));
-    }
   };
 
   // Update paginated stages to use filtered stages
@@ -150,7 +198,7 @@ const LeadStages = () => {
               width: '32px',
               height: '32px',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+              background: record.color || 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -159,20 +207,73 @@ const LeadStages = () => {
           >
             <FiLayers />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>{text}</span>
-            {record.isDefault && (
-              <span style={{
-                fontSize: '11px',
-                padding: '2px 6px',
-                background: '#e6f7ff',
-                color: '#1890ff',
-                borderRadius: '4px',
-                fontWeight: '500'
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: '16px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '180px'
+              }}>{record.stageName}</h3>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <Text style={{
+                fontSize: '13px',
+                color: '#64748b',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '120px',
+                opacity: pipelines.length ? 1 : 0.6,
+                cursor: 'help'
               }}>
-                Default
-              </span>
-            )}
+                <Tooltip title={getPipelineName(record.pipeline)}>
+                  <span>{getPipelineName(record.pipeline)}</span>
+                </Tooltip>
+                {!pipelines.length && <span className="loading-dots">...</span>}
+              </Text>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                {record.isDefault && (
+                  <Tag color="blue" style={{
+                    margin: 0,
+                    padding: '0 8px',
+                    fontSize: '12px',
+                    borderRadius: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    height: '22px',
+                    fontWeight: 500,
+                  }}>
+                    Default
+                  </Tag>
+                )}
+                {isStageInUse(record.id) && (
+                  <Tooltip title="This stage is currently being used in leads">
+                    <Tag className="stage-label" style={{
+                      margin: 0,
+                      padding: '2px 8px',
+                      fontSize: '11px',
+                      borderRadius: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      height: '20px',
+                      fontWeight: 500,
+                      background: '#0369a1',
+                      color: 'white',
+                      border: 'none',
+                      letterSpacing: '0.02em',
+                      textTransform: 'uppercase',
+                      cursor: 'help'
+                    }}>
+                      Used
+                    </Tag>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ),
@@ -187,26 +288,30 @@ const LeadStages = () => {
       title: 'Actions',
       key: 'actions',
       width: 80,
-      render: (_, record) => (
-        <Dropdown
-          menu={actionMenu(record)}
-          trigger={['click']}
-          placement="bottomRight"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-button"
-            style={{
-              width: '32px',
-              height: '32px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          />
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const isUsed = isStageInUse(record.id);
+        return (
+          <div className="stage-actions">
+            {!isUsed && (
+              <>
+                <Button
+                  type="text"
+                  icon={<FiEdit2 />}
+                  onClick={() => handleEdit(record)}
+                  className="edit-button"
+                />
+                <Button
+                  type="text"
+                  danger
+                  icon={<FiTrash2 />}
+                  onClick={() => handleDelete(record)}
+                  className="delete-button"
+                />
+              </>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -293,53 +398,117 @@ const LeadStages = () => {
           <>
             <div className="stage-grid">
               {filteredStages && filteredStages.length > 0 ? (
-                paginatedStages.map((stage) => (
-                  <div key={stage.id} className="stage-card">
-                    <div className="stage-content">
-                      <div className="stage-header">
-                        <div className="stage-info-wrapper">
-                          <div className="stage-icon">
-                            <FiLayers />
-                          </div>
-                          <div className="stage-info">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <h3>{stage.stageName}</h3>
-                              {stage.isDefault && (
-                                <span style={{
-                                  fontSize: '11px',
-                                  padding: '2px 6px',
-                                  background: '#e6f7ff',
-                                  color: '#1890ff',
-                                  borderRadius: '4px',
-                                  fontWeight: '500'
-                                }}>
-                                  Default
-                                </span>
-                              )}
+                paginatedStages.map((stage) => {
+                  const usage = getStageUsage(stage.id);
+                  const isUsed = usage.type !== 'none';
+                  return (
+                    <div key={stage.id} className="stage-card">
+                      <div className="pipeline-header" style={{
+                        margin: '-12px -24px 12px -24px',
+                        padding: '0 24px 12px 24px',
+                        fontSize: '13px',
+                        color: '#1890ff',
+                        fontWeight: 500,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        borderBottom: '1px solid #f0f0f0',
+                        cursor: 'help'
+                      }}>
+                        <Tooltip title={getPipelineName(stage.pipeline)}>
+                          <span>{getPipelineName(stage.pipeline)}</span>
+                        </Tooltip>
+                        {!pipelines.length && <span className="loading-dots" style={{ color: '#1890ff' }}>...</span>}
+                      </div>
+                      <div className="stage-content">
+                        <div className="stage-header">
+                          <div className="stage-info-wrapper">
+                            <div className="stage-icon">
+                              <FiLayers />
                             </div>
-                            <p className="pipeline-name">
-                              {getPipelineName(stage.pipeline)}
-                            </p>
+                            <div className="stage-info">
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Tooltip title={stage.stageName}>
+                                    <h3 style={{
+                                      margin: 0,
+                                      fontSize: '16px',
+                                      fontWeight: '600',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      maxWidth: '180px',
+                                      cursor: 'help'
+                                    }}>{stage.stageName}</h3>
+                                  </Tooltip>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                    {stage.isDefault && (
+                                      <Tag color="blue" style={{
+                                        margin: 0,
+                                        padding: '0 8px',
+                                        fontSize: '12px',
+                                        borderRadius: '4px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        height: '22px',
+                                        fontWeight: 500,
+                                      }}>
+                                        Default
+                                      </Tag>
+                                    )}
+                                    {isStageInUse(stage.id) && (
+                                      <Tooltip title="This stage is currently being used in leads">
+                                        <Tag className="stage-label" style={{
+                                          margin: 0,
+                                          padding: '2px 8px',
+                                          fontSize: '11px',
+                                          borderRadius: '12px',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          height: '20px',
+                                          fontWeight: 500,
+                                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%',
+                                          color: 'white',
+                                          border: 'none',
+                                          letterSpacing: '0.02em',
+                                          textTransform: 'uppercase',
+                                          cursor: 'help'
+                                        }}>
+                                          Used
+                                        </Tag>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="stage-actions">
-                          <Button
-                            type="text"
-                            icon={<FiEdit2 />}
-                            onClick={() => handleEdit(stage)}
-                            className="edit-button"
-                          />
-                          <Button
-                            type="text"
-                            icon={<FiTrash2 />}
-                            onClick={() => handleDelete(stage)}
-                            className="delete-button"
-                          />
+                          <div className="stage-actions">
+                            {!isStageInUse(stage.id) && (
+                              <>
+                                <Button
+                                  type="text"
+                                  icon={<FiEdit2 />}
+                                  onClick={() => handleEdit(stage)}
+                                  className="edit-button"
+                                />
+                                <Button
+                                  type="text"
+                                  danger
+                                  icon={<FiTrash2 />}
+                                  onClick={() => handleDelete(stage)}
+                                  className="delete-button"
+                                />
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="no-stages">
                   <FiLayers size={48} />

@@ -7,52 +7,98 @@ export const leadStageApi = createApi({
   tagTypes: ["LeadStage"],
   endpoints: (builder) => ({
     getLeadStages: builder.query({
-      query: () => "stages",
+      query: () => ({
+        url: "stages",
+        method: "GET",
+        params: {
+          stageType: "lead",
+          client_id: true
+        }
+      }),
       transformResponse: (response) => {
-        // Handle different response structures
-        if (Array.isArray(response)) {
-          return response;
+        try {
+          if (Array.isArray(response)) {
+            return response;
+          }
+          if (response?.stages && Array.isArray(response.stages)) {
+            return response.stages;
+          }
+          if (response?.data && Array.isArray(response.data)) {
+            return response.data;
+          }
+          console.warn('Unexpected lead stage response format:', response);
+          return [];
+        } catch (error) {
+          console.error('Error transforming lead stage response:', error);
+          return [];
         }
-        if (response?.stages && Array.isArray(response.stages)) {
-          return response.stages;
-        }
-        if (response?.data && Array.isArray(response.data)) {
-          return response.data;
-        }
-        return [];
       },
       providesTags: ["LeadStage"],
     }),
 
     getLeadStagesByPipeline: builder.query({
-      query: (pipelineId) => `stages/pipeline/${pipelineId}`,
-      providesTags: ["LeadStage"],
+      query: (pipelineId) => ({
+        url: `stages/pipeline/${pipelineId}`,
+        method: "GET",
+        params: {
+          stageType: "lead",
+          client_id: true
+        }
+      }),
+      transformResponse: (response) => {
+        try {
+          const stages = Array.isArray(response) ? response :
+            response?.stages || response?.data || [];
+          return stages.filter(stage => stage.stageType === 'lead');
+        } catch (error) {
+          console.error('Error transforming pipeline stages:', error);
+          return [];
+        }
+      },
+      providesTags: (result, error, pipelineId) => [
+        "LeadStage",
+        { type: "LeadStage", id: `pipeline-${pipelineId}` }
+      ],
     }),
 
     addLeadStage: builder.mutation({
       query: (body) => ({
         url: "stages",
         method: "POST",
-        body,
+        body: {
+          ...body,
+          stageType: "lead",
+          client_id: true
+        }
       }),
       invalidatesTags: ["LeadStage"],
     }),
 
     updateLeadStage: builder.mutation({
-      query: ({ id, ...body }) => ({
-        url: `stages/${id}`,
+      query: (data) => ({
+        url: `stages/${data.id}`,
         method: "PUT",
-        body,
+        body: {
+          stageName: data.stageName,
+          pipeline: data.pipeline,
+          stageType: "lead",
+          isDefault: data.isDefault,
+          client_id: true
+        }
       }),
-      invalidatesTags: ["LeadStage"],
+      invalidatesTags: ["LeadStage"]
     }),
 
     deleteLeadStage: builder.mutation({
-      query: (id) => ({
+      query: ({ id, newDefaultId }) => ({
         url: `stages/${id}`,
         method: "DELETE",
+        body: {
+          newDefaultId,
+          client_id: true
+        }
       }),
-      invalidatesTags: ["LeadStage"],
+      invalidatesTags: ["LeadStage"]
     }),
   }),
 });

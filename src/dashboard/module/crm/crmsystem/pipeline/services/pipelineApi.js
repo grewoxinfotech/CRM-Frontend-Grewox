@@ -7,42 +7,79 @@ export const pipelineApi = createApi({
   tagTypes: ["Pipeline"],
   endpoints: (builder) => ({
     getPipelines: builder.query({
-      query: () => "/pipelines",
+      query: () => ({
+        url: "/pipelines",
+        method: "GET",
+        params: {
+          client_id: true
+        }
+      }),
       transformResponse: (response) => {
-        // Handle different response structures
-        if (Array.isArray(response)) {
-          return response;
+        try {
+          if (Array.isArray(response)) {
+            return response;
+          }
+          if (response?.pipelines && Array.isArray(response.pipelines)) {
+            return response.pipelines;
+          }
+          if (response?.data && Array.isArray(response.data)) {
+            return response.data;
+          }
+          console.warn('Unexpected pipeline response format:', response);
+          return [];
+        } catch (error) {
+          console.error('Error transforming pipeline response:', error);
+          return [];
         }
-        if (response?.pipelines && Array.isArray(response.pipelines)) {
-          return response.pipelines;
-        }
-        if (response?.data && Array.isArray(response.data)) {
-          return response.data;
-        }
-        return [];
       },
       providesTags: ["Pipeline"],
     }),
+
+    getPipelineById: builder.query({
+      query: (id) => ({
+        url: `/pipelines/${id}`,
+        method: "GET",
+        params: {
+          client_id: true
+        }
+      }),
+      providesTags: (result, error, id) => [{ type: "Pipeline", id }],
+    }),
+
     addPipeline: builder.mutation({
       query: (data) => ({
         url: "/pipelines",
         method: "POST",
-        body: data,
+        body: {
+          ...data,
+          client_id: true
+        }
       }),
       invalidatesTags: ["Pipeline"],
     }),
+
     updatePipeline: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `/pipelines/${id}`,
         method: "PUT",
-        body: data,
+        body: {
+          ...data,
+          client_id: true
+        }
       }),
-      invalidatesTags: ["Pipeline"],
+      invalidatesTags: (result, error, { id }) => [
+        "Pipeline",
+        { type: "Pipeline", id }
+      ],
     }),
+
     deletePipeline: builder.mutation({
       query: (id) => ({
         url: `/pipelines/${id}`,
         method: "DELETE",
+        params: {
+          client_id: true
+        }
       }),
       invalidatesTags: ["Pipeline"],
     }),
@@ -51,6 +88,7 @@ export const pipelineApi = createApi({
 
 export const {
   useGetPipelinesQuery,
+  useGetPipelineByIdQuery,
   useAddPipelineMutation,
   useUpdatePipelineMutation,
   useDeletePipelineMutation,
