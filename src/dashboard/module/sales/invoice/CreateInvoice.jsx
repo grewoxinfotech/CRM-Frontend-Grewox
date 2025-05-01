@@ -152,7 +152,7 @@ const CreateInvoice = ({
     const price = Number(item.unit_price) || 0;
     const itemAmount = quantity * price;
 
-    // Calculate discount
+    // Calculate discount first
     const itemDiscount = Number(item.discount || 0);
     const itemDiscountType = item.discount_type || "percentage";
     let itemDiscountAmount = 0;
@@ -163,8 +163,10 @@ const CreateInvoice = ({
       itemDiscountAmount = itemDiscount;
     }
 
+    // Calculate tax on amount after discount
     const amountAfterDiscount = itemAmount - itemDiscountAmount;
-    const taxRate = Number(item.tax) || 0;
+    const selectedTax = taxesData?.data?.find((tax) => tax.id === item.taxId);
+    const taxRate = selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0;
 
     return (amountAfterDiscount * taxRate) / 100;
   };
@@ -176,7 +178,7 @@ const CreateInvoice = ({
     const price = Number(item.unit_price) || 0;
     const itemAmount = quantity * price;
 
-    // Calculate discount
+    // Calculate discount first
     const itemDiscount = Number(item.discount || 0);
     const itemDiscountType = item.discount_type || "percentage";
     let itemDiscountAmount = 0;
@@ -187,11 +189,14 @@ const CreateInvoice = ({
       itemDiscountAmount = itemDiscount;
     }
 
-    // Calculate tax
+    // Calculate amount after discount
+    const amountAfterDiscount = itemAmount - itemDiscountAmount;
+
+    // Calculate tax on discounted amount
     const taxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
 
-    // Final item total: amount - discount + tax
-    return itemAmount - itemDiscountAmount + taxAmount;
+    // Final total: discounted amount + tax
+    return amountAfterDiscount + taxAmount;
   };
 
   const calculateTotals = (items = []) => {
@@ -207,6 +212,7 @@ const CreateInvoice = ({
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.unit_price) || 0;
       const itemAmount = quantity * price;
+      subTotal += itemAmount;
 
       // Calculate item discount
       const itemDiscount = Number(item.discount || 0);
@@ -220,7 +226,6 @@ const CreateInvoice = ({
       }
 
       totalDiscount += itemDiscountAmount;
-      subTotal += itemAmount;
 
       if (isTaxEnabled) {
         totalTax += calculateItemTaxAmount(item);
@@ -233,6 +238,7 @@ const CreateInvoice = ({
     form.setFieldsValue({
       subtotal: subTotal.toFixed(2),
       tax: totalTax.toFixed(2),
+      discount: totalDiscount.toFixed(2),
       total: totalAmount.toFixed(2),
     });
 
@@ -256,26 +262,37 @@ const CreateInvoice = ({
 
       // Format items for backend
       const formattedItems = values.items?.map((item) => {
-        // Find the selected tax from taxesData
-        const selectedTax = taxesData?.data?.find(
-          (tax) => tax.id === item.taxId
-        );
-
+        const itemTaxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
         return {
           product_id: item.id,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
-          tax_rate: selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0,
-          tax_name: selectedTax ? selectedTax.gstName : "",
-          tax_amount: calculateItemTaxAmount(item),
+          tax: isTaxEnabled ? item.taxId || null : null,
+          tax_amount: itemTaxAmount,
           discount: Number(item.discount) || 0,
           discount_type: item.discount_type || "percentage",
           hsn_sac: item.hsn_sac || "",
           amount: calculateItemTotal(item),
-          // currency: item.currency || values.currency,
-          // currencyIcon: item.currencyIcon || selectedCurrency,
         };
       });
+
+      // Calculate total tax amount from all items
+      const totalTaxAmount = formattedItems.reduce(
+        (sum, item) => sum + (item.tax_amount || 0),
+        0
+      );
+
+      // Calculate total discount amount from all items
+      const totalDiscountAmount = formattedItems.reduce((sum, item) => {
+        const itemAmount = item.quantity * item.unit_price;
+        let discountAmount = 0;
+        if (item.discount_type === "percentage") {
+          discountAmount = (itemAmount * (item.discount || 0)) / 100;
+        } else {
+          discountAmount = Number(item.discount) || 0;
+        }
+        return sum + discountAmount;
+      }, 0);
 
       // Get the next invoice number
       const nextInvoiceNumber = getNextInvoiceNumber();
@@ -292,7 +309,8 @@ const CreateInvoice = ({
         currencyIcon: selectedCurrency,
         items: formattedItems,
         subtotal: Number(values.subtotal) || 0,
-        tax: Number(values.tax) || 0,
+        tax: totalTaxAmount,
+        discount: totalDiscountAmount,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid",
       };
@@ -1477,6 +1495,44 @@ const CreateInvoice = ({
                 Sub Total
               </Text>
               <Form.Item name="subtotal" style={{ margin: 0 }}>
+                <InputNumber
+                  disabled
+                  size="large"
+                  style={{
+                    width: "150px",
+                    borderRadius: "8px",
+                    height: "45px",
+                    backgroundColor: "#fff",
+                    boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                  }}
+                  formatter={(value) =>
+                    `${selectedCurrency}${value}`.replace(
+                      /\B(?=(\d{3})+(?!\d))/g,
+                      ","
+                    )
+                  }
+                />
+              </Form.Item>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "16px",
+                padding: "12px",
+                background: "#f8fafc",
+                borderRadius: "8px",
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{ fontSize: "15px", color: "#4b5563", fontWeight: 500 }}
+              >
+                Discount
+              </Text>
+              <Form.Item name="discount" style={{ margin: 0 }}>
                 <InputNumber
                   disabled
                   size="large"

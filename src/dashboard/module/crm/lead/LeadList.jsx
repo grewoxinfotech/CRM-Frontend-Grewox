@@ -1,5 +1,16 @@
 import React, { useEffect } from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Input, Tooltip } from "antd";
+import {
+  Table,
+  Avatar,
+  Dropdown,
+  Button,
+  message,
+  Tag,
+  Typography,
+  Space,
+  Input,
+  Tooltip,
+} from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -13,27 +24,47 @@ import {
   FiCheck,
   FiBarChart2,
   FiBriefcase,
-  FiUser
+  FiUser,
 } from "react-icons/fi";
 import { useDeleteLeadMutation } from "./services/LeadApi";
-import { useGetSourcesQuery, useGetStatusesQuery } from '../crmsystem/souce/services/SourceApi';
-import { useGetLeadStagesQuery } from '../crmsystem/leadstage/services/leadStageApi';
-import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
-import { useGetCompanyAccountsQuery } from '../companyacoount/services/companyAccountApi';
-import { useGetContactsQuery } from '../contact/services/contactApi';
+import {
+  useGetSourcesQuery,
+  useGetStatusesQuery,
+} from "../crmsystem/souce/services/SourceApi";
+import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
+import { useGetAllCurrenciesQuery } from "../../../module/settings/services/settingsApi";
+import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
+import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useSelector } from "react-redux";
-import { selectCurrentUser } from '../../../../auth/services/authSlice';
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
-import { formatCurrency } from '../../../utils/currencyUtils';
+import { formatCurrency } from "../../../utils/currencyUtils";
 
 const { Text } = Typography;
 const { Search } = Input;
 
 const adjustColor = (color, amount) => {
-  return '#' + color.replace(/^#/, '').replace(/../g, color => ('0' + Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+  return (
+    "#" +
+    color
+      .replace(/^#/, "")
+      .replace(/../g, (color) =>
+        (
+          "0" +
+          Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)
+        ).substr(-2)
+      )
+  );
 };
 
-const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
+const LeadList = ({
+  leads,
+  onEdit,
+  onView,
+  onLeadClick,
+  onDelete,
+  onCreateLead,
+}) => {
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const navigate = useNavigate();
@@ -48,7 +79,8 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
   const { data: contactsResponse } = useGetContactsQuery();
 
   // Filter and prepare data
-  const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
+  const stages =
+    stagesData?.filter((stage) => stage.stageType === "lead") || [];
   const sources = sourcesData?.data || [];
   const statuses = statusesData?.data || [];
   const contacts = contactsResponse?.data || [];
@@ -59,59 +91,71 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       onCreateLead?.(location.state.initialFormData);
       navigate(location.pathname, {
         replace: true,
-        state: {}
+        state: {},
       });
     }
   }, [location.state, onCreateLead, navigate]);
 
-  const handleDelete = async (record) => {
-    try {
-      await deleteLead(record.id).unwrap();
-      message.success("Lead deleted successfully");
-    } catch (error) {
-      message.error(
-        "Failed to delete lead: " + (error.data?.message || "Unknown error")
-      );
-    }
-  };
+  // const handleDelete = async (record) => {
+  //   try {
+  //     await deleteLead(record.id).unwrap();
+  //     message.success("Lead deleted successfully");
+  //   } catch (error) {
+  //     message.error(
+  //       "Failed to delete lead: " + (error.data?.message || "Unknown error")
+  //     );
+  //   }
+  // };
 
   const getContactName = (record) => {
     // First check direct contact
     if (record.contact_id) {
-      const contact = contacts.find(c => c.id === record.contact_id);
+      const contact = contacts.find((c) => c.id === record.contact_id);
       if (contact) {
         return {
-          name: `${contact.first_name || ''} ${contact.last_name || ''}`.trim(),
-          contact: contact
+          name: `${contact.first_name || ""} ${contact.last_name || ""}`.trim(),
+          contact: contact,
         };
       }
     }
 
     // If no direct contact, check for related contacts
-    const relatedContact = contacts.find(c => c.related_id === record.id);
+    const relatedContact = contacts.find((c) => c.related_id === record.id);
     if (relatedContact) {
       return {
-        name: `${relatedContact.first_name || ''} ${relatedContact.last_name || ''}`.trim(),
-        contact: relatedContact
+        name: `${relatedContact.first_name || ""} ${
+          relatedContact.last_name || ""
+        }`.trim(),
+        contact: relatedContact,
       };
     }
 
     return {
-      name: 'No Contact',
-      contact: null
+      name: "No Contact",
+      contact: null,
     };
   };
 
   const getCompanyName = (record) => {
     if (record.company_id) {
-      const company = companyAccountsResponse?.data?.find(c => c.id === record.company_id);
-      return company?.company_name || 'Unknown Company';
+      const company = companyAccountsResponse?.data?.find(
+        (c) => c.id === record.company_id
+      );
+      return company?.company_name || "Unknown Company";
     }
     return null;
   };
 
   const getRandomColor = (text) => {
-    const colors = ['#1890ff', '#52c41a', '#722ed1', '#eb2f96', '#fa8c16', '#13c2c2', '#2f54eb'];
+    const colors = [
+      "#1890ff",
+      "#52c41a",
+      "#722ed1",
+      "#eb2f96",
+      "#fa8c16",
+      "#13c2c2",
+      "#2f54eb",
+    ];
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
       hash = text.charCodeAt(i) + ((hash << 5) - hash);
@@ -120,16 +164,18 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
   };
 
   const getCompanyTooltip = (record) => {
-    const company = companyAccountsResponse?.data?.find(c => c.id === record.company_id);
+    const company = companyAccountsResponse?.data?.find(
+      (c) => c.id === record.company_id
+    );
     if (!company) return null;
 
     return (
-      <div style={{ padding: '8px' }}>
-        <div style={{ marginBottom: '4px', fontWeight: '500' }}>
+      <div style={{ padding: "8px" }}>
+        <div style={{ marginBottom: "4px", fontWeight: "500" }}>
           {company.company_name}
         </div>
         {company.company_site && (
-          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
             {company.company_site}
           </div>
         )}
@@ -138,21 +184,21 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
   };
 
   const getContactTooltip = (record) => {
-    const contact = contacts.find(c => c.id === record.contact_id);
+    const contact = contacts.find((c) => c.id === record.contact_id);
     if (!contact) return null;
 
     return (
-      <div style={{ padding: '8px' }}>
-        <div style={{ marginBottom: '4px', fontWeight: '500' }}>
-          {`${contact.first_name || ''} ${contact.last_name || ''}`.trim()}
+      <div style={{ padding: "8px" }}>
+        <div style={{ marginBottom: "4px", fontWeight: "500" }}>
+          {`${contact.first_name || ""} ${contact.last_name || ""}`.trim()}
         </div>
         {contact.email && (
-          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
             {contact.email}
           </div>
         )}
         {contact.phone && (
-          <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+          <div style={{ fontSize: "12px", color: "#8c8c8c" }}>
             {contact.phone}
           </div>
         )}
@@ -166,9 +212,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       items: [
         {
           key: "view",
-          icon: <FiEye style={{ color: '#1890ff' }} />,
+          icon: <FiEye style={{ color: "#1890ff" }} />,
           label: (
-            <Text style={{ color: '#1890ff', fontWeight: '500' }}>
+            <Text style={{ color: "#1890ff", fontWeight: "500" }}>
               Overview
             </Text>
           ),
@@ -176,9 +222,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
         },
         shouldShowEditDelete && {
           key: "edit",
-          icon: <FiEdit2 style={{ color: '#52c41a' }} />,
+          icon: <FiEdit2 style={{ color: "#52c41a" }} />,
           label: (
-            <Text style={{ color: '#52c41a', fontWeight: '500' }}>
+            <Text style={{ color: "#52c41a", fontWeight: "500" }}>
               Edit Lead
             </Text>
           ),
@@ -186,15 +232,15 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
         },
         shouldShowEditDelete && {
           key: "delete",
-          icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
+          icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
           label: (
-            <Text style={{ color: '#ff4d4f', fontWeight: '500' }}>
+            <Text style={{ color: "#ff4d4f", fontWeight: "500" }}>
               Delete Lead
             </Text>
           ),
-          onClick: () => handleDelete(record),
+          onClick: () => onDelete(record),
           danger: true,
-        }
+        },
       ].filter(Boolean),
     };
   };
@@ -204,14 +250,21 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       title: "Lead Title",
       dataIndex: "leadTitle",
       key: "leadTitle",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search lead title"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -222,18 +275,24 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
         </div>
       ),
       onFilter: (value, record) => {
-        const companyName = getCompanyName(record) || '';
+        const companyName = getCompanyName(record) || "";
         const contactName = getContactName(record).name;
-        return record.leadTitle.toLowerCase().includes(value.toLowerCase()) ||
+        return (
+          record.leadTitle.toLowerCase().includes(value.toLowerCase()) ||
           companyName.toLowerCase().includes(value.toLowerCase()) ||
-          contactName.toLowerCase().includes(value.toLowerCase());
+          contactName.toLowerCase().includes(value.toLowerCase())
+        );
       },
       render: (text, record) => {
         const companyName = getCompanyName(record);
@@ -241,101 +300,119 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
         const avatarColor = getRandomColor(text);
 
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Avatar style={{
-              backgroundColor: record.is_converted ? '#52c41a' : avatarColor,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Avatar
+              style={{
+                backgroundColor: record.is_converted ? "#52c41a" : avatarColor,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               {text[0].toUpperCase()}
             </Avatar>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Text strong style={{ fontSize: '14px' }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <Text strong style={{ fontSize: "14px" }}>
                   {text}
                 </Text>
                 {record.is_converted && (
-                  <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
+                  <FiCheck style={{ color: "#52c41a", fontSize: "16px" }} />
                 )}
               </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                color: '#6B7280',
-                fontSize: '12px'
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  color: "#6B7280",
+                  fontSize: "12px",
+                }}
+              >
                 {companyName && (
                   <Tooltip title={getCompanyTooltip(record)} placement="bottom">
                     <span
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '2px 8px',
-                        background: 'rgba(24, 144, 255, 0.1)',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "2px 8px",
+                        background: "rgba(24, 144, 255, 0.1)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(24, 144, 255, 0.2)';
+                        e.currentTarget.style.background =
+                          "rgba(24, 144, 255, 0.2)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(24, 144, 255, 0.1)';
+                        e.currentTarget.style.background =
+                          "rgba(24, 144, 255, 0.1)";
                       }}
                     >
-                      <FiBriefcase style={{ fontSize: '12px', color: '#1890ff' }} />
+                      <FiBriefcase
+                        style={{ fontSize: "12px", color: "#1890ff" }}
+                      />
                       {companyName}
                     </span>
                   </Tooltip>
                 )}
                 {companyName && contact && (
-                  <span style={{
-                    width: '4px',
-                    height: '4px',
-                    backgroundColor: '#D1D5DB',
-                    borderRadius: '50%'
-                  }} />
+                  <span
+                    style={{
+                      width: "4px",
+                      height: "4px",
+                      backgroundColor: "#D1D5DB",
+                      borderRadius: "50%",
+                    }}
+                  />
                 )}
                 {contact ? (
                   <Tooltip title={getContactTooltip(record)} placement="bottom">
                     <span
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: '2px 8px',
-                        background: 'rgba(82, 196, 26, 0.1)',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "2px 8px",
+                        background: "rgba(82, 196, 26, 0.1)",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(82, 196, 26, 0.2)';
+                        e.currentTarget.style.background =
+                          "rgba(82, 196, 26, 0.2)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(82, 196, 26, 0.1)';
+                        e.currentTarget.style.background =
+                          "rgba(82, 196, 26, 0.1)";
                       }}
                     >
-                      <FiUser style={{ fontSize: '12px', color: '#52c41a' }} />
+                      <FiUser style={{ fontSize: "12px", color: "#52c41a" }} />
                       {contactName}
                     </span>
                   </Tooltip>
-                ) : (!companyName && (
-                  <span style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '2px 8px',
-                    background: 'rgba(107, 114, 128, 0.1)',
-                    borderRadius: '4px'
-                  }}>
-                    <FiUser style={{ fontSize: '12px' }} />
-                    No Contact
-                  </span>
-                ))}
+                ) : (
+                  !companyName && (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "2px 8px",
+                        background: "rgba(107, 114, 128, 0.1)",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <FiUser style={{ fontSize: "12px" }} />
+                      No Contact
+                    </span>
+                  )
+                )}
               </div>
             </div>
           </div>
@@ -346,99 +423,105 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       title: "Source",
       dataIndex: "source",
       key: "source",
-      filters: sources.map(source => ({
+      filters: sources.map((source) => ({
         text: source.name,
-        value: source.id
+        value: source.id,
       })),
       onFilter: (value, record) => record.source === value,
       render: (sourceId) => {
-        const source = sources.find(s => s.id === sourceId) || {};
+        const source = sources.find((s) => s.id === sourceId) || {};
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FiLink style={{ color: source.color || '#1890ff' }} />
-            <Text style={{ color: source.color || '#1890ff', fontWeight: '500' }}>
-              {source.name || 'Unknown'}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <FiLink style={{ color: source.color || "#1890ff" }} />
+            <Text
+              style={{ color: source.color || "#1890ff", fontWeight: "500" }}
+            >
+              {source.name || "Unknown"}
             </Text>
           </div>
         );
-      }
+      },
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      filters: statuses.map(status => ({
+      filters: statuses.map((status) => ({
         text: status.name,
-        value: status.id
+        value: status.id,
       })),
       onFilter: (value, record) => record.status === value,
       render: (statusId) => {
-        const status = statuses.find(s => s.id === statusId) || {};
+        const status = statuses.find((s) => s.id === statusId) || {};
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FiInfo style={{ color: status.color || '#1890ff' }} />
-            <Text style={{ color: status.color || '#1890ff', fontWeight: '500' }}>
-              {status.name || 'Unknown'}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <FiInfo style={{ color: status.color || "#1890ff" }} />
+            <Text
+              style={{ color: status.color || "#1890ff", fontWeight: "500" }}
+            >
+              {status.name || "Unknown"}
             </Text>
           </div>
         );
-      }
+      },
     },
     {
       title: "Interest Level",
       dataIndex: "interest_level",
       key: "interest_level",
       filters: [
-        { text: 'High Interest', value: 'high' },
-        { text: 'Medium Interest', value: 'medium' },
-        { text: 'Low Interest', value: 'low' }
+        { text: "High Interest", value: "high" },
+        { text: "Medium Interest", value: "medium" },
+        { text: "Low Interest", value: "low" },
       ],
       onFilter: (value, record) => record.interest_level === value,
       render: (level) => {
         const interestStyle = {
           high: {
-            color: '#52c41a',
-            bg: 'rgba(82, 196, 26, 0.1)',
-            icon: <FiZap style={{ marginRight: '4px' }} />,
-            text: 'High Interest'
+            color: "#52c41a",
+            bg: "rgba(82, 196, 26, 0.1)",
+            icon: <FiZap style={{ marginRight: "4px" }} />,
+            text: "High Interest",
           },
           medium: {
-            color: '#faad14',
-            bg: 'rgba(250, 173, 20, 0.1)',
-            icon: <FiTarget style={{ marginRight: '4px' }} />,
-            text: 'Medium Interest'
+            color: "#faad14",
+            bg: "rgba(250, 173, 20, 0.1)",
+            icon: <FiTarget style={{ marginRight: "4px" }} />,
+            text: "Medium Interest",
           },
           low: {
-            color: '#ff4d4f',
-            bg: 'rgba(255, 77, 79, 0.1)',
-            icon: <FiTrendingUp style={{ marginRight: '4px' }} />,
-            text: 'Low Interest'
-          }
+            color: "#ff4d4f",
+            bg: "rgba(255, 77, 79, 0.1)",
+            icon: <FiTrendingUp style={{ marginRight: "4px" }} />,
+            text: "Low Interest",
+          },
         }[level] || {
-          color: '#1890ff',
-          bg: 'rgba(24, 144, 255, 0.1)',
-          icon: <FiTarget style={{ marginRight: '4px' }} />,
-          text: 'Unknown'
+          color: "#1890ff",
+          bg: "rgba(24, 144, 255, 0.1)",
+          icon: <FiTarget style={{ marginRight: "4px" }} />,
+          text: "Unknown",
         };
 
         return (
-          <Tag style={{
-            width: 'fit-content',
-            color: interestStyle.color,
-            backgroundColor: interestStyle.bg,
-            border: 'none',
-            borderRadius: '4px',
-            padding: '4px 12px',
-            display: 'flex',
-            alignItems: 'center',
-            fontSize: '13px',
-            fontWeight: '500'
-          }}>
+          <Tag
+            style={{
+              width: "fit-content",
+              color: interestStyle.color,
+              backgroundColor: interestStyle.bg,
+              border: "none",
+              borderRadius: "4px",
+              padding: "4px 12px",
+              display: "flex",
+              alignItems: "center",
+              fontSize: "13px",
+              fontWeight: "500",
+            }}
+          >
             {interestStyle.icon}
             {interestStyle.text}
           </Tag>
         );
-      }
+      },
     },
     {
       title: "Lead Value",
@@ -447,11 +530,11 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       sorter: (a, b) => (a.leadValue || 0) - (b.leadValue || 0),
       render: (value, record) => {
         return (
-          <Text strong style={{ fontSize: '14px', color: '#52c41a' }}>
+          <Text strong style={{ fontSize: "14px", color: "#52c41a" }}>
             {formatCurrency(value || 0, record.currency, currencies)}
           </Text>
         );
-      }
+      },
     },
     {
       title: "Actions",
@@ -459,7 +542,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
       width: 80,
       align: "center",
       render: (_, record) => (
-        <div onClick={e => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={getDropdownItems(record)}
             trigger={["click"]}
@@ -467,9 +550,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
           >
             <Button
               type="text"
-              icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
+              icon={<FiMoreVertical style={{ fontSize: "16px" }} />}
               className="action-btn"
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             />
           </Dropdown>
         </div>
@@ -491,7 +574,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
         className="colorful-table"
         onRow={(record) => ({
           onClick: () => onLeadClick(record),
-          style: { cursor: 'pointer' }
+          style: { cursor: "pointer" },
         })}
       />
       <style jsx global>{`
@@ -551,7 +634,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
 
               &:nth-child(even) {
                 background-color: #fafafa;
-                
+
                 &:hover > td {
                   background: rgba(24, 144, 255, 0.04) !important;
                 }
@@ -599,7 +682,8 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
 
             .ant-input {
               border-radius: 4px;
-              &:hover, &:focus {
+              &:hover,
+              &:focus {
                 border-color: #1890ff;
               }
             }
@@ -635,7 +719,7 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
             .ant-pagination-item-active {
               border-color: #1890ff;
               background: #1890ff;
-              
+
               a {
                 color: white;
               }
@@ -651,9 +735,9 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
           align-items: center;
           justify-content: center;
           border-radius: 6px;
-          color: #6B7280;
+          color: #6b7280;
           transition: all 0.3s;
-          
+
           &:hover {
             color: #1890ff;
             background: rgba(24, 144, 255, 0.1);
@@ -665,4 +749,3 @@ const LeadList = ({ leads, onEdit, onView, onLeadClick, onCreateLead }) => {
 };
 
 export default LeadList;
-

@@ -1,5 +1,19 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Space, Tooltip, Menu, Input, Select, DatePicker } from "antd";
+import {
+  Table,
+  Avatar,
+  Dropdown,
+  Button,
+  message,
+  Tag,
+  Typography,
+  Space,
+  Tooltip,
+  Menu,
+  Input,
+  Select,
+  DatePicker,
+} from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -21,25 +35,28 @@ import {
   FiLayers,
   FiStar,
   FiCalendar,
-  FiUser
+  FiUser,
 } from "react-icons/fi";
 import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
-import { useGetLabelsQuery, useGetSourcesQuery } from "../crmsystem/souce/services/SourceApi";
+import {
+  useGetLabelsQuery,
+  useGetSourcesQuery,
+} from "../crmsystem/souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useNavigate } from "react-router-dom";
-import { useGetAllCurrenciesQuery } from '../../../module/settings/services/settingsApi';
+import { useGetAllCurrenciesQuery } from "../../../module/settings/services/settingsApi";
 import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
-import moment from 'moment';
-import dayjs from 'dayjs';
-import { formatCurrency } from '../../../utils/currencyUtils';
+import moment from "moment";
+import dayjs from "dayjs";
+import { formatCurrency } from "../../../utils/currencyUtils";
 
 const { Text } = Typography;
 
-const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
+const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteDeal] = useDeleteDealMutation();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
@@ -47,46 +64,43 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: labelsData } = useGetLabelsQuery(loggedInUser?.id);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
-  const { data: contactsResponse, isLoading: isContactsLoading, error: contactsError } = useGetContactsQuery();
-  const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
-  const navigate = useNavigate();
+  const {
+    data: contactsResponse,
+    isLoading: isContactsLoading,
+    error: contactsError,
+  } = useGetContactsQuery();
+  const {
+    data: companyAccountsResponse = { data: [] },
+    isLoading: isCompanyAccountsLoading,
+  } = useGetCompanyAccountsQuery();
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
-
-  const handleDelete = async (record) => {
-    try {
-      await deleteDeal(record.id).unwrap();
-      message.success("Deal deleted successfully");
-    } catch (error) {
-      message.error("Failed to delete deal: " + (error.data?.message || "Unknown error"));
-    }
-  };
 
   const getStatusColor = (status, is_won) => {
     // First check is_won flag
     if (is_won === true) {
       return {
-        bg: '#dcfce7',
-        color: '#15803d',
+        bg: "#dcfce7",
+        color: "#15803d",
         icon: <FiTarget />,
-        text: 'Won'
+        text: "Won",
       };
     } else if (is_won === false) {
       return {
-        bg: '#fee2e2',
-        color: '#b91c1c',
+        bg: "#fee2e2",
+        color: "#b91c1c",
         icon: <FiTarget />,
-        text: 'Lost'
+        text: "Lost",
       };
     }
 
     // Default to pending if is_won is null
     return {
-      bg: '#dbeafe',
-      color: '#1e40af',
+      bg: "#dbeafe",
+      color: "#1e40af",
       icon: <FiTarget />,
-      text: 'Pending'
+      text: "Pending",
     };
   };
 
@@ -94,11 +108,9 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
     items: [
       {
         key: "overview",
-        icon: <FiEye style={{ color: '#1890ff' }} />,
+        icon: <FiEye style={{ color: "#1890ff" }} />,
         label: (
-          <Text style={{ color: '#1890ff', fontWeight: '500' }}>
-            Overview
-          </Text>
+          <Text style={{ color: "#1890ff", fontWeight: "500" }}>Overview</Text>
         ),
         onClick: (e) => {
           e.stopPropagation();
@@ -107,11 +119,9 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       },
       {
         key: "edit",
-        icon: <FiEdit2 style={{ color: '#52c41a' }} />,
+        icon: <FiEdit2 style={{ color: "#52c41a" }} />,
         label: (
-          <Text style={{ color: '#52c41a', fontWeight: '500' }}>
-            Edit Deal
-          </Text>
+          <Text style={{ color: "#52c41a", fontWeight: "500" }}>Edit Deal</Text>
         ),
         onClick: (e) => {
           e.stopPropagation();
@@ -120,9 +130,9 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       },
       {
         key: "delete",
-        icon: <FiTrash2 style={{ color: '#ff4d4f' }} />,
+        icon: <FiTrash2 style={{ color: "#ff4d4f" }} />,
         label: (
-          <Text style={{ color: '#ff4d4f', fontWeight: '500' }}>
+          <Text style={{ color: "#ff4d4f", fontWeight: "500" }}>
             Delete Deal
           </Text>
         ),
@@ -130,7 +140,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
           e.stopPropagation();
           onDelete(record);
         },
-      }
+      },
     ],
   });
 
@@ -139,14 +149,21 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       title: "Deal Name",
       dataIndex: "dealTitle",
       key: "dealTitle",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search deal title"
             value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -157,7 +174,11 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
             >
               Filter
             </Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+            <Button
+              onClick={() => clearFilters()}
+              size="small"
+              style={{ width: 90 }}
+            >
               Reset
             </Button>
           </Space>
@@ -167,42 +188,60 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
         record.dealTitle.toLowerCase().includes(value.toLowerCase()),
       render: (text, record) => {
         // Find company and contact details
-        const company = companyAccountsResponse?.data?.find(c => c.id === record.company_id);
-        const contact = contactsResponse?.data?.find(c => c.id === record.contact_id);
+        const company = companyAccountsResponse?.data?.find(
+          (c) => c.id === record.company_id
+        );
+        const contact = contactsResponse?.data?.find(
+          (c) => c.id === record.contact_id
+        );
 
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Avatar style={{
-              backgroundColor: record.status?.toLowerCase() === 'won' ? '#52c41a' : '#1890ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {text?.[0]?.toUpperCase() || 'D'}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Avatar
+              style={{
+                backgroundColor:
+                  record.status?.toLowerCase() === "won"
+                    ? "#52c41a"
+                    : "#1890ff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {text?.[0]?.toUpperCase() || "D"}
             </Avatar>
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Text strong style={{ fontSize: '14px' }}>
-                  {text || 'Untitled Deal'}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <Text strong style={{ fontSize: "14px" }}>
+                  {text || "Untitled Deal"}
                 </Text>
-                {record.status?.toLowerCase() === 'won' && (
-                  <FiCheck style={{ color: '#52c41a', fontSize: '16px' }} />
+                {record.status?.toLowerCase() === "won" && (
+                  <FiCheck style={{ color: "#52c41a", fontSize: "16px" }} />
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  marginTop: "4px",
+                }}
+              >
                 {company && (
                   <Tag
-                    icon={<FiBriefcase style={{ fontSize: '12px' }} />}
+                    icon={<FiBriefcase style={{ fontSize: "12px" }} />}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: '#e6f7ff',
-                      color: '#1890ff',
-                      border: 'none',
-                      fontSize: '12px'
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: "#e6f7ff",
+                      color: "#1890ff",
+                      border: "none",
+                      fontSize: "12px",
                     }}
                   >
                     {company.company_name}
@@ -210,20 +249,20 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
                 )}
                 {contact && (
                   <Tag
-                    icon={<FiUser style={{ fontSize: '12px' }} />}
+                    icon={<FiUser style={{ fontSize: "12px" }} />}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: '#f3f4f6',
-                      color: '#4b5563',
-                      border: 'none',
-                      fontSize: '12px'
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: "#f3f4f6",
+                      color: "#4b5563",
+                      border: "none",
+                      fontSize: "12px",
                     }}
                   >
-                    {`${contact.first_name} ${contact.last_name || ''}`}
+                    {`${contact.first_name} ${contact.last_name || ""}`}
                   </Tag>
                 )}
               </div>
@@ -231,32 +270,38 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
           </div>
         );
       },
-      width: '30%',
+      width: "30%",
     },
     {
       title: "Source",
       dataIndex: "source",
       key: "source",
-      filters: sources.map(source => ({
+      filters: sources.map((source) => ({
         text: source.name,
-        value: source.id
+        value: source.id,
       })),
       onFilter: (value, record) => record.source === value,
       render: (sourceId) => {
-        const source = sources.find(s => s.id === sourceId) || {};
-        const className = `source-${source.name?.toLowerCase().replace(/\s+/g, '')}`;
+        const source = sources.find((s) => s.id === sourceId) || {};
+        const className = `source-${source.name
+          ?.toLowerCase()
+          .replace(/\s+/g, "")}`;
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <FiLink style={{
-              fontSize: '14px',
-              color: source.color || '#64748b'
-            }} />
-            <Text style={{
-              fontSize: '13px',
-              fontWeight: '500',
-              color: source.color || '#64748b'
-            }}>
-              {source.name || 'Unknown Source'}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <FiLink
+              style={{
+                fontSize: "14px",
+                color: source.color || "#64748b",
+              }}
+            />
+            <Text
+              style={{
+                fontSize: "13px",
+                fontWeight: "500",
+                color: source.color || "#64748b",
+              }}
+            >
+              {source.name || "Unknown Source"}
             </Text>
           </div>
         );
@@ -266,24 +311,26 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       title: "Stage",
       dataIndex: "stage",
       key: "stage",
-      filters: dealStages.map(stage => ({
+      filters: dealStages.map((stage) => ({
         text: stage.stageName,
-        value: stage.id
+        value: stage.id,
       })),
       onFilter: (value, record) => record.stage === value,
       render: (stageId) => {
-        const stage = dealStages.find(s => s.id === stageId);
+        const stage = dealStages.find((s) => s.id === stageId);
         return (
-          <Tag style={{
-            textTransform: 'capitalize',
-            padding: '4px 12px',
-            borderRadius: '4px',
-            fontSize: '13px',
-            fontWeight: '500',
-            color: 'white',
-            background: stage?.color || '#1890ff'
-          }}>
-            {stage?.stageName || 'Unknown Stage'}
+          <Tag
+            style={{
+              textTransform: "capitalize",
+              padding: "4px 12px",
+              borderRadius: "4px",
+              fontSize: "13px",
+              fontWeight: "500",
+              color: "white",
+              background: stage?.color || "#1890ff",
+            }}
+          >
+            {stage?.stageName || "Unknown Stage"}
           </Tag>
         );
       },
@@ -292,16 +339,21 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       title: "Expected Date",
       dataIndex: "closedDate",
       key: "closedDate",
-      render: (date) => dayjs(date).format('DD-MM-YYYY'),
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      render: (date) => dayjs(date).format("DD-MM-YYYY"),
+      filterDropdown: ({
+        setSelectedKeys,
+        selectedKeys,
+        confirm,
+        clearFilters,
+      }) => (
         <div style={{ padding: 8 }}>
           <DatePicker
             value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
             onChange={(date) => {
-              const dateStr = date ? date.format('YYYY-MM-DD') : null;
+              const dateStr = date ? date.format("YYYY-MM-DD") : null;
               setSelectedKeys(dateStr ? [dateStr] : []);
             }}
-            style={{ marginBottom: 8, display: 'block' }}
+            style={{ marginBottom: 8, display: "block" }}
           />
           <Space>
             <Button
@@ -324,11 +376,11 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       ),
       onFilter: (value, record) => {
         if (!value || !record.closedDate) return false;
-        return dayjs(record.closedDate).format('YYYY-MM-DD') === value;
+        return dayjs(record.closedDate).format("YYYY-MM-DD") === value;
       },
-      filterIcon: filtered => (
-        <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
-      )
+      filterIcon: (filtered) => (
+        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
+      ),
     },
     {
       title: "Value",
@@ -336,7 +388,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       key: "value",
       sorter: (a, b) => (a.value || 0) - (b.value || 0),
       render: (value, record) => (
-        <Text strong style={{ fontSize: '14px', color: '#52c41a' }}>
+        <Text strong style={{ fontSize: "14px", color: "#52c41a" }}>
           {formatCurrency(value || 0, record.currency, currencies)}
         </Text>
       ),
@@ -346,23 +398,25 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       dataIndex: "status",
       key: "status",
       filters: [
-        { text: 'Won', value: true },
-        { text: 'Lost', value: false },
-        { text: 'Pending', value: null }
+        { text: "Won", value: true },
+        { text: "Lost", value: false },
+        { text: "Pending", value: null },
       ],
       onFilter: (value, record) => record.is_won === value,
       render: (status, record) => {
         const statusConfig = getStatusColor(status, record.is_won);
         return (
-          <Tag style={{
-            margin: 0,
-            padding: '4px 11px',
-            fontSize: '13px',
-            borderRadius: '12px',
-            background: statusConfig.bg,
-            color: statusConfig.color,
-            border: 'none',
-          }}>
+          <Tag
+            style={{
+              margin: 0,
+              padding: "4px 11px",
+              fontSize: "13px",
+              borderRadius: "12px",
+              background: statusConfig.bg,
+              color: statusConfig.color,
+              border: "none",
+            }}
+          >
             {statusConfig.text}
           </Tag>
         );
@@ -374,7 +428,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
       width: 80,
       align: "center",
       render: (_, record) => (
-        <div onClick={e => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={getDropdownItems(record)}
             trigger={["click"]}
@@ -383,9 +437,9 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
           >
             <Button
               type="text"
-              icon={<FiMoreVertical style={{ fontSize: '16px' }} />}
+              icon={<FiMoreVertical style={{ fontSize: "16px" }} />}
               className="action-btn"
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             />
           </Dropdown>
         </div>
@@ -395,7 +449,6 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
 
   return (
     <>
-
       <Table
         columns={columns}
         dataSource={deals}
@@ -408,7 +461,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
         className="colorful-table"
         onRow={(record) => ({
           onClick: () => onDealClick(record),
-          style: { cursor: 'pointer' }
+          style: { cursor: "pointer" },
         })}
       />
 
@@ -442,7 +495,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
 
               &:nth-child(even) {
                 background-color: #fafafa;
-                
+
                 &:hover > td {
                   background: rgba(24, 144, 255, 0.04) !important;
                 }
@@ -456,7 +509,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
             .ant-pagination-item-active {
               border-color: #1890ff;
               background: #1890ff;
-              
+
               a {
                 color: white;
               }
@@ -465,11 +518,21 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
         }
 
         // Source colors
-        .source-social { color: #1890ff !important; }
-        .source-partner { color: #52c41a !important; }
-        .source-referral { color: #722ed1 !important; }
-        .source-website { color: #13c2c2 !important; }
-        .source-event { color: #fa8c16 !important; }
+        .source-social {
+          color: #1890ff !important;
+        }
+        .source-partner {
+          color: #52c41a !important;
+        }
+        .source-referral {
+          color: #722ed1 !important;
+        }
+        .source-website {
+          color: #13c2c2 !important;
+        }
+        .source-event {
+          color: #fa8c16 !important;
+        }
 
         .action-btn {
           width: 32px;
@@ -479,9 +542,9 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
           align-items: center;
           justify-content: center;
           border-radius: 6px;
-          color: #6B7280;
+          color: #6b7280;
           transition: all 0.3s;
-          
+
           &:hover {
             color: #1890ff;
             background: rgba(24, 144, 255, 0.1);
@@ -500,8 +563,9 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
 
             .ant-input-affix-wrapper {
               border-radius: 6px;
-              
-              &:hover, &:focus {
+
+              &:hover,
+              &:focus {
                 border-color: #1890ff;
               }
             }
@@ -509,7 +573,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
 
           .filter-section {
             margin-bottom: 16px;
-            
+
             &:last-child {
               margin-bottom: 0;
             }
@@ -566,7 +630,7 @@ const DealList = ({ onEdit, onDelete, onDealClick, deals = [] }) => {
 
             .ant-btn {
               color: #6b7280;
-              
+
               &:hover {
                 color: #1890ff;
               }

@@ -31,11 +31,18 @@ import LeadCard from "./LeadCard";
 import LeadList from "./LeadList";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import EditLead from "./EditLead";
-import { useGetLeadsQuery } from "./services/LeadApi";
+import { useDeleteLeadMutation, useGetLeadsQuery } from "./services/LeadApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
-import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
-import { useGetCategoriesQuery, useGetSourcesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
+import {
+  useGetAllCountriesQuery,
+  useGetAllCurrenciesQuery,
+} from "../../settings/services/settingsApi";
+import {
+  useGetCategoriesQuery,
+  useGetSourcesQuery,
+  useGetStatusesQuery,
+} from "../crmsystem/souce/services/SourceApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import * as XLSX from "xlsx";
@@ -55,6 +62,7 @@ const Lead = () => {
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
   const loggedInUser = useSelector(selectCurrentUser);
+  const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
   const { data: leads, isLoading } = useGetLeadsQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -70,12 +78,12 @@ const Lead = () => {
     if (location.state?.openCreateForm) {
       // Only set the inquiry_id from the submission
       const formData = {
-        inquiry_id: location.state.formSubmissionId
+        inquiry_id: location.state.formSubmissionId,
       };
 
       // Get the first available currency if not provided
       if (currencies?.length > 0) {
-        const inrCurrency = currencies.find(c => c.currencyCode === 'INR');
+        const inrCurrency = currencies.find((c) => c.currencyCode === "INR");
         formData.currency = inrCurrency?.id || currencies[0].id;
       }
 
@@ -85,7 +93,7 @@ const Lead = () => {
       // Clear the state
       navigate(location.pathname, {
         replace: true,
-        state: {}
+        state: {},
       });
     }
   }, [location.state, navigate, currencies]);
@@ -97,7 +105,7 @@ const Lead = () => {
   const filteredLeads = React.useMemo(() => {
     if (!leads?.data) return [];
 
-    return leads.data.filter(lead => {
+    return leads.data.filter((lead) => {
       const searchLower = searchText.toLowerCase();
       return (
         lead.leadTitle?.toLowerCase().includes(searchLower) ||
@@ -128,15 +136,27 @@ const Lead = () => {
     setSelectedLead(null);
   };
 
+ 
+
   const handleDelete = (lead) => {
     Modal.confirm({
       title: "Delete Lead",
-      content: "Are you sure you want to delete this lead?",
+      content:
+        "Are you sure you want to delete this lead? This action cannot be undone.",
       okText: "Yes",
       okType: "danger",
       cancelText: "No",
-      onOk: () => {
-        // Handle delete action
+      bodyStyle: {
+        padding: "20px",
+      },
+      onOk: async () => {
+        try {
+          await deleteLead(lead.id).unwrap();
+          message.success("Lead deleted successfully");
+        } catch (error) {
+          console.error("Delete Error:", error);
+          message.error(error?.data?.message || "Failed to delete lead");
+        }
       },
     });
   };
@@ -150,12 +170,18 @@ const Lead = () => {
       setLoading(true);
       const data = leads.data.map((lead) => ({
         "Lead Title": lead.leadTitle,
-        "Company": lead.company_name,
-        "Source": sourcesData?.data?.find(s => s.id === lead.source)?.name || lead.source,
-        "Status": statusesData?.data?.find(s => s.id === lead.status)?.name || lead.status,
+        Company: lead.company_name,
+        Source:
+          sourcesData?.data?.find((s) => s.id === lead.source)?.name ||
+          lead.source,
+        Status:
+          statusesData?.data?.find((s) => s.id === lead.status)?.name ||
+          lead.status,
         "Interest Level": lead.interest_level,
-        "Lead Value": `${currencies?.find(c => c.id === lead.currency)?.currencyIcon || ''} ${lead.leadValue || 0}`,
-        "Created Date": moment(lead.createdAt).format("DD-MM-YYYY")
+        "Lead Value": `${
+          currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
+        } ${lead.leadValue || 0}`,
+        "Created Date": moment(lead.createdAt).format("DD-MM-YYYY"),
       }));
 
       switch (type) {
@@ -217,23 +243,23 @@ const Lead = () => {
       styles: {
         fontSize: 8,
         cellPadding: 3,
-        overflow: 'linebreak'
+        overflow: "linebreak",
       },
       columnStyles: {
         0: { cellWidth: 100 }, // Lead Title
         1: { cellWidth: 120 }, // Company
-        2: { cellWidth: 80 },  // Source
-        3: { cellWidth: 80 },  // Status
+        2: { cellWidth: 80 }, // Source
+        3: { cellWidth: 80 }, // Status
         4: { cellWidth: 100 }, // Interest Level
-        5: { cellWidth: 80 },  // Lead Value
-        6: { cellWidth: 80 }   // Created Date
+        5: { cellWidth: 80 }, // Lead Value
+        6: { cellWidth: 80 }, // Created Date
       },
       headStyles: {
         fillColor: [63, 81, 181],
         textColor: 255,
         fontSize: 9,
-        fontStyle: 'bold'
-      }
+        fontStyle: "bold",
+      },
     });
     doc.save(`${filename}.pdf`);
   };
@@ -266,7 +292,7 @@ const Lead = () => {
 
   // Add debug log for initialFormData changes
   useEffect(() => {
-    console.log('Initial form data updated:', initialFormData);
+    console.log("Initial form data updated:", initialFormData);
   }, [initialFormData]);
 
   return (
@@ -292,7 +318,9 @@ const Lead = () => {
           <Col xs={24} sm={24} md={20} lg={16} xl={14}>
             <div className="header-actions">
               <Input
-                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                prefix={
+                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
+                }
                 placeholder="Search leads"
                 allowClear
                 onChange={(e) => handleSearch(e.target.value)}
@@ -302,14 +330,14 @@ const Lead = () => {
               <div className="action-buttons">
                 <Button.Group className="view-toggle">
                   <Button
-                    type={viewMode === 'table' ? 'primary' : 'default'}
+                    type={viewMode === "table" ? "primary" : "default"}
                     icon={<FiList size={16} />}
-                    onClick={() => setViewMode('table')}
+                    onClick={() => setViewMode("table")}
                   />
                   <Button
-                    type={viewMode === 'card' ? 'primary' : 'default'}
+                    type={viewMode === "card" ? "primary" : "default"}
                     icon={<FiGrid size={16} />}
-                    onClick={() => setViewMode('card')}
+                    onClick={() => setViewMode("card")}
                   />
                 </Button.Group>
                 <Dropdown overlay={exportMenu} trigger={["click"]}>
