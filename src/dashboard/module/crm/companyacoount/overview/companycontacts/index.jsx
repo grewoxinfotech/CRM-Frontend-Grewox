@@ -88,14 +88,38 @@ const CompanyContactList = () => {
 
   const handleEditSubmit = async (values) => {
     try {
-      setLoading(true);
+      // Get the selected country's phone code
+      const selectedCountry = countries.find(c => c.id === values.phoneCode);
+      const phoneNumber = values.phone ? values.phone.replace(/^0+/, '') : '';
+
+      const updatedContactData = {
+        id: selectedContact.id,
+        contact_owner: selectedContact.contact_owner,
+        first_name: values.first_name || "",
+        last_name: values.last_name || "",
+        email: values.email || "",
+        phone_code: selectedCountry?.id || "",
+        phone: phoneNumber,
+        company_name: values.company_name || "",
+        contact_source: values.contact_source || "",
+        description: values.description || "",
+        address: values.address || "",
+        city: values.city || "",
+        state: values.state || "",
+        country: values.country || "",
+        section: "contact",
+      };
+
+      await updateContact({
+        id: selectedContact.id,
+        data: updatedContactData
+      }).unwrap();
+
       message.success("Contact updated successfully");
       setIsEditModalOpen(false);
-      setSelectedContact(null);
     } catch (error) {
-      message.error("Failed to update contact");
-    } finally {
-      setLoading(false);
+      console.error("Update Error:", error);
+      message.error(error?.data?.message || "Failed to update contact");
     }
   };
 

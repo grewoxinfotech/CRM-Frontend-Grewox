@@ -14,11 +14,15 @@ import {
     FiClock,
     FiCheck,
     FiX,
+    FiBriefcase,
+    FiGlobe,
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from '../services/companyAccountApi';
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
+import { useGetLeadsQuery } from '../../lead/services/LeadApi';
+import { useGetDealsQuery } from '../../deal/services/dealApi';
 
 const { Title, Text } = Typography;
 
@@ -27,6 +31,8 @@ const CompanyDetails = () => {
     const navigate = useNavigate();
     const { data: companyAccountsResponse, isLoading } = useGetCompanyAccountsQuery();
     const { data: usersData } = useGetUsersQuery();
+    const { data: lead } = useGetLeadsQuery();
+    const { data: deal } = useGetDealsQuery();
     const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
     const [ownerName, setOwnerName] = useState('');
 
@@ -37,6 +43,16 @@ const CompanyDetails = () => {
             : [];
 
     const company = companies.find(company => company.id === accountId);
+
+    const leadsData = lead?.data || [];
+    const dealsData = deal || [];
+
+    const leads = leadsData?.filter(lead => lead.company_id === accountId) || [];
+    const deals = dealsData?.filter(deal => deal.company_id === accountId) || [];
+
+    const totalLeadValue = leads.reduce((sum, lead) => sum + (Number(lead.leadValue) || 0), 0);
+    const totalDealValue = deals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
+    const totalRevenue = totalLeadValue + totalDealValue;
 
     useEffect(() => {
         if (company?.account_owner && usersData?.data) {
@@ -60,8 +76,10 @@ const CompanyDetails = () => {
                         <div className="profile-info">
                             <h2 className="company-name">{company?.company_name || 'Company Name'}</h2>
                             <div className="contact-name">
-                                <FiUser className="icon" />
-                                {ownerName || 'No Owner Assigned'}
+                                <FiGlobe className="icon" />
+                                <a href={company?.company_site} target="_blank">
+                                    {company?.company_site || '-'}
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -69,12 +87,12 @@ const CompanyDetails = () => {
                 <div className="profile-stats">
                     <div className="stat-item">
                         <div className="stat-icon">
-                            <FiMail />
+                            <FiGlobe />
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Email Address</div>
-                            <a href={`mailto:${company?.email}`} className="stat-value">
-                                {company?.email || '-'}
+                            <div className="stat-label">Website</div>
+                            <a href={company?.company_site} target="_blank" className="stat-value">
+                                {company?.company_site || '-'}
                             </a>
                         </div>
                     </div>
@@ -99,57 +117,69 @@ const CompanyDetails = () => {
                         </div>
                     </div>
                 </div>
-            </Card>
+            </Card >
 
             <Row gutter={[16, 16]} className="metrics-row">
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card lead-value-card">
+                    <Card className="metric-card total-revenue-card">
                         <div className="metric-icon">
                             <FiDollarSign />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Revenue</div>
+                            <div className="metric-label">TOTAL REVENUE</div>
                             <div className="metric-value">
-                                {company?.company_revenue || '-'}
+                                ₹{totalRevenue.toLocaleString()}
+                            </div>
+                            <div className="metric-subtitle">
+                                {leads.length + deals.length} Total Activities
                             </div>
                         </div>
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card status-card">
+                    <Card className="metric-card leads-card">
                         <div className="metric-icon">
                             <FiTarget />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Company Type</div>
+                            <div className="metric-label">LEADS</div>
                             <div className="metric-value">
-                                {company?.company_type || '-'}
+                                {leads?.length || 0}
+                            </div>
+                            <div className="metric-subtitle">
+                                ₹{totalLeadValue.toLocaleString()} Total Value
                             </div>
                         </div>
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card created-date-card">
+                    <Card className="metric-card deals-card">
+                        <div className="metric-icon">
+                            <FiBriefcase />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">DEALS</div>
+                            <div className="metric-value">
+                                {deals.length || 0}
+                            </div>
+                            <div className="metric-subtitle">
+                                ₹{totalDealValue.toLocaleString()} Total Value
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card created-card">
                         <div className="metric-icon">
                             <FiCalendar />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Created</div>
+                            <div className="metric-label">CREATED</div>
                             <div className="metric-value">
                                 {company?.createdAt ? dayjs(company.createdAt).format('MMM DD, YYYY') : '-'}
                             </div>
-                        </div>
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card members-card">
-                        <div className="metric-icon">
-                            <FiUsers />
-                        </div>
-                        <div className="metric-content">
-                            <div className="metric-label">Employees</div>
-                            <div className="metric-value">
-                                {company?.number_of_employees || '0'}
+                            <div className="metric-subtitle">
+                                {company?.updatedAt ? `Updated ${dayjs(company.updatedAt).format('MMM DD, YYYY')}` : '-'}
                             </div>
                         </div>
                     </Card>
@@ -211,11 +241,15 @@ const CompanyDetails = () => {
                         <div className="detail-card status-card">
                             <div className="detail-content">
                                 <div className="detail-icon">
-                                    <FiTarget />
+                                    <FiGlobe />
                                 </div>
                                 <div className="detail-info">
-                                    <div className="detail-label">Fax</div>
-                                    <div className="detail-value">{company?.fax || '-'}</div>
+                                    <div className="detail-label">Website</div>
+                                    <div className="detail-value">
+                                        <a href={company?.website} target="_blank" rel="noopener noreferrer">
+                                            {company?.website || '-'}
+                                        </a>
+                                    </div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>
@@ -223,7 +257,7 @@ const CompanyDetails = () => {
                     </Col>
                 </Row>
             </div>
-        </div>
+        </div >
     );
 };
 

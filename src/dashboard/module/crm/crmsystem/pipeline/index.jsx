@@ -28,7 +28,7 @@ const Pipeline = () => {
 
   // Ensure data is always an array
   const leadsData = leadsResponse?.data || [];
-  const dealsData = dealsResponse || [];
+  const dealsData = dealsResponse || []
   // Ensure pipelines is always an array
   const pipelines = Array.isArray(data?.pipelines)
     ? data.pipelines

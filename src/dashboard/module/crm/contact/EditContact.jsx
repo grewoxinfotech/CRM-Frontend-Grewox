@@ -118,6 +118,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
         state: values.state || "",
         country: values.country || "",
         section: "contact",
+        client_id: contactData.client_id,
       };
 
       // Call the update API
@@ -392,43 +393,26 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                   dropdownRender={(menu) => (
-                    <div onClick={(e) => e.stopPropagation()}>
+                    <>
                       {menu}
                       <Divider style={{ margin: '8px 0' }} />
-                      <div
-                        style={{
-                          padding: '8px 12px',
-                          display: 'flex',
-                          justifyContent: 'center'
-                        }}
+                      <Button
+                        type="text"
+                        icon={<PlusOutlined />}
+                        onClick={handleAddCompanyClick}
+                        style={{ width: '100%', textAlign: 'left' }}
                       >
-                        <Button
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={handleAddCompanyClick}
-                          style={{
-                            width: '100%',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            height: '40px',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                            fontWeight: '500',
-                          }}
-                        >
-                          Add Company
-                        </Button>
-                      </div>
-                    </div>
+                        Add New Company
+                      </Button>
+                    </>
                   )}
                 >
-                  {companyAccountsResponse?.data?.map((company) => (
+                  {companyAccounts.map((company) => (
                     <Option key={company.id} value={company.id} label={company.company_name}>
-                      {company.company_name}
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <FiGlobe style={{ marginRight: 8 }} />
+                        {company.company_name}
+                      </div>
                     </Option>
                   ))}
                 </Select>

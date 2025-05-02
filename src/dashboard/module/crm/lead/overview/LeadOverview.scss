@@ -689,20 +689,33 @@
                 }
 
                 .metric-label {
-                    font-size: 14px;
-                    font-weight: 600;
+                    font-size: 14px !important;
+                    font-weight: 900 !important;
                     margin-bottom: 8px;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    letter-spacing: 0.7px;
                     position: relative;
                 }
 
                 .metric-value {
-                    font-size: 28px;
-                    font-weight: 700;
+                    font-size: 32px !important;
+                    font-weight: 900 !important;
                     line-height: 1.2;
                     position: relative;
                     transition: all 0.3s ease;
+                    letter-spacing: -0.5px;
+
+                    .interest-text {
+                        font-size: 28px !important;
+                        font-weight: 900 !important;
+                    }
+                }
+
+                .metric-subtitle {
+                    font-size: 14px !important;
+                    font-weight: 700 !important;
+                    margin-top: 4px;
+                    opacity: 0.9;
                 }
             }
 
@@ -1064,15 +1077,19 @@
                 .detail-label {
                     font-size: 13px;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    letter-spacing: 0.7px;
                     margin-bottom: 4px;
-                    color: rgba(0, 0, 0, 0.45);
+                    color: #1890ff;
+                    font-weight: 700;
+                    opacity: 0.9;
                 }
 
                 .detail-value {
-                    font-size: 18px;
+                    font-size: 16px;
                     font-weight: 600;
-                    letter-spacing: -0.5px;
+                    color: #1f2937;
+                    transition: all 0.3s ease;
+                    letter-spacing: -0.3px;
                 }
             }
 
@@ -1213,22 +1230,21 @@
                 z-index: 1;
 
                 .detail-label {
-                    font-size: 12px;
+                    font-size: 13px;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
+                    letter-spacing: 0.7px;
                     margin-bottom: 4px;
                     color: #1890ff;
-                    font-weight: 600;
-                    opacity: 0.7;
+                    font-weight: 700;
+                    opacity: 0.9;
                 }
 
                 .detail-value {
                     font-size: 16px;
                     font-weight: 600;
-                    letter-spacing: -0.3px;
-                    transition: all 0.3s ease;
-                    position: relative;
                     color: #1f2937;
+                    transition: all 0.3s ease;
+                    letter-spacing: -0.3px;
                 }
             }
 
@@ -1612,11 +1628,11 @@
 
 @keyframes shimmer {
     0% {
-        transform: translate(-50%, -50%) rotate(45deg);
+        transform: translateX(-150%) rotate(45deg);
     }
 
     100% {
-        transform: translate(150%, 150%) rotate(45deg);
+        transform: translateX(150%) rotate(45deg);
     }
 }
 

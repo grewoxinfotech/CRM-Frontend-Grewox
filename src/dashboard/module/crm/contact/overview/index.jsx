@@ -12,12 +12,19 @@ import {
     FiActivity,
     FiFolder,
     FiClock,
-    FiCheck,
-    FiX,
+    FiBox,
+    FiGlobe,
+    FiMapPin as FiLocation,
+    FiBriefcase,
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetContactsQuery, useUpdateContactMutation } from '../services/contactApi';
+import { useGetLeadsQuery } from '../../../crm/lead/services/LeadApi';
+import { useGetDealsQuery } from '../../../crm/deal/services/dealApi';
+import { useGetCompanyAccountsQuery } from '../../companyacoount/services/companyAccountApi';
+import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
+import './contactoverview.scss';
 // import ContactOverview from './ContactOverview';
 
 const { Title, Text } = Typography;
@@ -26,8 +33,14 @@ const ContactDetails = () => {
     const { contactId } = useParams();
     const navigate = useNavigate();
     const { data: contactsResponse, isLoading } = useGetContactsQuery();
+    const { data: lead } = useGetLeadsQuery();
+    const { data: deal } = useGetDealsQuery();
+    const { data: companyAccounts } = useGetCompanyAccountsQuery();
+    const { data: usersData } = useGetUsersQuery();
     const [updateContact] = useUpdateContactMutation();
 
+    const leadsData = lead?.data || [];
+    const dealsData = deal || [];
     const contacts = Array.isArray(contactsResponse?.data)
         ? contactsResponse.data
         : Array.isArray(contactsResponse)
@@ -38,19 +51,40 @@ const ContactDetails = () => {
 
     if (!contact) return <div>Contact not found</div>;
 
+    const leads = leadsData?.filter(lead => lead.contact_id === contactId) || [];
+    const deals = dealsData?.filter(deal => deal.contact_id === contactId) || [];
+
+    const totalLeadValue = leads.reduce((sum, lead) => sum + (Number(lead.leadValue) || 0), 0);
+    const totalDealValue = deals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
+    const totalRevenue = totalLeadValue + totalDealValue;
+
+    // Find company details if company_name exists
+    const companyDetails = contact?.company_name
+        ? companyAccounts?.data?.find(company => company.id === contact.company_name)
+        : null;
+
+    // Find contact owner's name
+    const contactOwnerName = contact?.contact_owner && usersData?.data
+        ? usersData.data.find(user => user.id === contact.contact_owner)?.username || contact.contact_owner
+        : 'Not Assigned';
+
     return (
         <div className="overview-content">
+            {/* Contact Details Card */}
             <Card className="info-card contact-card">
                 <div className="profile-header">
                     <div className="profile-main">
                         <div className="company-avatar">
-                            {contact?.first_name ? contact.first_name[0].toUpperCase() : 'C'}
+                            {contact?.first_name ? contact.first_name[0].toUpperCase() : ''}
+                            {contact?.last_name ? contact.last_name[0].toUpperCase() : ''}
                         </div>
                         <div className="profile-info">
-                            <h2 className="company-name">{contact?.first_name || 'Contact Name'}</h2>
+                            <h2 className="company-name">
+                                {contact?.first_name} {contact?.last_name}
+                            </h2>
                             <div className="contact-name">
                                 <FiUser className="icon" />
-                                {contact?.account_owner}
+                                {contact?.email || 'No Email'}
                             </div>
                         </div>
                     </div>
@@ -80,138 +114,154 @@ const ContactDetails = () => {
                     </div>
                     <div className="stat-item">
                         <div className="stat-icon">
-                            <FiMapPin />
+                            <FiLocation />
                         </div>
                         <div className="stat-content">
                             <div className="stat-label">Location</div>
-                            <div className="stat-value">{contact?.address || '-'}</div>
+                            <div className="stat-value">
+                                {[contact?.address, contact?.city, contact?.state, contact?.country]
+                                    .filter(Boolean)
+                                    .join(', ') || '-'}
+                            </div>
                         </div>
                     </div>
                 </div>
             </Card>
 
+            {/* Metrics Row */}
             <Row gutter={[16, 16]} className="metrics-row">
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card lead-value-card">
+                    <Card className="metric-card total-revenue-card">
                         <div className="metric-icon">
                             <FiDollarSign />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Revenue</div>
+                            <div className="metric-label">TOTAL REVENUE</div>
                             <div className="metric-value">
-                                {contact?.company_revenue || '-'}
+                                ₹{totalRevenue.toLocaleString()}
+                            </div>
+                            <div className="metric-subtitle">
+                                {leads.length + deals.length} Total Activities
                             </div>
                         </div>
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card status-card">
+                    <Card className="metric-card leads-card">
                         <div className="metric-icon">
                             <FiTarget />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Company Type</div>
+                            <div className="metric-label">LEADS</div>
                             <div className="metric-value">
-                                {contact?.company_type || '-'}
+                                {leads?.length || 0}
+                            </div>
+                            <div className="metric-subtitle">
+                                ₹{totalLeadValue.toLocaleString()} Total Value
                             </div>
                         </div>
                     </Card>
                 </Col>
                 <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card created-date-card">
+                    <Card className="metric-card deals-card">
+                        <div className="metric-icon">
+                            <FiBriefcase />
+                        </div>
+                        <div className="metric-content">
+                            <div className="metric-label">DEALS</div>
+                            <div className="metric-value">
+                                {deals.length || 0}
+                            </div>
+                            <div className="metric-subtitle">
+                                ₹{totalDealValue.toLocaleString()} Total Value
+                            </div>
+                        </div>
+                    </Card>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                    <Card className="metric-card created-card">
                         <div className="metric-icon">
                             <FiCalendar />
                         </div>
                         <div className="metric-content">
-                            <div className="metric-label">Created</div>
+                            <div className="metric-label">CREATED</div>
                             <div className="metric-value">
                                 {contact?.createdAt ? dayjs(contact.createdAt).format('MMM DD, YYYY') : '-'}
                             </div>
-                        </div>
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} md={6}>
-                    <Card className="metric-card members-card">
-                        <div className="metric-icon">
-                            <FiUsers />
-                        </div>
-                        <div className="metric-content">    
-                            <div className="metric-label">Employees</div>
-                            <div className="metric-value">
-                                {contact?.number_of_employees || '0'}
+                            <div className="metric-subtitle">
+                                {contact?.updatedAt ? `Updated ${dayjs(contact.updatedAt).format('MMM DD, YYYY')}` : '-'}
                             </div>
                         </div>
                     </Card>
                 </Col>
             </Row>
 
-            <div className="lead-details-section">
-                <Row gutter={[24, 24]}>
-                    <Col xs={24} sm={12} md={6}>
-                        <div className="detail-card source-card">
-                            <div className="detail-content">
-                                <div className="detail-icon">
-                                    <FiActivity />
+            {/* Details Row */}
+            <Row gutter={[24, 24]} className="details-row">
+                <Col xs={24} sm={12} md={6}>
+                    <div className="detail-card source-card">
+                        <div className="detail-content">
+                            <div className="detail-icon">
+                                <FiActivity />
+                            </div>
+                            <div className="detail-info">
+                                <div className="detail-label">SOURCE</div>
+                                <div className="detail-value">
+                                    {contact?.contact_source || '-'}
                                 </div>
-                                <div className="detail-info">
-                                    <div className="detail-label">Industry</div>
-                                    <div className="detail-value">
-                                        {contact?.company_industry || '-'}
-                                    </div>
-                                </div>
-                                <div className="detail-indicator" />
                             </div>
                         </div>
-                    </Col>
+                    </div>
+                </Col>
 
-                    <Col xs={24} sm={12} md={6}>
-                        <div className="detail-card stage-card">
-                            <div className="detail-content">
-                                <div className="detail-icon">
-                                    <FiFolder />
+                <Col xs={24} sm={12} md={6}>
+                    <div className="detail-card category-card">
+                        <div className="detail-content">
+                            <div className="detail-icon">
+                                <FiBriefcase />
+                            </div>
+                            <div className="detail-info">
+                                <div className="detail-label">COMPANY</div>
+                                <div className="detail-value">
+                                    {companyDetails?.company_name || 'No Company Associated'}
                                 </div>
-                                <div className="detail-info">
-                                    <div className="detail-label">Category</div>
-                                    <div className="detail-value">{contact?.company_category || '-'}</div>
-                                </div>
-                                <div className="detail-indicator" />
                             </div>
                         </div>
-                    </Col>
+                    </div>
+                </Col>
 
-                    <Col xs={24} sm={12} md={6}>
-                        <div className="detail-card category-card">
-                            <div className="detail-content">
-                                <div className="detail-icon">
-                                    <FiClock />
+                <Col xs={24} sm={12} md={6}>
+                    <div className="detail-card ownership-card">
+                        <div className="detail-content">
+                            <div className="detail-icon">
+                                <FiUsers />
+                            </div>
+                            <div className="detail-info">
+                                <div className="detail-label">CONTACT OWNER</div>
+                                <div className="detail-value">
+                                    {contactOwnerName}
                                 </div>
-                                <div className="detail-info">
-                                    <div className="detail-label">Ownership</div>
-                                    <div className="detail-value">
-                                        {contact?.ownership || '-'}
-                                    </div>
-                                </div>
-                                <div className="detail-indicator" />
                             </div>
                         </div>
-                    </Col>
+                    </div>
+                </Col>
 
-                    <Col xs={24} sm={12} md={6}>
-                        <div className="detail-card status-card">
-                            <div className="detail-content">
-                                <div className="detail-icon">
-                                    <FiTarget />
+                <Col xs={24} sm={12} md={6}>
+                    <div className="detail-card fax-card">
+                        <div className="detail-content">
+                            <div className="detail-icon">
+                                <FiGlobe />
+                            </div>
+                            <div className="detail-info">
+                                <div className="detail-label">COUNTRY</div>
+                                <div className="detail-value">
+                                    {contact?.country || '-'}
                                 </div>
-                                <div className="detail-info">
-                                    <div className="detail-label">Fax</div>
-                                    <div className="detail-value">{contact?.fax || '-'}</div>
-                                </div>
-                                <div className="detail-indicator" />
                             </div>
                         </div>
-                    </Col>
-                </Row>
-            </div>
+                    </div>
+                </Col>
+            </Row>
         </div>
     );
 };
