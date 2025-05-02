@@ -187,7 +187,19 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Company Name <span className="required">*</span>
                   </span>
                 }
-                rules={[{ required: true, message: "Please enter company name" }]}
+                rules={[{ required: true, message: "Please enter company name" },
+                  {
+                    validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                            return Promise.reject(
+                                new Error('Company name must contain both uppercase or lowercase English letters')
+                            );
+                        }
+                        return Promise.resolve();
+                    }
+                }
+                ]}
               >
                 <Input
                   placeholder="Enter company name"

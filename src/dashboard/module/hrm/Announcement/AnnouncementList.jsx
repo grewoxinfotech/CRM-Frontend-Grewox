@@ -187,12 +187,12 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
             width: 80,
             render: (_, record) => {
                 const items = [
-                    {
-                        key: 'view',
-                        icon: <FiEye style={{ fontSize: '14px' }} />,
-                        label: 'View',
-                        onClick: () => onEdit(record),
-                    },
+                    // {
+                    //     key: 'view',
+                    //     icon: <FiEye style={{ fontSize: '14px' }} />,
+                    //     label: 'View',
+                    //     onClick: () => onEdit(record),
+                    // },
                     {
                         key: 'edit',
                         icon: <FiEdit2 style={{ fontSize: '14px' }} />,

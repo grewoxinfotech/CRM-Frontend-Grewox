@@ -400,6 +400,18 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                   Product Name
                 </span>
               }
+              rules={[ {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                    return Promise.reject(
+                        new Error('Product name must contain both uppercase or lowercase English letters')
+                    );
+                }
+                return Promise.resolve();
+                }
+              }
+              ]}  
             >
               <Input
                 prefix={

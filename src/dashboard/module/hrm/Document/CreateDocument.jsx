@@ -235,6 +235,17 @@ const CreateDocument = ({
               }
               rules={[
                 { required: true, message: "Please enter document name" },
+                {
+                  validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                          return Promise.reject(
+                              new Error('Document name must contain both uppercase and lowercase English letters')
+                          );
+                      }
+                      return Promise.resolve();
+                  }
+              }
               ]}
             >
               <Input

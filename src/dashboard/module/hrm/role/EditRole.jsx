@@ -471,7 +471,19 @@ const EditRole = ({ visible, onCancel, onSubmit, loading, initialValues }) => {
                                 Role Name
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter role name' }]}
+                        rules={[{ required: true, message: 'Please enter role name' },
+                        {
+                            validator: (_, value) => {
+                                if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Role name must contain both uppercase and lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
+                        ]}
                     >
                         <Input
                             placeholder="Enter Role Name"

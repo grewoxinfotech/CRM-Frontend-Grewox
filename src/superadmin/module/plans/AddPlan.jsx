@@ -335,7 +335,19 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             Plan Name <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
-                    rules={[{ required: true, message: 'Please enter plan name' }]}
+                    rules={[{ required: true, message: 'Please enter plan name' },
+                        {
+                            validator: (_, value) => {
+                              if (!value) return Promise.resolve();
+                              if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                return Promise.reject(
+                                new Error('Plan name must contain both uppercase or lowercase English letters')
+                                );
+                            }
+                            return Promise.resolve();
+                            }
+                          }
+                    ]}
                 >
                     <Input
                         prefix={<FiTag style={{ color: '#1890ff', fontSize: '16px' }} />}

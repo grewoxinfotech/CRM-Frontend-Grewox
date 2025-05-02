@@ -268,6 +268,17 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
               rules={[
                 { required: true, message: "Please enter customer name" },
                 { max: 100, message: "Name cannot exceed 100 characters" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                      return Promise.reject(
+                          new Error('Customer name must contain both uppercase or lowercase English letters')
+                      );
+                  }
+                  return Promise.resolve();
+                  }
+                }
               ]}
             >
               <Input

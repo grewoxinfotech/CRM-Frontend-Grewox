@@ -25,12 +25,12 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
     ];
     // Define action items for dropdown
     const getActionItems = (record) => [
-        {
-            key: 'view',
-            icon: <FiEye />,
-            label: 'View Details',
-            onClick: () => onView?.(record)
-        },
+        // {
+        //     key: 'view',
+        //     icon: <FiEye />,
+        //     label: 'View Details',
+        //     onClick: () => onView?.(record)
+        // },
         {
             key: 'edit',
             icon: <FiEdit2 />,

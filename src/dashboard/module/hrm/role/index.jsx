@@ -30,8 +30,10 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useSelector } from 'react-redux';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
+const { confirm } = Modal;
 
 const Role = () => {
     // States
@@ -111,19 +113,22 @@ const Role = () => {
     };
 
     const handleDeleteClick = (role) => {
-        setSelectedRole(role);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteRole = async () => {
-        try {
-            await deleteRole(selectedRole.id).unwrap();
-            message.success('Role deleted successfully');
-            setIsDeleteModalVisible(false);
-            refetch();
-        } catch (error) {
-            message.error(error?.data?.message || 'Failed to delete role');
-        }
+        Modal.confirm({
+            title: 'Delete Confirmation',
+            content: 'Are you sure you want to delete this role?',
+            okType: 'danger',
+            bodyStyle: { padding: '20px' },
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await deleteRole(role.id).unwrap();
+                    message.success('Role deleted successfully');
+                    refetch();
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete role');
+                }
+            },
+        });
     };
 
     const handleCreateSubmit = async (formData) => {
@@ -316,21 +321,6 @@ const Role = () => {
                 loading={isUpdating}
                 initialValues={selectedRole}
             />
-
-            <Modal
-                title="Delete Role"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteRole}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: isDeleting
-                }}
-            >
-                <p>Are you sure you want to delete <strong>{selectedRole?.role_name}</strong>?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
         </div>
     );
 };

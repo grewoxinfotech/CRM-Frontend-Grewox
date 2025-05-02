@@ -13,12 +13,12 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
         { id: 'delayed', name: 'Delayed' },
     ];  
     const getActionItems = (record) => [
-        {
-            key: 'view',
-            icon: <FiEye style={{ fontSize: '16px' }} />,
-            label: 'View',
-            onClick: () => onView(record)
-        },
+        // {
+        //     key: 'view',
+        //     icon: <FiEye style={{ fontSize: '16px' }} />,
+        //     label: 'View',
+        //     onClick: () => onView(record)
+        // },
         {
             key: 'edit',
             icon: <FiEdit2 style={{ fontSize: '16px' }} />,

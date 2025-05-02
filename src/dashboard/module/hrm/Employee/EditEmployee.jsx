@@ -638,6 +638,20 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="firstName"
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>First Name</span>}
+                            rules={[
+                                { required: true, message: "Please enter first name" },
+                                {
+                                    validator: (_, value) => {
+                                        if (!value) return Promise.resolve();
+                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) { 
+                                            return Promise.reject(
+                                                new Error('First name must contain both uppercase and lowercase English letters')
+                                            );
+                                        }
+                                        return Promise.resolve();
+                                    }
+                                }       
+                            ]}
                         >
                             <Input
                                 prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -655,7 +669,21 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
 
                         <Form.Item
                             name="lastName"
-                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Last Name</span>}
+                                label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Last Name</span>}
+                            rules={[
+                                { required: true, message: "Please enter last name" },
+                                {
+                                    validator: (_, value) => {
+                                        if (!value) return Promise.resolve();
+                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                            return Promise.reject(
+                                                new Error('Last name must contain both uppercase and lowercase English letters')
+                                            );
+                                        }
+                                        return Promise.resolve();
+                                    }
+                                }
+                            ]}
                         >
                             <Input
                                 prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -674,6 +702,21 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="username"
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Username</span>}
+                            rules={[
+                                { required: true, message: "Please enter username" },
+                                { min: 3, message: "Username must be at least 3 characters" },
+                                {
+                                    validator: (_, value) => {
+                                        if (!value) return Promise.resolve();
+                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                            return Promise.reject(
+                                                new Error('Username must contain both uppercase and lowercase English letters')
+                                            );
+                                        }
+                                        return Promise.resolve();
+                                    }
+                                }   
+                            ]}
                         >
                             <Input
                                 prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}

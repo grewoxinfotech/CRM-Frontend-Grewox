@@ -217,6 +217,17 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                             required: true,
                             message: "Please input the name!",
                         },
+                        {
+                            validator: (_, value) => {
+                              if (!value) return Promise.resolve();
+                              if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                return Promise.reject(
+                                    new Error('Name must contain both uppercase or lowercase English letters')
+                                );
+                            }
+                            return Promise.resolve();
+                            }
+                          }
                     ]}
                 >
                     <Input

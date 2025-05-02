@@ -28,12 +28,12 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
 
     // Function to get menu items for each row
     const getActionItems = (record) => [
-        {
-            key: 'view',
-            icon: <FiEye style={{ fontSize: '16px' }} />,
-            label: 'View',
-            onClick: () => onView?.(record)
-        },
+        // {
+        //     key: 'view',
+        //     icon: <FiEye style={{ fontSize: '16px' }} />,
+        //     label: 'View',
+        //     onClick: () => onView?.(record)
+        // },
         {
             key: 'edit',
             icon: <FiEdit2 style={{ fontSize: '16px' }} />,

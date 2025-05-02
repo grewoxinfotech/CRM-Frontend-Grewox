@@ -395,7 +395,18 @@ const CreateUser = ({ visible, onCancel }) => {
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Username</span>}
                             rules={[
                                 { required: true, message: 'Please enter username' },
-                                { min: 3, message: 'Username must be at least 3 characters' }
+                                { min: 3, message: 'Username must be at least 3 characters' },
+                                {
+                                    validator: (_, value) => {
+                                      if (!value) return Promise.resolve();
+                                      if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Username must contain both uppercase or lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                    }
+                                  }
                             ]}
                         >
                             <Input

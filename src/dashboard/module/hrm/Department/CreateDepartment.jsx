@@ -227,7 +227,18 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                         }
                         rules={[
                             { required: true, message: 'Please enter department name' },
-                            { max: 100, message: 'Department name cannot exceed 100 characters' }
+                            { max: 100, message: 'Department name cannot exceed 100 characters' },
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Department name must contain both uppercase and lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
                         ]}
                     >
                         <Input

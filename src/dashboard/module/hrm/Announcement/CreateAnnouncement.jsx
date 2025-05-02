@@ -305,6 +305,17 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                     required: true,
                     message: "Please enter announcement title",
                   },
+                  {
+                    validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                            return Promise.reject(
+                                new Error('Announcement title must contain both uppercase and lowercase English letters')
+                            );
+                        }
+                        return Promise.resolve();
+                    }
+                }
                 ]}
               >
                 <Input

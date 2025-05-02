@@ -374,7 +374,19 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                                 Username <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
-                        rules={[{ required: true, message: 'Please enter username' }]}
+                        rules={[{ required: true, message: 'Please enter username' },
+                            {
+                                validator: (_, value) => {
+                                  if (!value) return Promise.resolve();
+                                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                    return Promise.reject(
+                                    new Error('Username must contain both uppercase or lowercase English letters')
+                                    );
+                                }
+                                return Promise.resolve();
+                                }
+                              }
+                        ]}
                     >
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}

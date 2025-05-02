@@ -219,7 +219,19 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
                     <Form.Item
                         name="name"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Event Title <span style={{ color: "#ff4d4f" }}>*</span></span>}
-                        rules={[{ required: true, message: 'Please enter event title' }]}
+                        rules={[{ required: true, message: 'Please enter event title' },
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Event title must contain both uppercase or lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
+                        ]}
                         style={{ gridColumn: 'span 2' }}
                     >
                         <Input

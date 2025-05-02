@@ -278,6 +278,17 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
               rules={[
                 { required: true, message: "Please enter customer name" },
                 { max: 100, message: "Name cannot exceed 100 characters" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                      return Promise.reject(
+                          new Error('Customer name must contain both uppercase or lowercase English letters')
+                      );
+                  }
+                  return Promise.resolve();
+                  }
+                }
               ]}
             >
               <Input
@@ -378,7 +389,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                   <Select
                     size="large"
                     style={{
-                      width: '80px',
+                      width: '90px',
                       height: '48px',
                       display: 'flex',
                       alignItems: 'center',
@@ -408,7 +419,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                           color: '#262626',
                           cursor: 'pointer',
                         }}>
-                          <span>{country.phoneCode} {country.countryCode}</span>
+                          <span>{country.countryCode} {country.phoneCode}</span>
                         </div>
                       </Option>
                     ))}

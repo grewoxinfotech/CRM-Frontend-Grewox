@@ -242,7 +242,19 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                         <Form.Item
                             name="name"
                             label="Name"
-                            rules={[{ required: true, message: 'Please enter name' }]}
+                            rules={[{ required: true, message: 'Please enter name' },
+                                {
+                                    validator: (_, value) => {
+                                      if (!value) return Promise.resolve();
+                                      if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Vendor name must contain both uppercase or lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                    }
+                                  }
+                            ]}
                         >
                             <Input
                                 placeholder="Enter name"

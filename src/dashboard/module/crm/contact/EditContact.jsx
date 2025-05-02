@@ -231,7 +231,19 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     First Name <span className="required">*</span>
                   </span>
                 }
-                rules={[{ required: true, message: "Please enter first name" }]}
+                rules={[{ required: true, message: "Please enter first name" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                      return Promise.reject(
+                          new Error('First name must contain both uppercase or lowercase English letters')
+                      );
+                  }
+                  return Promise.resolve();
+                  }
+                }
+                ]}
               >
                 <Input
                   placeholder="Enter first name"

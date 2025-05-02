@@ -347,6 +347,18 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         <Form.Item
                             name="name"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Plan Name</span>}
+                            rules={[{ required: true, message: 'Please enter plan name' },
+                                {
+                                    validator: (_, value) => {
+                                      if (!value) return Promise.resolve();
+                                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                    return Promise.reject(
+                                        new Error('Plan name must contain both uppercase or lowercase English letters')
+                                    );
+                                }
+                                return Promise.resolve();
+                                }
+                              }]}
                         >
                             <Input
                                 prefix={<FiPackage style={{ color: '#1890ff' }} />}

@@ -255,7 +255,18 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                         }
                         rules={[
                             { required: true, message: 'Please enter designation name' },
-                            { max: 100, message: 'Designation name cannot exceed 100 characters' }
+                            { max: 100, message: 'Designation name cannot exceed 100 characters' },
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Designation name must contain both uppercase and lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
                         ]}
                     >
                         <Input

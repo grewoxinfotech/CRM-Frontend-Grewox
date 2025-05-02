@@ -277,7 +277,19 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                                 Interviewer {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                             </span>
                         }
-                        rules={getFieldRules('interviewer')}
+                        rules={[getFieldRules('interviewer'),
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Interviewer must contain both uppercase or lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
+                        ]}  
                     >
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}

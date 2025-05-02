@@ -153,15 +153,15 @@ const ProductList = ({
 
   const getDropdownItems = (record) => ({
     items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: (e) => {
-          e.domEvent.stopPropagation();
-          onView(record);
-        },
-      },
+      // {
+      //   key: "view",
+      //   icon: <FiEye />,
+      //   label: "View Details",
+      //   onClick: (e) => {
+      //     e.domEvent.stopPropagation();
+      //     onView(record);
+      //   },
+      // },
       {
         key: "edit",
         icon: <FiEdit2 />,

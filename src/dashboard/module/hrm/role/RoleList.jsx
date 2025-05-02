@@ -347,7 +347,7 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
                 label: 'Delete',
                 onClick: (e) => {
                     e.domEvent.stopPropagation();
-                    onDelete(record);
+                    onDelete?.(record);
                 }
             });
         }

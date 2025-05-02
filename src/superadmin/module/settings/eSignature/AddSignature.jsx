@@ -338,7 +338,8 @@ const AddSignature = ({ visible, onCancel, isEditing, initialValues, onSuccess }
                                                 style: {
                                                     width: '100%',
                                                     height: '200px',
-                                                    borderRadius: '8px'
+                                                    borderRadius: '8px',
+                                                  cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none'%3E%3Cpath d='M8 24l12-12 4 4-12 12-5 1 1-5z' fill='%23000000' stroke='%23ffffff'/%3E%3C/svg%3E") 0 32, auto`
                                                 }
                                             }}
                                             backgroundColor="rgba(247, 250, 252, 1)"

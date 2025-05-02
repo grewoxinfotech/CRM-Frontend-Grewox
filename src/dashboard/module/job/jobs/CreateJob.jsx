@@ -445,7 +445,19 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                     Job Title {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                                 </span>
                             }
-                            rules={getFieldRules('job title')}
+                            rules={[{ required: true, message: 'Please enter job title' },
+                                {
+                                    validator: (_, value) => {
+                                        if (!value) return Promise.resolve();
+                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                            return Promise.reject(
+                                                new Error('Job title must contain both uppercase or lowercase English letters')
+                                            );
+                                        }
+                                        return Promise.resolve();
+                                    }
+                                }
+                            ]}
                         >
                             <Input
                                 prefix={<FiBriefcase style={{ color: '#1890ff', fontSize: '16px' }} />}

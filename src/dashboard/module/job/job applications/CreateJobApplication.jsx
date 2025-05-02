@@ -328,7 +328,21 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                     <Form.Item
                         name="name"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Name {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}</span>}
-                        rules={getFieldRules('name')}
+                        rules={[getFieldRules('name'),
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Name must contain both uppercase or lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
+                                }
+                            }
+                        ]}
+
+
                     >
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}

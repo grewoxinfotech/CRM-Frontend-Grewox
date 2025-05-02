@@ -38,12 +38,12 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
 
   const getDropdownItems = (record) => ({
     items: [
-      {
-        key: 'view',
-        icon: <FiEye />,
-        label: 'View Details',
-        onClick: () => onView(record)
-      },
+      // {
+      //   key: 'view',
+      //   icon: <FiEye />,
+      //   label: 'View Details',
+      //   onClick: () => onView(record)
+      // },
       {
         key: 'edit',
         icon: <FiEdit2 />,
