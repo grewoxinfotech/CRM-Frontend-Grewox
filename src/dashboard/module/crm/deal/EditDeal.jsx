@@ -40,7 +40,11 @@ import "./Deal.scss";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
-import { useGetDealStagesQuery, useDeleteDealStageMutation, useUpdateDealStageMutation } from "../crmsystem/dealstage/services/dealStageApi";
+import {
+  useGetDealStagesQuery,
+  useDeleteDealStageMutation,
+  useUpdateDealStageMutation,
+} from "../crmsystem/dealstage/services/dealStageApi";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import { PlusOutlined } from "@ant-design/icons";
 import { useGetUsersQuery } from "../../user-management/users/services/userApi";
@@ -58,7 +62,10 @@ import AddContactModal from "../contact/CreateContact";
 import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAccountApi";
 import { useGetContactsQuery } from "../contact/services/contactApi";
 import { useCreateContactMutation } from "../contact/services/contactApi";
-import { useGetCategoriesQuery, useDeleteCategoryMutation } from "../crmsystem/souce/services/SourceApi";
+import {
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation,
+} from "../crmsystem/souce/services/SourceApi";
 import { useDeleteSourceMutation } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
@@ -87,7 +94,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
   // Group all queries together
   const { data: pipelines = [] } = useGetPipelinesQuery();
-  const { data: dealStages = [], refetch: refetchDealStages } = useGetDealStagesQuery();
+  const { data: dealStages = [], refetch: refetchDealStages } =
+    useGetDealStagesQuery();
   const { refetch } = useGetDealsQuery();
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: currencies } = useGetAllCurrenciesQuery({
@@ -105,11 +113,13 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const [createContact] = useCreateContactMutation();
 
   // Find default country (India) for phone code
-  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  const indiaCountry = countries?.find((c) => c.countryCode === "IN");
   const defaultPhoneCode = indiaCountry?.id;
 
   // Find default currency (INR) or use first available
-  const defaultCurrency = currencies?.find(c => c.currencyCode === 'INR')?.id || currencies?.[0]?.id;
+  const defaultCurrency =
+    currencies?.find((c) => c.currencyCode === "INR")?.id ||
+    currencies?.[0]?.id;
   const selectedCurrency = initialValues?.currency || defaultCurrency;
 
   const [selectedPipeline, setSelectedPipeline] = useState(null);
@@ -123,7 +133,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const products = productsData?.data || [];
   const categories = categoriesData?.data || [];
 
-  const [contactMode, setContactMode] = useState('existing');
+  const [contactMode, setContactMode] = useState("existing");
   const [isAddSourceVisible, setIsAddSourceVisible] = useState(false);
   const [isAddCategoryVisible, setIsAddCategoryVisible] = useState(false);
 
@@ -139,7 +149,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const [isAddStageVisible, setIsAddStageVisible] = useState(false);
   const [deleteStage] = useDeleteDealStageMutation();
   const [updateStage] = useUpdateDealStageMutation();
-  const [isSelectDefaultModalOpen, setIsSelectDefaultModalOpen] = useState(false);
+  const [isSelectDefaultModalOpen, setIsSelectDefaultModalOpen] =
+    useState(false);
   const [stageToDelete, setStageToDelete] = useState(null);
 
   // Get pipeline name by ID
@@ -156,7 +167,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
   // Filter stages by pipeline and type
   const filteredStages = dealStages?.filter(
-    (stage) => stage.stageType === "deal" && stage.pipeline === initialValues?.pipeline
+    (stage) =>
+      stage.stageType === "deal" && stage.pipeline === initialValues?.pipeline
   );
 
   // const { data: users = [] } = useGetAllUsersQuery({
@@ -215,16 +227,17 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       }
 
       // Set contact mode based on whether there's an existing contact
-      setContactMode(initialValues.contact_id ? 'existing' : 'new');
+      setContactMode(initialValues.contact_id ? "existing" : "new");
 
       // Find the currency object from the currencies array
-      const currencyObj = currencies?.find(c => c.id === initialValues.currency) ||
-        currencies?.find(c => c.currencyCode === 'INR');
+      const currencyObj =
+        currencies?.find((c) => c.id === initialValues.currency) ||
+        currencies?.find((c) => c.currencyCode === "INR");
 
       const formValues = {
         dealTitle: initialValues.dealTitle,
         value: initialValues.value || 0,
-        currency: currencyObj?.currencyCode || 'INR',
+        currency: currencyObj?.currencyCode || "INR",
         pipeline: initialValues.pipeline,
         stage: initialValues.stage,
         company_id: initialValues.company_id,
@@ -232,7 +245,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         source: initialValues.source,
         category: initialValues.category,
         products: selectedProducts,
-        closedDate: initialValues.closedDate ? dayjs(initialValues.closedDate) : null,
+        closedDate: initialValues.closedDate
+          ? dayjs(initialValues.closedDate)
+          : null,
         status: initialValues.status || "pending",
         assigned_to: assignedTo?.assigned_to || [],
         is_won: initialValues.is_won,
@@ -242,7 +257,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         email: initialValues.email || "",
         phoneCode: initialValues.phoneCode || defaultPhoneCode,
         telephone: initialValues.telephone || "",
-        address: initialValues.address || ""
+        address: initialValues.address || "",
       };
 
       // Set the selected pipeline for stage filtering
@@ -250,8 +265,6 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
       // Set form values
       form.setFieldsValue(formValues);
-
-     
     }
   }, [initialValues, form, currencies, defaultPhoneCode]);
 
@@ -259,18 +272,20 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   useEffect(() => {
     if (companyAccountsData?.data && contactsData?.data && initialValues) {
       // Verify the company and contact exist in the loaded data
-      const companyExists = companyAccountsData.data.some(company => company.id === initialValues.company_id);
-      const contactExists = contactsData.data.some(contact => contact.id === initialValues.contact_id);
+      const companyExists = companyAccountsData.data.some(
+        (company) => company.id === initialValues.company_id
+      );
+      const contactExists = contactsData.data.some(
+        (contact) => contact.id === initialValues.contact_id
+      );
 
       if (companyExists && contactExists) {
         form.setFieldsValue({
           company_id: initialValues.company_id,
-          contact_id: initialValues.contact_id
+          contact_id: initialValues.contact_id,
         });
-        setContactMode('existing');
+        setContactMode("existing");
       }
-
-     
     }
   }, [companyAccountsData?.data, contactsData?.data, initialValues, form]);
 
@@ -304,23 +319,21 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
     try {
       let contactId;
 
-      if (contactMode === 'existing') {
+      if (contactMode === "existing") {
         contactId = values.contact_id;
-      } else if (contactMode === 'new') {
-        // Validate required fields for new contact
-        if (!values.firstName && !values.lastName) {
-          message.error('Please enter at least first name or last name for the contact');
-          return;
-        }
-
+      } else {
         try {
-
           // Format phone with country code
-          let formattedPhone = '';
+          let formattedPhone = "";
           if (values.telephone && values.phoneCode) {
-            const selectedCountry = countries.find(c => c.id === values.phoneCode);
+            const selectedCountry = countries.find(
+              (c) => c.id === values.phoneCode
+            );
             if (selectedCountry) {
-              formattedPhone = `+${selectedCountry.phoneCode.replace('+', '')} ${values.telephone}`;
+              formattedPhone = `+${selectedCountry.phoneCode.replace(
+                "+",
+                ""
+              )} ${values.telephone}`;
             }
           }
 
@@ -333,28 +346,31 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             phone_code: values.phoneCode || "",
             phone: values.telephone ? values.telephone.toString() : "",
             contact_source: "deal",
-            description: `Contact created from deal form by ${loggedInUser?.username || 'user'} on ${new Date().toLocaleDateString()}`,
+            description: `Contact created from deal form by ${
+              loggedInUser?.username || "user"
+            } on ${new Date().toLocaleDateString()}`,
             address: values.address || "",
-            client_id: loggedInUser?.client_id
+            client_id: loggedInUser?.client_id,
           };
-
 
           const response = await createContact(contactData).unwrap();
 
           if (response?.data?.id) {
             contactId = response.data.id;
-            message.success('Contact created successfully');
+            message.success("Contact created successfully");
           } else {
-            throw new Error('Contact creation failed - no ID returned');
+            throw new Error("Contact creation failed - no ID returned");
           }
         } catch (error) {
-          message.error(error.data?.message || 'Failed to create contact');
+          message.error(error.data?.message || "Failed to create contact");
           return;
         }
       }
 
       // Get the selected currency object
-      const selectedCurrencyObj = currencies?.find(c => c.id === values.currency);
+      const selectedCurrencyObj = currencies?.find(
+        (c) => c.id === values.currency
+      );
 
       // Prepare deal update data
       const dealData = {
@@ -365,16 +381,22 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         pipeline: values.pipeline,
         stage: values.stage,
         status: values.status,
-        closedDate: values.closedDate ? dayjs(values.closedDate).format("YYYY-MM-DD") : null,
+        closedDate: values.closedDate
+          ? dayjs(values.closedDate).format("YYYY-MM-DD")
+          : null,
         company_id: values.company_id || null,
         contact_id: contactId || null,
         category: values.category,
         source: values.source,
         products: { products: values.products || [] },
         assigned_to: { assigned_to: values.assigned_to || [] },
-        is_won: values.status === "won" ? true : values.status === "lost" ? false : null,
+        is_won:
+          values.status === "won"
+            ? true
+            : values.status === "lost"
+            ? false
+            : null,
       };
-
 
       // Update the deal
       await updateDeal(dealData).unwrap();
@@ -395,7 +417,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const prefixIconStyle = {
     color: "#1890ff",
     fontSize: "16px",
-    marginRight: "8px"
+    marginRight: "8px",
   };
 
   // Add inputStyle definition
@@ -467,23 +489,23 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const handleContactModeChange = (mode) => {
     setContactMode(mode);
     // Clear form fields when switching modes
-    if (mode === 'new') {
+    if (mode === "new") {
       form.setFieldsValue({
         company_id: undefined,
         contact_id: undefined,
-        firstName: '',
-        lastName: '',
-        email: '',
-        telephone: '',
-        address: ''
+        firstName: "",
+        lastName: "",
+        email: "",
+        telephone: "",
+        address: "",
       });
     } else {
       form.setFieldsValue({
-        firstName: '',
-        lastName: '',
-        email: '',
-        telephone: '',
-        address: ''
+        firstName: "",
+        lastName: "",
+        email: "",
+        telephone: "",
+        address: "",
       });
     }
   };
@@ -503,17 +525,17 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       return;
     }
 
-    const selectedContact = contactsData?.data?.find(c => c.id === contactId);
+    const selectedContact = contactsData?.data?.find((c) => c.id === contactId);
     if (selectedContact) {
       // Update form with contact details
       form.setFieldsValue({
         contact_id: contactId,
-        firstName: selectedContact.first_name || '',
-        lastName: selectedContact.last_name || '',
-        email: selectedContact.email || '',
-        telephone: selectedContact.phone || '',
-        address: selectedContact.address || '',
-        company_id: selectedContact.company_name // Set company_id from contact's company_name
+        firstName: selectedContact.first_name || "",
+        lastName: selectedContact.last_name || "",
+        email: selectedContact.email || "",
+        telephone: selectedContact.phone || "",
+        address: selectedContact.address || "",
+        company_id: selectedContact.company_name, // Set company_id from contact's company_name
       });
     }
   };
@@ -522,9 +544,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const handleCompanyChange = (companyId) => {
     if (!companyId) {
       // If company is cleared and we're in existing contact mode
-      if (contactMode === 'existing') {
+      if (contactMode === "existing") {
         form.setFieldsValue({
-          company_id: undefined
+          company_id: undefined,
         });
       } else {
         // If in new contact mode, clear all contact fields
@@ -542,7 +564,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
     // Set the company ID
     form.setFieldsValue({
-      company_id: companyId
+      company_id: companyId,
     });
   };
 
@@ -561,15 +583,15 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   // Handler for successful company creation
   const handleCompanyCreationSuccess = (newCompany) => {
     setIsAddCompanyVisible(false);
-    form.setFieldValue('company_id', newCompany.id);
+    form.setFieldValue("company_id", newCompany.id);
   };
 
   // Handler for successful contact creation
   const handleContactCreationSuccess = (newContact) => {
     setIsAddContactVisible(false);
-    form.setFieldValue('contact_id', newContact.id);
+    form.setFieldValue("contact_id", newContact.id);
     if (newContact.company_name) {
-      form.setFieldValue('company_id', newContact.company_name);
+      form.setFieldValue("company_id", newContact.company_name);
     }
   };
 
@@ -579,9 +601,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       name="currency"
       noStyle
       initialValue={selectedCurrency}
-      rules={[
-        { required: true, message: "Currency is required" }
-      ]}
+      rules={[{ required: true, message: "Currency is required" }]}
     >
       <Select
         style={{ width: "120px" }}
@@ -591,9 +611,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         showSearch
         optionFilterProp="children"
         filterOption={(input, option) => {
-          const currencyData = currencies?.find(
-            (c) => c.id === option.value
-          );
+          const currencyData = currencies?.find((c) => c.id === option.value);
           return (
             currencyData?.currencyName
               ?.toLowerCase()
@@ -604,7 +622,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
           );
         }}
         onChange={(value) => {
-          const currency = currencies?.find(c => c.id === value);
+          const currency = currencies?.find((c) => c.id === value);
           if (currency) {
             form.setFieldValue("currency", currency.id);
           }
@@ -615,16 +633,10 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         {currencies?.map((currency) => (
           <Option key={currency.id} value={currency.id}>
             <div className="currency-option">
-              <span className="currency-icon">
-                {currency.currencyIcon}
-              </span>
+              <span className="currency-icon">{currency.currencyIcon}</span>
               <div className="currency-details">
-                <span className="currency-code">
-                  {currency.currencyCode}
-                </span>
-                <span className="currency-name">
-                  {currency.currencyName}
-                </span>
+                <span className="currency-code">{currency.currencyCode}</span>
+                <span className="currency-name">{currency.currencyName}</span>
               </div>
             </div>
           </Option>
@@ -652,8 +664,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       await deleteSource(sourceId).unwrap();
       message.success("Source deleted successfully");
       // Clear the source field if the deleted source was selected
-      if (form.getFieldValue('source') === sourceId) {
-        form.setFieldValue('source', undefined);
+      if (form.getFieldValue("source") === sourceId) {
+        form.setFieldValue("source", undefined);
       }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete source");
@@ -666,8 +678,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       await deleteCategory(categoryId).unwrap();
       message.success("Category deleted successfully");
       // Clear the category field if the deleted category was selected
-      if (form.getFieldValue('category') === categoryId) {
-        form.setFieldValue('category', undefined);
+      if (form.getFieldValue("category") === categoryId) {
+        form.setFieldValue("category", undefined);
       }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete category");
@@ -678,17 +690,20 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   const handleStageCreationSuccess = async (newStage) => {
     setIsAddStageVisible(false);
     await refetchDealStages(); // Refetch stages after adding new one
-    form.setFieldValue('stage', newStage.id);
+    form.setFieldValue("stage", newStage.id);
   };
 
   // Add handler for stage deletion
   const handleDeleteStage = async (e, stageId) => {
     e.stopPropagation();
-    const stage = dealStages.find(s => s.id === stageId);
+    const stage = dealStages.find((s) => s.id === stageId);
 
     if (stage.isDefault) {
-      const otherStagesInPipeline = dealStages.filter(s =>
-        s.pipeline === stage.pipeline && s.id !== stageId && s.stageType === 'deal'
+      const otherStagesInPipeline = dealStages.filter(
+        (s) =>
+          s.pipeline === stage.pipeline &&
+          s.id !== stageId &&
+          s.stageType === "deal"
       );
 
       if (otherStagesInPipeline.length > 0) {
@@ -704,20 +719,20 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
   const showDeleteConfirmation = (stage) => {
     Modal.confirm({
-      title: 'Delete Deal Stage',
-      content: 'Are you sure you want to delete this deal stage?',
-      okText: 'Yes',
-      okType: 'danger',
-      cancelText: 'No',
+      title: "Delete Deal Stage",
+      content: "Are you sure you want to delete this deal stage?",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
       onOk: async () => {
         try {
           await deleteStage(stage.id).unwrap();
-          message.success('Deal stage deleted successfully');
-          if (form.getFieldValue('stage') === stage.id) {
-            form.setFieldValue('stage', undefined);
+          message.success("Deal stage deleted successfully");
+          if (form.getFieldValue("stage") === stage.id) {
+            form.setFieldValue("stage", undefined);
           }
         } catch (error) {
-          message.error('Failed to delete deal stage');
+          message.error("Failed to delete deal stage");
         }
       },
     });
@@ -725,28 +740,32 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
   const handleSetNewDefaultAndDelete = async (newDefaultStageId) => {
     try {
-      const newDefaultStage = dealStages.find(s => s.id === newDefaultStageId);
+      const newDefaultStage = dealStages.find(
+        (s) => s.id === newDefaultStageId
+      );
       if (newDefaultStage) {
         await updateStage({
           stageName: newDefaultStage.stageName,
           pipeline: newDefaultStage.pipeline,
           stageType: "deal",
           isDefault: true,
-          id: newDefaultStage.id
+          id: newDefaultStage.id,
         }).unwrap();
 
         await deleteStage(stageToDelete.id).unwrap();
-        message.success('Deal stage deleted and new default stage set successfully');
+        message.success(
+          "Deal stage deleted and new default stage set successfully"
+        );
         setIsSelectDefaultModalOpen(false);
         setStageToDelete(null);
         await refetchDealStages();
 
-        if (form.getFieldValue('stage') === stageToDelete.id) {
-          form.setFieldValue('stage', undefined);
+        if (form.getFieldValue("stage") === stageToDelete.id) {
+          form.setFieldValue("stage", undefined);
         }
       }
     } catch (error) {
-      message.error('Failed to update stages');
+      message.error("Failed to update stages");
     }
   };
 
@@ -855,7 +874,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
           style={{ padding: "24px" }}
         >
           {/* Deal Details Section */}
-          <div className="section-title" >
+          <div className="section-title">
             <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
               Deal Details
             </Text>
@@ -874,7 +893,10 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
               rules={[
                 { required: true, message: "Deal title is required" },
                 { min: 3, message: "Deal title must be at least 3 characters" },
-                { max: 100, message: "Deal title cannot exceed 100 characters" }
+                {
+                  max: 100,
+                  message: "Deal title cannot exceed 100 characters",
+                },
               ]}
             >
               <Input
@@ -894,9 +916,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   name="currency"
                   noStyle
                   initialValue={defaultCurrency}
-                  rules={[
-                    { required: true, message: "Currency is required" },
-                  ]}
+                  rules={[{ required: true, message: "Currency is required" }]}
                 >
                   <Select
                     style={{ width: "120px" }}
@@ -946,10 +966,10 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   rules={[
                     { required: true, message: "Deal value is required" },
                     {
-                      type: 'number',
+                      type: "number",
                       min: 0,
-                      message: "Deal value must be greater than or equal to 0"
-                    }
+                      message: "Deal value must be greater than or equal to 0",
+                    },
                   ]}
                 >
                   <Input
@@ -964,7 +984,11 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
 
             <Form.Item
               name="pipeline"
-              label={<span style={formItemStyle}>Pipeline <span style={{ color: '#ff4d4f' }}>*</span></span>}
+              label={
+                <span style={formItemStyle}>
+                  Pipeline <span style={{ color: "#ff4d4f" }}>*</span>
+                </span>
+              }
               rules={[{ required: true, message: "Pipeline is required" }]}
               initialValue={initialValues?.pipeline}
             >
@@ -979,12 +1003,12 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 dropdownRender={(menu) => (
                   <div onClick={(e) => e.stopPropagation()}>
                     {menu}
-                    <Divider style={{ margin: '8px 0' }} />
+                    <Divider style={{ margin: "8px 0" }} />
                     <div
                       style={{
-                        padding: '8px 12px',
-                        display: 'flex',
-                        justifyContent: 'center'
+                        padding: "8px 12px",
+                        display: "flex",
+                        justifyContent: "center",
                       }}
                     >
                       <Button
@@ -992,17 +1016,18 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                         icon={<PlusOutlined />}
                         onClick={handleAddPipelineClick}
                         style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
+                          width: "100%",
+                          background:
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                          border: "none",
+                          height: "40px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                          fontWeight: "500",
                         }}
                       >
                         Add Pipeline
@@ -1031,8 +1056,14 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 dropdownRender={(menu) => (
                   <div onClick={(e) => e.stopPropagation()}>
                     {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -1042,17 +1073,18 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                           setIsAddStageVisible(true);
                         }}
                         style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
+                          width: "100%",
+                          background:
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                          border: "none",
+                          height: "40px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                          fontWeight: "500",
                         }}
                       >
                         Add Stage
@@ -1062,25 +1094,39 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 )}
               >
                 {dealStages
-                  ?.filter(stage => stage.pipeline === initialValues?.pipeline && stage.stageType === 'deal')
+                  ?.filter(
+                    (stage) =>
+                      stage.pipeline === initialValues?.pipeline &&
+                      stage.stageType === "deal"
+                  )
                   .map((stage) => (
                     <Option key={stage.id} value={stage.id}>
-                      <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%"
-                      }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <div style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: stage.color || "#1890ff"
-                          }} />
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              backgroundColor: stage.color || "#1890ff",
+                            }}
+                          />
                           {stage.stageName}
                         </div>
-                        {form.getFieldValue('stage') !== stage.id && (
+                        {form.getFieldValue("stage") !== stage.id && (
                           <Popconfirm
                             title="Delete Stage"
                             description="Are you sure you want to delete this stage?"
@@ -1105,8 +1151,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                                 transition: "opacity 0.2s",
                                 "&:hover": {
                                   opacity: 1,
-                                  backgroundColor: "transparent"
-                                }
+                                  backgroundColor: "transparent",
+                                },
                               }}
                             />
                           </Popconfirm>
@@ -1132,24 +1178,31 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 dropdownRender={(menu) => (
                   <div onClick={(e) => e.stopPropagation()}>
                     {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={handleAddSourceClick}
                         style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
+                          width: "100%",
+                          background:
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                          border: "none",
+                          height: "40px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                          fontWeight: "500",
                         }}
                       >
                         Add Source
@@ -1160,22 +1213,32 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
               >
                 {sources.map((source) => (
                   <Option key={source.id} value={source.id}>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          backgroundColor: source.color || "#1890ff"
-                        }} />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: source.color || "#1890ff",
+                          }}
+                        />
                         {source.name}
                       </div>
-                      {form.getFieldValue('source') !== source.id && (
+                      {form.getFieldValue("source") !== source.id && (
                         <Popconfirm
                           title="Delete Source"
                           description="Are you sure you want to delete this source?"
@@ -1200,8 +1263,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                               transition: "opacity 0.2s",
                               "&:hover": {
                                 opacity: 1,
-                                backgroundColor: "transparent"
-                              }
+                                backgroundColor: "transparent",
+                              },
                             }}
                           />
                         </Popconfirm>
@@ -1227,29 +1290,38 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 showSearch
                 allowClear
                 filterOption={(input, option) =>
-                  option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
+                  option.children.props.children[0].props.children[1]
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
                 }
                 dropdownRender={(menu) => (
                   <div onClick={(e) => e.stopPropagation()}>
                     {menu}
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'center' }}>
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={handleAddCategoryClick}
                         style={{
-                          width: '100%',
-                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                          border: 'none',
-                          height: '40px',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
-                          fontWeight: '500',
+                          width: "100%",
+                          background:
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                          border: "none",
+                          height: "40px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                          fontWeight: "500",
                         }}
                       >
                         Add Category
@@ -1260,22 +1332,32 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
               >
                 {categories?.map((category) => (
                   <Option key={category.id} value={category.id}>
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <div style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          backgroundColor: category.color || "#1890ff"
-                        }} />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: category.color || "#1890ff",
+                          }}
+                        />
                         {category.name}
                       </div>
-                      {form.getFieldValue('category') !== category.id && (
+                      {form.getFieldValue("category") !== category.id && (
                         <Popconfirm
                           title="Delete Category"
                           description="Are you sure you want to delete this category?"
@@ -1300,8 +1382,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                               transition: "opacity 0.2s",
                               "&:hover": {
                                 opacity: 1,
-                                backgroundColor: "transparent"
-                              }
+                                backgroundColor: "transparent",
+                              },
                             }}
                           />
                         </Popconfirm>
@@ -1315,7 +1397,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             <Form.Item
               name="closedDate"
               label={<span style={formItemStyle}>Expected Close Date</span>}
-              rules={[{ required: true, message: "Expected close date is required" }]}
+              rules={[
+                { required: true, message: "Expected close date is required" },
+              ]}
             >
               <DatePicker
                 size="large"
@@ -1477,80 +1561,94 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </div>
           {/* Basic Information Section */}
-          <div className="section-title" style={{ marginBottom: '16px' }}>
-            <Text strong style={{ fontSize: '16px', color: '#1f2937' }}>Basic Information</Text>
+          <div className="section-title" style={{ marginBottom: "16px" }}>
+            <Text strong style={{ fontSize: "16px", color: "#1f2937" }}>
+              Basic Information
+            </Text>
           </div>
 
           {/* Contact mode toggle */}
-          <div className="contact-mode-toggle" style={{
-            display: 'flex',
-            borderBottom: '1px solid #e5e7eb',
-            marginBottom: '24px'
-          }}>
+          <div
+            className="contact-mode-toggle"
+            style={{
+              display: "flex",
+              borderBottom: "1px solid #e5e7eb",
+              marginBottom: "24px",
+            }}
+          >
             <div
-              className={`mode-option ${contactMode === 'existing' ? 'active' : ''}`}
-              onClick={() => handleContactModeChange('existing')}
+              className={`mode-option ${
+                contactMode === "existing" ? "active" : ""
+              }`}
+              onClick={() => handleContactModeChange("existing")}
               style={{
-                padding: '12px 24px',
-                cursor: 'pointer',
-                position: 'relative',
-                color: contactMode === 'existing' ? '#1890ff' : '#6b7280',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                padding: "12px 24px",
+                cursor: "pointer",
+                position: "relative",
+                color: contactMode === "existing" ? "#1890ff" : "#6b7280",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
-              <FiUsers style={{ fontSize: '16px' }} />
+              <FiUsers style={{ fontSize: "16px" }} />
               Select Existing
-              {contactMode === 'existing' && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-1px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: '#1890ff'
-                }} />
+              {contactMode === "existing" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-1px",
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    background: "#1890ff",
+                  }}
+                />
               )}
             </div>
             <div
-              className={`mode-option ${contactMode === 'new' ? 'active' : ''}`}
-              onClick={() => handleContactModeChange('new')}
+              className={`mode-option ${contactMode === "new" ? "active" : ""}`}
+              onClick={() => handleContactModeChange("new")}
               style={{
-                padding: '12px 24px',
-                cursor: 'pointer',
-                position: 'relative',
-                color: contactMode === 'new' ? '#1890ff' : '#6b7280',
-                fontWeight: '500',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
+                padding: "12px 24px",
+                cursor: "pointer",
+                position: "relative",
+                color: contactMode === "new" ? "#1890ff" : "#6b7280",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
               }}
             >
-              <FiUserPlus style={{ fontSize: '16px' }} />
+              <FiUserPlus style={{ fontSize: "16px" }} />
               Add New
-              {contactMode === 'new' && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-1px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  background: '#1890ff'
-                }} />
+              {contactMode === "new" && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-1px",
+                    left: 0,
+                    right: 0,
+                    height: "2px",
+                    background: "#1890ff",
+                  }}
+                />
               )}
             </div>
           </div>
 
           {/* Form fields based on mode */}
-          <div className="form-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-            marginBottom: '32px'
-          }}>
-            {contactMode === 'existing' ? (
+          <div
+            className="form-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "16px",
+              marginBottom: "32px",
+            }}
+          >
+            {contactMode === "existing" ? (
               <>
                 <Form.Item
                   name="company_id"
@@ -1562,33 +1660,47 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     style={{
                       ...selectStyle,
                       dropdownStyle: {
-                        maxHeight: '400px',
-                        overflow: 'hidden'
-                      }
+                        maxHeight: "400px",
+                        overflow: "hidden",
+                      },
                     }}
                     allowClear
                     suffixIcon={null}
-                    value={form.getFieldValue('company_id')}
+                    value={form.getFieldValue("company_id")}
                   >
                     {companyAccountsData?.data?.map((company) => (
                       <Option key={company.id} value={company.id}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '4px 0'
-                        }}>
-                          <FiBriefcase style={{ color: '#1890FF', fontSize: '16px' }} />
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{
-                              fontWeight: '500',
-                              color: '#111827'
-                            }}>{company.company_name}</span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "4px 0",
+                          }}
+                        >
+                          <FiBriefcase
+                            style={{ color: "#1890FF", fontSize: "16px" }}
+                          />
+                          <div
+                            style={{ display: "flex", flexDirection: "column" }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: "500",
+                                color: "#111827",
+                              }}
+                            >
+                              {company.company_name}
+                            </span>
                             {company.company_site && (
-                              <span style={{
-                                fontSize: '12px',
-                                color: '#6B7280'
-                              }}>{company.company_site}</span>
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#6B7280",
+                                }}
+                              >
+                                {company.company_site}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1606,67 +1718,85 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     style={{
                       ...selectStyle,
                       dropdownStyle: {
-                        maxHeight: '400px',
-                        overflow: 'hidden'
-                      }
+                        maxHeight: "400px",
+                        overflow: "hidden",
+                      },
                     }}
                     suffixIcon={null}
                     showSearch
                     allowClear
                     onChange={handleContactChange}
-                    value={form.getFieldValue('contact_id')}
+                    value={form.getFieldValue("contact_id")}
                     filterOption={(input, option) => {
                       const contact = contactsData?.data?.find(
                         (c) => c.id === option.value
                       );
                       if (!contact) return false;
-                      const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.toLowerCase();
-                      const companyName = companyAccountsData?.data?.find(
-                        (c) => c.id === contact.company_name
-                      )?.company_name?.toLowerCase() || '';
-                      return fullName.includes(input.toLowerCase()) ||
-                        companyName.includes(input.toLowerCase());
+                      const fullName = `${contact.first_name || ""} ${
+                        contact.last_name || ""
+                      }`.toLowerCase();
+                      const companyName =
+                        companyAccountsData?.data
+                          ?.find((c) => c.id === contact.company_name)
+                          ?.company_name?.toLowerCase() || "";
+                      return (
+                        fullName.includes(input.toLowerCase()) ||
+                        companyName.includes(input.toLowerCase())
+                      );
                     }}
                   >
                     {contactsData?.data?.map((contact) => {
-                      const companyName = companyAccountsData?.data?.find(
-                        (c) => c.id === contact.company_name
-                      )?.company_name || "No Company";
+                      const companyName =
+                        companyAccountsData?.data?.find(
+                          (c) => c.id === contact.company_name
+                        )?.company_name || "No Company";
 
                       return (
                         <Option key={contact.id} value={contact.id}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '4px 0'
-                          }}>
-                            <FiUser style={{ color: '#1890FF', fontSize: '16px' }} />
-                            <div style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              flex: 1,
-                              minWidth: 0
-                            }}>
-                              <span style={{
-                                fontWeight: '500',
-                                color: '#111827',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>{`${contact.first_name || ''} ${contact.last_name || ''}`}</span>
-                              <span style={{
-                                color: '#6B7280',
-                                fontSize: '12px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}>
-                                <FiBriefcase style={{ fontSize: '12px' }} />
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "4px 0",
+                            }}
+                          >
+                            <FiUser
+                              style={{ color: "#1890FF", fontSize: "16px" }}
+                            />
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                flex: 1,
+                                minWidth: 0,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontWeight: "500",
+                                  color: "#111827",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >{`${contact.first_name || ""} ${
+                                contact.last_name || ""
+                              }`}</span>
+                              <span
+                                style={{
+                                  color: "#6B7280",
+                                  fontSize: "12px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                <FiBriefcase style={{ fontSize: "12px" }} />
                                 {companyName}
                               </span>
                             </div>
@@ -1708,9 +1838,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     {
                       type: "email",
                       message: "Please enter a valid email",
-                      validateTrigger: ['onChange', 'onBlur'],
-                      transform: (value) => value?.trim() || null
-                    }
+                      validateTrigger: ["onChange", "onBlur"],
+                      transform: (value) => value?.trim() || null,
+                    },
                   ]}
                 >
                   <Input
@@ -1726,9 +1856,13 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   className="combined-input-item"
                 >
                   <Input.Group compact className="phone-input-group">
-                    <Form.Item name="phoneCode" noStyle initialValue={defaultPhoneCode}>
+                    <Form.Item
+                      name="phoneCode"
+                      noStyle
+                      initialValue={defaultPhoneCode}
+                    >
                       <Select
-                        style={{ width: '120px' }}
+                        style={{ width: "120px" }}
                         className="phone-code-select"
                         dropdownMatchSelectWidth={120}
                         suffixIcon={<FiChevronDown size={14} />}
@@ -1736,25 +1870,37 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                         showSearch
                         optionFilterProp="children"
                         filterOption={(input, option) =>
-                          option?.children?.props?.children[0]?.props?.children?.toLowerCase().includes(input.toLowerCase())
+                          option?.children?.props?.children[0]?.props?.children
+                            ?.toLowerCase()
+                            .includes(input.toLowerCase())
                         }
                       >
                         {countries?.map((country) => (
                           <Option key={country.id} value={country.id}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '14px' }}>{country.countryCode}</span>
-                              <span style={{ fontSize: '14px' }}>+{country.phoneCode.replace('+', '')}</span>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              <span style={{ fontSize: "14px" }}>
+                                {country.countryCode}
+                              </span>
+                              <span style={{ fontSize: "14px" }}>
+                                +{country.phoneCode.replace("+", "")}
+                              </span>
                             </div>
                           </Option>
                         ))}
                       </Select>
                     </Form.Item>
-                    <Form.Item
-                      name="telephone"
-                      noStyle
-                    >
+                    <Form.Item name="telephone" noStyle>
                       <InputNumber
-                        style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
+                        style={{
+                          width: "calc(100% - 100px)",
+                          padding: "0 16px",
+                        }}
                         placeholder="Enter phone number"
                       />
                     </Form.Item>
@@ -1871,7 +2017,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         }}
         onSuccess={async (newStage) => {
           await refetchDealStages();
-          form.setFieldValue('stage', newStage.id);
+          form.setFieldValue("stage", newStage.id);
           setIsAddStageVisible(false);
         }}
         pipelineId={initialValues?.pipeline}
@@ -1893,9 +2039,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         styles={{
           body: {
             padding: 0,
-            borderRadius: '8px',
-            overflow: 'hidden',
-          }
+            borderRadius: "8px",
+            overflow: "hidden",
+          },
         }}
       >
         <div
@@ -1969,59 +2115,73 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
           </div>
         </div>
 
-        <div style={{ padding: '24px' }}>
-          <div style={{ marginBottom: '20px' }}>
+        <div style={{ padding: "24px" }}>
+          <div style={{ marginBottom: "20px" }}>
             <Text type="secondary">
-              Since you're deleting a default stage, please select a new default stage for this pipeline:
+              Since you're deleting a default stage, please select a new default
+              stage for this pipeline:
             </Text>
           </div>
-          <div className="stage-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div
+            className="stage-grid"
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
             {dealStages
-              .filter(s =>
-                s.pipeline === stageToDelete?.pipeline &&
-                s.id !== stageToDelete?.id &&
-                s.stageType === 'deal'
+              .filter(
+                (s) =>
+                  s.pipeline === stageToDelete?.pipeline &&
+                  s.id !== stageToDelete?.id &&
+                  s.stageType === "deal"
               )
-              .map(stage => (
+              .map((stage) => (
                 <Button
                   key={stage.id}
                   onClick={() => handleSetNewDefaultAndDelete(stage.id)}
                   className="stage-card"
                   style={{
-                    width: '100%',
-                    height: 'auto',
+                    width: "100%",
+                    height: "auto",
                     margin: 0,
-                    padding: '16px',
-                    textAlign: 'left',
-                    display: 'flex',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                    gap: '16px',
-                    border: '1px solid rgba(24, 144, 255, 0.1)',
-                    borderRadius: '12px',
-                    background: 'white',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(24, 144, 255, 0.02)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    padding: "16px",
+                    textAlign: "left",
+                    display: "flex",
+                    justifyContent: "flex-start",
+                    alignItems: "center",
+                    gap: "16px",
+                    border: "1px solid rgba(24, 144, 255, 0.1)",
+                    borderRadius: "12px",
+                    background: "white",
+                    boxShadow:
+                      "0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(24, 144, 255, 0.02)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
                 >
                   <div
                     className="stage-icon"
                     style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '10px',
-                      background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "10px",
+                      background:
+                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "white",
+                      boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
                     }}
                   >
-                    <FiLayers style={{ fontSize: '20px' }} />
+                    <FiLayers style={{ fontSize: "20px" }} />
                   </div>
                   <div className="stage-info">
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1a1f36' }}>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        color: "#1a1f36",
+                      }}
+                    >
                       {stage.stageName}
                     </h3>
                   </div>

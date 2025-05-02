@@ -179,7 +179,7 @@ const CompanyLeadsList = () => {
           </Breadcrumb.Item>
           <Breadcrumb.Item>Lead</Breadcrumb.Item>
         </Breadcrumb>
-      </div>
+        </div>
 
       <div className="page-header">
         <div className="header-left">
@@ -189,7 +189,7 @@ const CompanyLeadsList = () => {
         <Row justify="center" className="header-actions-wrapper">
           <Col xs={24} sm={24} md={20} lg={16} xl={14}>
             <div className="header-actions">
-              <Input
+          <Input
                 prefix={
                   <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
                 }
@@ -201,7 +201,7 @@ const CompanyLeadsList = () => {
               />
               <div className="action-buttons">
                 <Button.Group className="view-toggle">
-                  <Button
+            <Button
                     type={viewMode === "table" ? "primary" : "default"}
                     icon={<FiList size={16} />}
                     onClick={() => setViewMode("table")}
@@ -217,18 +217,18 @@ const CompanyLeadsList = () => {
                     <FiDownload size={16} />
                     <span>Export</span>
                     <FiChevronDown size={14} />
-                  </Button>
+            </Button>
                 </Dropdown>
-                <Button
+            <Button
                   type="primary"
                   icon={<FiPlus size={16} />}
                   onClick={handleCreate}
                   className="add-button"
                 >
                   Add Lead
-                </Button>
+            </Button>
+        </div>
               </div>
-            </div>
           </Col>
         </Row>
       </div> */}

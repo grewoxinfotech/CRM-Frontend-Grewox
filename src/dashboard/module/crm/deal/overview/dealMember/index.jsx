@@ -30,7 +30,7 @@ import {
 import {
   useUpdateDealMutation,
   useGetDealsQuery,
-} from "../../services/DealApi";
+} from "../../services/dealApi";
 import { useGetUsersQuery } from "../../../../user-management/users/services/userApi";
 import { useGetRolesQuery } from "../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
@@ -46,15 +46,14 @@ const DealMember = ({ deal }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [form] = Form.useForm();
   const [updateDeal] = useUpdateDealMutation();
-  const { data: usersResponse = { data: [] }, isLoading: usersLoading } = useGetUsersQuery();
+  const { data: usersResponse = { data: [] }, isLoading: usersLoading } =
+    useGetUsersQuery();
   const { refetch } = useGetDealsQuery();
   const { data: rolesData } = useGetRolesQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
 
-
-  
   // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(
     (role) => role?.role_name === "sub-client"
@@ -68,9 +67,9 @@ const DealMember = ({ deal }) => {
         user?.role_id !== subclientRoleId
     ) || [];
 
-  // Parse assigned_to from deal
-  const assignedMembers = deal?.assigned_to
-    ? JSON.parse(deal.assigned_to)?.assigned_to || []
+  // Parse deal_members from deal
+  const assignedMembers = deal?.deal_members
+    ? JSON.parse(deal.deal_members)?.deal_members || []
     : [];
 
   const getRoleColor = (role) => {
@@ -196,8 +195,8 @@ const DealMember = ({ deal }) => {
 
       await updateDeal({
         id: deal.id,
-        assigned_to: {
-          assigned_to: newAssignedTo,
+        deal_members: {
+          deal_members: newAssignedTo,
         },
       }).unwrap();
 
@@ -216,8 +215,8 @@ const DealMember = ({ deal }) => {
 
       await updateDeal({
         id: deal.id,
-        assigned_to: {
-          assigned_to: newAssignedTo,
+        deal_members: {
+          deal_members: newAssignedTo,
         },
       }).unwrap();
 
@@ -417,185 +416,213 @@ const DealMember = ({ deal }) => {
                 },
               ]}
             >
-               <Select
-              mode="multiple"
-              placeholder="Select team members"
-              style={{
-                width: '100%',
-                height: 'auto',
-                minHeight: '48px'
-              }}
-              listHeight={200}
-              maxTagCount={1}
-              maxTagTextLength={15}
-              dropdownStyle={{
-                maxHeight: '300px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
-              popupClassName="team-members-dropdown"
-              showSearch
-              optionFilterProp="children"
-              loading={usersLoading}
-              open={teamMembersOpen}
-              onDropdownVisibleChange={setTeamMembersOpen}
-              dropdownRender={(menu) => (
-                <>
-                  {menu}
-                  <Divider style={{ margin: '8px 0' }} />
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    padding: '0 8px',
-                    justifyContent: 'flex-end'
-                  }}>
-                    <Button
-                      type="text"
-                      icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
-                      onClick={handleCreateUser}
+              <Select
+                mode="multiple"
+                placeholder="Select team members"
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  minHeight: "48px",
+                }}
+                listHeight={200}
+                maxTagCount={1}
+                maxTagTextLength={15}
+                dropdownStyle={{
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                  scrollbarWidth: "thin",
+                  scrollBehavior: "smooth",
+                }}
+                popupClassName="team-members-dropdown"
+                showSearch
+                optionFilterProp="children"
+                loading={usersLoading}
+                open={teamMembersOpen}
+                onDropdownVisibleChange={setTeamMembersOpen}
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div
                       style={{
-                        height: '36px',
-                        padding: '8px 12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '6px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                        display: "flex",
+                        gap: "8px",
+                        padding: "0 8px",
+                        justifyContent: "flex-end",
                       }}
                     >
-                      Add New User
-                    </Button>
-                    <Button
-                      type="text"
-                      icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTeamMembersOpen(false);
-                      }}
-                      style={{
-                        height: '36px',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        background: '#ffffff',
-                        border: '1px solid #1890ff',
-                        color: '#1890ff',
-                        fontWeight: '500'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#e6f4ff';
-                        e.currentTarget.style.borderColor = '#69b1ff';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#ffffff';
-                        e.currentTarget.style.borderColor = '#1890ff';
-                      }}
-                    >
-                      Done
-                    </Button>
-                  </div>
-                </>
-              )}
-            >
-              {Array.isArray(users) && users.map(user => {
-                const userRole = rolesData?.data?.find(role => role.id === user.role_id);
-                const roleStyle = getRoleColor(userRole?.role_name);
-
-                return (
-                  <Option key={user.id} value={user.id}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '4px 0'
-                    }}>
-                      <div style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '50%',
-                        background: '#e6f4ff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#1890ff',
-                        fontSize: '16px',
-                        fontWeight: '500',
-                        textTransform: 'uppercase'
-                      }}>
-                        {user.profilePic ? (
-                          <img
-                            src={user.profilePic}
-                            alt={user.username}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              borderRadius: '50%',
-                              objectFit: 'cover'
-                            }}
+                      <Button
+                        type="text"
+                        icon={
+                          <FiUserPlus
+                            style={{ fontSize: "16px", color: "#ffffff" }}
                           />
-                        ) : (
-                          user.username?.charAt(0) || <FiUser />
-                        )}
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        gap: '4px'
-                      }}>
-                        <span style={{
-                          fontWeight: 500,
-                          color: 'rgba(0, 0, 0, 0.85)',
-                          fontSize: '14px'
-                        }}>
-                          {user.username}
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginLeft: 'auto'
-                      }}>
-                        <div
-                          className="role-indicator"
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: roleStyle.color,
-                            boxShadow: `0 0 8px ${roleStyle.color}`,
-                            animation: 'pulse 2s infinite'
-                          }}
-                        />
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          background: roleStyle.bg,
-                          color: roleStyle.color,
-                          border: `1px solid ${roleStyle.border}`,
-                          fontWeight: 500,
-                          textTransform: 'capitalize'
-                        }}>
-                          {userRole?.role_name || 'User'}
-                        </span>
-                      </div>
+                        }
+                        onClick={handleCreateUser}
+                        style={{
+                          height: "36px",
+                          padding: "8px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background:
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background =
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
+                        }}
+                      >
+                        Add New User
+                      </Button>
+                      <Button
+                        type="text"
+                        icon={
+                          <FiShield
+                            style={{ fontSize: "16px", color: "#1890ff" }}
+                          />
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTeamMembersOpen(false);
+                        }}
+                        style={{
+                          height: "36px",
+                          borderRadius: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          background: "#ffffff",
+                          border: "1px solid #1890ff",
+                          color: "#1890ff",
+                          fontWeight: "500",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#e6f4ff";
+                          e.currentTarget.style.borderColor = "#69b1ff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#ffffff";
+                          e.currentTarget.style.borderColor = "#1890ff";
+                        }}
+                      >
+                        Done
+                      </Button>
                     </div>
-                  </Option>
-                );
-              })}
-            </Select>
+                  </>
+                )}
+              >
+                {Array.isArray(users) &&
+                  users.map((user) => {
+                    const userRole = rolesData?.data?.find(
+                      (role) => role.id === user.role_id
+                    );
+                    const roleStyle = getRoleColor(userRole?.role_name);
+
+                    return (
+                      <Option key={user.id} value={user.id}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "4px 0",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              borderRadius: "50%",
+                              background: "#e6f4ff",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#1890ff",
+                              fontSize: "16px",
+                              fontWeight: "500",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {user.profilePic ? (
+                              <img
+                                src={user.profilePic}
+                                alt={user.username}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            ) : (
+                              user.username?.charAt(0) || <FiUser />
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              gap: "4px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: 500,
+                                color: "rgba(0, 0, 0, 0.85)",
+                                fontSize: "14px",
+                              }}
+                            >
+                              {user.username}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              marginLeft: "auto",
+                            }}
+                          >
+                            <div
+                              className="role-indicator"
+                              style={{
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                background: roleStyle.color,
+                                boxShadow: `0 0 8px ${roleStyle.color}`,
+                                animation: "pulse 2s infinite",
+                              }}
+                            />
+                            <span
+                              style={{
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                fontSize: "12px",
+                                background: roleStyle.bg,
+                                color: roleStyle.color,
+                                border: `1px solid ${roleStyle.border}`,
+                                fontWeight: 500,
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {userRole?.role_name || "User"}
+                            </span>
+                          </div>
+                        </div>
+                      </Option>
+                    );
+                  })}
+              </Select>
             </Form.Item>
           </div>
 

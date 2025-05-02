@@ -1264,11 +1264,30 @@ const CreateInvoice = ({
                           <Form.Item
                             {...restField}
                             name={[name, "quantity"]}
-                            rules={[{ required: true, message: "Required" }]}
+                            rules={[
+                              { required: true, message: "Required" },
+                              {
+                                validator: (_, value) => {
+                                  if (!value) return Promise.resolve();
+                                  if (!Number.isInteger(value)) {
+                                    return Promise.reject(
+                                      "Please enter a valid quantity"
+                                    );
+                                  }
+                                  if (value < 1) {
+                                    return Promise.reject(
+                                      "Quantity must be at least 1"
+                                    );
+                                  }
+                                  return Promise.resolve();
+                                },
+                              },
+                            ]}
                             initialValue={1}
                           >
                             <InputNumber
                               min={1}
+                              precision={0}
                               className="quantity-input"
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))

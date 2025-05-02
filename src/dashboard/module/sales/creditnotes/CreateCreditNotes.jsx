@@ -121,12 +121,15 @@ const CreateCreditNotes = ({ open, onCancel }) => {
         invoice: values.invoice || "",
         customer: values.customer || "",
         currency: values.currency || "",
-        amount: values.amount || "",
+        amount: parseFloat(values.amount) || 0,
         description: values.description || "",
         date: values.date ? values.date.format("YYYY-MM-DD") : "",
       };
 
-      await createCreditNote(creditNoteData).unwrap();
+      const response = await createCreditNote(creditNoteData).unwrap();
+      if (response.success === false) {
+        throw new Error(response.message);
+      }
       message.success("Credit note created successfully");
       // Refetch invoices data to update the list
       await refetchInvoices();

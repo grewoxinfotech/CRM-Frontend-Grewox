@@ -123,10 +123,7 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
         label: (
           <Text style={{ color: "#52c41a", fontWeight: "500" }}>Edit Deal</Text>
         ),
-        onClick: (e) => {
-          e.stopPropagation();
-          onEdit(record);
-        },
+        onClick: (e) => onEdit(record),
       },
       {
         key: "delete",
