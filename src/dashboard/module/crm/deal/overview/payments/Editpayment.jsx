@@ -22,45 +22,62 @@ import {
 } from "react-icons/fi";
 import { useUpdateDealPaymentMutation } from "./services/dealpaymentApi";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
-import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
+// import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
 import dayjs from "dayjs";
+import { useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
 
 const { Text } = Typography;
 const { Option } = Select;
 
-const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
+const EditPayment = ({
+  open,
+  onCancel,
+  dealId,
+  onSubmit,
+  setEditModalVisible,
+  initialValues,
+}) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [updatePayment] = useUpdateDealPaymentMutation();
   const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
-    limit: 100
+    limit: 100,
   });
-  const { data: invoicesResponse = { data: [] } } = useGetDealInvoicesQuery(dealId);
-  const invoicessData = invoicesResponse.data
-  const invoicesData = invoicessData.filter(invoice => invoice.related_id === dealId);
+  // const { data: invoicesResponse = { data: [] } } = useGetDealInvoicesQuery(dealId);
+  // const invoicessData = invoicesResponse.data
+  // const invoicesData = invoicessData.filter(invoice => invoice.related_id === dealId);
+
+  const { data: invoicesDataa, isLoading, error } = useGetInvoicesQuery();
+  const invoicesData = (invoicesDataa?.data || []).filter(
+    (invoice) => invoice.related_id === dealId
+  );
 
   const handleInvoiceChange = (value) => {
-    const selectedInvoice = invoicesData.find(invoice => invoice.id === value);
+    const selectedInvoice = invoicesData.find(
+      (invoice) => invoice.id === value
+    );
     if (selectedInvoice) {
       form.setFieldsValue({
         amount: selectedInvoice.total,
-        currency: selectedInvoice.currency
+        currency: selectedInvoice.currency,
       });
     }
   };
 
   useEffect(() => {
     if (initialValues && invoicesData.length > 0) {
-      const selectedInvoice = invoicesData.find(inv => inv.id === initialValues.invoice);
-      
+      const selectedInvoice = invoicesData.find(
+        (inv) => inv.id === initialValues.invoice
+      );
+
       form.setFieldsValue({
         invoice: initialValues.invoice,
         paidOn: initialValues.paidOn ? dayjs(initialValues.paidOn) : null,
         amount: initialValues.amount,
         currency: selectedInvoice?.currency || initialValues.currency,
         paymentMethod: initialValues.paymentMethod,
-        status: initialValues.status || 'pending',
+        status: initialValues.status || "pending",
         remark: initialValues.remark,
       });
     }
@@ -69,25 +86,28 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
-      const selectedInvoice = invoicesData.find(inv => inv.id === values.invoice);
-      
+      const selectedInvoice = invoicesData.find(
+        (inv) => inv.id === values.invoice
+      );
+
       const formattedValues = {
         ...values,
         paidOn: values.paidOn?.format("YYYY-MM-DD"),
         amount: values.amount?.toString(),
         invoice: values.invoice?.toString(),
         currency: selectedInvoice?.currency || values.currency?.toString(),
-        status: values.status || 'pending',
+        status: values.status || "pending",
       };
 
       await updatePayment({
-        id: initialValues.id, 
-        data: formattedValues
+        id: initialValues.id,
+        data: formattedValues,
       }).unwrap();
-      
+
       message.success("Payment updated successfully");
       form.resetFields();
       onCancel();
+      setEditModalVisible(false);
     } catch (error) {
       message.error(error?.data?.message || "Failed to update payment");
     } finally {
@@ -222,7 +242,8 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
           >
             {invoicesData.map((invoice) => (
               <Option key={invoice.id} value={invoice.id}>
-                {invoice.salesInvoiceNumber} - {invoice.customer} ({invoice.total})
+                {invoice.salesInvoiceNumber} - {invoice.customer} (
+                {invoice.total})
               </Option>
             ))}
           </Select>
@@ -238,10 +259,7 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
           }
           rules={[{ required: true, message: "Please select payment date" }]}
         >
-          <DatePicker
-            style={{ width: "100%" }}
-            format="YYYY-MM-DD"
-          />
+          <DatePicker style={{ width: "100%" }} format="YYYY-MM-DD" />
         </Form.Item>
 
         <Form.Item
@@ -258,10 +276,17 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
             style={{ width: "100%" }}
             placeholder="Enter amount"
             formatter={(value) => {
-              const selectedInvoice = form.getFieldValue('invoice');
-              const invoice = invoicesData.find(inv => inv.id === selectedInvoice);
-              const currencyDetails = currencies.find(c => c.id === invoice?.currency);
-              return `${currencyDetails?.currencyIcon || '₹'} ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+              const selectedInvoice = form.getFieldValue("invoice");
+              const invoice = invoicesData.find(
+                (inv) => inv.id === selectedInvoice
+              );
+              const currencyDetails = currencies.find(
+                (c) => c.id === invoice?.currency
+              );
+              return `${currencyDetails?.currencyIcon || "₹"} ${value}`.replace(
+                /\B(?=(\d{3})+(?!\d))/g,
+                ","
+              );
             }}
             parser={(value) => value.replace(/[^\d.]/g, "")}
           />
@@ -300,10 +325,7 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
           }
           rules={[{ required: true, message: "Please select payment method" }]}
         >
-          <Select
-            placeholder="Select payment method"
-            style={{ width: "100%" }}
-          >
+          <Select placeholder="Select payment method" style={{ width: "100%" }}>
             <Option value="cash">Cash</Option>
             <Option value="bank_transfer">Bank Transfer</Option>
             <Option value="credit_card">Credit Card</Option>
@@ -323,10 +345,7 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
           }
           rules={[{ required: true, message: "Please select status" }]}
         >
-          <Select
-            placeholder="Select status"
-            style={{ width: "100%" }}
-          >
+          <Select placeholder="Select status" style={{ width: "100%" }}>
             <Option value="pending">
               <Tag color="warning">Pending</Tag>
             </Option>
@@ -346,7 +365,9 @@ const EditPayment = ({ open, onCancel, dealId, onSubmit, initialValues }) => {
           name="remark"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              <FiMessageSquare style={{ marginRight: "8px", color: "#1890ff" }} />
+              <FiMessageSquare
+                style={{ marginRight: "8px", color: "#1890ff" }}
+              />
               Remark
             </span>
           }

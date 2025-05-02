@@ -323,6 +323,7 @@ const Invoice = () => {
       <CreateInvoice
         open={createModalVisible}
         onSubmit={handleCreate}
+        id={id}
         productsData={productsData}
         productsLoading={productsLoading}
         setCreateModalVisible={setCreateModalVisible}

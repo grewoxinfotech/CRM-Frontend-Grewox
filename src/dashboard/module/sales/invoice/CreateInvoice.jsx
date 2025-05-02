@@ -55,6 +55,7 @@ const { Option } = Select;
 const CreateInvoice = ({
   open,
   onCancel,
+  id,
   onSubmit,
   setCreateModalVisible,
   productsData,
@@ -84,10 +85,10 @@ const CreateInvoice = ({
       limit: 100,
     });
 
-  const id = loggedInUser?.id;
+  // const id = loggedInUser?.id;
   const { data: invoicesData, error } = useGetInvoicesQuery();
   const invoices = (invoicesData?.data || []).filter(
-    (invoice) => invoice.client_id === id
+    (invoice) => invoice.client_id === loggedInUser?.id
   );
 
   // console.log(invoices, "invoices");

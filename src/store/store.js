@@ -11,7 +11,7 @@ import { planApi } from "../superadmin/module/plans/services/planApi.js";
 import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
 import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
 import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
-import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
+// import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
 import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
 import { roleApi } from "../dashboard/module/hrm/role/services/roleApi.js";
 import { userApi } from "../dashboard/module/user-management/users/services/userApi.js";
@@ -57,8 +57,8 @@ import { debitNoteApi } from "../dashboard/module/purchase/debitnote/services/de
 import leadStageReducer from "../dashboard/module/crm/crmsystem/leadstage/services/leadStageSlice";
 import { meetingApi } from "../dashboard/module/hrm/Meeting/services/meetingApi";
 import { announcementApi } from "../dashboard/module/hrm/Announcement/services/announcementApi";
-import { mailApi } from '../dashboard/module/communication/mail/services/mailApi';
-import { notificationApi } from '../common/notifacations/services/notificationApi';
+import { mailApi } from "../dashboard/module/communication/mail/services/mailApi";
+import { notificationApi } from "../common/notifacations/services/notificationApi";
 import { companyAccountApi } from "../dashboard/module/crm/companyacoount/services/companyAccountApi";
 import { contactApi } from "../dashboard/module/crm/contact/services/contactApi";
 import { companyInquiryApi } from "../dashboard/module/crm/company-inquiry/services/companyInquiryApi";
@@ -90,7 +90,7 @@ const rootReducer = combineReducers({
   [settingsApi.reducerPath]: settingsApi.reducer,
   [planApi.reducerPath]: planApi.reducer,
   [policyApi.reducerPath]: policyApi.reducer,
-  [dealInvoiceApi.reducerPath]: dealInvoiceApi.reducer,
+  // [dealInvoiceApi.reducerPath]: dealInvoiceApi.reducer,
   [notesApi.reducerPath]: notesApi.reducer,
   [inquiryApi.reducerPath]: inquiryApi.reducer,
   [subclientApi.reducerPath]: subclientApi.reducer,
@@ -131,7 +131,7 @@ const rootReducer = combineReducers({
   [attendanceApi.reducerPath]: attendanceApi.reducer,
   [holidayApi.reducerPath]: holidayApi.reducer,
   [salaryApi.reducerPath]: salaryApi.reducer,
-  [dealInvoiceApi.reducerPath]: dealInvoiceApi.reducer,
+  // [dealInvoiceApi.reducerPath]: dealInvoiceApi.reducer,
   [vendorApi.reducerPath]: vendorApi.reducer,
   [billingApi.reducerPath]: billingApi.reducer,
   [debitNoteApi.reducerPath]: debitNoteApi.reducer,
@@ -209,7 +209,7 @@ export const store = configureStore({
       .concat(attendanceApi.middleware)
       .concat(holidayApi.middleware)
       .concat(salaryApi.middleware)
-      .concat(dealInvoiceApi.middleware)
+      // .concat(dealInvoiceApi.middleware)
       .concat(vendorApi.middleware)
       .concat(billingApi.middleware)
       .concat(debitNoteApi.middleware)
@@ -227,7 +227,7 @@ export const store = configureStore({
       .concat(settingApi.middleware)
       .concat(activityApi.middleware)
       .concat(forgotPasswordApi.middleware)
-      .concat(storageApi.middleware)
+      .concat(storageApi.middleware),
 });
 
 export const persistor = persistStore(store);

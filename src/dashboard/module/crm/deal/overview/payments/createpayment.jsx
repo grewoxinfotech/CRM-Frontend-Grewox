@@ -23,7 +23,7 @@ import {
 } from "react-icons/fi";
 import { useCreateDealPaymentMutation } from "./services/dealpaymentApi";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
-import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
+// import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
 import dayjs from "dayjs";
 import { useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
 
@@ -38,14 +38,26 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
     page: 1,
     limit: 100,
   });
-  const { data: invoicesResponse = { data: [] }, refetch: refetchInvoices } =
-    useGetInvoicesQuery();
-  const invoicessData = invoicesResponse.data;
-  const invoicesData = invoicessData.filter(
+
+  // const { data: invoicesResponse = { data: [] }, refetch: refetchInvoices } =
+  //   useGetInvoicesQuery();
+  // const invoicessData = invoicesResponse.data;
+  // const invoicesData = invoicessData.filter(
+  //   (invoice) => invoice.related_id === dealId
+  // );
+
+  const {
+    data: invoicesDataa = { data: [] },
+    isLoading,
+    error,
+    refetch: refetchInvoices,
+  } = useGetInvoicesQuery();
+  const invoicesData = (invoicesDataa?.data || []).filter(
     (invoice) => invoice.related_id === dealId
   );
+  // console.log("invoicesData", dealId);
 
-  console.log("invoicesData", invoicesData);
+  // console.log("invoicesData", invoicesData);
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
 
   const handleInvoiceChange = (value) => {
@@ -101,7 +113,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         return;
       }
 
-      await createPayment({
+      const response = await createPayment({
         id: dealId,
         data: {
           invoice: values.invoice,
@@ -114,12 +126,23 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
         },
       }).unwrap();
 
-      message.success("Payment created successfully");
-      await refetchInvoices();
-      form.resetFields();
+      if (!response.success) {
+        throw new Error(response.message || "Failed to create payment");
+      }
+
+      // Close modal first
       onCancel();
+
+      // Then show success message and reset form
+      message.success("Payment created successfully");
+      form.resetFields();
+
+      // Finally refresh the data
+      await refetchInvoices();
     } catch (error) {
-      message.error(error?.data?.message || "Failed to create payment");
+      message.error(
+        error?.data?.message || error.message || "Failed to create payment"
+      );
     } finally {
       setLoading(false);
     }

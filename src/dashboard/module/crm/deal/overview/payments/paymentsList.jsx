@@ -1,5 +1,14 @@
 import React from "react";
-import { Table, Avatar, Dropdown, Button, message, Tag, Typography, Select } from "antd";
+import {
+  Table,
+  Avatar,
+  Dropdown,
+  Button,
+  message,
+  Tag,
+  Typography,
+  Select,
+} from "antd";
 import {
   FiEdit2,
   FiTrash2,
@@ -7,53 +16,70 @@ import {
   FiMoreVertical,
   FiDollarSign,
 } from "react-icons/fi";
-import { useDeleteDealPaymentMutation, useGetDealPaymentsQuery, useUpdateDealPaymentMutation } from "./services/dealpaymentApi";
+import {
+  useDeleteDealPaymentMutation,
+  useGetDealPaymentsQuery,
+  useUpdateDealPaymentMutation,
+} from "./services/dealpaymentApi";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../settings/services/settingsApi";
-import { useGetDealInvoicesQuery } from "../invoices/services/dealinvoiceApi";
 import { useGetInvoicesQuery } from "../../../../sales/invoice/services/invoiceApi";
 
 const { Text } = Typography;
 const { Option } = Select;
 
 const PaymentsList = ({ deal, onEdit, onView }) => {
-
   const dealId = deal?.deal?.id;
   const loggedInUser = useSelector(selectCurrentUser);
-  const { data: paymentsResponse, isLoading, error } = useGetDealPaymentsQuery(dealId);
-  const [deletePayment, { isLoading: isDeleting }] = useDeleteDealPaymentMutation();
+  const {
+    data: paymentsResponse,
+    isLoading,
+    error,
+  } = useGetDealPaymentsQuery(dealId);
+  const [deletePayment, { isLoading: isDeleting }] =
+    useDeleteDealPaymentMutation();
   const [updatePayment] = useUpdateDealPaymentMutation();
   const { data: currencies = [] } = useGetAllCurrenciesQuery({
     page: 1,
-    limit: 100
+    limit: 100,
   });
-  const { data: dealinvoicedata } = useGetInvoicesQuery(dealId);
+  // const { data: dealinvoicedata } = useGetInvoicesQuery(dealId);
+
+  const { data: invoicesData } = useGetInvoicesQuery();
+  const dealinvoicedata = (invoicesData?.data || []).filter(
+    (invoice) => invoice.related_id === dealId
+  );
 
   // Ensure payments is always an array and filter by related_id
   const payments = React.useMemo(() => {
-    const paymentData = Array.isArray(paymentsResponse?.data) 
-      ? paymentsResponse.data 
-      : paymentsResponse?.data 
-        ? [paymentsResponse.data] 
-        : [];
-    
+    const paymentData = Array.isArray(paymentsResponse?.data)
+      ? paymentsResponse.data
+      : paymentsResponse?.data
+      ? [paymentsResponse.data]
+      : [];
+
     // Filter payments where related_id matches dealId
-    return paymentData.filter(payment => payment.related_id === dealId);
+    return paymentData.filter((payment) => payment.related_id === dealId);
   }, [paymentsResponse, dealId]);
-
-
 
   // Function to get currency details by ID or code
   const getCurrencyDetails = (currencyIdOrCode) => {
-    const currency = currencies.find(c => c.id === currencyIdOrCode || c.currencyCode === currencyIdOrCode);
-    return currency || { currencyIcon: currencyIdOrCode, currencyCode: currencyIdOrCode };
+    const currency = currencies.find(
+      (c) => c.id === currencyIdOrCode || c.currencyCode === currencyIdOrCode
+    );
+    return (
+      currency || {
+        currencyIcon: currencyIdOrCode,
+        currencyCode: currencyIdOrCode,
+      }
+    );
   };
 
   // Function to get invoice details by ID
   const getInvoiceDetails = (invoiceId) => {
-    return dealinvoicedata?.data?.find(inv => inv.id === invoiceId);
+    return dealinvoicedata?.data?.find((inv) => inv.id === invoiceId);
   };
 
   const handleStatusChange = async (record, newStatus) => {
@@ -62,12 +88,15 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
         id: record.id,
         data: {
           ...record,
-          status: newStatus
-        }
+          status: newStatus,
+        },
       }).unwrap();
       message.success("Payment status updated successfully");
     } catch (error) {
-      message.error("Failed to update payment status: " + (error.data?.message || "Unknown error"));
+      message.error(
+        "Failed to update payment status: " +
+          (error.data?.message || "Unknown error")
+      );
     }
   };
 
@@ -127,7 +156,9 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
       default:
         className = "";
     }
-    return <Tag className={`method-tag ${className}`}>{method || "Unknown"}</Tag>;
+    return (
+      <Tag className={`method-tag ${className}`}>{method || "Unknown"}</Tag>
+    );
   };
 
   const getDropdownItems = (record) => ({
@@ -165,16 +196,18 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
         const invoiceDetails = getInvoiceDetails(text);
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
-            <Avatar 
-              icon={<FiDollarSign />} 
-              style={{ 
-                backgroundColor: "#e6f7ff", 
+            <Avatar
+              icon={<FiDollarSign />}
+              style={{
+                backgroundColor: "#e6f7ff",
                 color: "#1890ff",
-                marginRight: "12px" 
-              }} 
+                marginRight: "12px",
+              }}
             />
             <div>
-              <Text strong>{invoiceDetails?.salesInvoiceNumber || text || "-"}</Text>
+              <Text strong>
+                {invoiceDetails?.salesInvoiceNumber || text || "-"}
+              </Text>
               <div>
                 <Text type="secondary" style={{ fontSize: "12px" }}>
                   {record.remark || "-"}
@@ -232,7 +265,10 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
         return (
           <div style={{ display: "flex", alignItems: "center" }}>
             <Text strong>
-              {currencyDetails.currencyIcon} {record.amount ? `${record.amount}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "-"}
+              {currencyDetails.currencyIcon}{" "}
+              {record.amount
+                ? `${record.amount}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                : "-"}
             </Text>
           </div>
         );
