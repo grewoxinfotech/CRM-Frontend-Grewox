@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import {
     Card,
     Typography,
@@ -25,8 +25,10 @@ import {
     FiGlobe,
 } from 'react-icons/fi';
 import { selectCurrentUser, selectUserRole } from '../../../auth/services/authSlice';
+import { useUpdateUserMutation } from '../user-management/users/services/userApi';
 import './profile.scss';
 import EditProfileModal from './EditProfileModal';
+import EditCompanyWrapper from './EditCompanyWrapper';
 
 const { Title, Text } = Typography;
 
@@ -119,7 +121,6 @@ const PersonalInfo = ({ user }) => {
 
 const AdditionalInfo = ({ user, userRole }) => {
     const infoItems = [
-
         {
             icon: FiMapPin,
             label: 'Address',
@@ -177,6 +178,9 @@ const Profile = () => {
     const userRole = useSelector(selectUserRole);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
+    // Only need updateUser mutation since EditCompany handles its own updates
+    const [updateUser, { isLoading: isUpdatingUser }] = useUpdateUserMutation();
+
     const handleEditProfile = () => {
         setIsEditModalVisible(true);
     };
@@ -186,13 +190,20 @@ const Profile = () => {
     };
 
     const handleSubmitEdit = async (formData) => {
+        if (!user?.id) {
+            message.error('User ID not found');
+            return;
+        }
+
         try {
-            // Add your update profile API call here
-            // await updateProfile(formData);
+            await updateUser({
+                id: user.id,
+                data: formData
+            }).unwrap();
             message.success('Profile updated successfully');
             setIsEditModalVisible(false);
         } catch (error) {
-            message.error('Failed to update profile');
+            message.error(error?.data?.message || 'Failed to update profile');
         }
     };
 
@@ -229,12 +240,24 @@ const Profile = () => {
                 <AdditionalInfo user={user} userRole={userRole} />
             </Card>
 
-            <EditProfileModal
-                visible={isEditModalVisible}
-                onCancel={handleCancelEdit}
-                onSubmit={handleSubmitEdit}
-                initialValues={user}
-            />
+            {/* Conditionally render different edit modals based on user role */}
+            {userRole === 'client' ? (
+                <EditCompanyWrapper
+                    visible={isEditModalVisible}
+                    onCancel={handleCancelEdit}
+                    initialValues={user}
+                    loading={false}
+                />
+            ) : (
+                <EditProfileModal
+                    visible={isEditModalVisible}
+                    onCancel={handleCancelEdit}
+                    onSubmit={handleSubmitEdit}
+                    initialValues={user}
+                    loading={isUpdatingUser}
+                    userRole={userRole}
+                />
+            )}
         </div>
     );
 };

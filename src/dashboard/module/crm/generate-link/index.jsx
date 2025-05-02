@@ -93,7 +93,8 @@ const CustomFormPage = () => {
 
     const handleEditSubmit = useCallback(async (values) => {
         try {
-            await updateForm(values).unwrap();
+            const { id, ...data } = values;
+            await updateForm({ id, data }).unwrap();
             message.success('Form updated successfully');
             setIsEditModalOpen(false);
         } catch (error) {

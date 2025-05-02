@@ -12,6 +12,7 @@ import {
   DatePicker,
   TimePicker,
   InputNumber,
+  message,
 } from "antd";
 import {
   FiFileText,
@@ -192,18 +193,29 @@ const EditCustomForm = ({
         return acc;
       }, {});
 
+      // Ensure all required fields are present and properly formatted
       const formData = {
-        ...values,
-        fields: JSON.stringify(fieldsObject), // Stringify the fields object
-        start_date: values.event_dates[0].toISOString(),
-        end_date: values.event_dates[1].toISOString(),
-        id: initialValues.id, // Preserve the ID
+        id: initialValues.id,
+        title: values.title?.trim(),
+        description: values.description?.trim(),
+        event_name: values.event_name?.trim(),
+        event_location: values.event_location?.trim(),
+        start_date: values.event_dates?.[0]?.toISOString(),
+        end_date: values.event_dates?.[1]?.toISOString(),
+        fields: fieldsObject,
       };
-      delete formData.event_dates;
+
+      // Validate required fields
+      if (!formData.title) throw new Error('Title is required');
+      if (!formData.description) throw new Error('Description is required');
+      if (!formData.event_name) throw new Error('Event name is required');
+      if (!formData.event_location) throw new Error('Event location is required');
+      if (!formData.start_date || !formData.end_date) throw new Error('Event dates are required');
 
       await onSubmit(formData);
     } catch (error) {
       console.error("Submit Error:", error);
+      message.error(error.message || "Failed to submit form");
     }
   };
 
@@ -622,7 +634,7 @@ const EditCustomForm = ({
                               }
                             >
                               {validation === "minDate" ||
-                              validation === "maxDate" ? (
+                                validation === "maxDate" ? (
                                 <DatePicker
                                   style={{
                                     width: "100%",

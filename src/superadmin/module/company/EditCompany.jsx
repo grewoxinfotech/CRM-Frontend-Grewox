@@ -31,10 +31,10 @@ import { useGetAllCountriesQuery } from '../settings/services/settingsApi';
 const { Text } = Typography;
 const { Option } = Select;
 
-const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
+const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isProfileView }) => {
     const [form] = Form.useForm();
-    const [updateCompany, { isLoading: isUpdating }] = useUpdateCompanyMutation();
     const [fileList, setFileList] = useState([]);
+    const [submitting, setSubmitting] = useState(false);
 
     // Fetch countries for phone codes
     const { data: countries, isLoading: countriesLoading } = useGetAllCountriesQuery({
@@ -44,10 +44,11 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
 
     useEffect(() => {
         if (visible && initialValues) {
+            // Reset form and file list when modal opens
             form.setFieldsValue({
                 firstName: initialValues?.firstName || '',
                 lastName: initialValues?.lastName || '',
-                phoneCode: initialValues?.phoneCode || '91', // Default to India (+91)
+                phoneCode: initialValues?.phoneCode || '91',
                 phone: initialValues?.phone || '',
                 bankname: initialValues?.bankname || '',
                 ifsc: initialValues?.ifsc || '',
@@ -77,45 +78,42 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
         }
     }, [visible, initialValues, form]);
 
-    const handleSubmit = () => {
-        form.validateFields()
-            .then(values => {
-                const formData = new FormData();
+    const handleSubmit = async () => {
+        try {
+            setSubmitting(true);
+            const values = await form.validateFields();
 
-                // Check if there's a profile picture
-                const hasProfilePic = fileList.length > 0;
-                if (!hasProfilePic) {
-                    message.error('Please upload a company logo');
-                    return;
-                }
+            const formData = new FormData();
 
-                // Add file if exists
-                const hasNewProfilePic = fileList.length > 0 && fileList[0].originFileObj;
-                if (hasNewProfilePic) {
-                    formData.append('profilePic', fileList[0].originFileObj);
-                }
+            // Add file if exists
+            const hasNewProfilePic = fileList.length > 0 && fileList[0].originFileObj;
+            if (hasNewProfilePic) {
+                formData.append('profilePic', fileList[0].originFileObj);
+            }
 
-                // Add all form values to formData
-                Object.keys(values).forEach(key => {
-                    if (key !== 'profilePic' && values[key] !== undefined && values[key] !== '') {
-                        formData.append(key, values[key]);
-                    }
-                });
-
-                // Call the update mutation
-                updateCompany({ 
-                    id: initialValues.id, 
-                    data: formData 
-                })
-                    .unwrap()
-                    .then(() => {
-                        message.success('Company updated successfully');
-                        onCancel(); // Close the modal
-                    })
-                    .catch((error) => {
-                        message.error(error?.data?.message || 'Failed to update company');
-                    });
+            // Add all form values to formData, including empty values
+            Object.keys(values).forEach(key => {
+                formData.append(key, values[key] === undefined ? '' : values[key]);
             });
+
+            // Add existing profile pic URL if no new file is uploaded
+            if (!hasNewProfilePic && initialValues?.profilePic) {
+                formData.append('existingProfilePic', initialValues.profilePic);
+            }
+
+            if (onSubmit) {
+                await onSubmit(formData);
+            }
+        } catch (error) {
+            if (error.errorFields) {
+                message.error('Please fill in all required fields correctly.');
+            } else {
+                message.error('An error occurred while saving. Please try again.');
+            }
+            console.error('Form submission error:', error);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     const beforeUpload = (file) => {
@@ -224,7 +222,11 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}>
-                        {/* <FiBriefcase style={{ fontSize: '24px', color: '#ffffff' }} /> */}
+                        {isProfileView ? (
+                            <FiUser style={{ fontSize: '24px', color: '#ffffff' }} />
+                        ) : (
+                            <FiBriefcase style={{ fontSize: '24px', color: '#ffffff' }} />
+                        )}
                     </div>
                     <div>
                         <h2 style={{
@@ -233,13 +235,13 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                             fontWeight: '600',
                             color: '#ffffff',
                         }}>
-                            Edit Company
+                            {isProfileView ? 'Edit Profile' : 'Edit Company'}
                         </h2>
                         <Text style={{
                             fontSize: '14px',
                             color: 'rgba(255, 255, 255, 0.85)'
                         }}>
-                            Update company information and settings
+                            {isProfileView ? 'Update your profile information' : 'Update company information and settings'}
                         </Text>
                     </div>
                 </div>
@@ -249,7 +251,8 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                requiredMark={false}
+                initialValues={initialValues}
+                disabled={loading}
                 style={{
                     padding: '24px'
                 }}
@@ -375,18 +378,18 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                             </span>
                         }
                         rules={[{ required: true, message: 'Please enter first name' },
-                            {
-                                validator: (_, value) => {
-                                  if (!value) return Promise.resolve();
-                                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                        {
+                            validator: (_, value) => {
+                                if (!value) return Promise.resolve();
+                                if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                                     return Promise.reject(
                                         new Error('First name must contain both uppercase or lowercase English letters')
                                     );
                                 }
                                 return Promise.resolve();
-                                }
-                              }
-                            ]}
+                            }
+                        }
+                        ]}
                     >
                         <Input
                             prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -414,17 +417,17 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                             </span>
                         }
                         rules={[{ required: true, message: 'Please enter last name' },
-                            {
-                                validator: (_, value) => {
-                                  if (!value) return Promise.resolve();
-                                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                        {
+                            validator: (_, value) => {
+                                if (!value) return Promise.resolve();
+                                if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                                     return Promise.reject(
                                         new Error('Last name must contain both uppercase or lowercase English letters')
                                     );
                                 }
                                 return Promise.resolve();
-                                }
-                              }
+                            }
+                        }
                         ]}
                     >
                         <Input
@@ -570,7 +573,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                         }
                     >
                         <Input
-                            prefix={<FiFileText style={{ color: '#1890ff', fontSize: '16px' }} />} 
+                            prefix={<FiFileText style={{ color: '#1890ff', fontSize: '16px' }} />}
                             placeholder="Enter GST number"
                             size="large"
                             style={{
@@ -899,6 +902,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                     <Button
                         size="large"
                         onClick={onCancel}
+                        disabled={submitting}
                         style={{
                             padding: '8px 24px',
                             height: '44px',
@@ -912,8 +916,8 @@ const EditCompany = ({ visible, onCancel, initialValues, loading }) => {
                     <Button
                         size="large"
                         type="primary"
-                        onClick={handleSubmit}
-                        loading={isUpdating || loading}
+                        htmlType="submit"
+                        loading={submitting || loading}
                         style={{
                             padding: '8px 32px',
                             height: '44px',

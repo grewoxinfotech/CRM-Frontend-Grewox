@@ -104,7 +104,7 @@ export default function Dashboard() {
       iconGradient: "linear-gradient(135deg, #7c3aed, #a78bfa)",
       color: "#7c3aed",
       tag: `Total customers with orders: ${activeCustomers}`,
-      link: "/dashboard/crm/companies"
+      link: "/dashboard/sales/customer"
     },
     {
       title: "Leads",

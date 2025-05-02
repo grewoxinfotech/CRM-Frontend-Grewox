@@ -478,7 +478,6 @@ const FormSubmissions = () => {
                             /* Action Column Styles */
                             .action-cell {
                                 display: flex;
-                                justify-content: center;
                                 align-items: center;
                                 padding: 0 12px !important;
                                 opacity: 1 !important;

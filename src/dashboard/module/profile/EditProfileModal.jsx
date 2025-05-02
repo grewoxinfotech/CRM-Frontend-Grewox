@@ -7,7 +7,10 @@ import {
     Button,
     Typography,
     Divider,
-    message
+    message,
+    Select,
+    Row,
+    Col
 } from 'antd';
 import {
     FiUser,
@@ -17,19 +20,24 @@ import {
     FiMapPin,
     FiHome,
     FiMap,
-    FiGlobe
+    FiGlobe,
+    FiBriefcase,
+    FiDollarSign,
+    FiCreditCard
 } from 'react-icons/fi';
 
 const { Text } = Typography;
+const { Option } = Select;
 
-const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading }) => {
+const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading, userRole }) => {
     const [form] = Form.useForm();
     const [fileList, setFileList] = useState([]);
 
     // Reset form when modal opens or closes
     useEffect(() => {
         if (visible) {
-            form.setFieldsValue({
+            // Common fields for all roles
+            const commonFields = {
                 firstName: initialValues?.firstName || '',
                 lastName: initialValues?.lastName || '',
                 phone: initialValues?.phone || '',
@@ -38,6 +46,24 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
                 state: initialValues?.state || '',
                 country: initialValues?.country || '',
                 zipCode: initialValues?.zipCode || ''
+            };
+
+            // Additional fields for company role
+            const companyFields = userRole === 'client' ? {
+                phoneCode: initialValues?.phoneCode || '',
+                bankname: initialValues?.bankname || '',
+                ifsc: initialValues?.ifsc || '',
+                banklocation: initialValues?.banklocation || '',
+                accountholder: initialValues?.accountholder || '',
+                accountnumber: initialValues?.accountnumber || '',
+                gstIn: initialValues?.gstIn || '',
+                website: initialValues?.website || '',
+                accounttype: initialValues?.accounttype || ''
+            } : {};
+
+            form.setFieldsValue({
+                ...commonFields,
+                ...companyFields
             });
 
             // Set profile picture if exists
@@ -52,7 +78,7 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
                 setFileList([]);
             }
         }
-    }, [visible, initialValues, form]);
+    }, [visible, initialValues, form, userRole]);
 
     const handleSubmit = () => {
         form.validateFields()
@@ -62,8 +88,7 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
 
                 // Add text fields, including empty values
                 Object.keys(values).forEach(key => {
-                    if (key !== 'profilePic') {
-                        // Send empty string if value is undefined or empty
+                    if (key !== 'profilePic' && values[key] !== undefined) {
                         formData.append(key, values[key] || '');
                     }
                 });
@@ -98,7 +123,6 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
     };
 
     const handleChange = ({ fileList }) => {
-        // Ensure we have the file name for newly uploaded files
         const updatedFileList = fileList.map(file => {
             if (file.originFileObj && !file.name) {
                 return {
@@ -118,13 +142,74 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
         </div>
     );
 
+    // Render company-specific fields
+    const renderCompanyFields = () => {
+        if (userRole !== 'client') return null;
+
+        return (
+            <>
+                <Divider orientation="left">Company Details</Divider>
+                <Row gutter={[16, 16]}>
+                    <Col span={12}>
+                        <Form.Item name="website" label="Website">
+                            <Input prefix={<FiGlobe />} placeholder="Company Website" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="gstIn" label="GST Number">
+                            <Input prefix={<FiBriefcase />} placeholder="GST Number" />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Divider orientation="left">Bank Details</Divider>
+                <Row gutter={[16, 16]}>
+                    <Col span={12}>
+                        <Form.Item name="bankname" label="Bank Name">
+                            <Input prefix={<FiCreditCard />} placeholder="Bank Name" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="accountholder" label="Account Holder">
+                            <Input prefix={<FiUser />} placeholder="Account Holder Name" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="accountnumber" label="Account Number">
+                            <Input prefix={<FiCreditCard />} placeholder="Account Number" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="ifsc" label="IFSC Code">
+                            <Input prefix={<FiCreditCard />} placeholder="IFSC Code" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="banklocation" label="Bank Location">
+                            <Input prefix={<FiMapPin />} placeholder="Bank Location" />
+                        </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                        <Form.Item name="accounttype" label="Account Type">
+                            <Select placeholder="Select Account Type">
+                                <Option value="savings">Savings</Option>
+                                <Option value="current">Current</Option>
+                                <Option value="other">Other</Option>
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                </Row>
+            </>
+        );
+    };
+
     return (
         <Modal
             title={null}
             open={visible}
             onCancel={onCancel}
             footer={null}
-            width={520}
+            width={720}
             destroyOnClose={true}
             centered
             closeIcon={null}
@@ -211,35 +296,14 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
                 </div>
             </div>
 
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                initialValues={{
-                    firstName: initialValues?.firstName || '',
-                    lastName: initialValues?.lastName || '',
-                    phone: initialValues?.phone || '',
-                    address: initialValues?.address || '',
-                    city: initialValues?.city || '',
-                    state: initialValues?.state || '',
-                    country: initialValues?.country || '',
-                    zipCode: initialValues?.zipCode || ''
-                }}
-                requiredMark={false}
-                style={{
-                    padding: '24px'
-                }}
-                autoComplete="off"
-            >
-                {/* Hidden fields to prevent autofill */}
-                <div style={{ display: 'none' }}>
-                    <input type="text" autoComplete="chrome-off" />
-                    <input type="password" autoComplete="chrome-off" />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-                    <div style={{ marginRight: '16px' }}>
-                        <Form.Item name="profilePic" noStyle>
+            <div className="modal-content" style={{ padding: '24px' }}>
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                >
+                    <div className="upload-section" style={{ textAlign: 'center', marginBottom: '24px' }}>
+                        <Form.Item name="profilePic" label="Profile Picture">
                             <Upload
                                 name="profilePic"
                                 listType="picture-circle"
@@ -249,450 +313,82 @@ const EditProfileModal = ({ visible, onCancel, onSubmit, initialValues, loading 
                                 onChange={handleChange}
                                 maxCount={1}
                             >
-                                {fileList.length > 0 && (fileList[0].url || fileList[0].originFileObj) ? (
-                                    <div style={{
-                                        width: '80px',
-                                        height: '80px',
-                                        borderRadius: '50%',
-                                        overflow: 'hidden',
-                                        position: 'relative'
-                                    }}>
-                                        {fileList[0].originFileObj ? (
-                                            // Show preview for newly selected image
-                                            <>
-                                                <img
-                                                    src={URL.createObjectURL(fileList[0].originFileObj)}
-                                                    alt="avatar preview"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover'
-                                                    }}
-                                                />
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    background: 'rgba(24, 144, 255, 0.2)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}>
-                                                    <div style={{
-                                                        background: 'rgba(24, 144, 255, 0.8)',
-                                                        color: 'white',
-                                                        fontSize: '10px',
-                                                        padding: '2px 6px',
-                                                        borderRadius: '10px'
-                                                    }}>
-                                                        New
-                                                    </div>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            // Show existing image
-                                            <img
-                                                src={fileList[0].url}
-                                                alt="avatar"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    objectFit: 'cover'
-                                                }}
-                                            />
-                                        )}
-                                        <div style={{
-                                            position: 'absolute',
-                                            bottom: 0,
-                                            left: 0,
-                                            right: 0,
-                                            background: 'rgba(0,0,0,0.4)',
-                                            padding: '4px 0',
-                                            textAlign: 'center'
-                                        }}>
-                                            <FiCamera style={{ color: 'white', fontSize: '14px' }} />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div style={{
-                                        width: '80px',
-                                        height: '80px',
-                                        borderRadius: '50%',
-                                        background: '#f0f2f5',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '1px dashed #d9d9d9'
-                                    }}>
-                                        {uploadButton}
-                                    </div>
-                                )}
+                                {fileList.length > 0 ? (
+                                    <img
+                                        src={fileList[0].url || URL.createObjectURL(fileList[0].originFileObj)}
+                                        alt="avatar"
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            borderRadius: '50%',
+                                            objectFit: 'cover'
+                                        }}
+                                    />
+                                ) : uploadButton}
                             </Upload>
                         </Form.Item>
                     </div>
-                    <div>
-                        <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '500' }}>Profile Picture</h3>
-                        <Text type="secondary" style={{ fontSize: '12px' }}>
-                            {fileList.length > 0 && fileList[0].originFileObj ? (
-                                <>Selected: {fileList[0].name}</>
-                            ) : (
-                                <>Click to upload or change your profile picture</>
-                            )}
-                        </Text>
+
+                    <Divider orientation="left">Personal Information</Divider>
+                    <Row gutter={[16, 16]}>
+                        <Col span={12}>
+                            <Form.Item name="firstName" label="First Name">
+                                <Input prefix={<FiUser />} placeholder="First Name" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="lastName" label="Last Name">
+                                <Input prefix={<FiUser />} placeholder="Last Name" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="phone" label="Phone">
+                                <Input prefix={<FiPhone />} placeholder="Phone Number" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Divider orientation="left">Address Information</Divider>
+                    <Row gutter={[16, 16]}>
+                        <Col span={24}>
+                            <Form.Item name="address" label="Address">
+                                <Input.TextArea placeholder="Full Address" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="city" label="City">
+                                <Input prefix={<FiHome />} placeholder="City" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="state" label="State">
+                                <Input prefix={<FiMap />} placeholder="State" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="country" label="Country">
+                                <Input prefix={<FiGlobe />} placeholder="Country" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="zipCode" label="Zip Code">
+                                <Input prefix={<FiMapPin />} placeholder="Zip Code" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    {renderCompanyFields()}
+
+                    <div style={{ textAlign: 'right', marginTop: '24px' }}>
+                        <Button onClick={onCancel} style={{ marginRight: '12px' }}>
+                            Cancel
+                        </Button>
+                        <Button type="primary" onClick={handleSubmit} loading={loading}>
+                            Save Changes
+                        </Button>
                     </div>
-                </div>
-
-                <Form.Item
-                    name="firstName"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            First Name
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter first name"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="lastName"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Last Name
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter last name"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="phone"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Phone Number
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiPhone style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter phone number"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="address"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Address
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiMapPin style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter address"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="city"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            City
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiHome style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter city"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="state"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            State
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiMap style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter state"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="country"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Country
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiGlobe style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter country"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Form.Item
-                    name="zipCode"
-                    label={
-                        <span style={{
-                            fontSize: '14px',
-                            fontWeight: '500',
-                        }}>
-                            Zip Code
-                        </span>
-                    }
-                    rules={[
-                        {
-                            transform: (value) => value?.trim() || '',
-                            validator: async (_, value) => {
-                                if (value?.trim()?.length === 0) {
-                                    return Promise.resolve();
-                                }
-                                return Promise.resolve();
-                            }
-                        }
-                    ]}
-                >
-                    <Input
-                        prefix={<FiMapPin style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter zip code"
-                        size="large"
-                        autoComplete="off"
-                        style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
-                        }}
-                    />
-                </Form.Item>
-
-                <Divider style={{ margin: '24px 0' }} />
-
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: '12px'
-                }}>
-                    <Button
-                        size="large"
-                        onClick={onCancel}
-                        style={{
-                            padding: '8px 24px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            border: '1px solid #e6e8eb',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        size="large"
-                        type="primary"
-                        onClick={handleSubmit}
-                        loading={loading}
-                        style={{
-                            padding: '8px 32px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            fontWeight: '500',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}
-                    >
-                        Save Changes
-                    </Button>
-                </div>
-            </Form>
+                </Form>
+            </div>
         </Modal>
     );
 };
