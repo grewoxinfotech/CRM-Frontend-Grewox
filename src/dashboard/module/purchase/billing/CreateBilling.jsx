@@ -1009,7 +1009,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
               }}
             >
               <Option value="unpaid">Unpaid</Option>
-              <Option value="partially_paid">Partially Paid</Option>
+              {/* <Option value="partially_paid">Partially Paid</Option> */}
               <Option value="paid">Paid</Option>
             </Select>
           </Form.Item>

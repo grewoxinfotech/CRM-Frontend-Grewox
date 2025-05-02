@@ -94,10 +94,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
     if (initialValues) {
       let items = [];
       try {
-        items = JSON.parse(initialValues.items);
-        if (!Array.isArray(items)) {
-          items = [items];
-        }
+        items =
+          typeof initialValues.items === "string"
+            ? JSON.parse(initialValues.items)
+            : initialValues.items || [];
+
+        // Ensure items is always an array
+        items = Array.isArray(items) ? items : [items];
       } catch (error) {
         console.error("Error parsing items:", error);
         items = [];
@@ -142,22 +145,22 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             product: item.product_id,
             id: item.product_id,
             item_name: item.name,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            discount: item.discount || 0,
-            discount_type: item.discount_type,
+            quantity: Number(item.quantity) || 0,
+            unit_price: Number(item.unit_price) || 0,
+            discount: Number(item.discount) || 0,
+            discount_type: item.discount_type || "percentage",
             tax: matchingTax ? parseFloat(matchingTax.gstPercentage) : 0,
             taxId: item.tax || null,
             tax_name: matchingTax ? matchingTax.gstName : "",
             hsn_sac: item.hsn_sac || "",
-            taxAmount: item.tax_amount || 0,
+            taxAmount: Number(item.tax_amount) || 0,
           };
         }),
-        subtotal: initialValues.subtotal,
-        totalTax: initialValues.tax,
-        totalDiscount: initialValues.discount,
-        totalAmount: initialValues.total,
-        additionalNotes: initialValues.additional_notes,
+        subtotal: Number(initialValues.subtotal) || 0,
+        totalTax: Number(initialValues.tax) || 0,
+        totalDiscount: Number(initialValues.discount) || 0,
+        totalAmount: Number(initialValues.total) || 0,
+        additionalNotes: initialValues.additional_notes || "",
       };
 
       // Set form values
@@ -368,29 +371,30 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         const itemTaxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
         return {
           product_id: item.id,
+          name: item.item_name,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
           tax: isTaxEnabled ? item.taxId || null : null,
-          tax_amount: itemTaxAmount,
+          tax_amount: Number(itemTaxAmount) || 0,
           discount: Number(item.discount) || 0,
           discount_type: item.discount_type || "percentage",
           hsn_sac: item.hsn_sac || "",
-          amount: calculateItemTotal(item),
+          amount: Number(calculateItemTotal(item)) || 0,
         };
       });
 
       // Calculate total tax amount from all items
       const totalTaxAmount = formattedItems.reduce(
-        (sum, item) => sum + (item.tax_amount || 0),
+        (sum, item) => sum + (Number(item.tax_amount) || 0),
         0
       );
 
       // Calculate total discount amount from all items
       const totalDiscountAmount = formattedItems.reduce((sum, item) => {
-        const itemAmount = item.quantity * item.unit_price;
+        const itemAmount = Number(item.quantity) * Number(item.unit_price);
         let discountAmount = 0;
         if (item.discount_type === "percentage") {
-          discountAmount = (itemAmount * (item.discount || 0)) / 100;
+          discountAmount = (itemAmount * (Number(item.discount) || 0)) / 100;
         } else {
           discountAmount = Number(item.discount) || 0;
         }
@@ -404,20 +408,28 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         issueDate: values.issueDate?.format("YYYY-MM-DD"),
         dueDate: values.dueDate?.format("YYYY-MM-DD"),
         currency: selectedCurrencyId || values.currency,
-        items: formattedItems,
+        items: Array.isArray(formattedItems)
+          ? formattedItems
+          : [formattedItems], // Ensure items is always an array
         subtotal: Number(values.subtotal) || 0,
-        tax: totalTaxAmount,
-        discount: totalDiscountAmount,
+        tax: Number(totalTaxAmount) || 0,
+        discount: Number(totalDiscountAmount) || 0,
         total: Number(values.total) || 0,
         payment_status: values.status || "unpaid",
-        additional_notes: values.additionalNotes,
+        additional_notes: values.additionalNotes || "",
       };
 
-      await updateInvoice({ id: initialValues.id, data: payload }).unwrap();
+      const response = await updateInvoice({
+        id: initialValues.id,
+        data: payload,
+      }).unwrap();
+      if (response.success === false) {
+        throw new Error(response.message);
+      }
       message.success("Invoice updated successfully");
       onCancel();
     } catch (error) {
-      message.error("Failed to update invoice");
+      message.error(error?.message || "Failed to update invoice");
       console.error("Submit Error:", error);
     } finally {
       setLoading(false);

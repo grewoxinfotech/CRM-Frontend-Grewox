@@ -1050,7 +1050,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 }}
               >
                 <Option value="unpaid">UnPaid</Option>
-                <Option value="partially_paid">Partially Paid</Option>
+                {/* <Option value="partially_paid">Partially Paid</Option> */}
                 <Option value="paid">Paid</Option>
               </Select>
             </Form.Item>

@@ -31,16 +31,17 @@ const { TextArea } = Input;
 const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const { data: countries = [], loading: countriesLoading } = useGetAllCountriesQuery();
+  const { data: countries = [], loading: countriesLoading } =
+    useGetAllCountriesQuery();
   const [selectedCountry, setSelectedCountry] = useState(null);
 
   // Find India in countries array and set as default
   useEffect(() => {
     if (countries.length > 0) {
-      const india = countries.find(country => country.countryCode === 'IN');
+      const india = countries.find((country) => country.countryCode === "IN");
       if (india) {
         setSelectedCountry(india);
-        form.setFieldValue('country', india.id);
+        form.setFieldValue("country", india.id);
       }
     }
   }, [countries, form]);
@@ -48,12 +49,14 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   useEffect(() => {
     if (initialValues) {
       // Parse the phone object if it exists
-      let phoneCode = '+91'; // Default to India's code
-      let phoneNumber = '';
-      
+      let phoneCode = "+91"; // Default to India's code
+      let phoneNumber = "";
+
       // Find the country by ID and get its phone code
       if (initialValues.phonecode) {
-        const country = countries?.find(c => c.id === initialValues.phonecode);
+        const country = countries?.find(
+          (c) => c.id === initialValues.phonecode
+        );
         if (country) {
           phoneCode = country.phoneCode;
         }
@@ -64,16 +67,34 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         phoneNumber = initialValues.contact;
       }
 
+      // Parse billing and shipping addresses
+      let billingAddress = {};
+      let shippingAddress = {};
+
+      try {
+        billingAddress =
+          typeof initialValues.billing_address === "string"
+            ? JSON.parse(initialValues.billing_address)
+            : initialValues.billing_address || {};
+      } catch (error) {
+        console.error("Error parsing billing address:", error);
+      }
+
+      try {
+        shippingAddress =
+          typeof initialValues.shipping_address === "string"
+            ? JSON.parse(initialValues.shipping_address)
+            : initialValues.shipping_address || {};
+      } catch (error) {
+        console.error("Error parsing shipping address:", error);
+      }
+
       const formattedValues = {
         ...initialValues,
-        phoneCode: phoneCode || '+91', // Ensure phoneCode is never null
+        phoneCode: phoneCode || "+91", // Ensure phoneCode is never null
         phoneNumber,
-        billing_address: initialValues.billing_address
-          ? JSON.parse(initialValues.billing_address)
-          : {},
-        shipping_address: initialValues.shipping_address
-          ? JSON.parse(initialValues.shipping_address)
-          : {},
+        billing_address: billingAddress,
+        shipping_address: shippingAddress,
       };
       form.setFieldsValue(formattedValues);
 
@@ -95,11 +116,15 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
       const { phoneCode, phoneNumber, ...otherValues } = values;
 
       // Find the country ID from the selected phone code
-      const selectedCountry = countries?.find(c => c.phoneCode === phoneCode);
+      const selectedCountry = countries?.find((c) => c.phoneCode === phoneCode);
       if (!selectedCountry) {
-        message.error('Please select a valid phone code');
+        message.error("Please select a valid phone code");
         return;
       }
+
+      // Ensure billing and shipping addresses are properly formatted
+      const billingAddress = otherValues.billing_address || {};
+      const shippingAddress = otherValues.shipping_address || {};
 
       const customerData = {
         // Basic Information
@@ -113,9 +138,9 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         status: otherValues.status || "active",
         phonecode: selectedCountry.id,
 
-        // Address Information
-        billing_address: otherValues.billing_address || {},
-        shipping_address: otherValues.shipping_address || {},
+        // Address Information - stringify objects
+        billing_address: JSON.stringify(billingAddress),
+        shipping_address: JSON.stringify(shippingAddress),
 
         // Additional Information
         notes: otherValues.notes || "",
@@ -129,7 +154,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
       await onSubmit(customerData);
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error("Failed to update customer");
+      message.error(error?.message || "Failed to update customer");
     }
   };
 
@@ -138,7 +163,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
   };
 
   const handleCountryChange = (value) => {
-    const country = countries.find(c => c.id === value);
+    const country = countries.find((c) => c.id === value);
     setSelectedCountry(country);
   };
 
@@ -283,12 +308,14 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                     if (!value) return Promise.resolve();
                     if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                       return Promise.reject(
-                          new Error('Customer name must contain both uppercase or lowercase English letters')
+                        new Error(
+                          "Customer name must contain both uppercase or lowercase English letters"
+                        )
                       );
-                  }
-                  return Promise.resolve();
-                  }
-                }
+                    }
+                    return Promise.resolve();
+                  },
+                },
               ]}
             >
               <Input
@@ -365,61 +392,65 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
               />
             </Form.Item>
           </Col>
-         
+
           <Col span={12}>
-            <Form.Item
-              label="Contact"
-              style={{ marginBottom: 0 }}
-              required
-            >
-              <Input.Group compact className="phone-input-group" style={{
-                display: 'flex',
-                height: '48px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '10px',
-                border: '1px solid #e6e8eb',
-                overflow: 'hidden'
-              }}>
+            <Form.Item label="Contact" style={{ marginBottom: 0 }} required>
+              <Input.Group
+                compact
+                className="phone-input-group"
+                style={{
+                  display: "flex",
+                  height: "48px",
+                  backgroundColor: "#f8fafc",
+                  borderRadius: "10px",
+                  border: "1px solid #e6e8eb",
+                  overflow: "hidden",
+                }}
+              >
                 <Form.Item
                   name="phoneCode"
                   noStyle
-                  rules={[{ required: true, message: 'Required' }]}
+                  rules={[{ required: true, message: "Required" }]}
                   initialValue="+91"
                 >
                   <Select
                     size="large"
                     style={{
-                      width: '90px',
-                      height: '48px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      backgroundColor: 'white',
-                      cursor: 'pointer',
+                      width: "90px",
+                      height: "48px",
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "white",
+                      cursor: "pointer",
                     }}
                     loading={countriesLoading}
                     className="phone-code-select"
                     dropdownStyle={{
-                      padding: '8px',
-                      borderRadius: '10px',
-                      backgroundColor: 'white',
+                      padding: "8px",
+                      borderRadius: "10px",
+                      backgroundColor: "white",
                     }}
                     showSearch
                     optionFilterProp="children"
                   >
-                    {countries?.map(country => (
-                      <Option 
-                        key={country.id} 
+                    {countries?.map((country) => (
+                      <Option
+                        key={country.id}
                         value={country.phoneCode}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: "pointer" }}
                       >
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          color: '#262626',
-                          cursor: 'pointer',
-                        }}>
-                          <span>{country.countryCode} {country.phoneCode}</span>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#262626",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <span>
+                            {country.countryCode} {country.phoneCode}
+                          </span>
                         </div>
                       </Option>
                     ))}
@@ -429,20 +460,20 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                   name="phoneNumber"
                   noStyle
                   rules={[
-                    { required: true, message: 'Please enter phone number' }
+                    { required: true, message: "Please enter phone number" },
                   ]}
                 >
                   <Input
                     size="large"
                     style={{
                       flex: 1,
-                      border: 'none',
-                      borderLeft: '1px solid #e6e8eb',
+                      border: "none",
+                      borderLeft: "1px solid #e6e8eb",
                       borderRadius: 0,
-                      height: '46px',
-                      backgroundColor: 'transparent',
-                      display: 'flex',
-                      alignItems: 'center',
+                      height: "46px",
+                      backgroundColor: "transparent",
+                      display: "flex",
+                      alignItems: "center",
                     }}
                     placeholder="Enter phone number"
                   />
