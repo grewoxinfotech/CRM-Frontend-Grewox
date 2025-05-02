@@ -26,6 +26,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
+import { useGetRevenueQuery } from "./services/revenueApi";
 
 const { Title, Text } = Typography;
 
@@ -35,21 +36,9 @@ const Revenue = () => {
   const [selectedRevenue, setSelectedRevenue] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const { data: revenueData } = useGetRevenueQuery();
 
-  // Dummy data for demonstration
-  const revenueData = [
-    {
-      id: 1,
-      amount: 1500.0,
-      account: "1234567890",
-      date: "2023-12-01",
-      customer: "John Doe",
-      category: "Sales",
-      description: "Product sales revenue",
-      status: "Completed",
-    },
-    // Add more dummy data as needed
-  ];
+  const revdata = revenueData?.data || [];
 
   const handleCreate = () => {
     setSelectedRevenue(null);
@@ -101,7 +90,7 @@ const Revenue = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = revenueData.map((revenue) => ({
+      const data = revdata.map((revenue) => ({
         Amount: revenue.amount,
         Date: revenue.date,
         "Payment Method": revenue.payment_method,
@@ -224,18 +213,16 @@ const Revenue = () => {
         <div className="header-actions">
           <div className="search-filter-group">
             <Input
-              prefix={
-                <FiSearch style={{ color: "#8c8c8c" }} />
-              }
+              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search revenue entries..."
               allowClear
               onChange={(e) => setSearchText(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ 
-                width: '300px', 
-                borderRadius: '20px',
-                height: '38px'
+              style={{
+                width: "300px",
+                borderRadius: "20px",
+                height: "38px",
               }}
             />
           </div>
@@ -264,7 +251,7 @@ const Revenue = () => {
 
       <Card className="customer-table-card">
         <RevenueList
-          revenues={revenueData}
+          revdata={revdata}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}

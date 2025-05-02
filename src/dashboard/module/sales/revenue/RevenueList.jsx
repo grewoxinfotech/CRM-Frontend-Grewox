@@ -43,7 +43,13 @@ import { useSelector } from "react-redux";
 const { Text } = Typography;
 const { Option } = Select;
 
-const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
+const RevenueList = ({
+  onEdit,
+  onDelete,
+  onView,
+  revdata,
+  searchText = "",
+}) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const location = useLocation();
@@ -63,14 +69,13 @@ const RevenueList = ({ onEdit, onDelete, onView, searchText = "" }) => {
     }
   }, [customerFromList, productFromList]);
 
-  const { data: revenueData } = useGetRevenueQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
   const { data: customersData } = useGetCustomersQuery();
   const [deleteRevenue] = useDeleteRevenueMutation();
   const { data: currencies } = useGetAllCurrenciesQuery();
 
-  const revdata = revenueData?.data || [];
+  // const revdata = revenueData?.data || [];
   const products = productsData?.data || [];
   const customers = customersData?.data || [];
 
