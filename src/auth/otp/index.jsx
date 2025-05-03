@@ -79,7 +79,7 @@ export default function OTPVerification() {
                 throw new Error('Please enter complete OTP');
             }
 
-        
+
 
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1500));
@@ -104,7 +104,7 @@ export default function OTPVerification() {
     return (
         <div className="otp-container">
             <div className="otp-split">
-                
+
                 <motion.div
                     className="illustration-side"
                     initial={{ opacity: 0, x: -20 }}

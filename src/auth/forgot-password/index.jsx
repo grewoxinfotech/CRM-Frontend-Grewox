@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { FiMail, FiBox, FiArrowLeft, FiLock } from 'react-icons/fi';
 import * as yup from 'yup';
 import form_graphic from '../../assets/auth/form_grapihc.png';
-import { Link } from 'react-router-dom';
-import { useSendResetEmailMutation } from './services/forgot-passwordApi';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSendResetEmailMutation, useVerifyOtpMutation } from './services/forgot-passwordApi';
 import './forgot-password.scss';
 
 const validationSchema = yup.object().shape({
@@ -24,9 +24,11 @@ export default function ForgotPassword() {
     const inputRefs = useRef([]);
     const [form] = Form.useForm();
     const [userEmail, setUserEmail] = useState('');
+    const navigate = useNavigate();
 
     // RTK Query hooks
     const [sendResetEmail] = useSendResetEmailMutation();
+    const [verifyOtp] = useVerifyOtpMutation();
 
     React.useEffect(() => {
         let interval;
@@ -87,25 +89,32 @@ export default function ForgotPassword() {
 
             // Call the sendResetEmail API
             const response = await sendResetEmail({ email: values.email }).unwrap();
-            
+
             message.success({
                 content: response.message || 'Verification code sent to your email!',
                 icon: <span className="success-icon">✓</span>
             });
-            
+
             setShowOtpVerification(true);
             setTimer(30);
         } catch (error) {
+            console.error('Error details:', error); // For debugging
             message.error({
-                content: error?.data?.message || 'Failed to send verification code. Please try again.',
-                icon: <span className="error-icon">×</span>
+                content: error.error || error.data?.message || 'An unexpected error occurred',
+                icon: <span className="error-icon">×</span>,
+                duration: 5 // Show error for 5 seconds
             });
+            // Clear form on error if needed
+            form.setFields([{
+                name: 'email',
+                errors: [error.error || error.data?.message || 'Please check your email and try again']
+            }]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleVerifyCode = () => {
+    const handleVerifyCode = async () => {
         const otpString = otp.join('');
         if (otpString.length !== 6) {
             message.error({
@@ -116,38 +125,87 @@ export default function ForgotPassword() {
         }
 
         setLoading(true);
-        // Simulate API verification
-        setTimeout(() => {
-            setLoading(false);
-            // Navigate to reset password page after verification
-            window.location.href = '/reset-password';
-        }, 1500);
-    };
+        try {
+            const response = await verifyOtp({
+                email: userEmail,
+                otp: otpString
+            }).unwrap();
 
-    const resendOTP = () => {
-        if (timer > 0) return;
-        setTimer(30);
-        // Call the sendResetEmail API again
-        sendResetEmail({ email: userEmail })
-            .unwrap()
-            .then(() => {
+            if (response.success) {
                 message.success({
-                    content: 'New verification code sent!',
+                    content: response.message || 'OTP verified successfully!',
                     icon: <span className="success-icon">✓</span>
                 });
-            })
-            .catch(() => {
+                navigate('/reset-password');
+            }
+        } catch (error) {
+            console.error('OTP verification error:', error);
+
+            // Handle specific OTP error cases
+            if (error.isOtpError) {
                 message.error({
-                    content: 'Failed to send new code',
-                    icon: <span className="error-icon">×</span>
+                    content: error.error,
+                    icon: <span className="error-icon">×</span>,
+                    duration: 5
                 });
+                setOtp(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
+            } else if (error.isOtpExpired) {
+                message.error({
+                    content: error.error,
+                    icon: <span className="error-icon">×</span>,
+                    duration: 5
+                });
+                setTimer(0);
+                setOtp(['', '', '', '', '', '']);
+                const resendButton = document.querySelector('.resend-button');
+                if (resendButton) {
+                    resendButton.click();
+                }
+            } else {
+                message.error({
+                    content: error.error || 'Verification failed. Please try again.',
+                    icon: <span className="error-icon">×</span>,
+                    duration: 5
+                });
+                setOtp(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resendOTP = async () => {
+        if (timer > 0) return;
+
+        try {
+            setLoading(true);
+            const response = await sendResetEmail({ email: userEmail }).unwrap();
+
+            setTimer(30);
+            message.success({
+                content: response.message || 'New verification code sent!',
+                icon: <span className="success-icon">✓</span>
             });
+        } catch (error) {
+            console.error('Resend OTP error:', error);
+            message.error({
+                content: error.error || 'Failed to send new code. Please try again.',
+                icon: <span className="error-icon">×</span>,
+                duration: 5
+            });
+            // If resend fails, allow immediate retry
+            setTimer(0);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <div className="forgot-password-container">
             <div className="forgot-password-split">
-               
+
                 <motion.div
                     className="illustration-side"
                     initial={{ opacity: 0, x: -20 }}
