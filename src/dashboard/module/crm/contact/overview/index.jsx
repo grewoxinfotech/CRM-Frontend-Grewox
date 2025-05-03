@@ -25,6 +25,11 @@ import { useGetDealsQuery } from '../../../crm/deal/services/dealApi';
 import { useGetCompanyAccountsQuery } from '../../companyacoount/services/companyAccountApi';
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 import './contactoverview.scss';
+import {
+  useGetSourcesQuery
+} from "../../crmsystem/souce/services/SourceApi.js";
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 // import ContactOverview from './ContactOverview';
 
 const { Title, Text } = Typography;
@@ -32,14 +37,17 @@ const { Title, Text } = Typography;
 const ContactDetails = () => {
     const { contactId } = useParams();
     const navigate = useNavigate();
+      const loggedInUser = useSelector(selectCurrentUser);
     const { data: contactsResponse, isLoading } = useGetContactsQuery();
     const { data: lead } = useGetLeadsQuery();
     const { data: deal } = useGetDealsQuery();
     const { data: companyAccounts } = useGetCompanyAccountsQuery();
     const { data: usersData } = useGetUsersQuery();
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
     const [updateContact] = useUpdateContactMutation();
 
     const leadsData = lead?.data || [];
+     const sources = sourcesData?.data || [];
     const dealsData = deal || [];
     const contacts = Array.isArray(contactsResponse?.data)
         ? contactsResponse.data
@@ -67,6 +75,11 @@ const ContactDetails = () => {
     const contactOwnerName = contact?.contact_owner && usersData?.data
         ? usersData.data.find(user => user.id === contact.contact_owner)?.username || contact.contact_owner
         : 'Not Assigned';
+
+        const getSourceName = (sourceId) => {
+    const source = sources.find((s) => s.id === sourceId);
+    return source?.name || "N/A";
+  };
 
     return (
         <div className="overview-content">
@@ -207,7 +220,7 @@ const ContactDetails = () => {
                             <div className="detail-info">
                                 <div className="detail-label">SOURCE</div>
                                 <div className="detail-value">
-                                    {contact?.contact_source || '-'}
+                                    {getSourceName(contact?.contact_source) || '-'}
                                 </div>
                             </div>
                         </div>

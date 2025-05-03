@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Modal,
   Form,
@@ -12,11 +12,13 @@ import {
   DatePicker,
   message,
   Switch,
+  Popconfirm,
 } from "antd";
 import {
   FiFileText,
   FiX,
   FiCalendar,
+  FiTrash2,
   FiUser,
   FiMail,
   FiPhone,
@@ -28,11 +30,18 @@ import {
   FiUsers,
   FiCopy,
   FiChevronDown,
+  
 } from "react-icons/fi";
+import { PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import "./companyaccount.scss";
 import { useCreateCompanyAccountMutation } from "./services/companyAccountApi";
 import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
+import {
+  useGetSourcesQuery,
+  useDeleteSourceMutation,
+} from "../crmsystem/souce/services/SourceApi";
+import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -54,6 +63,38 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
   // Get countries data
   const { data: countries = [] } = useGetAllCountriesQuery();
   const { defaultPhoneCode } = findIndianDefaults(countries);
+
+  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+
+  const sources = sourcesData?.data || [];
+
+  const [deleteSource] = useDeleteSourceMutation();
+
+
+  const [isAddSourceVisible, setIsAddSourceVisible] = useState(false);
+  const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false);
+  const sourceSelectRef = useRef(null);
+
+  // Add handlers for source and category
+  const handleAddSourceClick = (e) => {
+    e.stopPropagation();
+    setSourceDropdownOpen(false);
+    setIsAddSourceVisible(true);
+  };
+
+   // Source handlers
+   const handleDeleteSource = async (sourceId) => {
+    try {
+      await deleteSource(sourceId).unwrap();
+      message.success("Source deleted successfully");
+      // Clear the source field if the deleted source was selected
+      if (form.getFieldValue("source") === sourceId) {
+        form.setFieldValue("source", undefined);
+      }
+    } catch (error) {
+      message.error(error.data?.message || "Failed to delete source");
+    }
+  };
 
   // Initialize form with default values
   React.useEffect(() => {
@@ -103,6 +144,18 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
       });
     }
   };
+
+  // Add these consistent styles from CreateLead
+  const formItemStyle = {
+    fontSize: "14px",
+    fontWeight: "500",
+  };
+
+  const selectStyle = {
+    width: "100%",
+    height: "48px",
+  };
+
 
   return (
     <Modal
@@ -211,18 +264,35 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+          <Col span={12}>
               <Form.Item
-                name="company_site"
+                name="email"
                 label={
                   <span className="form-label">
-                    <FiGlobe />
-                    Company Site
+                    <FiMail />
+                    Email
                   </span>
                 }
               >
                 <Input
-                  placeholder="Enter company site"
+                  placeholder="Enter company email"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="website"
+                label={
+                  <span className="form-label">
+                    <FiGlobe />
+                    Website
+                  </span>
+                }
+              >
+                <Input
+                  placeholder="Enter company website"
                   size="large"
                   className="form-input"
                 />
@@ -303,6 +373,124 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                 </Input.Group>
               </Form.Item>
             </Col>
+            <Col span={12}>
+            <Form.Item
+                name="company_source"
+                label={
+                  <span style={formItemStyle}>
+                    Source <span style={{ color: "#ff4d4f" }}>*</span>
+                  </span>
+                }
+                rules={[{ required: true, message: "Source is required" }]}
+              >
+                <Select
+                  ref={sourceSelectRef}
+                  open={sourceDropdownOpen}
+                  onDropdownVisibleChange={setSourceDropdownOpen}
+                  placeholder="Select source"
+                  style={selectStyle}
+                  popupClassName="custom-select-dropdown"
+                  dropdownRender={(menu) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {menu}
+                      <Divider style={{ margin: "8px 0" }} />
+                      <div
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={handleAddSourceClick}
+                          style={{
+                            width: "100%",
+                            background:
+                              "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                            border: "none",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Add Source
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                >
+                  {sources.map((source) => (
+                    <Option key={source.id} value={source.id}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              backgroundColor: source.color || "#1890ff",
+                            }}
+                          />
+                          {source.name}
+                        </div>
+                        {form.getFieldValue("company_source") !== source.id && (
+                          <Popconfirm
+                            title="Delete Source"
+                            description="Are you sure you want to delete this source?"
+                            onConfirm={(e) => {
+                              e?.stopPropagation?.();
+                              handleDeleteSource(source.id);
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            placement="left"
+                          >
+                            <Button
+                              type="text"
+                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                              size="small"
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                opacity: 0.8,
+                                transition: "opacity 0.2s",
+                                "&:hover": {
+                                  opacity: 1,
+                                  backgroundColor: "transparent",
+                                },
+                              }}
+                            />
+                          </Popconfirm>
+                        )}
+                      </div>
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
           </Row>
         </div>
 
@@ -380,110 +568,6 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
               >
                 <Input
                   placeholder="Enter company revenue"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
-
-        <div className="form-section">
-          <Text strong className="section-title">Contact Information</Text>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="phone_number"
-                label={
-                  <span className="form-label">
-                    <FiPhone />
-                    Phone Number
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter phone number"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item
-                name="website"
-                label={
-                  <span className="form-label">
-                    <FiGlobe />
-                    Website
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter website"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="fax"
-                label={
-                  <span className="form-label">
-                    <FiPhone />
-                    Fax
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter fax number"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-
-            <Col span={12}>
-              <Form.Item
-                name="ownership"
-                label={
-                  <span className="form-label">
-                    <FiUsers />
-                    Ownership
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter ownership details"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </div>
-
-
-        <div className="form-section">
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="number_of_employees"
-                label={
-                  <span className="form-label">
-                    <FiUsers />
-                    Number of Employees
-                  </span>
-                }
-              >
-                <Input
-                  type="number"
-                  placeholder="Enter number of employees"
                   size="large"
                   className="form-input"
                 />
@@ -717,6 +801,16 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
           </Button>
         </div>
       </Form>
+
+      <AddSourceModal
+        isOpen={isAddSourceVisible}
+        onClose={(success) => {
+          setIsAddSourceVisible(false);
+          if (success) {
+            setSourceDropdownOpen(true);
+          }
+        }}
+      />
 
       <style jsx global>{`
         .company-account-form {

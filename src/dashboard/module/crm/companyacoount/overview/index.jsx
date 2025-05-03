@@ -23,6 +23,9 @@ import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from '../
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 import { useGetLeadsQuery } from '../../lead/services/LeadApi';
 import { useGetDealsQuery } from '../../deal/services/dealApi';
+import { useGetSourcesQuery } from '../../crmsystem/souce/services/SourceApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 
 const { Title, Text } = Typography;
 
@@ -34,13 +37,17 @@ const CompanyDetails = () => {
     const { data: lead } = useGetLeadsQuery();
     const { data: deal } = useGetDealsQuery();
     const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
-    const [ownerName, setOwnerName] = useState('');
+    // const [ownerName, setOwnerName] = useState('');
+    const loggedInUser = useSelector(selectCurrentUser);
+    const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
 
     const companies = Array.isArray(companyAccountsResponse?.data)
         ? companyAccountsResponse.data
         : Array.isArray(companyAccountsResponse)
             ? companyAccountsResponse
             : [];
+
+    const sources = sourcesData?.data || [];
 
     const company = companies.find(company => company.id === accountId);
 
@@ -54,14 +61,24 @@ const CompanyDetails = () => {
     const totalDealValue = deals.reduce((sum, deal) => sum + (Number(deal.value) || 0), 0);
     const totalRevenue = totalLeadValue + totalDealValue;
 
-    useEffect(() => {
-        if (company?.account_owner && usersData?.data) {
-            const owner = usersData.data.find(user => user.id === company.account_owner);
-            if (owner) {
-                setOwnerName(owner.name || `${owner.firstName} ${owner.lastName}`.trim());
-            }
-        }
-    }, [company?.account_owner, usersData]);
+     // Find contact owner's name
+     const ownerName = company?.account_owner && usersData?.data
+     ? usersData.data.find(user => user.id === company.account_owner)?.username || company.account_owner
+     : 'Not Assigned';
+
+     const getSourceName = (sourceId) => {
+        const source = sources.find((s) => s.id === sourceId);
+        return source?.name || "N/A";
+      };
+
+    // useEffect(() => {
+    //     if (company?.account_owner && usersData?.data) {
+    //         const owner = usersData.data.find(user => user.id === company.account_owner);
+    //         if (owner) {
+    //             setOwnerName(owner.name || `${owner.firstName} ${owner.lastName}`.trim());
+    //         }
+    //     }
+    // }, [company?.account_owner, usersData]);
 
     if (!company) return <div>Company not found</div>;
 
@@ -76,9 +93,9 @@ const CompanyDetails = () => {
                         <div className="profile-info">
                             <h2 className="company-name">{company?.company_name || 'Company Name'}</h2>
                             <div className="contact-name">
-                                <FiGlobe className="icon" />
-                                <a href={company?.company_site} target="_blank">
-                                    {company?.company_site || '-'}
+                                <FiMail className="icon" />
+                                <a href={company?.email} target="_blank">
+                                    {company?.email || '-'}
                                 </a>
                             </div>
                         </div>
@@ -87,12 +104,12 @@ const CompanyDetails = () => {
                 <div className="profile-stats">
                     <div className="stat-item">
                         <div className="stat-icon">
-                            <FiGlobe />
+                            <FiMail />
                         </div>
                         <div className="stat-content">
-                            <div className="stat-label">Website</div>
-                            <a href={company?.company_site} target="_blank" className="stat-value">
-                                {company?.company_site || '-'}
+                            <div className="stat-label">Email</div>
+                            <a href={company?.email} target="_blank" className="stat-value">
+                                {company?.email || '-'}
                             </a>
                         </div>
                     </div>
@@ -195,9 +212,9 @@ const CompanyDetails = () => {
                                     <FiActivity />
                                 </div>
                                 <div className="detail-info">
-                                    <div className="detail-label">Industry</div>
+                                    <div className="detail-label">SOURCE</div>
                                     <div className="detail-value">
-                                        {company?.company_industry || '-'}
+                                        {getSourceName(company?.company_source) || '-'}
                                     </div>
                                 </div>
                                 <div className="detail-indicator" />
@@ -212,7 +229,7 @@ const CompanyDetails = () => {
                                     <FiFolder />
                                 </div>
                                 <div className="detail-info">
-                                    <div className="detail-label">Category</div>
+                                    <div className="detail-label">Company Category</div>
                                     <div className="detail-value">{company?.company_category || '-'}</div>
                                 </div>
                                 <div className="detail-indicator" />
@@ -221,21 +238,20 @@ const CompanyDetails = () => {
                     </Col>
 
                     <Col xs={24} sm={12} md={6}>
-                        <div className="detail-card category-card">
-                            <div className="detail-content">
-                                <div className="detail-icon">
-                                    <FiClock />
+                    <div className="detail-card ownership-card">
+                        <div className="detail-content">
+                            <div className="detail-icon">
+                                <FiUsers />
+                            </div>
+                            <div className="detail-info">
+                                <div className="detail-label">OWNERSHIP</div>
+                                <div className="detail-value">
+                                    {ownerName}
                                 </div>
-                                <div className="detail-info">
-                                    <div className="detail-label">Ownership</div>
-                                    <div className="detail-value">
-                                        {company?.ownership || '-'}
-                                    </div>
-                                </div>
-                                <div className="detail-indicator" />
                             </div>
                         </div>
-                    </Col>
+                    </div>
+                </Col>
 
                     <Col xs={24} sm={12} md={6}>
                         <div className="detail-card status-card">
