@@ -310,17 +310,9 @@ const Users = () => {
                         onDelete={handleDelete}
                     />
                 ) : (
-                    <Row gutter={[16, 16]} className="user-cards-grid">
-                        {filteredUsers.map((user, index) => (
-                            <Col
-                                key={user.id}
-                                xs={24}
-                                sm={index === 0 ? 24 : 12}
-                                md={index === 0 ? 24 : 12}
-                                lg={index === 0 ? 24 : 12}
-                                xl={index === 0 ? 24 : 12}
-                                style={{ marginBottom: '16px' }}
-                            >
+                    <Row gutter={[16, 16]} style={{ margin: '0 -8px' }}>
+                        {filteredUsers.map(user => (
+                            <Col xs={24} sm={12} md={8} lg={6} key={user.id} style={{ padding: '8px' }}>
                                 <UserCard
                                     user={user}
                                     onEdit={handleEditUser}

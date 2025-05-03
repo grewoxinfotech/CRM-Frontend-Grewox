@@ -441,48 +441,6 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     }
   };
 
-  const handlePrint = () => {
-    const content = document.getElementById("invoice-content");
-    const printWindow = window.open("", "_blank");
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice?.salesInvoiceNumber}</title>
-          <style>
-            @page {
-              size: A4;
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              padding: 20px;
-              font-family: 'Segoe UI', sans-serif;
-              background: white;
-            }
-            .invoice-content {
-              padding: 40px;
-              background: white;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-content">
-            ${content.innerHTML}
-          </div>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
-  };
-
   const handleSendInvoice = async () => {
     try {
       const category = invoice.category || "customer";
@@ -1219,24 +1177,6 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                 gap: "12px",
               }}
             >
-              <Button
-                icon={<FiPrinter />}
-                onClick={handlePrint}
-                size="large"
-                style={{
-                  padding: "8px 24px",
-                  height: "44px",
-                  borderRadius: "10px",
-                  border: "1px solid #e6e8eb",
-                  fontWeight: "500",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                }}
-              >
-                Print
-              </Button>
               <Dropdown
                 menu={shareItems}
                 trigger={["click"]}

@@ -15,7 +15,6 @@ import { useGetDebitNotesQuery } from "../debitnote/services/debitnoteApi";
 import { QRCodeSVG } from "qrcode.react";
 import {
   FiDownload,
-  FiPrinter,
   FiMail,
   FiShare2,
   FiX,
@@ -210,49 +209,6 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
 
     // Fallback to bill link if no UPI ID
     return data.upiLink || `https://grewox.com/bill/${data.billNumber}`;
-  };
-
-  // Handle print function
-  const handlePrint = () => {
-    const content = document.getElementById("invoice-content");
-    const printWindow = window.open("", "_blank");
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice?.salesInvoiceNumber}</title>
-          <style>
-            @page {
-              size: A4;
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              padding: 20px;
-              font-family: 'Segoe UI', sans-serif;
-              background: white;
-            }
-            .invoice-content {
-              padding: 40px;
-              background: white;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-content">
-            ${content.innerHTML}
-          </div>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
   };
 
   // Handle share via email
@@ -680,8 +636,8 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                       <span className="detail-value">
                         {vendorDetails?.id
                           ? `#VEN${String(
-                              vendorsData?.data?.length || 1
-                            ).padStart(1, "0")}`
+                            vendorsData?.data?.length || 1
+                          ).padStart(1, "0")}`
                           : "-"}
                       </span>
                     </div>
@@ -753,9 +709,8 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                             : 0;
                           const taxAmount = Number(item.taxAmount) || 0;
                           const discount = item.discountValue
-                            ? `${item.discountValue}${
-                                item.discountType === "percentage" ? "%" : "₹"
-                              }`
+                            ? `${item.discountValue}${item.discountType === "percentage" ? "%" : "₹"
+                            }`
                             : "-";
                           const amount = Number(item.amount) || 0;
 
@@ -1032,24 +987,6 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
               gap: "12px",
             }}
           >
-            <Button
-              icon={<FiPrinter />}
-              onClick={handlePrint}
-              size="large"
-              style={{
-                padding: "8px 24px",
-                height: "44px",
-                borderRadius: "10px",
-                border: "1px solid #e6e8eb",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-              }}
-            >
-              Print
-            </Button>
             <Dropdown
               menu={shareItems}
               trigger={["click"]}

@@ -104,12 +104,21 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
             className="user-card modern-card"
             bordered={false}
             style={{
-                borderRadius: '16px',
+                borderRadius: '12px',
                 overflow: 'hidden',
                 background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
                 boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
                 height: '100%',
-                position: 'relative'
+                minHeight: '280px',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+            }}
+            bodyStyle={{
+                padding: '20px',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column'
             }}
             actions={[
                 <Button
@@ -128,17 +137,16 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                         justifyContent: 'center',
                         gap: '8px',
                         fontSize: '14px',
-                        fontWeight: '500'
+                        fontWeight: '500',
+                        margin: '0 1px'
                     }}
                 >
                     {getLoginButtonText(user.role_name)}
                 </Button>
             ]}
         >
-            <div className="card-top-pattern" />
-
-            <div className="user-card-header">
-                <div className="user-main-info">
+            <div className="user-card-header" style={{ marginBottom: '16px' }}>
+                <div className="user-main-info" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <Avatar
                         size={56}
                         src={user.profilePic}
@@ -149,14 +157,25 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '24px'
+                            fontSize: '24px',
+                            flexShrink: 0
                         }}
                     >
                         {!user.profilePic && getInitials(user.username)}
                     </Avatar>
-                    <div className="user-info">
-                        <h3>{user.username}</h3>
-                        <div className="role-wrapper">
+                    <div className="user-info" style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{
+                            margin: '0 0 8px 0',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            color: '#1f2937',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            {user.username}
+                        </h3>
+                        <div className="role-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div
                                 className="role-indicator"
                                 style={{
@@ -164,7 +183,8 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                                     height: '8px',
                                     borderRadius: '50%',
                                     background: roleStyle.color,
-                                    boxShadow: `0 0 8px ${roleStyle.color}`
+                                    boxShadow: `0 0 8px ${roleStyle.color}`,
+                                    flexShrink: 0
                                 }}
                             />
                             <Tag
@@ -180,11 +200,15 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                                     fontWeight: 500,
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '6px'
+                                    gap: '6px',
+                                    maxWidth: 'calc(100% - 16px)',
+                                    overflow: 'hidden'
                                 }}
                             >
-                                <FiUsers size={12} />
-                                {user.role_name || 'N/A'}
+                                <FiUsers size={12} style={{ flexShrink: 0 }} />
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {user.role_name || 'N/A'}
+                                </span>
                             </Tag>
                         </div>
                     </div>
@@ -198,39 +222,43 @@ const UserCard = ({ user, onEdit, onDelete, onView }) => {
                         type="text"
                         icon={<FiMoreVertical />}
                         className="action-dropdown-button"
+                        style={{
+                            position: 'absolute',
+                            top: '12px',
+                            right: '12px',
+                            height: '32px',
+                            width: '32px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 0,
+                            color: '#6b7280'
+                        }}
                     />
                 </Dropdown>
             </div>
 
-            <div className="user-details">
-                <div className="detail-item">
-                    <FiMail className="detail-icon" />
-                    <span className="detail-text">{user.email}</span>
-                </div>
-                <div className="detail-item">
-                    <FiCalendar className="detail-icon" />
-                    <div className="date-cell">
-                        <span className="date">
+            <div className="user-card-content" style={{ flex: 1 }}>
+                <div className="user-details" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="detail-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FiMail style={{ color: '#6b7280', fontSize: '16px' }} />
+                        <span style={{
+                            color: '#374151',
+                            fontSize: '14px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            {user.email}
+                        </span>
+                    </div>
+                    <div className="detail-item" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FiCalendar style={{ color: '#6b7280', fontSize: '16px' }} />
+                        <span style={{ color: '#374151', fontSize: '14px' }}>
                             {moment(user.created_at).format('MMM DD, YYYY')}
                         </span>
-                        <span className="time">
-                            {moment(user.created_at).format('h:mm A')}
-                        </span>
                     </div>
                 </div>
-                {user.updated_at && (
-                    <div className="detail-item">
-                        <FiCalendar className="detail-icon" />
-                        <div className="date-cell">
-                            <span className="date">
-                                {moment(user.updated_at).format('MMM DD, YYYY')}
-                            </span>
-                            <span className="time">
-                                {moment(user.updated_at).format('h:mm A')}
-                            </span>
-                        </div>
-                    </div>
-                )}
             </div>
         </Card>
     );
