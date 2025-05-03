@@ -400,9 +400,6 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                     Company Name
                   </span>
                 }
-                rules={[{ required: true, message: "Please select company" },
-                 
-                  ]}
                 >
                   <Select
                     placeholder="Select company"
@@ -419,15 +416,28 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                       {menu}
                       <Divider style={{ margin: '8px 0' }} />
                       <Button
-                        type="text"
+                        type="primary"
                         icon={<PlusOutlined />}
                         onClick={handleAddCompanyClick}
-                        style={{ width: '100%', textAlign: 'left' }}
+                        style={{
+                          width: '100%',
+                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                          border: 'none',
+                          height: '40px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                          fontWeight: '500',
+                        }}
                       >
                         Add New Company
                       </Button>
                     </>
                   )}
+
                 >
                   {companyAccounts.map((company) => (
                     <Option key={company.id} value={company.id} label={company.company_name}>
@@ -446,10 +456,9 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 name="contact_source"
                 label={
                   <span style={formItemStyle}>
-                    Source <span style={{ color: "#ff4d4f" }}>*</span>
+                    Source 
                   </span>
                 }
-                rules={[{ required: true, message: "Source is required" }]}
               >
                 <Select
                   ref={sourceSelectRef}

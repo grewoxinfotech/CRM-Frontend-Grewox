@@ -334,9 +334,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Email
                   </span>
                 }
-                rules={[
-                  { type: "email", message: "Please enter valid email" }
-                ]}
               >
                 <Input
                   placeholder="Enter email"
@@ -448,10 +445,22 @@ const EditContact = ({ open, onCancel, contactData }) => {
                       {menu}
                       <Divider style={{ margin: '8px 0' }} />
                       <Button
-                        type="text"
+                        type="primary"
                         icon={<PlusOutlined />}
                         onClick={handleAddCompanyClick}
-                        style={{ width: '100%', textAlign: 'left' }}
+                        style={{
+                          width: '100%',
+                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                          border: 'none',
+                          height: '40px',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                          fontWeight: '500',
+                        }}
                       >
                         Add New Company
                       </Button>
@@ -478,7 +487,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Source <span style={{ color: "#ff4d4f" }}>*</span>
                   </span>
                 }
-                rules={[{ required: true, message: "Source is required" }]}
               >
                 <Select
                   ref={sourceSelectRef}

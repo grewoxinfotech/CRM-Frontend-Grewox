@@ -23,7 +23,7 @@ import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from '../
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 import { useGetLeadsQuery } from '../../lead/services/LeadApi';
 import { useGetDealsQuery } from '../../deal/services/dealApi';
-import { useGetSourcesQuery } from '../../crmsystem/souce/services/SourceApi';
+import { useGetSourcesQuery,useGetCategoriesQuery } from '../../crmsystem/souce/services/SourceApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 
@@ -50,6 +50,14 @@ const CompanyDetails = () => {
     const sources = sourcesData?.data || [];
 
     const company = companies.find(company => company.id === accountId);
+
+    const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
+    const categories = categoriesData?.data || [];
+
+    const getCategoryName = (categoryId) => {
+        const category = categories.find((c) => c.id === categoryId);
+        return category?.name || "N/A";
+      };
 
     const leadsData = lead?.data || [];
     const dealsData = deal || [];
@@ -230,7 +238,7 @@ const CompanyDetails = () => {
                                 </div>
                                 <div className="detail-info">
                                     <div className="detail-label">Company Category</div>
-                                    <div className="detail-value">{company?.company_category || '-'}</div>
+                                    <div className="detail-value">{getCategoryName(company?.company_category) || '-'}</div>
                                 </div>
                                 <div className="detail-indicator" />
                             </div>

@@ -40,8 +40,11 @@ import { useGetAllCountriesQuery } from '../../../module/settings/services/setti
 import {
   useGetSourcesQuery,
   useDeleteSourceMutation,
+  useGetCategoriesQuery,
+  useDeleteCategoryMutation
 } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
+import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -55,7 +58,7 @@ const findIndianDefaults = (countries) => {
   };
 };
 
-const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
+const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categoriesData }) => {
   const [form] = Form.useForm();
   const [copyBillingToShipping, setCopyBillingToShipping] = useState(false);
   const { data: usersData } = useGetUsersQuery();
@@ -66,15 +69,24 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
   const { defaultPhoneCode } = findIndianDefaults(countries);
 
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: categoriesDataFromApi } = useGetCategoriesQuery(loggedInUser?.id);
 
   const sources = sourcesData?.data || [];
+  const categories = categoriesDataFromApi?.data || categoriesData?.data || [];
 
   const [deleteSource] = useDeleteSourceMutation();
 
+  const [isAddCategoryVisible, setIsAddCategoryVisible] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categorySelectRef = React.useRef(null);
+  const [deleteCategory] = useDeleteCategoryMutation();
 
   const [isAddSourceVisible, setIsAddSourceVisible] = useState(false);
   const [sourceDropdownOpen, setSourceDropdownOpen] = useState(false);
   const sourceSelectRef = useRef(null);
+
+   // Find others category
+   const othersCategory = categories?.find(cat => cat.name.toLowerCase() === "others") || null;
 
   // Add handlers for source and category
   const handleAddSourceClick = (e) => {
@@ -83,14 +95,36 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
     setIsAddSourceVisible(true);
   };
 
+   // Handle add category click
+   const handleAddCategoryClick = (e) => {
+    e.stopPropagation();
+    setCategoryDropdownOpen(false);
+    setIsAddCategoryVisible(true);
+  };
+
+  // Handle category deletion
+  const handleDeleteCategory = async (e, categoryId) => {
+    e.stopPropagation();
+    try {
+      await deleteCategory(categoryId).unwrap();
+      message.success("Category deleted successfully");
+      // Clear the category field if the deleted category was selected
+      if (form.getFieldValue('company_category') === categoryId) {
+        form.setFieldValue('company_category', undefined);
+      }
+    } catch (error) {
+      message.error(error.data?.message || "Failed to delete category");
+    }
+  };
+
    // Source handlers
    const handleDeleteSource = async (sourceId) => {
     try {
       await deleteSource(sourceId).unwrap();
       message.success("Source deleted successfully");
       // Clear the source field if the deleted source was selected
-      if (form.getFieldValue("source") === sourceId) {
-        form.setFieldValue("source", undefined);
+      if (form.getFieldValue("company_source") === sourceId) {
+        form.setFieldValue("company_source", undefined);
       }
     } catch (error) {
       message.error(error.data?.message || "Failed to delete source");
@@ -169,6 +203,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
 
       const updatedCompanyData = {
         ...values,
+        category: values.company_category || othersCategory?.id,
         account_owner: accountOwnerId,
         registrationDate: values.registrationDate ? values.registrationDate.format('YYYY-MM-DD') : null,
         phone_code: selectedCountry?.id || "",
@@ -250,7 +285,6 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                     Account Owner 
                   </span>
                 }
-
                 rules={[{ required: true, message: "Please enter account owner" }]}
               >
                 <Input
@@ -336,7 +370,6 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                     name="phoneCode"
                     noStyle
                     initialValue={defaultPhoneCode}
-                    rules={[{ required: true, message: 'Please select country code' }]}
                   >
                     <Select
                       style={{ width: '120px' }}
@@ -364,7 +397,6 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                     name="phone_number"
                     noStyle
                     rules={[
-                      { required: true, message: 'Please enter company number' },
                       { pattern: /^\d+$/, message: 'Please enter only numbers' },
                       { min: 10, message: 'Phone number must be at least 10 digits' },
                       { max: 15, message: 'Phone number cannot exceed 15 digits' },
@@ -398,10 +430,9 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
                 name="company_source"
                 label={
                   <span style={formItemStyle}>
-                    Source <span style={{ color: "#ff4d4f" }}>*</span>
+                    Source 
                   </span>
                 }
-                rules={[{ required: true, message: "Source is required" }]}
               >
                 <Select
                   ref={sourceSelectRef}
@@ -539,21 +570,127 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
             </Col>
 
             <Col span={12}>
-              <Form.Item
-                name="company_category"
-                label={
-                  <span className="form-label">
-                    <FiTag />
-                    Company Category
-                  </span>
+            <Form.Item
+            name="company_category"
+            label={<span style={formItemStyle}>Category</span>}
+          >
+            <Select
+              ref={categorySelectRef}
+              open={categoryDropdownOpen}
+              onDropdownVisibleChange={setCategoryDropdownOpen}
+              placeholder="Select or type to filter categories"
+              style={{
+                ...selectStyle,
+                dropdownStyle: {
+                  maxHeight: '400px',
+                  overflow: 'hidden'
                 }
-              >
-                <Input
-                  placeholder="Enter company category"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
+              }}
+              showSearch
+              allowClear
+              filterOption={(input, option) =>
+                option.children.props.children[0].props.children[1].toLowerCase().includes(input.toLowerCase())
+              }
+              dropdownRender={(menu) => (
+                <div
+                  style={{
+                    position: 'relative',
+                    maxHeight: '400px'
+                  }}
+                >
+                  <div style={{
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    paddingBottom: '48px'
+                  }}>
+                    {menu}
+                  </div>
+                  <div style={{
+                    position: 'sticky',
+                    bottom: 0,
+                    padding: '8px 12px',
+                    borderTop: '1px solid #f0f0f0',
+                    backgroundColor: '#ffffff',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={handleAddCategoryClick}
+                      style={{
+                        width: '100%',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Add Category
+                    </Button>
+                  </div>
+                </div>
+              )}
+            >
+              {categories?.map((category) => (
+                <Option key={category.id} value={category.id}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: category.color || '#1890ff'
+                        }}
+                      />
+                      {category.name}
+                    </div>
+                    {form.getFieldValue('company_category') !== category.id && (
+                      <Popconfirm
+                        title="Delete Category"
+                        description="Are you sure you want to delete this category?"
+                        onConfirm={(e) => handleDeleteCategory(e, category.id)}
+                        onCancel={(e) => e.stopPropagation()}
+                        okText="Yes"
+                        cancelText="No"
+                        placement="left"
+                      >
+                        <Button
+                          type="text"
+                          icon={<FiTrash2 style={{ color: '#ff4d4f' }} />}
+                          size="small"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            opacity: 0.8,
+                            transition: 'opacity 0.2s',
+                            ':hover': {
+                              opacity: 1,
+                              backgroundColor: 'transparent'
+                            }
+                          }}
+                        />
+                      </Popconfirm>
+                    )}
+                  </div>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
             </Col>
           </Row>
 
@@ -841,6 +978,16 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser }) => {
           </Button>
         </div>
       </Form>
+
+      <AddCategoryModal
+        isOpen={isAddCategoryVisible}
+        onClose={(success) => {
+          setIsAddCategoryVisible(false);
+          if (success) {
+            setCategoryDropdownOpen(true);
+          }
+        }}
+      />
 
       <AddSourceModal
         isOpen={isAddSourceVisible}

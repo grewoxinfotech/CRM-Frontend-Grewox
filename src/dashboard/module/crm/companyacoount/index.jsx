@@ -28,6 +28,9 @@ import EditCompanyAccount from "./EditCompanyAccount";
 import { useCreateCompanyAccountMutation, useDeleteCompanyAccountMutation, useGetCompanyAccountsQuery } from "./services/companyAccountApi";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import {
+  useGetCategoriesQuery,
+} from "../crmsystem/souce/services/SourceApi";
 import CompanyAccountDetails from "./CompanyAccountDetails";
 import moment from "moment";
 import { useGetAllCountriesQuery } from '../../../module/settings/services/settingsApi';
@@ -46,6 +49,7 @@ const CompanyAccount = () => {
   const [createCompanyAccount] = useCreateCompanyAccountMutation();
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
+  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
 
   const companyTypes = [
     { key: 'all', label: 'All Types' },
@@ -288,6 +292,7 @@ const CompanyAccount = () => {
           onDelete={handleDelete}
           searchText={searchText}
           loggedInUser={loggedInUser}
+          categoriesData={categoriesData}
           companyAccountsResponse={companyAccountsResponse}
           isCompanyAccountsLoading={isCompanyAccountsLoading}
           countries={countries}
@@ -297,7 +302,7 @@ const CompanyAccount = () => {
       <CreateCompanyAccount
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
-
+        categoriesData={categoriesData}
         loggedInUser={loggedInUser}
         companyAccountsResponse={companyAccountsResponse}
 
@@ -307,7 +312,7 @@ const CompanyAccount = () => {
       <EditCompanyAccount
         open={isEditModalOpen}
         onCancel={() => setIsEditModalOpen(false)}
-
+        categoriesData={categoriesData}
         companyData={selectedCompany}
         loggedInUser={loggedInUser}
         companyAccountsResponse={companyAccountsResponse}
