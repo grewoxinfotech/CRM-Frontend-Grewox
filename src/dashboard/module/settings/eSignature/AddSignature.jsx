@@ -255,6 +255,7 @@ const AddSignature = ({ visible, onCancel, isEditing, initialValues, onSuccess }
                             gap: '8px',
                             marginBottom: '24px',
                             background: '#f8fafc',
+                            marginTop: '8px',
                             padding: '4px',
                             borderRadius: '10px',
                             border: '1px solid #e6e8eb',

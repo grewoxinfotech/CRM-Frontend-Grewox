@@ -153,7 +153,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error("Failed to create company account");
+      message.error(error.data?.message || 'Failed to create contact');
     }
   };
 

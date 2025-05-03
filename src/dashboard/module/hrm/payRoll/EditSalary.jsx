@@ -393,7 +393,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '8px' }}>
             <Form.Item
               name="salary_group"
               label={
@@ -474,7 +474,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '8px' }}>
             <Form.Item
               name="net_salary_group"
               label={

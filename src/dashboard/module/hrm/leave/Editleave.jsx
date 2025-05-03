@@ -360,7 +360,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '8px' }}>
             <Form.Item
               name="startDate"
               label={
@@ -377,6 +377,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                  height: "48px",
                 }}
                 size="large"
                 format="DD-MM-YYYY"
@@ -384,7 +385,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '8px' }}>
             <Form.Item
               name="endDate"
               label={
@@ -401,6 +402,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
                 style={{
                   width: "100%",
                   borderRadius: "10px",
+                  height: "48px",
                 }}
                 size="large"
                 format="DD-MM-YYYY"

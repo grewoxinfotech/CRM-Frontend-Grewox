@@ -102,6 +102,42 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
     return [];
   }, [companyAccountsResponse]);
 
+  // const handleSubmit = async (values) => {
+  //   try {
+  //     // Get the selected country's phone code
+  //     const selectedCountry = countries.find(c => c.id === values.phoneCode);
+  //     const phoneNumber = values.phone ? values.phone.replace(/^0+/, '') : '';
+
+  //     const contactData = {
+  //       contact_owner: loggedInUser?.id || "",
+  //       first_name: values.first_name || "",
+  //       last_name: values.last_name || "",
+  //       company_name: values.company_name || "",
+  //       email: values.email || "",
+  //       phone_code: selectedCountry?.id || "",
+  //       phone: phoneNumber,
+  //       contact_source: values.contact_source || "",
+  //       description: values.description || "",
+  //       address: values.address || "",
+  //       city: values.city || "",
+  //       state: values.state || "",
+  //       country: values.country || "",
+  //       section: "contact",
+  //       contact_source: values.contact_source || "",
+  //       client_id: loggedInUser?.client_id || "",
+  //     };
+
+  //     await createContact(contactData);
+  //     message.success("Contact created successfully");
+  //     form.resetFields();
+  //     onCancel();
+  //   } catch (error) {
+  //     console.error("Submit Error:", error);
+  //     message.error(error.data?.message || 'Failed to create contact');
+  //   }
+  // };
+
+  // ... existing code ...
   const handleSubmit = async (values) => {
     try {
       // Get the selected country's phone code
@@ -127,15 +163,28 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         client_id: loggedInUser?.client_id || "",
       };
 
-      await createContact(contactData);
+      const response = await createContact(contactData).unwrap();
+
+      // Check if response contains error
+      if (response.error) {
+        message.error(response.error);
+        return; // Don't close modal or reset form
+      }
+
       message.success("Contact created successfully");
       form.resetFields();
       onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
-      message.error("Failed to create contact");
+      // Check for specific error messages
+      if (error.data?.message?.includes("already exists")) {
+        message.error("Contact with this name already exists");
+      } else {
+        message.error(error.data?.message || 'Failed to create contact');
+      }
     }
   };
+
 
    // Add these consistent styles from CreateLead
    const formItemStyle = {

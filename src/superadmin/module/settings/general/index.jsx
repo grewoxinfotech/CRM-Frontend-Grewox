@@ -148,13 +148,8 @@ const GeneralSettings = () => {
       formData.append("companyName", values.companyName);
       formData.append("title", values.title);
 
-      // Only append termsandconditions if it has a value
-      if (
-        values.termsandconditions &&
-        values.termsandconditions.trim() !== ""
-      ) {
-        formData.append("termsandconditions", values.termsandconditions);
-      }
+      // Add terms and conditions
+      formData.append("termsandconditions", termsContent || "");
 
       // Add merchant fields
       formData.append("merchant_name", values.merchant_name || "");
@@ -167,22 +162,17 @@ const GeneralSettings = () => {
 
       // Add files
       formData.append("companylogo", selectedLogo);
-      // formData.append('favicon', selectedFavicon);
-
-      // Log the FormData contents for debugging
 
       // Create a plain object to show the payload structure
       const payloadObject = {
         companyName: values.companyName,
         title: values.title,
-        termsandconditions: values.termsandconditions,
+        termsandconditions: termsContent,
         merchant_name: values.merchant_name,
         merchant_upi_id: values.merchant_upi_id,
         companylogo: selectedLogo ? selectedLogo.name : null,
         favicon: selectedFavicon ? selectedFavicon.name : null,
       };
-
-      // console.log("Payload object:", payloadObject);
 
       // Call the API with the FormData
       const response = await createSetting({ id, data: formData }).unwrap();
@@ -191,6 +181,7 @@ const GeneralSettings = () => {
         // Update the saved data with the response
         const updatedSettings = {
           ...values,
+          termsandconditions: termsContent,
           companylogo: response.data?.companylogo,
           favicon: response.data?.favicon,
         };
@@ -370,11 +361,17 @@ const GeneralSettings = () => {
               <Button
                 icon={<EditOutlined />}
                 onClick={handleEdit}
-                type="primary"
+                type="primary" 
+                style={{
+                  height: "40px",
+                }}
               >
                 Edit
               </Button>
-              <Button icon={<DeleteOutlined />} onClick={handleDelete} danger>
+              <Button icon={<DeleteOutlined />} onClick={handleDelete} danger style={{
+                  height: "40px",
+                }}
+              >
                 Delete
               </Button>
             </Space>

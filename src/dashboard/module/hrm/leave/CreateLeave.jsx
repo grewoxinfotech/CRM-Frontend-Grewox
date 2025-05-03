@@ -345,7 +345,7 @@ const CreateLeave = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '8px' }}>
             <Form.Item
               name="startDate"
               label={
@@ -361,6 +361,7 @@ const CreateLeave = ({ open, onCancel }) => {
               <DatePicker
                 style={{
                   width: "100%",
+                  height: "48px",
                   borderRadius: "10px",
                 }}
                 size="large"
@@ -369,7 +370,7 @@ const CreateLeave = ({ open, onCancel }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '8px' }}>
             <Form.Item
               name="endDate"
               label={
@@ -385,6 +386,7 @@ const CreateLeave = ({ open, onCancel }) => {
               <DatePicker
                 style={{
                   width: "100%",
+                  height: "48px",
                   borderRadius: "10px",
                 }}
                 size="large"

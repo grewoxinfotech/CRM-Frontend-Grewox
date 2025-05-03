@@ -365,10 +365,10 @@ const CreateMeeting = ({
                                         background: '#f4f6fa',
                                         borderRadius: 6,
                                         padding: '2px 8px',
-                                        color: '#7c3aed',
+                                        // color: '#7c3aed',
                                         fontWeight: 500,
                                         fontSize: 13,
-                                        border: '1px solidrgb(9, 12, 24)',
+                                        // border: '1px solidrgb(9, 12, 24)',
                                         marginLeft: 4,
                                         display: 'inline-block'
                                     }}>

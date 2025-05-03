@@ -41,7 +41,7 @@ const EditMeeting = ({
     loading
 }) => {
     const [form] = Form.useForm();
-    
+
     const { data: subClientsData, isLoading: subClientsLoading } = useGetAllSubclientsQuery();
     const { data: departmentsData, isLoading: departmentsLoading } = useGetAllDepartmentsQuery();
     const { data: employeesData, isLoading: employeesLoading } = useGetEmployeesQuery();
@@ -197,7 +197,7 @@ const EditMeeting = ({
         }
     };
 
-    
+
 
     return (
         <Modal
@@ -323,17 +323,17 @@ const EditMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please enter meeting title' },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value) return Promise.resolve();
-                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                                            return Promise.reject(
-                                                new Error('Meeting title must contain both uppercase and lowercase English letters')
-                                            );
-                                        }
-                                        return Promise.resolve();
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Meeting title must contain both uppercase and lowercase English letters')
+                                        );
                                     }
+                                    return Promise.resolve();
                                 }
+                            }
                             ]}
                         >
                             <Input
@@ -425,10 +425,10 @@ const EditMeeting = ({
                                         background: '#f4f6fa',
                                         borderRadius: 6,
                                         padding: '2px 8px',
-                                        color: '#7c3aed',
+                                        // color: '#7c3aed',
                                         fontWeight: 500,
                                         fontSize: 13,
-                                        border: '1px solid #e0e7ff',
+                                        // border: '1px solid #e0e7ff',
                                         marginLeft: 4,
                                         display: 'inline-block'
                                     }}>
@@ -443,7 +443,7 @@ const EditMeeting = ({
                                     const roleStyle = getRoleStyle(emp.role);
                                     return (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 6px', borderRadius: 6, background: '#f4f6fa', marginRight: 4 }}>
-                                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#e6f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center',textTransform: 'uppercase', fontSize: 13, fontWeight: 500, overflow: 'hidden' }}>
+                                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#e6f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', textTransform: 'uppercase', fontSize: 13, fontWeight: 500, overflow: 'hidden' }}>
                                                 {emp.avatar ? (
                                                     <img src={emp.avatar} alt={emp.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
                                                 ) : (
@@ -510,7 +510,7 @@ const EditMeeting = ({
                                     value: client.id,
                                     label: client.username
                                 })) || []}
-                                   
+
                                 filterOption={(input, option) =>
                                     option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                 }
@@ -522,9 +522,9 @@ const EditMeeting = ({
                             name="date"
                             label="Meeting Date"
                         >
-                            <DatePicker 
+                            <DatePicker
                                 format="DD-MM-YYYY"
-                                style={{ width: '100%' , height: '48px'}}
+                                style={{ width: '100%', height: '48px' }}
                             />
                         </Form.Item>
                     </Col>
@@ -533,9 +533,9 @@ const EditMeeting = ({
                             name="startTime"
                             label="Start Time"
                         >
-                            <TimePicker 
+                            <TimePicker
                                 format="HH:mm"
-                                style={{ width: '100%' , height: '48px'}}
+                                style={{ width: '100%', height: '48px' }}
                             />
                         </Form.Item>
                     </Col>
@@ -544,9 +544,9 @@ const EditMeeting = ({
                             name="endTime"
                             label="End Time"
                         >
-                            <TimePicker 
+                            <TimePicker
                                 format="HH:mm"
-                                style={{ width: '100%' , height: '48px'}}
+                                style={{ width: '100%', height: '48px' }}
                             />
                         </Form.Item>
                     </Col>
