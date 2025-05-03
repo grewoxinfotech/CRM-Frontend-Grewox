@@ -12,14 +12,11 @@ export const taskApi = createApi({
         method: "GET",
       }),
       transformResponse: (response) => {
-        console.log('Raw API Response:', JSON.stringify(response, null, 2));
         if (response?.data) {
           const transformedData = {
             ...response,
             data: response.data.map(task => {
-              console.log('Processing task:', task);
               if (!task.taskName) {
-                console.warn('Task with missing taskName:', task);
               }
               return {
                 ...task,
@@ -45,7 +42,6 @@ export const taskApi = createApi({
 
     updateTask: builder.mutation({
       query: ({ id, data }) => {
-        console.log("Update Task Request Data:", JSON.stringify(data, null, 2));
         return {
           url: `/tasks/${id}`,
           method: "PUT",
@@ -53,9 +49,7 @@ export const taskApi = createApi({
         };
       },
       transformResponse: (response) => {
-        console.log('Update Task Response:', JSON.stringify(response, null, 2));
         if (!response?.taskName) {
-          console.warn('Update response missing taskName:', response);
         }
         return response;
       },

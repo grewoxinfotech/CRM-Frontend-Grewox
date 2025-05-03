@@ -31,6 +31,9 @@ import moment from "moment";
 import { useUpdateTaskMutation } from "./services/taskApi";
 import { useGetRolesQuery } from "../../hrm/role/services/roleApi";
 import CreateUser from "../../user-management/users/CreateUser";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import { useSelector } from "react-redux";
+
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -43,6 +46,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
   const { data: rolesData } = useGetRolesQuery();
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+  const currentUser = useSelector(selectCurrentUser);
 
   // Add style constants
   const formItemStyle = {
@@ -80,6 +84,19 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
       return Array.isArray(assignTo) ? assignTo : [];
     }
   };
+
+  // Get subclient role ID to filter it out
+  const subclientRoleId = rolesData?.data?.find(
+    (role) => role?.role_name === "sub-client"
+  )?.id;
+
+  // Filter users to get team members (excluding subclients)
+  const teamMembers =
+    users?.filter(
+      (user) =>
+        user?.created_by === currentUser?.username &&
+        user?.role_id !== subclientRoleId
+    ) || [];
 
   useEffect(() => {
     if (initialValues) {
@@ -324,10 +341,10 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
                 if (!value) return Promise.resolve();
                 if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                   return Promise.reject(
-                      new Error('Task name must contain both uppercase or lowercase English letters')
+                    new Error('Task name must contain both uppercase or lowercase English letters')
                   );
-              }
-              return Promise.resolve();
+                }
+                return Promise.resolve();
               }
             }
           ]}
@@ -373,7 +390,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             popupClassName="team-members-dropdown"
             optionFilterProp="children"
           >
-            {users.map((user) => {
+            {teamMembers.map((user) => {
               const userRole = rolesData?.data?.find(
                 (role) => role.id === user.role_id
               );
@@ -831,7 +848,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               </>
             )}
           >
-            {users.map((user) => {
+            {teamMembers.map((user) => {
               const userRole = rolesData?.data?.find(
                 (role) => role.id === user.role_id
               );

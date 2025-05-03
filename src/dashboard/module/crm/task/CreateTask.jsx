@@ -360,10 +360,10 @@ const CreateTask = ({
                 if (!value) return Promise.resolve();
                 if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                   return Promise.reject(
-                      new Error('Task name must contain both uppercase or lowercase English letters')
+                    new Error('Task name must contain both uppercase or lowercase English letters')
                   );
-              }
-              return Promise.resolve();
+                }
+                return Promise.resolve();
               }
             }
           ]}
@@ -882,7 +882,7 @@ const CreateTask = ({
             popupClassName="team-members-dropdown"
             optionFilterProp="children"
           >
-            {users.map((user) => {
+            {teamMembers.map((user) => {
               const userRole = rolesData?.data?.find(
                 (role) => role.id === user.role_id
               );

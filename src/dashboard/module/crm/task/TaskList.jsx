@@ -13,7 +13,10 @@ const TaskDetailCard = ({ record, users, visible, onClose }) => {
                 const parsed = JSON.parse(assignTo);
                 return parsed?.assignedusers || [];
             }
-            return assignTo?.assignedusers || [];
+            if (assignTo?.assignedusers) {
+                return assignTo.assignedusers;
+            }
+            return Array.isArray(assignTo) ? assignTo : [];
         } catch (error) {
             console.log('Error parsing assignTo:', error);
             return [];
@@ -261,6 +264,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
     const [selectedTask, setSelectedTask] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
+
     // console.log('Raw Tasks in TaskList:', JSON.stringify(tasks, null, 2));
 
     const userMap = useMemo(() => {
@@ -269,7 +273,6 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             return acc;
         }, {});
     }, [users]);
-
     // Validate and transform tasks data
     const validTasks = useMemo(() => {
         return tasks.map(task => {
@@ -288,30 +291,14 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 created_by: task.created_by || 'Unknown',
                 task_reporter: task.task_reporter || ''
             };
-                // console.log('Validated task:', validatedTask);
+            // console.log('Validated task:', validatedTask);
             return validatedTask;
         });
     }, [tasks]);
 
-    // Define status options
-    const statusOptions = [
-        { id: 'Pending', name: 'Pending' },
-        { id: 'In Progress', name: 'In Progress' },
-        { id: 'Completed', name: 'Completed' }
-    ];
-
-    // Define priority options
-    const priorityOptions = [
-        { id: 'Low', name: 'Low' },
-        { id: 'Medium', name: 'Medium' },
-        { id: 'High', name: 'High' }
-    ];
-
-    // Define date options
 
     const filteredTasks = useMemo(() => {
         const tasksArray = Array.isArray(validTasks) ? validTasks : [];
-        console.log('Filtered tasks before filtering:', tasksArray);
 
         const filtered = tasksArray.filter(task => {
             const taskName = task?.taskName?.toLowerCase() || '';
@@ -339,8 +326,6 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
 
             return matchesSearch && matchesPriority && matchesStatus && matchesDateRange;
         });
-
-        console.log('Filtered tasks after filtering:', filtered);
         return filtered;
     }, [validTasks, searchText, filters, userMap]);
 
@@ -377,9 +362,12 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
         try {
             if (typeof assignTo === 'string') {
                 const parsed = JSON.parse(assignTo);
-                return parsed?.assignedusers || []; // Changed from users to assignedusers
+                return parsed?.assignedusers || [];
             }
-            return assignTo?.assignedusers || []; // Changed from users to assignedusers
+            if (assignTo?.assignedusers) {
+                return assignTo.assignedusers;
+            }
+            return Array.isArray(assignTo) ? assignTo : [];
         } catch (error) {
             console.error('Error parsing assignTo:', error);
             return [];
@@ -436,34 +424,21 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 const assignedUsers = getAssignedUsers(assignTo);
 
                 if (assignedUsers.length === 0) {
-                    return <Text type="secondary">Unassigned</Text>;
+                    return <Text type="secondary">-</Text>;
                 }
 
                 return (
-                    <Avatar.Group
-                        maxCount={2}
-                        maxStyle={{
-                            color: '#f56a00',
-                            backgroundColor: '#fde3cf',
-                        }}
-                    >
-                        {assignedUsers.map((userId) => {
-                            const user = userMap[userId];
-                            if (!user) return null;
-                            return (
-                                <Tooltip key={userId} title={user.username || user.email}>
-                                    <Avatar
-                                        src={user.profilePic}
-                                        style={{
-                                            backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
-                                        }}
-                                    >
-                                        {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
-                                    </Avatar>
-                                </Tooltip>
-                            );
-                        })}
-                    </Avatar.Group>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Avatar
+                            src={userMap[assignedUsers[0]]?.profilePic}
+                            style={{
+                                backgroundColor: userMap[assignedUsers[0]]?.profilePic ? 'transparent' : '#1890ff'
+                            }}
+                        >
+                            {!userMap[assignedUsers[0]]?.profilePic && (userMap[assignedUsers[0]]?.username?.[0] || userMap[assignedUsers[0]]?.email?.[0] || '').toUpperCase()}
+                        </Avatar>
+                        <Text>{userMap[assignedUsers[0]]?.username || userMap[assignedUsers[0]]?.email}</Text>
+                    </div>
                 );
             },
         },
@@ -611,8 +586,8 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 className="task-table"
                 onRow={(record) => ({
                     onClick: (e) => {
-                        if (!e.target.closest('.ant-dropdown-trigger') && 
-                            !e.target.closest('.ant-dropdown') && 
+                        if (!e.target.closest('.ant-dropdown-trigger') &&
+                            !e.target.closest('.ant-dropdown') &&
                             !e.target.closest('.ant-dropdown-menu')) {
                             handleView(record);
                         }

@@ -9,7 +9,6 @@ export const policyApi = createApi({
         getAllPolicies: builder.query({
             query: () => '/policies',
             transformResponse: (response) => {
-                console.log('Raw API Response:', response);
                 const policies = Array.isArray(response) ? response : response?.data || [];
                 return {
                     data: policies,
@@ -18,7 +17,6 @@ export const policyApi = createApi({
                 };
             },
             transformErrorResponse: (response) => {
-                console.error('API Error:', response);
                 return {
                     data: [],
                     total: 0,

@@ -148,67 +148,103 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
   const renderBillingDetails = () => {
     if (!billingData) {
-      return "Loading details...";
+      return <Text type="secondary">Loading details...</Text>;
     }
 
     return (
-      <>
-        {`Name: ${billingData.name}`}
-        <br />
-        {/* {billingData.email && `Email: ${billingData.email}`}<br /> */}
-        {billingData.contact && `Phone: ${billingData.contact}`}
-        <br />
-        {/* {billingData?.address && (
-          <>
-            Address:<br />
-            {typeof billingData.address === 'string' ? 
-              billingData.address : 
-              tryParseAddress(billingData.address)
-            }
-          </>
-        )} */}
-      </>
+      <div>
+        <Text>{billingData.name || 'N/A'}</Text>
+        {billingData.contact && (
+          <div>
+            <Text>Phone: {billingData.contact}</Text>
+          </div>
+        )}
+      </div>
     );
   };
 
   const tryParseAddress = (address) => {
     try {
-      if (typeof address === "string") {
-        const parsed = JSON.parse(address);
-        return (
-          <>
-            {parsed.street && `${parsed.street},`}
-            <br />
-            {parsed.city && `${parsed.city},`} {parsed.state}
-            <br />
-            {parsed.country} {parsed.postal_code}
-          </>
-        );
+      if (typeof address === 'string') {
+        try {
+          const parsed = JSON.parse(address);
+          return (
+            <div>
+              {parsed.street && <div>{parsed.street}</div>}
+              {(parsed.city || parsed.state) && (
+                <div>
+                  {parsed.city && `${parsed.city}, `}
+                  {parsed.state}
+                </div>
+              )}
+              {(parsed.country || parsed.postal_code) && (
+                <div>
+                  {parsed.country} {parsed.postal_code}
+                </div>
+              )}
+            </div>
+          );
+        } catch (e) {
+          return <Text>{address}</Text>;
+        }
       }
-      return address;
+      return <Text>{String(address) || 'N/A'}</Text>;
     } catch (error) {
-      return address;
+      return <Text type="secondary">N/A</Text>;
     }
   };
 
-  // Update getPaymentUrl function
+  // Update the getPaymentUrl function to handle errors
   const getPaymentUrl = () => {
-    if (!invoice) return "";
+    try {
+      if (!invoice) return '';
 
-    // If there's a UPI ID, create a UPI payment URL
-    if (merchantUpiId) {
-      const amount = Number(invoice?.amount || 0);
-      const tr = invoice?.salesInvoiceNumber || "";
-      const pn = companyName || "Merchant";
+      if (merchantUpiId) {
+        const amount = Number(invoice?.amount || 0);
+        const tr = invoice?.salesInvoiceNumber || '';
+        const pn = encodeURIComponent(companyName || 'Merchant');
 
-      // Create UPI URL with parameters
-      return `upi://pay?pa=${merchantUpiId}&pn=${encodeURIComponent(
-        pn
-      )}&am=${amount}&tr=${tr}&tn=Invoice%20Payment`;
+        return `upi://pay?pa=${merchantUpiId}&pn=${pn}&am=${amount}&tr=${tr}&tn=Invoice%20Payment`;
+      }
+
+      return `${window.location.origin}/invoice/${invoice.salesInvoiceNumber || ''}`;
+    } catch (error) {
+      console.error('Error generating payment URL:', error);
+      return '';
     }
+  };
 
-    // Fallback to invoice link if no UPI ID
-    return `${window.location.origin}/invoice/${invoice.salesInvoiceNumber}`;
+  // Add null checks for invoice items
+  const getInvoiceItems = () => {
+    try {
+      if (!Array.isArray(invoice?.items)) return [];
+
+      return invoice.items.map((item, index) => {
+        const quantity = Number(item?.quantity) || 0;
+        const rate = Number(item?.unit_price || item?.rate) || 0;
+        const taxRate = Number(item?.tax_rate) || 0;
+        const taxAmount = Number(item?.tax_amount) || 0;
+        const discount = item?.discount
+          ? `${item.discount}${item.discount_type === 'percentage' ? '%' : '₹'}`
+          : '-';
+        const amount = Number(item?.amount) || 0;
+
+        return {
+          key: index,
+          name: item?.name || item?.description || '-',
+          hsn_sac: item?.hsn_sac || '-',
+          quantity,
+          rate,
+          taxRate,
+          taxAmount,
+          discount,
+          amount
+        };
+      });
+    } catch (error) {
+      console.error('Error processing invoice items:', error);
+      return [];
+    }
   };
 
   const handleDownload = async () => {
@@ -574,9 +610,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         name:
           customerData.name ||
           customerData.company_name ||
-          `${customerData.first_name || ""} ${
-            customerData.last_name || ""
-          }`.trim(),
+          `${customerData.first_name || ""} ${customerData.last_name || ""
+            }`.trim(),
         email: customerData.email,
         contact:
           customerData.contact || customerData.phone || customerData.mobile,
@@ -680,6 +715,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   };
 
   if (!invoice) return null;
+
+  const invoiceItems = getInvoiceItems();
 
   return (
     <>
@@ -918,25 +955,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                         <div className="info-row">
                           <span className="label">Address</span>
                           <span className="value address-value">
-                            {(() => {
-                              try {
-                                if (billingData?.billing_address) {
-                                  const addr = JSON.parse(
-                                    billingData.billing_address
-                                  );
-                                  return addr.street ? (
-                                    <>
-                                      {addr.street},<br />
-                                      {addr.city} {addr.postal_code},<br />
-                                      {addr.state}
-                                    </>
-                                  ) : (
-                                    "-"
-                                  );
-                                }
-                              } catch (e) {}
-                              return billingData?.billing_address || "-";
-                            })()}
+                            {tryParseAddress(billingData?.billing_address)}
                           </span>
                         </div>
                       </div>
@@ -958,50 +977,18 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {Array.isArray(invoice.items) &&
-                          invoice.items.map((item, index) => {
-                            const quantity = Number(item.quantity) || 0;
-                            const rate =
-                              Number(item.unit_price || item.rate) || 0;
-                            const taxRate = Number(item.tax_rate) || 0;
-                            const taxAmount = Number(item.tax_amount) || 0;
-                            const discount = item.discount
-                              ? `${item.discount}${
-                                  item.discount_type === "percentage"
-                                    ? "%"
-                                    : "₹"
-                                }`
-                              : "-";
-                            const amount = Number(item.amount) || 0;
-
-                            return (
-                              <tr key={index}>
-                                <td>{item.name || item.description || "-"}</td>
-                                <td>{item.hsn_sac || "-"}</td>
-                                <td>{quantity}</td>
-                                <td>
-                                  ₹
-                                  {rate.toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                  })}
-                                </td>
-                                <td>{taxRate}%</td>
-                                <td>
-                                  ₹
-                                  {taxAmount.toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                  })}
-                                </td>
-                                <td>{discount}</td>
-                                <td>
-                                  ₹
-                                  {amount.toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                  })}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                        {invoiceItems.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.name}</td>
+                            <td>{item.hsn_sac}</td>
+                            <td>{item.quantity}</td>
+                            <td>₹{item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td>{item.taxRate}%</td>
+                            <td>₹{item.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td>{item.discount}</td>
+                            <td>₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
 
