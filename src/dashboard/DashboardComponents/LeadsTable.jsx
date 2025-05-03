@@ -324,7 +324,7 @@ const LeadsTable = ({
                         overflow: 'hidden'
                     }}
                     onRow={(record) => ({
-                        onClick: () => navigate(`/dashboard/crm/lead/${record.id}`),
+                        onClick: () => navigate(`/dashboard/crm/leads/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
                     scroll={{ x: 'max-content' }}

@@ -136,7 +136,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
   // Handle click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (floatingDropdownRef.current && 
+      if (floatingDropdownRef.current &&
         !floatingDropdownRef.current.contains(event.target) &&
         !event.target.closest('.nav-item.dropdown-trigger')) {
         setOpenDropdown(null);
@@ -171,7 +171,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
         {
           title: "Leads",
           icon: <FiTarget />,
-          path: "/dashboard/crm/lead",
+          path: "/dashboard/crm/leads",
           permission: "dashboards-lead"
         },
         {
@@ -338,7 +338,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           path: "/dashboard/communication/chat",
 
         },
-       
+
       ].filter(item => shouldShowMenuItem(item)),
     },
     {

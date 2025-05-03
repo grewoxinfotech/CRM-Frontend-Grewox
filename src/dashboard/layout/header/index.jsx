@@ -47,7 +47,7 @@ const Header = () => {
 
         // CRM
         { title: "Projects", path: "/dashboard/crm/project", parent: "CRM" },
-        { title: "Leads", path: "/dashboard/crm/lead", parent: "CRM" },
+        { title: "Leads", path: "/dashboard/crm/leads", parent: "CRM" },
         { title: "Deals", path: "/dashboard/crm/deals", parent: "CRM" },
         { title: "Proposals", path: "/dashboard/crm/proposal", parent: "CRM" },
         { title: "Tasks", path: "/dashboard/crm/tasks", parent: "CRM" },

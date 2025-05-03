@@ -27,7 +27,7 @@ import moment from "moment";
 const SECTIONS = {
   lead: {
     name: "Lead",
-    route: "/dashboard/crm/lead",
+    route: "/dashboard/crm/leads",
     icon: "👥",
   },
   deal: {
@@ -197,7 +197,7 @@ const NotificationsComponent = () => {
     if (notification.section) {
       if (notification.section === "lead") {
         // Navigate to lead overview with the lead ID
-        navigate(`/dashboard/crm/lead/${notification.parent_id}`);
+        navigate(`/dashboard/crm/leads/${notification.parent_id}`);
       } else if (notification.section === "deal") {
         // Navigate to deal detail with the deal ID
         navigate(`/dashboard/crm/deals/${notification.parent_id}`);
@@ -290,9 +290,8 @@ const NotificationsComponent = () => {
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`notification-item ${
-                          !notification.read ? "unread" : ""
-                        }`}
+                        className={`notification-item ${!notification.read ? "unread" : ""
+                          }`}
                       >
                         <div
                           className="notification-content"
@@ -404,9 +403,8 @@ const NotificationsComponent = () => {
                   {sectionReminders.map((reminder) => (
                     <div
                       key={reminder.id}
-                      className={`notification-item reminder-item ${
-                        !reminder.read ? "unread" : ""
-                      }`}
+                      className={`notification-item reminder-item ${!reminder.read ? "unread" : ""
+                        }`}
                     >
                       <div
                         className="notification-content"

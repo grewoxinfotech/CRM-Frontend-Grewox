@@ -115,7 +115,7 @@ export default function Dashboard() {
       iconGradient: "linear-gradient(135deg, #eb2f96, #ff85c0)",
       color: "#eb2f96",
       tag: `Total: ${leadsData?.data?.length || 0}`,
-      link: "/dashboard/crm/lead"
+      link: "/dashboard/crm/leads"
     },
     {
       title: "Deals",
@@ -126,7 +126,7 @@ export default function Dashboard() {
       iconGradient: "linear-gradient(135deg, #1890ff, #69c0ff)",
       color: "#1890ff",
       tag: `Total: ${deal?.data?.length || 0}`,
-      link: "/dashboard/crm/deal"
+      link: "/dashboard/crm/deals"
     },
     {
       title: "TOTAL REVENUE",

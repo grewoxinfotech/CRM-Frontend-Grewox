@@ -1,0 +1,155 @@
+.overview-content {
+    .metrics-row {
+        margin-bottom: 24px;
+
+        .Metric-card {
+            height: 100%;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: none;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+
+            // Leads Card
+            &.leads-card {
+                background: linear-gradient(135deg, #fff1f2 0%, #fff 100%);
+
+                .metric-icon {
+                    background: linear-gradient(135deg, #f43f5e 0%, #fb7185 100%);
+                    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
+                }
+
+                .metric-content {
+                    .metric-label {
+                        color: #64748b;
+                    }
+
+                    .metric-value {
+                        color: #f43f5e;
+                    }
+                }
+            }
+
+            // Deals Card
+            &.deals-card {
+                background: linear-gradient(135deg, #f0fdf4 0%, #fff 100%);
+
+                .metric-icon {
+                    background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
+                    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+                }
+
+                .metric-content {
+                    .metric-label {
+                        color: #64748b;
+                    }
+
+                    .metric-value {
+                        color: #22c55e;
+                    }
+                }
+            }
+
+            // Revenue Card
+            &.revenue-card {
+                background: linear-gradient(135deg, #f5f3ff 0%, #fff 100%);
+
+                .metric-icon {
+                    background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+                    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+                }
+
+                .metric-content {
+                    .metric-label {
+                        color: #64748b;
+                    }
+
+                    .metric-value {
+                        color: #8b5cf6;
+                    }
+                }
+            }
+
+            // Created Card
+            &.created-card {
+                background: linear-gradient(135deg, #fff7ed 0%, #fff 100%);
+
+                .metric-icon {
+                    background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+                    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+                }
+
+                .metric-content {
+                    .metric-label {
+                        color: #64748b;
+                    }
+
+                    .metric-value {
+                        color: #f97316;
+                    }
+                }
+            }
+
+            .metric-icon {
+                width: 46px;
+                height: 46px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 16px;
+                transition: all 0.3s ease;
+
+                svg {
+                    font-size: 24px;
+                    color: white;
+                }
+            }
+
+            .metric-content {
+                .metric-label {
+                    font-size: 15px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 8px;
+                }
+
+                .metric-value {
+                    font-size: 32px;
+                    font-weight: 800;
+                    margin-bottom: 8px;
+                }
+
+                .metric-subtitle {
+                    font-size: 13px;
+                    color: #64748b;
+                }
+            }
+
+            &:hover {
+                transform: translateY(-4px);
+            }
+        }
+    }
+
+    // Basic styles for profile and details sections
+    .contact-card {
+        margin-bottom: 24px;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .details-row {
+        .detail-card {
+            .detail-content {
+                padding: 20px;
+                border-radius: 16px;
+                background: #ffffff;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+        }
+    }
+}

@@ -249,7 +249,7 @@ const routes = createBrowserRouter([
         path: "crm",
         children: [
           {
-            path: "lead",
+            path: "leads",
             children: [
               {
                 path: "",
@@ -402,7 +402,7 @@ const routes = createBrowserRouter([
             path: "mail",
             element: <Mail />,
           },
-         
+
         ],
       },
       {

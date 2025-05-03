@@ -117,7 +117,7 @@ const Lead = () => {
   }, [leads?.data, searchText]);
 
   const handleLeadClick = (lead) => {
-    navigate(`/dashboard/crm/lead/${lead.id}`);
+    navigate(`/dashboard/crm/leads/${lead.id}`);
   };
 
   const handleCreate = () => {
@@ -136,7 +136,7 @@ const Lead = () => {
     setSelectedLead(null);
   };
 
- 
+
 
   const handleDelete = (lead) => {
     Modal.confirm({
@@ -178,9 +178,8 @@ const Lead = () => {
           statusesData?.data?.find((s) => s.id === lead.status)?.name ||
           lead.status,
         "Interest Level": lead.interest_level,
-        "Lead Value": `${
-          currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
-        } ${lead.leadValue || 0}`,
+        "Lead Value": `${currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
+          } ${lead.leadValue || 0}`,
         "Created Date": moment(lead.createdAt).format("DD-MM-YYYY"),
       }));
 

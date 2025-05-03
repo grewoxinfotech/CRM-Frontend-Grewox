@@ -116,7 +116,7 @@ const FormSubmissions = () => {
         }
 
         // Navigate to lead page with only the submission ID
-        navigate('/dashboard/crm/lead', {
+        navigate('/dashboard/crm/leads', {
             state: {
                 openCreateForm: true,
                 formSubmissionId: submission.id

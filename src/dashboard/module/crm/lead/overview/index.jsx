@@ -109,9 +109,8 @@ const LeadStageProgress = ({
         return (
           <button
             key={stage.id}
-            className={`stage-item ${statusClass} ${
-              isLoading ? "loading" : ""
-            } ${isWon ? "converted" : ""}`}
+            className={`stage-item ${statusClass} ${isLoading ? "loading" : ""
+              } ${isWon ? "converted" : ""}`}
             onClick={(e) => handleItemClick(stage.id, e)}
             disabled={isLoading || isWon}
             type="button"
@@ -341,9 +340,9 @@ const LeadOverviewContent = ({
               <h2 className="company-name">{localLeadData?.leadTitle}</h2>
               <div className="contact-details">
                 {localLeadData?.company_id &&
-                companyData?.data?.[0] &&
-                localLeadData?.contact_id &&
-                contactData?.data ? (
+                  companyData?.data?.[0] &&
+                  localLeadData?.contact_id &&
+                  contactData?.data ? (
                   <div className="combined-info">
                     <div className="info-section company-section">
                       <div className="icon-wrapper company">
@@ -447,11 +446,10 @@ const LeadOverviewContent = ({
                 <div className="stat-label">Email Address</div>
                 {localLeadData?.contact_id && contactData?.data ? (
                   <a
-                    href={`mailto:${
-                      contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.email
-                    }`}
+                    href={`mailto:${contactData.data.find(
+                      (c) => c.id === localLeadData.contact_id
+                    )?.email
+                      }`}
                     className="stat-value"
                   >
                     {contactData.data.find(
@@ -471,11 +469,10 @@ const LeadOverviewContent = ({
                 <div className="stat-label">Phone Number</div>
                 {localLeadData?.contact_id && contactData?.data ? (
                   <a
-                    href={`tel:${
-                      contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.phone
-                    }`}
+                    href={`tel:${contactData.data.find(
+                      (c) => c.id === localLeadData.contact_id
+                    )?.phone
+                      }`}
                     className="stat-value"
                   >
                     {getPhoneWithCode(
@@ -510,41 +507,34 @@ const LeadOverviewContent = ({
                 <div className="stat-label">Location</div>
                 {localLeadData?.contact_id && contactData?.data ? (
                   <Tooltip
-                    title={`${
-                      contactData.data.find(
-                        (c) => c.id === localLeadData.contact_id
-                      )?.address || ""
-                    } ${
-                      contactData.data.find(
+                    title={`${contactData.data.find(
+                      (c) => c.id === localLeadData.contact_id
+                    )?.address || ""
+                      } ${contactData.data.find(
                         (c) => c.id === localLeadData.contact_id
                       )?.city
-                        ? `, ${
-                            contactData.data.find(
-                              (c) => c.id === localLeadData.contact_id
-                            )?.city
-                          }`
+                        ? `, ${contactData.data.find(
+                          (c) => c.id === localLeadData.contact_id
+                        )?.city
+                        }`
                         : ""
-                    }${
-                      contactData.data.find(
+                      }${contactData.data.find(
                         (c) => c.id === localLeadData.contact_id
                       )?.state
-                        ? `, ${
-                            contactData.data.find(
-                              (c) => c.id === localLeadData.contact_id
-                            )?.state
-                          }`
+                        ? `, ${contactData.data.find(
+                          (c) => c.id === localLeadData.contact_id
+                        )?.state
+                        }`
                         : ""
-                    }${
-                      contactData.data.find(
+                      }${contactData.data.find(
                         (c) => c.id === localLeadData.contact_id
                       )?.country
-                        ? `, ${
-                            contactData.data.find(
-                              (c) => c.id === localLeadData.contact_id
-                            )?.country
-                          }`
+                        ? `, ${contactData.data.find(
+                          (c) => c.id === localLeadData.contact_id
+                        )?.country
+                        }`
                         : ""
-                    }`}
+                      }`}
                   >
                     <div className="stat-value truncate">
                       {contactData.data.find(
@@ -553,44 +543,38 @@ const LeadOverviewContent = ({
                       {contactData.data.find(
                         (c) => c.id === localLeadData.contact_id
                       )?.city &&
-                        `, ${
-                          contactData.data.find(
-                            (c) => c.id === localLeadData.contact_id
-                          )?.city
+                        `, ${contactData.data.find(
+                          (c) => c.id === localLeadData.contact_id
+                        )?.city
                         }`}
                       {contactData.data.find(
                         (c) => c.id === localLeadData.contact_id
                       )?.state &&
-                        `, ${
-                          contactData.data.find(
-                            (c) => c.id === localLeadData.contact_id
-                          )?.state
+                        `, ${contactData.data.find(
+                          (c) => c.id === localLeadData.contact_id
+                        )?.state
                         }`}
                       {contactData.data.find(
                         (c) => c.id === localLeadData.contact_id
                       )?.country &&
-                        `, ${
-                          contactData.data.find(
-                            (c) => c.id === localLeadData.contact_id
-                          )?.country
+                        `, ${contactData.data.find(
+                          (c) => c.id === localLeadData.contact_id
+                        )?.country
                         }`}
                     </div>
                   </Tooltip>
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (
                   <Tooltip
-                    title={`${companyData.data[0].billing_address || ""} ${
-                      companyData.data[0].billing_city
+                    title={`${companyData.data[0].billing_address || ""} ${companyData.data[0].billing_city
                         ? `, ${companyData.data[0].billing_city}`
                         : ""
-                    }${
-                      companyData.data[0].billing_state
+                      }${companyData.data[0].billing_state
                         ? `, ${companyData.data[0].billing_state}`
                         : ""
-                    }${
-                      companyData.data[0].billing_country
+                      }${companyData.data[0].billing_country
                         ? `, ${companyData.data[0].billing_country}`
                         : ""
-                    }`}
+                      }`}
                   >
                     <div className="stat-value truncate">
                       {companyData.data[0].billing_address || "-"}
@@ -862,9 +846,9 @@ const LeadOverviewContent = ({
               <div className="metric-value">
                 {localLeadData?.leadValue
                   ? formatCurrencyValue(
-                      localLeadData.leadValue,
-                      localLeadData.currency
-                    )
+                    localLeadData.leadValue,
+                    localLeadData.currency
+                  )
                   : "-"}
               </div>
             </div>
@@ -872,22 +856,19 @@ const LeadOverviewContent = ({
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            className={`metric-card interest-level-card ${
-              localLeadData?.interest_level || "medium"
-            }`}
+            className={`metric-card interest-level-card ${localLeadData?.interest_level || "medium"
+              }`}
           >
             <div
-              className={`metric-icon ${
-                localLeadData?.interest_level || "medium"
-              }`}
+              className={`metric-icon ${localLeadData?.interest_level || "medium"
+                }`}
             >
               <FiTarget />
             </div>
             <div className="metric-content">
               <div
-                className={`metric-label ${
-                  localLeadData?.interest_level || "medium"
-                }`}
+                className={`metric-label ${localLeadData?.interest_level || "medium"
+                  }`}
               >
                 Interest Level
               </div>
@@ -1259,7 +1240,7 @@ const LeadOverview = () => {
             <Button
               type="primary"
               icon={<FiArrowLeft />}
-              onClick={() => navigate("/dashboard/crm/lead")}
+              onClick={() => navigate("/dashboard/crm/leads")}
               style={{
                 background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                 border: "none",
