@@ -36,17 +36,25 @@ const SubclientCard = ({ subclient, onEdit, onDelete, onView }) => {
 
     const handleAdminLogin = async () => {
         try {
+            if (!subclient || !subclient.email) {
+                message.error('Invalid subclient data');
+                return;
+            }
+
             const response = await adminLogin({
                 email: subclient.email,
                 isClientPage: true
             }).unwrap();
 
-            if (response.success) {
+            if (response?.success) {
                 message.success('Logged in as subclient successfully');
-                // Force reload to update the app state with new user
-                window.location.href = '/dashboard';
+                // Use navigate instead of window.location for proper React Router handling
+                navigate('/dashboard', { replace: true });
+            } else {
+                message.error(response?.message || 'Failed to login as subclient');
             }
         } catch (error) {
+            console.error('Subclient login error:', error);
             message.error(error?.data?.message || 'Failed to login as subclient');
         }
     };

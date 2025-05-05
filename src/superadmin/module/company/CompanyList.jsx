@@ -118,16 +118,24 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
 
     const handleAdminLogin = async (company) => {
         try {
+            if (!company || !company.email) {
+                message.error('Invalid company data');
+                return;
+            }
+
             const response = await adminLogin({
                 email: company.email,
                 isClientPage: true
             }).unwrap();
 
-            if (response.success) {
+            if (response?.success) {
                 message.success('Logged in as company successfully');
-                navigate('/dashboard');
+                navigate('/dashboard', { replace: true });
+            } else {
+                message.error(response?.message || 'Failed to login as company');
             }
         } catch (error) {
+            console.error('Company login error:', error);
             message.error(error?.data?.message || 'Failed to login as company');
         }
     };

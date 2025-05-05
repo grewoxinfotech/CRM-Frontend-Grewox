@@ -2,6 +2,22 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { loginSuccess, loginFailure, loginStart } from './authSlice';
 import { baseQueryWithReauth } from '../../store/baseQuery';
 
+const safelyParseJSON = (jsonString) => {
+    try {
+        return JSON.parse(jsonString);
+    } catch (e) {
+        return null;
+    }
+};
+
+const safelyStringifyJSON = (obj) => {
+    try {
+        return JSON.stringify(obj);
+    } catch (e) {
+        return null;
+    }
+};
+
 export const authApi = createApi({
     reducerPath: 'authApi',
     baseQuery: baseQueryWithReauth,
@@ -21,9 +37,12 @@ export const authApi = createApi({
                 try {
                     const { data: response } = await queryFulfilled;
                     if (response.success) {
-                        // Store token in localStorage
+                        // Safely store token and user data
                         localStorage.setItem('token', response.data.token);
-                        localStorage.setItem('user', JSON.stringify(response.data.user));
+                        const userStr = safelyStringifyJSON(response.data.user);
+                        if (userStr) {
+                            localStorage.setItem('user', userStr);
+                        }
 
                         dispatch(loginSuccess({
                             user: response.data.user,
@@ -52,11 +71,13 @@ export const authApi = createApi({
                 try {
                     const { data: response } = await queryFulfilled;
                     if (response.success) {
-                        // Store token in localStorage
+                        // Safely store token and user data
                         localStorage.setItem('token', response.data.token);
-                        localStorage.setItem('user', JSON.stringify(response.data.user));
+                        const userStr = safelyStringifyJSON(response.data.user);
+                        if (userStr) {
+                            localStorage.setItem('user', userStr);
+                        }
 
-                        // Update Redux store
                         dispatch(loginSuccess({
                             user: response.data.user,
                             token: response.data.token,

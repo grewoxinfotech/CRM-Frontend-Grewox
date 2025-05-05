@@ -14,16 +14,24 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
 
     const handleAdminLogin = async (user) => {
         try {
+            if (!user || !user.email) {
+                message.error('Invalid user data');
+                return;
+            }
+
             const response = await adminLogin({
                 email: user.email,
                 isClientPage: true
             }).unwrap();
 
-            if (response.success) {
+            if (response?.success) {
                 message.success('Logged in as user successfully');
                 navigate('/dashboard');
+            } else {
+                message.error(response?.message || 'Failed to login as user');
             }
         } catch (error) {
+            console.error('Admin login error:', error);
             message.error(error?.data?.message || 'Failed to login as user');
         }
     };
@@ -142,29 +150,29 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             key: 'username',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search username"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search username"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.username.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => (
@@ -176,7 +184,7 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
                     {text}
                 </div>
             ),
-          
+
             width: '200px'
         },
         {
@@ -198,29 +206,29 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             width: '20%',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search role"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search role"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.role_name.toLowerCase().includes(value.toLowerCase()) ||
                 record.company_name?.toLowerCase().includes(value.toLowerCase()),
             render: (role) => {
