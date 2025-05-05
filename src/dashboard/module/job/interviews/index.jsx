@@ -130,9 +130,9 @@ const Interviews = () => {
                     </div>
                     <div className="interview-cards">
                         {!interviews?.data?.length ? (
-                            <Empty 
-                                description="No interviews scheduled" 
-                                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                            <Empty
+                                description="No interviews scheduled"
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
                             />
                         ) : (
                             interviews.data.map(interview => (
@@ -170,6 +170,7 @@ const Interviews = () => {
 
                 <Card className="calendar-card" loading={isLoading}>
                     <Calendar
+                        className='calendar'
                         dateCellRender={dateCellRender}
                         onSelect={handleDateSelect}
                     />

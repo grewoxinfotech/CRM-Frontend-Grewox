@@ -35,6 +35,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
     const [form] = Form.useForm();
     const [fileList, setFileList] = useState([]);
     const [submitting, setSubmitting] = useState(false);
+    const [updateCompany] = useUpdateCompanyMutation();
 
     // Fetch countries for phone codes
     const { data: countries, isLoading: countriesLoading } = useGetAllCountriesQuery({
@@ -103,6 +104,14 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
 
             if (onSubmit) {
                 await onSubmit(formData);
+            } else {
+                // If no onSubmit prop is provided, use the updateCompany mutation
+                await updateCompany({
+                    id: initialValues.id,
+                    data: formData
+                }).unwrap();
+                message.success('Company updated successfully');
+                onCancel();
             }
         } catch (error) {
             if (error.errorFields) {
@@ -155,7 +164,19 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
             title={null}
             open={visible}
             onCancel={onCancel}
-            footer={null}
+            footer={[
+                <Button key="cancel" onClick={onCancel}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={submitting}
+                    onClick={handleSubmit}
+                >
+                    Save Changes
+                </Button>
+            ]}
             width={720}
             destroyOnClose={true}
             centered
@@ -893,44 +914,6 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                 </div>
 
                 <Divider style={{ margin: '0 0 24px' }} />
-
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: '12px'
-                }}>
-                    <Button
-                        size="large"
-                        onClick={onCancel}
-                        disabled={submitting}
-                        style={{
-                            padding: '8px 24px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            border: '1px solid #e6e8eb',
-                            fontWeight: '500',
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        size="large"
-                        type="primary"
-                        htmlType="submit"
-                        loading={submitting || loading}
-                        style={{
-                            padding: '8px 32px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            fontWeight: '500',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                        }}
-                    >
-                        Save Changes
-                    </Button>
-                </div>
             </Form>
         </Modal>
     );

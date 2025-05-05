@@ -18,16 +18,16 @@ const CalendarPage = () => {
     const [upcomingEvents, setUpcomingEvents] = useState([]);
 
     console.log('Upcoming Events:', upcomingEvents);
-    
+
     const { data: calendarEvents, isLoading, isError } = useGetAllCalendarEventsQuery();
     const [deleteCalendarEvent, { isLoading: isDeleting }] = useDeleteCalendarEventMutation();
 
     useEffect(() => {
         if (calendarEvents) {
-            const eventsArray = Array.isArray(calendarEvents) 
-                ? calendarEvents 
+            const eventsArray = Array.isArray(calendarEvents)
+                ? calendarEvents
                 : calendarEvents?.data || [];
-            
+
             setEvents(eventsArray);
         }
     }, [calendarEvents]);
@@ -65,7 +65,7 @@ const CalendarPage = () => {
             label: values.label,
             event_type: values.event_type
         };
-        
+
         setEvents(prevEvents => [...prevEvents, newEvent]);
         message.success('Event created successfully');
         setIsModalVisible(false);
@@ -82,7 +82,7 @@ const CalendarPage = () => {
     };
 
     const getEventLabelColor = (label) => {
-        switch(label) {
+        switch (label) {
             case 'personal': return '#1890ff';
             case 'work': return '#52c41a';
             case 'important': return '#ff4d4f';
@@ -92,7 +92,7 @@ const CalendarPage = () => {
     };
 
     const getEventLabelText = (label) => {
-        switch(label) {
+        switch (label) {
             case 'personal': return 'Personal';
             case 'work': return 'Work';
             case 'important': return 'Important';
@@ -102,7 +102,7 @@ const CalendarPage = () => {
     };
 
     const getEventTypeIcon = (type) => {
-        switch(type) {
+        switch (type) {
             case 'meeting': return <FiCalendar style={{ fontSize: '16px' }} />;
             case 'call': return <FiPhone style={{ fontSize: '16px' }} />;
             case 'appointment': return <FiClock style={{ fontSize: '16px' }} />;
@@ -137,8 +137,8 @@ const CalendarPage = () => {
                 transition: 'all 0.3s ease'
             }}>
                 {dayEvents.map(event => (
-                    <div 
-                        key={event.id} 
+                    <div
+                        key={event.id}
                         className="event-item"
                         style={{
                             marginBottom: '4px',
@@ -149,13 +149,13 @@ const CalendarPage = () => {
                         }}
                     >
                         <div className="event-details">
-                            <div style={{ 
-                                display: 'flex', 
+                            <div style={{
+                                display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'start',
                                 gap: '2px'
                             }}>
-                               
+
                                 <span className="event-title" style={{
                                     fontSize: '14px',
                                     color: '#333',
@@ -168,7 +168,7 @@ const CalendarPage = () => {
                                 }}>
                                     {event.name}
                                 </span>
-                                 <span className="event-time" style={{ 
+                                <span className="event-time" style={{
                                     color: event.color || defaultColor,
                                     fontSize: '15px',
                                     fontWeight: '750'
@@ -238,9 +238,9 @@ const CalendarPage = () => {
             </div>
 
             <div className="calendar-content" style={{ display: 'flex', gap: '24px' }}>
-                <Card 
-                    className="upcoming-events" 
-                    style={{ 
+                <Card
+                    className="upcoming-events"
+                    style={{
                         width: '380px',
                         height: 'fit-content',
                         borderRadius: '12px',
@@ -259,16 +259,16 @@ const CalendarPage = () => {
                         ) : isError ? (
                             <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Error loading events</div>
                         ) : !upcomingEvents.length ? (
-                            <Empty 
-                                description="No upcoming events" 
-                                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                            <Empty
+                                description="No upcoming events"
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
                             />
                         ) : (
                             upcomingEvents.map(event => (
-                                <div 
-                                    key={event.id} 
+                                <div
+                                    key={event.id}
                                     className="event-card"
-                                    style={{ 
+                                    style={{
                                         backgroundColor: `${event.color}15`,
                                         borderLeft: `4px solid ${event.color || defaultColor}`,
                                         padding: '16px',
@@ -306,20 +306,20 @@ const CalendarPage = () => {
                                                     }}>{event.name}</span>
                                                 </div>
                                                 {event.label && (
-                                                    <Tag 
+                                                    <Tag
                                                         color={getEventLabelColor(event.label)}
-                                                        style={{ 
+                                                        style={{
                                                             padding: '4px 12px',
                                                             borderRadius: '4px',
                                                             fontSize: '12px'
                                                         }}
                                                     >
-                                                        <FiTag 
-                                                            style={{ 
-                                                                marginRight: '4px', 
+                                                        <FiTag
+                                                            style={{
+                                                                marginRight: '4px',
                                                                 fontSize: '12px',
-                                                                verticalAlign: 'middle' 
-                                                            }} 
+                                                                verticalAlign: 'middle'
+                                                            }}
                                                         />
                                                         {getEventLabelText(event.label)}
                                                     </Tag>
@@ -359,7 +359,7 @@ const CalendarPage = () => {
                                                 marginBottom: '12px',
                                                 textAlign: 'center'
                                             }}>
-                                                
+
                                             </div>
                                         </div>
                                         <Popconfirm
@@ -370,9 +370,9 @@ const CalendarPage = () => {
                                             cancelText="No"
                                             placement="left"
                                         >
-                                            <Button 
+                                            <Button
                                                 className="delete-button"
-                                                type="text" 
+                                                type="text"
                                                 danger
                                                 icon={<FiTrash2 size={16} />}
                                                 style={{
@@ -394,15 +394,16 @@ const CalendarPage = () => {
                     </div>
                 </Card>
 
-                <Card 
+                <Card
                     className="calendar-card"
-                    style={{ 
+                    style={{
                         flex: 1,
                         borderRadius: '12px',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                     }}
                 >
                     <Calendar
+                        className='calendar'
                         dateCellRender={dateCellRender}
                         onSelect={handleDateSelect}
                         value={selectedDate}

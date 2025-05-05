@@ -4,6 +4,7 @@
     padding: 24px;
     background: $background-color;
 
+
     .page-breadcrumb {
         margin-bottom: 24px;
 
@@ -158,62 +159,154 @@
             box-shadow: 0 2px 8px rgba($primary-color, 0.08);
 
             .ant-picker-calendar {
-                .ant-picker-panel {
-                    border-top: none;
-                }
-
                 .ant-picker-calendar-header {
-                    padding: 12px 16px;
-                    border-bottom: 1px solid $border-color;
+                    padding: 20px 24px;
+                    background: linear-gradient(to right, #ffffff, #f8fafc);
+                    border-bottom: 1px solid #e6e8eb;
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    position: relative;
+
+                    // Year and Month Selectors Container
+                    .ant-picker-calendar-header-left {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-right: auto;
+                    }
+
+                    // Month/Year Toggle Button Group
+                    .ant-radio-group {
+                        position: absolute;
+                        right: 24px;
+                        background: #ffffff;
+                        padding: 2px;
+                        border-radius: 10px;
+                        border: 1px solid #e6e8eb;
+                        display: flex;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+
+                        .ant-radio-button-wrapper {
+                            height: 32px;
+                            padding: 0 20px;
+                            border: none;
+                            background: transparent;
+                            color: #64748b;
+                            font-weight: 500;
+                            font-size: 14px;
+                            line-height: 32px;
+                            transition: all 0.3s ease;
+                            position: relative;
+                            overflow: hidden;
+
+                            &:hover {
+                                color: #1890ff;
+                            }
+
+                            &::before {
+                                display: none;
+                            }
+
+                            // Selected state
+                            &.ant-radio-button-wrapper-checked {
+                                background: #1890ff;
+                                color: #ffffff;
+                                box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+
+                                &::after {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    right: 0;
+                                    bottom: 0;
+                                    background: linear-gradient(120deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 70%);
+                                    animation: shine 2s infinite;
+                                }
+                            }
+                        }
+                    }
+
+                    // Year and Month Selectors
+                    .ant-select {
+                        min-width: 110px;
+
+                        .ant-select-selector {
+                            height: 36px !important;
+                            padding: 0 16px !important;
+                            border: 1px solid #e6e8eb !important;
+                            border-radius: 10px !important;
+                            background: #ffffff !important;
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+                            transition: all 0.3s ease;
+
+                            &:hover {
+                                border-color: #1890ff !important;
+                                box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+                            }
+
+                            .ant-select-selection-item {
+                                line-height: 34px !important;
+                                font-weight: 500;
+                                color: #1f2937;
+                                font-size: 14px;
+                            }
+                        }
+
+                        &.ant-select-focused .ant-select-selector {
+                            border-color: #1890ff !important;
+                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                        }
+                    }
                 }
 
                 .ant-picker-content {
-                    th {
-                        padding: 12px 0;
-                        font-weight: 600;
-                    }
-
-                    td {
-                        &.ant-picker-cell-selected {
-                            .ant-picker-cell-inner {
-                                background: #1677ff;
+                    thead {
+                        tr {
+                            th {
+                                padding: 12px 8px;
+                                font-weight: 600;
+                                color: #4b5563;
+                                background: #f8fafc;
                             }
                         }
                     }
                 }
 
                 .ant-picker-cell {
-                    &-selected .ant-picker-calendar-date {
-                        background: #f0f7ff !important;
-                        color: #1890ff !important;
-                        border-color: #e6f4ff !important;
+                    padding: 4px !important;
+
+                    .ant-picker-cell-inner {
+                        height: auto !important;
+                        min-height: 80px !important;
+                        border-radius: 8px;
+                        transition: background 0.3s;
 
                         &:hover {
-                            background: #e6f4ff !important;
+                            background: #f0f7ff;
                         }
                     }
 
-                    &-today .ant-picker-calendar-date {
-                        border-color: #e6f4ff !important;
+                    &.ant-picker-cell-today .ant-picker-cell-inner {
+                        border: 1px solid #1890ff;
 
-                        .ant-picker-calendar-date-value {
-                            color: #1890ff !important;
+                        &::before {
+                            border: none;
                         }
                     }
 
-                    .ant-picker-calendar-date {
-                        &:hover {
-                            background: #f5f5f5 !important;
-                        }
+                    &.ant-picker-cell-selected .ant-picker-cell-inner {
+                        background: #e6f4ff;
                     }
 
-                    &-selected .ant-picker-calendar-date-value {
-                        color: #1890ff !important;
+                    .ant-picker-calendar-date-value {
+                        margin: 4px;
+                        height: 24px;
+                        line-height: 24px;
+                        border-radius: 4px;
+                        font-weight: 500;
                     }
-                }
-
-                .ant-picker-calendar-date-today {
-                    border-color: #e6f4ff !important;
                 }
             }
 
@@ -282,5 +375,133 @@
         .page-header {
             padding: 16px;
         }
+
+        .calendar-card {
+            .ant-picker-calendar {
+                .ant-picker-calendar-header {
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    padding: 16px;
+
+                    .ant-select {
+                        flex: 1;
+                        min-width: 140px;
+                    }
+
+                    .ant-radio-group {
+                        width: 100%;
+                        justify-content: center;
+                    }
+                }
+            }
+        }
     }
+}
+
+// Add these styles for dropdown popup
+.ant-select-dropdown {
+    padding: 8px !important;
+    border-radius: 12px !important;
+    border: 1px solid #e6e8eb !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    background: #ffffff !important;
+    animation: dropdownFade 0.2s ease;
+
+    .ant-select-item {
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        margin: 2px 0 !important;
+        min-height: 36px !important;
+        transition: all 0.3s ease;
+
+        &-option {
+            color: #1f2937;
+            font-size: 14px;
+
+            &:hover {
+                background: #f0f7ff !important;
+            }
+
+            &-selected {
+                background: #e6f4ff !important;
+                font-weight: 600 !important;
+                color: #1890ff !important;
+
+                &:hover {
+                    background: #bae0ff !important;
+                }
+            }
+
+            &-active {
+                background: #f0f7ff !important;
+            }
+        }
+    }
+
+    // Custom Scrollbar
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f8fafc;
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: #9ca3af;
+        }
+    }
+}
+
+// Animations
+@keyframes shine {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Specific styles for year and month selects
+.ant-picker-calendar-year-select {
+    margin-right: 8px !important;
+    min-width: 120px !important;
+}
+
+.ant-picker-calendar-month-select {
+    min-width: 100px !important;
+}
+
+// Add overlay styles to ensure dropdown is visible
+.ant-select-dropdown-hidden {
+    display: none;
+}
+
+.ant-select-dropdown-open {
+    display: block;
+}
+
+// Ensure proper z-index
+.ant-select-dropdown {
+    z-index: 1050 !important;
 }

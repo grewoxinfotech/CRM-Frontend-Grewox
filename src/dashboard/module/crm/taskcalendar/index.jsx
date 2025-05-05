@@ -16,16 +16,16 @@ const TaskCalendarPage = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [tasks, setTasks] = useState([]);
     const [upcomingTasks, setUpcomingTasks] = useState([]);
-    
+
     const { data: calendarTasks, isLoading, isError } = useGetAllTaskCalendarEventsQuery();
     const [deleteTaskCalendarEvent, { isLoading: isDeleting }] = useDeleteTaskCalendarEventMutation();
 
     useEffect(() => {
         if (calendarTasks) {
-            const tasksArray = Array.isArray(calendarTasks) 
-                ? calendarTasks 
+            const tasksArray = Array.isArray(calendarTasks)
+                ? calendarTasks
                 : calendarTasks?.data || [];
-            
+
             setTasks(tasksArray);
         }
     }, [calendarTasks]);
@@ -62,7 +62,7 @@ const TaskCalendarPage = () => {
             client_id: values.client_id,
             created_by: values.created_by
         };
-        
+
         setTasks(prevTasks => [...prevTasks, newTask]);
         message.success('Task created successfully');
         setIsModalVisible(false);
@@ -79,7 +79,7 @@ const TaskCalendarPage = () => {
     };
 
     const getPriorityColor = (priority) => {
-        switch(priority) {
+        switch (priority) {
             case 'high': return '#ff4d4f';
             case 'medium': return '#faad14';
             case 'low': return '#52c41a';
@@ -89,7 +89,7 @@ const TaskCalendarPage = () => {
     };
 
     const getPriorityText = (priority) => {
-        switch(priority) {
+        switch (priority) {
             case 'high': return 'High Priority';
             case 'medium': return 'Medium Priority';
             case 'low': return 'Low Priority';
@@ -99,7 +99,7 @@ const TaskCalendarPage = () => {
     };
 
     const getTaskTypeIcon = (type) => {
-        switch(type) {
+        switch (type) {
             case 'task': return <FiCalendar style={{ fontSize: '16px' }} />;
             case 'call': return <FiPhone style={{ fontSize: '16px' }} />;
             case 'meeting': return <FiClock style={{ fontSize: '16px' }} />;
@@ -201,9 +201,9 @@ const TaskCalendarPage = () => {
                     </div>
                     <div className="task-cards">
                         {!upcomingTasks.length ? (
-                            <Empty 
-                                description="No tasks scheduled" 
-                                image={Empty.PRESENTED_IMAGE_SIMPLE} 
+                            <Empty
+                                description="No tasks scheduled"
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
                             />
                         ) : (
                             upcomingTasks.map(task => (
@@ -238,6 +238,7 @@ const TaskCalendarPage = () => {
 
                 <Card className="calendar-card" loading={isLoading}>
                     <Calendar
+                        className="calendar"
                         dateCellRender={dateCellRender}
                         onSelect={handleDateSelect}
                     />
