@@ -22,7 +22,7 @@ import {
   FiList,
   FiHome,
 } from "react-icons/fi";
-import "./notes.scss";
+import "./Notes.scss";
 import moment from "moment";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -33,7 +33,7 @@ import CompanyList from "./NotesList";
 import {
   useGetAllNotesQuery,
   useDeleteNotesMutation,
-} from "./services/NotesApi";
+} from "./services/notesApi";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
@@ -188,7 +188,7 @@ const Notes = () => {
         "Description": note.description || 'N/A',
         "Employees": Array.isArray(note.employees) ? note.employees.join(', ') : note.employees || 'N/A',
         "Created Date": moment(note.created_at).format("DD-MM-YYYY") || 'N/A',
-       
+
       }));
 
       switch (type) {
@@ -363,7 +363,7 @@ const Notes = () => {
         loading={isLoadingNotes || isDeleting}
       />
 
-    
+
     </div>
   );
 };

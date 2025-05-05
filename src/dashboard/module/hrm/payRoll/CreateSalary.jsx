@@ -36,20 +36,20 @@ const CreateSalary = ({ open, onCancel }) => {
   const [createSalary, { isLoading }] = useCreateSalaryMutation();
   const { data: employeesData, isLoading: isLoadingEmployees } =
     useGetEmployeesQuery();
-    const { data: rolesData } = useGetRolesQuery();
+  const { data: rolesData } = useGetRolesQuery();
   const { data: currenciesData, isLoading: isLoadingCurrencies } = useGetAllCurrenciesQuery();
   const employees = React.useMemo(() => {
     if (!employeesData?.data || !rolesData?.data) return [];
-    
+
     const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
     const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
 
     return employeesList.map(employee => {
-        const userRole = rolesList.find(role => role.id === employee.role_id);
-        return {
-            ...employee,
-            role: userRole
-        };
+      const userRole = rolesList.find(role => role.id === employee.role_id);
+      return {
+        ...employee,
+        role: userRole
+      };
     });
   }, [employeesData, rolesData]);
   const currencies = currenciesData || [];
@@ -58,7 +58,7 @@ const CreateSalary = ({ open, onCancel }) => {
   const handleSubmit = async (values) => {
     try {
       const selectedCurrency = currencies.find(curr => curr.currencyCode === values.salary_group?.currency);
-      
+
       const payload = {
         employeeId: values.employeeId,
         payslipType: values.payslipType,
@@ -349,13 +349,13 @@ const CreateSalary = ({ open, onCancel }) => {
               ]}
             >
               <Select
-              listHeight={100}
-              dropdownStyle={{
-                Height: '100px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollBehavior: 'smooth'
-              }}
+                listHeight={100}
+                dropdownStyle={{
+                  Height: '100px',
+                  overflowY: 'auto',
+                  scrollbarWidth: 'thin',
+                  scrollBehavior: 'smooth'
+                }}
                 placeholder="Select Payslip Type"
                 size="large"
                 style={{
