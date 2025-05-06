@@ -5,10 +5,24 @@ export const revenueApi = createApi({
   reducerPath: "revenueApi",
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Revenue"],
+  keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getRevenue: builder.query({
       query: () => "/sales-revenue",
-      providesTags: ["Revenue"],
+      transformResponse: (response) => {
+        // Ensure consistent data structure
+        if (response?.data) {
+          return response.data;
+        }
+        if (Array.isArray(response)) {
+          return response;
+        }
+        return [];
+      },
+      providesTags: (result, error, arg) => [
+        { type: "Revenue", id: "LIST" },
+        ...(result?.map(({ id }) => ({ type: "Revenue", id })) ?? [])
+      ],
     }),
     createRevenue: builder.mutation({
       query: (data) => ({

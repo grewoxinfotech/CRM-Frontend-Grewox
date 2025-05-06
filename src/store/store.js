@@ -84,6 +84,22 @@ const rootReducer = (state, action) => {
     // Keep only auth state when resetting
     const { auth } = state;
     state = { auth };
+  } else if (action.type === RESET_API_STATE) {
+    // Reset all API states except auth
+    const apiKeys = Object.keys(state).filter(key =>
+      key.endsWith('Api') && key !== 'authApi'
+    );
+    apiKeys.forEach(key => {
+      if (state[key]) {
+        state[key] = {
+          ...state[key],
+          queries: {},
+          mutations: {},
+          provided: {},
+          subscriptions: {},
+        };
+      }
+    });
   }
   return combineReducers({
     auth: authReducer,

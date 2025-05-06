@@ -28,6 +28,8 @@ import {
   FiUser,
   FiTrendingUp,
   FiPercent,
+  FiArrowUpRight,
+  FiArrowDownRight,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -40,6 +42,7 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 import { useLocation, useNavigate } from "react-router-dom";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
+import './revenue.scss';
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -90,8 +93,8 @@ const RevenueList = ({
               typeof revenue.products === "string"
                 ? JSON.parse(revenue.products)
                 : Array.isArray(revenue.products)
-                ? revenue.products
-                : [];
+                  ? revenue.products
+                  : [];
           }
         } catch (error) {
           console.error("Error parsing products:", error);
@@ -506,125 +509,124 @@ const RevenueList = ({
   };
 
   return (
-    <div className="revenue-container">
-      {/* {selectedCustomer && (
-        <div style={{ marginBottom: 16 }}>
-          <Tag color="blue" closable onClose={clearCustomerFilter}>
-            Filtered by Customer: {customers.find(c => c.id === selectedCustomer)?.name}
-          </Tag>  
-        </div>
-      )}
-      {selectedProduct && (
-        <div style={{ marginBottom: 16 }}>
-          <Tag color="blue" closable onClose={clearProductFilter}>
-            Filtered by Product: {products.find(p => p.id === selectedProduct)?.name}
-          </Tag>
-        </div>
-      )} */}
-
-      <Row gutter={[16, 16]} className="revenue-filters">
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Select
-            placeholder="Select Product"
-            allowClear
-            style={{ width: "100%" }}
-            onChange={setSelectedProduct}
-            value={selectedProduct}
-          >
-            {products.map((product) => (
-              <Option key={product.id} value={product.id}>
-                {product.name}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6}>
-          <Select
-            placeholder="Select Customer"
-            allowClear
-            style={{ width: "100%" }}
-            onChange={setSelectedCustomer}
-            value={selectedCustomer}
-          >
-            {customers.map((customer) => (
-              <Option key={customer.id} value={customer.id}>
-                {customer.name}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} className="revenue-stats">
-        <Col xs={24} md={8}>
-          <Card>
-            <Statistic
-              title="Total Revenue"
-              value={stats.total_revenue}
-              precision={2}
-              formatter={(value) =>
-                `₹ ${(Number(value) || 0).toLocaleString("en-IN")}`
-              }
-            />
+    <div className="overview-content">
+      <Row gutter={[16, 16]} className="metrics-row">
+        <Col xs={24} sm={12} md={6}>
+          <Card className="Metric-card revenue-card">
+            <div className="metric-icon">
+              <FiDollarSign />
+            </div>
+            <div className="metric-content">
+              <div className="metric-label">TOTAL REVENUE</div>
+              <div className="metric-value">
+                ₹{stats.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </div>
+              <div className="metric-subtitle">
+                {filteredRevenue.length} Total Transactions
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={24} md={8}>
-          <Card>
-            <Statistic
-              title="Total Profit"
-              value={stats.total_profit}
-              precision={2}
-              valueStyle={{
-                color: stats.total_profit < 0 ? "#ff4d4f" : "#3f8600",
-                fontWeight: "600",
-              }}
-              prefix={stats.total_profit < 0 ? "-₹ " : "₹ "}
-              formatter={(value) =>
-                `${Math.abs(Number(value) || 0).toLocaleString("en-IN")}`
-              }
-            />
+
+        <Col xs={24} sm={12} md={6}>
+          <Card className="Metric-card deals-card">
+            <div className="metric-icon">
+              <FiTrendingUp />
+            </div>
+            <div className="metric-content">
+              <div className="metric-label">TOTAL PROFIT</div>
+              <div className="metric-value">
+                ₹{Math.abs(stats.total_profit).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </div>
+              <div className="metric-subtitle">
+                {stats.total_profit >= 0 ? 'Net Profit' : 'Net Loss'}
+              </div>
+            </div>
           </Card>
         </Col>
-        <Col xs={24} md={8}>
-          <Card>
-            <Statistic
-              title="Average Profit Margin"
-              value={stats.count > 0 ? stats.total_margin / stats.count : 0}
-              precision={2}
-              suffix="%"
-              valueStyle={{
-                color:
-                  (stats.count > 0 ? stats.total_margin / stats.count : 0) < 0
-                    ? "#ff4d4f"
-                    : "#3f8600",
-                fontWeight: "600",
-              }}
-              prefix={(() => {
-                const value =
-                  stats.count > 0 ? stats.total_margin / stats.count : 0;
-                return value !== 0 ? (value < 0 ? "-" : "+") : "";
-              })()}
-              formatter={(value) =>
-                `${Math.abs(Number(value) || 0).toFixed(2)}`
-              }
-            />
+
+        <Col xs={24} sm={12} md={6}>
+          <Card className="Metric-card leads-card">
+            <div className="metric-icon">
+              <FiPercent />
+            </div>
+            <div className="metric-content">
+              <div className="metric-label">PROFIT MARGIN</div>
+              <div className="metric-value">
+                {(stats.count > 0 ? (stats.total_margin / stats.count).toFixed(2) : '0.00')}%
+              </div>
+              <div className="metric-subtitle">
+                Average Margin
+              </div>
+            </div>
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12} md={6}>
+          <Card className="Metric-card created-card">
+            <div className="metric-icon">
+              <FiPackage />
+            </div>
+            <div className="metric-content">
+              <div className="metric-label">PRODUCTS SOLD</div>
+              <div className="metric-value">
+                {productRevenue.reduce((sum, p) => sum + (p.quantity_sold || 0), 0)}
+              </div>
+              <div className="metric-subtitle">
+                Total Units
+              </div>
+            </div>
           </Card>
         </Col>
       </Row>
 
-      <div className="revenue-tables">
-        <Table
-          columns={columns}
-          dataSource={filteredRevenue}
-          rowKey="id"
-          // loading={isLoading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} items`,
-          }}
-          className="revenue-table"
-        />
+      <div className="revenue-container">
+        <Row gutter={[16, 16]} className="revenue-filters">
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              placeholder="Select Product"
+              allowClear
+              style={{ width: "100%" }}
+              onChange={setSelectedProduct}
+              value={selectedProduct}
+            >
+              {products.map((product) => (
+                <Option key={product.id} value={product.id}>
+                  {product.name}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <Select
+              placeholder="Select Customer"
+              allowClear
+              style={{ width: "100%" }}
+              onChange={setSelectedCustomer}
+              value={selectedCustomer}
+            >
+              {customers.map((customer) => (
+                <Option key={customer.id} value={customer.id}>
+                  {customer.name}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+        </Row>
+
+        <div className="revenue-tables">
+          <Table
+            columns={columns}
+            dataSource={filteredRevenue}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `Total ${total} items`,
+            }}
+            className="revenue-table"
+          />
+        </div>
       </div>
     </div>
   );

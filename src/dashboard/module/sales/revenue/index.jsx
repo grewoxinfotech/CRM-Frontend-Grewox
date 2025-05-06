@@ -9,6 +9,7 @@ import {
   Dropdown,
   Menu,
   Breadcrumb,
+  Spin,
 } from "antd";
 import {
   FiPlus,
@@ -36,9 +37,9 @@ const Revenue = () => {
   const [selectedRevenue, setSelectedRevenue] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const { data: revenueData } = useGetRevenueQuery();
+  const { data: revenueData, isLoading: isRevenueLoading } = useGetRevenueQuery();
 
-  const revdata = revenueData?.data || [];
+  const revdata = revenueData || [];
 
   const handleCreate = () => {
     setSelectedRevenue(null);
@@ -250,13 +251,19 @@ const Revenue = () => {
       </div>
 
       <Card className="customer-table-card">
-        <RevenueList
-          revdata={revdata}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onView={handleView}
-          searchText={searchText}
-        />
+        {isRevenueLoading ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <Spin size="large" />
+          </div>
+        ) : (
+          <RevenueList
+            revdata={revdata}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onView={handleView}
+            searchText={searchText}
+          />
+        )}
       </Card>
 
       <CreateRevenue
