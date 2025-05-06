@@ -1,6 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { loginSuccess, loginFailure, loginStart } from './authSlice';
 import { baseQueryWithReauth } from '../../store/baseQuery';
+import { resetState, resetApiState } from '../../store/actions';
 
 const safelyParseJSON = (jsonString) => {
     try {
@@ -34,6 +35,8 @@ export const authApi = createApi({
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 dispatch(loginStart());
+                dispatch(resetState());
+                dispatch(resetApiState());
                 try {
                     const { data: response } = await queryFulfilled;
                     if (response.success) {
@@ -68,6 +71,8 @@ export const authApi = createApi({
             }),
             async onQueryStarted(_, { dispatch, queryFulfilled }) {
                 dispatch(loginStart());
+                dispatch(resetState());
+                dispatch(resetApiState());
                 try {
                     const { data: response } = await queryFulfilled;
                     if (response.success) {

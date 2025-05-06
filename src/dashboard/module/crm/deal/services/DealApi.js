@@ -6,6 +6,7 @@ export const dealApi = createApi({
   reducerPath: "dealApi",
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Deal"],
+  keepUnusedDataFor: 0,
   endpoints: (builder) => ({
 
     getDeals: builder.query({

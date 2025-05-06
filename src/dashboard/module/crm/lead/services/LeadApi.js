@@ -5,6 +5,7 @@ export const leadApi = createApi({
   reducerPath: "leadApi",
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Lead", "Followup"],
+  keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getLeads: builder.query({
       query: (params) => ({
