@@ -133,8 +133,6 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         email: otherValues.email || "",
         tax_number: otherValues.tax_number || "",
         alternate_number: otherValues.alternate_number || "",
-        text_number: otherValues.text_number || "",
-        company: otherValues.company || "",
         status: otherValues.status || "active",
         phonecode: selectedCountry.id,
 
@@ -142,8 +140,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         billing_address: JSON.stringify(billingAddress),
         shipping_address: JSON.stringify(shippingAddress),
 
-        // Additional Information
-        notes: otherValues.notes || "",
+      
       };
 
       // If there's a profile image, append it to the data
@@ -394,7 +391,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
           </Col>
 
           <Col span={12}>
-            <Form.Item label="Contact" style={{ marginBottom: 0 }} required>
+            <Form.Item  className="combined-input-item" label="Contact" style={{ marginBottom: 0 }} required>
               <Input.Group
                 compact
                 className="phone-input-group"
@@ -416,7 +413,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                   <Select
                     size="large"
                     style={{
-                      width: "90px",
+                      width: "120px",
                       height: "48px",
                       display: "flex",
                       alignItems: "center",

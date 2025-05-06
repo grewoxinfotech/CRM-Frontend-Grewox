@@ -630,7 +630,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               <Select
                 size="large"
                 style={{
-                  width: "90px",
+                  width: "120px",
                   height: "48px",
                   display: "flex",
                   alignItems: "center",

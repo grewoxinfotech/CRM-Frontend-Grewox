@@ -159,7 +159,7 @@ const LeadFollowup = ({ leadId }) => {
                             placement="bottomRight"
                             trigger={['click']}
                         >
-                            <Button type="primary" icon={<FiPlus />}>
+                            <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
                                 Create New
                             </Button>
                         </Dropdown>

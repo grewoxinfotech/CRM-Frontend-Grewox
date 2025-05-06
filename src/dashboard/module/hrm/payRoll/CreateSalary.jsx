@@ -314,7 +314,7 @@ const CreateSalary = ({ open, onCancel }) => {
                             }}
                           />
                           <span style={{
-                            padding: '2px 8px',
+                            padding: '0px 8px',
                             borderRadius: '4px',
                             fontSize: '12px',
                             background: roleStyle.bg,
@@ -412,8 +412,9 @@ const CreateSalary = ({ open, onCancel }) => {
               }
               rules={[{ required: true, message: "Please enter salary" }]}
               style={{ flex: 1 }}
+              className="combined-input-item"
             >
-              <Input.Group compact className="price-input-group" style={{
+              <Input.Group compact className="value-input-group" style={{
                 display: 'flex',
                 height: '48px',
                 backgroundColor: '#f8fafc',
@@ -431,7 +432,7 @@ const CreateSalary = ({ open, onCancel }) => {
                   <Select
                     size="large"
                     style={{
-                      width: '100px',
+                      width: '120px',
                       height: '48px'
                     }}
                     className="currency-select"
@@ -495,8 +496,9 @@ const CreateSalary = ({ open, onCancel }) => {
               }
               rules={[{ required: true, message: "Please enter net salary" }]}
               style={{ flex: 1 }}
+              className="combined-input-item"
             >
-              <Input.Group compact className="price-input-group" style={{
+              <Input.Group compact className="value-input-group" style={{
                 display: 'flex',
                 height: '48px',
                 backgroundColor: '#f8fafc',
@@ -514,7 +516,7 @@ const CreateSalary = ({ open, onCancel }) => {
                   <Select
                     size="large"
                     style={{
-                      width: '100px',
+                      width: '120px',
                       height: '48px'
                     }}
                     className="currency-select"

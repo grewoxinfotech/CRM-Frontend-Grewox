@@ -274,6 +274,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                         </span>
                     }
                     required
+                    className="combined-input-item"
                 >
                     <Input.Group compact className="phone-input-group" style={{
                         display: 'flex',
@@ -292,7 +293,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                             <Select
                                 size="large"
                                 style={{
-                                    width: '90px',
+                                    width: '120px',
                                     height: '48px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -300,7 +301,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                                     cursor: 'pointer',
                                 }}
                                 loading={countriesLoading}
-                                className="phone-code-select"
+                                className="phone-code-select blue-gradient-select"
                                 dropdownStyle={{
                                     padding: '8px',
                                     borderRadius: '10px',

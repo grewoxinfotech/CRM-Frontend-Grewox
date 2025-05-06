@@ -675,7 +675,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
               <Select
                 size="large"
                 style={{
-                  width: "90px",
+                  width: "120px",
                   height: "48px",
                   display: "flex",
                   alignItems: "center",

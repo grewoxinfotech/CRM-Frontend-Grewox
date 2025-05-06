@@ -356,7 +356,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         />
                     </Form.Item>
 
-                    <div style={{ display: 'flex', gap: '16px' }}>
+                    {/* <div style={{ display: 'flex', gap: '16px' }}> */}
                     <Form.Item
                         name="salary"
                         label={
@@ -365,8 +365,9 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         style={{ flex: 1 }}
+                        className="combined-input-item"
                     >
-                        <Input.Group compact className="price-input-group" style={{
+                        <Input.Group compact className="value-input-group" style={{
                             display: 'flex',
                             height: '48px',
                             backgroundColor: '#f8fafc',
@@ -383,7 +384,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                                         <Select
                                             size="large"
                                             style={{
-                                                width: '80px',
+                                                width: '120px',
                                                 height: '48px'
                                             }}
                                             loading={currenciesLoading}
@@ -432,7 +433,7 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                         </Input.Group>
                     </Form.Item>
 
-                </div>
+                {/* </div> */}
 
                     <Form.Item
                         name="salary_type"

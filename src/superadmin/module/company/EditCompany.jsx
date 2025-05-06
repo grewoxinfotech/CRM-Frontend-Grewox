@@ -495,7 +495,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                                 <Select
                                     size="large"
                                     style={{
-                                        width: '90px',
+                                        width: '120px',
                                         height: '48px'
                                     }}
                                     loading={countriesLoading}

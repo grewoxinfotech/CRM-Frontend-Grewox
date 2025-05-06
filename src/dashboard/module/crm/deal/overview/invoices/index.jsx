@@ -260,14 +260,14 @@ const Invoice = () => {
               style={{
                 width: "300px",
                 borderRadius: "20px",
-                height: "38px",
+                height: "40px",
               }}
             />
             <RangePicker
               onChange={handleDateRangeChange}
               value={filters.dateRange}
               allowClear
-              style={{ width: 400 }}
+              style={{ width: 400,height: '40px' }}
               placeholder={["Start Date", "End Date"]}
             />
           </div>
@@ -277,6 +277,7 @@ const Invoice = () => {
                 className="export-button"
                 icon={<FiDownload size={16} />}
                 loading={loading}
+                style={{height: '40px'}}
               >
                 Export
                 <FiChevronDown size={16} />

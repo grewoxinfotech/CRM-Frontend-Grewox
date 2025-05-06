@@ -192,6 +192,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             label={<span style={{ color: "#374151", fontWeight: 500 }}>Contact <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             style={{ marginBottom: 0 }}
                             required
+                            className="combined-input-item"
                         >
                             <Input.Group compact className="phone-input-group" style={{
                                 display: 'flex',
@@ -210,7 +211,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                                     <Select
                                         size="large"
                                         style={{
-                                            width: '90px',
+                                            width: '120px',
                                             height: '48px',
                                             display: 'flex',
                                             alignItems: 'center',

@@ -25,6 +25,7 @@ import {
   FiGlobe,
   FiUsers,
   FiChevronDown,
+  FiLink,
 } from "react-icons/fi";
 import "./contact.scss";
 import { useCreateContactMutation } from "./services/contactApi";
@@ -150,6 +151,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
         last_name: values.last_name || "",
         company_name: values.company_name || "",
         email: values.email || "",
+        website: values.website || "",
         phone_code: selectedCountry?.id || "",
         phone: phoneNumber,
         contact_source: values.contact_source || "",
@@ -339,9 +341,7 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 />
               </Form.Item>
             </Col>
-          </Row>
 
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="email"
@@ -362,7 +362,10 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 />
               </Form.Item>
             </Col>
+          </Row>
 
+
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="phoneGroup"
@@ -437,6 +440,28 @@ const CreateContact = ({ open, onCancel, loggedInUser, companyAccountsResponse }
                 </Input.Group>
               </Form.Item>
             </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="website"
+                label={
+                  <span className="form-label">
+                    <FiLink />
+                    Website
+                  </span>
+                }
+                rules={[
+                  { type: "url", message: "Please enter a valid URL" }
+                ]}
+              >
+                <Input
+                  placeholder="Enter website URL"
+                  size="large"
+                  className="form-input"
+                />
+              </Form.Item>
+            </Col>
+         
           </Row>
 
           <Row gutter={16}>

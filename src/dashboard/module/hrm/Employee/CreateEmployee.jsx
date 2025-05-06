@@ -741,7 +741,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -785,7 +785,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -830,7 +830,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -864,7 +864,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -905,7 +905,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -924,6 +924,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   </span>
                 }
                 required
+                className="combined-input-item"
               >
                 <Input.Group
                   compact
@@ -946,7 +947,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     <Select
                       size="large"
                       style={{
-                        width: "90px",
+                        width: "120px",
                         height: "48px",
                         display: "flex",
                         alignItems: "center",
@@ -960,6 +961,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                         borderRadius: "10px",
                         backgroundColor: "white",
                       }}
+                      popupClassName="custom-select-dropdown"
                       showSearch
                       optionFilterProp="children"
                       defaultValue="+91"
@@ -1248,8 +1250,9 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   </span>
                 }
                 style={{ flex: 1 }}
+                className="combined-input-item"
               >
-                <Input.Group compact className="price-input-group" style={{
+                <Input.Group compact className="value-input-group" style={{
                   display: 'flex',
                   height: '48px',
                   backgroundColor: '#f8fafc',
@@ -1344,7 +1347,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -1372,7 +1375,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -1399,7 +1402,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -1426,7 +1429,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -1453,7 +1456,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     fontSize: "14px",
                     transition: "all 0.3s ease",
                   }}
@@ -1480,7 +1483,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     padding: "0 24px",
                     fontSize: "14px",
                     fontWeight: 500,
@@ -1504,7 +1507,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   style={{
                     borderRadius: "8px",
                     boxShadow: "none",
-                    height: "40px",
+                    height: "48px",
                     padding: "0 24px",
                     fontSize: "14px",
                     fontWeight: 500,

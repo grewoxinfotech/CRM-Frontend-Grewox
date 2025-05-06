@@ -159,6 +159,7 @@ const DealFiles = ({ deal }) => {
           icon={<FiPlus />}
           onClick={() => setIsModalVisible(true)}
           className="add-files-btn"
+          style={{height: '40px'}}
         >
           Upload New File
         </Button>

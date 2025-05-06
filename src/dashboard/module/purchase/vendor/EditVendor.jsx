@@ -272,6 +272,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                             label="Contact"
                             style={{ marginBottom: 0 }}
                             required
+                            className="combined-input-item"
                         >
                             <Input.Group compact className="phone-input-group" style={{
                                 display: 'flex',
@@ -290,7 +291,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                                     <Select
                                         size="large"
                                         style={{
-                                            width: '90px',
+                                            width: '120px',
                                             height: '48px',
                                             display: 'flex',
                                             alignItems: 'center',

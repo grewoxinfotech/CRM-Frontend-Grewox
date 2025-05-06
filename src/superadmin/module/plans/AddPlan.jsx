@@ -376,6 +376,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         style={{ flex: 1 }}
+                        className="combined-input-item"
                     >
                         <Input.Group compact className="price-input-group" style={{
                             display: 'flex',

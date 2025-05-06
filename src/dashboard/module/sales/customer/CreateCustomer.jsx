@@ -353,6 +353,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
           <Col span={12}>
             <Form.Item
               name="phone"
+               className="combined-input-item"
               label={
                 <span style={{
                     fontSize: '14px',
@@ -379,7 +380,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                       <Select
                           size="large"
                           style={{
-                              width: '90px',
+                              width: '120px',
                               height: '48px',
                               display: 'flex',
                               alignItems: 'center',

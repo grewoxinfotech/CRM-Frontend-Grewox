@@ -660,7 +660,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -692,7 +692,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -725,7 +725,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -743,7 +743,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -769,7 +769,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -879,7 +879,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -894,7 +894,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                 placeholder="Select gender"
                                 style={{
                                     width: "100%",
-                                    height: "40px",
+                                    height: "48px",
                                     borderRadius: "8px",
                                 }}
                                 dropdownStyle={{
@@ -1162,7 +1162,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -1180,7 +1180,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -1197,7 +1197,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -1214,7 +1214,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -1231,7 +1231,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     fontSize: "14px",
                                     transition: "all 0.3s ease",
                                 }}
@@ -1252,7 +1252,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     padding: "0 24px",
                                     fontSize: "14px",
                                     fontWeight: 500,
@@ -1276,7 +1276,7 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                 style={{
                                     borderRadius: "8px",
                                     boxShadow: "none",
-                                    height: "40px",
+                                    height: "48px",
                                     padding: "0 24px",
                                     fontSize: "14px",
                                     fontWeight: 500,

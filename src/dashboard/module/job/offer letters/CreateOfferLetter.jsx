@@ -405,8 +405,9 @@ const CreateOfferLetter = ({ open, onCancel, loading, initialValues }) => {
                                 </span>
                             }
                             style={{ flex: 1 }}
+                            className="combined-input-item"
                         >
-                            <Input.Group compact className="price-input-group" style={{
+                            <Input.Group compact className="value-input-group" style={{
                                 display: 'flex',
                                 height: '48px',
                                 backgroundColor: '#f8fafc',
@@ -423,7 +424,7 @@ const CreateOfferLetter = ({ open, onCancel, loading, initialValues }) => {
                                     <Select
                                         size="large"
                                         style={{
-                                            width: '80px',
+                                            width: '120px',
                                             height: '48px'
                                         }}
                                         loading={currenciesLoading}

@@ -25,6 +25,7 @@ import {
   FiUsers,
   FiChevronDown,
   FiTrash2,
+  FiLink,
 } from "react-icons/fi";
 import AddCompanyModal from "../companyacoount/CreateCompanyAccount";
 import { PlusOutlined } from "@ant-design/icons";
@@ -148,6 +149,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
         first_name: values.first_name || "",
         last_name: values.last_name || "",
         email: values.email || "",
+        website: values.website || "",
         phone_code: selectedCountry?.id || "",
         phone: phoneNumber,
         company_name: values.company_name || "",
@@ -322,9 +324,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
                 />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="email"
@@ -342,7 +341,9 @@ const EditContact = ({ open, onCancel, contactData }) => {
                 />
               </Form.Item>
             </Col>
+          </Row>
 
+          <Row gutter={16}>
             <Col span={12}>
               <Form.Item
                 name="phoneGroup"
@@ -415,6 +416,27 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     />
                   </Form.Item>
                 </Input.Group>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                name="website"
+                label={
+                  <span className="form-label">
+                    <FiLink />
+                    Website
+                  </span>
+                }
+                rules={[
+                  { type: "url", message: "Please enter a valid URL" }
+                ]}
+              >
+                <Input
+                  placeholder="Enter website URL"
+                  size="large"
+                  className="form-input"
+                />
               </Form.Item>
             </Col>
           </Row>

@@ -108,11 +108,11 @@ const DealPayments = (deal) => {
             onChange={(e) => setSearchText(e.target.value)}
           />
           <Dropdown menu={exportMenu} trigger={["click"]}>
-            <Button>
+            <Button style={{height: '40px'}}>
               <FiDownload /> Export <FiChevronDown />
             </Button>
           </Dropdown>
-          <Button type="primary" icon={<FiPlus />} onClick={handleCreate}>
+          <Button style={{height: '40px'}} type="primary" icon={<FiPlus />} onClick={handleCreate}>
             Add Payment
           </Button>
         </div>

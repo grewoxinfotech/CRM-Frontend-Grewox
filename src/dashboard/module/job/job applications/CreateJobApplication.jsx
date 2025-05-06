@@ -389,6 +389,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                 Phone Number
                             </span>
                         }
+                        className="combined-input-item"
                         // rules={getFieldRules('phone')}
                     >
                         <Input.Group compact className="phone-input-group" style={{
@@ -407,7 +408,7 @@ const CreateJobApplication = ({ open, onCancel, isEditing, initialValues }) => {
                                 <Select
                                     size="large"
                                     style={{
-                                        width: '90px',
+                                        width: '120px',
                                         height: '48px',
                                         display: 'flex',
                                         alignItems: 'center',
