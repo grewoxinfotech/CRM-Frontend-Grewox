@@ -65,7 +65,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
     // refetch: refetchSettings,
   } = useGetAllSettingsQuery(id);
 
-  console.log("invoice", invoice);
+  // console.log("invoice", invoice);
 
   const [sendInvoiceEmail] = useSendInvoiceEmailMutation();
   // State for company information
@@ -153,7 +153,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
     return (
       <div>
-        <Text>{billingData.name || 'N/A'}</Text>
+        <Text>{billingData.name || "N/A"}</Text>
         {billingData.contact && (
           <div>
             <Text>Phone: {billingData.contact}</Text>
@@ -165,7 +165,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
   const tryParseAddress = (address) => {
     try {
-      if (typeof address === 'string') {
+      if (typeof address === "string") {
         try {
           const parsed = JSON.parse(address);
           return (
@@ -188,7 +188,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           return <Text>{address}</Text>;
         }
       }
-      return <Text>{String(address) || 'N/A'}</Text>;
+      return <Text>{String(address) || "N/A"}</Text>;
     } catch (error) {
       return <Text type="secondary">N/A</Text>;
     }
@@ -197,20 +197,22 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   // Update the getPaymentUrl function to handle errors
   const getPaymentUrl = () => {
     try {
-      if (!invoice) return '';
+      if (!invoice) return "";
 
       if (merchantUpiId) {
         const amount = Number(invoice?.amount || 0);
-        const tr = invoice?.salesInvoiceNumber || '';
-        const pn = encodeURIComponent(companyName || 'Merchant');
+        const tr = invoice?.salesInvoiceNumber || "";
+        const pn = encodeURIComponent(companyName || "Merchant");
 
         return `upi://pay?pa=${merchantUpiId}&pn=${pn}&am=${amount}&tr=${tr}&tn=Invoice%20Payment`;
       }
 
-      return `${window.location.origin}/invoice/${invoice.salesInvoiceNumber || ''}`;
+      return `${window.location.origin}/invoice/${
+        invoice.salesInvoiceNumber || ""
+      }`;
     } catch (error) {
-      console.error('Error generating payment URL:', error);
-      return '';
+      console.error("Error generating payment URL:", error);
+      return "";
     }
   };
 
@@ -225,24 +227,24 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         const taxRate = Number(item?.tax_rate) || 0;
         const taxAmount = Number(item?.tax_amount) || 0;
         const discount = item?.discount
-          ? `${item.discount}${item.discount_type === 'percentage' ? '%' : '₹'}`
-          : '-';
+          ? `${item.discount}${item.discount_type === "percentage" ? "%" : "₹"}`
+          : "-";
         const amount = Number(item?.amount) || 0;
 
         return {
           key: index,
-          name: item?.name || item?.description || '-',
-          hsn_sac: item?.hsn_sac || '-',
+          name: item?.name || item?.description || "-",
+          hsn_sac: item?.hsn_sac || "-",
           quantity,
           rate,
           taxRate,
           taxAmount,
           discount,
-          amount
+          amount,
         };
       });
     } catch (error) {
-      console.error('Error processing invoice items:', error);
+      console.error("Error processing invoice items:", error);
       return [];
     }
   };
@@ -568,8 +570,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         name:
           customerData.name ||
           customerData.company_name ||
-          `${customerData.first_name || ""} ${customerData.last_name || ""
-            }`.trim(),
+          `${customerData.first_name || ""} ${
+            customerData.last_name || ""
+          }`.trim(),
         email: customerData.email,
         contact:
           customerData.contact || customerData.phone || customerData.mobile,
@@ -781,21 +784,25 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                   <div className="invoice-header">
                     <div className="company-info">
                       <div className="company-left">
-                        <div style={{
-                          width: '80px',
-                          height: '80px',
-                          borderRadius: '20px',
-                          background: '#f0f7ff',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          border: '1px solid #e6f4ff'
-                        }}>
-                          <PiBuildingsFill style={{
-                            width: '80px',
-                            height: '80px',
-                            color: '#1f2937'
-                          }} />
+                        <div
+                          style={{
+                            width: "80px",
+                            height: "80px",
+                            borderRadius: "20px",
+                            background: "#f0f7ff",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1px solid #e6f4ff",
+                          }}
+                        >
+                          <PiBuildingsFill
+                            style={{
+                              width: "80px",
+                              height: "80px",
+                              color: "#1f2937",
+                            }}
+                          />
                         </div>
                         <div>
                           <div className="company-name">
@@ -940,11 +947,26 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                             <td>{item.name}</td>
                             <td>{item.hsn_sac}</td>
                             <td>{item.quantity}</td>
-                            <td>₹{item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td>
+                              ₹
+                              {item.rate.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
                             <td>{item.taxRate}%</td>
-                            <td>₹{item.taxAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td>
+                              ₹
+                              {item.taxAmount.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
                             <td>{item.discount}</td>
-                            <td>₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td>
+                              ₹
+                              {item.amount.toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                              })}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

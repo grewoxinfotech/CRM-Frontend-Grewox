@@ -81,6 +81,10 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   console.log("taxesData", taxesData);
   console.log(initialValues, "initialValues");
 
+  const [paymentStatus, setPaymentStatus] = useState(
+    initialValues?.payment_status || "unpaid"
+  );
+
   const handleCustomerChange = (value) => {
     const selectedCustomer = customers?.find((c) => c.id === value);
     const customerName = selectedCustomer?.name || "";
@@ -1112,6 +1116,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 width: "100%",
                 borderRadius: "10px",
               }}
+              onChange={(value) => setPaymentStatus(value)}
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
@@ -1188,6 +1193,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               placeholder="Select Product"
                               optionFilterProp="children"
                               style={{ width: "100%" }}
+                              disabled={paymentStatus === "paid"}
                               onChange={(value) => {
                                 const selectedProduct =
                                   productsData?.data?.find(
@@ -1298,6 +1304,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               min={1}
                               precision={0}
                               className="quantity-input"
+                              disabled={paymentStatus === "paid"}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
                               }
@@ -1355,6 +1362,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                     height: "40px",
                                   }}
                                   defaultValue="percentage"
+                                  disabled={paymentStatus === "paid"}
                                   onChange={() =>
                                     calculateTotals(form.getFieldValue("items"))
                                   }
@@ -1382,6 +1390,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                         ? "Amount"
                                         : "%"
                                     }
+                                    disabled={paymentStatus === "paid"}
                                     formatter={(value) => {
                                       if (!value && value !== 0) return "";
                                       return value
@@ -1439,7 +1448,9 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               placeholder="Select Tax"
                               loading={taxesLoading}
                               allowClear
-                              disabled={!isTaxEnabled}
+                              disabled={
+                                !isTaxEnabled || paymentStatus === "paid"
+                              }
                               onChange={(value, option) => {
                                 const items = form.getFieldValue("items") || [];
                                 const selectedTax = taxesData?.data?.find(
@@ -1500,6 +1511,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               type="text"
                               className="delete-btn"
                               icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                              disabled={paymentStatus === "paid"}
                               onClick={() => {
                                 remove(name);
                                 calculateTotals(form.getFieldValue("items"));
@@ -1518,6 +1530,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                     icon={<FiPlus />}
                     onClick={() => add()}
                     className="add-item-btn"
+                    disabled={paymentStatus === "paid"}
                   >
                     Add Items
                   </Button>
