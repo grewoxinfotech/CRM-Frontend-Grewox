@@ -395,6 +395,7 @@ const EditMeeting = ({
                                     Employees
                                 </span>
                             }
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 mode="multiple"
@@ -489,6 +490,7 @@ const EditMeeting = ({
                                     Client
                                 </span>
                             }
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 placeholder="Select client"
@@ -521,6 +523,7 @@ const EditMeeting = ({
                         <Form.Item
                             name="date"
                             label="Meeting Date"
+                            style={{ marginTop: '12px' }}
                         >
                             <DatePicker
                                 format="DD-MM-YYYY"
@@ -532,6 +535,7 @@ const EditMeeting = ({
                         <Form.Item
                             name="startTime"
                             label="Start Time"
+                            style={{ marginTop: '12px' }}
                         >
                             <TimePicker
                                 format="HH:mm"
@@ -543,6 +547,7 @@ const EditMeeting = ({
                         <Form.Item
                             name="endTime"
                             label="End Time"
+                            style={{ marginTop: '12px' }}
                         >
                             <TimePicker
                                 format="HH:mm"
@@ -558,6 +563,7 @@ const EditMeeting = ({
                                     Status
                                 </span>
                             }
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 placeholder="Select status"
@@ -583,6 +589,7 @@ const EditMeeting = ({
                                     Meeting Link
                                 </span>
                             }
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter meeting link"
@@ -604,6 +611,7 @@ const EditMeeting = ({
                             Meeting Description
                         </span>
                     }
+                    style={{ marginTop: '12px' }}
                 >
                     <TextArea
                         placeholder="Enter meeting description"

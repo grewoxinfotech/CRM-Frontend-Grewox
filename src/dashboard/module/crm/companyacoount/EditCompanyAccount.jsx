@@ -326,6 +326,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Email
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company email"
@@ -344,6 +345,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Website
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company website"
@@ -364,6 +366,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                 }
                 className="combined-input-item"
                 required
+                style={{ marginTop: "22px" }}
               >
                 <Input.Group compact className="phone-input-group">
                   <Form.Item
@@ -433,6 +436,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Source 
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Select
                   ref={sourceSelectRef}
@@ -695,23 +699,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="company_industry"
-                label={
-                  <span className="form-label">
-                    <FiBriefcase />
-                    Company Industry
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Enter company industry"
-                  size="large"
-                  className="form-input"
-                />
-              </Form.Item>
-            </Col>
+           
             <Col span={12}>
               <Form.Item
                 name="company_revenue"
@@ -721,6 +709,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Company Revenue
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company revenue"
@@ -767,6 +756,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     City
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter city"
@@ -784,6 +774,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     State
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter state"
@@ -801,6 +792,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Pincode
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   type="number"
@@ -821,6 +813,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Country
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter country"
@@ -873,6 +866,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     City
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter city"
@@ -890,6 +884,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     State
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter state"
@@ -907,6 +902,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Pincode
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   type="number"
@@ -927,6 +923,7 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
                     Country
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter country"

@@ -333,6 +333,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                   Email Address
                 </span>
               }
+              style={{ marginTop: '12px' }}
             >
               <Input
                 prefix={
@@ -362,6 +363,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                     Phone Number <span style={{ color: '#ff4d4f' }}>*</span>
                 </span>
               }
+              style={{ marginTop: '12px' }}
               // rules={[{ required: true, message: "Please enter phone number" }]}
             >
               <Input.Group compact className="phone-input-group" style={{
@@ -453,6 +455,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
                   Billing Address
                 </span>
               }
+              style={{ marginTop: '12px' }}
             >
               <Input
                 prefix={

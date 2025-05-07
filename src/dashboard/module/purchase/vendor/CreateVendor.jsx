@@ -281,6 +281,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         <Form.Item
                             name="email"
                             label="Email"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter email address (optional)"
@@ -297,6 +298,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         <Form.Item
                             name="taxNumber"
                             label="Tax Number"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter tax number (optional)"
@@ -314,6 +316,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                 <Form.Item
                     name="address"
                     label="Address"
+                    style={{ marginTop: '12px' }}
                 >
                     <TextArea
                         placeholder="Enter complete address (optional)"
@@ -330,6 +333,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         <Form.Item
                             name="city"
                             label="City"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter city (optional)"
@@ -346,6 +350,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         <Form.Item
                             name="state"
                             label="State"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter state (optional)"
@@ -365,6 +370,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         <Form.Item
                             name="country"
                             label="Country"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter country"
@@ -381,6 +387,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         <Form.Item
                             name="zipcode"
                             label="Zipcode"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter zipcode (optional)"

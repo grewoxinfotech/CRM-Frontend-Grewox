@@ -353,7 +353,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '12px' }}>
             <Form.Item
               name="amount"
               label={
@@ -428,6 +428,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
               Description
             </span>
           }
+          style={{ marginTop: '12px' }}
         >
           <TextArea
             placeholder="Enter description"

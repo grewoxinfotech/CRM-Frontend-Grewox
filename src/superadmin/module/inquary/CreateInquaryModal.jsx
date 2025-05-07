@@ -255,6 +255,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                             message: "Please input a valid email!",
                         },
                     ]}
+                    style={{ marginTop: "22px" }}
                 >
                     <Input
                         prefix={<FiMail style={{ color: "#1890ff", fontSize: "16px" }} />}
@@ -275,6 +276,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                     }
                     required
                     className="combined-input-item"
+                    style={{ marginTop: "22px" }}
                 >
                     <Input.Group compact className="phone-input-group" style={{
                         display: 'flex',
@@ -369,6 +371,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                             message: "Please input the subject!",
                         },
                     ]}
+                    style={{ marginTop: "22px" }}
                 >
                     <Input
                         prefix={<FiBookmark style={{ color: "#1890ff", fontSize: "16px" }} />}
@@ -394,6 +397,7 @@ const CreateInquaryModal = ({ open, onCancel, onSubmit, isEditing, initialValues
                             message: "Please input the message!",
                         },
                     ]}
+                    style={{ marginTop: "22px" }}
                 >
                     <TextArea
                         rows={4}

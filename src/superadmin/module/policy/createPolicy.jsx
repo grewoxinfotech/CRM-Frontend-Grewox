@@ -208,6 +208,7 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter policy description' }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <TextArea
                         prefix={<FiAlignLeft style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -235,6 +236,7 @@ const CreatePolicy = ({ open, onClose, onSubmit }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please upload a policy file' }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <Upload
                         beforeUpload={beforeUpload}

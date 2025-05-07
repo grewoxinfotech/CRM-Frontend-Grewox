@@ -316,6 +316,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Last Name
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter last name"
@@ -333,6 +334,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Email
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter email"
@@ -355,6 +357,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                 }
                 className="combined-input-item"
                 required
+                style={{ marginTop: "22px" }}
               >
                 <Input.Group compact className="phone-input-group">
                   <Form.Item
@@ -431,6 +434,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                 rules={[
                   { type: "url", message: "Please enter a valid URL" }
                 ]}
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter website URL"
@@ -451,6 +455,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Company Name <span className="required">*</span>
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Select
                   placeholder="Select company"
@@ -509,6 +514,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Source <span style={{ color: "#ff4d4f" }}>*</span>
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Select
                   ref={sourceSelectRef}
@@ -629,6 +635,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Address
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <TextArea
                   placeholder="Enter address"
@@ -649,6 +656,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     City
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter city"
@@ -667,6 +675,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     State
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter state"
@@ -685,6 +694,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Country
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter country"
@@ -705,6 +715,7 @@ const EditContact = ({ open, onCancel, contactData }) => {
                     Description
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <TextArea
                   placeholder="Enter description"

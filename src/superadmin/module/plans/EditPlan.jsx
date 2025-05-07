@@ -386,9 +386,10 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                     Price
                                 </span>
                             }
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, marginTop: "22px" }}
+                           className="combined-input-item"
                         >
-                            <Input.Group compact className="price-input-group" style={{
+                            <Input.Group compact className="value-input-group" style={{
                                 display: 'flex',
                                 height: '48px',
                                 backgroundColor: '#f8fafc',
@@ -470,7 +471,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                     Duration
                                 </span>
                             }
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, marginTop: "22px" }}
                         >
                             <Dropdown
                                 overlay={mainMenu}
@@ -514,7 +515,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Trial Period (Days)
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiClock style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -540,7 +541,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Storage Limit
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <Input.Group compact className="storage-input-group" style={{
                             display: 'flex',
@@ -614,7 +615,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Users
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -640,7 +641,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Clients
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -668,7 +669,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Vendors
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -694,7 +695,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 Max Customers
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -722,6 +723,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                         </span>
                     }
                     valuePropName="checked"
+                    style={{ marginTop: "22px" }}
                 >
                     <Switch
                         checkedChildren="Active"

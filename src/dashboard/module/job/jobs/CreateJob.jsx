@@ -445,19 +445,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                     Job Title {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
                                 </span>
                             }
-                            rules={[{ required: true, message: 'Please enter job title' },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value) return Promise.resolve();
-                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                                            return Promise.reject(
-                                                new Error('Job title must contain both uppercase or lowercase English letters')
-                                            );
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }
-                            ]}
+                            rules={getFieldRules('job title')}
                         >
                             <Input
                                 prefix={<FiBriefcase style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -768,7 +756,7 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                                                         }}
                                                     />
                                                     <span style={{
-                                                        padding: '2px 8px',
+                                                        padding: '0px 8px',
                                                         borderRadius: '4px',
                                                         fontSize: '12px',
                                                         background: roleStyle.bg,
@@ -889,84 +877,90 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
                         </Form.Item>
 
                         <div style={{ display: 'flex', gap: '16px' }}>
-                        <Form.Item
-                            name="expectedSalary"
-                            label={
-                                <span style={{
-                                    fontSize: '14px',
-                                    fontWeight: '500',
+                            <Form.Item
+                                name="expectedSalary"
+                                label={
+                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                        Expected Salary {!isEditing && <span style={{ color: '#ff4d4f' }}>*</span>}
+                                    </span>
+                                }
+                                style={{ flex: 1 }}
+                                rules={[
+                                    {
+                                        required: !isEditing,
+                                        message: 'Please enter expected salary'
+                                    }
+                                ]}
+                            >
+                                <div style={{
+                                    display: 'flex',
+                                    width: '100%',
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #e6e8eb',
+                                    borderRadius: '10px',
+                                    overflow: 'hidden'
                                 }}>
-                                    Expected Salary <span style={{ color: '#ff4d4f' }}>*</span>
-                                </span>
-                            }
-                            style={{ flex: 1 }}
-                            className="combined-input-item"
-                        >
-                            <Input.Group compact className="value-input-group" style={{
-                                display: 'flex',
-                                height: '48px',
-                                backgroundColor: '#f8fafc',
-                                borderRadius: '10px',
-                                border: '1px solid #e6e8eb',
-                                overflow: 'hidden',
-                                marginBottom: 0
-                            }}>
-                                <Form.Item
-                                    name="currency"
-                                    noStyle
-                                    rules={[{ required: true, message: 'Please select a currency' }]}
-                                >
-                                    <Select
-                                        size="large"
-                                        style={{
-                                            width: '120px',
-                                            height: '48px'
-                                        }}
-                                        loading={currenciesLoading}
-                                        className="currency-select"
-                                        defaultValue={currencies?.find(c => c.currencyCode === 'INR')?.id}
-                                        showSearch
-                                        optionFilterProp="children"
-                                        filterOption={(input, option) => {
-                                            const currency = currencies?.find(c => c.id === option.value);
-                                            return currency?.currencyCode.toLowerCase().indexOf(input.toLowerCase()) >= 0;
-                                        }}
+                                    <Form.Item
+                                        name="currency"
+                                        noStyle
+                                        rules={[{ required: true, message: 'Please select currency' }]}
                                     >
-                                        {currencies?.map(currency => (
-                                            <Option 
-                                                key={currency.id} 
-                                                value={currency.id}
-                                                selected={currency.currencyCode === 'INR'}
-                                            >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span>{currency.currencyIcon}</span>
-                                                    <span>{currency.currencyCode}</span>
-                                                </div>
-                                            </Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                                <Form.Item
-                                    name="salary"
-                                    noStyle
-                                    rules={[{ required: true, message: 'Please enter price' }]}
-                                >
-                                    <Input
-                                        placeholder="Enter price"
+                                        <Select
+                                            size="large"
+                                            style={{
+                                                width: '120px',
+                                                backgroundColor: '#f8fafc'
+                                            }}
+                                            loading={currenciesLoading}
+                                            className="currency-select"
+                                            defaultValue={currencies?.find(c => c.currencyCode === 'INR')?.id}
+                                            showSearch
+                                            optionFilterProp="children"
+                                            dropdownMatchSelectWidth={false}
+                                            filterOption={(input, option) => {
+                                                const currency = currencies?.find(c => c.id === option.value);
+                                                return currency?.currencyCode.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+                                            }}
+                                        >
+                                            {currencies?.map(currency => (
+                                                <Option
+                                                    key={currency.id}
+                                                    value={currency.id}
+                                                    selected={currency.currencyCode === 'INR'}
+                                                >
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <span>{currency.currencyIcon}</span>
+                                                        <span>{currency.currencyCode}</span>
+                                                    </div>
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                    <div style={{
+                                        width: '1px',
+                                        backgroundColor: '#e6e8eb',
+                                        margin: '8px 0'
+                                    }} />
+                                    <InputNumber
+                                        placeholder="Enter salary amount"
                                         size="large"
+                                        defaultValue={initialValues?.expectedSalary}
+                                        min={0}
+                                        precision={0}
                                         style={{
                                             flex: 1,
-                                            width: '100%',
+                                            backgroundColor: '#f8fafc',
                                             border: 'none',
-                                            borderLeft: '1px solid #e6e8eb',
                                             borderRadius: 0,
-                                            height: '48px',
+                                            boxShadow: 'none',
+                                            padding: '0 8px'
                                         }}
-                                        className="price-input"
+                                        formatter={value => value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
+                                        parser={value => value?.replace(/[^\d]/g, '')}
+                                        className="salary-input"
                                     />
-                                </Form.Item>
-                            </Input.Group>
-                        </Form.Item>
+                                </div>
+                            </Form.Item>
                         </div>
 
                         <Form.Item

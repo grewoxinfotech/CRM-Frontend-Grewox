@@ -241,6 +241,7 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                         </span>
                     }
                     rules={[{ required: true, message: "Please enter form description" }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <TextArea
                         placeholder="Enter form description"
@@ -263,7 +264,7 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                     label={
                         <span style={{ fontSize: "14px", fontWeight: "500" }}>
                             <FiCalendar style={{ marginRight: "8px", color: "#1890ff" }} />
-                            Event Name <span style={{ color: '#ff4d4f' }}>*</span>
+                            Event Name <span style={{ color: '#ff4d4f' }}>*</span>  
                         </span>
                     }
                     rules={[{ required: true, message: "Please enter event name" }]}
@@ -290,6 +291,7 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                         </span>
                     }
                     rules={[{ required: true, message: "Please enter event location" }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <Input
                         placeholder="Enter event location"
@@ -313,6 +315,7 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                         </span>
                     }
                     rules={[{ required: true, message: "Please select event dates" }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <RangePicker
                         format="YYYY-MM-DD"
@@ -333,6 +336,7 @@ const CreateCustomForm = ({ open, onCancel, onSubmit, loading }) => {
                 <Form.List
                     name="fields"
                     initialValue={[{ name: '', type: 'text', required: false }]}
+                    style={{ marginTop: "22px" }}
                 >
                     {(fields, { add, remove }) => (
                         <>

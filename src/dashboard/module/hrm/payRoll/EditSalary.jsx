@@ -58,16 +58,19 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
 
   React.useEffect(() => {
     if (initialValues) {
+      // Find the currency details from the currency ID
+      const currencyDetails = currencies.find(curr => curr.id === initialValues.currency);
+      
       form.setFieldsValue({
         employeeId: initialValues.employeeId,
         employeeName: initialValues.employeeName,
         payslipType: initialValues.payslipType,
         salary_group: {
-          currency: initialValues.currency,
+          currency: currencyDetails?.currencyCode || initialValues.currencyCode || 'INR',
           amount: initialValues.salary
         },
         net_salary_group: {
-          currency: initialValues.currency,
+          currency: currencyDetails?.currencyCode || initialValues.currencyCode || 'INR',
           amount: initialValues.netSalary
         },
         bankAccount: initialValues.bankAccount,
@@ -77,18 +80,20 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
       });
       
       // Update selected currency
-      setSelectedCurrency(initialValues.currency);
+      setSelectedCurrency(currencyDetails?.currencyIcon || '$');
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, currencies]);
 
   const handleSubmit = async (values) => {
     try {
+      const selectedCurrency = currencies.find(curr => curr.currencyCode === values.salary_group?.currency);
+
       const payload = {
         id: initialValues.id,
         data: {
           employeeId: values.employeeId,
           payslipType: values.payslipType,
-          currency: values.salary_group.currency,
+          currency: selectedCurrency?.id || values.salary_group?.currency,
           salary: String(values.salary_group.amount),
           netSalary: String(values.net_salary_group.amount),
           bankAccount: values.bankAccount,
@@ -393,7 +398,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="salary_group"
               label={
@@ -475,7 +480,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="net_salary_group"
               label={
@@ -559,7 +564,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="status"
               label={
@@ -583,7 +588,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
       
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="bankAccount"
               label={
@@ -606,7 +611,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="salary_date"
               label={
@@ -615,7 +620,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
                   Salary Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select salary date" }]}
+              // rules={[{ required: true, message: "Please select salary date" }]}
             >
               <DatePicker
                 style={{
@@ -629,7 +634,7 @@ const EditSalary = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
       
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="payment_date"
               label={

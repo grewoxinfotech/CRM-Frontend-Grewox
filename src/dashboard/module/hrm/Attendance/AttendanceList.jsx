@@ -422,6 +422,7 @@ const AttendanceList = ({ searchText, filters }) => {
                 pagination={false}
                 className="attendance-table"
                 bordered
+                sticky
             />
         </div>
     );

@@ -393,6 +393,7 @@ const CreateTask = ({
                 </span>
               }
               rules={[{ required: true, message: "Please select start date" }]}
+              style={{ marginTop: "22px" }}
             >
               <DatePicker
                 size="large"
@@ -416,6 +417,7 @@ const CreateTask = ({
                 </span>
               }
               rules={[{ required: true, message: "Please select due date" }]}
+              style={{ marginTop: "22px" }}
             >
               <DatePicker
                 size="large"
@@ -438,6 +440,7 @@ const CreateTask = ({
               name="priority"
               label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Please select priority" }]}
+              style={{ marginTop: "22px" }}
             >
               <Select
                 placeholder="Select priority"
@@ -528,6 +531,7 @@ const CreateTask = ({
               name="status"
               label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Status <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Please select status" }]}
+              style={{ marginTop: "22px" }}
             >
               <Select
                 placeholder="Select status"
@@ -642,6 +646,7 @@ const CreateTask = ({
             </span>
           }
           rules={[{ required: true, message: "Please select assignees" }]}
+          style={{ marginTop: "22px" }}
         >
           <Select
             mode="multiple"
@@ -861,6 +866,7 @@ const CreateTask = ({
             </span>
           }
           rules={[{ required: true, message: "Please select task reporter" }]}
+          style={{ marginTop: "22px" }}
         >
           <Select
             showSearch
@@ -995,6 +1001,7 @@ const CreateTask = ({
                   Reminder Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
+              style={{ marginTop: "22px" }}
             >
               <DatePicker
                 size="large"
@@ -1018,6 +1025,7 @@ const CreateTask = ({
               Description
             </span>
           }
+          style={{ marginTop: "22px" }}
         >
           <TextArea
             placeholder="Enter task description"
@@ -1045,6 +1053,7 @@ const CreateTask = ({
             }
             return e?.fileList;
           }}
+          style={{ marginTop: "22px" }}
         >
           <Upload
             maxCount={1}

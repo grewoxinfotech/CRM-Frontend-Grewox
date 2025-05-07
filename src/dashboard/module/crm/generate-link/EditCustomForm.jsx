@@ -361,6 +361,7 @@ const EditCustomForm = ({
             </span>
           }
           rules={[{ required: true, message: "Please enter form description" }]}
+          style={{ marginTop: "22px" }}
         >
           <TextArea
             placeholder="Enter form description"
@@ -410,6 +411,7 @@ const EditCustomForm = ({
             </span>
           }
           rules={[{ required: true, message: "Please enter event location" }]}
+          style={{ marginTop: "22px" }}
         >
           <Input
             placeholder="Enter event location"
@@ -433,6 +435,7 @@ const EditCustomForm = ({
             </span>
           }
           rules={[{ required: true, message: "Please select event dates" }]}
+          style={{ marginTop: "22px" }}
         >
           <RangePicker
             format="YYYY-MM-DD"

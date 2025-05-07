@@ -373,7 +373,7 @@ const CreateSalary = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={24} style={{ marginTop: '8px' }}>
+          <Col span={24} style={{ marginTop: '22px' }}>
             <Form.Item
               name="status"
               label={
@@ -399,7 +399,7 @@ const CreateSalary = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="salary_group"
               label={
@@ -483,7 +483,7 @@ const CreateSalary = ({ open, onCancel }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="net_salary_group"
               label={
@@ -569,7 +569,7 @@ const CreateSalary = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="bankAccount"
               label={
@@ -594,7 +594,7 @@ const CreateSalary = ({ open, onCancel }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="paymentDate"
               label={

@@ -359,6 +359,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 </span>
               }
               rules={[{ required: true, message: "Please select date" }]}
+              style={{ marginTop: "22px" }}
             >
               <DatePicker
                 size="large"
@@ -385,6 +386,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
+              style={{ marginTop: "22px" }}
             >
               <Select
                 size="large"
@@ -416,6 +418,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                   Amount <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
+              style={{ marginTop: "22px" }}
               rules={[
                 { required: true, message: "Please enter amount" },
                 ({ getFieldValue }) => ({
@@ -470,6 +473,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               Description
             </span>
           }
+          style={{ marginTop: "22px" }}
         >
           <TextArea
             placeholder="Enter description"

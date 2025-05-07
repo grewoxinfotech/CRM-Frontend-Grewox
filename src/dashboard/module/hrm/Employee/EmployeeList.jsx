@@ -710,8 +710,14 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
             rowKey="id"
             pagination={{
                 pageSize: 10,
-                showSizeChanger: false,
-                showTotal: (total) => `Total ${total} employees`,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} items`,
+                style: {
+                    margin: "16px 24px",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                },
             }}
             className="custom-table"
             scroll={{ x: 1000 }}

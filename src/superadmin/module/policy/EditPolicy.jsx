@@ -273,6 +273,7 @@ const EditPolicy = ({ visible: open, policy, onClose, onSubmit }) => {
             </span>
           }
           rules={[{ required: true, message: "Please enter policy description" }]}
+          style={{ marginTop: "22px" }}
         >
           <TextArea
             prefix={
@@ -303,6 +304,7 @@ const EditPolicy = ({ visible: open, policy, onClose, onSubmit }) => {
               Policy File
             </span>
           }
+          style={{ marginTop: "22px" }}
         >
           <Upload
             beforeUpload={beforeUpload}

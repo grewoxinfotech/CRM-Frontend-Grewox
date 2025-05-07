@@ -307,6 +307,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Email
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company email"
@@ -324,6 +325,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Website
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company website"
@@ -343,6 +345,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                   </span>
                 }
                 className="combined-input-item"
+                style={{ marginTop: "22px" }}
               >
                 <Input.Group compact className="phone-input-group">
                   <Form.Item
@@ -412,6 +415,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Source 
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Select
                   ref={sourceSelectRef}
@@ -669,6 +673,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Company Revenue
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter company revenue"
@@ -713,6 +718,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     City
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter city"
@@ -730,6 +736,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     State
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter state"
@@ -747,6 +754,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Pincode
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   type="number"
@@ -767,6 +775,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Country
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter country"
@@ -819,6 +828,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     City
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter city"
@@ -836,6 +846,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     State
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter state"
@@ -853,6 +864,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Pincode
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   type="number"
@@ -873,6 +885,7 @@ const CreateCompanyAccount = ({ open, onCancel, loggedInUser, companyAccountsRes
                     Country
                   </span>
                 }
+                style={{ marginTop: "22px" }}
               >
                 <Input
                   placeholder="Enter country"

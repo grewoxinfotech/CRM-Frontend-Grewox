@@ -45,8 +45,8 @@ const EditHoliday = ({ open, onCancel, onSubmit, initialValues }) => {
             // Format dates before sending to API
             const formattedValues = {
                 ...values,
-                start_date: values.start_date ? values.start_date.format('YYYY-MM-DD') : null,
-                end_date: values.end_date ? values.end_date.format('YYYY-MM-DD') : null
+                start_date: values.start_date ? values.start_date.format('DD-MM-YYYY') : null,
+                end_date: values.end_date ? values.end_date.format('DD-MM-YYYY') : null
             };
 
             const response = await updateHoliday({
@@ -205,6 +205,7 @@ const EditHoliday = ({ open, onCancel, onSubmit, initialValues }) => {
                     name="leave_type"
                     label="Holiday Type"
                     rules={[{ required: true, message: 'Please select holiday type' }]}
+                    style={{ marginTop: '22px' }}
                 >
                     <Select
                         placeholder="Select holiday type"
@@ -235,10 +236,11 @@ const EditHoliday = ({ open, onCancel, onSubmit, initialValues }) => {
                             }
                         }
                     ]}
+                    style={{ marginTop: '22px' }}
                 >
                     <DatePicker
-                        style={{ width: '100%' }}
-                        format="YYYY-MM-DD"
+                        style={{ width: '100%', height: '48px' }}
+                        format="DD-MM-YYYY"
                         placeholder="Select start date"
                         size="large"
                     />
@@ -263,10 +265,11 @@ const EditHoliday = ({ open, onCancel, onSubmit, initialValues }) => {
                             }
                         }
                     ]}
+                    style={{ marginTop: '22px' }}
                 >
                     <DatePicker
-                        style={{ width: '100%' }}
-                        format="YYYY-MM-DD"
+                        style={{ width: '100%', height: '48px' }}
+                        format="DD-MM-YYYY"
                         placeholder="Select end date"
                         size="large"
                     />

@@ -300,6 +300,7 @@ const CreateDocument = ({
             </span>
           }
           rules={[{ required: true, message: "Please enter description" }]}
+          style={{ marginTop: '12px' }}
         >
           <TextArea
             placeholder="Enter document description"
@@ -328,6 +329,7 @@ const CreateDocument = ({
           rules={[
             { required: !isEditing, message: "Please upload a document" },
           ]}
+          style={{ marginTop: '12px' }}
         >
           <Upload.Dragger
             {...uploadProps}

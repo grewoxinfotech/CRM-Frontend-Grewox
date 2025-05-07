@@ -365,7 +365,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                                                     }}
                                                 />
                                                 <span style={{
-                                                    padding: '2px 8px',
+                                                    padding: '0px 8px',
                                                     borderRadius: '4px',
                                                     fontSize: '12px',
                                                     background: roleStyle.bg,
@@ -456,6 +456,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                     name="description"
                     label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Description <span style={{ color: "#ff4d4f" }}>*</span></span>}
                     rules={[{ required: true, message: 'Please enter description' }]}
+                    style={{ marginTop: '12px' }}
                 >
                     <TextArea
                         placeholder="Enter detailed description of your issue"
@@ -474,6 +475,7 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
                     name="attachment"
                     label="Attachment"
                     className="full-width"
+                    style={{ marginTop: '12px' }}
                 >
                     <Upload.Dragger
                         name="attachment"

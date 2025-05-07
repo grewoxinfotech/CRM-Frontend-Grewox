@@ -326,6 +326,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
                     name="date"
                     label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Date <span style={{ color: "#ff4d4f" }}>*</span></span>}
                     rules={[{ required: true, message: 'Please select date' }]}
+                    style={{ marginTop: '24px' }}
                 >
                     <DatePicker
                         format="DD-MM-YYYY"
@@ -347,6 +348,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
                         name="startTime"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Start Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select start time' }]}
+                        style={{ marginTop: '22px' }}
                     >
                         <TimePicker
                             format="HH:mm"
@@ -367,6 +369,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
                         name="endTime"
                         label={<span style={{ fontSize: '14px', fontWeight: '500' }}>End Time <span style={{ color: "#ff4d4f" }}>*</span></span>}
                         rules={[{ required: true, message: 'Please select end time' }]}
+                        style={{ marginTop: '22px' }}
                     >
                         <TimePicker
                             format="HH:mm"
@@ -387,6 +390,7 @@ const CreateAttendance = ({ open, onCancel, onSuccess }) => {
                 <Form.Item
                     name="comment"
                     label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Comment </span>}
+                    style={{ marginTop: '20px' }}
                 >
                     <TextArea
                         placeholder="Add a comment (optional)"

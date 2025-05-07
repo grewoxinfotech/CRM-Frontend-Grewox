@@ -360,7 +360,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="startDate"
               label={
@@ -385,7 +385,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="endDate"
               label={
@@ -420,6 +420,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
             </span>
           }
           rules={[{ required: true, message: "Please enter reason" }]}
+          style={{ marginTop: '22px' }}
         >
           <TextArea
             rows={4}
@@ -438,6 +439,7 @@ const EditLeave = ({ open, onCancel, initialValues }) => {
             </span>
           }
           valuePropName="checked"
+          style={{ marginTop: '22px' }}
         >
           <Switch />
         </Form.Item>

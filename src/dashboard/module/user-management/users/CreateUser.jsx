@@ -392,7 +392,7 @@ const CreateUser = ({ visible, onCancel }) => {
                     >
                         <Form.Item
                             name="username"
-                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Username</span>}
+                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Username <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             rules={[
                                 { required: true, message: 'Please enter username' },
                                 { min: 3, message: 'Username must be at least 3 characters' },
@@ -431,11 +431,12 @@ const CreateUser = ({ visible, onCancel }) => {
 
                         <Form.Item
                             name="email"
-                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Email</span>}
+                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Email <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             rules={[
                                 { required: true, message: 'Please enter email' },
                                 { type: 'email', message: 'Please enter a valid email' }
                             ]}
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter email"
@@ -452,7 +453,7 @@ const CreateUser = ({ visible, onCancel }) => {
 
                         <Form.Item
                             name="password"
-                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Password</span>}
+                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Password <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             rules={[
                                 { required: true, message: 'Please enter password' },
                                 { min: 8, message: 'Password must be at least 8 characters' },
@@ -461,6 +462,7 @@ const CreateUser = ({ visible, onCancel }) => {
                                     message: 'Password must contain only letters, numbers and special characters'
                                 }
                             ]}
+                            style={{ marginTop: '12px' }}
                             extra={<span style={{ color: "#8c8c8c", fontSize: "12px" }}>Password must be at least 8 characters long</span>}
                         >
                             <Input.Password
@@ -478,8 +480,9 @@ const CreateUser = ({ visible, onCancel }) => {
 
                         <Form.Item
                             name="role_id"
-                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Role</span>}
+                            label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Role <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             rules={[{ required: true, message: 'Please select a role' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 placeholder="Select role"

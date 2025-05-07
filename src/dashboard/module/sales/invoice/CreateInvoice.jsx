@@ -540,6 +540,8 @@ const CreateInvoice = ({
               Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
+          style={{ marginTop: '12px' }}
+          className="combined-input-item"
         >
           <Input.Group
             compact
@@ -607,7 +609,7 @@ const CreateInvoice = ({
                   border: "none",
                   borderLeft: "1px solid #e6e8eb",
                   borderRadius: 0,
-                  height: "46px",
+                  height: "48px",
                   backgroundColor: "transparent",
                   display: "flex",
                   alignItems: "center",
@@ -1052,6 +1054,7 @@ const CreateInvoice = ({
               </span>
             }
             rules={[{ required: true, message: "Please select issue date" }]}
+            style={{ marginTop: '12px' }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1073,6 +1076,7 @@ const CreateInvoice = ({
               </span>
             }
             rules={[{ required: true, message: "Please select due date" }]}
+            style={{ marginTop: '12px' }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1096,6 +1100,7 @@ const CreateInvoice = ({
             rules={[
               { required: true, message: "Please select payment status" },
             ]}
+            style={{ marginTop: '12px' }}
           >
             <Select
               placeholder="Select Status"
@@ -1285,6 +1290,7 @@ const CreateInvoice = ({
                               },
                             ]}
                             initialValue={1}
+                            style={{ height: "48px" }}
                           >
                             <InputNumber
                               min={1}
@@ -1332,7 +1338,7 @@ const CreateInvoice = ({
                           <Form.Item
                             {...restField}
                             name={[name, "discount"]}
-                            style={{ margin: 0 }}
+                            style={{ marginTop: "-8px" }}
                           >
                             <Space>
                               <Form.Item
@@ -1345,7 +1351,7 @@ const CreateInvoice = ({
                                   style={{
                                     width: "120px",
                                     borderRadius: "8px",
-                                    height: "40px",
+                                    height: "48px",
                                   }}
                                   defaultValue="percentage"
                                   onChange={() =>
@@ -1427,7 +1433,7 @@ const CreateInvoice = ({
                           </Form.Item>
                         </td>
                         <td>
-                          <Form.Item {...restField} name={[name, "taxId"]}>
+                          <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-2px"}}>
                             <Select
                               placeholder="Select Tax"
                               loading={taxesLoading}
@@ -1453,11 +1459,11 @@ const CreateInvoice = ({
                           </Form.Item>
                         </td>
                         <td>
-                          <div className="amount-field">
-                            <span className="currency-symbol">
+                          <div className="amount-fields">
+                            <span className="currency-symbols">
                               {selectedCurrency}
                             </span>
-                            <span className="amount-value">
+                            <span className="amount-values">
                               {calculateItemTotal(
                                 form.getFieldValue("items")[index]
                               )?.toFixed(2) || "0.00"}

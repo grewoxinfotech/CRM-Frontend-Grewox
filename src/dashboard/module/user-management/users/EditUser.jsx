@@ -196,6 +196,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
                             { required: true, message: 'Please enter email' },
                             { type: 'email', message: 'Please enter a valid email' }
                         ]}
+                        style={{ marginTop: '12px' }}
                     >
                         <Input
                             placeholder="Enter email"
@@ -214,6 +215,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
                         name="role_id"
                         label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Role</span>}
                         rules={[{ required: true, message: 'Please select a role' }]}
+                        style={{ marginTop: '12px' }}
                     >
                         <Select
                             placeholder="Select role"
@@ -238,6 +240,7 @@ const EditUser = ({ visible, onCancel, initialValues }) => {
                         rules={[
                             { min: 6, message: 'Password must be at least 6 characters' }
                         ]}
+                        style={{ marginTop: '22px' }}
                         extra={<span style={{ color: "#8c8c8c", fontSize: "12px" }}>Leave blank to keep current password</span>}
                     >
                         <Input.Password

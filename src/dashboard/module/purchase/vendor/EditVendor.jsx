@@ -363,6 +363,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                             rules={[
                                 { type: 'email', message: 'Please enter valid email' }
                             ]}
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter email (optional)"
@@ -379,6 +380,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                         <Form.Item
                             name="taxNumber"
                             label="Tax Number"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter tax number (optional)"
@@ -396,6 +398,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                 <Form.Item
                     name="address"
                     label="Address"
+                    style={{ marginTop: '12px' }}
                 >
                     <TextArea
                         placeholder="Enter address (optional)"
@@ -413,6 +416,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                         <Form.Item
                             name="city"
                             label="City"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter city (optional)"
@@ -429,6 +433,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                         <Form.Item
                             name="state"
                             label="State"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter state (optional)"
@@ -448,6 +453,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                         <Form.Item
                             name="country"
                             label="Country"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter country (optional)"
@@ -464,6 +470,7 @@ const EditVendor = ({ onCancel,initialValues,open }) => {
                         <Form.Item
                             name="zipcode"
                             label="Zipcode"
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter zipcode (optional)"

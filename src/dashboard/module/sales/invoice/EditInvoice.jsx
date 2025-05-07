@@ -613,6 +613,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
+          style={{ marginTop: "12px" }}
         >
           <Input.Group
             compact
@@ -1066,6 +1067,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select issue date" }]}
+            style={{ marginTop: "12px" }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1087,6 +1089,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select due date" }]}
+            style={{ marginTop: "12px" }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1108,6 +1111,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select status" }]}
+            style={{ marginTop: "12px" }}
           >
             <Select
               placeholder="Select Status"
@@ -1166,7 +1170,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
-                <table className="proposal-items-table">
+                <table className="invoice-items-table">
                   <thead>
                     <tr>
                       <th>Item</th>
@@ -1299,6 +1303,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               },
                             ]}
                             initialValue={1}
+                            style={{ height: "48px" }}
                           >
                             <InputNumber
                               min={1}
@@ -1319,17 +1324,18 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           >
                             <InputNumber
                               className="price-input"
-                              formatter={(value) =>
-                                `${selectedCurrency} ${value}`
-                              }
-                              parser={(value) =>
-                                value.replace(selectedCurrency, "").trim()
-                              }
+                              min={0}
+                              disabled={true}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
                               }
-                              defaultValue={0}
-                              disabled={true}
+                              formatter={(value) =>
+                                `${selectedCurrency}${value}`.replace(
+                                  /\B(?=(\d{3})+(?!\d))/g,
+                                  ","
+                                )
+                              }
+                              parser={(value) => value.replace(/[^\d.]/g, "")}
                             />
                           </Form.Item>
                         </td>
@@ -1337,7 +1343,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           <Form.Item {...restField} name={[name, "hsn_sac"]}>
                             <Input
                               placeholder="HSN/SAC"
-                              className="item-input"
+                              className="hsn-input"
                               disabled={true}
                             />
                           </Form.Item>
@@ -1346,7 +1352,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           <Form.Item
                             {...restField}
                             name={[name, "discount"]}
-                            style={{ margin: 0 }}
+                            style={{ marginTop: "-8px" }}
                           >
                             <Space>
                               <Form.Item
@@ -1359,7 +1365,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                   style={{
                                     width: "120px",
                                     borderRadius: "8px",
-                                    height: "40px",
+                                    height: "48px",
                                   }}
                                   defaultValue="percentage"
                                   disabled={paymentStatus === "paid"}
@@ -1443,49 +1449,24 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           </Form.Item>
                         </td>
                         <td>
-                          <Form.Item {...restField} name={[name, "taxId"]}>
+                          <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-2px"}}>
                             <Select
                               placeholder="Select Tax"
                               loading={taxesLoading}
+                              disabled={!isTaxEnabled || paymentStatus === "paid"}
                               allowClear
-                              disabled={
-                                !isTaxEnabled || paymentStatus === "paid"
-                              }
                               onChange={(value, option) => {
                                 const items = form.getFieldValue("items") || [];
-                                const selectedTax = taxesData?.data?.find(
-                                  (tax) => tax.id === value
-                                );
-                                if (selectedTax) {
-                                  items[index] = {
-                                    ...items[index],
-                                    tax: selectedTax.gstPercentage,
-                                    taxId: selectedTax.id,
-                                    tax_name: selectedTax.gstName,
-                                  };
-                                } else {
-                                  items[index] = {
-                                    ...items[index],
-                                    tax: 0,
-                                    taxId: null,
-                                    tax_name: "",
-                                  };
-                                }
+                                items[index].tax = option?.taxRate;
                                 form.setFieldsValue({ items });
                                 calculateTotals(items);
                               }}
-                              value={form.getFieldValue([
-                                "items",
-                                index,
-                                "taxId",
-                              ])}
                             >
                               {taxesData?.data?.map((tax) => (
                                 <Option
                                   key={tax.id}
                                   value={tax.id}
                                   taxRate={tax.gstPercentage}
-                                  taxName={tax.gstName}
                                 >
                                   {tax.gstName} ({tax.gstPercentage}%)
                                 </Option>
@@ -1494,11 +1475,11 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           </Form.Item>
                         </td>
                         <td>
-                          <div className="amount-field">
-                            <span className="currency-symbol">
+                          <div className="amount-fields">
+                            <span className="currency-symbols">
                               {selectedCurrency}
                             </span>
-                            <span className="amount-value">
+                            <span className="amount-values">
                               {calculateItemTotal(
                                 form.getFieldValue("items")[index]
                               )?.toFixed(2) || "0.00"}
@@ -1509,7 +1490,6 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           {fields.length > 1 && (
                             <Button
                               type="text"
-                              className="delete-btn"
                               icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
                               disabled={paymentStatus === "paid"}
                               onClick={() => {

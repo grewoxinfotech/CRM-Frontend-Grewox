@@ -606,6 +606,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
               Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
+          style={{ marginTop: '12px' }}
         >
           <Input.Group
             compact
@@ -673,7 +674,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                   border: "none",
                   borderLeft: "1px solid #e6e8eb",
                   borderRadius: 0,
-                  height: "46px",
+                  height: "48px",
                   backgroundColor: "transparent",
                   display: "flex",
                   alignItems: "center",
@@ -957,6 +958,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select currency" }]}
+            style={{ marginTop: '12px' }}
           >
             <Select
               placeholder="Select Currency"
@@ -998,6 +1000,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select status" }]}
+            style={{ marginTop: '12px' }}
           >
             <Select
               placeholder="Select Status"
@@ -1014,8 +1017,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
             </Select>
           </Form.Item>
         </div>
-
-        <Form.Item name="discription" label="Description">
+ 
+        <Form.Item name="discription" label="Description" style={{ marginTop: '12px' }}>
           <Input.TextArea />
         </Form.Item>
 
@@ -1025,8 +1028,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginTop: "16px",
-              marginBottom: "16px",
+              marginBottom: "24px",
               marginLeft: "16px",
               marginRight: "16px",
             }}
@@ -1061,7 +1063,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
           <Form.List name="items" style={{ marginTop: "20px" }}>
             {(fields, { add, remove }) => (
               <>
-                <table className="proposal-items-table">
+                <table className="billing-items-table">
                   <thead>
                     <tr>
                       <th>Item</th>
@@ -1077,11 +1079,12 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                   <tbody>
                     {fields.map((field, index) => (
                       <React.Fragment key={field.key}>
-                        <tr className="item-data-row">
+                        <tr>
                           <td>
                             <Form.Item
                               {...field}
                               name={[field.name, "item_name"]}
+                              style={{ marginTop: "-8px" }}
                             >
                               <Select
                                 showSearch
@@ -1222,6 +1225,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                                 className="item-input"
                                 style={{
                                   width: "100%",
+                                  height: "48px",
                                 }}
                               />
                             </Form.Item>
@@ -1230,7 +1234,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                             <Form.Item
                               {...field}
                               name={[field.name, "discount"]}
-                              style={{ margin: 0 }}
+                              style={{ marginTop: "-8px" }}
                             >
                               <Space>
                                 <Form.Item
@@ -1267,7 +1271,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                                   <Form.Item
                                     {...field}
                                     name={[field.name, "discount"]}
-                                    style={{ margin: 0 }}
+                                    style={{ marginTop: "-8px", height: "48px" }}
                                   >
                                     <InputNumber
                                       className="item-discount-input"
@@ -1331,7 +1335,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                             </Form.Item>
                           </td>
                           <td>
-                            <Form.Item {...field} name={[field.name, "taxId"]}>
+                            <Form.Item {...field} name={[field.name, "taxId"]} style={{marginTop:"-14px"}}>
                               <Select
                                 placeholder="Select Tax"
                                 loading={taxesLoading}
@@ -1361,11 +1365,11 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                             </Form.Item>
                           </td>
                           <td>
-                            <div className="amount-field">
-                              <span className="currency-symbol">
+                            <div className="amount-fieldss" style={{marginTop:"-5px"}}>
+                              <span className="currency-symbolss">
                                 {selectedCurrency}
                               </span>
-                              <span className="amount-value">
+                              <span className="amount-valuess">
                                 {calculateItemTotal(
                                   form.getFieldValue("items")[index]
                                 )?.toFixed(2) || "0.00"}
@@ -1495,7 +1499,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
             >
               <Text style={{ marginTop: "10px" }}>Overall Discount</Text>
               <Space>
-                <Form.Item name="discount_type" style={{ margin: 0 }}>
+                <Form.Item name="discount_type" style={{ marginTop: "-8px" }}>
                   <Select
                     size="large"
                     style={{

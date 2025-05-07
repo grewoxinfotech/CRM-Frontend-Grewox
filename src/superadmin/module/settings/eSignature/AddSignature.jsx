@@ -254,6 +254,7 @@ const AddSignature = ({ visible, onCancel, isEditing, initialValues, onSuccess }
                             display: 'flex',
                             gap: '8px',
                             marginBottom: '24px',
+                            marginTop: '8px',
                             background: '#f8fafc',
                             padding: '4px',
                             borderRadius: '10px',
@@ -319,7 +320,7 @@ const AddSignature = ({ visible, onCancel, isEditing, initialValues, onSuccess }
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: 'center',
-                                    gap: '16px'
+                                    gap: '16px',
                                 }}>
                                     <div style={{
                                         width: '100%',

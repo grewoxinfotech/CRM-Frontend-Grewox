@@ -213,8 +213,14 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
             dataSource={tableData}
             pagination={{
                 pageSize: 10,
-                showSizeChanger: false,
+                showSizeChanger: true,
                 showTotal: (total) => `Total ${total} jobs`,
+                style: {
+                    margin: "16px 24px",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                },
             }}
             className="custom-table"
             scroll={{ x: 1000 }}

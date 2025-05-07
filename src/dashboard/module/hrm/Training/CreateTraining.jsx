@@ -285,6 +285,7 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
                                                     { required: true, message: 'Please enter training title' },
                                                     { max: 100, message: 'Title cannot exceed 100 characters' }
                                                 ]}
+                                                style={{ marginTop: '12px' }}
                                             >
                                                 <Input
                                                     prefix={<FiGrid style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -313,6 +314,7 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
                                                     { required: true, message: 'Please enter training link' },
                                                     { type: 'url', message: 'Please enter a valid URL' }
                                                 ]}
+                                                style={{ marginTop: '12px' }}
                                             >
                                                 <Input
                                                     prefix={<FiLink style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -354,7 +356,7 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
                                 </div>
                             ))}
                             
-                            <Form.Item>
+                            <Form.Item style={{ marginTop: '12px' }}>
                                 <Button
                                     type="dashed"
                                     onClick={() => add()}

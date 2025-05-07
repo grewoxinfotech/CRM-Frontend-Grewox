@@ -369,6 +369,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             </span>
           }
           rules={[{ required: true, message: "Please select task reporter" }]}
+          style={{ marginTop: "22px" }}
         >
           <Select
             showSearch
@@ -500,6 +501,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               name="startDate"
               label="Start Date"
               rules={[{ required: true, message: "Please select start date" }]}
+              style={{ marginTop: "22px" }}
             >
               <DatePicker
                 size="large"
@@ -514,6 +516,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               name="dueDate"
               label="Due Date"
               rules={[{ required: true, message: "Please select due date" }]}
+              style={{ marginTop: "22px" }}
             >
               <DatePicker
                 size="large"
@@ -525,7 +528,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
           </Col>
         </Row>
 
-        <Form.Item name="reminder_date" label="Reminder Date">
+        <Form.Item name="reminder_date" label="Reminder Date" style={{ marginTop: "22px" }}>
           <DatePicker
             size="large"
             format="YYYY-MM-DD"
@@ -540,6 +543,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               name="priority"
               label={<span style={formItemStyle}>Priority</span>}
               rules={[{ required: true, message: "Please select priority" }]}
+              style={{ marginTop: "22px" }}
             >
               <Select
                 placeholder="Select priority"
@@ -630,6 +634,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               name="status"
               label={<span style={formItemStyle}>Status</span>}
               rules={[{ required: true, message: "Please select status" }]}
+              style={{ marginTop: "22px" }}
             >
               <Select
                 placeholder="Select status"
@@ -744,6 +749,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             </span>
           }
           rules={[{ required: true, message: "Please select assignees" }]}
+          style={{ marginTop: "22px" }}
         >
           <Select
             mode="multiple"
@@ -952,7 +958,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
           </Select>
         </Form.Item>
 
-        <Form.Item name="description" label="Description">
+        <Form.Item name="description" label="Description" style={{ marginTop: "22px" }}>
           <TextArea
             placeholder="Enter task description"
             rows={4}
@@ -963,7 +969,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
           />
         </Form.Item>
 
-        <Form.Item name="file" label="Task File">
+        <Form.Item name="file" label="Task File" style={{ marginTop: "22px" }}>
           <Upload
             maxCount={1}
             fileList={fileList}

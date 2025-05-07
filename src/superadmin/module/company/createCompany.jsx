@@ -417,6 +417,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                             { required: true, message: 'Please enter email' },
                             { type: 'email', message: 'Please enter a valid email' }
                         ]}
+                        style={{ marginTop: "22px" }}
                     >
                         <Input
                             prefix={<FiMail style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -456,6 +457,7 @@ const CreateCompany = ({ open, onCancel, isEditing, initialValues, loading }) =>
                                 Password must be at least 6 characters long
                             </Text>
                         }
+                        style={{ marginTop: "22px" }}
                     >
                         <Input.Password
                             prefix={<FiLock style={{ color: '#1890ff', fontSize: '16px' }} />}

@@ -308,6 +308,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please select start date' }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <DatePicker
                         style={{
@@ -336,6 +337,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please select end date' }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <DatePicker
                         style={{
@@ -364,6 +366,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please select status' }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <Select
                         placeholder="Select Status"
@@ -392,6 +395,7 @@ const CreateUpgradePlan = ({ open, onCancel, companyId }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please select payment status' }]}
+                    style={{ marginTop: "22px" }}
                 >
                     <Select
                         placeholder="Select Payment Status"

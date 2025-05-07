@@ -633,14 +633,46 @@ $border-radius: 6px;
     }
 
     .quantity-input,
-    .price-input {
-      width: 100%;
-      border-radius: 8px;
+    .price-input,
+    .item-discount-input,
+    .hsn-input
+   {
+      height: 48px !important;
+      min-height: 48px !important;
+      border-radius: 8px !important;
+      font-size: 15px !important;
+      display: flex;
+      align-items: center;
     }
 
-    .item-discount-input {
-      width: 100px;
-      border-radius: 8px;
+    .amount-fields {
+      display: flex;
+      align-items: center;
+      //   justify-content: flex-end;
+      background-color: #f1f6fa;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      height: 36px;
+      padding: 0 12px;
+      transition: all 0.3s;
+      font-weight: 500;
+      margin-top: 10px;
+      // color: #262626;
+
+      &:hover {
+        background-color: #f0f7ff;
+        border-color: #40a9ff;
+      }
+
+      .currency-symbols {
+        color: #8c8c8c;
+        margin-right: 4px;
+        font-size: 14px;
+      }
+
+      .amount-values {
+        font-size: 14px;
+      }
     }
 
     .delete-btn {

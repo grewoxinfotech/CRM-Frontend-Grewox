@@ -264,6 +264,7 @@ const CreateDepartment = ({ open, onCancel, onSubmit, isEditing, initialValues }
                             </span>
                         }
                         rules={[{ required: true, message: 'Please select a branch' }]}
+                        style={{ marginTop: '22px' }}
                     >
                         <Select
                             showSearch

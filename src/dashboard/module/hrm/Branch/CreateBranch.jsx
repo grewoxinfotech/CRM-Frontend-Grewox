@@ -305,6 +305,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                             </div>
                         }
                         rules={[{ required: true, message: 'Please select a branch manager' }]}
+                        style={{ marginTop: '22px' }}
                     >
                         <Select
                             showSearch
@@ -420,7 +421,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                                                     }}
                                                 />
                                                 <span style={{
-                                                    padding: '2px 8px',
+                                                    padding: '0px 8px',
                                                     borderRadius: '4px',
                                                     fontSize: '12px',
                                                     background: roleStyle.bg,
@@ -448,6 +449,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                             </span>
                         }
                         rules={[{ required: true, message: 'Please enter address' }]}
+                        style={{ marginTop: '22px' }}
                     >
                         <TextArea
                             placeholder="Enter complete address"

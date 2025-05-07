@@ -372,6 +372,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                 { required: true, message: "Please enter email address" },
                 { type: "email", message: "Please enter a valid email" },
               ]}
+              style={{ marginTop: '12px' }}
             >
               <Input
                 prefix={
@@ -391,7 +392,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
           </Col>
 
           <Col span={12}>
-            <Form.Item  className="combined-input-item" label="Contact" style={{ marginBottom: 0 }} required>
+            <Form.Item  className="combined-input-item" label="Contact" style={{ marginBottom: 0, marginTop: '12px' }} required>
               <Input.Group
                 compact
                 className="phone-input-group"
@@ -514,6 +515,8 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
                   Billing Address
                 </span>
               }
+              style={{ marginTop: '12px' }}
+              
             >
               <Input
                 prefix={

@@ -257,6 +257,7 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
             </span>
           }
           rules={[{ required: true, message: "Please select note type" }]}
+          style={{ marginTop: "22px" }}
         >
           <Select
             placeholder="Select note type"
@@ -282,6 +283,7 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
                 </span>
               }
               rules={[{ required: true, message: "Please select an employee" }]}
+              style={{ marginTop: "22px" }}
             >
               <Select
                 showSearch
@@ -385,6 +387,7 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
               Description
             </span>
           }
+          style={{ marginTop: "22px" }}
         >
           <TextArea
             placeholder="Enter description"

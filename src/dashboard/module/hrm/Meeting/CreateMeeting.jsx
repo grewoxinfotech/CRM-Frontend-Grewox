@@ -335,6 +335,7 @@ const CreateMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select employees' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 mode="multiple"
@@ -430,6 +431,7 @@ const CreateMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select client' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 placeholder="Select client"
@@ -467,6 +469,7 @@ const CreateMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select date' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <DatePicker 
                                 format="DD-MM-YYYY"
@@ -483,6 +486,7 @@ const CreateMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select start time' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <TimePicker 
                                 format="HH:mm"
@@ -499,6 +503,7 @@ const CreateMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select end time' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <TimePicker 
                                 format="HH:mm"
@@ -515,6 +520,7 @@ const CreateMeeting = ({
                                 </span>
                             }
                             rules={[{ required: true, message: 'Please select status' }]}
+                            style={{ marginTop: '12px' }}
                         >
                             <Select
                                 placeholder="Select status"
@@ -540,6 +546,7 @@ const CreateMeeting = ({
                                     Meeting Link
                                 </span>
                             }
+                            style={{ marginTop: '12px' }}
                         >
                             <Input
                                 placeholder="Enter meeting link"
@@ -562,6 +569,7 @@ const CreateMeeting = ({
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter meeting description' }]}
+                    style={{ marginTop: '12px' }}
                 >
                     <TextArea
                         placeholder="Enter meeting description"

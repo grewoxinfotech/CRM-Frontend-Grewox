@@ -658,6 +658,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
               Phone Number <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
+          style={{ marginTop: '12px' }}
         >
           <Input.Group
             compact
@@ -725,7 +726,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                   border: "none",
                   borderLeft: "1px solid #e6e8eb",
                   borderRadius: 0,
-                  height: "46px",
+                  height: "48px",
                   backgroundColor: "transparent",
                   display: "flex",
                   alignItems: "center",
@@ -976,6 +977,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 size="large"
                 style={{
                   width: "100%",
+                  height: "48px",
                   borderRadius: "10px",
                   backgroundColor: "#f8fafc",
                 }}
@@ -999,6 +1001,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 </span>
               }
               rules={[{ required: true, message: "Please select currency" }]}
+              style={{ marginTop: '12px' }}
             >
               <Select
                 placeholder="Select Currency"
@@ -1040,6 +1043,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 </span>
               }
               rules={[{ required: true, message: "Please select status" }]}
+              style={{ marginTop: '12px' }}
             >
               <Select
                 placeholder="Select Status"
@@ -1056,7 +1060,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
             </Form.Item>
           </div>
 
-          <Form.Item name="discription" label="Description">
+          <Form.Item name="discription" label="Description" style={{ marginTop: '22px' }}>
             <Input.TextArea />
           </Form.Item>
 
@@ -1066,18 +1070,13 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginTop: "16px",
-                marginBottom: "16px",
+                marginBottom: "24px",
                 marginLeft: "16px",
                 marginRight: "16px",
               }}
             >
               <span
-                style={{
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  color: "#1f2937",
-                }}
+                style={{ fontSize: "16px", fontWeight: "500", color: "#1f2937" }}
               >
                 <FiPackage style={{ marginRight: "8px", color: "#1890ff" }} />
                 Items & Services
@@ -1090,16 +1089,15 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     setIsTaxEnabled(checked);
                     if (!checked) {
                       const items = form.getFieldValue("items") || [];
-                      const updatedItems = items.map((item) => ({
-                        ...item,
-                        tax: 0,
-                        taxId: null,
-                        taxAmount: 0,
-                      }));
-                      form.setFieldsValue({ items: updatedItems });
-                      calculateTotals(updatedItems);
+                      items.forEach((item) => {
+                        item.tax = 0;
+                        item.taxId = undefined;
+                      });
+                      form.setFieldsValue({ items });
                     }
+                    calculateTotals(form.getFieldValue("items"));
                   }}
+                  size="small"
                 />
               </div>
             </div>
@@ -1107,7 +1105,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
             <Form.List name="items" style={{ marginTop: "20px" }}>
               {(fields, { add, remove }) => (
                 <>
-                  <table className="proposal-items-table">
+                  <table className="billing-items-table">
                     <thead>
                       <tr>
                         <th>Item</th>
@@ -1128,12 +1126,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               <Form.Item
                                 {...field}
                                 name={[field.name, "item_name"]}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: "Please select or enter item",
-                                  },
-                                ]}
+                                style={{ marginTop: "-8px" }}
                               >
                                 <Select
                                   showSearch
@@ -1233,12 +1226,6 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                 {...field}
                                 name={[field.name, "quantity"]}
                                 initialValue={1}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: "Required",
-                                  },
-                                ]}
                               >
                                 <InputNumber
                                   min={1}
@@ -1256,12 +1243,6 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               <Form.Item
                                 {...field}
                                 name={[field.name, "unit_price"]}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message: "Required",
-                                  },
-                                ]}
                               >
                                 <InputNumber
                                   className="price-input"
@@ -1290,6 +1271,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                   className="item-input"
                                   style={{
                                     width: "100%",
+                                    height: "48px",
                                   }}
                                 />
                               </Form.Item>
@@ -1298,7 +1280,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               <Form.Item
                                 {...field}
                                 name={[field.name, "discount"]}
-                                style={{ margin: 0 }}
+                                style={{ marginTop: "-8px" }}
                               >
                                 <Space>
                                   <Form.Item
@@ -1323,9 +1305,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                       <Option value="percentage">
                                         Percentage
                                       </Option>
-                                      <Option value="fixed">
-                                        Fixed Amount
-                                      </Option>
+                                      <Option value="fixed">Fixed Amount</Option>
                                     </Select>
                                   </Form.Item>
                                   <div
@@ -1337,7 +1317,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                     <Form.Item
                                       {...field}
                                       name={[field.name, "discount"]}
-                                      style={{ margin: 0 }}
+                                      style={{ marginTop: "-8px", height: "48px" }}
                                     >
                                       <InputNumber
                                         className="item-discount-input"
@@ -1378,11 +1358,11 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                             calculateTotals(items);
                                           }
                                         }}
-                                        onKeyUp={() =>
+                                        onKeyUp={() => {
                                           calculateTotals(
                                             form.getFieldValue("items")
-                                          )
-                                        }
+                                          );
+                                        }}
                                         style={{
                                           width: "100px",
                                           borderRadius: "8px",
@@ -1401,10 +1381,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               </Form.Item>
                             </td>
                             <td>
-                              <Form.Item
-                                {...field}
-                                name={[field.name, "taxId"]}
-                              >
+                              <Form.Item {...field} name={[field.name, "taxId"]} style={{marginTop:"-11px"}}>
                                 <Select
                                   placeholder="Select Tax"
                                   loading={taxesLoading}
@@ -1458,11 +1435,11 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               </Form.Item>
                             </td>
                             <td>
-                              <div className="amount-field">
-                                <span className="currency-symbol">
+                              <div className="amount-fieldss" style={{marginTop:"-2px"}}>
+                                <span className="currency-symbolss">
                                   {selectedCurrency}
                                 </span>
-                                <span className="amount-value">
+                                <span className="amount-valuess">
                                   {calculateItemTotal(
                                     form.getFieldValue("items")[index]
                                   )?.toFixed(2) || "0.00"}

@@ -48,8 +48,8 @@ const CreateLeave = ({ open, onCancel }) => {
     try {
       const payload = {
         employeeId: values.employeeId,
-        startDate: values.startDate.format("YYYY-MM-DD"),
-        endDate: values.endDate.format("YYYY-MM-DD"),
+        startDate: values.startDate.format("DD-MM-YYYY"),
+        endDate: values.endDate.format("DD-MM-YYYY"),
         leaveType: values.leaveType,
         reason: values.reason,
         isHalfDay: values.isHalfDay || false,
@@ -193,7 +193,7 @@ const CreateLeave = ({ open, onCancel }) => {
                 size="large"
                 listHeight={100}
                 dropdownStyle={{
-                  Height: '100px',
+                  height: '100px',
                   overflowY: 'auto',
                   scrollbarWidth: 'thin',
                   scrollBehavior: 'smooth'
@@ -288,7 +288,7 @@ const CreateLeave = ({ open, onCancel }) => {
                             }}
                           />
                           <span style={{
-                            padding: '2px 8px',
+                            padding: '0px 8px',
                             borderRadius: '4px',
                             fontSize: '12px',
                             background: roleStyle.bg,
@@ -345,7 +345,7 @@ const CreateLeave = ({ open, onCancel }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="startDate"
               label={
@@ -365,12 +365,12 @@ const CreateLeave = ({ open, onCancel }) => {
                   borderRadius: "10px",
                 }}
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </Form.Item>
           </Col>
 
-          <Col span={12} style={{ marginTop: '8px' }}>
+          <Col span={12} style={{ marginTop: '22px' }}>
             <Form.Item
               name="endDate"
               label={
@@ -390,7 +390,7 @@ const CreateLeave = ({ open, onCancel }) => {
                   borderRadius: "10px",
                 }}
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </Form.Item>
           </Col>
@@ -405,6 +405,7 @@ const CreateLeave = ({ open, onCancel }) => {
             </span>
           }
           rules={[{ required: true, message: "Please enter reason" }]}
+          style={{ marginTop: '22px' }}
         >
           <TextArea
             rows={4}
@@ -423,6 +424,7 @@ const CreateLeave = ({ open, onCancel }) => {
             </span>
           }
           valuePropName="checked"
+          style={{ marginTop: '22px' }}
         >
           <Switch />
         </Form.Item>

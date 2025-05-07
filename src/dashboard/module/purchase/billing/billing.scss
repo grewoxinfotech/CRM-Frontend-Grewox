@@ -535,102 +535,80 @@ $border-radius: 6px;
   align-items: center;
 }
 
-// Copy all styles from proposal.scss
+// Table styles update
 .table-style-container {
-  margin-top: 20px;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-  background-color: #ffffff;
-
-  .proposal-items-table {
+  .billing-items-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
 
     th,
     td {
-      padding: 12px 16px;
+      padding: 16px;
       text-align: left;
-      font-size: 14px;
-      vertical-align: middle;
+      border-bottom: 1px solid #f0f0f0;
     }
 
     th {
-      background-color: #f5f7fa;
-      font-weight: 500;
-      color: #555;
-      white-space: nowrap;
-      height: 48px;
-      position: relative;
-      border-bottom: 1px solid #e8e8e8;
+      background: #fafafa;
+      font-weight: 600;
+      color: #1f2937;
     }
 
-    .item-data-row {
-      td {
-        padding: 12px 16px 6px;
-        border-bottom: none;
-
-
-      }
+    tr:hover td {
+      background: #fafafa;
     }
 
-    .item-description-row {
-      td {
-        padding: 0px 16px 12px;
-        border-bottom: 1px solid #f0f0f0;
-      }
-    }
-
-    .item-input,
-    .quantity-input,
-    .price-input {
+    .item-input {
       width: 100%;
-      border: 1px solid #d9d9d9;
-      border-radius: 6px;
-      height: 36px;
-      padding: 4px 11px;
-
-      &:hover {
-        border-color: #40a9ff;
-      }
-
-      &:focus {
-        border-color: #40a9ff;
-        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-      }
+      border-radius: 8px;
     }
 
-    .amount-field {
+    .quantity-input,
+    .price-input,
+    .item-discount-input,
+    .hsn-input {
+      height: 48px !important;
+      min-height: 48px !important;
+      border-radius: 8px !important;
+      font-size: 15px !important;
       display: flex;
       align-items: center;
-      background-color: #f8fafc;
+    }
+
+    .amount-fieldss {
+      display: flex;
+      align-items: center;
+      background-color: #f1f6fa;
       border: 1px solid #d9d9d9;
       border-radius: 6px;
       height: 36px;
       padding: 0 12px;
+      transition: all 0.3s;
+      font-weight: 500;
+      margin-top: 10px;
 
-      .currency-symbol {
-        color: #8c8c8c;
-        margin-right: 4px;
+      &:hover {
+        background-color: #f0f7ff;
+        border-color: #40a9ff;
       }
 
-      .amount-value {
-        font-weight: 500;
+      .currency-symbolss {
+        color: #8c8c8c;
+        margin-right: 4px;
+        font-size: 14px;
+      }
+
+      .amount-valuess {
+        font-size: 14px;
       }
     }
 
     .delete-btn {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border-radius: 6px;
+      color: #ff4d4f;
 
       &:hover {
-        background-color: rgba(255, 77, 79, 0.1);
+        background: #fff1f0;
       }
     }
   }
@@ -641,18 +619,17 @@ $border-radius: 6px;
     border-top: 1px solid #f0f0f0;
 
     .add-item-btn {
-      background-color: #1677ff;
+      background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
       border: none;
-      height: 36px;
-      padding: 0 16px;
-      border-radius: 6px;
+      border-radius: 8px;
+      height: 40px;
+      padding: 0 24px;
+      font-weight: 500;
       display: flex;
-      align-items: center;
       gap: 8px;
 
       &:hover {
-        background-color: #4096ff;
-        transform: translateY(-1px);
+        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
       }
     }
   }

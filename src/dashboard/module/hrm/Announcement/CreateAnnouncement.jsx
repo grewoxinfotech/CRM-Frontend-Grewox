@@ -77,19 +77,37 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
   useEffect(() => {
     if (initialValues) {
       try {
-        // Convert date strings to dayjs objects
-        const date = initialValues.date ? dayjs(initialValues.date) : null;
-        const time = initialValues.time
-          ? dayjs(initialValues.time, "HH:mm")
-          : null;
+        let formattedDate = null;
+        let formattedTime = null;
+
+        // Handle date formatting
+        if (initialValues.date) {
+          const parsedDate = dayjs(initialValues.date);
+          formattedDate = parsedDate.isValid() ? parsedDate : null;
+        }
+
+        // Handle time formatting
+        if (initialValues.time) {
+          const parsedTime = dayjs(initialValues.time, "HH:mm");
+          formattedTime = parsedTime.isValid() ? parsedTime : null;
+        }
+
+        // Handle branch formatting
+        let formattedBranch = [];
+        if (initialValues.branch) {
+          try {
+            const parsedBranch = JSON.parse(initialValues.branch);
+            formattedBranch = parsedBranch.branch || [];
+          } catch (e) {
+            console.error("Error parsing branch data:", e);
+          }
+        }
 
         const formattedValues = {
           ...initialValues,
-          date: date,
-          time: time,
-          branch: initialValues.branch
-            ? JSON.parse(initialValues.branch).branch
-            : [],
+          date: formattedDate,
+          time: formattedTime,
+          branch: formattedBranch,
         };
 
         form.setFieldsValue(formattedValues);
@@ -104,13 +122,16 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
 
   const handleSubmit = async (values) => {
     try {
-      // Format dates properly
+      // Format dates properly with validation
       const formattedValues = {
         ...values,
         section: "announcement",
-        date: values.date ? dayjs(values.date).format("YYYY-MM-DD") : null,
-        time: values.time ? dayjs(values.time).format("HH:mm") : null,
-
+        date: values.date && dayjs(values.date).isValid() 
+          ? dayjs(values.date).format("YYYY-MM-DD") 
+          : null,
+        time: values.time && dayjs(values.time).isValid() 
+          ? dayjs(values.time).format("HH:mm") 
+          : null,
         branch: {
           branch: values.branch || [],
         },
@@ -285,7 +306,6 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={initialValues}
           requiredMark={false}
           style={{
             padding: "24px",
@@ -388,6 +408,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                   </span>
                 }
                 rules={[{ required: true, message: "Please select date" }]}
+                style={{ marginTop: '12px' }}
               >
                 <DatePicker
                   placeholder="Select date"
@@ -404,6 +425,11 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                     />
                   }
                   format="DD-MM-YYYY"
+                  onChange={(date) => {
+                    if (date && !date.isValid()) {
+                      form.setFieldValue('date', null);
+                    }
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -416,6 +442,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                   </span>
                 }
                 rules={[{ required: true, message: "Please select time" }]}
+                style={{ marginTop: '12px' }}
               >
                 <TimePicker
                   placeholder="Select time"
@@ -430,6 +457,11 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
                     <FiClock style={{ color: "#1890ff", fontSize: "16px" }} />
                   }
                   format="HH:mm"
+                  onChange={(time) => {
+                    if (time && !time.isValid()) {
+                      form.setFieldValue('time', null);
+                    }
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -443,6 +475,7 @@ const CreateAnnouncement = ({ open, onCancel, isEditing, initialValues }) => {
               </span>
             }
             rules={[{ required: true, message: "Please enter description" }]}
+            style={{ marginTop: '12px' }}
           >
             <TextArea
               placeholder="Enter announcement description"

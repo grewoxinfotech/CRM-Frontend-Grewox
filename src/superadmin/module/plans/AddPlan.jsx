@@ -375,10 +375,10 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 Price <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                         className="combined-input-item"
                     >
-                        <Input.Group compact className="price-input-group" style={{
+                        <Input.Group compact className="value-input-group" style={{
                             display: 'flex',
                             height: '48px',
                             backgroundColor: '#f8fafc',
@@ -427,6 +427,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 name="price"
                                 noStyle
                                 rules={[{ required: true, message: 'Please enter price' }]}
+                               
                             >
                                 <InputNumber
                                     placeholder="Enter price"
@@ -459,14 +460,21 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <Dropdown
                             overlay={mainMenu}
                             trigger={['click']}
                             overlayClassName="duration-dropdown"
                         >
-                            <Button className="duration-select-button">
+                            <Button className="duration-select-button" style={{
+                                width: '100%',
+                                height: '48px',
+                                padding: '0 16px',
+                                borderRadius: '10px',
+                                backgroundColor: '#f8fafc',
+                                border: '1px solid #e6e8eb',
+                            }}>
                                 <div className="duration-display">
                                     <span className="selected-duration">
                                         {durationType === 'Monthly' && selectedMonth
@@ -496,7 +504,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiClock style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -504,6 +512,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
                             }}
@@ -522,7 +531,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <Input.Group compact className="storage-input-group" style={{
                             display: 'flex',
@@ -597,7 +606,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px"  }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -605,6 +614,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
                             }}
@@ -623,7 +633,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -631,6 +641,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             style={{
                                 width: '100%',
                                 borderRadius: '10px',
+                                height: '48px',
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
                             }}
@@ -651,7 +662,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -661,6 +672,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 borderRadius: '10px',
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
+                                height: '48px',
                             }}
                             min={1}
                         />
@@ -677,7 +689,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -687,6 +699,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 borderRadius: '10px',
                                 backgroundColor: '#f8fafc',
                                 border: '1px solid #e6e8eb',
+                                height: '48px',
                             }}
                             min={1}
                         />
@@ -704,6 +717,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                         </span>
                     }
                     valuePropName="checked"
+                    style={{ marginTop: "22px" }}
                 >
                     <Switch
                         checkedChildren="Active"
@@ -911,28 +925,66 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                     }
                 }
 
-                .duration-select .ant-select-selector {
-                    height: 48px !important;
-                    padding: 0 16px !important;
-                    background-color: #f8fafc !important;
-                    border: 1px solid #e6e8eb !important;
-                    border-radius: 10px !important;
-                    display: flex;
-                    align-items: center;
+                .duration-select-button {
+                    width: 100%;
+                    height: 48px;
+                    padding: 0 16px;
+                    border-radius: 10px;
+                    background: #f8fafc;
+                    border: 1px solid #e6e8eb;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        border-color: #40a9ff;
+                    }
+
+                    &:active, &:focus {
+                        border-color: #1890ff;
+                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                    }
+
+                    .duration-display {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        width: 100%;
+
+                        .selected-duration {
+                            color: rgba(0, 0, 0, 0.85);
+                            font-size: 14px;
+                        }
+
+                        .duration-arrow {
+                            color: rgba(0, 0, 0, 0.25);
+                            font-size: 12px;
+                        }
+                    }
                 }
 
-                .duration-select .ant-select-selection-item {
-                    line-height: 48px !important;
-                    font-size: 14px;
-                }
+                .duration-dropdown {
+                    .ant-dropdown-menu {
+                        padding: 8px;
+                        min-width: 280px;
+                        border-radius: 12px;
+                        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+                        
+                        .duration-option {
+                            border-radius: 8px;
+                            margin: 4px 0;
+                            padding: 12px 16px;
+                            transition: all 0.3s ease;
 
-                .duration-select:hover .ant-select-selector {
-                    border-color: #1890ff !important;
-                }
+                            &:hover {
+                                background: rgba(24, 144, 255, 0.06);
+                            }
 
-                .duration-select.ant-select-focused .ant-select-selector {
-                    border-color: #1890ff !important;
-                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+                            &.lifetime {
+                                border-bottom: 1px solid #f0f0f0;
+                                margin-bottom: 8px;
+                                padding-bottom: 16px;
+                            }
+                        }
+                    }
                 }
 
                 .duration-submenu {

@@ -291,6 +291,7 @@ const CreateDesignation = ({ open, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true, message: 'Please select a branch' }]}
+                        style={{ marginTop: '22px' }}
                     >
                         <Select
                             showSearch

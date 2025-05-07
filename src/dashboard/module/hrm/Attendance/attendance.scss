@@ -201,6 +201,29 @@ $border-radius: 6px;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     padding: 24px;
+    // max-height: calc(100vh - 200px);
+    overflow: auto;
+
+    // Custom scrollbar styles
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: #a8a8a8;
+        }
+    }
 
     .attendance-header {
         margin-bottom: 24px;
@@ -262,6 +285,32 @@ $border-radius: 6px;
         .ant-table {
             border-radius: 8px;
             overflow: hidden;
+
+            .ant-table-body {
+                overflow-x: auto !important;
+                overflow-y: auto !important;
+                max-height: calc(100vh - 300px) !important;
+
+                &::-webkit-scrollbar {
+                    width: 8px;
+                    height: 8px;
+                }
+
+                &::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 4px;
+                }
+
+                &::-webkit-scrollbar-thumb {
+                    background: #c1c1c1;
+                    border-radius: 4px;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        background: #a8a8a8;
+                    }
+                }
+            }
 
             .ant-table-thead {
                 tr {

@@ -196,6 +196,9 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
             </span>
           }
           rules={[{ required: true, message: "Please select leave type" }]}
+          style={{
+            marginTop: "22px",
+          }}
         >
           <Select
             placeholder="Select leave type"
@@ -220,6 +223,9 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
             </span>
           }
           rules={[{ required: true, message: "Please select start date" }]}
+          style={{
+            marginTop: "22px",
+          }}
         >
           <DatePicker
             suffix={
@@ -264,6 +270,9 @@ const CreateHoliday = ({ open, onCancel, onSubmit }) => {
               },
             }),
           ]}
+          style={{
+            marginTop: "22px",
+          }}
         >
           <DatePicker
             placeholder="Select end date"
