@@ -19,7 +19,8 @@ import {
     FiCreditCard,
     FiEdit3,
     FiBox,
-    FiHardDrive
+    FiHardDrive,
+    FiMenu
 } from 'react-icons/fi';
 import { useLogout } from '../../../hooks/useLogout';
 import './sidebar.scss';
@@ -28,6 +29,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     const [isCollapsed, setIsCollapsed] = useState(collapsed);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const floatingDropdownRef = useRef(null);
     const handleLogout = useLogout();
 
@@ -42,6 +44,35 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
         setIsCollapsed(newCollapsedState);
         onCollapsedChange(newCollapsedState);
     };
+
+    // Handle mobile menu toggle
+    const handleMobileMenuToggle = () => {
+        setIsMobileMenuOpen(!isMobileMenuOpen);
+        document.body.classList.toggle('sidebar-open');
+    };
+
+    // Close mobile menu on navigation
+    const handleNavigation = () => {
+        if (isMobileMenuOpen) {
+            setIsMobileMenuOpen(false);
+            document.body.classList.remove('sidebar-open');
+        }
+    };
+
+    // Close mobile menu on outside click
+    const handleOverlayClick = (e) => {
+        if (e.target.classList.contains('sidebar-overlay')) {
+            setIsMobileMenuOpen(false);
+            document.body.classList.remove('sidebar-open');
+        }
+    };
+
+    // Clean up body class on unmount
+    useEffect(() => {
+        return () => {
+            document.body.classList.remove('sidebar-open');
+        };
+    }, []);
 
     const menuItems = [
         {
@@ -228,83 +259,50 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
     };
 
     return (
-        <motion.aside
-            className={`superadmin-sidebar ${isCollapsed ? 'collapsed' : ''}`}
-            initial={false}
-        >
-            <div className="sidebar-header">
-                <div className="logo">
-                    {!isCollapsed && <span>SuperAdmin</span>}
-                </div>
-                <button
-                    className="collapse-btn"
-                    onClick={handleToggleCollapse}
-                >
-                    {isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
-                </button>
-            </div>
+        <>
+            <button className="mobile-menu-toggle" onClick={handleMobileMenuToggle}>
+                <FiMenu />
+            </button>
 
-            <nav className="sidebar-nav">
-                {menuItems.map((item, index) => (
-                    <motion.div
-                        key={item.path || index}
-                        initial={false}
-                    >
-                        {item.isDropdown ? renderSettingsDropdown(item) : renderNavItem(item)}
-                    </motion.div>
-                ))}
-            </nav>
-
-            {isCollapsed && openDropdown && (
-                <motion.div
-                    ref={floatingDropdownRef}
-                    className="floating-dropdown"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{
-                        duration: 0.2,
-                        ease: [0.4, 0, 0.2, 1]
-                    }}
-                    style={{
-                        position: "fixed",
-                        top: `${100 + (menuItems.findIndex(item => item.title === openDropdown) * 48)}px`,
-                        left: "70px",
-                        zIndex: 1000,
-                    }}
-                >
-                    {menuItems
-                        .find((item) => item.title === openDropdown)
-                        ?.subItems.map((subItem, idx) => (
-                            <motion.div
-                                key={subItem.path || idx}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{
-                                    duration: 0.2,
-                                    delay: idx * 0.05,
-                                    ease: "easeOut"
-                                }}
-                            >
-                                <NavLink
-                                    to={subItem.path}
-                                    className={({ isActive }) =>
-                                        `floating-dropdown-item ${isActive ? 'active' : ''}`
-                                    }
-                                    onClick={() => {
-                                        setOpenDropdown(null);
-                                    }}
-                                >
-                                    <span className="icon">{subItem.icon}</span>
-                                    <span className="title">{subItem.title}</span>
-                                </NavLink>
-                            </motion.div>
-                        ))}
-                </motion.div>
+            {isMobileMenuOpen && (
+                <div className="sidebar-overlay" onClick={handleOverlayClick} />
             )}
 
+            <aside className={`superadmin-sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'open' : ''}`}>
+            <div className="sidebar-header">
+                <div className="logo">
+                        <span className="full-text" style={{ display: isCollapsed ? 'none' : 'inline' }}>Super Admin</span>
+                </div>
+                    <button className="collapse-btn" onClick={handleToggleCollapse}>
+                    {isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+                </button>
+                    <button className="mobile-close-btn" onClick={handleMobileMenuToggle}>
+                        <FiChevronLeft />
+                    </button>
+            </div>
+
+                <div className="sidebar-nav">
+                    {menuItems.map((item) => (
+                        item.isDropdown ? (
+                            renderSettingsDropdown(item)
+                        ) : (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                                onClick={handleNavigation}
+                            >
+                                <div className="nav-item-content">
+                                    <span className="icon">{item.icon}</span>
+                                    {!isCollapsed && <span className="title">{item.title}</span>}
+                                </div>
+                                </NavLink>
+                        )
+                        ))}
+                </div>
+
             <div className="sidebar-footer">
-                <NavLink to="/superadmin/profile" className="nav-item profile-btn">
+                    <NavLink to="/superadmin/profile" className="nav-item profile-btn" onClick={handleNavigation}>
                     <div className="nav-item-content">
                         <span className="icon"><FiUser /></span>
                         {!isCollapsed && <span className="title">Profile</span>}
@@ -312,8 +310,12 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                 </NavLink>
                 <NavLink
                     to="/logout"
-                    onClick={handleLogout}
-                    className="nav-item logout-btn"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleNavigation();
+                            handleLogout();
+                        }}
+                        className="nav-item profile-btn"
                 >
                     <div className="nav-item-content">
                         <span className="icon">
@@ -323,7 +325,8 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { } }) => {
                     </div>
                 </NavLink>
             </div>
-        </motion.aside>
+            </aside>
+        </>
     );
 };
 

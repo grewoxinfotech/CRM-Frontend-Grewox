@@ -41,12 +41,21 @@ import {
   FiCreditCard,
   FiTruck,
   FiSliders,
+  FiMenu,
 } from "react-icons/fi";
 import "./sidebar.scss";
 import { useLogout } from "../../../hooks/useLogout";
 
-const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, loggedInUser }) => {
+const Sidebar = ({
+  collapsed = false,
+  onCollapsedChange = () => { },
+  rolesData,
+  loggedInUser,
+  isMobileMenuOpen = false,
+  onMobileMenuClose = () => { }
+}) => {
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 1024);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCommunicationOpen, setCommunicationOpen] = useState(false);
   const [isCrmOpen, setCrmOpen] = useState(false);
@@ -57,6 +66,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
   const [isSalesOpen, setSalesOpen] = useState(false);
   const [isPurchaseOpen, setPurchaseOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [localMobileMenuOpen, setLocalMobileMenuOpen] = useState(isMobileMenuOpen);
   const floatingDropdownRef = useRef(null);
 
   const handleLogout = useLogout();
@@ -123,15 +133,44 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
     return checkPermission(item.permission);
   };
 
+  // Handle window resize and mobile view
   useEffect(() => {
-    setIsCollapsed(collapsed);
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 1024;
+      setIsMobileView(mobile);
+      if (mobile) {
+        setIsCollapsed(false); // Never collapse on mobile
+      } else {
+        setIsCollapsed(collapsed);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, [collapsed]);
 
+  // Handle toggle collapse - only work on desktop
   const handleToggleCollapse = () => {
-    const newCollapsedState = !isCollapsed;
-    setIsCollapsed(newCollapsedState);
-    onCollapsedChange(newCollapsedState);
+    if (!isMobileView) {
+      const newCollapsedState = !isCollapsed;
+      setIsCollapsed(newCollapsedState);
+      onCollapsedChange(newCollapsedState);
+    }
   };
+
+  // Sync mobile menu state with props
+  useEffect(() => {
+    setLocalMobileMenuOpen(isMobileMenuOpen);
+    if (isMobileMenuOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+  }, [isMobileMenuOpen]);
 
   // Handle click outside
   useEffect(() => {
@@ -154,6 +193,43 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
 
   const handleFloatingDropdownClose = () => {
     setOpenDropdown(null);
+  };
+
+  // Handle mobile menu toggle
+  const handleMobileMenuToggle = () => {
+    const newState = !localMobileMenuOpen;
+    setLocalMobileMenuOpen(newState);
+    onMobileMenuClose();
+    if (newState) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+  };
+
+  // Handle overlay click
+  const handleOverlayClick = (e) => {
+    if (e.target.classList.contains('sidebar-overlay')) {
+      setLocalMobileMenuOpen(false);
+      onMobileMenuClose();
+      document.body.classList.remove('sidebar-open');
+    }
+  };
+
+  // Clean up body class on unmount
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('sidebar-open');
+    };
+  }, []);
+
+  // Handle navigation and close mobile menu
+  const handleNavigation = () => {
+    if (localMobileMenuOpen) {
+      setLocalMobileMenuOpen(false);
+      onMobileMenuClose();
+      document.body.classList.remove('sidebar-open');
+    }
   };
 
   const menuItems = [
@@ -330,13 +406,13 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           title: "Mail",
           icon: <FiMail />,
           path: "/dashboard/communication/mail",
-
+          permission: "dashboards-communication"
         },
         {
           title: "Chat",
           icon: <FiMessageSquare />,
           path: "/dashboard/communication/chat",
-
+          permission: "dashboards-communication"
         },
 
       ].filter(item => shouldShowMenuItem(item)),
@@ -405,7 +481,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           title: "Calendar",
           icon: <FiCalendar />,
           path: "/dashboard/hrm/calendar",
-
+          permission: "dashboards-communication"
         },
         {
           title: "Meeting",
@@ -485,32 +561,38 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
         {
           title: 'General',
           icon: <FiSliders />,
-          path: '/dashboard/settings/general'
+          path: '/dashboard/settings/general',
+          permission: "dashboards-communication"
         },
         {
           title: 'Payment',
           icon: <FiDollarSign />,
-          path: '/dashboard/settings/payment'
+          path: '/dashboard/settings/payment',
+          permission: "dashboards-communication"
         },
         {
           title: 'Countries',
           icon: <FiGlobe />,
-          path: '/dashboard/settings/countries'
+          path: '/dashboard/settings/countries',
+          permission: "dashboards-communication"
         },
         {
           title: 'Currencies',
           icon: <FiCreditCard />,
-          path: '/dashboard/settings/currencies'
+          path: '/dashboard/settings/currencies',
+          permission: "dashboards-communication"
         },
         {
           title: 'Tax',
           icon: <FiPercent />,
-          path: '/dashboard/settings/tax'
+          path: '/dashboard/settings/tax',
+          permission: "dashboards-communication"
         },
         {
           title: 'ESignature',
           icon: <FiEdit3 />,
-          path: '/dashboard/settings/esignature'
+          path: '/dashboard/settings/esignature',
+          permission: "dashboards-communication"
         }
       ]
     },
@@ -523,7 +605,7 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
           title: "Ticket",
           icon: <FiMessageSquare />,
           path: "/dashboard/support/ticket",
-
+          permission: "dashboards-communication"
         },
       ],
     },
@@ -627,122 +709,132 @@ const Sidebar = ({ collapsed = false, onCollapsedChange = () => { }, rolesData, 
   };
 
   return (
-    <motion.aside
-      className={`superadmin-sidebar ${isCollapsed ? "collapsed" : ""}`}
-      initial={false}
-    >
-      <div className="sidebar-header">
-        <div className="logo">{!isCollapsed && <span>Grewox CRM</span>}</div>
-        <button className="collapse-btn" onClick={handleToggleCollapse}>
-          {isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
-        </button>
-      </div>
+    <>
+      <button className="mobile-menu-toggle" onClick={handleMobileMenuToggle}>
+        <FiMenu />
+      </button>
 
-      <nav className="sidebar-nav">
-        {menuItems.map((item, index) => (
-          <motion.div key={item.path || index} initial={false}>
-            {!item.isDropdown
-              ? renderNavItem(item)
-              : item.title === "CRM"
-                ? renderDropdown(item, isCrmOpen, setCrmOpen)
-                : item.title === "Sales"
-                  ? renderDropdown(item, isSalesOpen, setSalesOpen)
-                  : item.title === "Purchase"
-                    ? renderDropdown(item, isPurchaseOpen, setPurchaseOpen)
-                    : item.title === "User Management"
-                      ? renderDropdown(
-                        item,
-                        isUserManagementOpen,
-                        setUserManagementOpen
-                      )
-                      : item.title === "Communication"
-                        ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
-                        : item.title === "HRM"
-                          ? renderDropdown(item, isHrmOpen, setHrmOpen)
-                          : item.title === "Setting"
-                            ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
-                            : item.title === "Support"
-                              ? renderDropdown(item, isSupportOpen, setSupportOpen)
-                              : item.title === "Job"
-                                ? renderDropdown(item, isJobOpen, setJobOpen)
-                                : renderDropdown(item, false, () => { })}
-          </motion.div>
-        ))}
-      </nav>
-
-      {isCollapsed && openDropdown && (
-        <motion.div
-          ref={floatingDropdownRef}
-          className="floating-dropdown"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{
-            duration: 0.2,
-            ease: [0.4, 0, 0.2, 1]
-          }}
-          style={{
-            position: "fixed",
-            top: `${100 + (menuItems.findIndex(item => item.title === openDropdown) * 48)}px`,
-            left: "70px",
-            zIndex: 1000,
-          }}
-        >
-          {menuItems
-            .find((item) => item.title === openDropdown)
-            ?.subItems.map((subItem, idx) => (
-              <motion.div
-                key={subItem.path || idx}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  duration: 0.2,
-                  delay: idx * 0.05,
-                  ease: "easeOut"
-                }}
-              >
-                <NavLink
-                  to={subItem.path}
-                  className={({ isActive }) =>
-                    `floating-dropdown-item ${isActive ? 'active' : ''}`
-                  }
-                  onClick={() => {
-                    setOpenDropdown(null);
-                  }}
-                >
-                  <span className="icon">{subItem.icon}</span>
-                  <span className="title">{subItem.title}</span>
-                </NavLink>
-              </motion.div>
-            ))}
-        </motion.div>
+      {localMobileMenuOpen && (
+        <div className="sidebar-overlay" onClick={handleOverlayClick} />
       )}
 
-      <div className="sidebar-footer">
-        <NavLink to="/dashboard/profile" className="nav-item profile-btn">
-          <div className="nav-item-content">
-            <span className="icon">
-              <FiUser />
-            </span>
-            {!isCollapsed && <span className="title">Profile</span>}
+      <aside className={`sidebar ${!isMobileView && isCollapsed ? 'collapsed' : ''} ${localMobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="logo">
+            {(!isMobileView && !isCollapsed) && <span className="full-text">Grewox CRM</span>}
+            {isMobileView && <span className="full-text">Grewox CRM</span>}
           </div>
-        </NavLink>
-        <NavLink
-          to="/logout"
-          onClick={handleLogout}
-          className="nav-item logout-btn"
-        >
-          <div className="nav-item-content">
-            <span className="icon">
-              <FiLogOut />
-            </span>
-            {!isCollapsed && <span className="title">Logout</span>}
-          </div>
-        </NavLink>
-      </div>
-    </motion.aside>
+          {!isMobileView ? (
+            <button className="collapse-btn" onClick={handleToggleCollapse}>
+              {isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+            </button>
+          ) : (
+            <button className="mobile-close-btn" onClick={handleMobileMenuToggle}>
+              <FiChevronLeft />
+            </button>
+          )}
+        </div>
+        <nav className="sidebar-nav">
+          {menuItems.map((item, index) => (
+            <motion.div key={item.path || index} initial={false} onClick={handleNavigation}>
+              {!item.isDropdown
+                ? renderNavItem(item)
+                : item.title === "CRM"
+                  ? renderDropdown(item, isCrmOpen, setCrmOpen)
+                  : item.title === "Sales"
+                    ? renderDropdown(item, isSalesOpen, setSalesOpen)
+                    : item.title === "Purchase"
+                      ? renderDropdown(item, isPurchaseOpen, setPurchaseOpen)
+                      : item.title === "User Management"
+                        ? renderDropdown(
+                          item,
+                          isUserManagementOpen,
+                          setUserManagementOpen
+                        )
+                        : item.title === "Communication"
+                          ? renderDropdown(item, isCommunicationOpen, setCommunicationOpen)
+                          : item.title === "HRM"
+                            ? renderDropdown(item, isHrmOpen, setHrmOpen)
+                            : item.title === "Setting"
+                              ? renderDropdown(item, isSettingsOpen, setIsSettingsOpen)
+                              : item.title === "Support"
+                                ? renderDropdown(item, isSupportOpen, setSupportOpen)
+                                : item.title === "Job"
+                                  ? renderDropdown(item, isJobOpen, setJobOpen)
+                                  : renderDropdown(item, false, () => { })}
+            </motion.div>
+          ))}
+        </nav>
+
+        {isCollapsed && openDropdown && (
+          <motion.div
+            ref={floatingDropdownRef}
+            className="floating-dropdown"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{
+              duration: 0.2,
+              ease: [0.4, 0, 0.2, 1]
+            }}
+            style={{
+              position: "fixed",
+              top: `${100 + (menuItems.findIndex(item => item.title === openDropdown) * 48)}px`,
+              left: "70px",
+              zIndex: 1000,
+            }}
+          >
+            {menuItems
+              .find((item) => item.title === openDropdown)
+              ?.subItems.map((subItem, idx) => (
+                <motion.div
+                  key={subItem.path || idx}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: idx * 0.05,
+                    ease: "easeOut"
+                  }}
+                >
+                  <NavLink
+                    to={subItem.path}
+                    className={({ isActive }) =>
+                      `floating-dropdown-item ${isActive ? 'active' : ''}`
+                    }
+                    onClick={() => {
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    <span className="icon">{subItem.icon}</span>
+                    <span className="title">{subItem.title}</span>
+                  </NavLink>
+                </motion.div>
+              ))}
+          </motion.div>
+        )}
+
+        <div className="sidebar-footer">
+          <NavLink to="/dashboard/profile" className="nav-item profile-btn" onClick={handleNavigation}>
+            <div className="nav-item-content">
+              <span className="icon">
+                <FiUser />
+              </span>
+              {!isCollapsed && <span className="title">Profile</span>}
+            </div>
+          </NavLink>
+          <NavLink to="/logout" onClick={(e) => { e.preventDefault(); handleLogout(); handleNavigation(); }} className="nav-item logout-btn">
+            <div className="nav-item-content">
+              <span className="icon">
+                <FiLogOut />
+              </span>
+              {!isCollapsed && <span className="title">Logout</span>}
+            </div>
+          </NavLink>
+        </div>
+      </aside>
+    </>
   );
 };
 
 export default Sidebar;
-

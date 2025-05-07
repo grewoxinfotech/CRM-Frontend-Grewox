@@ -1,43 +1,130 @@
 @import '../../../styles/theme/theme.scss';
 
+// Breakpoints
+$mobile: 576px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// Colors
+$logout-color: #ff4d4f;
+$logout-hover: #ff7875;
+
 .dashboard-footer {
+    background: white;
+    border-top: 1px solid rgba($border-color, 0.1);
+    padding: 16px 24px;
     position: fixed;
     bottom: 0;
     right: 0;
-    width: calc(100% - 260px);
-    height: 60px;
-    background: #FFFFFF;
-    padding: 0 24px;
-    box-shadow: 0 -1px 2px 0 rgba(0, 0, 0, 0.03);
-    transition: width 0.3s ease;
-    z-index: 999;
+    left: 260px; // Default sidebar width
+    z-index: 997;
+    transition: all 0.3s ease;
+    min-width: 320px; // Prevent footer from becoming too narrow
+
+    @media (max-width: $desktop) {
+        left: 0;
+        padding: 12px 16px;
+    }
 
     .footer-content {
-        height: 100%;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        color: #64748B;
-        font-size: 14px;
+        gap: 20px;
+        width: 100%;
+        max-width: 1800px;
+        margin: 0 auto;
 
-        .footer-links {
+        @media (max-width: $tablet) {
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
+        }
+
+        .footer-left {
+            color: $text-color;
+            font-size: 14px;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            @media (max-width: $mobile) {
+                font-size: 12px;
+                order: 2;
+                width: 100%;
+            }
+        }
+
+        .footer-right {
             display: flex;
+            align-items: center;
             gap: 24px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+
+            @media (max-width: $mobile) {
+                gap: 16px;
+                order: 1;
+                width: 100%;
+                justify-content: center;
+            }
 
             a {
-                color: #64748B;
+                color: $text-color;
                 text-decoration: none;
-                transition: color 0.2s ease;
+                font-size: 14px;
+                opacity: 0.8;
+                transition: all 0.3s ease;
+                white-space: nowrap;
+                position: relative;
+
+                @media (max-width: $mobile) {
+                    font-size: 12px;
+                }
 
                 &:hover {
-                    color: #3B82F6;
+                    color: $primary-color;
+                    opacity: 1;
+                }
+
+                // Special styling for logout link
+                &[href="/logout"] {
+                    &:hover {
+                        color: $logout-color;
+                    }
+
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        bottom: -4px;
+                        left: 0;
+                        width: 0;
+                        height: 2px;
+                        background: $logout-color;
+                        transition: width 0.3s ease;
+                    }
+
+                    &:hover::after {
+                        width: 100%;
+                    }
                 }
             }
         }
     }
+
+    // Table handling
+    .ant-table-wrapper+& {
+        position: static;
+        margin-top: 24px;
+    }
 }
 
-// Adjust footer width when sidebar is collapsed
-.dashboard-sidebar.collapsed~.main-content .dashboard-footer {
-    width: calc(100% - 70px);
+// Collapsed sidebar adjustments
+.dashboard-sidebar.collapsed+.main-content .dashboard-footer {
+    left: 70px;
+
+    @media (max-width: $desktop) {
+        left: 0;
+    }
 }

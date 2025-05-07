@@ -1,14 +1,138 @@
 @import '../../../styles/theme/theme.scss';
 
+// Breakpoints
+$mobile: 576px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// Colors
+$blue-gradient: linear-gradient(135deg, #1890ff, #096dd9);
+$purple-gradient: linear-gradient(135deg, #722ed1, #531dab);
+$green-gradient: linear-gradient(135deg, #52c41a, #389e0d);
+
+// Add new gradient variables
+$card-gradient-1: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8));
+$card-gradient-2: linear-gradient(to right bottom, rgba(255, 255, 255, 0.9), rgba(243, 244, 246, 0.6));
+$shimmer-gradient: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%);
+
 .dashboard-container {
     padding: 24px;
     background: $background-color;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+
+    @media (max-width: $desktop) {
+        padding: 20px;
+    }
+
+    @media (max-width: $mobile) {
+        padding: 16px;
+    }
+
+    .overview-header {
+        margin-bottom: 24px;
+        background: white;
+        padding: 28px 32px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+
+        @media (max-width: $tablet) {
+            padding: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        @media (max-width: $mobile) {
+            padding: 20px;
+            margin-bottom: 16px;
+            text-align: center;
+
+            h1 {
+                text-align: center;
+                width: 100%;
+            }
+
+            p {
+                text-align: center;
+                width: 100%;
+            }
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: $text-color-dark;
+            margin: 0 0 8px;
+            line-height: 1.2;
+
+            @media (max-width: $tablet) {
+                font-size: 28px;
+            }
+
+            @media (max-width: $mobile) {
+                font-size: 24px;
+            }
+        }
+
+        p {
+            font-size: 16px;
+            color: $text-color-light;
+            margin: 0;
+            line-height: 1.5;
+
+            @media (max-width: $mobile) {
+                font-size: 14px;
+            }
+        }
+    }
+
+    .section-header {
+        margin-bottom: 20px;
+        padding: 0 4px;
+
+        @media (max-width: $mobile) {
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: $text-color-dark;
+            margin: 0 0 4px;
+
+            @media (max-width: $tablet) {
+                font-size: 22px;
+            }
+
+            @media (max-width: $mobile) {
+                font-size: 20px;
+            }
+        }
+
+        p {
+            font-size: 15px;
+            color: $text-color-light;
+            margin: 0;
+
+            @media (max-width: $mobile) {
+                font-size: 13px;
+            }
+        }
+    }
 
     .page-breadcrumb {
         margin-bottom: 16px;
 
         .ant-breadcrumb {
             font-size: 14px;
+
+            @media (max-width: $mobile) {
+                font-size: 13px;
+            }
 
             .ant-breadcrumb-link {
                 color: $text-color-light;
@@ -49,10 +173,26 @@
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba($primary-color, 0.08);
 
+        @media (max-width: $tablet) {
+            padding: 20px 24px;
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+
+        @media (max-width: $mobile) {
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+
         .page-title {
             text-align: left;
             margin-bottom: 0;
             flex-shrink: 0;
+
+            @media (max-width: $tablet) {
+                text-align: center;
+            }
 
             h2 {
                 color: $text-color-dark;
@@ -60,84 +200,286 @@
                 font-size: 28px;
                 font-weight: 600;
                 line-height: 1.2;
+
+                @media (max-width: $tablet) {
+                    font-size: 24px;
+                }
+
+                @media (max-width: $mobile) {
+                    font-size: 20px;
+                }
             }
 
             .ant-typography-secondary {
                 color: $text-color-light;
                 font-size: 15px;
                 display: block;
+
+                @media (max-width: $mobile) {
+                    font-size: 13px;
+                }
+            }
+        }
+    }
+
+    // Row Gutter Adjustments
+    .ant-row {
+        margin: -12px;
+        width: calc(100% + 24px);
+
+        @media (max-width: $tablet) {
+            margin: -10px;
+            width: calc(100% + 20px);
+        }
+
+        @media (max-width: $mobile) {
+            margin: -8px;
+            width: calc(100% + 16px);
+        }
+
+        &>.ant-col {
+            padding: 12px;
+
+            @media (max-width: $tablet) {
+                padding: 10px;
+            }
+
+            @media (max-width: $mobile) {
+                padding: 8px;
             }
         }
     }
 
     .stats-card {
-        height: 100%;
         border-radius: 16px;
-        background: linear-gradient(145deg, #ffffff, #f5f7fa);
-        box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.05),
-            -5px -5px 15px rgba(255, 255, 255, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: $card-gradient-1;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        backdrop-filter: blur(10px);
+        box-shadow:
+            0 4px 24px -1px rgba(0, 0, 0, 0.1),
+            0 2px 8px -1px rgba(0, 0, 0, 0.06),
+            inset 0 1px 0 rgba(255, 255, 255, 0.6);
+
+        &::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: $card-gradient-2;
+            opacity: 0.8;
+            z-index: 0;
+        }
+
+        // Add shimmer effect
+        &::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: $shimmer-gradient;
+            transform: skewX(-15deg);
+            animation: shimmer 6s infinite;
+            z-index: 1;
+            opacity: 0.4;
+        }
+
+        .ant-card-body {
+            padding: 0;
+            height: 100%;
+        }
 
         .stats-content {
             padding: 24px;
+            height: 100%;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: transparent;
+
+            &::before {
+                background: linear-gradient(180deg,
+                        rgba(255, 255, 255, 0.95) 0%,
+                        rgba(255, 255, 255, 0.8) 40%,
+                        transparent 100%);
+                backdrop-filter: blur(4px);
+            }
 
             .stats-header {
                 display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
+                align-items: center;
+                gap: 16px;
                 margin-bottom: 20px;
+
+                @media (max-width: $mobile) {
+                    gap: 12px;
+                    margin-bottom: 16px;
+                }
 
                 .icon-wrapper {
                     width: 48px;
                     height: 48px;
+                    min-width: 48px;
                     border-radius: 12px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.15);
+                    position: relative;
+                    z-index: 1;
+                    transition: all 0.3s ease;
+
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        inset: -2px;
+                        border-radius: inherit;
+                        opacity: 0.15;
+                        background: inherit;
+                        z-index: -1;
+                        filter: blur(4px);
+                    }
+
+                    @media (max-width: $mobile) {
+                        width: 44px;
+                        height: 44px;
+                        min-width: 44px;
+                        border-radius: 10px;
+                    }
 
                     svg {
                         color: white;
                         font-size: 24px;
                         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+
+                        @media (max-width: $mobile) {
+                            font-size: 22px;
+                        }
                     }
                 }
 
                 .tag-wrapper {
-                    padding: 6px 12px;
-                    border-radius: 8px;
                     font-size: 13px;
                     font-weight: 500;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+                    padding: 6px 14px;
+                    border-radius: 8px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: calc(100% - 64px);
+                    background: rgba(255, 255, 255, 0.95);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                    border: 1px solid rgba(0, 0, 0, 0.04);
+                    backdrop-filter: blur(4px);
+
+                    @media (max-width: $mobile) {
+                        padding: 5px 12px;
+                        font-size: 12px;
+                    }
                 }
             }
 
             .stats-info {
+                position: relative;
+                padding-bottom: 4px;
+
                 h3 {
-                    font-size: 16px;
+                    font-size: 15px;
                     font-weight: 600;
+                    color: #1f2937;
                     margin: 0 0 8px;
+                    letter-spacing: -0.01em;
+                    opacity: 0.85;
                 }
 
                 .stats-value {
-                    font-size: 32px;
-                    font-weight: 600;
-                    margin-bottom: 8px;
-                    letter-spacing: -0.5px;
+                    font-size: 36px;
+                    font-weight: 700;
+                    margin-bottom: 6px;
+                    line-height: 1;
+                    letter-spacing: -0.02em;
+                    background: inherit;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    position: relative;
+                    z-index: 1;
+
+                    @media (max-width: $mobile) {
+                        font-size: 32px;
+                    }
                 }
 
                 p {
+                    font-size: 13px;
+                    color: #6b7280;
                     margin: 0;
-                    font-size: 14px;
+                    opacity: 0.85;
+                }
+
+                &::after {
+                    background: linear-gradient(0deg,
+                            rgba(255, 255, 255, 0.9) 0%,
+                            rgba(255, 255, 255, 0.6) 40%,
+                            transparent 100%);
                 }
             }
         }
 
-        &:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        // Star decoration
+        &::before,
+        &::after {
+            content: '';
+            position: absolute;
+            background: rgba(0, 0, 0, 0.02);
+            transform: rotate(45deg);
+            border-radius: 4px;
+            transition: all 0.3s ease;
         }
+
+        &::before {
+            width: 28px;
+            height: 28px;
+            top: 16px;
+            right: 16px;
+        }
+
+        &::after {
+            width: 56px;
+            height: 56px;
+            top: 40px;
+            right: 40px;
+            opacity: 0.3;
+        }
+
+        // Enhanced hover effects
+        &:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow:
+                0 20px 40px -5px rgba(0, 0, 0, 0.15),
+                0 8px 16px -2px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+            &::after {
+                animation: shimmer 3s infinite;
+            }
+        }
+    }
+}
+
+// Add shimmer animation
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) skewX(-15deg);
+    }
+
+    50%,
+    100% {
+        transform: translateX(100%) skewX(-15deg);
     }
 }
 

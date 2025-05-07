@@ -6,14 +6,14 @@ import {
     FiUser,
     FiLogOut,
     FiArrowRight,
-    FiFolder
+    FiMenu
 } from 'react-icons/fi';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../auth/services/authSlice';
-import { useNavigate } from 'react-router-dom';
-import './header.scss';
 import { useLogout } from '../../../hooks/useLogout';
+import { useNavigate } from 'react-router-dom';
 import Notifications from '../../../common/notifacations';
+import './header.scss';
 
 const { Text } = Typography;
 
@@ -23,28 +23,16 @@ const Header = () => {
         return name.split(' ').map(n => n[0]).join('').toUpperCase();
     };
 
-    const getUserFullName = (user) => {
-        if (user?.firstName && user?.lastName) {
-            return `${user.firstName} ${user.lastName}`;
-        }
-        return user?.username || 'User';
-    };
-
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [showResults, setShowResults] = useState(false);
     const user = useSelector(selectCurrentUser);
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
     const handleLogout = useLogout();
-    const searchInputRef = useRef(null);
-    const searchResultsRef = useRef(null);
+    const navigate = useNavigate();
 
-    // Define searchable items with proper structure
+    // Define searchable items
     const searchableItems = [
-        { title: "Dashboard", path: "/dashboard" },
-
         // CRM
         { title: "Projects", path: "/dashboard/crm/project", parent: "CRM" },
         { title: "Leads", path: "/dashboard/crm/leads", parent: "CRM" },
@@ -93,7 +81,6 @@ const Header = () => {
         // Communication
         { title: "Chat", path: "/dashboard/communication/chat", parent: "Communication" },
         { title: "Mail", path: "/dashboard/communication/mail", parent: "Communication" },
-        // { title: "Calendar", path: "/dashboard/hrm/calendar", parent: "Communication" },
 
         // Support
         { title: "Tickets", path: "/dashboard/support/ticket", parent: "Support" },
@@ -106,9 +93,11 @@ const Header = () => {
 
         // Others
         { title: "Profile", path: "/dashboard/profile" },
-        { title: "Users", path: "/dashboard/user-management/users" },
-        { title: "Clients", path: "/dashboard/clients" }
+        { title: "Dashboard", path: "/dashboard" }
     ];
+
+    const searchInputRef = useRef(null);
+    const searchResultsRef = useRef(null);
 
     // Handle search input change
     const handleSearchChange = (e) => {
@@ -180,27 +169,8 @@ const Header = () => {
         }
     }, [showSearch]);
 
-    const userMenuItems = [
-        {
-            key: 'profile',
-            label: 'Profile',
-            icon: <FiUser />,
-            onClick: () => navigate('/dashboard/profile')
-        },
-        {
-            type: 'divider'
-        },
-        {
-            key: 'logout',
-            label: 'Logout',
-            icon: <FiLogOut />,
-            danger: true,
-            onClick: handleLogout
-        }
-    ];
-
     return (
-        <header className="superadmin-header">
+        <header className="dashboard-header">
             <div className="header-left">
                 <h1>Dashboard</h1>
             </div>
@@ -271,13 +241,33 @@ const Header = () => {
                     <Notifications />
 
                     <Dropdown
-                        menu={{ items: userMenuItems }}
-                        trigger={['click']}
+                        menu={{
+                            items: [
+                                {
+                                    key: 'profile',
+                                    label: 'Profile',
+                                    icon: <FiUser />,
+                                    onClick: () => navigate('/dashboard/profile')
+                                },
+                                {
+                                    type: 'divider'
+                                },
+                                {
+                                    key: 'logout',
+                                    label: 'Logout',
+                                    icon: <FiLogOut />,
+                                    danger: true,
+                                    onClick: handleLogout
+                                }
+                            ]
+                        }}
                         placement="bottomRight"
-                        getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                        trigger={['click']}
                     >
                         <div className="user-avatar">
-                            <Avatar>{getInitials(getUserFullName(user))}</Avatar>
+                            <Avatar size={40}>
+                                {getInitials(user?.name)}
+                            </Avatar>
                         </div>
                     </Dropdown>
                 </Space>
@@ -286,4 +276,4 @@ const Header = () => {
     );
 };
 
-export default Header; 
+export default Header;

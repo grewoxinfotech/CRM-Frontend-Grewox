@@ -134,25 +134,6 @@ const Header = () => {
         }
     }, [showSearch]);
 
-    const userMenuItems = [
-        {
-            key: 'profile',
-            label: 'Profile',
-            icon: <FiUser />,
-            onClick: () => navigate('/superadmin/profile')
-        },
-        {
-            type: 'divider'
-        },
-        {
-            key: 'logout',
-            label: 'Logout',
-            icon: <FiLogOut />,
-            danger: true,
-            onClick: handleLogout
-        }
-    ];
-
     return (
         <header className="superadmin-header">
             <div className="header-left">
@@ -225,13 +206,33 @@ const Header = () => {
                     <Notifications />
 
                     <Dropdown
-                        menu={{ items: userMenuItems }}
-                        trigger={['click']}
+                        menu={{
+                            items: [
+                                {
+                                    key: 'profile',
+                                    label: 'Profile',
+                                    icon: <FiUser />,
+                                    onClick: () => navigate('/superadmin/profile')
+                                },
+                                {
+                                    type: 'divider'
+                                },
+                                {
+                                    key: 'logout',
+                                    label: 'Logout',
+                                    icon: <FiLogOut />,
+                                    danger: true,
+                                    onClick: handleLogout
+                                }
+                            ]
+                        }}
                         placement="bottomRight"
-                        getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                        trigger={['click']}
                     >
                         <div className="user-avatar">
-                            <Avatar>{user?.name ? getInitials(user.name) : 'U'}</Avatar>
+                            <Avatar size={40}>
+                                {getInitials(user?.name)}
+                            </Avatar>
                         </div>
                     </Dropdown>
                 </Space>

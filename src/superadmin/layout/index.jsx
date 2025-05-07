@@ -7,6 +7,7 @@ import './layout.scss';
 
 const SuperAdminLayout = () => {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
     const handleSidebarToggle = (collapsed) => {
         setSidebarCollapsed(collapsed);
         localStorage.setItem('superadmin_sidebar_collapsed', JSON.stringify(collapsed));
@@ -20,7 +21,7 @@ const SuperAdminLayout = () => {
     }, []);
 
     return (
-        <div className="superadmin-layout">
+        <div className={`superadmin-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <Sidebar
                 collapsed={sidebarCollapsed}
                 onCollapsedChange={handleSidebarToggle}

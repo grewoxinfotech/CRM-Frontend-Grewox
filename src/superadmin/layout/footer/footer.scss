@@ -1,70 +1,130 @@
 @import '../../../styles/theme/theme.scss';
 
+// Breakpoints
+$mobile: 576px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// Colors
+$logout-color: #ff4d4f;
+$logout-hover: #ff7875;
+
 .superadmin-footer {
-    background-color: white;
-    border-top: 1px solid rgba($border-color, 0.8);
-    padding: 1rem 2rem;
+    background: white;
+    border-top: 1px solid rgba($border-color, 0.1);
+    padding: 16px 24px;
     position: fixed;
     bottom: 0;
     right: 0;
-    width: calc(100% - 260px); // Match main content width
-    z-index: 10;
-    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.05);
-    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); // Match sidebar transition
+    left: 260px; // Default sidebar width
+    z-index: 997;
+    transition: all 0.3s ease;
+    min-width: 320px; // Prevent footer from becoming too narrow
+
+    @media (max-width: $desktop) {
+        left: 0;
+        padding: 12px 16px;
+    }
 
     .footer-content {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin: 0 auto;
+        justify-content: space-between;
+        gap: 20px;
         width: 100%;
+        max-width: 1800px;
+        margin: 0 auto;
 
-        .copyright {
-            color: rgba($text-color, 0.6);
-            font-size: 0.875rem;
-            font-weight: 400;
-            line-height: 1.5;
+        @media (max-width: $tablet) {
+            flex-direction: column;
+            gap: 12px;
+            text-align: center;
         }
 
-        .footer-links {
+        .footer-left {
+            color: $text-color;
+            font-size: 14px;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            @media (max-width: $mobile) {
+                font-size: 12px;
+                order: 2;
+                width: 100%;
+            }
+        }
+
+        .footer-right {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+
+            @media (max-width: $mobile) {
+                gap: 16px;
+                order: 1;
+                width: 100%;
+                justify-content: center;
+            }
 
             a {
-                color: rgba($text-color, 0.6);
+                color: $text-color;
                 text-decoration: none;
-                font-size: 0.875rem;
-                font-weight: 400;
-                line-height: 1.5;
-                transition: all 0.2s ease-in-out;
-                padding: 0.25rem 0;
+                font-size: 14px;
+                opacity: 0.8;
+                transition: all 0.3s ease;
+                white-space: nowrap;
                 position: relative;
+
+                @media (max-width: $mobile) {
+                    font-size: 12px;
+                }
 
                 &:hover {
                     color: $primary-color;
+                    opacity: 1;
                 }
 
-                &:after {
-                    content: '';
-                    position: absolute;
-                    width: 0;
-                    height: 1px;
-                    bottom: 0;
-                    left: 0;
-                    background-color: $primary-color;
-                    transition: width 0.2s ease-in-out;
-                }
+                // Special styling for logout link
+                &[href="/logout"] {
+                    &:hover {
+                        color: $logout-color;
+                    }
 
-                &:hover:after {
-                    width: 100%;
+                    &::after {
+                        content: '';
+                        position: absolute;
+                        bottom: -4px;
+                        left: 0;
+                        width: 0;
+                        height: 2px;
+                        background: $logout-color;
+                        transition: width 0.3s ease;
+                    }
+
+                    &:hover::after {
+                        width: 100%;
+                    }
                 }
             }
         }
     }
+
+    // Table handling
+    .ant-table-wrapper+& {
+        position: static;
+        margin-top: 24px;
+    }
 }
 
-// Adjust for collapsed sidebar
-.superadmin-sidebar.collapsed~.main-content .superadmin-footer {
-    width: calc(100% - 70px); // Match collapsed main content width
+// Collapsed sidebar adjustments
+.superadmin-sidebar.collapsed+.main-content .superadmin-footer {
+    left: 70px;
+
+    @media (max-width: $desktop) {
+        left: 0;
+    }
 }

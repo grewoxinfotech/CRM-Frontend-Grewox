@@ -1,5 +1,14 @@
 @import '../../../styles/theme/theme.scss';
 
+// Breakpoints
+$mobile: 576px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// Colors
+$logout-color: #ff4d4f;
+$logout-hover: #ff7875;
+
 .superadmin-sidebar {
     width: 260px;
     height: 100vh;
@@ -7,27 +16,94 @@
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    position: sticky;
+    position: fixed;
     top: 0;
     left: 0;
     z-index: 1000;
-    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.3s ease;
     border-right: 1px solid rgba($border-color, 0.8);
+
+    @media (max-width: $desktop) {
+        transform: translateX(-100%);
+        width: 280px;
+
+        &.open {
+            transform: translateX(0);
+        }
+    }
 
     &.collapsed {
         width: 70px;
+        overflow: visible;
+
+        @media (max-width: $desktop) {
+            transform: translateX(-100%);
+        }
 
         .nav-item-content {
-            padding: 0 12px;
+            padding: 0;
+            height: 44px;
             justify-content: center;
+            align-items: center;
 
             .title,
             .arrow {
                 display: none;
+                opacity: 0;
+                width: 0;
             }
 
             .icon {
                 margin: 0;
+                font-size: 20px;
+                min-width: 24px;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .logo {
+            justify-content: center;
+            padding: 0 10px;
+
+            .full-text {
+                display: none;
+                opacity: 0;
+                width: 0;
+            }
+        }
+
+        .sidebar-nav {
+            .nav-item {
+                margin: 8px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 54px;
+            }
+        }
+
+        .sidebar-header {
+            padding: 0 13px;
+            justify-content: center;
+
+            .logo {
+                padding-left: 0;
+            }
+
+            .collapse-btn {
+                transform: rotate(180deg);
+            }
+        }
+
+        // Hide dropdown elements when collapsed
+        .nav-dropdown {
+            .dropdown-menu {
+                display: none;
             }
         }
     }
@@ -36,18 +112,36 @@
         height: 70px;
         display: flex;
         align-items: center;
-        padding: 0 20px;
+        justify-content: space-between;
         border-bottom: 1px solid rgba($border-color, 0.1);
+        padding: 0 13px;
+
+        @media (max-width: $mobile) {
+            height: 60px;
+        }
 
         .logo {
-            flex: 1;
-            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
-            background: linear-gradient(135deg, $primary-color, $accent-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             white-space: nowrap;
-            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            padding-left: 7px;
+
+            .full-text {
+                font-size: 18px;
+                color: #4070FF;
+                transition: all 0.3s ease;
+                flex-shrink: 0;
+                font-weight: 600;
+            }
+
+            @media (max-width: $mobile) {
+                .full-text {
+                    font-size: 16px;
+                }
+            }
         }
 
         .collapse-btn {
@@ -55,19 +149,58 @@
             height: 32px;
             border-radius: 8px;
             border: none;
-            background: rgba($primary-color, 0.05);
-            color: $text-color;
+            background: linear-gradient(135deg, #4096ff, #1677ff);
+            color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex-shrink: 0;
+
+            svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            @media (max-width: $desktop) {
+                display: none;
+            }
 
             &:hover {
-                background: rgba($primary-color, 0.1);
-                color: $primary-color;
+                background: linear-gradient(135deg, #1677ff, #4096ff);
                 transform: scale(1.08);
-                box-shadow: 0 2px 8px rgba($primary-color, 0.15);
+                box-shadow: 0 2px 8px rgba(#1677ff, 0.3);
+            }
+        }
+
+        .mobile-close-btn {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #4096ff, #1677ff);
+            color: white;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+
+            svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            @media (max-width: $desktop) {
+                display: flex;
+            }
+
+            &:hover {
+                background: linear-gradient(135deg, #1677ff, #4096ff);
+                transform: scale(1.08);
+                box-shadow: 0 2px 8px rgba(#1677ff, 0.3);
             }
         }
     }
@@ -77,6 +210,11 @@
         padding: 12px 0;
         overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+
+        @media (max-width: $mobile) {
+            padding: 8px 0;
+        }
 
         &::-webkit-scrollbar {
             width: 4px;
@@ -102,6 +240,10 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
+
+        @media (max-width: $mobile) {
+            margin: 8px 10px;
+        }
 
         &::before {
             content: '';
@@ -136,15 +278,15 @@
             position: relative;
             z-index: 2;
             transition: all 0.4s ease;
-            height: 40px;
+            height: 44px;
 
             .icon {
-                font-size: 18px;
+                font-size: 20px;
                 opacity: 0.7;
                 transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-                min-width: 20px;
-                width: 20px;
-                height: 20px;
+                min-width: 24px;
+                width: 24px;
+                height: 24px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -412,7 +554,7 @@
 
                     .icon {
                         color: $primary-color;
-                        opacity: 1;
+                        opacity: 0.8;
                         font-size: 16px;
                     }
 
@@ -424,92 +566,135 @@
 
                 &:hover {
                     background: rgba($primary-color, 0.06);
-                    transform: translateY(-2px);
+                    transform: translateY(-1px);
+
+                    .icon {
+                        opacity: 1;
+                    }
+
+                    .title {
+                        color: $primary-color;
+                    }
                 }
 
                 &.active {
                     background: rgba($primary-color, 0.08);
-                }
-            }
-        }
 
-        .logout-btn {
-            width: calc(100% - 24px);
-            background: none;
-            border-radius: 8px;
-            cursor: pointer;
-            padding: 0;
-            color: $text-color;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin: 0 12px;
-            overflow: hidden;
-            position: relative;
-
-            &::before {
-                content: '';
-                position: absolute;
-                left: 0;
-                top: 0;
-                height: 100%;
-                width: 0;
-                background: $error-color;
-                border-radius: 4px 0 0 4px;
-                opacity: 0;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .nav-item-content {
-                padding: 8px 16px;
-                position: relative;
-                z-index: 2;
-
-                .icon {
-                    color: $error-color;
-                    opacity: 1;
-                    font-size: 16px;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-
-                .title {
-                    font-weight: 500;
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    .icon,
+                    .title {
+                        color: $primary-color;
+                    }
                 }
             }
 
-            &:hover {
-                background: rgba($error-color, 0.06);
-                color: $error-color;
-                transform: translateY(-2px);
+            // Special styling for logout button
+            &[href="/logout"] {
+                .nav-item-content {
+                    .icon {
+                        color: $error-color;
+                        opacity: 0.8;
+                    }
+                }
 
                 &::before {
-                    width: 4px;
-                    opacity: 1;
+                    background: $error-color;
                 }
 
-                .title {
-                    color: $error-color;
-                }
-            }
 
-            &:active {
-                transform: translateY(0);
-                background: rgba($error-color, 0.1);
+                &:hover {
+                    background: rgba($error-color, 0.06);
 
-                &::before {
-                    width: 6px;
-                    opacity: 1;
+                    .icon {
+                        opacity: 1;
+                    }
+
+                    .title {
+                        color: $error-color;
+                    }
                 }
             }
         }
     }
 }
+
+// Mobile menu toggle button
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1001;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: linear-gradient(135deg, #4096ff, #1677ff);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+
+    @media (max-width: $desktop) {
+        display: flex;
+    }
+
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    &:hover {
+        background: linear-gradient(135deg, #1677ff, #4096ff);
+        transform: scale(1.08);
+        box-shadow: 0 2px 8px rgba(#1677ff, 0.3);
+    }
+}
+
+// Sidebar overlay
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+
+    @media (max-width: $desktop) {
+        display: block;
+        opacity: 0;
+        pointer-events: none;
+
+        &.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    }
+}
+
+// When sidebar is open, hide the toggle button
+body.sidebar-open {
+    @media (max-width: $desktop) {
+        overflow: hidden;
+
+        .mobile-menu-toggle {
+            display: none;
+        }
+    }
+}
+
 // Add this at the end of sidebar.scss
 
 .floating-dropdown {
     min-width: 220px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     padding: 8px 0;
     display: flex;
     flex-direction: column;
@@ -531,6 +716,7 @@
     &::-webkit-scrollbar-thumb {
         background: rgba($primary-color, 0.1);
         border-radius: 4px;
+
         &:hover {
             background: rgba($primary-color, 0.8);
         }
@@ -540,7 +726,7 @@
         background: transparent;
         margin: 4px 0;
     }
-  
+
     .floating-dropdown-item {
         display: flex;
         align-items: center;
@@ -556,7 +742,7 @@
         margin: 0 8px;
         position: relative;
         overflow: hidden;
-  
+
         .icon {
             font-size: 14px;
             opacity: 0.8;
@@ -568,7 +754,7 @@
             align-items: center;
             justify-content: center;
         }
-  
+
         .title {
             font-weight: 500;
             flex: 1;
@@ -625,6 +811,19 @@
                 width: 2px;
                 opacity: 1;
             }
+        }
+    }
+}
+
+// Add specific styles for collapsed state
+.superadmin-sidebar.collapsed {
+    .logo {
+        justify-content: center;
+
+        .full-text {
+            width: 0;
+            margin: 0;
+            opacity: 0;
         }
     }
 }

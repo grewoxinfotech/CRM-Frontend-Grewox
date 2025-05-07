@@ -1,34 +1,110 @@
 @import '../../../styles/theme/theme.scss';
 
-.dashboard-sidebar {
+// Breakpoints
+$mobile: 576px;
+$tablet: 768px;
+$desktop: 1024px;
+
+// Colors
+$logout-color: #ff4d4f;
+$logout-hover: #ff7875;
+
+.sidebar {
     width: 260px;
     height: 100vh;
     background: white;
     display: flex;
     flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    position: sticky;
+    position: fixed;
     top: 0;
     left: 0;
     z-index: 1000;
-    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.3s ease;
     border-right: 1px solid rgba($border-color, 0.8);
 
+    @media (max-width: $desktop) {
+        transform: translateX(-100%);
+        width: 280px;
+        transition: transform 0.3s ease-in-out;
+
+        &.mobile-open {
+            transform: translateX(0);
+        }
+    }
 
     &.collapsed {
         width: 70px;
+        overflow: visible;
+
+        @media (max-width: $desktop) {
+            transform: translateX(-100%);
+        }
 
         .nav-item-content {
-            padding: 0 12px;
+            padding: 0;
+            height: 44px;
             justify-content: center;
+            align-items: center;
 
             .title,
             .arrow {
                 display: none;
+                opacity: 0;
+                width: 0;
             }
 
             .icon {
                 margin: 0;
+                font-size: 20px;
+                min-width: 24px;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+
+        .logo {
+            justify-content: center;
+            padding: 0 10px;
+
+            .full-text {
+                display: none;
+                opacity: 0;
+                width: 0;
+            }
+        }
+
+        .sidebar-nav {
+            .nav-item {
+                margin: 8px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 54px;
+            }
+        }
+
+        .sidebar-header {
+            padding: 0 13px;
+            justify-content: center;
+
+            .logo {
+                padding-left: 0;
+            }
+
+            .collapse-btn {
+                transform: rotate(180deg);
+            }
+        }
+
+        // Hide dropdown elements when collapsed
+        .nav-dropdown {
+            .dropdown-menu {
+                display: none;
             }
         }
     }
@@ -37,18 +113,36 @@
         height: 70px;
         display: flex;
         align-items: center;
-        padding: 0 20px;
+        justify-content: space-between;
         border-bottom: 1px solid rgba($border-color, 0.1);
+        padding: 0 13px;
+
+        @media (max-width: $mobile) {
+            height: 60px;
+        }
 
         .logo {
-            flex: 1;
-            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
-            background: linear-gradient(135deg, $primary-color, $accent-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             white-space: nowrap;
-            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            padding-left: 7px;
+
+            .full-text {
+                font-size: 18px;
+                color: #4070FF;
+                transition: all 0.3s ease;
+                flex-shrink: 0;
+                font-weight: 600;
+            }
+
+            @media (max-width: $mobile) {
+                .full-text {
+                    font-size: 16px;
+                }
+            }
         }
 
         .collapse-btn {
@@ -56,19 +150,58 @@
             height: 32px;
             border-radius: 8px;
             border: none;
-            background: rgba($primary-color, 0.05);
-            color: $text-color;
+            background: linear-gradient(135deg, #4096ff, #1677ff);
+            color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex-shrink: 0;
+
+            svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            @media (max-width: $desktop) {
+                display: none;
+            }
 
             &:hover {
-                background: rgba($primary-color, 0.1);
-                color: $primary-color;
+                background: linear-gradient(135deg, #1677ff, #4096ff);
                 transform: scale(1.08);
-                box-shadow: 0 2px 8px rgba($primary-color, 0.15);
+                box-shadow: 0 2px 8px rgba(#1677ff, 0.3);
+            }
+        }
+
+        .mobile-close-btn {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #4096ff, #1677ff);
+            color: white;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            z-index: 1001;
+
+            svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            @media (max-width: $desktop) {
+                display: flex;
+            }
+
+            &:hover {
+                background: linear-gradient(135deg, #1677ff, #4096ff);
+                transform: scale(1.08);
             }
         }
     }
@@ -78,10 +211,14 @@
         padding: 12px 0;
         overflow-y: auto;
         overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+
+        @media (max-width: $mobile) {
+            padding: 8px 0;
+        }
 
         &::-webkit-scrollbar {
             width: 4px;
-            
         }
 
         &::-webkit-scrollbar-thumb {
@@ -104,6 +241,10 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
+
+        @media (max-width: $mobile) {
+            margin: 8px 10px;
+        }
 
         &::before {
             content: '';
@@ -138,15 +279,15 @@
             position: relative;
             z-index: 2;
             transition: all 0.4s ease;
-            height: 40px;
+            height: 44px;
 
             .icon {
-                font-size: 18px;
+                font-size: 20px;
                 opacity: 0.7;
                 transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-                min-width: 20px;
-                width: 20px;
-                height: 20px;
+                min-width: 24px;
+                width: 24px;
+                height: 24px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -256,160 +397,294 @@
                 .arrow {
                     transform: rotate(90deg);
                     opacity: 1;
-                    color: $primary-color;
                 }
             }
 
             .dropdown-menu {
-                max-height: 800px;
+                max-height: fit-content;
                 opacity: 1;
                 transform: translateY(0);
-                visibility: visible;
                 pointer-events: all;
                 margin-top: 4px;
                 margin-bottom: 4px;
-                transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.2s ease,
-                    transform 0.2s ease,
-                    margin 0.2s ease,
-                    visibility 0s;
-
-                .sub-item {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
             }
         }
 
         .dropdown-trigger {
-            transition: background 0.2s ease,
-                color 0.2s ease;
+            position: relative;
+            z-index: 3;
+            margin-bottom: 0;
 
-            .arrow {
-                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.2s ease,
-                    color 0.2s ease;
+            &:hover {
+                .arrow {
+                    opacity: 0.8;
+                    transform: translateX(2px) rotate(0deg);
+                }
+
+                &.open .arrow {
+                    transform: translateX(2px) rotate(90deg);
+                }
             }
         }
 
         .dropdown-menu {
             overflow: hidden;
-            padding: 0 8px;
             max-height: 0;
             opacity: 0;
-            transform: translateY(-4px);
-            visibility: hidden;
+            transform: translateY(-5px);
+            transition:
+                max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease,
+                transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                margin 0.25s ease;
             pointer-events: none;
             margin-top: 0;
             margin-bottom: 0;
-            will-change: max-height, opacity, transform;
-            transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.15s ease,
-                transform 0.15s ease,
-                margin 0.15s ease,
-                visibility 0s linear 0.2s;
+            position: relative;
+            z-index: 2;
+            border-left: 2px solid rgba($primary-color, 0.1);
+            margin-left: 20px;
+            padding-left: 10px;
+            padding-top: 0;
+            padding-bottom: 0;
+            will-change: transform, max-height, opacity;
+
+            &::before {
+                content: '';
+                position: absolute;
+                left: -2px;
+                top: 0;
+                width: 2px;
+                height: 0;
+                background: $primary-color;
+                transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                opacity: 0;
+                z-index: 1;
+            }
 
             .sub-item {
-                margin: 2px 0;
-                font-size: 13px;
-                opacity: 0;
-                transform: translateX(-4px);
-                will-change: transform, opacity;
-                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.2s ease;
+                margin: 6px 0;
+                border-radius: 6px;
+                position: relative;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transform: translateX(0);
+                opacity: 0.9;
 
-                @for $i from 1 through 15 {
-                    &:nth-child(#{$i}) {
-                        transition-delay: #{$i * 0.015}s;
-                    }
+                &::before {
+                    left: -12px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
 
                 .nav-item-content {
-                    height: 36px;
                     padding: 8px 12px;
+                    height: 32px;
 
                     .icon {
                         font-size: 16px;
+                        min-width: 18px;
+                        width: 18px;
+                        height: 18px;
+                    }
+
+                    .title {
+                        font-size: 13px;
                     }
                 }
 
                 &:hover {
+                    background: rgba($primary-color, 0.04);
                     transform: translateX(2px);
+                    opacity: 1;
+
+                    .icon {
+                        transform: scale(1.1);
+                    }
+                }
+
+                &.active {
+                    background: rgba($primary-color, 0.08);
+                    opacity: 1;
+
+                    .icon {
+                        transform: scale(1.1);
+                    }
+
+                    &::before {
+                        width: 4px;
+                        opacity: 1;
+                    }
+                }
+
+                &:first-child {
+                    margin-top: 0;
+                }
+
+                &:last-child {
+                    margin-bottom: 0;
                 }
             }
         }
 
-        &:not(.open) {
-            .dropdown-menu {
-                transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-                    opacity 0.15s ease,
-                    transform 0.15s ease,
-                    margin 0.15s ease,
-                    visibility 0s linear 0.2s;
+        &.open .dropdown-menu::before {
+            height: 100%;
+            opacity: 1;
+        }
 
-                .sub-item {
-                    transition: transform 0.15s ease,
-                        opacity 0.15s ease;
-                    transition-delay: 0s !important;
-                    opacity: 0;
-                    transform: translateX(-4px);
-                }
-            }
+        &:hover .dropdown-menu::before {
+            opacity: 0.5;
         }
     }
 
     .sidebar-footer {
-        padding: 12px;
+        padding: 16px 0;
         border-top: 1px solid rgba($border-color, 0.1);
+        background: white;
         display: flex;
         flex-direction: column;
         gap: 8px;
 
-        .profile-btn {
-            background: rgba($primary-color, 0.04);
-            margin: 0;
+        .nav-item {
+            margin: 0 12px;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-            &:hover {
-                background: rgba($primary-color, 0.08);
+            &.profile-btn {
+                .nav-item-content {
+                    padding: 8px 16px;
+
+                    .icon {
+                        color: $primary-color;
+                        opacity: 0.8;
+                        font-size: 16px;
+                    }
+
+                    .title {
+                        font-weight: 500;
+                        color: $text-color;
+                    }
+                }
+
+                &:hover {
+                    background: rgba($primary-color, 0.06);
+                    transform: translateY(-1px);
+
+                    .icon {
+                        opacity: 1;
+                    }
+
+                    .title {
+                        color: $primary-color;
+                    }
+                }
+
+                &.active {
+                    background: rgba($primary-color, 0.08);
+
+                    .icon,
+                    .title {
+                        color: $primary-color;
+                    }
+                }
             }
-        }
 
-        .logout-btn {
-            color: $error-color;
-            margin: 0;
-
-            &:hover {
-                background: rgba($error-color, 0.08);
-                color: $error-color;
+            // Special styling for logout button
+            &[href="/logout"] {
+                .nav-item-content {
+                    .icon {
+                        color: $error-color;
+                        opacity: 0.8;
+                    }
+                }
 
                 &::before {
                     background: $error-color;
                 }
 
-                .icon {
-                    color: $error-color !important;
+                &:hover {
+                    background: rgba($error-color, 0.06);
+
+                    .icon {
+                        opacity: 1;
+                    }
+
+                    .title {
+                        color: $error-color;
+                    }
                 }
             }
+        }
+    }
 
-            &::before {
-                background: $error-color;
-            }
+    .mobile-menu-toggle {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(135deg, #4096ff, #1677ff);
+        color: white;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        position: fixed;
+        top: 10px;
+        left: 16px;
+        z-index: 1001;
+
+        svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        @media (max-width: $desktop) {
+            display: flex;
+        }
+
+        &:hover {
+            background: linear-gradient(135deg, #1677ff, #4096ff);
+            transform: scale(1.08);
+            box-shadow: 0 2px 8px rgba(#1677ff, 0.3);
         }
     }
 }
 
-.superadmin-sidebar {
-    .icon {
-        color: #000;
+// Sidebar overlay
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+
+    @media (max-width: $desktop) {
+        display: block;
     }
 }
+
+// Body class for mobile menu
+body.sidebar-open {
+    overflow: hidden;
+
+    @media (max-width: $desktop) {
+        .sidebar {
+            transform: translateX(0);
+        }
+    }
+}
+
+// Add this at the end of sidebar.scss
 
 .floating-dropdown {
     min-width: 220px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-    padding: 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    padding: 8px 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -422,42 +697,6 @@
     background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba($primary-color, 0.1);
 
-    .floating-dropdown-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        border-bottom: 1px solid rgba($primary-color, 0.1);
-        background: rgba($primary-color, 0.02);
-        border-radius: 12px 12px 0 0;
-
-        .title {
-            font-size: 14px;
-            font-weight: 600;
-            color: $primary-color;
-        }
-
-        .close-btn {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: none;
-            border: none;
-            color: $text-color;
-            cursor: pointer;
-            transition: all 0.3s ease;
-
-            &:hover {
-                background: rgba($primary-color, 0.1);
-                color: $primary-color;
-                transform: scale(1.1);
-            }
-        }
-    }
-
     &::-webkit-scrollbar {
         width: 4px;
         height: 4px;
@@ -466,6 +705,7 @@
     &::-webkit-scrollbar-thumb {
         background: rgba($primary-color, 0.1);
         border-radius: 4px;
+
         &:hover {
             background: rgba($primary-color, 0.8);
         }
@@ -475,7 +715,7 @@
         background: transparent;
         margin: 4px 0;
     }
-  
+
     .floating-dropdown-item {
         display: flex;
         align-items: center;
@@ -491,7 +731,7 @@
         margin: 0 8px;
         position: relative;
         overflow: hidden;
-  
+
         .icon {
             font-size: 14px;
             opacity: 0.8;
@@ -503,7 +743,7 @@
             align-items: center;
             justify-content: center;
         }
-  
+
         .title {
             font-weight: 500;
             flex: 1;
@@ -560,6 +800,19 @@
                 width: 2px;
                 opacity: 1;
             }
+        }
+    }
+}
+
+// Add specific styles for collapsed state
+.sidebar.collapsed {
+    .logo {
+        justify-content: center;
+
+        .full-text {
+            width: 0;
+            margin: 0;
+            opacity: 0;
         }
     }
 }
