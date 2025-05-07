@@ -573,7 +573,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
     ];
 
     return (
-        <div className="task-list">
+        <div >
             <Table
                 columns={columns}
                 dataSource={filteredTasks}
@@ -581,8 +581,12 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`
+                    showTotal: (total) => `Total ${total} items`,
+                    size: window.innerWidth <= 480 ? 'small' : 'default',
+                    responsive: true,
+                    showLessItems: window.innerWidth <= 480
                 }}
+                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
                 className="task-table"
                 onRow={(record) => ({
                     onClick: (e) => {

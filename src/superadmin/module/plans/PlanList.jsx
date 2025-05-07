@@ -132,12 +132,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
 
     const getDropdownItems = (record) => ({
         items: [
-            {
-                key: 'view',
-                icon: <FiEye />,
-                label: 'View Details',
-                onClick: () => onView(record),
-            },
+            // {
+            //     key: 'view',
+            //     icon: <FiEye />,
+            //     label: 'View Details',
+            //     onClick: () => onView(record),
+            // },
             {
                 key: 'edit',
                 icon: <FiEdit2 />,
@@ -154,27 +154,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         ]
     });
 
-    const getActionItems = (record) => [
-        {
-            key: 'view',
-            icon: <FiEye className="action-icon" />,
-            label: 'View Details',
-            onClick: () => onView(record)
-        },
-        {
-            key: 'edit',
-            icon: <FiEdit2 className="action-icon" />,
-            label: 'Edit Plan',
-            onClick: () => onEdit(record)
-        },
-        {
-            key: 'delete',
-            icon: <FiTrash2 className="action-icon" />,
-            label: 'Delete Plan',
-            danger: true,
-            onClick: () => onDelete(record)
-        }
-    ];
+   
 
     const formatStorageSize = (sizeInMB) => {
         const size = parseFloat(sizeInMB);
@@ -310,25 +290,20 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             key: 'actions',
             align: 'right',
             render: (_, record) => (
-                <div className="action-cell">
-                    <Button
-                        type="text"
-                        icon={<FiEye className="action-icon" />}
-                        onClick={() => onView(record)}
-                        className="action-button view"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiEdit2 className="action-icon" />}
-                        onClick={() => onEdit(record)}
-                        className="action-button edit"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiTrash2 className="action-icon" />}
-                        onClick={() => onDelete(record)}
-                        className="action-button delete"
-                    />
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="plan-actions-dropdown"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical className="action-icon" />}
+                            className="action-button more"
+                        />
+                    </Dropdown>
                 </div>
             ),
             width: '15%',

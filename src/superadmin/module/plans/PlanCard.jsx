@@ -40,12 +40,12 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
     };
 
     const actionItems = [
-        {
-            key: 'view',
-            icon: <FiEye />,
-            label: 'View Details',
-            onClick: () => onView?.(plan)
-        },
+        // {
+        //     key: 'view',
+        //     icon: <FiEye />,
+        //     label: 'View Details',
+        //     onClick: () => onView?.(plan)
+        // },
         {
             key: 'edit',
             icon: <FiEdit2 />,

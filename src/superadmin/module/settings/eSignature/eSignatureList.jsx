@@ -1,11 +1,12 @@
 import React from 'react';
 import {
     Table, Empty, Tag, Button, Tooltip,
-    Typography, Space, Spin, Input
+    Typography, Space, Spin, Input, Dropdown
 } from 'antd';
 import {
     FiTrash2,
-    FiCalendar, FiEye
+    FiCalendar, FiEye,
+    FiMoreVertical
 } from 'react-icons/fi';
 import moment from 'moment';
 
@@ -34,6 +35,24 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             />
         );
     }
+
+    const getDropdownItems = (record) => ({
+        items: [
+            {
+                key: 'download',
+                icon: <FiEye />,
+                label: 'Download',
+                onClick: () => onDownload(record),
+            },
+            {
+                key: 'delete',
+                icon: <FiTrash2 />,
+                label: 'Delete',
+                danger: true,
+                onClick: () => onDelete(record.id),
+            }
+        ]
+    });
 
     const columns = [
         {
@@ -113,32 +132,20 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             title: 'Actions',
             key: 'actions',
             render: (_, record) => (
-                <Space size="small" className="action-buttons">
-                    {/* <Tooltip title="Edit">
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="signature-actions-dropdown"
+                    >
                         <Button
                             type="text"
-                            icon={<FiEdit2 />}
-                            onClick={() => onEdit(record)}
-                            className="action-button edit"
+                            icon={<FiMoreVertical className="action-icon" />}
+                            className="action-button more"
                         />
-                    </Tooltip> */}
-                    <Tooltip title="Download">
-                        <Button
-                            type="text"
-                            icon={<FiEye />}
-                            onClick={() => onDownload(record)}
-                            className="action-button download"
-                        />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            icon={<FiTrash2 />}
-                            onClick={() => onDelete(record.id)}
-                            className="action-button delete"
-                        />
-                    </Tooltip>
-                </Space>
+                    </Dropdown>
+                </div>
             )
         }
     ];

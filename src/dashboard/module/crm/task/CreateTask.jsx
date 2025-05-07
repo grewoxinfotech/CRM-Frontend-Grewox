@@ -396,7 +396,7 @@ const CreateTask = ({
             >
               <DatePicker
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -419,7 +419,7 @@ const CreateTask = ({
             >
               <DatePicker
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
@@ -998,7 +998,7 @@ const CreateTask = ({
             >
               <DatePicker
                 size="large"
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
                 style={{
                   width: "100%",
                   borderRadius: "10px",
