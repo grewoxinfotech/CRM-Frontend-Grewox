@@ -497,7 +497,19 @@ const TasksTable = ({
                     dataSource={filterTasksByDate(tasks)}
                     columns={columns}
                     rowKey="id"
-                    pagination={false}
+                    pagination={{
+                        pageSize: 5,
+                        total: filterTasksByDate(tasks)?.length,
+                        showTotal: (total) => `Total ${total} tasks`,
+                        showSizeChanger: false,
+                        hideOnSinglePage: true,
+                        style: {
+                            marginTop: '12px',
+                            padding: '8px 16px',
+                            background: '#f8fafc',
+                            borderRadius: '0 0 8px 8px'
+                        }
+                    }}
                     className="colorful-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => handleRowClick(record),
@@ -507,7 +519,7 @@ const TasksTable = ({
                     // loading={loading}
                     locale={{
                         emptyText: (
-                            <div style={{ 
+                            <div style={{
                                 padding: '24px',
                                 display: 'flex',
                                 flexDirection: 'column',

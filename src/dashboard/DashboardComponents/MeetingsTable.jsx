@@ -285,7 +285,19 @@ const MeetingsTable = ({
                     dataSource={filterMeetingsByDate(meetings)}
                     columns={columns}
                     rowKey="id"
-                    pagination={false}
+                    pagination={{
+                        pageSize: 5,
+                        total: filterMeetingsByDate(meetings)?.length,
+                        showTotal: (total) => `Total ${total} meetings`,
+                        showSizeChanger: false,
+                        hideOnSinglePage: true,
+                        style: {
+                            marginTop: '12px',
+                            padding: '8px 16px',
+                            background: '#f8fafc',
+                            borderRadius: '0 0 8px 8px'
+                        }
+                    }}
                     className="colorful-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/hrm/meeting/${record.id}`),
@@ -295,7 +307,7 @@ const MeetingsTable = ({
                     // loading={loading}
                     locale={{
                         emptyText: (
-                            <div style={{ 
+                            <div style={{
                                 padding: '24px',
                                 display: 'flex',
                                 flexDirection: 'column',
