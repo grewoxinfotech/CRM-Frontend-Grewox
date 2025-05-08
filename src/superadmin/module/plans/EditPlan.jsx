@@ -22,7 +22,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
 
     React.useEffect(() => {
         if (initialValues && currencies) {
-            console.log('Initial values received:', initialValues); // Debug log
+            console.log('Initial values received:', initialValues);
 
             // Convert storage limit to appropriate unit for display
             const storageLimitMB = parseFloat(initialValues.storage_limit || 0);
@@ -54,8 +54,11 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 duration: initialValues.duration
             };
 
-            console.log('Setting form values:', formValues); // Debug log
+            console.log('Setting form values:', formValues);
             form.setFieldsValue(formValues);
+
+            // Validate currency field after setting value
+            form.validateFields(['price_group', 'currency']);
 
             // Set duration type and values
             const durationStr = initialValues.duration?.toString() || '';
@@ -109,7 +112,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
             const updateData = {
                 name: values.name,
                 price: priceGroup.price?.toString(),
-                currency: priceGroup.currency, // Use currency ID directly
+                currency: priceGroup.currency,
                 duration: formattedDuration,
                 trial_period: values.trial_period?.toString(),
                 storage_limit: form.getFieldValue('_storage_limit_mb') || values.storage_limit?.toString(),
@@ -120,13 +123,23 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 status: values.status ? 'active' : 'inactive'
             };
 
-            console.log('Update payload:', updateData); // For debugging
-            await updatePlan({ idd, updateData }).unwrap();
-            message.success('Plan updated successfully');
-            onCancel();
+            const response = await updatePlan({ idd, updateData }).unwrap();
+            if (response.success) {
+                message.success('Plan updated successfully');
+                onCancel();
+            } else {
+                throw new Error(response.message || 'Failed to update plan');
+            }
         } catch (error) {
             console.error('Update error:', error);
-            message.error('Failed to update plan: ' + (error.message || 'Unknown error'));
+            message.error(error?.data?.message || error?.message || 'Failed to update plan');
+
+            if (error?.data?.message === 'Plan already exists') {
+                form.setFields([{
+                    name: 'name',
+                    errors: ['This plan name already exists. Please choose a different name.']
+                }]);
+            }
         }
     };
 
@@ -348,17 +361,17 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                             name="name"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Plan Name</span>}
                             rules={[{ required: true, message: 'Please enter plan name' },
-                                {
-                                    validator: (_, value) => {
-                                      if (!value) return Promise.resolve();
-                                  if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                                    return Promise.reject(
-                                        new Error('Plan name must contain both uppercase or lowercase English letters')
-                                    );
+                            {
+                                validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                                        return Promise.reject(
+                                            new Error('Plan name must contain both uppercase or lowercase English letters')
+                                        );
+                                    }
+                                    return Promise.resolve();
                                 }
-                                return Promise.resolve();
-                                }
-                              }]}
+                            }]}
                         >
                             <Input
                                 prefix={<FiPackage style={{ color: '#1890ff' }} />}
@@ -387,7 +400,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 </span>
                             }
                             style={{ flex: 1, marginTop: "22px" }}
-                           className="combined-input-item"
+                            className="combined-input-item"
                         >
                             <Input.Group compact className="value-input-group" style={{
                                 display: 'flex',
@@ -401,6 +414,8 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                 <Form.Item
                                     name={['price_group', 'currency']}
                                     noStyle
+                                    rules={[{ required: true, message: 'Please select currency' }]}
+                                    validateTrigger={['onChange', 'onBlur']}
                                 >
                                     <Select
                                         size="large"
@@ -417,11 +432,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                                         }}
                                         showSearch
                                         optionFilterProp="children"
-                                        filterOption={(input, option) => {
-                                            const currency = currencies?.find(c => c.id === option.value);
-                                            return currency?.currencyCode?.toLowerCase().includes(input.toLowerCase()) ||
-                                                currency?.currencyIcon?.toLowerCase().includes(input.toLowerCase());
-                                        }}
                                     >
                                         {currencies?.map(currency => (
                                             <Option

@@ -56,6 +56,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
             const defaultCurrencyId = getDefaultCurrencyId();
             if (defaultCurrencyId) {
                 form.setFieldValue('currency', defaultCurrencyId);
+                // Validate the field after setting default value
+                form.validateFields(['currency']);
             }
         }
     }, [currencies, form]);
@@ -84,12 +86,26 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 currency: values.currency
             };
 
-            await createPlan(formattedValues).unwrap();
-            message.success('Plan created successfully');
-            form.resetFields();
-            onCancel();
+            const response = await createPlan(formattedValues).unwrap();
+            if (response.success) {
+                message.success('Plan created successfully');
+                form.resetFields();
+                onCancel();
+            } else {
+                throw new Error(response.message || 'Failed to create plan');
+            }
         } catch (error) {
-            message.error('Failed to create plan: ' + (error.message || 'Unknown error'));
+            console.error('Create plan error:', error);
+            // Display the exact error message from the backend
+            message.error(error?.data?.message || error?.message || 'Failed to create plan');
+
+            // If it's a plan already exists error, focus the name field
+            if (error?.data?.message === 'Plan already exists') {
+                form.setFields([{
+                    name: 'name',
+                    errors: ['This plan name already exists. Please choose a different name.']
+                }]);
+            }
         }
     };
 
@@ -336,17 +352,17 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                         </span>
                     }
                     rules={[{ required: true, message: 'Please enter plan name' },
-                        {
-                            validator: (_, value) => {
-                              if (!value) return Promise.resolve();
-                              if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                    {
+                        validator: (_, value) => {
+                            if (!value) return Promise.resolve();
+                            if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
                                 return Promise.reject(
-                                new Error('Plan name must contain both uppercase or lowercase English letters')
+                                    new Error('Plan name must contain both uppercase or lowercase English letters')
                                 );
                             }
                             return Promise.resolve();
-                            }
-                          }
+                        }
+                    }
                     ]}
                 >
                     <Input
@@ -390,7 +406,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             <Form.Item
                                 name="currency"
                                 noStyle
-                                rules={[{ required: true }]}
+                                rules={[{ required: true, message: 'Please select currency' }]}
+                                validateTrigger={['onChange', 'onBlur']}
                             >
                                 <Select
                                     size="large"
@@ -407,11 +424,6 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                     }}
                                     showSearch
                                     optionFilterProp="children"
-                                    filterOption={(input, option) => {
-                                        const currency = currencies?.find(c => c.id === option.value);
-                                        return currency?.currencyCode.toLowerCase().includes(input.toLowerCase()) ||
-                                            currency?.currencyIcon.toLowerCase().includes(input.toLowerCase());
-                                    }}
                                 >
                                     {currencies?.map(currency => (
                                         <Option key={currency.id} value={currency.id}>
@@ -427,7 +439,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 name="price"
                                 noStyle
                                 rules={[{ required: true, message: 'Please enter price' }]}
-                               
+
                             >
                                 <InputNumber
                                     placeholder="Enter price"
@@ -606,7 +618,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                             </span>
                         }
                         rules={[{ required: true }]}
-                        style={{ flex: 1, marginTop: "22px"  }}
+                        style={{ flex: 1, marginTop: "22px" }}
                     >
                         <InputNumber
                             prefix={<FiUsers style={{ color: '#1890ff', fontSize: '16px' }} />}
