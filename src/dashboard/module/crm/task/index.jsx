@@ -323,7 +323,7 @@ const Task = () => {
                   onClick={handleCreate}
                   className="mobile-add-button"
                 />
-                <Popover 
+                <Popover
                   content={searchContent}
                   trigger="click"
                   visible={isSearchVisible}
@@ -337,8 +337,8 @@ const Task = () => {
                     className="mobile-search-button"
                   />
                 </Popover>
-                <Dropdown 
-                  overlay={filterMenu} 
+                <Dropdown
+                  overlay={filterMenu}
                   trigger={["click"]}
                   visible={isFilterVisible}
                   onVisibleChange={setIsFilterVisible}
@@ -354,7 +354,7 @@ const Task = () => {
             </div>
             <Text type="secondary">Manage all tasks in the organization</Text>
           </div>
-          
+
           <div className="header-actions">
             <div className="desktop-actions">
               <Input
@@ -382,6 +382,20 @@ const Task = () => {
                 icon={<FiPlus size={16} />}
                 onClick={handleCreate}
                 className="add-button"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                  border: "none",
+                  boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
+                  height: "40px",
+                  padding: "0 24px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                }}
               >
                 Add Task
               </Button>

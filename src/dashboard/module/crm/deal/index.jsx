@@ -52,6 +52,8 @@ const Deal = () => {
   const [deleteDeal] = useDeleteDealMutation();
   const { data, isLoading, error } = useGetDealsQuery();
 
+  console.log(data);
+
   // Filter deals based on search text
   const filteredDeals = React.useMemo(() => {
     if (!data) return [];

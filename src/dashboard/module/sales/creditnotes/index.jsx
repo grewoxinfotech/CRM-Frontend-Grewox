@@ -25,7 +25,11 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import moment from "moment";
-import { useGetCreditNotesQuery, useCreateCreditNoteMutation, useUpdateCreditNoteMutation } from "./services/creditNoteApi";
+import {
+  useGetCreditNotesQuery,
+  useCreateCreditNoteMutation,
+  useUpdateCreditNoteMutation,
+} from "./services/creditNoteApi";
 
 const { Title, Text } = Typography;
 
@@ -55,20 +59,20 @@ const CreditNotes = () => {
 
   const handleDelete = (record) => {
     Modal.confirm({
-      title: 'Delete Credit Note',
-      content: 'Are you sure you want to delete this credit note?',
-      okText: 'Yes',
-      okType: 'danger',
-      cancelText: 'No',
+      title: "Delete Credit Note",
+      content: "Are you sure you want to delete this credit note?",
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
       bodyStyle: {
-        padding: '20px',
+        padding: "20px",
       },
       onOk: async () => {
         try {
           // Add delete mutation here
-          message.success('Credit note deleted successfully');
+          message.success("Credit note deleted successfully");
         } catch (error) {
-          message.error(error?.data?.message || 'Failed to delete credit note');
+          message.error(error?.data?.message || "Failed to delete credit note");
         }
       },
     });
@@ -78,10 +82,10 @@ const CreditNotes = () => {
     try {
       setLoading(true);
       await createCreditNote(values).unwrap();
-      message.success('Credit note created successfully');
+      message.success("Credit note created successfully");
       setIsCreateModalOpen(false);
     } catch (error) {
-      message.error(error?.data?.message || 'Failed to create credit note');
+      message.error(error?.data?.message || "Failed to create credit note");
     } finally {
       setLoading(false);
     }
@@ -91,11 +95,11 @@ const CreditNotes = () => {
     try {
       setLoading(true);
       await updateCreditNote({ id: selectedCreditNote.id, ...values }).unwrap();
-      message.success('Credit note updated successfully');
+      message.success("Credit note updated successfully");
       setIsEditModalOpen(false);
       setSelectedCreditNote(null);
     } catch (error) {
-      message.error(error?.data?.message || 'Failed to update credit note');
+      message.error(error?.data?.message || "Failed to update credit note");
     } finally {
       setLoading(false);
     }
@@ -222,12 +226,16 @@ const CreditNotes = () => {
       <div className="page-header">
         <div className="page-title">
           <Title level={2}>Credit Notes</Title>
-          <Text type="secondary">Manage all credit notes in the organization</Text>
+          <Text type="secondary">
+            Manage all credit notes in the organization
+          </Text>
         </div>
         <div className="header-actions">
           <div className="search-filter-group">
             <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+              prefix={
+                <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
+              }
               placeholder="Search credit notes..."
               allowClear
               onChange={(e) => setSearchText(e.target.value)}
@@ -274,7 +282,6 @@ const CreditNotes = () => {
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateSubmit}
-        
       />
 
       <EditCreditNotes
@@ -282,7 +289,6 @@ const CreditNotes = () => {
         onCancel={() => setIsEditModalOpen(false)}
         onSubmit={handleEditSubmit}
         creditNote={selectedCreditNote}
-       
       />
     </div>
   );

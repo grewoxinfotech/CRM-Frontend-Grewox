@@ -9,7 +9,7 @@ export const billingApi = createApi({
   endpoints: (builder) => ({
     // Get all bills for a company
     getBillings: builder.query({
-      query: (id) => `/bills/${id}`,
+      query: () => `/bills/`,
       providesTags: ["Billings"],
     }),
 

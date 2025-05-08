@@ -33,40 +33,6 @@ export const customerApi = createApi({
       }),
       invalidatesTags: ["Customers"],
     }),
-    verifyUserOtp: builder.mutation({
-      query: (data) => ({
-        url: "auth/verify-otp",
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["Users"],
-    }),
-    resendOtp: builder.mutation({
-      query: (userId) => ({
-        url: `auth/resend-otp/${userId}`,
-        method: "POST",
-      }),
-    }),
-    verifySignup: builder.mutation({
-      query: ({ otp, token }) => ({
-        url: "auth/verify-signup",
-        method: "POST",
-        body: { otp },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
-      invalidatesTags: ["Users"],
-    }),
-    resendSignupOtp: builder.mutation({
-      query: ({ token }) => ({
-        url: "auth/resend-signup-otp",
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
-    }),
   }),
 });
 
@@ -75,8 +41,4 @@ export const {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
-  useVerifyUserOtpMutation,
-  useResendOtpMutation,
-  useVerifySignupMutation,
-  useResendSignupOtpMutation,
 } = customerApi;

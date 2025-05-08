@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Form, message, Badge, Tooltip, Button, Spin } from 'antd';
-import { useGetEmailsQuery, useSendEmailMutation, useStarEmailMutation, useToggleImportantMutation, useMoveToTrashMutation, useDeleteEmailMutation } from './services/mailApi';
-import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../../../../auth/services/authSlice';
-import ComposeModal from './components/ComposeModal';
-import EmailList from './components/EmailList';
-import Sidebar from './components/Sidebar';
-import MailHeader from './components/MailHeader';
-import ScheduleModal from './components/ScheduleModal';
-import { FiMenu } from 'react-icons/fi';
-import './mail.scss';
+import React, { useState, useEffect } from "react";
+import { Layout, Form, message, Badge, Tooltip, Button, Spin } from "antd";
+import {
+  useGetEmailsQuery,
+  useSendEmailMutation,
+  useStarEmailMutation,
+  useToggleImportantMutation,
+  useMoveToTrashMutation,
+  useDeleteEmailMutation,
+} from "./services/mailApi";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
+import ComposeModal from "./components/ComposeModal";
+import EmailList from "./components/EmailList";
+import Sidebar from "./components/Sidebar";
+import MailHeader from "./components/MailHeader";
+import ScheduleModal from "./components/ScheduleModal";
+import { FiMenu } from "react-icons/fi";
+import "./mail.scss";
 
 const Mail = () => {
   // Form instance
@@ -25,13 +32,12 @@ const Mail = () => {
   const [deleteEmail] = useDeleteEmailMutation();
 
   // State variables
-  const [selectedMenu, setSelectedMenu] = useState('inbox');
-  const [searchText, setSearchText] = useState('');
+  const [selectedMenu, setSelectedMenu] = useState("inbox");
+  const [searchText, setSearchText] = useState("");
   const [composeVisible, setComposeVisible] = useState(false);
   const [isScheduleModalVisible, setIsScheduleModalVisible] = useState(false);
   const [scheduleDate, setScheduleDate] = useState(null);
   const [scheduleTime, setScheduleTime] = useState(null);
-  const [scheduledDateTime, setScheduledDateTime] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [templateFields, setTemplateFields] = useState({});
   const [attachments, setAttachments] = useState([]);
@@ -48,42 +54,57 @@ const Mail = () => {
       setSidebarVisible(!mobile);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (emailsData) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [refetch, emailsData]);
 
   // Filter emails based on selected menu and search text
   const emails = React.useMemo(() => {
     let filteredEmails = emailsData?.data || [];
 
     // First filter by user's email (to) or username (created_by)
-    filteredEmails = filteredEmails.filter(email => 
-      email.to === currentUser?.email || email.created_by === currentUser?.username
+    filteredEmails = filteredEmails.filter(
+      (email) =>
+        email.to === currentUser?.email ||
+        email.created_by === currentUser?.username
     );
 
     // Then filter by menu type
     switch (selectedMenu) {
-      case 'inbox':
-        filteredEmails = filteredEmails.filter(email => !email.isTrash);
+      case "inbox":
+        filteredEmails = filteredEmails.filter((email) => !email.isTrash);
         break;
-      case 'sent':
-        filteredEmails = filteredEmails.filter(email => email.type === 'sent');
-        break;
-      case 'starred':
-        filteredEmails = filteredEmails.filter(email => email.isStarred && email.type !== 'trash');
-        break;
-      case 'important':
-        filteredEmails = filteredEmails.filter(email => email.isImportant && email.type !== 'trash');
-        break;
-      case 'scheduled':
-        filteredEmails = filteredEmails.filter(email => 
-          email.status === 'scheduled' && 
-          email.scheduledFor && 
-          new Date(email.scheduledFor) > new Date()
+      case "sent":
+        filteredEmails = filteredEmails.filter(
+          (email) => email.type === "sent"
         );
         break;
-      case 'trash':
-        filteredEmails = filteredEmails.filter(email => email.isTrash);
+      case "starred":
+        filteredEmails = filteredEmails.filter(
+          (email) => email.isStarred && email.type !== "trash"
+        );
+        break;
+      case "important":
+        filteredEmails = filteredEmails.filter(
+          (email) => email.isImportant && email.type !== "trash"
+        );
+        break;
+      case "scheduled":
+        filteredEmails = filteredEmails.filter(
+          (email) => email.type === "scheduled" && email.status === "scheduled"
+        );
+        break;
+      case "trash":
+        filteredEmails = filteredEmails.filter((email) => email.isTrash);
         break;
       default:
         break;
@@ -92,10 +113,11 @@ const Mail = () => {
     // Filter by search text
     if (searchText) {
       const searchLower = searchText.toLowerCase();
-      filteredEmails = filteredEmails.filter(email =>
-        email.subject?.toLowerCase().includes(searchLower) ||
-        email.to?.toLowerCase().includes(searchLower) ||
-        email.html?.toLowerCase().includes(searchLower)
+      filteredEmails = filteredEmails.filter(
+        (email) =>
+          email.subject?.toLowerCase().includes(searchLower) ||
+          email.to?.toLowerCase().includes(searchLower) ||
+          email.html?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -103,20 +125,28 @@ const Mail = () => {
   }, [emailsData, selectedMenu, searchText, currentUser]);
 
   // Calculate counts for badges
-  const unreadCount = emails.filter(email => !email.isRead && email.type !== 'trash').length;
-  const starredCount = emails.filter(email => email.isStarred && email.type !== 'trash').length;
-  const importantCount = emails.filter(email => email.isImportant && email.type !== 'trash').length;
-  const scheduledCount = emails.filter(email => email.status === 'scheduled').length;
-  const trashCount = emails.filter(email => email.type === 'trash').length;
+  const unreadCount = emails.filter(
+    (email) => !email.isRead && email.type !== "trash"
+  ).length;
+  const starredCount = emails.filter(
+    (email) => email.isStarred && email.type !== "trash"
+  ).length;
+  const importantCount = emails.filter(
+    (email) => email.isImportant && email.type !== "trash"
+  ).length;
+  const scheduledCount = emails.filter(
+    (email) => email.status === "scheduled"
+  ).length;
+  const trashCount = emails.filter((email) => email.type === "trash").length;
 
   // Handle refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       await refetch();
-      message.success('Emails refreshed successfully');
+      message.success("Emails refreshed successfully");
     } catch (error) {
-      message.error('Failed to refresh emails');
+      message.error("Failed to refresh emails");
     } finally {
       setIsRefreshing(false);
     }
@@ -128,33 +158,35 @@ const Mail = () => {
     form.resetFields();
     setSelectedTemplate(null);
     setTemplateFields({});
-    setScheduledDateTime(null);
     setIsImportant(false);
     setAttachments([]);
   };
 
-  const handleScheduleConfirm = (date, time, utcDateTime) => {
+  const handleScheduleConfirm = (date, time, formattedDate, formattedTime) => {
     setScheduleDate(date);
     setScheduleTime(time);
-    setScheduledDateTime(utcDateTime);
     setIsScheduleModalVisible(false);
   };
 
   const handleSend = async (values) => {
     try {
       const formData = new FormData();
-      
+
       // Add basic email data
-      formData.append('to', values.to);
-      formData.append('subject', values.subject);
-      formData.append('html', values.html);
-      formData.append('isImportant', isImportant);
-      formData.append('type', scheduledDateTime ? 'scheduled' : 'sent');
-      formData.append('isRead', true);
-      formData.append('isStarred', false);
-      
-      if (scheduledDateTime) {
-        formData.append('scheduledFor', scheduledDateTime);
+      formData.append("to", values.to);
+      formData.append("subject", values.subject);
+      formData.append("html", values.html);
+      formData.append("isImportant", isImportant);
+      formData.append(
+        "type",
+        scheduleDate && scheduleTime ? "scheduled" : "sent"
+      );
+      formData.append("isRead", true);
+      formData.append("isStarred", false);
+
+      if (scheduleDate && scheduleTime) {
+        formData.append("scheduleDate", scheduleDate.format("YYYY-MM-DD"));
+        formData.append("scheduleTime", scheduleTime.format("HH:mm:ss"));
       }
 
       // Handle attachments
@@ -167,18 +199,23 @@ const Mail = () => {
       }
 
       await sendEmail(formData);
-      
-      message.success(scheduledDateTime ? 'Email scheduled successfully' : 'Email sent successfully');
+
+      message.success(
+        scheduleDate && scheduleTime
+          ? "Email scheduled successfully"
+          : "Email sent successfully"
+      );
       setComposeVisible(false);
       form.resetFields();
       setSelectedTemplate(null);
       setTemplateFields({});
-      setScheduledDateTime(null);
+      setScheduleDate(null);
+      setScheduleTime(null);
       setIsImportant(false);
       setAttachments([]);
     } catch (error) {
       console.error("Send email error:", error);
-      message.error(error?.data?.message || 'Failed to send email');
+      message.error(error?.data?.message || "Failed to send email");
     }
   };
 
@@ -186,7 +223,7 @@ const Mail = () => {
     try {
       await starEmail({ id: email.id });
     } catch (error) {
-      message.error('Failed to star email');
+      message.error("Failed to star email");
     }
   };
 
@@ -194,25 +231,25 @@ const Mail = () => {
     try {
       await toggleImportant({ id: email.id });
     } catch (error) {
-      message.error('Failed to mark email as important');
+      message.error("Failed to mark email as important");
     }
   };
 
   const handleDelete = async (email) => {
     try {
       await moveToTrash({ id: email.id, isTrash: true });
-      message.success('Email moved to trash');
+      message.success("Email moved to trash");
     } catch (error) {
-      message.error('Failed to move email to trash');
+      message.error("Failed to move email to trash");
     }
   };
 
   const handleRestore = async (email) => {
     try {
       await moveToTrash({ id: email.id, isTrash: false });
-      message.success('Email restored to inbox');
+      message.success("Email restored to inbox");
     } catch (error) {
-      message.error('Failed to restore email');
+      message.error("Failed to restore email");
     }
   };
 
@@ -223,14 +260,14 @@ const Mail = () => {
   return (
     <Layout className="mail-layout">
       {isMobile && (
-        <Button 
-          className="mobile-menu-toggle" 
-          icon={<FiMenu />} 
+        <Button
+          className="mobile-menu-toggle"
+          icon={<FiMenu />}
           onClick={toggleSidebar}
         />
       )}
-      
-      <Sidebar 
+
+      <Sidebar
         selectedMenu={selectedMenu}
         setSelectedMenu={setSelectedMenu}
         unreadCount={unreadCount}
@@ -239,11 +276,11 @@ const Mail = () => {
         scheduledCount={scheduledCount}
         trashCount={trashCount}
         setComposeVisible={setComposeVisible}
-        className={sidebarVisible ? 'visible' : ''}
+        className={sidebarVisible ? "visible" : ""}
       />
 
       <Layout className="mail-content">
-        <MailHeader 
+        <MailHeader
           searchText={searchText}
           setSearchText={setSearchText}
           onRefresh={handleRefresh}
@@ -257,7 +294,7 @@ const Mail = () => {
             <p>Loading emails...</p>
           </div>
         ) : (
-          <EmailList 
+          <EmailList
             emails={emails}
             handleStarEmail={handleStarEmail}
             handleImportant={handleImportant}
@@ -268,7 +305,7 @@ const Mail = () => {
         )}
       </Layout>
 
-      <ComposeModal 
+      <ComposeModal
         visible={composeVisible}
         onCancel={handleComposeCancel}
         onSubmit={handleSend}
@@ -284,7 +321,7 @@ const Mail = () => {
         handleSchedule={() => setIsScheduleModalVisible(true)}
       />
 
-      <ScheduleModal 
+      <ScheduleModal
         visible={isScheduleModalVisible}
         onCancel={() => setIsScheduleModalVisible(false)}
         onConfirm={handleScheduleConfirm}

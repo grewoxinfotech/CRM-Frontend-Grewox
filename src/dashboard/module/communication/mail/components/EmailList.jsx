@@ -1,21 +1,50 @@
-import React, { useState } from 'react';
-import { List, Avatar, Space, Button, Tooltip, Modal, Typography, Divider, message, Tag, Row, Col } from 'antd';
-import { FiStar, FiAlertCircle, FiTrash2, FiCornerUpLeft, FiPaperclip, FiDownload, FiFile, FiMail, FiUser, FiClock, FiX } from 'react-icons/fi';
-import dayjs from 'dayjs';
+import React, { useState } from "react";
+import {
+  List,
+  Avatar,
+  Space,
+  Button,
+  Tooltip,
+  Modal,
+  Typography,
+  Divider,
+  message,
+  Tag,
+  Row,
+  Col,
+} from "antd";
+import {
+  FiStar,
+  FiAlertCircle,
+  FiTrash2,
+  FiCornerUpLeft,
+  FiPaperclip,
+  FiDownload,
+  FiFile,
+  FiMail,
+  FiUser,
+  FiClock,
+  FiX,
+  FiUsers,
+  FiCalendar,
+  FiFileText,
+  FiImage,
+} from "react-icons/fi";
+import dayjs from "dayjs";
 
 const { Text, Title, Paragraph } = Typography;
 
-const EmailList = ({ 
-  emails, 
-  handleStarEmail, 
-  handleImportant, 
-  handleDelete, 
-  handleRestore 
+const EmailList = ({
+  emails,
+  handleStarEmail,
+  handleImportant,
+  handleDelete,
+  handleRestore,
 }) => {
   const [selectedEmail, setSelectedEmail] = useState(null);
 
   const renderEmailActions = (email) => {
-    if (email.type === 'trash') {
+    if (email.type === "trash") {
       return (
         <Space>
           <Tooltip title="Restore">
@@ -44,20 +73,22 @@ const EmailList = ({
 
     return (
       <Space>
-        <Tooltip title={email.isStarred ? 'Unstar' : 'Star'}>
+        <Tooltip title={email.isStarred ? "Unstar" : "Star"}>
           <Button
             icon={<FiStar />}
-            className={email.isStarred ? 'starred' : ''}
+            className={email.isStarred ? "starred" : ""}
             onClick={(e) => {
               e.stopPropagation();
               handleStarEmail(email);
             }}
           />
         </Tooltip>
-        <Tooltip title={email.isImportant ? 'Not important' : 'Mark as important'}>
+        <Tooltip
+          title={email.isImportant ? "Not important" : "Mark as important"}
+        >
           <Button
             icon={<FiAlertCircle />}
-            className={email.isImportant ? 'important' : ''}
+            className={email.isImportant ? "important" : ""}
             onClick={(e) => {
               e.stopPropagation();
               handleImportant(email);
@@ -90,7 +121,7 @@ const EmailList = ({
       const response = await fetch(attachment.url);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = attachment.name;
       document.body.appendChild(link);
@@ -98,34 +129,34 @@ const EmailList = ({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      message.error('Failed to download attachment');
+      message.error("Failed to download attachment");
     }
   };
 
   const getFileIcon = (fileName) => {
-    if (!fileName) return 'file'; // Default icon if no filename
+    if (!fileName) return "file"; // Default icon if no filename
 
     try {
-      const extension = fileName.split('.').pop().toLowerCase();
+      const extension = fileName.split(".").pop().toLowerCase();
       switch (extension) {
-        case 'pdf':
-          return 'pdf';
-        case 'doc':
-        case 'docx':
-          return 'word';
-        case 'xls':
-        case 'xlsx':
-          return 'excel';
-        case 'jpg':
-        case 'jpeg':
-        case 'png':
-          return 'image';
+        case "pdf":
+          return "pdf";
+        case "doc":
+        case "docx":
+          return "word";
+        case "xls":
+        case "xlsx":
+          return "excel";
+        case "jpg":
+        case "jpeg":
+        case "png":
+          return "image";
         default:
-          return 'file';
+          return "file";
       }
     } catch (error) {
-      console.error('Error getting file icon:', error);
-      return 'file'; // Return default icon if there's an error
+      console.error("Error getting file icon:", error);
+      return "file"; // Return default icon if there's an error
     }
   };
 
@@ -136,47 +167,55 @@ const EmailList = ({
         dataSource={emails}
         renderItem={(email) => (
           <List.Item
-            className={`mail-item ${email.isRead ? '' : 'unread'} ${email.type === 'trash' ? 'trash' : ''}`}
+            className={`mail-item ${email.isRead ? "" : "unread"} ${
+              email.type === "trash" ? "trash" : ""
+            }`}
             actions={[renderEmailActions(email)]}
             onClick={() => handleEmailClick(email)}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: "pointer" }}
           >
             <List.Item.Meta
               avatar={
-                <Avatar src={`https://ui-avatars.com/api/?name=${encodeURIComponent(email.from)}&background=1890ff&color=fff`} />
+                <Avatar
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    email.from
+                  )}&background=1890ff&color=fff`}
+                />
               }
               title={
                 <Space size={16}>
                   <Text strong={!email.isRead}>{email.subject}</Text>
-                  {email.attachments && email.attachments !== '[]' && (() => {
-                    try {
-                      // Parse double stringified JSON
-                      const firstParse = JSON.parse(email.attachments);
-                      const attachments = JSON.parse(firstParse);
-                      
-                      return (
-                        <Space>
-                          <FiPaperclip style={{ color: '#8c8c8c' }} />
-                          {attachments.map((attachment, index) => (
-                            <Text
-                              key={index}
-                              type="secondary"
-                              style={{ cursor: 'pointer', fontSize: '12px' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(attachment.url, '_blank');
-                              }}
-                            >
-                              {attachment.name}
-                            </Text>
-                          ))}
-                        </Space>
-                      );
-                    } catch (error) {
-                      console.error('Error parsing attachments:', error);
-                      return <FiPaperclip style={{ color: '#8c8c8c' }} />;
-                    }
-                  })()}
+                  {email.attachments &&
+                    email.attachments !== "[]" &&
+                    (() => {
+                      try {
+                        // Parse double stringified JSON
+                        const firstParse = JSON.parse(email.attachments);
+                        const attachments = JSON.parse(firstParse);
+
+                        return (
+                          <Space>
+                            <FiPaperclip style={{ color: "#8c8c8c" }} />
+                            {attachments.map((attachment, index) => (
+                              <Text
+                                key={index}
+                                type="secondary"
+                                style={{ cursor: "pointer", fontSize: "12px" }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(attachment.url, "_blank");
+                                }}
+                              >
+                                {attachment.name}
+                              </Text>
+                            ))}
+                          </Space>
+                        );
+                      } catch (error) {
+                        console.error("Error parsing attachments:", error);
+                        return <FiPaperclip style={{ color: "#8c8c8c" }} />;
+                      }
+                    })()}
                 </Space>
               }
               description={
@@ -187,7 +226,7 @@ const EmailList = ({
                     <Text type="secondary">{email.to}</Text>
                   </Space>
                   <Text type="secondary" className="mail-date">
-                    {dayjs(email.createdAt).format('MMM D, YYYY h:mm A')}
+                    {dayjs(email.createdAt).format("MMM D, YYYY h:mm A")}
                   </Text>
                 </div>
               }
@@ -195,318 +234,416 @@ const EmailList = ({
           </List.Item>
         )}
       />
-
       <Modal
-        title={
-          <div className="email-modal-header">
-            <div className="email-modal-title">
-              <FiMail className="header-icon" />
-              <span>Email Details</span>
-            </div>
-            <Button 
-              type="text" 
-              // icon={<FiX />} 
-              onClick={handleCloseModal}
-              className="close-button"
-            />
-          </div>
-        }
+        title={null}
         open={!!selectedEmail}
         onCancel={handleCloseModal}
         footer={null}
-        width={800}
-        className="email-view-modal"
-        bodyStyle={{ padding: '0' }}
+        width={720}
+        destroyOnClose={true}
         centered
+        closeIcon={null}
+        className="pro-modal custom-modal"
+        style={{
+          "--antd-arrow-background-color": "#ffffff",
+        }}
+        styles={{
+          body: {
+            padding: 0,
+            borderRadius: "8px",
+            overflow: "hidden",
+          },
+        }}
       >
         {selectedEmail && (
-          <div className="email-view">
-            <div className="email-header">
-              <Title level={4} className="email-subject">{selectedEmail.subject}</Title>
-              <div className="email-tags">
-                {selectedEmail.isStarred && <Tag color="gold" icon={<FiStar />}>Starred</Tag>}
-                {selectedEmail.isImportant && <Tag color="red" icon={<FiAlertCircle />}>Important</Tag>}
-                {selectedEmail.type === 'trash' && <Tag color="default" icon={<FiTrash2 />}>Trash</Tag>}
+          <>
+            <div
+              className="modal-header"
+              style={{
+                background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                padding: "24px",
+                color: "#ffffff",
+                position: "relative",
+              }}
+            >
+              <Button
+                type="text"
+                onClick={handleCloseModal}
+                style={{
+                  position: "absolute",
+                  top: "16px",
+                  right: "16px",
+                  color: "#ffffff",
+                  width: "32px",
+                  height: "32px",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(255, 255, 255, 0.2)",
+                  borderRadius: "8px",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                }}
+              >
+                <FiX style={{ fontSize: "20px" }} />
+              </Button>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "12px",
+                    background: "rgba(255, 255, 255, 0.2)",
+                    backdropFilter: "blur(8px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <FiMail style={{ fontSize: "24px", color: "#ffffff" }} />
+                </div>
+                <div>
+                  <h2
+                    style={{
+                      margin: "0",
+                      fontSize: "24px",
+                      fontWeight: "600",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {selectedEmail.subject}
+                  </h2>
+                  <Text
+                    style={{
+                      fontSize: "14px",
+                      color: "rgba(255, 255, 255, 0.85)",
+                    }}
+                  >
+                    View email details
+                  </Text>
+                </div>
               </div>
             </div>
-            
-            <div className="email-meta">
-              <Row gutter={[16, 16]}>
-                <Col span={24}>
-                  <div className="meta-item">
-                    <FiUser className="meta-icon" />
-                    <div className="meta-content">
-                      <Text type="secondary">From:</Text>
-                      <Text strong>{selectedEmail.from}</Text>
-                    </div>
-                  </div>
-                </Col>
-                <Col span={24}>
-                  <div className="meta-item">
-                    <FiMail className="meta-icon" />
-                    <div className="meta-content">
-                      <Text type="secondary">To:</Text>
-                      <Text strong>{selectedEmail.to}</Text>
-                    </div>
-                  </div>
-                </Col>
-                <Col span={24}>
-                  <div className="meta-item">
-                    <FiClock className="meta-icon" />
-                    <div className="meta-content">
-                      <Text type="secondary">Date:</Text>
-                      <Text>{dayjs(selectedEmail.createdAt).format('dddd, MMMM D, YYYY h:mm A')}</Text>
-                    </div>
-                  </div>
-                </Col>
-              </Row>
-            </div>
-            
-            <Divider className="email-divider" />
-            
-            <div className="email-content-container">
-              <div 
-                className="email-content"
-                dangerouslySetInnerHTML={{ __html: selectedEmail.html }}
-              />
-            </div>
-            
-            {selectedEmail.attachments && selectedEmail.attachments !== '[]' && (
-              <>
-                <Divider className="email-divider" />
-                <div className="email-attachments">
-                  <Title level={5} className="attachments-title">
-                    <FiPaperclip className="attachments-icon" />
-                    Attachments
-                  </Title>
-                  <div className="attachments-list">
-                    {(() => {
-                      try {
-                        // Parse double stringified JSON
-                        const firstParse = JSON.parse(selectedEmail.attachments);
-                        const attachments = JSON.parse(firstParse);
-                        
-                        if (!Array.isArray(attachments)) {
-                          console.error('Attachments is not an array:', attachments);
-                          return null;
-                        }
 
-                        return attachments.map((attachment, index) => (
-                          <div key={index} className="attachment-item">
-                            <div className="attachment-content">
-                              <FiFile className={`file-icon ${getFileIcon(attachment.name)}`} />
-                              <div className="attachment-info">
-                                <Text strong className="attachment-name">
-                                  {attachment.name}
-                                </Text>
-                                {attachment.size && (
-                                  <Text type="secondary" className="file-size">
-                                    {(attachment.size / 1024).toFixed(1)} KB
-                                  </Text>
-                                )}
-                              </div>
-                            </div>
-                            <Button
-                              type="primary"
-                              icon={<FiDownload />}
-                              size="small"
-                              onClick={() => handleDownloadAttachment(attachment)}
-                              className="download-button"
-                            >
-                              Download
-                            </Button>
-                          </div>
-                        ));
-                      } catch (error) {
-                        console.error('Error parsing attachments:', error);
-                        return null;
-                      }
-                    })()}
+            <div style={{ padding: "24px" }}>
+              <div style={{ marginBottom: "24px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "16px",
+                    background: "#f8fafc",
+                    borderRadius: "10px",
+                    marginBottom: "12px",
+                    border: "1px solid #e6e8eb",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      background: "#e6f4ff",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: "16px",
+                    }}
+                  >
+                    <FiUser style={{ fontSize: "20px", color: "#1890ff" }} />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        color: "#64748b",
+                        fontSize: "14px",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      From
+                    </div>
+                    <div
+                      style={{
+                        color: "#1e293b",
+                        fontWeight: "500",
+                        fontSize: "15px",
+                      }}
+                    >
+                      {selectedEmail.from}
+                    </div>
                   </div>
                 </div>
-              </>
-            )}
-            
-            <div className="email-actions">
-              <Space>
-                {/* <Button 
-                  type="primary" 
-                  icon={<FiMail />}
-                  className="reply-button"
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "16px",
+                    background: "#f8fafc",
+                    borderRadius: "10px",
+                    marginBottom: "12px",
+                    border: "1px solid #e6e8eb",
+                  }}
                 >
-                  Reply
-                </Button> */}
-                <Button 
-                  icon={<FiStar />}
-                  className={selectedEmail.isStarred ? 'starred' : ''}
-                  onClick={() => handleStarEmail(selectedEmail)}
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      background: "#e6f4ff",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: "16px",
+                    }}
+                  >
+                    <FiUsers style={{ fontSize: "20px", color: "#1890ff" }} />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        color: "#64748b",
+                        fontSize: "14px",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      To
+                    </div>
+                    <div
+                      style={{
+                        color: "#1e293b",
+                        fontWeight: "500",
+                        fontSize: "15px",
+                      }}
+                    >
+                      {selectedEmail.to}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "16px",
+                    background: "#f8fafc",
+                    borderRadius: "10px",
+                    border: "1px solid #e6e8eb",
+                  }}
                 >
-                  {selectedEmail.isStarred ? 'Unstar' : 'Star'}
-                </Button>
-                <Button 
-                  icon={<FiAlertCircle />}
-                  className={selectedEmail.isImportant ? 'important' : ''}
-                  onClick={() => handleImportant(selectedEmail)}
-                >
-                  {selectedEmail.isImportant ? 'Not Important' : 'Mark as Important'}
-                </Button>
-                <Button 
-                  danger
-                  icon={<FiTrash2 />}
-                  onClick={() => handleDelete(selectedEmail)}
-                >
-                  Delete
-                </Button>
-              </Space>
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      background: "#e6f4ff",
+                      borderRadius: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginRight: "16px",
+                    }}
+                  >
+                    <FiCalendar
+                      style={{ fontSize: "20px", color: "#1890ff" }}
+                    />
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        color: "#64748b",
+                        fontSize: "14px",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Date
+                    </div>
+                    <div
+                      style={{
+                        color: "#1e293b",
+                        fontWeight: "500",
+                        fontSize: "15px",
+                      }}
+                    >
+                      {dayjs(selectedEmail.createdAt).format(
+                        "dddd, MMMM D, YYYY h:mm A"
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  background: "#fff",
+                  padding: "24px",
+                  borderRadius: "10px",
+                  border: "1px solid #e6e8eb",
+                  marginBottom: "24px",
+                }}
+              >
+                <div dangerouslySetInnerHTML={{ __html: selectedEmail.html }} />
+              </div>
+
+              {selectedEmail.attachments &&
+                selectedEmail.attachments !== "[]" && (
+                  <div>
+                    <div
+                      style={{
+                        marginBottom: "16px",
+                        fontWeight: "500",
+                        color: "#1e293b",
+                        fontSize: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <FiPaperclip style={{ color: "#1890ff" }} />
+                      Attachments
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gap: "16px",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(200px, 1fr))",
+                      }}
+                    >
+                      {(() => {
+                        try {
+                          const firstParse = JSON.parse(
+                            selectedEmail.attachments
+                          );
+                          const attachments = JSON.parse(firstParse);
+                          return attachments.map((attachment, index) => (
+                            <div
+                              key={index}
+                              style={{
+                                background: "#fff",
+                                border: "1px solid #e6e8eb",
+                                borderRadius: "10px",
+                                padding: "16px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "48px",
+                                  height: "48px",
+                                  background: "#e6f4ff",
+                                  borderRadius: "10px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  marginBottom: "12px",
+                                }}
+                              >
+                                {attachment.name.endsWith(".pdf") ? (
+                                  <FiFile
+                                    style={{
+                                      color: "#1890ff",
+                                      fontSize: "24px",
+                                    }}
+                                  />
+                                ) : attachment.name.endsWith(".docx") ? (
+                                  <FiFileText
+                                    style={{
+                                      color: "#1890ff",
+                                      fontSize: "24px",
+                                    }}
+                                  />
+                                ) : (
+                                  <FiImage
+                                    style={{
+                                      color: "#1890ff",
+                                      fontSize: "24px",
+                                    }}
+                                  />
+                                )}
+                              </div>
+                              <div style={{ marginBottom: "12px" }}>
+                                <div
+                                  style={{
+                                    color: "#1e293b",
+                                    fontWeight: "500",
+                                    marginBottom: "4px",
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    fontSize: "14px",
+                                  }}
+                                >
+                                  {attachment.name}
+                                </div>
+                                <div
+                                  style={{ color: "#64748b", fontSize: "12px" }}
+                                >
+                                  {(attachment.size / 1024).toFixed(1)} KB
+                                </div>
+                              </div>
+                              <Button
+                                type="primary"
+                                block
+                                icon={<FiDownload />}
+                                onClick={() =>
+                                  handleDownloadAttachment(attachment)
+                                }
+                                style={{
+                                  height: "40px",
+                                  borderRadius: "8px",
+                                  background:
+                                    "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                                  border: "none",
+                                  boxShadow:
+                                    "0 4px 12px rgba(24, 144, 255, 0.15)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "8px",
+                                }}
+                              >
+                                Download
+                              </Button>
+                            </div>
+                          ));
+                        } catch (error) {
+                          console.error("Error parsing attachments:", error);
+                          return null;
+                        }
+                      })()}
+                    </div>
+                  </div>
+                )}
             </div>
-          </div>
+          </>
         )}
       </Modal>
 
       <style jsx>{`
-        .email-view {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
+        .email-view-modal {
+          border-radius: 12px;
+          overflow: hidden;
         }
-        .email-modal-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px 24px;
-         background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%),
-          color: white;
-          border-radius: 8px 8px 0 0;
+        .email-view-modal .ant-modal-content {
+          border-radius: 12px;
+          overflow: hidden;
         }
-        .email-modal-title {
-          display: flex;
-          align-items: center;
-        }
-        .header-icon {
-          margin-right: 12px;
-          font-size: 20px;
-        }
-        .close-button {
-          color: white;
-          font-size: 18px;
-        }
-        .email-header {
-          padding: 24px 24px 16px;
-        }
-        .email-subject {
-          margin-bottom: 8px;
-          color: #333;
-        }
-        .email-tags {
-          margin-bottom: 16px;
-        }
-        .email-meta {
-          padding: 0 24px;
-        }
-        .meta-item {
-          display: flex;
-          align-items: flex-start;
-          margin-bottom: 12px;
-        }
-        .meta-icon {
-          color: #8c8c8c;
-          margin-right: 12px;
-          margin-top: 4px;
-          font-size: 16px;
-        }
-        .meta-content {
-          display: flex;
-          flex-direction: column;
-        }
-        .email-divider {
-          margin: 16px 0;
-        }
-        .email-content-container {
-          padding: 0 24px;
-          flex: 1;
-          overflow-y: auto;
-          max-height: 400px;
-        }
-        .email-content {
-          white-space: pre-wrap;
-          line-height: 1.6;
-        }
-        .email-attachments {
-          padding: 0 24px 24px;
-        }
-        .attachments-title {
-          display: flex;
-          align-items: center;
-          margin-bottom: 16px;
-        }
-        .attachments-icon {
-          margin-right: 8px;
-          color: #4361ee;
-        }
-        .attachments-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        .attachment-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px;
-          border-radius: 4px;
-          background-color: #f8f9fa;
-          border: 1px solid #e8e8e8;
-        }
-        .attachment-content {
-          display: flex;
-          align-items: center;
-        }
-        .attachment-info {
-          margin-left: 12px;
-          display: flex;
-          flex-direction: column;
-        }
-        .attachment-name {
-          font-weight: 500;
-        }
-        .file-size {
-          font-size: 12px;
-        }
-        .file-icon {
-          font-size: 20px;
-        }
-        .file-icon.pdf {
-          color: #ff4d4f;
-        }
-        .file-icon.word {
-          color: #1890ff;
-        }
-        .file-icon.excel {
-          color: #52c41a;
-        }
-        .file-icon.image {
-          color: #722ed1;
-        }
-        .download-button {
-          background: linear-gradient(135deg, #4361ee, #4895ef);
-          border: none;
-        }
-        .email-actions {
-          padding: 16px 24px;
-          background-color: #f8f9fa;
-          border-top: 1px solid #e8e8e8;
-          display: flex;
-          justify-content: flex-end;
-        }
-        .reply-button {
-          background: linear-gradient(135deg, #4361ee, #4895ef);
-          border: none;
-        }
-        .starred {
-          color: #fbbf24;
-        }
-        .important {
-          color: #f87171;
+        .email-view-modal .ant-modal-body {
+          border-radius: 12px;
+          overflow: hidden;
         }
       `}</style>
     </>

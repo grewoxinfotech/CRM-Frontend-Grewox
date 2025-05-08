@@ -106,7 +106,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
     try {
       // Check if amount is 0 or less
       if (!values.amount || values.amount <= 0) {
-        message.error("માન્ય રકમ દાખલ કરો");
+        message.error("Please enter a valid amount");
         return;
       }
 

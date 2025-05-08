@@ -17,7 +17,7 @@ export const creditNoteApi = createApi({
         body: data,
         formData: true,
       }),
-      
+
       invalidatesTags: ["CreditNotes"],
     }),
     updateCreditNote: builder.mutation({
@@ -35,40 +35,6 @@ export const creditNoteApi = createApi({
       }),
       invalidatesTags: ["CreditNotes"],
     }),
-    verifyUserOtp: builder.mutation({
-      query: (data) => ({
-        url: "auth/verify-otp",
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["Users"],
-    }),
-    resendOtp: builder.mutation({
-      query: (userId) => ({
-        url: `auth/resend-otp/${userId}`,
-        method: "POST",
-      }),
-    }),
-    verifySignup: builder.mutation({
-      query: ({ otp, token }) => ({
-        url: "auth/verify-signup",
-        method: "POST",
-        body: { otp },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
-      invalidatesTags: ["Users"],
-    }),
-    resendSignupOtp: builder.mutation({
-      query: ({ token }) => ({
-        url: "auth/resend-signup-otp",
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }),
-    }),
   }),
 });
 
@@ -77,8 +43,4 @@ export const {
   useCreateCreditNoteMutation,
   useUpdateCreditNoteMutation,
   useDeleteCreditNoteMutation,
-  useVerifyUserOtpMutation,
-  useResendOtpMutation,
-  useVerifySignupMutation,
-  useResendSignupOtpMutation,
 } = creditNoteApi;

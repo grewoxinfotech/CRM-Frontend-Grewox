@@ -9,6 +9,7 @@ export const dealApi = createApi({
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
 
+    
     getDeals: builder.query({
       query: (params) => ({
         url: "/deals",
@@ -29,6 +30,7 @@ export const dealApi = createApi({
       },
       providesTags: ["Deal"],
     }),
+
 
     getDeal: builder.query({
       query: (id) => ({

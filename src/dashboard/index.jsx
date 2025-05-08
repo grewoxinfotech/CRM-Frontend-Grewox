@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col, Card, Tag, Typography } from "antd";
-import { FiDollarSign, FiTarget, FiFileText, FiUsers, FiBarChart2 } from "react-icons/fi";
+import {
+  FiDollarSign,
+  FiTarget,
+  FiFileText,
+  FiUsers,
+  FiBarChart2,
+} from "react-icons/fi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../auth/services/authSlice";
 import "./dashboard.scss";
@@ -18,19 +24,18 @@ import StatsCards from "./DashboardComponents/StatsCards";
 import LeadsTable from "./DashboardComponents/LeadsTable";
 import DealsTable from "./DashboardComponents/DealsTable";
 import TasksTable from "./DashboardComponents/TasksTable";
-import MeetingsTable from './DashboardComponents/MeetingsTable';
+import MeetingsTable from "./DashboardComponents/MeetingsTable";
 import Analytics from "./DashboardComponents/Analytics/index.jsx";
 import { useGetRevenueQuery } from "./module/sales/revenue/services/revenueApi";
-
 
 const { Text } = Typography;
 
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 export default function Dashboard() {
@@ -40,16 +45,16 @@ export default function Dashboard() {
   const companyName = "Grewox Software";
   const { data: currencies } = useGetAllCurrenciesQuery();
   const { data: tasksData, isLoading: tasksLoading } = useGetAllTasksQuery(id);
-  const { data: leadsData } = useGetLeadsQuery();
   const { data: statusesData } = useGetStatusesQuery(user?.id);
   const { data: stagesData } = useGetLeadStagesQuery(user?.id);
   const { data: meetings, isLoading: meetingsLoading } = useGetMeetingsQuery();
-  const [leadsDateFilter, setLeadsDateFilter] = useState('all');
+  const [leadsDateFilter, setLeadsDateFilter] = useState("all");
+  const { data: leadsData } = useGetLeadsQuery();
   const { data: deal } = useGetDealsQuery();
   const dealsData = deal || [];
-  const [dealsDateFilter, setDealsDateFilter] = useState('all');
-  const [tasksDateFilter, setTasksDateFilter] = useState('all');
-  const [meetingsDateFilter, setMeetingsDateFilter] = useState('all');
+  const [dealsDateFilter, setDealsDateFilter] = useState("all");
+  const [tasksDateFilter, setTasksDateFilter] = useState("all");
+  const [meetingsDateFilter, setMeetingsDateFilter] = useState("all");
   const [showAnalytics, setShowAnalytics] = useState(false);
 
   const { data: revenueData } = useGetRevenueQuery();
@@ -58,9 +63,12 @@ export default function Dashboard() {
   const calculateRevenue = () => {
     if (!revenueData?.data) return { total: 0, pending: 0 };
 
-    const total = revenueData.data.reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0);
+    const total = revenueData.data.reduce(
+      (sum, rev) => sum + (Number(rev.amount) || 0),
+      0
+    );
     const pending = revenueData.data
-      .filter(rev => rev.status?.toLowerCase() === 'pending')
+      .filter((rev) => rev.status?.toLowerCase() === "pending")
       .reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0);
 
     return { total, pending };
@@ -72,13 +80,17 @@ export default function Dashboard() {
     // Remove the existing useEffect since we're using dummy data
   }, []);
 
-  const openLeads = leadsData?.data ? leadsData.data.filter(lead =>
-    lead.status && lead.status.toLowerCase() !== 'closed'
-  ).length : 0;
+  const openLeads = leadsData?.data
+    ? leadsData.data.filter(
+        (lead) => lead.status && lead.status.toLowerCase() !== "closed"
+      ).length
+    : 0;
 
-  const openDeals = dealsData ? dealsData.filter(deal =>
-    deal.status && deal.status.toLowerCase() !== 'closed'
-  ).length : 0;
+  const openDeals = dealsData
+    ? dealsData.filter(
+        (deal) => deal.status && deal.status.toLowerCase() !== "closed"
+      ).length
+    : 0;
 
   // Add this after other useEffect hooks
   const getActiveCustomersCount = () => {
@@ -86,7 +98,7 @@ export default function Dashboard() {
 
     // Get unique customer IDs from invoices
     const uniqueCustomers = new Set(
-      revenueData.data.map(invoice => invoice.customer)
+      revenueData.data.map((invoice) => invoice.customer)
     );
 
     return uniqueCustomers.size;
@@ -104,7 +116,7 @@ export default function Dashboard() {
       iconGradient: "linear-gradient(135deg, #7c3aed, #a78bfa)",
       color: "#7c3aed",
       tag: `Total customers with orders: ${activeCustomers}`,
-      link: "/dashboard/sales/customer"
+      link: "/dashboard/sales/customer",
     },
     {
       title: "Leads",
@@ -115,7 +127,7 @@ export default function Dashboard() {
       iconGradient: "linear-gradient(135deg, #eb2f96, #ff85c0)",
       color: "#eb2f96",
       tag: `Total: ${leadsData?.data?.length || 0}`,
-      link: "/dashboard/crm/leads"
+      link: "/dashboard/crm/leads",
     },
     {
       title: "Deals",
@@ -126,25 +138,30 @@ export default function Dashboard() {
       iconGradient: "linear-gradient(135deg, #1890ff, #69c0ff)",
       color: "#1890ff",
       tag: `Total: ${deal?.data?.length || 0}`,
-      link: "/dashboard/crm/deals"
+      link: "/dashboard/crm/deals",
     },
     {
       title: "TOTAL REVENUE",
       value: totalRevenue,
       description: "Total revenue",
-      currencySymbol: '₹',
+      currencySymbol: "₹",
       icon: <FiDollarSign className="stats-icon" />,
       gradient: "linear-gradient(145deg, #ffffff, #f0fff4)",
       iconGradient: "linear-gradient(135deg, #52c41a, #95de64)",
       color: "#52c41a",
       tag: `Profit: ₹10`,
       link: "/dashboard/sales/revenue",
-      format: "currency"
-    }
+      format: "currency",
+    },
   ];
 
   return (
-    <motion.div className="dashboard-container" initial="initial" animate="animate" variants={staggerContainer}>
+    <motion.div
+      className="dashboard-container"
+      initial="initial"
+      animate="animate"
+      variants={staggerContainer}
+    >
       <Row gutter={[24, 24]}>
         <Col span={24}>
           <WelcomeSection

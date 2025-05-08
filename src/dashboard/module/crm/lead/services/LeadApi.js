@@ -15,6 +15,7 @@ export const leadApi = createApi({
       }),
       providesTags: ["Lead"],
     }),
+
     getLead: builder.query({
       query: (id) => ({
         url: `/leads/${id}`,
@@ -52,7 +53,7 @@ export const leadApi = createApi({
       query: ({ id, leadStage }) => ({
         url: `/leads/${id}`,
         method: "PUT",
-        body: { leadStage }
+        body: { leadStage },
       }),
       invalidatesTags: ["Lead"],
     }),
@@ -71,40 +72,40 @@ export const leadApi = createApi({
     getFollowups: builder.query({
       query: (id) => ({
         url: `/followups/${id}`,
-        method: "GET"
+        method: "GET",
       }),
-      providesTags: ["Followup"]
+      providesTags: ["Followup"],
     }),
     createFollowup: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `/followups/${id}`,
         method: "POST",
-        body: data
+        body: data,
       }),
-      invalidatesTags: ["Followup"]
+      invalidatesTags: ["Followup"],
     }),
     updateFollowup: builder.mutation({
       query: ({ id, ...data }) => ({
         url: `/followups/${id}`,
         method: "PUT",
-        body: data
+        body: data,
       }),
-      invalidatesTags: ["Followup"]
+      invalidatesTags: ["Followup"],
     }),
     deleteFollowup: builder.mutation({
       query: (id) => ({
         url: `/followups/${id}`,
-        method: "DELETE"
+        method: "DELETE",
       }),
-      invalidatesTags: ["Followup"]
+      invalidatesTags: ["Followup"],
     }),
     deleteLeadFile: builder.mutation({
       query: ({ id, filename }) => ({
         url: `/leads/files/${id}`,
-        method: 'DELETE',
-        body: { filename }
+        method: "DELETE",
+        body: { filename },
       }),
-      invalidatesTags: ['Lead']
+      invalidatesTags: ["Lead"],
     }),
   }),
 });

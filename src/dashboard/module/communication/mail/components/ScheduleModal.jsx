@@ -1,9 +1,20 @@
-import React from 'react';
-import { Modal, Space, DatePicker, TimePicker, Button, Typography, Row, Col, Form } from 'antd';
-import { FiCalendar, FiClock, FiCheck, FiX } from 'react-icons/fi';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
+import React from "react";
+import {
+  Modal,
+  Space,
+  DatePicker,
+  TimePicker,
+  Button,
+  Typography,
+  Row,
+  Col,
+  Form,
+  message,
+} from "antd";
+import { FiCalendar, FiClock, FiCheck, FiX } from "react-icons/fi";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
 
 // Add UTC and timezone plugins to dayjs
 dayjs.extend(utc);
@@ -18,27 +29,34 @@ const ScheduleModal = ({
   scheduleDate,
   setScheduleDate,
   scheduleTime,
-  setScheduleTime
+  setScheduleTime,
 }) => {
   const handleConfirm = () => {
     if (scheduleDate && scheduleTime) {
-      // Get the local timezone offset in minutes
-      const timezoneOffset = new Date().getTimezoneOffset();
-      
-      // Combine date and time
-      const combinedDateTime = dayjs(scheduleDate)
-        .hour(scheduleTime.hour())
-        .minute(scheduleTime.minute())
-        .second(0);
+      const now = dayjs();
+      const scheduledDateTime = dayjs(
+        `${scheduleDate.format("YYYY-MM-DD")} ${scheduleTime.format(
+          "HH:mm:ss"
+        )}`
+      );
 
-      // Add the timezone offset to compensate for UTC conversion
-      const adjustedDateTime = combinedDateTime.add(timezoneOffset, 'minute');
-      
-      // Convert to UTC ISO string
-      const utcDateTime = adjustedDateTime.toISOString();
-      
-      onConfirm(scheduleDate, scheduleTime, utcDateTime);
+      if (scheduledDateTime.isBefore(now)) {
+        message.error("Please select a future date and time");
+        return;
+      }
+
+      const formattedDate = scheduleDate.format("YYYY-MM-DD");
+      const formattedTime = scheduleTime.format("HH:mm:ss");
+
+      onConfirm(scheduleDate, scheduleTime, formattedDate, formattedTime);
+      message.success("Email scheduled successfully");
     }
+  };
+
+  const handleCancel = () => {
+    setScheduleDate(null);
+    setScheduleTime(null);
+    onCancel();
   };
 
   return (
@@ -50,92 +68,111 @@ const ScheduleModal = ({
         </div>
       }
       open={visible}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       footer={null}
       width={500}
       className="schedule-modal"
-      bodyStyle={{ padding: '0' }}
+      bodyStyle={{ padding: "0" }}
     >
       <div className="schedule-body">
         <div className="schedule-content">
-          <Title level={5} className="schedule-title">When would you like to send this email?</Title>
+          <Title level={5} className="schedule-title">
+            When would you like to send this email?
+          </Title>
           <Text type="secondary" className="schedule-description">
             Select a date and time to schedule your email for later delivery.
           </Text>
-          
+
           <Form layout="vertical" className="schedule-form">
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item 
-                  label="Date" 
+                <Form.Item
+                  label="Date"
                   className="schedule-form-item"
+                  validateStatus={scheduleDate ? "success" : ""}
                 >
                   <DatePicker
                     value={scheduleDate}
                     onChange={setScheduleDate}
-                    disabledDate={(current) => current && current < dayjs().startOf('day')}
-                    style={{ width: '100%' }}
+                    disabledDate={(current) =>
+                      current && current < dayjs().startOf("day")
+                    }
+                    style={{ width: "100%" }}
                     placeholder="Select date"
                     format="YYYY-MM-DD"
                     showToday={true}
-                    className="schedule-datepicker"
+                    className={`schedule-datepicker ${
+                      scheduleDate ? "selected" : ""
+                    }`}
                     suffixIcon={<FiCalendar className="picker-icon" />}
                   />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item 
-                  label="Time" 
+                <Form.Item
+                  label="Time"
                   className="schedule-form-item"
+                  validateStatus={scheduleTime ? "success" : ""}
                 >
                   <TimePicker
                     value={scheduleTime}
                     onChange={setScheduleTime}
-                    format="hh:mm A"
-                    style={{ width: '100%' }}
+                    format="HH:mm"
+                    style={{ width: "100%" }}
                     placeholder="Select time"
                     minuteStep={1}
-                    use12Hours={true}
+                    use12Hours={false}
                     showNow={true}
                     allowClear={true}
                     inputReadOnly={true}
                     popupClassName="time-picker-popup"
                     hideDisabledOptions={true}
-                    className="schedule-timepicker"
+                    className={`schedule-timepicker ${
+                      scheduleTime ? "selected" : ""
+                    }`}
                     suffixIcon={<FiClock className="picker-icon" />}
                   />
                 </Form.Item>
               </Col>
             </Row>
           </Form>
-          
-          <div className="schedule-preview">
+
+          <div
+            className={`schedule-preview ${
+              scheduleDate && scheduleTime ? "active" : ""
+            }`}
+          >
             {scheduleDate && scheduleTime ? (
               <div className="preview-content">
                 <Text strong>Email will be sent on:</Text>
                 <Text className="preview-date">
-                  {scheduleDate.format('dddd, MMMM D, YYYY')} at {scheduleTime.format('h:mm A')}
+                  {scheduleDate.format("dddd, MMMM D, YYYY")} at{" "}
+                  {scheduleTime.format("HH:mm")}
                 </Text>
               </div>
             ) : (
-              <Text type="secondary">Select a date and time to see when your email will be sent.</Text>
+              <Text type="secondary">
+                Select a date and time to see when your email will be sent.
+              </Text>
             )}
           </div>
         </div>
-        
+
         <div className="schedule-footer">
           <Space>
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               onClick={handleConfirm}
               disabled={!scheduleDate || !scheduleTime}
               icon={<FiCheck />}
-              className="schedule-button"
+              className={`schedule-button ${
+                scheduleDate && scheduleTime ? "ready" : ""
+              }`}
             >
               Schedule
             </Button>
-            <Button 
-              onClick={onCancel}
+            <Button
+              onClick={handleCancel}
               icon={<FiX />}
               className="cancel-button"
             >
@@ -181,16 +218,19 @@ const ScheduleModal = ({
         .schedule-form-item {
           margin-bottom: 16px;
         }
-        .schedule-datepicker, .schedule-timepicker {
+        .schedule-datepicker,
+        .schedule-timepicker {
           height: 40px;
           border-radius: 4px;
           border: 1px solid #d9d9d9;
           transition: all 0.3s;
         }
-        .schedule-datepicker:hover, .schedule-timepicker:hover {
+        .schedule-datepicker:hover,
+        .schedule-timepicker:hover {
           border-color: #4361ee;
         }
-        .schedule-datepicker:focus, .schedule-timepicker:focus {
+        .schedule-datepicker:focus,
+        .schedule-timepicker:focus {
           border-color: #4361ee;
           box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
         }
@@ -231,6 +271,27 @@ const ScheduleModal = ({
         .cancel-button {
           height: 40px;
           padding: 0 24px;
+        }
+        .schedule-datepicker.selected,
+        .schedule-timepicker.selected {
+          border-color: #22c55e;
+          background-color: #f0fdf4;
+        }
+        .schedule-preview.active {
+          background-color: #f0fdf4;
+          border: 1px solid #22c55e;
+        }
+        .schedule-button.ready {
+          background: #22c55e;
+          border-color: #22c55e;
+        }
+        .schedule-button.ready:hover {
+          background: #16a34a;
+          border-color: #16a34a;
+        }
+        .preview-date {
+          color: #22c55e;
+          font-weight: 600;
         }
       `}</style>
     </Modal>

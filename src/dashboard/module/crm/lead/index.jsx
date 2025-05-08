@@ -72,6 +72,7 @@ const Lead = () => {
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
+  
 
   // Handle automatic form opening
   useEffect(() => {
@@ -136,8 +137,6 @@ const Lead = () => {
     setSelectedLead(null);
   };
 
-
-
   const handleDelete = (lead) => {
     Modal.confirm({
       title: "Delete Lead",
@@ -178,8 +177,9 @@ const Lead = () => {
           statusesData?.data?.find((s) => s.id === lead.status)?.name ||
           lead.status,
         "Interest Level": lead.interest_level,
-        "Lead Value": `${currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
-          } ${lead.leadValue || 0}`,
+        "Lead Value": `${
+          currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
+        } ${lead.leadValue || 0}`,
         "Created Date": moment(lead.createdAt).format("DD-MM-YYYY"),
       }));
 

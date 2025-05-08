@@ -78,6 +78,8 @@ const LeadList = ({
   const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
   const { data: contactsResponse } = useGetContactsQuery();
 
+  console.log(leads);
+
   // Filter and prepare data
   const stages =
     stagesData?.filter((stage) => stage.stageType === "lead") || [];
@@ -607,8 +609,6 @@ const LeadList = ({
                 border-radius: 10px;
               }
             }
-
-           
 
             .ant-table-thead > tr > th {
               background: #fafafa !important;

@@ -50,6 +50,7 @@ const { Text } = Typography;
 const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   const [billingData, setBillingData] = useState(null);
   const [creditNoteAmount, setCreditNoteAmount] = useState(0);
+  const [isSendingInvoice, setIsSendingInvoice] = useState(false);
   const printRef = useRef();
 
   const loggedInUser = useSelector(selectCurrentUser);
@@ -445,6 +446,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
 
   const handleSendInvoice = async () => {
     try {
+      setIsSendingInvoice(true);
       const category = invoice.category || "customer";
 
       let customerData = null;
@@ -619,6 +621,8 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
           "Failed to send invoice. Please try again.",
         key: "sendInvoice",
       });
+    } finally {
+      setIsSendingInvoice(false);
     }
   };
 
@@ -629,18 +633,6 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         icon: <FiMail />,
         label: "Send to Customer",
         onClick: handleSendInvoice,
-      },
-      {
-        key: "copy",
-        icon: <FiCopy />,
-        label: "Copy Invoice Link",
-        onClick: () => {
-          const invoiceUrl = `${window.location.origin}/invoice/${invoice?.salesInvoiceNumber}`;
-          navigator.clipboard
-            .writeText(invoiceUrl)
-            .then(() => message.success("Invoice link copied to clipboard!"))
-            .catch(() => message.error("Failed to copy invoice link"));
-        },
       },
     ],
   };
@@ -1199,29 +1191,26 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                 gap: "12px",
               }}
             >
-              <Dropdown
-                menu={shareItems}
-                trigger={["click"]}
-                placement="topRight"
+              <Button
+                icon={<FiMail />}
+                type="primary"
+                size="large"
+                onClick={handleSendInvoice}
+                loading={isSendingInvoice}
+                style={{
+                  padding: "8px 24px",
+                  height: "44px",
+                  borderRadius: "10px",
+                  border: "1px solid #e6e8eb",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                }}
               >
-                <Button
-                  icon={<FiShare2 />}
-                  size="large"
-                  style={{
-                    padding: "8px 24px",
-                    height: "44px",
-                    borderRadius: "10px",
-                    border: "1px solid #e6e8eb",
-                    fontWeight: "500",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                  }}
-                >
-                  Share
-                </Button>
-              </Dropdown>
+                {isSendingInvoice ? "Sending..." : "Send To Customer"}
+              </Button>
               <Button
                 type="primary"
                 icon={<FiDownload />}
