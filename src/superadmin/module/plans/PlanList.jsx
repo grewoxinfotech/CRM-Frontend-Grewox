@@ -26,6 +26,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
     });
 
     const [filteredInfo, setFilteredInfo] = useState({});
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
     const handleTableChange = (pagination, filters, sorter) => {
         console.log('Table Change:', { pagination, filters, sorter });
@@ -132,12 +133,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
 
     const getDropdownItems = (record) => ({
         items: [
-            // {
-            //     key: 'view',
-            //     icon: <FiEye />,
-            //     label: 'View Details',
-            //     onClick: () => onView(record),
-            // },
+            {
+                key: 'view',
+                icon: <FiEye />,
+                label: 'View Details',
+                onClick: () => onView(record),
+            },
             {
                 key: 'edit',
                 icon: <FiEdit2 />,
@@ -154,7 +155,27 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         ]
     });
 
-   
+    const getActionItems = (record) => [
+        {
+            key: 'view',
+            icon: <FiEye className="action-icon" />,
+            label: 'View Details',
+            onClick: () => onView(record)
+        },
+        {
+            key: 'edit',
+            icon: <FiEdit2 className="action-icon" />,
+            label: 'Edit Plan',
+            onClick: () => onEdit(record)
+        },
+        {
+            key: 'delete',
+            icon: <FiTrash2 className="action-icon" />,
+            label: 'Delete Plan',
+            danger: true,
+            onClick: () => onDelete(record)
+        }
+    ];
 
     const formatStorageSize = (sizeInMB) => {
         const size = parseFloat(sizeInMB);
@@ -290,20 +311,25 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             key: 'actions',
             align: 'right',
             render: (_, record) => (
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-
-                    <Dropdown
-                        menu={getDropdownItems(record)}
-                        trigger={['click']}
-                        placement="bottomRight"
-                        overlayClassName="plan-actions-dropdown"
-                    >
-                        <Button
-                            type="text"
-                            icon={<FiMoreVertical className="action-icon" />}
-                            className="action-button more"
-                        />
-                    </Dropdown>
+                <div className="action-cell">
+                    <Button
+                        type="text"
+                        icon={<FiEye className="action-icon" />}
+                        onClick={() => onView(record)}
+                        className="action-button view"
+                    />
+                    <Button
+                        type="text"
+                        icon={<FiEdit2 className="action-icon" />}
+                        onClick={() => onEdit(record)}
+                        className="action-button edit"
+                    />
+                    <Button
+                        type="text"
+                        icon={<FiTrash2 className="action-icon" />}
+                        onClick={() => onDelete(record)}
+                        className="action-button delete"
+                    />
                 </div>
             ),
             width: '15%',
@@ -311,8 +337,44 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         }
     ];
 
+    const handleDelete = async (recordOrIds) => {
+        try {
+            await onDelete(recordOrIds);
+            // Clear selection after successful delete
+            setSelectedRowKeys([]);
+        } catch (error) {
+            console.error('Delete error:', error);
+        }
+    };
+
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
+    };
+
+    // Add bulk action buttons with your design
+    const BulkActions = () => (
+        <div className="bulk-actions" style={{ marginBottom: 16 }}>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    icon={<FiTrash2 />}
+                    onClick={() => handleDelete(selectedRowKeys)}
+                    className="delete-button"
+                    style={{ marginTop: 10 }}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
+        </div>
+    );
+
     return (
         <div className="plans-table-wrapper">
+            <BulkActions />
             <Table
                 columns={columns}
                 dataSource={plans}
@@ -322,6 +384,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                 rowKey="id"
                 className="plans-table"
                 scroll={{ x: 1200 }}
+                rowSelection={rowSelection}
             />
         </div>
     );

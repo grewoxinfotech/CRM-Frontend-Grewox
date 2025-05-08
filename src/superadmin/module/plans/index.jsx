@@ -54,6 +54,7 @@ const Plans = () => {
     const [searchText, setSearchText] = useState('');
     const searchInputRef = useRef(null);
     const [exportLoading, setExportLoading] = useState(false);
+    const [deleteModalData, setDeleteModalData] = useState({ visible: false, ids: [] });
 
     const {
         data: plansData,
@@ -100,10 +101,15 @@ const Plans = () => {
         setIsEditModalOpen(true);
     };
 
-    const handleDelete = (record) => {
+    const handleDelete = (recordOrIds) => {
+        const isMultiple = Array.isArray(recordOrIds);
+        const records = isMultiple ? recordOrIds : [recordOrIds];
+
         Modal.confirm({
             title: 'Delete Plan',
-            content: `Are you sure you want to delete "${record.name}"?`,
+            content: isMultiple
+                ? `Are you sure you want to delete ${records.length} selected plans?`
+                : `Are you sure you want to delete "${recordOrIds.name}"?`,
             okText: 'Yes',
             okType: 'danger',
             cancelText: 'No',
@@ -112,11 +118,14 @@ const Plans = () => {
             },
             onOk: async () => {
                 try {
-                    await deletePlan(record.id).unwrap();
-                    message.success('Plan deleted successfully');
+                    await Promise.all(records.map(id => deletePlan(isMultiple ? id : id.id).unwrap()));
+                    message.success(isMultiple
+                        ? `Successfully deleted ${records.length} plans`
+                        : 'Plan deleted successfully'
+                    );
                 } catch (error) {
                     console.error('Delete error:', error);
-                    message.error(error?.data?.message || 'Failed to delete plan');
+                    message.error(error?.data?.message || 'Failed to delete plan(s)');
                 }
             },
         });

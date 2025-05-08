@@ -758,512 +758,280 @@
 
         .plans-table {
             .ant-table {
-                background: transparent;
+                background: white;
+                border-radius: 8px;
 
                 .ant-table-thead {
-                    >tr>th {
-                        background: #f8fafc !important;
-                        border-bottom: 1px solid #e2e8f0 !important;
-                        padding: 16px !important;
-                        font-weight: 600 !important;
-                        color: #1e293b !important;
-                        transition: background-color 0.3s ease !important;
-                        position: relative;
+                    tr {
+                        th {
+                            background: #f8fafc;
+                            border-bottom: 1px solid #e2e8f0;
+                            color: #475569;
+                            font-weight: 600;
+                            padding: 16px;
 
-                        &:hover {
-                            background: #f1f5f9 !important;
-                        }
-
-                        // Sort and filter icons wrapper
-                        .ant-table-column-sorters {
-                            padding: 0;
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-
-                            .ant-table-column-title {
-                                flex: auto;
-                                padding-right: 8px;
+                            &::before {
+                                display: none;
                             }
 
-                            .ant-table-column-sorter {
-                                margin-left: 4px;
-                                color: #94a3b8;
+                            .column-header {
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
 
-                                &-up,
-                                &-down {
-                                    font-size: 12px;
-
-                                    &.active {
-                                        color: #3b82f6;
-                                    }
+                                .header-icon {
+                                    font-size: 16px;
+                                    color: #64748b;
                                 }
                             }
-                        }
 
-                        // Filter trigger button
-                        .ant-table-filter-trigger {
-                            width: 28px;
-                            height: 28px;
-                            border-radius: 6px;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                            margin-left: 4px;
-                            color: #94a3b8;
-                            transition: all 0.2s ease;
-
-                            &:hover {
-                                background: rgba(59, 130, 246, 0.08);
-                                color: #3b82f6;
-                            }
-
-                            &.active {
-                                background: rgba(59, 130, 246, 0.1);
-                                color: #3b82f6;
+                            &.ant-table-column-sort {
+                                background: #f8fafc;
                             }
                         }
                     }
                 }
 
                 .ant-table-tbody {
-                    >tr {
-                        &:hover {
-                            >td {
-                                background: #f7faff;
-                            }
-                        }
-
-                        >td {
+                    tr {
+                        td {
+                            border-bottom: 1px solid #e2e8f0;
                             padding: 16px;
-                            border-bottom: 1px solid #edf2f7;
-                            transition: all 0.3s ease;
+                            color: #1e293b;
 
-                            &:first-child {
-                                border-top-left-radius: 8px;
-                                border-bottom-left-radius: 8px;
+                            .price-cell {
+                                .price-amount {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 4px;
+                                    font-weight: 500;
+
+                                    .currency {
+                                        color: #64748b;
+                                    }
+                                }
                             }
 
-                            &:last-child {
-                                border-top-right-radius: 8px;
-                                border-bottom-right-radius: 8px;
+                            .limits-cell {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 8px;
+
+                                .limits-group {
+                                    display: flex;
+                                    gap: 8px;
+                                }
+
+                                .limit-tag {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 4px;
+                                    padding: 4px 8px;
+                                    border-radius: 4px;
+                                    font-size: 12px;
+                                    line-height: 1.5;
+                                    border: none;
+
+                                    &.users {
+                                        background: rgba(#3b82f6, 0.1);
+                                        color: #3b82f6;
+                                    }
+
+                                    &.clients {
+                                        background: rgba(#10b981, 0.1);
+                                        color: #10b981;
+                                    }
+
+                                    &.vendors {
+                                        background: rgba(#f59e0b, 0.1);
+                                        color: #f59e0b;
+                                    }
+
+                                    &.customers {
+                                        background: rgba(#8b5cf6, 0.1);
+                                        color: #8b5cf6;
+                                    }
+
+                                    .tag-icon {
+                                        font-size: 12px;
+                                    }
+                                }
+                            }
+
+                            .storage-trial-cell {
+                                display: flex;
+                                gap: 8px;
+
+                                .feature-tag {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 4px;
+                                    padding: 4px 8px;
+                                    border-radius: 4px;
+                                    font-size: 12px;
+                                    line-height: 1.5;
+                                    border: none;
+
+                                    &.storage {
+                                        background: rgba(#6366f1, 0.1);
+                                        color: #6366f1;
+                                    }
+
+                                    &.trial {
+                                        background: rgba(#ec4899, 0.1);
+                                        color: #ec4899;
+                                    }
+
+                                    .tag-icon {
+                                        font-size: 12px;
+                                    }
+                                }
+                            }
+
+                            .status-tag {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 4px;
+                                padding: 4px 12px;
+                                border-radius: 40px;
+                                font-size: 12px;
+                                line-height: 1.5;
+                                font-weight: 500;
+                                border: none;
+
+                                &.active {
+                                    background: rgba(#22c55e, 0.1);
+                                    color: #22c55e;
+                                }
+
+                                &.inactive {
+                                    background: rgba(#94a3b8, 0.1);
+                                    color: #94a3b8;
+                                }
+                            }
+
+                            .action-button {
+                                padding: 6px;
+                                height: 32px;
+                                width: 32px;
+                                border: none;
+                                border-radius: 6px;
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: all 0.3s ease;
+                                background: transparent;
+
+                                .action-icon {
+                                    font-size: 16px;
+                                    color: #64748b;
+                                }
+
+                                &:hover {
+                                    background: #f1f5f9;
+
+                                    &.more {
+                                        background: #f1f5f9;
+
+                                        .action-icon {
+                                            color: #3b82f6;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        &:hover {
+                            td {
+                                background: #f8fafc;
                             }
                         }
                     }
                 }
             }
 
-            // Plan Name Cell
-            .plan-name-cell {
-                .plan-name {
-                    font-weight: 500;
-                    color: #2d3748;
-                }
+            .ant-pagination {
+                margin: 16px 0 0;
 
-                .highlight-text {
-                    background-color: rgba(66, 153, 225, 0.2);
-                    padding: 2px 4px;
-                    border-radius: 4px;
-                }
-            }
-
-            // Price Cell
-            .price-cell {
-                .price-amount {
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-
-                    .currency {
-                        color: #2d3748;
-                        font-size: 15px;
-                        font-weight: 500;
-                        margin-right: 1px;
-                        position: relative;
-                        top: 0.5px;
-                    }
-
-                    .amount {
-                        font-size: 16px;
-                        font-weight: 600;
-                        color: #2d3748;
-                        letter-spacing: -0.2px;
-                    }
-                }
-            }
-
-            // Limits Cell
-            .limits-cell {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-
-                .limits-group {
-                    display: flex;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                }
-
-                .limit-tag {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
+                .ant-pagination-item {
                     border-radius: 6px;
-                    border: none;
-                    font-size: 13px;
+                    border: 1px solid #e2e8f0;
 
-                    .tag-icon {
-                        font-size: 12px;
+                    a {
+                        color: #64748b;
                     }
 
-                    &.users {
-                        background: rgba(66, 153, 225, 0.1);
-                        color: #2b6cb0;
-                    }
+                    &-active {
+                        border-color: #3b82f6;
+                        background: #3b82f6;
 
-                    &.clients {
-                        background: rgba(56, 178, 172, 0.1);
-                        color: #2c7a7b;
+                        a {
+                            color: white;
+                        }
                     }
+                }
 
-                    &.vendors {
-                        background: rgba(159, 122, 234, 0.1);
-                        color: #6b46c1;
-                    }
-
-                    &.customers {
-                        background: rgba(236, 72, 153, 0.1);
-                        color: #b83280;
+                .ant-pagination-prev,
+                .ant-pagination-next {
+                    .ant-pagination-item-link {
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                        color: #64748b;
                     }
                 }
             }
+        }
 
-            // Storage & Trial Cell
-            .storage-trial-cell {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
+        .bulk-actions {
+            padding: 0 16px;
 
-                .feature-tag {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 4px;
-                    padding: 4px 8px;
-                    border-radius: 6px;
-                    border: none;
-                    font-size: 13px;
-
-                    .tag-icon {
-                        font-size: 12px;
-                    }
-
-                    &.storage {
-                        background: rgba(246, 173, 85, 0.1);
-                        color: #c05621;
-                    }
-
-                    &.trial {
-                        background: rgba(72, 187, 120, 0.1);
-                        color: #2f855a;
-                    }
-                }
-            }
-
-            // Status Cell
-            .status-tag {
-                border-radius: 20px;
-                padding: 6px 12px;
-                font-size: 13px;
-                font-weight: 500;
-                text-transform: capitalize;
+            .ant-btn-primary.ant-btn-dangerous {
+                height: 40px;
+                padding: 0 20px;
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+                justify-content: center;
+                gap: 8px;
+                border-radius: 8px;
+                font-weight: 500;
+                transition: all 0.3s ease;
 
-                &::before {
-                    content: '';
-                    display: inline-block;
-                    width: 6px;
-                    height: 6px;
-                    border-radius: 50%;
-                }
-
-                &.active {
-                    background: #ecfdf5;
-                    color: #059669;
-                    border: 1px solid rgba(5, 150, 105, 0.15);
-
-                    &::before {
-                        background-color: #059669;
-                        box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
-                    }
-                }
-
-                &.inactive {
-                    background: #f3f4f6;
-                    color: #6b7280;
-                    border: 1px solid rgba(107, 114, 128, 0.15);
-
-                    &::before {
-                        background-color: #6b7280;
-                        box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
-                    }
+                svg {
+                    font-size: 16px;
                 }
 
                 &:hover {
                     transform: translateY(-1px);
-                    transition: all 0.2s ease;
+                }
+
+                &:active {
+                    transform: translateY(0);
                 }
             }
+        }
 
-            // Column header for status
-            .column-header {
-                &.status-header {
-                    justify-content: center;
+        // Style for selected rows
+        .ant-table-row-selected>td {
+            background: rgba(#1677ff, 0.02) !important;
+        }
 
-                    .header-icon {
-                        font-size: 14px;
-                    }
-                }
-            }
+        // Style for checkbox
+        .ant-checkbox-wrapper {
+            .ant-checkbox {
+                .ant-checkbox-inner {
+                    border-radius: 4px;
+                    border-color: #d1d5db;
+                    transition: all 0.3s ease;
 
-            // Status column alignment
-            td.status-column {
-                text-align: center !important;
-            }
-
-            // Action Cell
-            .action-cell {
-                display: flex;
-                justify-content: flex-end;
-                gap: 4px;
-
-                .action-button {
-                    padding: 6px;
-                    height: 32px;
-                    width: 32px;
-                    border-radius: 6px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s ease;
-
-                    .action-icon {
-                        font-size: 16px;
-                    }
-
-                    &.view {
-                        color: #4299e1;
-
-                        &:hover {
-                            background: rgba(66, 153, 225, 0.1);
-                        }
-                    }
-
-                    &.edit {
-                        color: #48bb78;
-
-                        &:hover {
-                            background: rgba(72, 187, 120, 0.1);
-                        }
-                    }
-
-                    &.delete {
-                        color: #f56565;
-
-                        &:hover {
-                            background: rgba(245, 101, 101, 0.1);
-                        }
-                    }
-                }
-            }
-
-            // Filter Dropdown
-            .custom-filter-dropdown {
-                padding: 16px;
-                background: #ffffff;
-                border-radius: 12px;
-                box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-                min-width: 280px;
-                border: 1px solid #e2e8f0;
-
-                .filter-input {
-                    margin-bottom: 16px;
-
-                    .ant-input-affix-wrapper {
-                        border-radius: 8px;
-                        padding: 8px 12px;
-                        font-size: 14px;
-                        border: 1px solid #e2e8f0;
-                        background-color: #f8fafc;
-                        transition: all 0.2s ease;
-                        height: 40px;
-
-                        &:hover {
-                            border-color: #94a3b8;
-                            background-color: #ffffff;
-                        }
-
-                        &:focus,
-                        &-focused {
-                            border-color: #3b82f6;
-                            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-                            background-color: #ffffff;
-                        }
-
-                        .ant-input-prefix {
-                            margin-right: 8px;
-
-                            .search-icon {
-                                color: #94a3b8;
-                                font-size: 16px;
-                            }
-                        }
-
-                        .ant-input {
-                            background: transparent;
-                            font-size: 14px;
-
-                            &::placeholder {
-                                color: #94a3b8;
-                            }
-                        }
-
-                        .ant-input-clear-icon {
-                            color: #94a3b8;
-                            font-size: 14px;
-                            opacity: 0.7;
-                            transition: all 0.2s ease;
-
-                            &:hover {
-                                opacity: 1;
-                                color: #64748b;
-                            }
-                        }
+                    &:hover {
+                        border-color: #1677ff;
                     }
                 }
 
-                .filter-actions {
-                    display: flex;
-                    gap: 8px;
-
-                    .filter-button {
-                        flex: 1;
-                        height: 38px;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        font-weight: 500;
-                        padding: 0 16px;
-                        transition: all 0.2s ease;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 6px;
-                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-                        svg {
-                            font-size: 14px;
-                            stroke-width: 2.5;
-                        }
-
-                        &.ant-btn-primary {
-                            background: #3b82f6;
-                            border: none;
-                            color: white;
-
-                            &:hover {
-                                background: #2563eb;
-                            }
-
-                            &:active {
-                                background: #1d4ed8;
-                            }
-                        }
-
-                        &.ant-btn-default {
-                            border: 1px solid #e2e8f0;
-                            color: #64748b;
-                            background: #ffffff;
-
-                            &:hover {
-                                color: #3b82f6;
-                                border-color: #3b82f6;
-                                background: #f8fafc;
-                            }
-
-                            &:active {
-                                color: #1d4ed8;
-                                border-color: #1d4ed8;
-                                background: #f1f5f9;
-                            }
-                        }
-
-                        &:hover {
-                            transform: translateY(-1px);
-                        }
-
-                        &:active {
-                            transform: translateY(0);
-                        }
-                    }
-                }
-            }
-
-            // Column Filter Icon
-            .ant-table-filter-trigger {
-                color: #64748b;
-                transition: all 0.3s ease;
-                width: 28px;
-                height: 28px;
-                border-radius: 6px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-
-                &:hover {
-                    background: rgba(59, 130, 246, 0.1);
-                    color: #3b82f6;
-                }
-
-                &.active {
-                    color: #3b82f6;
-                    background: rgba(59, 130, 246, 0.1);
-                }
-            }
-
-            // Filter Dropdown Overlay
-            .ant-table-filter-dropdown {
-                padding: 0;
-                border-radius: 12px;
-                overflow: hidden;
-                border: none;
-
-                .ant-dropdown-menu {
-                    border-radius: 12px;
-                    padding: 4px;
-
-                    .ant-dropdown-menu-item {
-                        padding: 8px 12px;
-                        border-radius: 6px;
-                        margin: 2px 0;
-                        transition: all 0.2s ease;
-
-                        &:hover {
-                            background: #f1f5f9;
-                        }
-
-                        &-selected {
-                            background: #eff6ff;
-                            color: #3b82f6;
-                            font-weight: 500;
-
-                            &:hover {
-                                background: #e0f2fe;
-                            }
-                        }
+                &.ant-checkbox-checked {
+                    .ant-checkbox-inner {
+                        background-color: #1677ff;
+                        border-color: #1677ff;
                     }
                 }
             }
