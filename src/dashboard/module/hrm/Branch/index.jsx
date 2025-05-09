@@ -183,7 +183,7 @@ const Branch = () => {
         </Menu>
     );
 
-  return (
+    return (
         <div className="branch-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -215,8 +215,8 @@ const Branch = () => {
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
                             className="search-input"
-                            style={{ 
-                                width: '300px', 
+                            style={{
+                                width: '300px',
                                 borderRadius: '20px',
                                 height: '38px'
                             }}
@@ -289,8 +289,8 @@ const Branch = () => {
             )}
 
             <Card className="branch-table-card">
-                <BranchList 
-                    onEdit={handleEdit} 
+                <BranchList
+                    onEdit={handleEdit}
                     searchText={searchText}
                     filters={filters}
                 />

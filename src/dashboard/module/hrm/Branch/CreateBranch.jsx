@@ -23,12 +23,12 @@ const { Option } = Select;
 const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, loading }) => {
     const [form] = Form.useForm();
     const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
-    
+
     // API hooks
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
     const [createBranch, { isLoading: isCreating }] = useCreateBranchMutation();
     const [updateBranch, { isLoading: isUpdating }] = useUpdateBranchMutation();
-    const { data: rolesData} = useGetRolesQuery();
+    const { data: rolesData } = useGetRolesQuery();
 
     // Add array of excluded role names
     const excludedRoleNames = ['employee', 'client', 'sub-client', 'super-admin'];
@@ -36,14 +36,14 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
     // Modify the users memo to filter out users with excluded roles
     const filteredUsers = React.useMemo(() => {
         if (!userData?.data || !rolesData?.data) return [];
-        
+
         const usersList = Array.isArray(userData.data) ? userData.data : [];
         const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
 
         return usersList.filter(user => {
             // Find the role object for this user
             const userRole = rolesList.find(role => role.id === user.role_id);
-            
+
             // If role not found or role_name is in excluded list, filter out this user
             if (!userRole || excludedRoleNames.includes(userRole.role_name.toLowerCase())) {
                 return false;
@@ -64,7 +64,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
     const handleSubmit = async (values) => {
         try {
             let response;
-            
+
             if (isEditing && initialValues?.id) {
                 // Update existing branch
                 response = await updateBranch({
@@ -258,7 +258,7 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                                 Branch Name <span style={{ color: "#ff4d4f" }}>*</span>
                             </span>
                         }
-                        
+
                         rules={[
                             { required: true, message: 'Please enter branch name' },
                             { max: 100, message: 'Branch name cannot exceed 100 characters' },
@@ -293,9 +293,9 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
                     <Form.Item
                         name="branchManager"
                         label={
-                            <div style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 width: '100%'
                             }}>
