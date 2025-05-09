@@ -191,8 +191,57 @@ const Sidebar = ({
     };
   }, [openDropdown]);
 
-  const handleFloatingDropdownClose = () => {
+  const handleFloatingDropdownClose = (e) => {
+    // If clicking inside a dropdown menu, don't close the sidebar
+    if (e && (e.target.closest('.dropdown-menu') || e.target.closest('.nav-item'))) {
+      return;
+    }
     setOpenDropdown(null);
+  };
+
+  // Modify dropdown click handler
+  const handleDropdownClick = (e, dropdownName) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+
+    // Update the corresponding state based on dropdown name
+    switch (dropdownName) {
+      case "CRM":
+        setCrmOpen(!isCrmOpen);
+        break;
+      case "Sales":
+        setSalesOpen(!isSalesOpen);
+        break;
+      case "Purchase":
+        setPurchaseOpen(!isPurchaseOpen);
+        break;
+      case "User Management":
+        setUserManagementOpen(!isUserManagementOpen);
+        break;
+      case "Communication":
+        setCommunicationOpen(!isCommunicationOpen);
+        break;
+      case "HRM":
+        setHrmOpen(!isHrmOpen);
+        break;
+      case "Setting":
+        setIsSettingsOpen(!isSettingsOpen);
+        break;
+      case "Support":
+        setSupportOpen(!isSupportOpen);
+        break;
+      case "Job":
+        setJobOpen(!isJobOpen);
+        break;
+    }
+
+    // Handle collapsed state dropdown
+    if (isCollapsed) {
+      if (openDropdown === dropdownName) {
+        setOpenDropdown(null);
+      } else {
+        setOpenDropdown(dropdownName);
+      }
+    }
   };
 
   // Handle mobile menu toggle
@@ -633,25 +682,10 @@ const Sidebar = ({
       <div className={`nav-dropdown ${isOpen ? 'open' : ''}`}>
         <div
           className={`nav-item dropdown-trigger ${isOpen || isSubItemActive ? 'active' : ''}`}
-          onClick={() => {
-            if (isCollapsed) {
-              setOpenDropdown(openDropdown === item.title ? null : item.title);
-            } else {
-              setIsOpen(!isOpen);
-            }
-          }}
+          onClick={(e) => handleDropdownClick(e, item.title)}
         >
           <div className="nav-item-content">
-            <span
-              className="icon"
-              onClick={() => {
-                if (isCollapsed) {
-                  setOpenDropdown(openDropdown === item.title ? null : item.title);
-                } else {
-                  setIsOpen(!isOpen);
-                }
-              }}
-            >
+            <span className="icon">
               {item.icon}
             </span>
             {!isCollapsed && (
@@ -695,6 +729,7 @@ const Sidebar = ({
                 className={({ isActive }) =>
                   `nav-item sub-item ${isActive ? "active" : ""}`
                 }
+                onClick={handleNavigation}
               >
                 <div className="nav-item-content">
                   <span className="icon">{subItem.icon}</span>
