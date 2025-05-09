@@ -141,7 +141,7 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -149,7 +149,7 @@
                     border-bottom: 1px solid $border-color;
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
                 }
@@ -215,7 +215,7 @@
         .page-header {
             padding: 16px;
             flex-direction: column;
-            
+
             .header-actions {
                 flex-direction: column;
                 width: 100%;
@@ -224,6 +224,223 @@
                     width: 100%;
                     max-width: none;
                 }
+            }
+        }
+    }
+}
+
+.custom-table {
+    .ant-table {
+        background: transparent;
+
+        .ant-table-thead {
+            tr {
+                th {
+                    background: transparent;
+                    font-weight: 600;
+                    color: #4B5563;
+                    font-size: 14px;
+                    padding: 16px;
+                    border-bottom: 1px solid #E5E7EB;
+
+                    &::before {
+                        display: none;
+                    }
+                }
+            }
+        }
+
+        .ant-table-tbody {
+            tr {
+                td {
+                    padding: 16px;
+                    border-bottom: 1px solid #E5E7EB;
+
+                    .item-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+
+                        .item-content {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+
+                            .icon-wrapper {
+                                width: 36px;
+                                height: 36px;
+                                border-radius: 8px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: all 0.3s ease;
+
+                                .item-icon {
+                                    font-size: 16px;
+                                }
+                            }
+
+                            .info-wrapper {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 4px;
+
+                                .name {
+                                    font-size: 14px;
+                                    line-height: 20px;
+                                }
+
+                                .meta {
+                                    font-size: 12px;
+                                    color: #6B7280;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                &:hover {
+                    td {
+                        background: #F9FAFB;
+                    }
+                }
+            }
+        }
+    }
+
+    .ant-table-pagination {
+        margin: 16px 0;
+    }
+}
+
+.bulk-actions {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+}
+
+// Checkbox styling
+.ant-checkbox-wrapper {
+    .ant-checkbox {
+        .ant-checkbox-inner {
+            border-radius: 4px;
+            border-color: #D1D5DB;
+
+            &:hover {
+                border-color: #7C3AED;
+            }
+        }
+
+        &.ant-checkbox-checked {
+            .ant-checkbox-inner {
+                background-color: #7C3AED;
+                border-color: #7C3AED;
+            }
+        }
+    }
+}
+
+// Action button styling
+.action-button {
+    color: #6B7280;
+    transition: all 0.3s ease;
+
+    &:hover {
+        color: #7C3AED;
+        background: rgba(124, 58, 237, 0.1);
+    }
+}
+
+// Filter dropdown styling
+.ant-dropdown {
+    .ant-dropdown-menu {
+        padding: 8px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: #F3F4F6;
+            }
+
+            &-icon {
+                min-width: 16px;
+            }
+
+            &-danger {
+                color: #EF4444;
+
+                &:hover {
+                    background: #FEE2E2;
+                    color: #DC2626;
+                }
+            }
+        }
+    }
+}
+
+// Modal styling
+.ant-modal {
+    .ant-modal-content {
+        border-radius: 12px;
+        padding: 0;
+
+        .ant-modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #E5E7EB;
+            border-radius: 12px 12px 0 0;
+
+            .ant-modal-title {
+                font-weight: 600;
+                font-size: 18px;
+                color: #111827;
+            }
+        }
+
+        .ant-modal-body {
+            padding: 24px;
+            font-size: 14px;
+            color: #4B5563;
+        }
+
+        .ant-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #E5E7EB;
+            border-radius: 0 0 12px 12px;
+        }
+    }
+}
+
+// Button styling
+.ant-btn {
+    border-radius: 6px;
+    height: 36px;
+    padding: 0 16px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    &-primary {
+        background: #7C3AED;
+        border-color: #7C3AED;
+
+        &:hover {
+            background: #6D28D9;
+            border-color: #6D28D9;
+        }
+
+        &.ant-btn-dangerous {
+            background: #EF4444;
+            border-color: #EF4444;
+
+            &:hover {
+                background: #DC2626;
+                border-color: #DC2626;
             }
         }
     }

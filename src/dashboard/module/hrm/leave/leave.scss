@@ -172,12 +172,12 @@
 
         .ant-table-wrapper {
             .ant-table {
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                 }
 
-                .ant-table-tbody > tr:hover > td {
+                .ant-table-tbody>tr:hover>td {
                     background: #f5f5f5;
                 }
             }
@@ -321,7 +321,7 @@
         .ant-table {
             background: transparent;
 
-            .ant-table-thead > tr > th {
+            .ant-table-thead>tr>th {
                 background: #fafafa;
                 font-weight: 600;
                 color: $text-color-dark;
@@ -333,7 +333,7 @@
                 }
             }
 
-            .ant-table-tbody > tr > td {
+            .ant-table-tbody>tr>td {
                 padding: 16px 24px;
                 border-bottom: 1px solid $border-color;
 
@@ -358,12 +358,14 @@
                 }
 
                 // Style for date columns
-                .ant-space, div {
+                .ant-space,
+                div {
                     display: flex;
                     align-items: center;
                     gap: 8px;
 
-                    .anticon, svg {
+                    .anticon,
+                    svg {
                         color: #1890ff;
                         font-size: 14px;
                     }
@@ -376,11 +378,13 @@
                         color: #52c41a;
                         border-color: #b7eb8f;
                     }
+
                     &[color="warning"] {
                         background-color: #fffbe6;
                         color: #faad14;
                         border-color: #ffe58f;
                     }
+
                     &[color="error"] {
                         background-color: #fff1f0;
                         color: #ff4d4f;
@@ -399,7 +403,7 @@
                     &.ant-btn-primary {
                         background: #4096ff;
                         border-color: #4096ff;
-                        
+
                         &:hover {
                             background: #1677ff;
                             border-color: #1677ff;
@@ -428,7 +432,7 @@
                     align-items: center;
                     justify-content: center;
                     border-radius: 6px;
-                    
+
                     &:hover {
                         background: #f5f5f5;
                     }
@@ -451,13 +455,13 @@
 
         .ant-table-pagination {
             margin: 16px 24px;
-            
+
             .ant-pagination-item {
                 border-radius: 6px;
-                
+
                 &-active {
                     border-color: #1890ff;
-                    
+
                     a {
                         color: #1890ff;
                     }
@@ -499,6 +503,150 @@
                     background-color: #fff1f0;
                 }
             }
+        }
+    }
+}
+
+.leave-list-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+
+    .custom-table {
+        .ant-table {
+            background: transparent;
+
+            .ant-table-thead>tr>th {
+                background: #f9fafb;
+                color: #4b5563;
+                font-weight: 600;
+                padding: 16px;
+                border-bottom: 1px solid #e5e7eb;
+
+                &::before {
+                    display: none;
+                }
+            }
+
+            .ant-table-tbody>tr>td {
+                padding: 16px;
+                border-bottom: 1px solid #f3f4f6;
+            }
+
+            .ant-table-row {
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background: #f9fafb;
+                    cursor: pointer;
+
+                    .action-button {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+    }
+
+    .item-wrapper {
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .icon-wrapper {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+
+                .item-icon {
+                    font-size: 16px;
+                }
+            }
+
+            .info-wrapper {
+                .name {
+                    font-size: 14px;
+                    line-height: 20px;
+                }
+
+                .meta {
+                    font-size: 12px;
+                    color: #6b7280;
+                    margin-top: 2px;
+                }
+            }
+        }
+    }
+
+    .action-button {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+    }
+
+    .bulk-actions {
+        margin-bottom: 16px;
+
+        .ant-btn {
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 16px;
+            font-weight: 500;
+        }
+    }
+
+    // Role indicator animation
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 6px rgba(124, 58, 237, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+        }
+    }
+
+    // Custom scrollbar
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f9fafb;
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+
+        &:hover {
+            background: #9ca3af;
         }
     }
 }

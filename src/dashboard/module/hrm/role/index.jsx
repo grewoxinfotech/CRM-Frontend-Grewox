@@ -106,29 +106,22 @@ const Role = () => {
             setSelectedRole({
                 id: role.id,
                 role_name: role.role_name,
-                permissions: role.permissions || {}
+                permissions: typeof role.permissions === 'string'
+                    ? JSON.parse(role.permissions)
+                    : role.permissions || {}
             });
             setIsEditFormVisible(true);
         }, 100);
     };
 
-    const handleDeleteClick = (role) => {
-        Modal.confirm({
-            title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this role?',
-            okType: 'danger',
-            bodyStyle: { padding: '20px' },
-            cancelText: 'No',
-            onOk: async () => {
-                try {
-                    await deleteRole(role.id).unwrap();
-                    message.success('Role deleted successfully');
-                    refetch();
-                } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete role');
-                }
-            },
-        });
+    const handleDeleteRole = async (roleId) => {
+        try {
+            await deleteRole(roleId).unwrap();
+            message.success('Role deleted successfully');
+            refetch();
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to delete role');
+        }
     };
 
     const handleCreateSubmit = async (formData) => {
@@ -300,7 +293,7 @@ const Role = () => {
                     roles={filteredRoles}
                     loading={isLoadingRoles || isDeleting}
                     onEdit={handleEditRole}
-                    onDelete={handleDeleteClick}
+                    onDelete={handleDeleteRole}
                 />
             </Card>
 

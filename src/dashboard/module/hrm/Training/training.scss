@@ -189,7 +189,7 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -201,7 +201,7 @@
                     }
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -294,7 +294,7 @@
     justify-content: center;
     border-radius: 6px;
     transition: all 0.3s ease;
-    
+
     &:hover {
         background-color: rgba(0, 0, 0, 0.04);
     }
@@ -311,8 +311,8 @@
         padding: 4px;
         border-radius: 8px;
         box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
-                    0 6px 16px 0 rgba(0, 0, 0, 0.08),
-                    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+            0 6px 16px 0 rgba(0, 0, 0, 0.08),
+            0 9px 28px 8px rgba(0, 0, 0, 0.05);
 
         .ant-dropdown-menu-item {
             padding: 8px 12px;
@@ -335,7 +335,7 @@
 
             &-danger {
                 color: #ff4d4f;
-                
+
                 &:hover {
                     background: #fff1f0;
                 }
@@ -352,7 +352,7 @@
         overflow: hidden;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
-        .ant-table-thead > tr > th {
+        .ant-table-thead>tr>th {
             background: #fafafa;
             font-weight: 600;
             color: #262626;
@@ -360,7 +360,7 @@
             border-bottom: 1px solid #f0f0f0;
         }
 
-        .ant-table-tbody > tr > td {
+        .ant-table-tbody>tr>td {
             padding: 16px;
             vertical-align: middle;
 
@@ -377,7 +377,7 @@
             }
         }
 
-        .ant-table-tbody > tr:hover > td {
+        .ant-table-tbody>tr:hover>td {
             background: #fafafa;
         }
     }
@@ -464,10 +464,175 @@
 
     .training-table {
         .ant-table {
-            .ant-table-thead > tr > th,
-            .ant-table-tbody > tr > td {
+
+            .ant-table-thead>tr>th,
+            .ant-table-tbody>tr>td {
                 padding: 12px 8px;
             }
         }
     }
-} 
+}
+
+.training-list-container {
+    .item-wrapper {
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .icon-wrapper {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+
+                .item-icon {
+                    font-size: 16px;
+                }
+            }
+
+            .info-wrapper {
+                .name {
+                    font-size: 14px;
+                    line-height: 20px;
+                    margin-bottom: 2px;
+                }
+
+                .meta {
+                    font-size: 12px;
+                    color: #6b7280;
+                }
+            }
+        }
+    }
+
+    .links-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        .ant-tag {
+            margin: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .anticon {
+                font-size: 12px;
+            }
+        }
+    }
+
+    .custom-table {
+        .ant-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+            .ant-table-thead>tr>th {
+                background: #fafafa;
+                font-weight: 600;
+                padding: 16px 24px;
+                border-bottom: 1px solid #f0f0f0;
+
+                &::before {
+                    display: none;
+                }
+            }
+
+            .ant-table-tbody>tr>td {
+                padding: 16px 24px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .ant-table-row {
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background: #fafafa;
+
+                    .icon-wrapper {
+                        transform: scale(1.05);
+                    }
+                }
+            }
+        }
+
+        .ant-table-pagination {
+            margin: 16px 24px;
+        }
+    }
+
+    .action-button {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+    }
+
+    .bulk-actions {
+        margin-bottom: 16px;
+
+        .ant-btn {
+            height: 40px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                transform: translateY(-1px);
+            }
+        }
+    }
+}
+
+// Modal styles
+.ant-modal-confirm {
+    .ant-modal-confirm-body {
+        .ant-modal-confirm-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .ant-modal-confirm-content {
+            margin-top: 8px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+    }
+
+    .ant-modal-confirm-btns {
+        margin-top: 24px;
+
+        .ant-btn {
+            height: 36px;
+            padding: 0 16px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+    }
+}

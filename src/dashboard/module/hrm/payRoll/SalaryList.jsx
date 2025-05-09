@@ -80,6 +80,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const [processingSalaryId, setProcessingSalaryId] = useState(null);
   const [processedSalary, setProcessedSalary] = useState(new Set());
   const [loading, setLoading] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   // Define status options
   const statusOptions = [
@@ -130,24 +131,32 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     });
   }, [salary, searchText]);
 
-  const handleDelete = (id) => {
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
+    const title = isMultiple ? 'Delete Selected Salaries' : 'Delete Salary';
+    const content = isMultiple
+      ? `Are you sure you want to delete ${recordOrIds.length} selected salary records?`
+      : 'Are you sure you want to delete this salary record?';
+
     Modal.confirm({
-      title: "Delete Salary Record",
-      content: "Are you sure you want to delete this salary record?",
-      okText: "Yes",
-      okType: "danger",
-      cancelText: "No",
-      bodyStyle: {
-        padding: "20px",
-      },
+      title,
+      content,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      bodyStyle: { padding: "20px" },
       onOk: async () => {
         try {
-          await deleteSalary(id).unwrap();
-          message.success("Salary record deleted successfully");
+          if (isMultiple) {
+            await Promise.all(recordOrIds.map(id => deleteSalary(id).unwrap()));
+            message.success(`${recordOrIds.length} salaries deleted successfully`);
+            setSelectedRowKeys([]); // Clear selection after successful delete
+          } else {
+            await deleteSalary(recordOrIds).unwrap();
+            message.success('Salary deleted successfully');
+          }
         } catch (error) {
-          message.error(
-            error?.data?.message || "Failed to delete salary record"
-          );
+          message.error(error?.data?.message || 'Failed to delete salary(s)');
         }
       },
     });
@@ -534,42 +543,48 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     };
   }, []);
 
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
+
+  // Bulk actions component
+  const BulkActions = () => (
+    <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+      {selectedRowKeys.length > 0 && (
+        <Button
+          type="primary"
+          danger
+          icon={<FiTrash2 size={16} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(selectedRowKeys);
+          }}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div
-      className="salary-list"
-      style={{
-        background: "#ffffff",
-        borderRadius: "8px",
-        overflow: "hidden",
-      }}
-    >
+    <div className="salary-list-container">
+      <BulkActions />
       <Table
+        rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredSalary}
         rowKey="id"
-        // loading={isLoading}
+        loading={isLoading}
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} items`,
-          style: {
-            margin: "16px 24px",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-          },
         }}
-        className="salary-table"
-        style={{
-          "& .ant-table-thead > tr > th": {
-            background: "#fafafa",
-            fontWeight: 600,
-            color: "#262626",
-          },
-          "& .ant-table-tbody > tr:hover > td": {
-            background: "#f5f5f5",
-          },
-        }}
+        className="custom-table"
       />
       {selectedSalary && (
         <EditSalary

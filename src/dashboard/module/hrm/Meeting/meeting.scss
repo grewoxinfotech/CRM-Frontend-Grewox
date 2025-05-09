@@ -189,7 +189,7 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -201,7 +201,7 @@
                     }
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -230,17 +230,17 @@
         border-radius: 16px;
         font-size: 12px;
         font-weight: 500;
-        
+
         &.scheduled {
             background-color: #e6f7ff;
             color: #1890ff;
         }
-        
+
         &.completed {
             background-color: #f6ffed;
             color: #52c41a;
         }
-        
+
         &.cancelled {
             background-color: #fff1f0;
             color: #f5222d;
@@ -252,7 +252,7 @@
             padding: 0;
             height: auto;
             line-height: 1;
-            
+
             &:not(:last-child) {
                 margin-right: 16px;
             }
@@ -519,21 +519,21 @@
         border-radius: 12px !important;
         border: 1px solid #e5e7eb !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-        
+
         .ant-select-item {
             padding: 8px !important;
             border-radius: 8px !important;
             margin: 2px 0 !important;
-            
+
             &-option-selected {
                 background-color: #E6F4FF !important;
                 font-weight: 500 !important;
             }
-            
+
             &-option-active {
                 background-color: #F0F7FF !important;
             }
-            
+
             &:hover {
                 background-color: #F0F7FF !important;
             }
@@ -554,13 +554,302 @@
             transform: translateY(-50%) scale(1);
             opacity: 1;
         }
+
         50% {
             transform: translateY(-50%) scale(1.2);
             opacity: 0.8;
         }
+
         100% {
             transform: translateY(-50%) scale(1);
             opacity: 1;
         }
     }
-} 
+}
+
+.meeting-list-container {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+
+    .custom-table {
+        .ant-table {
+            background: transparent;
+
+            .ant-table-thead>tr>th {
+                background: #f9fafb;
+                color: #4b5563;
+                font-weight: 600;
+                padding: 16px;
+                border-bottom: 1px solid #e5e7eb;
+
+                &::before {
+                    display: none;
+                }
+            }
+
+            .ant-table-tbody>tr>td {
+                padding: 16px;
+                border-bottom: 1px solid #f3f4f6;
+            }
+
+            .ant-table-row {
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background: #f9fafb;
+                    cursor: pointer;
+
+                    .action-button {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+    }
+
+    .item-wrapper {
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .icon-wrapper {
+                width: 36px;
+                height: 36px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+
+                .item-icon {
+                    font-size: 16px;
+                }
+            }
+
+            .info-wrapper {
+                .name {
+                    font-size: 14px;
+                    line-height: 20px;
+                }
+
+                .meta {
+                    font-size: 12px;
+                    color: #6b7280;
+                    margin-top: 2px;
+                }
+            }
+        }
+    }
+
+    .action-button {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+    }
+
+    .bulk-actions {
+        margin-bottom: 16px;
+
+        .ant-btn {
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 16px;
+            font-weight: 500;
+        }
+    }
+
+    // Custom scrollbar
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f9fafb;
+        border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+
+        &:hover {
+            background: #9ca3af;
+        }
+    }
+}
+
+// Dropdown menu styling
+.ant-dropdown {
+    .ant-dropdown-menu {
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+        .ant-dropdown-menu-item {
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #374151;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: #f3f4f6;
+            }
+
+            &-danger {
+                color: #dc2626;
+
+                &:hover {
+                    background: #fee2e2;
+                }
+            }
+
+            .anticon {
+                font-size: 14px;
+            }
+        }
+    }
+}
+
+// Modal styling
+.ant-modal {
+    .ant-modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+
+        .ant-modal-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+            border-bottom: none;
+
+            .ant-modal-title {
+                color: white;
+                font-size: 18px;
+                font-weight: 600;
+            }
+        }
+
+        .ant-modal-body {
+            padding: 24px;
+        }
+
+        .ant-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+    }
+}
+
+// Form styling
+.ant-form {
+    .ant-form-item {
+        margin-bottom: 24px;
+
+        .ant-form-item-label {
+            padding-bottom: 8px;
+
+            label {
+                font-weight: 500;
+                color: #374151;
+            }
+        }
+
+        .ant-input,
+        .ant-select-selector,
+        .ant-picker {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+
+            &:hover,
+            &:focus {
+                border-color: #1677ff;
+                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+            }
+        }
+
+        .ant-select-selector {
+            height: 40px !important;
+            padding: 4px 12px !important;
+
+            .ant-select-selection-search-input {
+                height: 38px !important;
+            }
+
+            .ant-select-selection-item {
+                line-height: 32px !important;
+            }
+        }
+
+        .ant-picker {
+            height: 40px;
+        }
+
+        textarea.ant-input {
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 120px;
+        }
+    }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+    .meeting-list-container {
+        padding: 16px;
+
+        .ant-table {
+
+            .ant-table-thead>tr>th,
+            .ant-table-tbody>tr>td {
+                padding: 12px 8px;
+            }
+        }
+
+        .item-wrapper {
+            .item-content {
+                gap: 8px;
+
+                .icon-wrapper {
+                    width: 32px;
+                    height: 32px;
+
+                    .item-icon {
+                        font-size: 14px;
+                    }
+                }
+
+                .info-wrapper {
+                    .name {
+                        font-size: 13px;
+                    }
+
+                    .meta {
+                        font-size: 11px;
+                    }
+                }
+            }
+        }
+    }
+}

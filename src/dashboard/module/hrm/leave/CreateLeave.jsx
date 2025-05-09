@@ -31,16 +31,16 @@ const CreateLeave = ({ open, onCancel }) => {
   const { data: rolesData } = useGetRolesQuery();
   const employees = React.useMemo(() => {
     if (!employeesData?.data || !rolesData?.data) return [];
-    
+
     const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
     const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
 
     return employeesList.map(employee => {
-        const userRole = rolesList.find(role => role.id === employee.role_id);
-        return {
-            ...employee,
-            role: userRole
-        };
+      const userRole = rolesList.find(role => role.id === employee.role_id);
+      return {
+        ...employee,
+        role: userRole
+      };
     });
   }, [employeesData, rolesData]);
 
@@ -48,8 +48,8 @@ const CreateLeave = ({ open, onCancel }) => {
     try {
       const payload = {
         employeeId: values.employeeId,
-        startDate: values.startDate.format("DD-MM-YYYY"),
-        endDate: values.endDate.format("DD-MM-YYYY"),
+        startDate: values.startDate.format("YYYY-MM-DD"),
+        endDate: values.endDate.format("YYYY-MM-DD"),
         leaveType: values.leaveType,
         reason: values.reason,
         isHalfDay: values.isHalfDay || false,

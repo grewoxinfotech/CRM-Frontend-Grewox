@@ -1,14 +1,18 @@
 import React, { useState, useMemo } from "react";
-import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space } from "antd";
+import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, Checkbox } from "antd";
 import {
   FiEdit2,
   FiTrash2,
   FiEye,
   FiMoreVertical,
   FiCalendar,
+  FiUser,
+  FiClock,
+  FiCheckCircle,
+  FiXCircle,
 } from "react-icons/fi";
 import dayjs from "dayjs";
-import { 
+import {
   useGetLeaveQuery,
   useDeleteLeaveMutation,
   useUpdateLeaveMutation,
@@ -31,6 +35,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [processingLeaveId, setProcessingLeaveId] = useState(null);
   const [processedLeaves, setProcessedLeaves] = useState(new Set());
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   // Create a map of employee IDs to employee names
   const employeeMap = useMemo(() => {
@@ -74,6 +79,52 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       return matchesSearch && matchesDateRange;
     });
   }, [leaves, searchText, employeeMap, filters]);
+
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    Modal.confirm({
+      title: "Delete Selected Leave Requests",
+      content: `Are you sure you want to delete ${selectedRowKeys.length} selected leave requests?`,
+      okText: "Yes",
+      okType: "danger",
+      cancelText: "No",
+      bodyStyle: {
+        padding: "20px",
+      },
+      onOk: async () => {
+        try {
+          await Promise.all(selectedRowKeys.map(id => deleteLeave(id).unwrap()));
+          message.success(`${selectedRowKeys.length} leave requests deleted successfully`);
+          setSelectedRowKeys([]);
+        } catch (error) {
+          message.error("Failed to delete some leave requests");
+        }
+      },
+    });
+  };
+
+  // Bulk actions component
+  const BulkActions = () => (
+    <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+      {selectedRowKeys.length > 0 && (
+        <Button
+          type="primary"
+          danger
+          icon={<FiTrash2 size={16} />}
+          onClick={handleBulkDelete}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
+    </div>
+  );
 
   const handleDelete = (id) => {
     Modal.confirm({
@@ -119,7 +170,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
           remarks: status === "approved" ? "Leave approved." : "Leave rejected.",
         },
       }).unwrap();
-      
+
       setProcessedLeaves((prev) => new Set([...prev, id]));
       message.success(
         `Leave ${status === "approved" ? "approved" : "rejected"} successfully`
@@ -168,6 +219,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
     }
   };
 
+  // Update columns with modern styling
   const columns = [
     {
       title: "Employee Name",
@@ -201,9 +253,24 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
         record.employeeId.toLowerCase().includes(value.toLowerCase()) ||
         record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (employeeId) => (
-        <Text style={{ color: "#262626" }}>
-          {employeeMap[employeeId] || "Unknown Employee"}
-        </Text>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div
+              className="icon-wrapper"
+              style={{
+                color: "#7C3AED",
+                background: "rgba(124, 58, 237, 0.1)"
+              }}
+            >
+              <FiUser className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name" style={{ color: "#262626", fontWeight: 600 }}>
+                {employeeMap[employeeId] || "Unknown Employee"}
+              </div>
+            </div>
+          </div>
+        </div>
       ),
     },
     {
@@ -216,61 +283,109 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       })),
       onFilter: (value, record) => record.leaveType === value,
       render: (leaveType) => (
-        <Tag
-          color="blue"
-          style={{ borderRadius: "4px", padding: "2px 8px", fontSize: "13px" }}
-        >
-          {leaveType}
-        </Tag>
-      ),
-    },
-    {
-      title: "Start Date",
-      dataIndex: "startDate",
-      key: "startDate",
-      sorter: (a, b) => dayjs(a.startDate).unix() - dayjs(b.startDate).unix(),
-      render: (startDate) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiCalendar style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{dayjs(startDate).format("DD-MM-YYYY")}</Text>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div
+              className="icon-wrapper"
+              style={{
+                color: "#059669",
+                background: "rgba(5, 150, 105, 0.1)"
+              }}
+            >
+              <FiClock className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name" style={{ color: "#059669", fontWeight: 500 }}>
+                {leaveType}
+              </div>
+            </div>
+          </div>
         </div>
       ),
     },
     {
-      title: "End Date",
-      dataIndex: "endDate",
-      key: "endDate",
-      sorter: (a, b) => dayjs(a.endDate).unix() - dayjs(b.endDate).unix(),
-      render: (endDate) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiCalendar style={{ color: "#1890ff", fontSize: "16px" }} />
-          <Text>{dayjs(endDate).format("DD-MM-YYYY")}</Text>
-        </div>
-      ),
+      title: "Duration",
+      key: "duration",
+      render: (_, record) => {
+        const start = dayjs(record.startDate);
+        const end = dayjs(record.endDate);
+        const days = end.diff(start, 'day') + 1;
+        return (
+          <div className="item-wrapper">
+            <div className="item-content">
+              <div
+                className="icon-wrapper"
+                style={{
+                  color: "#D97706",
+                  background: "rgba(217, 119, 6, 0.1)"
+                }}
+              >
+                <FiCalendar className="item-icon" />
+              </div>
+              <div className="info-wrapper">
+                <div className="name" style={{ color: "#D97706", fontWeight: 500 }}>
+                  {days} day{days > 1 ? 's' : ''}
+                </div>
+                <div className="meta">
+                  {dayjs(record.startDate).format('DD MMM')} - {dayjs(record.endDate).format('DD MMM YYYY')}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      },
     },
     {
       title: "Status",
       dataIndex: "status",
-        key: "status",
-        filters: statuses.map(status => ({
-            text: status.name,
-            value: status.id
-          })),
-          onFilter: (value, record) => record.status === value,
-      render: (status) => (
-        <Tag
-          color={getStatusColor(status)}
-          style={{ 
-            textTransform: "uppercase",
-            fontWeight: 500,
-            padding: "4px 12px",
-            borderRadius: "16px",
-            fontSize: "12px"
-          }}
-        >
-          {status}
-        </Tag>
-      ),
+      key: "status",
+      filters: statuses.map(status => ({
+        text: status.name,
+        value: status.id
+      })),
+      onFilter: (value, record) => record.status === value,
+      render: (status) => {
+        const statusConfig = {
+          approved: {
+            icon: <FiCheckCircle className="item-icon" />,
+            color: "#059669",
+            bg: "rgba(5, 150, 105, 0.1)"
+          },
+          rejected: {
+            icon: <FiXCircle className="item-icon" />,
+            color: "#DC2626",
+            bg: "rgba(220, 38, 38, 0.1)"
+          },
+          pending: {
+            icon: <FiClock className="item-icon" />,
+            color: "#D97706",
+            bg: "rgba(217, 119, 6, 0.1)"
+          }
+        };
+
+        const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
+
+        return (
+          <div className="item-wrapper">
+            <div className="item-content">
+              <div
+                className="icon-wrapper"
+                style={{
+                  color: config.color,
+                  background: config.bg
+                }}
+              >
+                {config.icon}
+              </div>
+              <div className="info-wrapper">
+                <div className="name" style={{ color: config.color, fontWeight: 500, textTransform: 'capitalize' }}>
+                  {status || 'Pending'}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
     },
     {
       title: "Reason",
@@ -302,8 +417,8 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
               }
               disabled={isDisabled}
               loading={isProcessing}
-              style={{ 
-                backgroundColor: "#4096ff", 
+              style={{
+                backgroundColor: "#4096ff",
                 borderColor: "#4096ff",
                 borderRadius: "6px",
                 fontWeight: 500
@@ -363,25 +478,22 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
   ];
 
   return (
-      <div className="leave-list">
+    <div className="leave-list-container">
+      <BulkActions />
       <Table
+        rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredLeaves}
-        rowKey="id"
         loading={isLoading}
-        scroll={{ x: 1000 }}
+        rowKey="id"
         pagination={{
-          total: filteredLeaves?.length || 0,
           pageSize: 10,
-          showTotal: (total) => `Total ${total} leaves`,
           showSizeChanger: true,
-          showQuickJumper: true,
-          size: 'default',
-          position: ['bottomRight']
+          showTotal: (total) => `Total ${total} items`,
         }}
-        className="leave-table"
+        className="custom-table"
       />
-      {selectedLeave && (
+      {editModalVisible && (
         <EditLeave
           open={editModalVisible}
           onCancel={handleEditModalClose}

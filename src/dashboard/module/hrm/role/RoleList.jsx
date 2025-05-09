@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { Table, Button, Tag, Space, Dropdown, Modal, Tabs, Row, Col, Typography, Tooltip, message, Input } from "antd";
-import { FiEdit2, FiTrash2, FiMoreVertical, FiEye, FiX, FiShield, FiCheck, FiPlus, FiEdit } from "react-icons/fi";
+import { FiEdit2, FiTrash2, FiMoreVertical, FiEye, FiX, FiShield, FiCheck, FiPlus, FiEdit, FiUsers } from "react-icons/fi";
 import EditRole from "./EditRole";
 
 const { Text } = Typography;
 
 const RoleList = ({ roles, onEdit, onDelete }) => {
-    const [editModalVisible, setEditModalVisible] = useState(false);
-    const [selectedRole, setSelectedRole] = useState(null);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [viewPermissionsModal, setViewPermissionsModal] = useState(false);
     const [selectedPermissions, setSelectedPermissions] = useState(null);
+    const [selectedRole, setSelectedRole] = useState(null);
     const [activeTab, setActiveTab] = useState('CRM');
+    const [currentPage, setCurrentPage] = useState(1);
 
     const modules = ['User Management', 'CRM', 'Communication', 'HRM', 'Job'];
     const subModules = {
@@ -59,24 +59,78 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
         ]
     };
 
-    const handleEdit = (role) => {
-        if (!role?.id) {
-            message.error("Cannot edit role: Missing ID");
-            return;
+    const handleEdit = (record) => {
+        // Close permissions modal if it's open
+        if (viewPermissionsModal) {
+            setViewPermissionsModal(false);
+            setSelectedPermissions(null);
         }
-        onEdit?.(role);
+
+        // Call the parent's onEdit handler with the record
+        if (onEdit) {
+            onEdit(record);
+        }
     };
 
-    const handleEditCancel = () => {
-        setSelectedRole(null);
-        setEditModalVisible(false);
+    const handleDelete = async (recordOrIds) => {
+        const isMultiple = Array.isArray(recordOrIds);
+        const title = isMultiple ? 'Delete Selected Roles' : 'Delete Role';
+        const content = isMultiple
+            ? `Are you sure you want to delete ${recordOrIds.length} selected roles?`
+            : 'Are you sure you want to delete this role?';
+
+        Modal.confirm({
+            title,
+            content,
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: { padding: "20px" },
+            onOk: async () => {
+                try {
+                    if (isMultiple) {
+                        // Handle bulk delete
+                        await Promise.all(recordOrIds.map(id => onDelete(id)));
+                        message.success(`${recordOrIds.length} roles deleted successfully`);
+                        setSelectedRowKeys([]); // Clear selection after successful delete
+                    } else {
+                        // Handle single delete
+                        await onDelete(recordOrIds);
+                        message.success('Role deleted successfully');
+                    }
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete role(s)');
+                }
+            },
+        });
     };
 
-    const handleEditComplete = (updatedRole) => {
-        setEditModalVisible(false);
-        setSelectedRole(null);
-        onEdit?.(updatedRole);
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
     };
+
+    // Bulk actions component
+    const BulkActions = () => (
+        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 size={16} />}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(selectedRowKeys);
+                    }}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
+        </div>
+    );
 
     const showAllPermissions = (role) => {
         if (!role?.permissions) {
@@ -84,10 +138,8 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
             return;
         }
 
-        // Parse permissions if they're stored as a string
-        let parsedPermissions;
         try {
-            parsedPermissions = typeof role.permissions === 'string'
+            const parsedPermissions = typeof role.permissions === 'string'
                 ? JSON.parse(role.permissions)
                 : role.permissions;
 
@@ -116,6 +168,7 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
         setViewPermissionsModal(false);
         setSelectedRole(null);
         setSelectedPermissions(null);
+        setActiveTab('CRM');
     };
 
     const renderFullPermissions = (permissions) => {
@@ -327,74 +380,21 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
         }
     };
 
-    const getActionMenu = (record) => {
-        const items = [
-            {
-                key: 'edit',
-                icon: <FiEdit2 style={{ fontSize: '14px', color: '#1890ff' }} />,
-                label: 'Edit',
-                onClick: (e) => {
-                    e.domEvent.stopPropagation();
-                    handleEdit(record);
-                }
-            }
-        ];
-
-        if (record.role_name !== 'super-admin' && record.role_name !== 'client') {
-            items.push({
-                key: 'delete',
-                icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
-                label: 'Delete',
-                onClick: (e) => {
-                    e.domEvent.stopPropagation();
-                    onDelete?.(record);
-                }
-            });
-        }
-
-        return items;
-    };
-
     const columns = [
         {
             title: "Role",
             dataIndex: "role_name",
             key: "role_name",
-            width: "20%",
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search role name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
-                </div>
-              ),
-              onFilter: (value, record) =>
-                record.role_name.toLowerCase().includes(value.toLowerCase()) ||
-                record.company_name?.toLowerCase().includes(value.toLowerCase()),
-            render: (text) => (
-                <div style={{
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    color: '#262626'
-                }}>
-                    {text || "N/A"}
+            render: (text, record) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{ color: "#1890ff", background: "rgba(24, 144, 255, 0.1)" }}>
+                            <FiUsers className="item-icon" />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name" style={{ color: "#262626", fontWeight: 600 }}>{text}</div>
+                        </div>
+                    </div>
                 </div>
             ),
         },
@@ -403,158 +403,100 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
             dataIndex: "permissions",
             key: "permissions",
             width: "65%",
-            sorter: (a, b) => (a?.permissions || "").localeCompare(b?.permissions || ""),
             render: (permissions, record) => renderPermissionTags(permissions, record),
         },
         {
-            title: "Action",
-            key: "action",
-            width: "15%",
-            align: "center",
-            render: (_, record) => (
-                <Dropdown
-                    menu={{ items: getActionMenu(record) }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayStyle={{ minWidth: '120px' }}
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical style={{ fontSize: '16px', color: '#8c8c8c' }} />}
-                        style={{
-                            padding: '4px 8px',
-                            height: '32px',
-                            borderRadius: '6px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </Dropdown>
-            ),
-        },
+            title: "Actions",
+            key: "actions",
+            width: 80,
+            render: (_, record) => {
+                const menuItems = [
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 size={14} />,
+                        label: 'Edit',
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            handleEdit(record);
+                        }
+                    }
+                ];
+
+                if (record.role_name !== 'super-admin' && record.role_name !== 'client') {
+                    menuItems.push({
+                        key: 'delete',
+                        icon: <FiTrash2 size={14} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            handleDelete(record.id);
+                        }
+                    });
+                }
+
+                return (
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <Dropdown
+                            menu={{
+                                items: menuItems,
+                                onClick: (e) => e.domEvent.stopPropagation()
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button
+                                type="text"
+                                icon={<FiMoreVertical size={16} />}
+                                className="action-button"
+                            />
+                        </Dropdown>
+                    </div>
+                );
+            }
+        }
     ];
 
     return (
-        <>
+        <div className="role-list-container">
+            <BulkActions />
             <Table
-                dataSource={roles}
+                rowSelection={rowSelection}
                 columns={columns}
-                rowKey={(record) => record.id}
-                // loading={loading}
+                dataSource={roles}
+                rowKey="id"
                 pagination={{
                     current: currentPage,
-                    pageSize: 10,
-                    total: roles?.length,
-                    showSizeChanger: false,
-                    showQuickJumper: false,
                     onChange: (page) => setCurrentPage(page),
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
                 }}
-                style={{
-                    background: '#fff',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
-                }}
+                className="custom-table"
+                onRow={(record) => ({
+                    onClick: () => showAllPermissions(record)
+                })}
             />
 
-            <Modal
-                title={null}
-                open={viewPermissionsModal}
-                onCancel={handleClosePermissionsModal}
-                footer={null}
-                width={720}
-                destroyOnClose={true}
-                centered
-                closeIcon={null}
-                className="pro-modal custom-modal"
-                styles={{
-                    body: {
-                        padding: 0,
-                        borderRadius: "8px",
-                        overflow: "hidden",
-                    },
-                }}
-            >
-                <div className="modal-header" style={{
-                    background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                    padding: "24px",
-                    color: "#ffffff",
-                    position: "relative",
-                }}>
-                    <Button
-                        type="text"
-                        onClick={handleClosePermissionsModal}
-                        style={{
-                            position: "absolute",
-                            top: "16px",
-                            right: "16px",
-                            color: "#ffffff",
-                            width: "32px",
-                            height: "32px",
-                            padding: 0,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: "rgba(255, 255, 255, 0.2)",
-                            borderRadius: "8px",
-                            border: "none",
-                            cursor: "pointer",
-                            transition: "all 0.3s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
-                        }}
-                    >
-                        <FiX style={{ fontSize: "20px" }} />
-                    </Button>
-                    <div style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "16px",
-                    }}>
-                        <div style={{
-                            width: "48px",
-                            height: "48px",
-                            borderRadius: "12px",
-                            background: "rgba(255, 255, 255, 0.2)",
-                            backdropFilter: "blur(8px)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}>
-                            <FiShield style={{ fontSize: "24px", color: "#ffffff" }} />
+            {viewPermissionsModal && (
+                <Modal
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <FiShield style={{ color: '#FFF' }} size={24} />
+                            <span style={{ fontSize: '16px', fontWeight: 600, color: '#FFF' }}>View Permissions - {selectedRole?.role_name}</span>
                         </div>
-                        <div>
-                            <h2 style={{
-                                margin: "0",
-                                fontSize: "24px",
-                                fontWeight: "600",
-                                color: "#ffffff",
-                            }}>
-                                {selectedRole?.role_name || 'Role'} Permissions
-                            </h2>
-                            <Text style={{
-                                fontSize: "14px",
-                                color: "rgba(255, 255, 255, 0.85)",
-                            }}>
-                                View all permissions for this role
-                            </Text>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="permission-content" style={{
-                    padding: "24px",
-                    backgroundColor: "#ffffff",
-                }}>
-                    {renderFullPermissions(selectedPermissions)}
-                </div>
-            </Modal>
-        </>
+                    }
+                    open={viewPermissionsModal}
+                    onCancel={handleClosePermissionsModal}
+                    footer={null}
+                    width={800}
+                    className="permissions-modal"
+                    destroyOnClose
+                >
+                    {selectedPermissions && renderFullPermissions(selectedPermissions)}
+                </Modal>
+            )}
+        </div>
     );
 };
 
