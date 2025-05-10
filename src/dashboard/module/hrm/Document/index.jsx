@@ -174,7 +174,7 @@ const Document = () => {
         case 'csv':
           const csvContent = [
             Object.keys(formattedData[0]).join(','),
-            ...formattedData.map(item => 
+            ...formattedData.map(item =>
               Object.values(item)
                 .map(value => `"${value?.toString().replace(/"/g, '""')}"`)
                 .join(',')
@@ -207,7 +207,7 @@ const Document = () => {
             head: [Object.keys(formattedData[0])],
             body: formattedData.map(item => Object.values(item)),
             margin: { top: 20 },
-            styles: { 
+            styles: {
               fontSize: 8,
               cellPadding: 2
             },

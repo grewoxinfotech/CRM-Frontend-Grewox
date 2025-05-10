@@ -8,6 +8,7 @@ import {
     FiChevronDown, FiDownload,
     FiHome, FiCalendar
 } from 'react-icons/fi';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import './offerLetters.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
@@ -23,10 +24,13 @@ import { useGetAllJobApplicationsQuery } from '../job applications/services/jobA
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
+const { confirm } = Modal;
 
 const OfferLetters = () => {
-    const { data: offerLettersData, isLoading } = useGetAllOfferLettersQuery();
+    const { data: offerLettersData, isLoading, refetch } = useGetAllOfferLettersQuery();
     const [deleteOfferLetter] = useDeleteOfferLetterMutation();
+    const [createOfferLetter] = useCreateOfferLetterMutation();
+    const [updateOfferLetter] = useUpdateOfferLetterMutation();
     const [offerLetters, setOfferLetters] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [selectedLetter, setSelectedLetter] = useState(null);
@@ -56,15 +60,21 @@ const OfferLetters = () => {
 
     useEffect(() => {
         if (offerLettersData?.data) {
+            console.log('Offer Letters Data:', offerLettersData.data);
+            if (!searchText) {
+                setFilteredLetters(offerLettersData.data);
+                return;
+            }
+
             const searchLower = searchText.toLowerCase();
             const filtered = offerLettersData.data.filter(letter => {
                 // Search in job details
                 const jobMatch = letter.job && getJobTitle(letter.job)?.toLowerCase().includes(searchLower);
-                
+
                 // Search in applicant details
-                const applicantMatch = letter.job_applicant && 
+                const applicantMatch = letter.job_applicant &&
                     applicationMap[letter.job_applicant]?.toLowerCase().includes(searchLower);
-                
+
                 // Search in other fields
                 const otherFieldsMatch = (
                     letter.description?.toLowerCase().includes(searchLower) ||
@@ -73,18 +83,13 @@ const OfferLetters = () => {
                     (letter.expected_joining_date && moment(letter.expected_joining_date).format('DD MMM YYYY').toLowerCase().includes(searchLower))
                 );
 
-                // Date range filtering
-                const matchesDateRange = !dateRange?.length || (
-                    moment(letter.expected_joining_date).isSameOrAfter(dateRange[0], 'day') &&
-                    moment(letter.offer_expiry).isSameOrBefore(dateRange[1], 'day')
-                );
-
-                return (jobMatch || applicantMatch || otherFieldsMatch) && matchesDateRange;
+                return jobMatch || applicantMatch || otherFieldsMatch;
             });
 
+            console.log('Filtered Letters:', filtered);
             setFilteredLetters(filtered);
         }
-    }, [offerLettersData, searchText, applicationMap, jobs, dateRange]);
+    }, [offerLettersData, searchText, applicationMap, jobs]);
 
     const handleAddLetter = () => {
         setSelectedLetter(null);
@@ -103,19 +108,33 @@ const OfferLetters = () => {
         // TODO: Implement view functionality
     };
 
-    const handleDelete = (record) => {
+    const handleDelete = (recordOrIds) => {
+        const isMultiple = Array.isArray(recordOrIds);
+        const title = isMultiple ? 'Delete Selected Offer Letters' : 'Delete Offer Letter';
+        const content = isMultiple
+            ? `Are you sure you want to delete ${recordOrIds.length} selected offer letters?`
+            : 'Are you sure you want to delete this offer letter?';
+
         Modal.confirm({
-            title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this offer letter?',
+            title,
+            content,
+            okText: 'Yes',
             okType: 'danger',
-            bodyStyle: { padding: '20px' },
             cancelText: 'No',
+            icon: <ExclamationCircleOutlined />,
+            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
-                    await deleteOfferLetter(record.id).unwrap();
-                    message.success('Offer letter deleted successfully');
+                    if (isMultiple) {
+                        await Promise.all(recordOrIds.map(id => deleteOfferLetter(id).unwrap()));
+                        message.success(`${recordOrIds.length} offer letters deleted successfully`);
+                    } else {
+                        await deleteOfferLetter(recordOrIds.id).unwrap();
+                        message.success('Offer letter deleted successfully');
+                    }
+                    refetch();
                 } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete offer letter');
+                    message.error(error?.data?.message || 'Failed to delete offer letter(s)');
                 }
             },
         });
@@ -241,6 +260,28 @@ const OfferLetters = () => {
         setSelectedLetter(null);
     };
 
+    const handleFormSubmit = async (formData) => {
+        try {
+            if (isEditing) {
+                await updateOfferLetter({
+                    id: selectedLetter.id,
+                    ...formData
+                }).unwrap();
+                message.success('Offer letter updated successfully');
+            } else {
+                await createOfferLetter(formData).unwrap();
+                message.success('Offer letter created successfully');
+            }
+            setIsFormVisible(false);
+            setSelectedLetter(null);
+            setIsEditing(false);
+            refetch();
+        } catch (error) {
+            console.error('Form submit error:', error);
+            message.error(error?.data?.message || 'Failed to save offer letter');
+        }
+    };
+
     return (
         <div className="offer-letters-page">
             <div className="page-breadcrumb">
@@ -252,7 +293,7 @@ const OfferLetters = () => {
                         </Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>
-                        <Link to="/dashboard/job">Job</Link>
+                        <Link to="/dashboard/hrm">HRM</Link>
                     </Breadcrumb.Item>
                     <Breadcrumb.Item>Offer Letters</Breadcrumb.Item>
                 </Breadcrumb>
@@ -261,13 +302,13 @@ const OfferLetters = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Offer Letters</Title>
-                    <Text type="secondary">Manage all offer letters</Text>
+                    <Text type="secondary">Manage all offer letters in the organization</Text>
                 </div>
                 <div className="header-actions">
                     <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <Input
                             prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search by job, applicant, salary, dates..."
+                            placeholder="Search offer letters..."
                             allowClear
                             onChange={(e) => handleSearch(e.target.value)}
                             value={searchText}
@@ -281,16 +322,16 @@ const OfferLetters = () => {
                             value={dateRange}
                             allowClear
                             style={{ width: '300px', height: '40px' }}
-                            placeholder={['Expected Joining Date', 'Offer Expiry Date']}
+                            placeholder={['Start Date', 'End Date']}
                         />
                     </div>
                     <div className="action-buttons">
-                        <Dropdown 
-                            overlay={exportMenu} 
+                        <Dropdown
+                            overlay={exportMenu}
                             trigger={['click']}
                             disabled={isLoading || exportLoading}
                         >
-                            <Button 
+                            <Button
                                 className="export-button"
                                 loading={exportLoading}
                             >
@@ -314,30 +355,20 @@ const OfferLetters = () => {
             <Card className="offer-letters-table-card">
                 <OfferLetterList
                     offerLetters={filteredLetters}
-                    loading={isLoading}
                     onEdit={handleEditLetter}
                     onDelete={handleDelete}
-                    onView={handleViewLetter}
+                    loading={isLoading}
+                    searchText={searchText}
                 />
             </Card>
 
-            {isEditing ? (
-                <EditOfferLetter
-                    open={isFormVisible}
-                    onCancel={handleEditModalClose}
-                    isEditing={isEditing}
-                    initialValues={selectedLetter}
-                    loading={exportLoading}
-                />
-            ) : (
+            {isFormVisible && (
                 <CreateOfferLetter
                     open={isFormVisible}
-                    onCancel={() => {
-                        setIsFormVisible(false);
-                        setSelectedLetter(null);
-                    }}
+                    onCancel={() => setIsFormVisible(false)}
+                    onSubmit={handleFormSubmit}
                     initialValues={selectedLetter}
-                    loading={exportLoading}
+                    isEditing={isEditing}
                 />
             )}
         </div>

@@ -45,7 +45,7 @@
             }
         }
     }
-   
+
 
     .page-header {
         @include hover-shadow;
@@ -190,7 +190,7 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
+                .ant-table-thead>tr>th {
                     background: #fafafa;
                     font-weight: 600;
                     color: $text-color-dark;
@@ -202,7 +202,7 @@
                     }
                 }
 
-                .ant-table-tbody > tr > td {
+                .ant-table-tbody>tr>td {
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
 
@@ -236,7 +236,7 @@
     .ant-card-cover {
         padding: 24px 24px 0;
         background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-        
+
         .job-avatar {
             width: 64px;
             height: 64px;
@@ -320,7 +320,7 @@
 
 // Job List Styles
 .job-list-table {
-    .ant-table-thead > tr > th {
+    .ant-table-thead>tr>th {
         background: #fafafa;
         font-weight: 500;
     }
@@ -424,7 +424,7 @@
 
         &-danger {
             color: #ff4d4f;
-            
+
             &:hover {
                 background: #fff1f0;
             }

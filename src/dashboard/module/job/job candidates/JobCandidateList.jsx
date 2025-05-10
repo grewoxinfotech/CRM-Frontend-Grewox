@@ -1,14 +1,22 @@
 import React from 'react';
-import { Table, Tag, Dropdown, Button, message, Input, Space } from 'antd';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import { Table, Tag, Button, Input, Space, Typography } from 'antd';
+import {
+    FiUser,
+    FiBriefcase,
+    FiPhone,
+    FiClock,
+    FiHash,
+    FiGlobe,
+    FiSearch
+} from 'react-icons/fi';
 import moment from 'moment';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
-import { useUpdateJobApplicationMutation } from '../job applications/services/jobApplicationApi';
+import './jobCandidates.scss';
 
+const { Text } = Typography;
 
-const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) => {
+const JobCandidateList = ({ applications, loading }) => {
     const { data: jobs, isLoading: jobsLoading } = useGetAllJobsQuery();
-    
 
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
@@ -17,34 +25,11 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
         return job ? job.title : 'N/A';
     };
 
- const statuses = [
+    const statuses = [
         { id: 'pending', name: 'Pending' },
         { id: 'shortlisted', name: 'Shortlisted' },
         { id: 'selected', name: 'Selected' },
         { id: 'rejected', name: 'Rejected' },
-    ];
-
-    // Function to get menu items for each row
-    const getActionItems = (record) => [
-        {
-            key: 'view',
-            icon: <FiEye style={{ fontSize: '16px' }} />,
-            label: 'View',
-            onClick: () => onView?.(record)
-        },
-        {
-            key: 'edit',
-            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-            label: 'Edit',
-            onClick: () => onEdit?.(record)
-        },
-        {
-            key: 'delete',
-            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
-            label: 'Delete',
-            danger: true,
-            onClick: () => onDelete?.(record)
-        }
     ];
 
     const columns = [
@@ -54,36 +39,49 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
             key: 'name',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search candidate name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search candidate name"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            icon={<FiSearch />}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Search
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
+            ),
+            onFilter: (value, record) =>
                 record.name?.toLowerCase().includes(value.toLowerCase()),
-              sorter: (a, b) => {
+            sorter: (a, b) => {
                 if (!a.name && !b.name) return 0;
                 if (!a.name) return -1;
                 if (!b.name) return 1;
                 return a.name.localeCompare(b.name);
-              },    
+            },
+            render: (text) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper">
+                            <FiUser size={16} />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name">{text}</div>
+                        </div>
+                    </div>
+                </div>
+            ),
         },
         {
             title: 'Job',
@@ -95,8 +93,18 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 if (!b.job) return 1;
                 return a.job.toString().localeCompare(b.job.toString());
             },
-            render: (jobId) => getJobTitle(jobId)
-        },  
+            render: (jobId) => (
+                <div className="column-icon">
+                    <div className="icon-bg" style={{
+                        color: "#8b5cf6",
+                        background: "rgba(139, 92, 246, 0.1)"
+                    }}>
+                        <FiBriefcase size={16} />
+                    </div>
+                    <Text>{getJobTitle(jobId)}</Text>
+                </div>
+            )
+        },
         {
             title: 'Notice Period',
             dataIndex: 'notice_period',
@@ -107,6 +115,17 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 if (!b.notice_period) return 1;
                 return a.notice_period.localeCompare(b.notice_period);
             },
+            render: (text) => (
+                <div className="column-icon">
+                    <div className="icon-bg" style={{
+                        color: "#10b981",
+                        background: "rgba(16, 185, 129, 0.1)"
+                    }}>
+                        <FiClock size={16} />
+                    </div>
+                    <Text>{text}</Text>
+                </div>
+            )
         },
         {
             title: 'Phone',
@@ -118,6 +137,17 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 if (!b.phone) return 1;
                 return a.phone.localeCompare(b.phone);
             },
+            render: (text) => (
+                <div className="column-icon">
+                    <div className="icon-bg" style={{
+                        color: "#f59e0b",
+                        background: "rgba(245, 158, 11, 0.1)"
+                    }}>
+                        <FiPhone size={16} />
+                    </div>
+                    <Text>{text}</Text>
+                </div>
+            )
         },
         {
             title: 'Experience',
@@ -129,6 +159,17 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 if (!b.total_experience) return 1;
                 return a.total_experience.localeCompare(b.total_experience);
             },
+            render: (text) => (
+                <div className="column-icon">
+                    <div className="icon-bg" style={{
+                        color: "#6366f1",
+                        background: "rgba(99, 102, 241, 0.1)"
+                    }}>
+                        <FiHash size={16} />
+                    </div>
+                    <Text>{text} years</Text>
+                </div>
+            )
         },
         {
             title: 'Applied Source',
@@ -140,8 +181,18 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
                 if (!b.applied_source) return 1;
                 return a.applied_source.localeCompare(b.applied_source);
             },
+            render: (text) => (
+                <div className="column-icon">
+                    <div className="icon-bg" style={{
+                        color: "#3b82f6",
+                        background: "rgba(59, 130, 246, 0.1)"
+                    }}>
+                        <FiGlobe size={16} />
+                    </div>
+                    <Text>{text}</Text>
+                </div>
+            )
         },
-        
         {
             title: 'Status',
             dataIndex: 'status',
@@ -149,75 +200,70 @@ const JobCandidateList = ({ applications, onEdit, onDelete, onView, loading }) =
             filters: statuses.map(status => ({
                 text: status.name,
                 value: status.id
-              })),
-              onFilter: (value, record) => record.status === value,
+            })),
+            onFilter: (value, record) => record.status === value,
             render: (status) => {
                 if (!status) return <Tag color="default">N/A</Tag>;
-                
+
                 let color;
+                let bgColor;
                 switch (status.toLowerCase()) {
-                    case 'pending': color = 'gold'; break;
-                    case 'shortlisted': color = 'blue'; break;
-                    case 'selected': color = 'green'; break;
-                    case 'rejected': color = 'red'; break;
-                    default: color = 'default';
+                    case 'pending':
+                        color = '#faad14';
+                        bgColor = '#fff7e6';
+                        break;
+                    case 'shortlisted':
+                        color = '#1890ff';
+                        bgColor = '#e6f7ff';
+                        break;
+                    case 'selected':
+                        color = '#52c41a';
+                        bgColor = '#f6ffed';
+                        break;
+                    case 'rejected':
+                        color = '#ff4d4f';
+                        bgColor = '#fff1f0';
+                        break;
+                    default:
+                        color = '#8c8c8c';
+                        bgColor = '#f5f5f5';
                 }
                 return (
-                    <Tag color={color} style={{ textTransform: 'capitalize' }}>
+                    <Tag
+                        style={{
+                            color: color,
+                            background: bgColor,
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '4px 8px',
+                            textTransform: 'capitalize'
+                        }}
+                    >
                         {status.replace(/_/g, ' ')}
                     </Tag>
                 );
             }
-        },
-        // {
-        //     title: 'Actions',
-        //     key: 'actions',
-        //     fixed: 'right',
-        //     render: (_, record) => (
-        //         <Dropdown
-        //             menu={{ items: getActionItems(record) }}
-        //             trigger={['click']}
-        //             placement="bottomRight"
-        //             overlayStyle={{ minWidth: '150px' }}
-        //         >
-        //             <Button
-        //                 type="text"
-        //                 icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-        //                 style={{
-        //                     width: '32px',
-        //                     height: '32px',
-        //                     display: 'flex',
-        //                     alignItems: 'center',
-        //                     justifyContent: 'center',
-        //                     borderRadius: '6px',
-        //                     transition: 'all 0.3s ease'
-        //                 }}
-        //                 onMouseEnter={(e) => {
-        //                     e.currentTarget.style.background = '#f0f2f5';
-        //                 }}
-        //                 onMouseLeave={(e) => {
-        //                     e.currentTarget.style.background = 'transparent';
-        //                 }}
-        //             />
-        //         </Dropdown>
-        //     )
-        // }
+        }
     ];
 
     return (
-        <Table
-            columns={columns}
-            dataSource={applications || []}
-            rowKey="id"
-            scroll={{ x: 1500 }}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total, range) => 
-                    `${range[0]}-${range[1]} of ${total} applications`
-            }}
-            style={{ background: '#ffffff', borderRadius: '8px' }}
-        />
+        <div className="job-candidates-page">
+            <div className="job-candidates-table-card">
+                <Table
+                    columns={columns}
+                    dataSource={applications || []}
+                    rowKey="id"
+                    loading={loading}
+                    scroll={{ x: 1500 }}
+                    pagination={{
+                        pageSize: 10,
+                        showSizeChanger: true,
+                        showTotal: (total, range) =>
+                            `${range[0]}-${range[1]} of ${total} applications`
+                    }}
+                />
+            </div>
+        </div>
     );
 };
 

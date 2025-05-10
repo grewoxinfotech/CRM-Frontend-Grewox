@@ -8,6 +8,7 @@ import {
     FiChevronDown, FiDownload,
     FiHome
 } from 'react-icons/fi';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import './jobOnboarding.scss';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
@@ -19,6 +20,7 @@ import { Link } from 'react-router-dom';
 import { useGetAllJobOnboardingQuery, useDeleteJobOnboardingMutation } from './services/jobOnboardingApi';
 
 const { Title, Text } = Typography;
+const { confirm } = Modal;
 
 const JobOnboarding = () => {
     const [onboardings, setOnboardings] = useState([]);
@@ -32,7 +34,7 @@ const JobOnboarding = () => {
     const searchInputRef = useRef(null);
 
     // Use RTK Query hooks
-    const { data: onboardingsData, isLoading } = useGetAllJobOnboardingQuery();
+    const { data: onboardingsData, isLoading, refetch } = useGetAllJobOnboardingQuery();
     const [deleteOnboarding] = useDeleteJobOnboardingMutation();
 
     useEffect(() => {
@@ -71,19 +73,34 @@ const JobOnboarding = () => {
         setSelectedOnboarding(onboarding);
     };
 
-    const handleDelete = (record) => {
+    const handleDelete = (recordOrIds) => {
+        const isMultiple = Array.isArray(recordOrIds);
+        const title = isMultiple ? 'Delete Selected Onboardings' : 'Delete Onboarding';
+        const content = isMultiple
+            ? `Are you sure you want to delete ${recordOrIds.length} selected onboardings?`
+            : 'Are you sure you want to delete this onboarding?';
+
         Modal.confirm({
-            title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this designation?',
+            title,
+            content,
+            okText: 'Yes',
             okType: 'danger',
-            bodyStyle: { padding: '20px' },
             cancelText: 'No',
+            icon: <ExclamationCircleOutlined />,
+            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
-                    await deleteOnboarding(record.id).unwrap();
-                    message.success('Job deleted successfully');
+                    if (isMultiple) {
+                        await Promise.all(recordOrIds.map(id => deleteOnboarding(id).unwrap()));
+                        message.success(`${recordOrIds.length} onboardings deleted successfully`);
+                    } else {
+                        await deleteOnboarding(recordOrIds).unwrap();
+                        message.success('Onboarding deleted successfully');
+                    }
+                    // Refetch the data after successful delete
+                    refetch();
                 } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete job');
+                    message.error(error?.data?.message || 'Failed to delete onboarding(s)');
                 }
             },
         });
@@ -216,7 +233,7 @@ const JobOnboarding = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
+    return (
         <div className="job-onboarding-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -283,12 +300,12 @@ const JobOnboarding = () => {
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
-                
+
                 initialValues={selectedOnboarding}
                 loading={loading}
             />
 
-           
+
         </div>
     );
 };

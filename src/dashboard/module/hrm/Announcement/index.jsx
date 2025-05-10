@@ -37,7 +37,7 @@ const Announcement = () => {
 
     // Get all announcements
     const { data: announcements = [], isLoading, error } = useGetAllAnnouncementsQuery();
-    
+
     // Delete mutation
     const [deleteAnnouncement] = useDeleteAnnouncementMutation();
 

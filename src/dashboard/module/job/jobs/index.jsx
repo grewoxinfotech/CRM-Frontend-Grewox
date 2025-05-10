@@ -33,23 +33,23 @@ const Job = () => {
     const [exportLoading, setExportLoading] = useState(false);
     const searchInputRef = useRef(null);
 
-    const { data: jobsData, isLoading, error } = useGetAllJobsQuery();
+    const { data: jobsData, isLoading, error, refetch } = useGetAllJobsQuery();
     const [deleteJob] = useDeleteJobMutation();
 
     const filteredJobs = React.useMemo(() => {
         if (!jobsData?.data) return [];
-        
+
         const searchTerm = searchText.toLowerCase().trim();
-        
+
         return jobsData.data.filter(job => {
-            const matchesSearch = !searchTerm || 
+            const matchesSearch = !searchTerm ||
                 job.title?.toLowerCase().includes(searchTerm);
-            
+
             const matchesDateRange = !dateRange?.length || (
                 moment(job.startDate).isSameOrAfter(dateRange[0], 'day') &&
                 moment(job.endDate).isSameOrBefore(dateRange[1], 'day')
             );
-            
+
             return matchesSearch && matchesDateRange;
         });
     }, [jobsData, searchText, dateRange]);
@@ -70,19 +70,34 @@ const Job = () => {
         setSelectedJob(job);
     };
 
-    const handleDelete = (record) => {
+    const handleDelete = (recordOrIds) => {
+        const isMultiple = Array.isArray(recordOrIds);
+        const title = isMultiple ? 'Delete Selected Jobs' : 'Delete Job';
+        const content = isMultiple
+            ? `Are you sure you want to delete ${recordOrIds.length} selected jobs?`
+            : 'Are you sure you want to delete this job?';
+
         Modal.confirm({
-            title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this job?',
+            title,
+            content,
+            okText: 'Yes',
             okType: 'danger',
-            bodyStyle: { padding: '20px' },
             cancelText: 'No',
+            icon: <ExclamationCircleOutlined />,
+            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
-                    await deleteJob(record.id).unwrap();
-                    message.success('Job deleted successfully');
+                    if (isMultiple) {
+                        await Promise.all(recordOrIds.map(id => deleteJob(id).unwrap()));
+                        message.success(`${recordOrIds.length} jobs deleted successfully`);
+                    } else {
+                        await deleteJob(recordOrIds).unwrap();
+                        message.success('Job deleted successfully');
+                    }
+                    // Refetch the data after successful delete
+                    refetch();
                 } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete job');
+                    message.error(error?.data?.message || 'Failed to delete job(s)');
                 }
             },
         });
@@ -267,12 +282,12 @@ const Job = () => {
                         />
                     </div>
                     <div className="action-buttons">
-                        <Dropdown 
-                            overlay={exportMenu} 
+                        <Dropdown
+                            overlay={exportMenu}
                             trigger={['click']}
                             disabled={isLoading || exportLoading}
                         >
-                            <Button 
+                            <Button
                                 className="export-button"
                                 loading={exportLoading}
                             >
@@ -296,21 +311,21 @@ const Job = () => {
             <Card className="job-table-card">
                 <JobList
                     jobs={filteredJobs}
-                    loading={isLoading}
                     onEdit={handleEditJob}
                     onDelete={handleDelete}
-                    onView={handleViewJob}
+                    loading={isLoading}
                 />
             </Card>
 
-            <CreateJob
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
-                isEditing={isEditing}
-                initialValues={selectedJob}
-                loading={isLoading}
-            />
+            {isFormVisible && (
+                <CreateJob
+                    open={isFormVisible}
+                    onCancel={() => setIsFormVisible(false)}
+                    onSubmit={handleFormSubmit}
+                    initialValues={selectedJob}
+                    isEditing={isEditing}
+                />
+            )}
         </div>
     );
 };

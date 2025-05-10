@@ -1,38 +1,114 @@
-import React, { useMemo } from 'react';
-import { Table, Tag, Dropdown, Button, Input, Space } from 'antd';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Table, Tag, Dropdown, Button, Input, Space, Typography, Menu } from 'antd';
+import {
+    FiMoreVertical,
+    FiEdit2,
+    FiTrash2,
+    FiSearch,
+    FiUser,
+    FiBriefcase,
+    FiFileText,
+    FiEye,
+    FiCalendar,
+    FiDollarSign,
+    FiClock
+} from 'react-icons/fi';
 import moment from 'moment';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
+import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
-const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) => {
+const { Text } = Typography;
+
+const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading, searchText }) => {
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [filteredInfo, setFilteredInfo] = useState({});
+    const [sortedInfo, setSortedInfo] = useState({});
+
     // Fetch jobs and applications data
-    const { data: jobs, isLoading: jobsLoading } = useGetAllJobsQuery();
+    const { data: jobsData, isLoading: jobsLoading } = useGetAllJobsQuery();
     const { data: applicationsData } = useGetAllJobApplicationsQuery();
+
+    // Fetch currency data
+    const { data: currencyData } = useGetAllCurrenciesQuery();
+
+    console.log('Jobs Data:', jobsData);
+    console.log('Applications Data:', applicationsData);
+    console.log('Offer Letters:', offerLetters);
 
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
-        if (!jobs) return 'Loading...';
-        const job = jobs.data.find(job => job.id === jobId);
+        if (!jobsData?.data) return 'Loading...';
+        const job = jobsData.data.find(job => job.id === jobId);
+        console.log('Finding job for ID:', jobId, 'Found:', job);
         return job ? job.title : 'N/A';
     };
 
     const applicationMap = useMemo(() => {
         if (!applicationsData?.data) return {};
-        return applicationsData.data.reduce((acc, application) => {
+        const map = applicationsData.data.reduce((acc, application) => {
             acc[application.id] = application.name || application.applicant_name;
             return acc;
         }, {});
+        console.log('Application Map:', map);
+        return map;
     }, [applicationsData]);
+
+    // Function to get currency details
+    const getCurrencyDetails = (currencyId) => {
+        if (!currencyData?.data) return { symbol: '$', code: 'USD' };
+        const currency = currencyData.data.find(c => c.id === currencyId);
+        return currency ? {
+            symbol: currency.currencySymbol || '$',
+            code: currency.currencyCode || 'USD'
+        } : { symbol: '$', code: 'USD' };
+    };
+
+    // Clear selections when offerLetters data changes
+    useEffect(() => {
+        setSelectedRowKeys([]);
+    }, [offerLetters]);
+
+    const handleChange = (pagination, filters, sorter) => {
+        setFilteredInfo(filters);
+        setSortedInfo(sorter);
+    };
+
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
+    };
+
+    // Handle bulk delete
+    const handleBulkDelete = () => {
+        onDelete(selectedRowKeys);
+        setSelectedRowKeys([]); // Clear selections after delete
+    };
+
+    const getStatusColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'accepted':
+                return { color: '#52c41a', background: '#f6ffed' };
+            case 'rejected':
+                return { color: '#ff4d4f', background: '#fff1f0' };
+            case 'pending':
+                return { color: '#faad14', background: '#fff7e6' };
+            default:
+                return { color: '#8c8c8c', background: '#f5f5f5' };
+        }
+    };
 
     // Function to get menu items for each row
     const getActionItems = (record) => [
-        // {
-        //     key: 'view',
-        //     icon: <FiEye style={{ fontSize: '16px' }} />,
-        //     label: 'View',
-        //     onClick: () => onView(record)
-        // },
+        {
+            key: 'view',
+            icon: <FiEye style={{ fontSize: '16px' }} />,
+            label: 'View',
+            onClick: () => onView(record)
+        },
         {
             key: 'edit',
             icon: <FiEdit2 style={{ fontSize: '16px' }} />,
@@ -55,32 +131,58 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
             key: 'job',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search job title"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search job title"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
-                record.job.toLowerCase().includes(value.toLowerCase()),
-
-            render: (jobId) => getJobTitle(jobId)
+            ),
+            onFilter: (value, record) => {
+                const jobTitle = getJobTitle(record.job);
+                return jobTitle.toLowerCase().includes(value.toLowerCase());
+            },
+            render: (jobId) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{
+                            color: "#1890ff",
+                            background: "rgba(24, 144, 255, 0.1)",
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiBriefcase size={20} />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>
+                                {getJobTitle(jobId)}
+                            </div>
+                            <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
+                                Job Position
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
         },
         {
             title: 'Applicant',
@@ -88,51 +190,83 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
             key: 'job_applicant',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search applicant name"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
+                    <Input
+                        placeholder="Search applicant name"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
-              ),
-              onFilter: (value, record) =>
-                record.job_applicant.toLowerCase().includes(value.toLowerCase()),
-            render: (applicantId) => {
-                const applicantName = applicationMap[applicantId] || 'Unknown Applicant';
-                return (
-                    <span >
-                        {applicantName}
-                    </span>
-                );
+            ),
+            onFilter: (value, record) => {
+                const applicantName = applicationMap[record.job_applicant] || '';
+                return applicantName.toLowerCase().includes(value.toLowerCase());
             },
-           
+            render: (applicantId) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{
+                            color: "#52c41a",
+                            background: "rgba(82, 196, 26, 0.1)",
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiUser size={20} />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>
+                                {applicationMap[applicantId] || 'Unknown Applicant'}
+                            </div>
+                            <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
+                                Applicant
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
         },
         {
             title: 'Salary',
             dataIndex: 'salary',
             key: 'salary',
-            render: (salary) => (
-                <span>
-                    {typeof salary === 'number' 
-                        ? `$${salary.toLocaleString()}`
-                        : salary
-                    }
-                </span>
+            render: (salary, record) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{
+                            color: "#722ed1",
+                            background: "rgba(114, 46, 209, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiDollarSign size={16} />
+                        </div>
+                        <Text>
+                            {salary ? `${getCurrencyDetails(record.currency).symbol} ${Number(salary).toLocaleString()}` : 'N/A'}
+                        </Text>
+                    </div>
+                </div>
             ),
             sorter: (a, b) => {
                 const salaryA = parseFloat(a.salary) || 0;
@@ -140,63 +274,94 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
                 return salaryA - salaryB;
             }
         },
-        {   
-            title: 'Expected Joining Date',
+        {
+            title: 'Expected Joining',
             dataIndex: 'expected_joining_date',
             key: 'expected_joining_date',
-            sorter: (a, b) => {
-                const dateA = new Date(a.expected_joining_date);
-                const dateB = new Date(b.expected_joining_date);
-                return dateA - dateB;
-            },
             render: (date) => (
-                <span>
-                    {date ? moment(date).format('DD-MM-YYYY') : '-'}
-                </span>
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{
+                            color: "#f5222d",
+                            background: "rgba(245, 34, 45, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiCalendar size={16} />
+                        </div>
+                        <Text>{date ? moment(date).format('DD MMM YYYY') : 'N/A'}</Text>
+                    </div>
+                </div>
             )
         },
         {
-            title: 'Offer Expiry Date',
+            title: 'Offer Expiry',
             dataIndex: 'offer_expiry',
             key: 'offer_expiry',
-            sorter: (a, b) => {
-                const dateA = new Date(a.offer_expiry);
-                const dateB = new Date(b.offer_expiry);
-                return dateA - dateB;
-            },
-            render: (date) => date ? moment(date).format('DD-MM-YYYY') : '-'
+            render: (date) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{
+                            color: "#fa8c16",
+                            background: "rgba(250, 140, 22, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiClock size={16} />
+                        </div>
+                        <Text>{date ? moment(date).format('DD MMM YYYY') : 'N/A'}</Text>
+                    </div>
+                </div>
+            )
         },
         {
-            title: 'Description',
-            dataIndex: 'description',
-            key: 'description',
-            render: (text) => (
-                <span style={{ 
-                    maxWidth: '200px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    display: 'block'
-                }}>
-                    {text || '-'}
-                </span>
-            ),
-            sorter: (a, b) => (a.description || '').localeCompare(b.description || '')
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
+            render: (status) => {
+                const { color, background } = getStatusColor(status);
+                return (
+                    <Tag style={{
+                        color: color,
+                        background: background,
+                        border: 'none',
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        textTransform: 'capitalize'
+                    }}>
+                        {status || 'N/A'}
+                    </Tag>
+                );
+            }
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
             width: 80,
             render: (_, record) => (
                 <Dropdown
-                    menu={{ items: getActionItems(record) }}
+                    overlay={
+                        <Menu>
+                            {getActionItems(record).map(item => (
+                                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
+                                    {item.label}
+                                </Menu.Item>
+                            ))}
+                        </Menu>
+                    }
                     trigger={['click']}
-                    placement="bottomRight"
-                    overlayStyle={{ minWidth: '150px' }}
                 >
                     <Button
                         type="text"
-                        icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
+                        icon={<FiMoreVertical size={16} />}
                         style={{
                             width: '32px',
                             height: '32px',
@@ -206,6 +371,7 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
                             borderRadius: '6px',
                             transition: 'all 0.3s ease'
                         }}
+                        className="action-btn"
                         onMouseEnter={(e) => {
                             e.currentTarget.style.background = '#f0f2f5';
                         }}
@@ -214,25 +380,45 @@ const OfferLetterList = ({ offerLetters, onEdit, onDelete, onView, loading }) =>
                         }}
                     />
                 </Dropdown>
-            )
-        }
+            ),
+        },
     ];
 
     return (
-        <Table
-            columns={columns}
-            dataSource={offerLetters}
-            rowKey="id"
-            scroll={{ x: 1500 }}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total, range) => 
-                    `${range[0]}-${range[1]} of ${total} offer letters`
-            }}
-            style={{ background: '#ffffff', borderRadius: '8px' }}
-        />
+        <>
+            {selectedRowKeys.length > 0 && (
+                <div className="bulk-actions">
+                    <Button
+                        type="primary"
+                        danger
+                        icon={<FiTrash2 size={16} />}
+                        onClick={handleBulkDelete}
+                    >
+                        Delete Selected ({selectedRowKeys.length})
+                    </Button>
+                </div>
+            )}
+            <Table
+                columns={columns}
+                dataSource={offerLetters}
+                rowSelection={rowSelection}
+                loading={loading || jobsLoading}
+                onChange={handleChange}
+                rowKey="id"
+                scroll={{ x: 1500 }}
+                pagination={{
+                    defaultPageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                }}
+            />
+        </>
     );
 };
 
-export default OfferLetterList; 
+export default OfferLetterList;

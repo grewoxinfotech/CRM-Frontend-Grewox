@@ -1,38 +1,112 @@
-import React from 'react';
-import { Table, Tag, Dropdown, Button, Input, Space, DatePicker  } from 'antd';
-import { FiMoreVertical, FiEdit2, FiTrash2, FiEye, FiCalendar } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Table, Tag, Dropdown, Button, Input, Space, DatePicker, Typography } from 'antd';
+import {
+    FiMoreVertical,
+    FiEdit2,
+    FiTrash2,
+    FiUser,
+    FiCalendar,
+    FiClock,
+    FiDollarSign,
+    FiPackage,
+    FiActivity
+} from 'react-icons/fi';
 import dayjs from 'dayjs';
+import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
-const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) => {
-    // Function to get menu items for each row
+const { Text } = Typography;
 
-    const statuses = [
-        { id: 'pending', name: 'Pending' },
-        { id: 'in_progress', name: 'In Progress' },
-        { id: 'completed', name: 'Completed' },
-        { id: 'delayed', name: 'Delayed' },
-    ];  
-    const getActionItems = (record) => [
-        // {
-        //     key: 'view',
-        //     icon: <FiEye style={{ fontSize: '16px' }} />,
-        //     label: 'View',
-        //     onClick: () => onView(record)
-        // },
-        {
-            key: 'edit',
-            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-            label: 'Edit',
-            onClick: () => onEdit(record)
-        },
-        {
-            key: 'delete',
-            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
-            label: 'Delete',
-            danger: true,
-            onClick: () => onDelete(record)
+const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading }) => {
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [filteredInfo, setFilteredInfo] = useState({});
+    const [sortedInfo, setSortedInfo] = useState({});
+
+    // Fetch currencies
+    const { data: currencies } = useGetAllCurrenciesQuery({
+        page: 1,
+        limit: 100
+    });
+
+    // Clear selections when onboardings data changes
+    useEffect(() => {
+        setSelectedRowKeys([]);
+    }, [onboardings]);
+
+    const handleChange = (pagination, filters, sorter) => {
+        setFilteredInfo(filters);
+        setSortedInfo(sorter);
+    };
+
+    const clearFilters = () => {
+        setFilteredInfo({});
+    };
+
+    const clearAll = () => {
+        setFilteredInfo({});
+        setSortedInfo({});
+    };
+
+    // Get currency details
+    const getCurrencyDetails = (currencyId) => {
+        if (!currencies || !currencyId) return { icon: '', code: '' };
+        const currency = currencies.find(c => c.id === currencyId);
+        return {
+            icon: currency?.currencyIcon || '',
+            code: currency?.currencyCode || ''
+        };
+    };
+
+    // Format salary with currency
+    const formatSalary = (salary, currencyId) => {
+        const { code } = getCurrencyDetails(currencyId);
+        return `${code} ${salary}`;
+    };
+
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
         }
-    ];
+    };
+
+    // Handle bulk delete
+    const handleBulkDelete = () => {
+        if (selectedRowKeys.length > 0) {
+            onDelete(selectedRowKeys);
+        }
+    };
+
+    // Bulk actions component
+    const BulkActions = () => (
+        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 size={16} />}
+                    onClick={handleBulkDelete}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
+        </div>
+    );
+
+    const getStatusColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'pending':
+                return { color: '#faad14', background: '#fff7e6' };
+            case 'in_progress':
+                return { color: '#1890ff', background: '#e6f7ff' };
+            case 'completed':
+                return { color: '#52c41a', background: '#f6ffed' };
+            case 'delayed':
+                return { color: '#ff4d4f', background: '#fff1f0' };
+            default:
+                return { color: '#8c8c8c', background: '#f5f5f5' };
+        }
+    };
 
     const columns = [
         {
@@ -41,45 +115,12 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
             key: 'Interviewer',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
-                  <Input
-                    placeholder="Search Interviewer"
-                    value={selectedKeys[0]}
-                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                    onPressEnter={() => confirm()}
-                    style={{ width: 188, marginBottom: 8, display: 'block' }}
-                  />
-                  <Space>
-                    <Button
-                      type="primary"
-                      onClick={() => confirm()}
-                      size="small"
-                      style={{ width: 90 }}
-                    >
-                      Filter
-                    </Button>
-                    <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                      Reset
-                    </Button>
-                  </Space>
-                </div>
-              ),
-              onFilter: (value, record) =>
-                record.Interviewer.toLowerCase().includes(value.toLowerCase()),
-        },
-        {
-            title: 'Joining Date',
-            dataIndex: 'JoiningDate',
-            key: 'JoiningDate',
-            render: (date) => dayjs(date).format('DD-MM-YYYY'),
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <DatePicker
-                        value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-                        onChange={(date) => {
-                            const dateStr = date ? date.format('YYYY-MM-DD') : null;
-                            setSelectedKeys(dateStr ? [dateStr] : []);
-                        }}
-                        style={{ marginBottom: 8, display: 'block' }}
+                    <Input
+                        placeholder="Search Interviewer"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
                     />
                     <Space>
                         <Button
@@ -88,77 +129,173 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
                             size="small"
                             style={{ width: 90 }}
                         >
-                            Filter
+                            Search
                         </Button>
-                        <Button
-                            onClick={() => clearFilters()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
                             Reset
                         </Button>
                     </Space>
                 </div>
             ),
-            onFilter: (value, record) => {
-                if (!value || !record.JoiningDate) return false;
-                return dayjs(record.JoiningDate).format('YYYY-MM-DD') === value;
-            },
-            filterIcon: filtered => (
-                <FiCalendar style={{ color: filtered ? '#1890ff' : undefined }} />
-            )
+            onFilter: (value, record) =>
+                record.Interviewer.toLowerCase().includes(value.toLowerCase()),
+            render: (text) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#1890ff",
+                        background: "rgba(24, 144, 255, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiUser size={16} />
+                    </div>
+                    <span style={{ color: "#262626" }}>{text}</span>
+                </div>
+            ),
+        },
+        {
+            title: 'Joining Date',
+            dataIndex: 'JoiningDate',
+            key: 'JoiningDate',
+            sorter: (a, b) => dayjs(a.JoiningDate).unix() - dayjs(b.JoiningDate).unix(),
+            render: (date) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#3b82f6",
+                        background: "rgba(59, 130, 246, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiCalendar size={16} />
+                    </div>
+                    <span style={{ color: "#4b5563" }}>{dayjs(date).format('DD MMM YYYY')}</span>
+                </div>
+            ),
         },
         {
             title: 'Days of Week',
             dataIndex: 'DaysOfWeek',
             key: 'DaysOfWeek',
-            sorter: (a, b) => a.DaysOfWeek.localeCompare(b.DaysOfWeek),
+            render: (text) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#8b5cf6",
+                        background: "rgba(139, 92, 246, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiClock size={16} />
+                    </div>
+                    <span style={{ color: "#4b5563" }}>{text}</span>
+                </div>
+            ),
         },
         {
             title: 'Salary',
             dataIndex: 'Salary',
             key: 'Salary',
-            sorter: (a, b) => a.Salary.localeCompare(b.Salary),
+            sorter: (a, b) => parseFloat(a.Salary) - parseFloat(b.Salary),
+            render: (text, record) => {
+                const { icon, code } = getCurrencyDetails(record.Currency);
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                            color: "#059669",
+                            background: "rgba(5, 150, 105, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            {icon ? (
+                                <span style={{ fontSize: '16px' }}>{icon}</span>
+                            ) : (
+                                <FiDollarSign size={16} />
+                            )}
+                        </div>
+                        <span style={{ color: "#059669", fontWeight: "600" }}>
+                            {formatSalary(text, record.Currency)}
+                        </span>
+                    </div>
+                );
+            },
         },
         {
             title: 'Salary Type',
             dataIndex: 'SalaryType',
             key: 'SalaryType',
-            sorter: (a, b) => a.SalaryType.localeCompare(b.SalaryType),
+            render: (text) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#6366f1",
+                        background: "rgba(99, 102, 241, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiPackage size={16} />
+                    </div>
+                    <span style={{ color: "#4b5563", textTransform: "capitalize" }}>{text}</span>
+                </div>
+            ),
         },
         {
             title: 'Status',
             dataIndex: 'Status',
             key: 'Status',
-            filters: statuses.map(status => ({
-                text: status.name,
-                value: status.id
-              })),
-              onFilter: (value, record) => record.status === value,
+            filters: [
+                { text: 'Pending', value: 'pending' },
+                { text: 'In Progress', value: 'in_progress' },
+                { text: 'Completed', value: 'completed' },
+                { text: 'Delayed', value: 'delayed' },
+            ],
+            onFilter: (value, record) => record.Status?.toLowerCase() === value,
             render: (status) => {
-                if (!status) return <Tag color="default">N/A</Tag>;
-                
-                let color;
-                switch (status.toLowerCase()) {
-                    case 'pending':
-                        color = 'gold';
-                        break;
-                    case 'in_progress':
-                        color = 'blue';
-                        break;
-                    case 'completed':
-                        color = 'green';
-                        break;
-                    case 'delayed':
-                        color = 'red';
-                        break;
-                    default:
-                        color = 'default';
-                }
+                const config = getStatusColor(status);
                 return (
-                    <Tag color={color} style={{ textTransform: 'capitalize' }}>
-                        {status.replace(/_/g, ' ')}
-                    </Tag>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                            color: config.color,
+                            background: config.background,
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiActivity size={16} />
+                        </div>
+                        <Tag
+                            style={{
+                                color: config.color,
+                                background: config.background,
+                                border: 'none',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                textTransform: 'capitalize'
+                            }}
+                        >
+                            {status?.replace(/_/g, ' ') || 'N/A'}
+                        </Tag>
+                    </div>
                 );
             }
         },
@@ -166,50 +303,69 @@ const JobOnboardingList = ({ onboardings, onEdit, onDelete, onView, loading }) =
             title: 'Actions',
             key: 'actions',
             width: 80,
-            render: (_, record) => (
-                <Dropdown
-                    menu={{ items: getActionItems(record) }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayStyle={{ minWidth: '150px' }}
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-                        style={{
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '6px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#f0f2f5';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                        }}
-                    />
-                </Dropdown>
-            )
+            render: (_, record) => {
+                const menuItems = [
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 size={14} />,
+                        label: 'Edit',
+                        onClick: () => onEdit(record)
+                    },
+                    {
+                        key: 'delete',
+                        icon: <FiTrash2 size={14} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: () => onDelete(record.id)
+                    }
+                ];
+
+                return (
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <Dropdown
+                            menu={{
+                                items: menuItems,
+                                onClick: (e) => e.domEvent.stopPropagation()
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button
+                                type="text"
+                                icon={<FiMoreVertical size={16} />}
+                                className="action-button"
+                            />
+                        </Dropdown>
+                    </div>
+                );
+            }
         }
     ];
 
     return (
-        <Table
-            columns={columns}
-            dataSource={onboardings}
-            rowKey="id"
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total, range) => 
-                    `${range[0]}-${range[1]} of ${total} onboardings`
-            }}
-            style={{ background: '#ffffff', borderRadius: '8px' }}
-        />
+        <div className="job-onboarding-list-container">
+            <BulkActions />
+            <Table
+                rowSelection={{
+                    ...rowSelection,
+                    selectedRowKeys: selectedRowKeys,
+                    onChange: (newSelectedRowKeys) => {
+                        setSelectedRowKeys(newSelectedRowKeys);
+                    }
+                }}
+                columns={columns}
+                dataSource={onboardings}
+                rowKey="id"
+                loading={loading}
+                onChange={handleChange}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                className="custom-table"
+            />
+        </div>
     );
 };
 

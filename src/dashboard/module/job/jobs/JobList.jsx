@@ -1,14 +1,51 @@
-import React from 'react';
-import { Table, Button, Tag, Dropdown, Input, Space } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiEye } from 'react-icons/fi';
-import dayjs from 'dayjs';
+import React, { useState, useEffect } from "react";
+import { Table, Button, Tag, Dropdown, Typography, Input, Space, Select } from "antd";
+import {
+    FiEdit2,
+    FiTrash2,
+    FiMoreVertical,
+    FiBriefcase,
+    FiClock,
+    FiCalendar,
+    FiUsers,
+    FiSearch,
+    FiCode,
+    FiHash
+} from "react-icons/fi";
+import dayjs from "dayjs";
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 
-const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
+const { Text } = Typography;
+const { Option } = Select;
+
+const JobList = ({ jobs = [], onEdit, onDelete, loading, searchText }) => {
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [filteredInfo, setFilteredInfo] = useState({});
+    const [sortedInfo, setSortedInfo] = useState({});
+
+    // Clear selections when jobs data changes
+    useEffect(() => {
+        setSelectedRowKeys([]);
+    }, [jobs]);
+
     const { data: currencies } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
     });
+
+    const handleChange = (pagination, filters, sorter) => {
+        setFilteredInfo(filters);
+        setSortedInfo(sorter);
+    };
+
+    const clearFilters = () => {
+        setFilteredInfo({});
+    };
+
+    const clearAll = () => {
+        setFilteredInfo({});
+        setSortedInfo({});
+    };
 
     const getCurrencyDetails = (currencyId) => {
         if (!currencies || !currencyId) return { icon: '', code: '' };
@@ -19,38 +56,78 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
         };
     };
 
-    const statuses = [
-        { id: 'active', name: 'Active' },
-        { id: 'inactive', name: 'Inactive' },
-    ];
-    // Define action items for dropdown
-    const getActionItems = (record) => [
-        // {
-        //     key: 'view',
-        //     icon: <FiEye />,
-        //     label: 'View Details',
-        //     onClick: () => onView?.(record)
-        // },
-        {
-            key: 'edit',
-            icon: <FiEdit2 />,
-            label: 'Edit Job',
-            onClick: () => onEdit?.(record)
-        },
-        {
-            key: 'delete',
-            icon: <FiTrash2 />,
-            label: 'Delete Job',
-            danger: true,
-            onClick: () => onDelete?.(record)
+    // Format salary with currency
+    const formatSalary = (salary, currencyId) => {
+        const { code } = getCurrencyDetails(currencyId);
+        return `${code} ${salary}`;
+    };
+
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
         }
-    ];
+    };
+
+    // Handle bulk delete
+    const handleBulkDelete = async () => {
+        await onDelete(selectedRowKeys);
+        setSelectedRowKeys([]); // Clear selections after delete
+    };
+
+    // Bulk actions component
+    const BulkActions = () => (
+        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 size={16} />}
+                    onClick={handleBulkDelete}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
+        </div>
+    );
+
+    const getStatusColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'active':
+                return { color: '#52c41a', background: '#f6ffed' };
+            case 'closed':
+                return { color: '#ff4d4f', background: '#fff1f0' };
+            case 'draft':
+                return { color: '#faad14', background: '#fff7e6' };
+            default:
+                return { color: '#8c8c8c', background: '#f5f5f5' };
+        }
+    };
+
+    // Parse JSON string fields
+    const parseJsonField = (jsonString, field) => {
+        try {
+            if (!jsonString) return [];
+            const parsed = JSON.parse(jsonString);
+            if (field === 'skills') {
+                const skillsObj = JSON.parse(parsed.Skills);
+                return skillsObj.Skills.split(',').filter(skill => skill.trim());
+            } else if (field === 'interviewRounds') {
+                const roundsObj = JSON.parse(parsed.InterviewRounds);
+                return roundsObj.InterviewRounds.split(',').filter(round => round.trim());
+            }
+            return [];
+        } catch (e) {
+            return [];
+        }
+    };
 
     const columns = [
         {
-            title: 'Title',
-            dataIndex: 'title',
-            key: 'title',
+            title: "Job Title",
+            dataIndex: "title",
+            key: "title",
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -64,10 +141,11 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
                         <Button
                             type="primary"
                             onClick={() => confirm()}
+                            icon={<FiSearch />}
                             size="small"
                             style={{ width: 90 }}
                         >
-                            Filter
+                            Search
                         </Button>
                         <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
                             Reset
@@ -75,161 +153,328 @@ const JobList = ({ jobs, loading, onEdit, onDelete, onView }) => {
                     </Space>
                 </div>
             ),
+            filterIcon: filtered => <FiSearch style={{ color: filtered ? '#1890ff' : undefined }} />,
             onFilter: (value, record) =>
-                record.title.toLowerCase().includes(value.toLowerCase()),
-
-        },
-        {
-            title: 'Category',
-            dataIndex: 'category',
-            key: 'category',
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search category"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+                record.title?.toLowerCase().includes(value.toLowerCase()),
+            render: (text, record) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{
+                            color: "#1890ff",
+                            background: "rgba(24, 144, 255, 0.1)",
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            <FiBriefcase size={20} />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>{text}</div>
+                            <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
+                                {record.category} • {record.workExperience} • {record.location}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             ),
-            onFilter: (value, record) =>
-                record.category.toLowerCase().includes(value.toLowerCase()),
-
         },
         {
-            title: 'Start Date',
-            dataIndex: 'startDate',
-            key: 'startDate',
-            sorter: (a, b) => dayjs(a.startDate).unix() - dayjs(b.startDate).unix(),
-            render: (date) => date ? dayjs(date).format('DD-MM-YYYY') : 'N/A'
-        },
-        {
-            title: 'End Date',
-            dataIndex: 'endDate',
-            key: 'endDate',
-            sorter: (a, b) => dayjs(a.endDate).unix() - dayjs(b.endDate).unix(),
-            render: (date) => date ? dayjs(date).format('DD-MM-YYYY') : 'N/A'
-        },
-        {
-            title: 'Experience',
-            dataIndex: 'workExperience',
-            key: 'workExperience',
-            sorter: (a, b) => (a.workExperience || '').localeCompare(b.workExperience || '')
-
-        },
-        {
-            title: 'Salary',
-            key: 'salary',
-            sorter: (a, b) => (a.expectedSalary || '').localeCompare(b.expectedSalary || ''),
-            render: (record) => {
-                const currencyDetails = getCurrencyDetails(record.currency);
+            title: "Skills",
+            key: "skills",
+            render: (_, record) => {
+                const skills = parseJsonField(record.skills, 'skills');
                 return (
-                    <span>
-                        {currencyDetails.icon} {record.expectedSalary || 'N/A'}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <div style={{
+                            color: "#6366f1",
+                            background: "rgba(99, 102, 241, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0
+                        }}>
+                            <FiCode size={16} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
+                            {skills.length > 0 ? (
+                                skills.map((skill, index) => (
+                                    <Tag key={index} style={{
+                                        background: "#eef2ff",
+                                        color: "#6366f1",
+                                        border: "none",
+                                        borderRadius: "4px",
+                                        padding: "2px 8px",
+                                        fontSize: "12px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "4px"
+                                    }}>
+                                        <FiHash size={12} />
+                                        {skill}
+                                    </Tag>
+                                ))
+                            ) : (
+                                <span style={{ color: "#9ca3af", fontSize: "13px", fontStyle: "italic" }}>
+                                    No skills specified
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 );
-            }
+            },
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            filters: statuses.map(status => ({
-                text: status.name,
-                value: status.id
-            })),
+            title: "Type",
+            dataIndex: "jobType",
+            key: "jobType",
+            filters: [
+                { text: 'Full-time', value: 'Full-time' },
+                { text: 'Part-time', value: 'Part-time' },
+                { text: 'Contract', value: 'Contract' },
+                { text: 'Internship', value: 'Internship' },
+            ],
+            onFilter: (value, record) => record.jobType === value,
+            render: (type) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#8b5cf6",
+                        background: "rgba(139, 92, 246, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiClock size={16} />
+                    </div>
+                    <span style={{ color: "#4b5563", textTransform: "capitalize" }}>{type}</span>
+                </div>
+            ),
+        },
+        {
+            title: "Openings",
+            dataIndex: "totalOpenings",
+            key: "totalOpenings",
+            sorter: (a, b) => a.totalOpenings - b.totalOpenings,
+            render: (openings) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#10b981",
+                        background: "rgba(16, 185, 129, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiUsers size={16} />
+                    </div>
+                    <span style={{ color: "#4b5563", fontWeight: "500" }}>{openings}</span>
+                </div>
+            ),
+        },
+        {
+            title: "Interview Rounds",
+            key: "interviewRounds",
+            render: (_, record) => {
+                const rounds = parseJsonField(record.interviewRounds, 'interviewRounds');
+                return (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <div style={{
+                            color: "#8b5cf6",
+                            background: "rgba(139, 92, 246, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0
+                        }}>
+                            <FiUsers size={16} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
+                            {rounds.length > 0 ? (
+                                rounds.map((round, index) => (
+                                    <Tag key={index} style={{
+                                        background: "#f3e8ff",
+                                        color: "#8b5cf6",
+                                        border: "none",
+                                        borderRadius: "4px",
+                                        padding: "2px 8px",
+                                        fontSize: "12px"
+                                    }}>
+                                        {round}
+                                    </Tag>
+                                ))
+                            ) : (
+                                <span style={{ color: "#9ca3af", fontSize: "13px", fontStyle: "italic" }}>
+                                    No rounds specified
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                );
+            },
+        },
+        {
+            title: "Salary",
+            key: "salary",
+            sorter: (a, b) => a.expectedSalary - b.expectedSalary,
+            render: (_, record) => {
+                const { icon, code } = getCurrencyDetails(record.currency);
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{
+                            color: "#059669",
+                            background: "rgba(5, 150, 105, 0.1)",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                        }}>
+                            {icon ? (
+                                <span style={{ fontSize: '16px' }}>{icon}</span>
+                            ) : null}
+                        </div>
+                        <span style={{ color: "#059669", fontWeight: "600" }}>
+                            {code} {record.expectedSalary}
+                        </span>
+                    </div>
+                );
+            },
+        },
+        {
+            title: "Posted Date",
+            dataIndex: "createdAt",
+            key: "createdAt",
+            sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+            render: (date) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{
+                        color: "#3b82f6",
+                        background: "rgba(59, 130, 246, 0.1)",
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}>
+                        <FiCalendar size={16} />
+                    </div>
+                    <span style={{ color: "#4b5563" }}>{dayjs(date).format('DD MMM YYYY')}</span>
+                </div>
+            ),
+        },
+        {
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
+            filters: [
+                { text: 'Active', value: 'active' },
+                { text: 'Closed', value: 'closed' },
+                { text: 'Draft', value: 'draft' },
+            ],
             onFilter: (value, record) => record.status === value,
             render: (status) => {
-                let color = 'blue';
-                switch (status?.toLowerCase()) {
-                    case 'active':
-                        color = 'green';
-                        break;
-                    case 'inactive':
-                        color = 'red';
-                        break;
-                    case 'draft':
-                        color = 'orange';
-                        break;
-                    default:
-                        color = 'blue';
-                }
+                const config = getStatusColor(status);
                 return (
-                    <Tag color={color} style={{ textTransform: 'capitalize' }}>
-                        {status?.replace(/_/g, ' ') || 'N/A'}
+                    <Tag
+                        style={{
+                            color: config.color,
+                            background: config.background,
+                            border: 'none',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            textTransform: 'capitalize'
+                        }}
+                    >
+                        {status}
                     </Tag>
                 );
-            }
+            },
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
             width: 80,
-            render: (_, record) => (
-                <Dropdown
-                    menu={{
-                        items: getActionItems(record)
-                    }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical className="text-lg" />}
-                        className="action-button"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </Dropdown>
-            ),
-        },
+            render: (_, record) => {
+                const menuItems = [
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 size={14} />,
+                        label: 'Edit',
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            onEdit(record);
+                        }
+                    }
+                ];
+
+                if (record.status !== 'closed') {
+                    menuItems.push({
+                        key: 'delete',
+                        icon: <FiTrash2 size={14} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            onDelete(record.id);
+                        }
+                    });
+                }
+
+                return (
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <Dropdown
+                            menu={{
+                                items: menuItems,
+                                onClick: (e) => e.domEvent.stopPropagation()
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button
+                                type="text"
+                                icon={<FiMoreVertical size={16} />}
+                                className="action-button"
+                            />
+                        </Dropdown>
+                    </div>
+                );
+            }
+        }
     ];
 
-    // Transform the jobs data to ensure each row has a unique key
-    const tableData = React.useMemo(() => {
-        return jobs.map(job => ({
-            ...job,
-            key: job.id
-        }));
-    }, [jobs]);
-
     return (
-        <Table
-            columns={columns}
-            dataSource={tableData}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} jobs`,
-                style: {
-                    margin: "16px 24px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    alignItems: "center",
-                },
-            }}
-            className="custom-table"
-            scroll={{ x: 1000 }}
-            style={{
-                background: '#ffffff',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-            }}
-        />
+        <div className="job-list-container">
+            <BulkActions />
+            <Table
+                rowSelection={rowSelection}
+                columns={columns}
+                dataSource={jobs}
+                rowKey="id"
+                loading={loading}
+                onChange={handleChange}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                className="custom-table"
+            />
+        </div>
     );
 };
 

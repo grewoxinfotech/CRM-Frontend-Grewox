@@ -65,11 +65,10 @@
             flex-shrink: 0;
 
             h2 {
-                color: $text-color-dark;
                 margin-bottom: 4px;
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: 600;
-                line-height: 1.2;
+                color: #111827;
             }
 
             .ant-typography-secondary {
@@ -82,93 +81,43 @@
         .header-actions {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
             gap: 16px;
-            width: 100%;
-            max-width: 800px;
+            margin-top: 16px;
 
             .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
+                width: 300px;
 
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
-
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
-                    }
-
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
-
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
-                        }
-                    }
-
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                    }
+                .ant-input-prefix {
+                    margin-right: 8px;
                 }
             }
 
             .action-buttons {
                 display: flex;
-                align-items: center;
                 gap: 12px;
-                flex-shrink: 0;
-
-                .export-button,
-                .add-button {
-                    height: 40px;
-                    padding: 0 20px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 8px;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    transition: all 0.3s ease;
-
-                    svg {
-                        font-size: 16px;
-                    }
-                }
 
                 .export-button {
-                    border: 1px solid $border-color;
-                    background: white;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    color: #4b5563;
+                    border-color: #e5e7eb;
 
                     &:hover {
-                        color: #1677ff;
-                        border-color: #1677ff;
-                        transform: translateY(-2px);
+                        color: #1890ff;
+                        border-color: #1890ff;
                     }
                 }
 
                 .add-button {
-                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: linear-gradient(to right, #1890ff, #096dd9);
                     border: none;
-                    color: white;
 
                     &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                        transform: translateY(-2px);
+                        background: linear-gradient(to right, #096dd9, #0050b3);
                     }
                 }
             }
@@ -189,32 +138,71 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-thead > tr > th {
-                    background: #fafafa;
-                    font-weight: 600;
-                    color: $text-color-dark;
-                    padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
-
-                    &::before {
-                        display: none;
+                .ant-table-thead {
+                    tr {
+                        th {
+                            background: #f9fafb;
+                            color: #4b5563;
+                            font-weight: 600;
+                            border-bottom: 1px solid #e5e7eb;
+                        }
                     }
                 }
 
-                .ant-table-tbody > tr > td {
-                    padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
+                .ant-table-tbody {
+                    tr {
+                        td {
+                            padding: 16px;
+                            border-bottom: 1px solid #f3f4f6;
 
-                    &:last-child {
-                        padding-right: 24px;
-                    }
-                }
+                            .item-wrapper {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
 
-                .ant-table-row {
-                    transition: all 0.3s ease;
+                                .item-content {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 12px;
 
-                    &:hover {
-                        background: #fafafa;
+                                    .icon-wrapper {
+                                        transition: all 0.3s ease;
+                                    }
+
+                                    .info-wrapper {
+                                        .name {
+                                            margin-bottom: 2px;
+                                        }
+
+                                        .subtitle {
+                                            color: #6b7280;
+                                            font-size: 13px;
+                                        }
+                                    }
+                                }
+                            }
+
+                            .ant-tag {
+                                margin: 0;
+                                transition: all 0.3s ease;
+                            }
+
+                            .ant-btn {
+                                &:hover {
+                                    transform: translateY(-1px);
+                                }
+                            }
+                        }
+
+                        &:hover {
+                            td {
+                                background: #f9fafb;
+
+                                .icon-wrapper {
+                                    transform: scale(1.05);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -222,6 +210,79 @@
             .ant-table-pagination {
                 margin: 16px 24px;
             }
+
+            // Checkbox styling
+            .ant-checkbox-wrapper {
+                .ant-checkbox {
+                    .ant-checkbox-inner {
+                        border-color: #d9d9d9;
+                        border-radius: 4px;
+                        transition: all 0.3s ease;
+                    }
+
+                    &.ant-checkbox-checked {
+                        .ant-checkbox-inner {
+                            background-color: #1890ff;
+                            border-color: #1890ff;
+                        }
+                    }
+
+                    &:hover {
+                        .ant-checkbox-inner {
+                            border-color: #1890ff;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Bulk delete button styling
+    .bulk-actions {
+        .ant-btn-danger {
+            background: #ef4444;
+            border: none;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            height: 36px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+
+            &:hover {
+                background: #dc2626;
+                transform: translateY(-1px);
+            }
+
+            svg {
+                margin-right: 4px;
+            }
+        }
+    }
+
+    // Column icons styling
+    .column-icon {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-1px);
+        }
+
+        .icon-bg {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
         }
     }
 }
@@ -305,7 +366,7 @@
 
         &-danger {
             color: #ff4d4f;
-            
+
             &:hover {
                 background: #fff1f0;
             }
@@ -334,7 +395,7 @@
                 font-size: 14px !important;
                 padding-right: 15px !important;
                 color: white !important;
-                
+
                 &::before {
                     content: none !important;
                 }
@@ -342,7 +403,7 @@
         }
 
         .ant-select-arrow {
-            color: white!important;
+            color: white !important;
             right: 8px !important;
         }
 
@@ -409,4 +470,4 @@
         border-color: #1890ff !important;
         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
     }
-} 
+}
