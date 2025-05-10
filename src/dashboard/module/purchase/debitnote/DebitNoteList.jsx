@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   Button,
@@ -10,6 +10,8 @@ import {
   Input,
   Space,
   DatePicker,
+  Tag,
+  Modal,
 } from "antd";
 import {
   FiMoreVertical,
@@ -25,6 +27,7 @@ import { useSelector } from "react-redux";
 import { useGetBillingsQuery } from "../billing/services/billingApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import dayjs from "dayjs";
+import "./debitnote.scss";
 
 const { Text } = Typography;
 
@@ -37,6 +40,7 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
   const companyId = useSelector(getCompanyId);
   const { data: billings } = useGetBillingsQuery(companyId);
   const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const getBillNumber = (billId) => {
     const foundBill = billings?.data?.find((bill) => bill.id === billId);
@@ -48,65 +52,56 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
     return currency?.currencyIcon || "₹";
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => onDelete(record),
-        danger: true,
-      },
-    ],
-  });
+  const handleBulkDelete = () => {
+    const idsToDelete = selectedRowKeys.map(key => {
+      const debitNote = data?.data?.find(note => note._id === key || note.id === key);
+      return debitNote?.id || debitNote?._id;
+    }).filter(id => id); // Remove any undefined/null values
+
+    if (idsToDelete.length > 0) {
+      onDelete(idsToDelete);
+      setSelectedRowKeys([]);
+    }
+  };
+
+  const getActionItems = (record) => [
+    {
+      key: 'view',
+      icon: <FiEye style={{ fontSize: '16px' }} />,
+      label: 'View',
+      onClick: () => onView(record)
+    },
+    {
+      key: 'edit',
+      icon: <FiEdit2 style={{ fontSize: '16px' }} />,
+      label: 'Edit',
+      onClick: () => onEdit(record)
+    },
+    {
+      key: 'delete',
+      icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
+      label: 'Delete',
+      danger: true,
+      onClick: () => onDelete(record)
+    }
+  ];
 
   const columns = [
     {
       title: "Bill Number",
       dataIndex: "bill",
       key: "bill",
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search bill number"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) =>
-        record.bill.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
       render: (billId) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <FiFileText style={{ color: "#1890ff" }} />
-          <Text>{getBillNumber(billId)}</Text>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper bill-icon">
+              <FiFileText className="item-icon" size={16} />
+            </div>
+            <div className="info-wrapper">
+              <div className="name">{getBillNumber(billId)}</div>
+              <div className="meta">Bill ID</div>
+            </div>
+          </div>
         </div>
       ),
     },
@@ -114,47 +109,15 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
       title: "Date",
       dataIndex: "date",
       key: "date",
-      render: (date) => dayjs(date).format("DD-MM-YYYY"),
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <DatePicker
-            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-            onChange={(date) => {
-              const dateStr = date ? date.format("YYYY-MM-DD") : null;
-              setSelectedKeys(dateStr ? [dateStr] : []);
-            }}
-            style={{ marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
+      render: (date) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper date-icon">
+              <FiCalendar className="item-icon" size={16} />
+            </div>
+            <Text>{dayjs(date).format("DD MMM, YYYY")}</Text>
+          </div>
         </div>
-      ),
-      onFilter: (value, record) => {
-        if (!value || !record.date) return false;
-        return dayjs(record.date).format("YYYY-MM-DD") === value;
-      },
-      filterIcon: (filtered) => (
-        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
       ),
     },
     {
@@ -162,39 +125,51 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Text style={{ fontWeight: "500", color: "#1890ff" }}>
-            {getCurrencySymbol(record.currency)}
-            {Number(amount).toLocaleString()}
-          </Text>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper amount-icon">
+              <Text className="item-icon">{getCurrencySymbol(record.currency)}</Text>
+            </div>
+            <Text>{Number(amount).toLocaleString()}</Text>
+          </div>
         </div>
       ),
-      sorter: (a, b) => Number(a.amount) - Number(b.amount),
     },
     {
       title: "Description",
       dataIndex: "description",
       key: "description",
-      ellipsis: true,
-      sorter: (a, b) => a.description.localeCompare(b.description),
+      render: (description) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="info-wrapper">
+              <div className="name">{description || "N/A"}</div>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
-      title: "Action",
+      title: "Actions",
       key: "actions",
       width: 80,
-      align: "center",
       render: (_, record) => (
         <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="invoice-actions-dropdown"
+          overlay={
+            <Menu>
+              {getActionItems(record).map(item => (
+                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
+                  {item.label}
+                </Menu.Item>
+              ))}
+            </Menu>
+          }
+          trigger={['click']}
         >
           <Button
             type="text"
-            icon={<FiMoreVertical />}
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
+            icon={<FiMoreVertical size={16} />}
+            className="action-button"
           />
         </Dropdown>
       ),
@@ -212,19 +187,43 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
         note.amount?.toString().includes(searchText)
     ) || [];
 
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
+
   return (
-    <div className="debitnote-list">
+    <div className="debitnote-list-container">
+      {selectedRowKeys.length > 0 && (
+        <div className="bulk-actions">
+          <Button
+            type="primary"
+            danger
+            icon={<FiTrash2 />}
+            onClick={handleBulkDelete}
+          >
+            Delete Selected ({selectedRowKeys.length})
+          </Button>
+        </div>
+      )}
       <Table
+        className="custom-table"
         columns={columns}
         dataSource={filteredDebitNotes}
-        rowKey="_id"
-        // loading={loading}
+        rowSelection={rowSelection}
+        rowKey={record => record.id || record._id}
+        scroll={{ x: 1200 }}
         pagination={{
-          pageSize: 10,
+          defaultPageSize: 10,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} debit notes`,
         }}
-        className="debitnote-table"
+        locale={{
+          emptyText: ' ',
+        }}
       />
     </div>
   );

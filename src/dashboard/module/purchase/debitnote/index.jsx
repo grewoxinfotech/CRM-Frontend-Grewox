@@ -79,33 +79,35 @@ const DebitNote = () => {
     console.log("View debit note:", record);
   };
 
-  const handleDelete = async (record) => {
+  const handleDelete = async (recordOrIds) => {
     try {
+      const ids = Array.isArray(recordOrIds) ? recordOrIds : [recordOrIds.id || recordOrIds._id];
+
+      if (!ids.length || ids.some(id => !id)) {
+        throw new Error("Invalid debit note ID(s)");
+      }
+
       Modal.confirm({
-        title: "Are you sure you want to delete this debit note?",
+        title: `Are you sure you want to delete ${ids.length > 1 ? 'these debit notes' : 'this debit note'}?`,
         content: "This action cannot be undone.",
         okText: "Yes",
         okType: "danger",
         cancelText: "No",
         onOk: async () => {
           try {
-            const response = await deleteDebitNote(record.id).unwrap();
-
-            if (response.success) {
-              message.success("Debit note deleted successfully");
-              refetch();
-            } else {
-              message.error(response.message);
-            }
+            const promises = ids.map(id => deleteDebitNote(id).unwrap());
+            await Promise.all(promises);
+            message.success(`Successfully deleted ${ids.length} debit note${ids.length > 1 ? 's' : ''}`);
+            refetch();
           } catch (error) {
             console.error("Delete Error:", error);
-            message.error(error.message);
+            message.error(error.data?.message || error.message || "Failed to delete debit note(s)");
           }
         },
       });
     } catch (error) {
       console.error("Delete Error:", error);
-      message.error(error.message);
+      message.error(error.message || "Failed to delete debit note(s)");
     }
   };
 

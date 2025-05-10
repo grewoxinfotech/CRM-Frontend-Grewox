@@ -83,33 +83,35 @@ const Billing = () => {
     console.log("View billing:", record);
   };
 
-  const handleDelete = async (record) => {
+  const handleDelete = async (recordOrIds) => {
     try {
+      const ids = Array.isArray(recordOrIds) ? recordOrIds : [recordOrIds.id || recordOrIds._id];
+
+      if (!ids.length || ids.some(id => !id)) {
+        throw new Error("Invalid bill ID(s)");
+      }
+
       Modal.confirm({
-        title: "Are you sure you want to delete this bill?",
+        title: `Are you sure you want to delete ${ids.length > 1 ? 'these bills' : 'this bill'}?`,
         content: "This action cannot be undone.",
         okText: "Yes",
         okType: "danger",
         cancelText: "No",
         onOk: async () => {
           try {
-            const response = await deleteBilling(record.id).unwrap();
-
-            if (response.success) {
-              message.success("Bill deleted successfully");
-              refetch();
-            } else {
-              message.error(response.message);
-            }
+            const promises = ids.map(id => deleteBilling(id).unwrap());
+            await Promise.all(promises);
+            message.success(`Successfully deleted ${ids.length} bill${ids.length > 1 ? 's' : ''}`);
+            refetch();
           } catch (error) {
             console.error("Delete Error:", error);
-            message.error(error.message);
+            message.error(error.data?.message || error.message || "Failed to delete bill(s)");
           }
         },
       });
     } catch (error) {
       console.error("Delete Error:", error);
-      message.error(error.message);
+      message.error(error.message || "Failed to delete bill(s)");
     }
   };
 
@@ -137,8 +139,8 @@ const Billing = () => {
             Tax: taxName
               ? `${taxName} (${billing.tax}%)`
               : billing.tax
-              ? `${billing.tax}%`
-              : "0%",
+                ? `${billing.tax}%`
+                : "0%",
           };
         }) || [];
 

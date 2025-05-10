@@ -156,7 +156,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
   }, [debitNotesData, data]);
 
   if (!data) {
-    return <div>No billing data found</div>;
+    return null;  // Return nothing if no data
   }
 
   // Find vendor details using vendor ID

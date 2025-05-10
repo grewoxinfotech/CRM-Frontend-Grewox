@@ -9,6 +9,7 @@ import {
   Input,
   Space,
   DatePicker,
+  Typography,
 } from "antd";
 import {
   FiMoreVertical,
@@ -16,13 +17,19 @@ import {
   FiTrash2,
   FiEye,
   FiCalendar,
+  FiFileText,
+  FiDollarSign,
+  FiUser,
 } from "react-icons/fi";
 import { useGetVendorsQuery } from "./services/billingApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import ViewBilling from "./ViewBilling";
 import dayjs from "dayjs";
+import { useGetBillingsQuery, useDeleteBillingMutation } from './services/billingApi';
 
-const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
+const { Text } = Typography;
+
+const BillingList = ({ onEdit, onDelete, onView, searchText, loading }) => {
   // Fetch vendors data
   const { data: vendorsData } = useGetVendorsQuery();
 
@@ -30,6 +37,11 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const { data, isError } = useGetBillingsQuery();
+  const [deleteBilling] = useDeleteBillingMutation();
+
+  const billings = data?.data || [];
 
   // Create a map of vendor IDs to vendor names
   const vendorMap = React.useMemo(() => {
@@ -57,274 +69,157 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
     }, {});
   }, [currenciesData]);
 
-  const getStatusTag = (status) => {
-    const statusColors = {
-      draft: "#d97706",
-      pending: "#2563eb",
-      paid: "#059669",
-      unpaid: "#dc2626",
-      partially_paid: "#7c3aed",
-    };
+  const getStatusTags = (status, billStatus) => {
+    const tags = [];
 
-    const statusBgColors = {
-      draft: "#fef3c7",
-      pending: "#dbeafe",
-      paid: "#d1fae5",
-      unpaid: "#fee2e2",
-      partially_paid: "#ede9fe",
-    };
+    // Payment Status Tag
+    if (status) {
+      tags.push(
+        <Tag key="payment" className={`billing-status-tag ${status.toLowerCase()}`}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </Tag>
+      );
+    }
 
-    return (
-      <Tag
-        className={`status-tag ${status}`}
-        style={{
-          color: statusColors[status],
-          backgroundColor: statusBgColors[status],
-          border: "none",
-          textTransform: "capitalize",
-          borderRadius: "6px",
-          padding: "4px 8px",
-        }}
-      >
-        {status}
-      </Tag>
-    );
+    // Bill Status Tag
+    if (billStatus && billStatus.toLowerCase() !== 'draft') {
+      tags.push(
+        <Tag key="bill" className={`billing-status-tag ${billStatus.toLowerCase()}`}>
+          {billStatus.charAt(0).toUpperCase() + billStatus.slice(1)}
+        </Tag>
+      );
+    }
+
+    return <div style={{ display: 'flex', gap: '8px' }}>{tags}</div>;
   };
+
+  const handleBulkDelete = () => {
+    const idsToDelete = selectedRowKeys.map(key => {
+      const bill = billings.find(bill => bill._id === key || bill.id === key);
+      return bill?.id || bill?._id;
+    }).filter(id => id); // Remove any undefined/null values
+
+    if (idsToDelete.length > 0) {
+      onDelete(idsToDelete);
+      setSelectedRowKeys([]);
+    }
+  };
+
+  const getActionItems = (record) => [
+    {
+      key: 'view',
+      icon: <FiEye style={{ fontSize: '16px' }} />,
+      label: 'View',
+      onClick: () => handleViewBilling(record)
+    },
+    {
+      key: 'edit',
+      icon: <FiEdit2 style={{ fontSize: '16px' }} />,
+      label: 'Edit',
+      onClick: () => onEdit(record)
+    },
+    {
+      key: 'delete',
+      icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
+      label: 'Delete',
+      danger: true,
+      onClick: () => onDelete(record)
+    }
+  ];
 
   const columns = [
     {
       title: "Bill Number",
       dataIndex: "billNumber",
       key: "billNumber",
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search bill number"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
+      render: (billNumber) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper bill-icon">
+              <FiFileText className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name">{billNumber || "N/A"}</div>
+              <div className="meta">Bill ID</div>
+            </div>
+          </div>
         </div>
       ),
-      onFilter: (value, record) =>
-        record.billNumber.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
-      render: (text, record) => (
-        <a
-          onClick={() => handleViewBilling(record)}
-          style={{
-            color: "#1890ff",
-            fontWeight: "500",
-            cursor: "pointer",
-            "&:hover": {
-              textDecoration: "underline",
-            },
-          }}
-        >
-          {text}
-        </a>
-      ),
-    },
-    {
-      title: "Vendor",
-      dataIndex: "vendor",
-      key: "vendor",
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search vendor name"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) =>
-        record.vendor.toLowerCase().includes(value.toLowerCase()) ||
-        record.company_name?.toLowerCase().includes(value.toLowerCase()),
-      render: (vendorId) => {
-        const vendorName = vendorMap[vendorId] || "Unknown Vendor";
-        return <span>{vendorName}</span>;
-      },
-    },
-    {
-      title: "Bill Date",
-      dataIndex: "billDate",
-      key: "billDate",
-      render: (date) => dayjs(date).format("DD-MM-YYYY"),
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <DatePicker
-            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-            onChange={(date) => {
-              const dateStr = date ? date.format("YYYY-MM-DD") : null;
-              setSelectedKeys(dateStr ? [dateStr] : []);
-            }}
-            style={{ marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) => {
-        if (!value || !record.billDate) return false;
-        return dayjs(record.billDate).format("YYYY-MM-DD") === value;
-      },
-      filterIcon: (filtered) => (
-        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
-      ),
-    },
-    {
-      title: "Total",
-      dataIndex: "total",
-      key: "total",
-      sorter: (a, b) => a.total - b.total,
-      render: (amount, record) => {
-        const currencyIcon = currencyMap[record.currency] || "₹";
-        return (
-          <span style={{ fontWeight: "500", color: "#1890ff" }}>
-            {currencyIcon}
-            {Number(amount).toLocaleString()}
-          </span>
-        );
-      },
     },
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
       render: (amount, record) => {
-        const currencyIcon = currencyMap[record.currency] || "₹";
+        const items = typeof record.items === 'string' ? JSON.parse(record.items) : record.items;
+        const currencyIcon = items?.[0]?.currencyIcon || '₹';
         return (
-          <span style={{ fontWeight: "500", color: "#1890ff" }}>
-            {currencyIcon}
-            {Number(amount).toLocaleString()}
-          </span>
+          <div className="item-wrapper">
+            <div className="item-content">
+              <div className="icon-wrapper amount-icon">
+                <Text>{currencyIcon}</Text>
+              </div>
+              <Text>{amount?.toFixed(2) || "0.00"}</Text>
+            </div>
+          </div>
         );
       },
     },
-
+    {
+      title: "Bill Date",
+      dataIndex: "billDate",
+      key: "billDate",
+      render: (date) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper date-icon">
+              <FiCalendar className="item-icon" />
+            </div>
+            <Text>{dayjs(date).format('DD MMM, YYYY')}</Text>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Description",
+      dataIndex: "discription",
+      key: "discription",
+      render: (description) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="info-wrapper">
+              <div className="name">{description || "N/A"}</div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
     {
       title: "Status",
-      dataIndex: "status",
       key: "status",
-      filters: statuses.map((status) => ({
-        text: status.name,
-        value: status.id,
-      })),
-      onFilter: (value, record) => record.status === value,
-      render: (status) => getStatusTag(status),
+      render: (_, record) => getStatusTags(record.status, record.bill_status),
     },
     {
       title: "Actions",
       key: "actions",
-      width: 100,
-      fixed: "right",
+      width: 80,
       render: (_, record) => (
         <Dropdown
           overlay={
             <Menu>
-              <Menu.Item
-                key="view"
-                icon={<FiEye />}
-                onClick={() => handleViewBilling(record)}
-              >
-                View Billing
-              </Menu.Item>
-              <Menu.Item
-                key="edit"
-                icon={<FiEdit2 />}
-                onClick={() => onEdit(record)}
-              >
-                Edit Billing
-              </Menu.Item>
-              <Menu.Item
-                key="delete"
-                icon={<FiTrash2 />}
-                danger
-                onClick={() => onDelete(record)}
-              >
-                Delete Billing
-              </Menu.Item>
+              {getActionItems(record).map(item => (
+                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
+                  {item.label}
+                </Menu.Item>
+              ))}
             </Menu>
           }
-          trigger={["click"]}
-          placement="bottomRight"
+          trigger={['click']}
         >
           <Button
             type="text"
-            icon={<FiMoreVertical />}
-            style={{ padding: 4 }}
+            icon={<FiMoreVertical size={16} />}
+            className="action-button"
           />
         </Dropdown>
       ),
@@ -332,11 +227,20 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
   ];
 
   // Filter billings based on search text
-  const filteredBillings = billings?.filter(
-    (bill) =>
-      bill.billNumber?.toLowerCase().includes(searchText.toLowerCase()) ||
-      vendorMap[bill.vendor]?.toLowerCase().includes(searchText.toLowerCase())
+  const filteredBillings = billings.filter(billing =>
+    billing.billNumber?.toLowerCase().includes(searchText?.toLowerCase()) ||
+    billing.discription?.toLowerCase().includes(searchText?.toLowerCase()) ||
+    billing.status?.toLowerCase().includes(searchText?.toLowerCase()) ||
+    billing.bill_status?.toLowerCase().includes(searchText?.toLowerCase())
   );
+
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
 
   const handleViewBilling = (record) => {
     setSelectedBill(record);
@@ -344,30 +248,45 @@ const BillingList = ({ billings, onEdit, onDelete, searchText, loading }) => {
   };
 
   return (
-    <>
+    <div className="billing-list-container">
+      {selectedRowKeys.length > 0 && (
+        <div className="bulk-actions">
+          <Button
+            type="primary"
+            danger
+            icon={<FiTrash2 />}
+            onClick={handleBulkDelete}
+          >
+            Delete Selected ({selectedRowKeys.length})
+          </Button>
+        </div>
+      )}
       <Table
+        className="custom-table"
         columns={columns}
         dataSource={filteredBillings}
-        rowKey="id"
-        scroll={{ x: 1300 }}
+        rowSelection={rowSelection}
+        rowKey={record => record.id || record._id}
+        loading={loading}
+        scroll={{ x: 1200 }}
         pagination={{
-          pageSize: 10,
+          defaultPageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
+          showTotal: (total) => `Total ${total} bills`,
+        }}
+        locale={{
+          emptyText: ' ',
         }}
       />
 
-      {selectedBill && (
+      {isModalVisible && (
         <ViewBilling
-          data={selectedBill}
-          isOpen={isModalVisible}
-          onClose={() => {
-            setIsModalVisible(false);
-            setSelectedBill(null);
-          }}
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          bill={selectedBill}
         />
       )}
-    </>
+    </div>
   );
 };
 

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Breadcrumb
+    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiDownload, FiHome,
-    FiChevronDown
+    FiChevronDown, FiFilter
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import VendorList from './VendorList';
@@ -16,20 +16,24 @@ import './vendor.scss';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { useGetVendorsQuery, useDeleteVendorMutation } from './services/vendorApi';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const Vendor = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
     const [selectedVendor, setSelectedVendor] = useState(null);
     const [searchText, setSearchText] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState({
+        status: undefined,
+        country: undefined
+    });
 
-    const { data: vendors, isLoading, isError, refetch } = useGetVendorsQuery();
+    const { data: vendors, isLoading, refetch } = useGetVendorsQuery();
     const [deleteVendor] = useDeleteVendorMutation();
 
     const handleCreate = () => {
@@ -40,44 +44,54 @@ const Vendor = () => {
     const handleEdit = (record) => {
         setSelectedVendor(record);
         setIsEditModalOpen(true);
-        setIsEditing(true);
     };
 
+    const handleDelete = async (recordOrIds) => {
+        const ids = Array.isArray(recordOrIds) ? recordOrIds : [recordOrIds.id];
 
-    const handleDelete = async (record) => {
-        try {
-            Modal.confirm({
-                title: 'Are you sure you want to delete this vendor?',
-                content: 'This action cannot be undone.',
-                okText: 'Yes',
-                okType: 'danger',
-                cancelText: 'No',
-                onOk: async () => {
-                    try {
-                        const response = await deleteVendor(record.id).unwrap();
-                        
-                        if (response.success) {
-                            message.success('Vendor deleted successfully');
-                            refetch();
-                        } else {
-                            message.error(response.message);
-                        }
-                    } catch (error) {
-                            console.error('Delete Error:', error);
-                            message.error(error.message);
-                    }
+        Modal.confirm({
+            title: `Are you sure you want to delete ${ids.length > 1 ? 'these vendors' : 'this vendor'}?`,
+            content: 'This action cannot be undone.',
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    const promises = ids.map(id => deleteVendor(id).unwrap());
+                    await Promise.all(promises);
+                    message.success(`Successfully deleted ${ids.length} vendor${ids.length > 1 ? 's' : ''}`);
+                    refetch();
+                } catch (error) {
+                    console.error('Delete Error:', error);
+                    message.error('Failed to delete vendor(s)');
                 }
-            });
-        } catch (error) {
-            console.error('Delete Error:', error);
-            message.error( error.message);
-        }
+            }
+        });
+    };
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            status: undefined,
+            country: undefined
+        });
+        setSearchText('');
     };
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
-            const data = vendors?.data?.map(vendor => ({
+            if (!vendors?.data || vendors.data.length === 0) {
+                message.warning('No data available to export');
+                return;
+            }
+
+            const data = vendors.data.map(vendor => ({
                 'Name': vendor.name,
                 'Contact': vendor.contact,
                 'Email': vendor.email,
@@ -85,18 +99,22 @@ const Vendor = () => {
                 'City': vendor.city,
                 'State': vendor.state,
                 'Country': vendor.country,
-                'Status': vendor.status || 'Active'
-            })) || [];
+                'Status': vendor.status || 'Active',
+                'Created At': dayjs(vendor.createdAt).format('YYYY-MM-DD')
+            }));
+
+            const timestamp = dayjs().format('YYYY-MM-DD_HH-mm');
+            const filename = `vendors_export_${timestamp}`;
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'vendor_export');
+                    exportToCSV(data, filename);
                     break;
                 case 'excel':
-                    exportToExcel(data, 'vendor_export');
+                    exportToExcel(data, filename);
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'vendor_export');
+                    exportToPDF(data, filename);
                     break;
                 default:
                     break;
@@ -104,8 +122,6 @@ const Vendor = () => {
             message.success(`Successfully exported as ${type.toUpperCase()}`);
         } catch (error) {
             message.error(`Failed to export: ${error.message}`);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -149,37 +165,19 @@ const Vendor = () => {
 
     const exportMenu = (
         <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
+            <Menu.Item key="excel" icon={<FiDownload />} onClick={() => handleExport('excel')}>
                 Export as Excel
             </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
+            <Menu.Item key="pdf" icon={<FiDownload />} onClick={() => handleExport('pdf')}>
                 Export as PDF
+            </Menu.Item>
+            <Menu.Item key="csv" icon={<FiDownload />} onClick={() => handleExport('csv')}>
+                Export as CSV
             </Menu.Item>
         </Menu>
     );
 
-    const handleEditModalClose = () => {
-        setIsEditModalOpen(false);
-        setIsEditing(false);
-        setSelectedVendor(null);
-    };
-
-  return (
+    return (
         <div className="vendor-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -202,37 +200,37 @@ const Vendor = () => {
                     <Text type="secondary">Manage all vendors in the organization</Text>
                 </div>
                 <div className="header-actions">
-                <div className="search-filter-group">
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                         <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
                             placeholder="Search vendors..."
                             allowClear
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
                             className="search-input"
-                            style={{ 
-                                width: '300px', 
-                                borderRadius: '20px',
-                                height: '38px'
-                            }}  
+                            style={{ width: '300px' }}
                         />
-                    </div>
-                    <div className="action-buttons">
+                        <Button
+                            icon={<FiFilter />}
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={showFilters ? 'filter-button active' : 'filter-button'}
+                        >
+                            Filters
+                        </Button>
                         <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button
-                                className="export-button"
-                                icon={<FiDownload size={16} />}
-                                loading={loading}
-                            >
-                                Export
-                                <FiChevronDown size={16} />
+                            <Button icon={<FiDownload />}>
+                                Export <FiChevronDown style={{ marginLeft: '4px' }} />
                             </Button>
                         </Dropdown>
                         <Button
                             type="primary"
-                            icon={<FiPlus size={16} />}
+                            icon={<FiPlus />}
                             onClick={handleCreate}
-                            className="add-button"
+                            style={{
+                                background: 'linear-gradient(135deg, #1890ff 0%, #1677ff 100%)',
+                                border: 'none',
+                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)'
+                            }}
                         >
                             Add Vendor
                         </Button>
@@ -240,29 +238,63 @@ const Vendor = () => {
                 </div>
             </div>
 
-            <Card className="vendor-table-card">
-                <VendorList
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    // onView={handleView}
-                    loading={isLoading}
-                    searchText={searchText}
-                />
-            </Card>
+            {showFilters && (
+                <Card className="filter-card" style={{ marginBottom: '24px' }}>
+                    <Row gutter={16}>
+                        <Col span={8}>
+                            <Select
+                                placeholder="Filter by status"
+                                style={{ width: '100%' }}
+                                allowClear
+                                value={filters.status}
+                                onChange={(value) => handleFilterChange('status', value)}
+                            >
+                                <Option value="active">Active</Option>
+                                <Option value="inactive">Inactive</Option>
+                            </Select>
+                        </Col>
+                        <Col span={8}>
+                            <Select
+                                placeholder="Filter by country"
+                                style={{ width: '100%' }}
+                                allowClear
+                                value={filters.country}
+                                onChange={(value) => handleFilterChange('country', value)}
+                            >
+                                {Array.from(new Set(vendors?.data?.map(v => v.country) || [])).map(country => (
+                                    <Option key={country} value={country}>{country}</Option>
+                                ))}
+                            </Select>
+                        </Col>
+                        <Col span={8}>
+                            <Space>
+                                <Button type="primary" onClick={clearFilters}>
+                                    Clear Filters
+                                </Button>
+                            </Space>
+                        </Col>
+                    </Row>
+                </Card>
+            )}
+
+            <VendorList
+                searchText={searchText}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                loading={isLoading}
+            />
 
             <CreateVendor
                 open={isCreateModalOpen}
                 onCancel={() => setIsCreateModalOpen(false)}
-                onSubmit={() => {
-                    setIsCreateModalOpen(false);
-                    message.success('Vendor created successfully');
-                }}
             />
 
             <EditVendor
                 open={isEditModalOpen}
-                onCancel={handleEditModalClose}
-                isEditing={isEditing}
+                onCancel={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedVendor(null);
+                }}
                 initialValues={selectedVendor}
             />
         </div>
