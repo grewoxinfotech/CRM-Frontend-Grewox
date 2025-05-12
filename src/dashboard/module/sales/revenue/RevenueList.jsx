@@ -16,6 +16,7 @@ import {
   Input,
   Space,
   DatePicker,
+  Menu,
 } from "antd";
 import {
   FiEdit2,
@@ -53,6 +54,7 @@ const RevenueList = ({
   revdata,
   searchText = "",
 }) => {
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const location = useLocation();
@@ -248,19 +250,31 @@ const RevenueList = ({
       });
   }, [processedRevenue, selectedProduct, selectedCustomer, searchText]);
 
-  const handleDelete = (id) => {
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
+    const title = isMultiple ? 'Delete Revenues' : 'Delete Revenue';
+    const content = isMultiple
+      ? `Are you sure you want to delete ${recordOrIds.length} selected revenues? This action cannot be undone.`
+      : 'Are you sure you want to delete this revenue?';
+
     Modal.confirm({
-      title: "Delete Revenue",
-      content: "Are you sure you want to delete this revenue?",
-      okText: "Yes",
+      title,
+      content,
+      okText: "Delete",
       okType: "danger",
       cancelText: "No",
       onOk: async () => {
         try {
-          await deleteRevenue(id).unwrap();
-          message.success("Revenue deleted successfully");
+          if (isMultiple) {
+            await Promise.all(recordOrIds.map(id => deleteRevenue(id).unwrap()));
+            message.success(`${recordOrIds.length} revenues deleted successfully`);
+            setSelectedRowKeys([]);
+          } else {
+            await deleteRevenue(recordOrIds).unwrap();
+            message.success("Revenue deleted successfully");
+          }
         } catch (error) {
-          message.error(error?.data?.message || "Failed to delete revenue");
+          message.error(error?.data?.message || "Failed to delete revenue(s)");
         }
       },
     });
@@ -283,201 +297,99 @@ const RevenueList = ({
     })}`;
   };
 
+  const getCustomerName = (customerId) => {
+    if (!customerId || !customersData?.data) return "N/A";
+    const customer = customersData.data.find(c => c.id === customerId);
+    return customer?.name || customer?.companyName || "N/A";
+  };
+
   const columns = [
     {
-      title: "Date",
-      dataIndex: "date", // Added dataIndex which was missing
-      key: "date",
-      width: "25%",
-      render: (date) => dayjs(date).format("DD-MM-YYYY"),
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <DatePicker
-            value={selectedKeys[0] ? dayjs(selectedKeys[0]) : null}
-            onChange={(date) => {
-              const dateStr = date ? date.format("YYYY-MM-DD") : null;
-              setSelectedKeys(dateStr ? [dateStr] : []);
-            }}
-            style={{ marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
+      title: "Revenue Details",
+      key: "details",
+      render: (_, record) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
+              <FiTrendingUp className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name">
+                {record.description || `Payment for Invoice ${record.salesInvoiceNumber}`}
+              </div>
+              <div className="meta" style={{ color: '#4b5563' }}>
+                {getCustomerName(record.customer)}
+              </div>
+            </div>
+          </div>
         </div>
-      ),
-      onFilter: (value, record) => {
-        if (!value || !record.date) return false;
-        return dayjs(record.date).format("YYYY-MM-DD") === value;
-      },
-      filterIcon: (filtered) => (
-        <FiCalendar style={{ color: filtered ? "#1890ff" : undefined }} />
       ),
     },
     {
-      title: "Products",
-      key: "products",
-      width: "30%",
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search product name"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) =>
-        record.parsedProducts.some((p) =>
-          p.name.toLowerCase().includes(value.toLowerCase())
-        ),
+      title: "Date",
+      key: "date",
       render: (_, record) => (
-        <div>
-          {record.parsedProducts.map((product, index) => (
-            <div
-              key={index}
-              style={{
-                marginBottom:
-                  index !== record.parsedProducts.length - 1 ? "8px" : 0,
-              }}
-            >
-              <Text strong>{product.name}</Text>
-              <div>
-                {/* <Text type="secondary" style={{ fontSize: "12px" }}>
-                  Qty: {product.quantity} × {formatAmount(product.unit_price, record.currency)}
-                  {product.tax_rate > 0 && ` (Tax: ${product.tax_rate}%)`}
-                  {product.discount > 0 && ` (Discount: ${formatAmount(product.discount, record.currency)})`}
-                </Text> */}
-              </div>
-              <Text type="success" style={{ fontSize: "12px" }}>
-                Total: {formatAmount(product.total, record.currency)}
-              </Text>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
+              <FiCalendar className="item-icon" />
             </div>
-          ))}
+            <div className="info-wrapper">
+              <div className="main-info">
+                <Text>{dayjs(record.date).format('DD MMM YYYY')}</Text>
+              </div>
+            </div>
+          </div>
         </div>
       ),
     },
     {
       title: "Amount",
       key: "amount",
-      width: "15%",
-      sorter: (a, b) => Number(a.amount) - Number(b.amount),
+      sorter: (a, b) => a.amount - b.amount,
       render: (_, record) => (
-        <div>
-          <Text strong style={{ fontSize: "16px", color: "#52c41a" }}>
-            {formatAmount(record.amount, record.currency)}
-          </Text>
-          <Text type="secondary" style={{ display: "block", fontSize: "12px" }}>
-            Cost: {formatAmount(record.cost_of_goods, record.currency)}
-          </Text>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="info-wrapper" style={{ padding: '8px 0' }}>
+              <div className="name" style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
+                {formatAmount(record.amount, record.currency)}
+              </div>
+              <div className="meta">
+                <Tag color={record.profit >= 0 ? 'success' : 'error'} style={{ margin: 0 }}>
+                  {record.profit >= 0 ? <FiArrowUpRight /> : <FiArrowDownRight />}
+                  {` ${Math.abs(record.profit).toFixed(2)}%`}
+                </Tag>
+              </div>
+            </div>
+          </div>
         </div>
       ),
     },
     {
-      title: "Profit",
-      key: "profit",
-      width: "20%",
-      sorter: (a, b) => Number(a.profit) - Number(b.profit),
-      render: (_, record) => (
-        <div>
-          <Text
-            strong
-            style={{
-              color: Number(record.profit || 0) < 0 ? "#ff4d4f" : "#1890ff",
-              display: "block",
-            }}
-          >
-            <FiTrendingUp style={{ marginRight: "4px" }} />
-            {formatAmount(record.profit || 0, record.currency)}
-          </Text>
-          <Text type="secondary" style={{ fontSize: "12px" }}>
-            {(Number(record.profit_margin_percentage) || 0).toFixed(2)}% Margin
-          </Text>
-        </div>
-      ),
-    },
-    {
-      title: "Action",
+      title: "Actions",
       key: "actions",
-      width: "10%",
-      align: "center",
+      width: 80,
       render: (_, record) => (
         <Dropdown
-          menu={{
-            items: [
-              // {
-              //   key: "view",
-              //   icon: <FiEye />,
-              //   label: "View Details",
-              //   onClick: () => onView?.(record),
-              // },
-              // {
-              //   key: "edit",
-              //   icon: <FiEdit2 />,
-              //   label: "Edit",
-              //   onClick: () => onEdit?.(record),
-              // },
-              {
-                key: "delete",
-                icon: <FiTrash2 />,
-                label: "Delete",
-                onClick: () => handleDelete(record.id),
-                danger: true,
-              },
-            ],
-          }}
-          trigger={["click"]}
-          placement="bottomRight"
+          overlay={
+            <Menu>
+              <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView(record)}>
+                View Details
+              </Menu.Item>
+              <Menu.Item key="edit" icon={<FiEdit2 style={{ fontSize: "14px" }} />} onClick={() => onEdit(record)}>
+                Edit Revenue
+              </Menu.Item>
+              <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => handleDelete(record.id)}>
+                Delete Revenue
+              </Menu.Item>
+            </Menu>
+          }
+          trigger={['click']}
         >
           <Button
             type="text"
-            icon={<FiMoreVertical />}
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
+            icon={<FiMoreVertical size={16} />}
+            className="action-button"
           />
         </Dropdown>
       ),
@@ -506,6 +418,13 @@ const RevenueList = ({
   const clearProductFilter = () => {
     setSelectedProduct(null);
     navigate("/dashboard/sales/revenue", { replace: true });
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
   };
 
   return (
@@ -582,6 +501,20 @@ const RevenueList = ({
 
       <div className="revenue-container">
         <Row gutter={[16, 16]} className="revenue-filters">
+          {selectedRowKeys.length > 0 && (
+            <Col xs={24}>
+              <div className="bulk-actions" style={{ marginBottom: '16px' }}>
+                <Button
+                  type="primary"
+                  danger
+                  icon={<FiTrash2 />}
+                  onClick={() => handleDelete(selectedRowKeys)}
+                >
+                  Delete Selected ({selectedRowKeys.length})
+                </Button>
+              </div>
+            </Col>
+          )}
           <Col xs={24} sm={12} md={8} lg={6}>
             <Select
               placeholder="Select Product"
@@ -616,6 +549,7 @@ const RevenueList = ({
 
         <div className="revenue-tables">
           <Table
+            rowSelection={rowSelection}
             columns={columns}
             dataSource={filteredRevenue}
             rowKey="id"

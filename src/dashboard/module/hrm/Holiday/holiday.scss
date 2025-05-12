@@ -319,27 +319,6 @@
     gap: 8px;
 }
 
-// Checkbox styling
-.ant-checkbox-wrapper {
-    .ant-checkbox {
-        .ant-checkbox-inner {
-            border-radius: 4px;
-            border-color: #D1D5DB;
-
-            &:hover {
-                border-color: #7C3AED;
-            }
-        }
-
-        &.ant-checkbox-checked {
-            .ant-checkbox-inner {
-                background-color: #7C3AED;
-                border-color: #7C3AED;
-            }
-        }
-    }
-}
-
 // Action button styling
 .action-button {
     color: #6B7280;

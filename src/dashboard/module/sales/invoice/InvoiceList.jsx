@@ -10,6 +10,7 @@ import {
   Space,
   Input,
   DatePicker,
+  Menu,
 } from "antd";
 import {
   FiEdit2,
@@ -20,6 +21,9 @@ import {
   FiPlus,
   FiSearch,
   FiSend,
+  FiFileText,
+  FiCalendar,
+  FiDollarSign,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -33,6 +37,7 @@ import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
+import "./invoice.scss";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -45,6 +50,7 @@ const InvoiceList = ({
 }) => {
   // const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery(id);
   const { data: currenciesData } = useGetAllCurrenciesQuery();
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [deleteInvoice] = useDeleteInvoiceMutation();
   const [updateInvoice] = useUpdateInvoiceMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -85,55 +91,73 @@ const InvoiceList = ({
   }, [invoices, searchText, filters]);
 
   const getStatusTag = (status) => {
-    const statusColors = {
-      draft: "#d97706",
-      pending: "#2563eb",
-      paid: "#059669",
-      unpaid: "#dc2626",
-      partially_paid: "#7c3aed",
+    const statusConfig = {
+      paid: {
+        color: '#059669',
+        bgColor: '#d1fae5',
+        icon: <FiDollarSign className="status-icon" />,
+      },
+      unpaid: {
+        color: '#dc2626',
+        bgColor: '#fee2e2',
+        icon: <FiDollarSign className="status-icon" />,
+      },
+      partially_paid: {
+        color: '#7c3aed',
+        bgColor: '#ede9fe',
+        icon: <FiDollarSign className="status-icon" />,
+      },
     };
 
-    const statusBgColors = {
-      draft: "#fef3c7",
-      pending: "#dbeafe",
-      paid: "#d1fae5",
-      unpaid: "#fee2e2",
-      partially_paid: "#ede9fe",
-    };
+    const config = statusConfig[status] || statusConfig.unpaid;
 
     return (
       <Tag
         className={`status-tag ${status}`}
         style={{
-          color: statusColors[status],
-          backgroundColor: statusBgColors[status],
-          border: "none",
-          textTransform: "capitalize",
-          borderRadius: "6px",
-          padding: "4px 8px",
+          color: config.color,
+          backgroundColor: config.bgColor,
+          border: 'none',
+          textTransform: 'capitalize',
+          borderRadius: '6px',
+          padding: '4px 8px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
         }}
       >
-        {status}
+        {config.icon}
+        {status.replace('_', ' ')}
       </Tag>
     );
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
+    const title = isMultiple ? 'Delete Invoices' : 'Delete Invoice';
+    const content = isMultiple
+      ? `Are you sure you want to delete ${recordOrIds.length} selected invoices? This action cannot be undone.`
+      : 'Are you sure you want to delete this invoice?';
+
     Modal.confirm({
-      title: "Delete Invoice",
-      content: "Are you sure you want to delete this invoice?",
-      okText: "Yes",
-      okType: "danger",
-      cancelText: "No",
-      bodyStyle: {
-        padding: "20px",
-      },
+      title,
+      content,
+      okText: 'Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      bodyStyle: { padding: "20px" },
       onOk: async () => {
         try {
-          await deleteInvoice(id).unwrap();
-          message.success("Invoice deleted successfully");
+          if (isMultiple) {
+            await Promise.all(recordOrIds.map(id => deleteInvoice(id).unwrap()));
+            message.success(`${recordOrIds.length} invoices deleted successfully`);
+            setSelectedRowKeys([]);
+          } else {
+            await deleteInvoice(recordOrIds).unwrap();
+            message.success('Invoice deleted successfully');
+          }
         } catch (error) {
-          message.error(error?.data?.message || "Failed to delete invoice");
+          message.error(error?.data?.message || 'Failed to delete invoice(s)');
         }
       },
     });
@@ -244,228 +268,147 @@ const InvoiceList = ({
   });
 
   const getCustomerName = (customerId) => {
-    if (!customerId) return "N/A";
-
-    const customer = customersData?.data?.find((c) => c.id === customerId);
-    return customer?.name || "N/A";
+    if (!customerId || !customersData?.data) return "N/A";
+    const customer = customersData.data.find(c => c.id === customerId);
+    return customer?.name || customer?.companyName || "N/A";
   };
 
   const columns = [
     {
-      title: "Invoice Number",
-      dataIndex: "salesInvoiceNumber",
-      key: "salesInvoiceNumber",
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
+      title: "Invoice Details",
+      key: "invoice",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
             placeholder="Search invoice number"
             value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
             onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
           />
           <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
+            <Button type="primary" onClick={() => confirm()} size="small" style={{ width: 90 }}>Filter</Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>Reset</Button>
           </Space>
         </div>
       ),
-      onFilter: (value, record) => {
-        const invoiceNumber = record?.salesInvoiceNumber?.toLowerCase() || "";
-        const customerName = record?.customerName?.toLowerCase() || "";
-        return (
-          invoiceNumber.includes(value.toLowerCase()) ||
-          customerName.includes(value.toLowerCase())
-        );
-      },
-      render: (text, record) => (
-        <Text
-          strong
-          style={{ color: "#1890ff", cursor: "pointer" }}
-          onClick={() => handleView(record)}
-        >
-          {text}
-        </Text>
-      ),
-    },
-    {
-      title: "Customer",
-      dataIndex: "customer",
-      key: "customer",
-      render: (customerId, record) => (
-        <Text>{getCustomerName(customerId, record.category)}</Text>
-      ),
-      filterDropdown: ({
-        setSelectedKeys,
-        selectedKeys,
-        confirm,
-        clearFilters,
-      }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search customer"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-          <Space>
-            <Button
-              type="primary"
-              onClick={() => confirm()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Filter
-            </Button>
-            <Button
-              onClick={() => clearFilters()}
-              size="small"
-              style={{ width: 90 }}
-            >
-              Reset
-            </Button>
-          </Space>
+      onFilter: (value, record) => record.salesInvoiceNumber?.toLowerCase().includes(value.toLowerCase()),
+      render: (_, record) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
+              <FiFileText className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name">{record.salesInvoiceNumber}</div>
+              <div className="meta" style={{ color: '#4b5563' }}>{getCustomerName(record.customer)}</div>
+            </div>
+          </div>
         </div>
       ),
-      onFilter: (value, record) => {
-        const customerName =
-          getCustomerName(record?.customer, record?.category)?.toLowerCase() ||
-          "";
-        return customerName.includes(value.toLowerCase());
-      },
     },
     {
-      title: "Issue Date",
-      dataIndex: "issueDate",
-      key: "issueDate",
-      render: (date) => dayjs(date).format("DD-MM-YYYY"),
-      sorter: (a, b) => new Date(a.issueDate) - new Date(b.issueDate),
+      title: "Dates",
+      key: "dates",
+      render: (_, record) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
+              <FiCalendar className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="main-info">
+                <Text>Issue: {dayjs(record.issueDate).format('DD MMM YYYY')}</Text>
+              </div>
+              <Text type="secondary" className="sub-info">
+                Due: {dayjs(record.dueDate).format('DD MMM YYYY')}
+              </Text>
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
-      title: "Due Date",
-      dataIndex: "dueDate",
-      key: "dueDate",
-      render: (date) => dayjs(date).format("DD-MM-YYYY"),
-      sorter: (a, b) => new Date(a.dueDate) - new Date(b.dueDate),
-    },
-    {
-      title: "Total",
-      dataIndex: "total",
-      key: "total",
-      render: (amount, record) => {
-        // Get currency details from the record
-        const currencyDetails = currenciesData?.find(
-          (curr) => curr.id === record.currency
-        );
-        const currencyIcon = currencyDetails?.currencyIcon || "₹";
-
-        return (
-          <Text strong>
-            {currencyIcon}
-            {Number(amount).toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-            })}
-          </Text>
-        );
-      },
-      sorter: (a, b) => a.total - b.total,
-    },
-    {
-      title: "Pending Amount",
-      dataIndex: "amount",
+      title: "Amount",
       key: "amount",
-      render: (amount, record) => {
-        // Get currency details from the record
-        const currencyDetails = currenciesData?.find(
-          (curr) => curr.id === record.currency
-        );
-        const currencyIcon = currencyDetails?.currencyIcon || "₹";
-
-        return (
-          <Text strong>
-            {currencyIcon}
-            {Number(amount).toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-            })}
-          </Text>
-        );
-      },
       sorter: (a, b) => a.total - b.total,
+      render: (_, record) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="info-wrapper" style={{ padding: '8px 0' }}>
+              <div className="name" style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
+                ₹ {record.total?.toFixed(2)}
+              </div>
+              <div className="meta">
+                {getStatusTag(record.payment_status)}
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
     },
-
     {
-      title: "Status",
-      dataIndex: "payment_status",
-      key: "payment_status",
-      filters: statuses.map((status) => ({
-        text: status.name,
-        value: status.id,
-      })),
-      onFilter: (value, record) => record.payment_status === value,
-      render: (status) => getStatusTag(status),
-    },
-    {
-      title: "Action",
+      title: "Actions",
       key: "actions",
       width: 80,
-      align: "center",
       render: (_, record) => (
         <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={["click"]}
-          placement="bottomRight"
-          overlayClassName="invoice-actions-dropdown"
+          overlay={
+            <Menu>
+              {getDropdownItems(record).items.map(item => (
+                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
+                  {item.label}
+                </Menu.Item>
+              ))}
+            </Menu>
+          }
+          trigger={['click']}
         >
           <Button
             type="text"
-            icon={<FiMoreVertical />}
-            className="action-dropdown-button"
-            onClick={(e) => e.preventDefault()}
+            icon={<FiMoreVertical size={16} />}
+            className="action-button"
           />
         </Dropdown>
       ),
     },
   ];
 
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+  };
+
   return (
-    <>
-      <div className="invoice-list">
-        <Table
-          columns={columns}
-          dataSource={filteredInvoices}
-          rowKey="id"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} invoices`,
-          }}
-          className="invoice-table"
-          loading={isLoading}
-        />
-      </div>
+    <div className="invoice-list-container">
+      {selectedRowKeys.length > 0 && (
+        <div className="bulk-actions">
+          <Button
+            type="primary"
+            danger
+            icon={<FiTrash2 />}
+            onClick={() => handleDelete(selectedRowKeys)}
+          >
+            Delete Selected ({selectedRowKeys.length})
+          </Button>
+        </div>
+      )}
+
+      <Table
+        rowSelection={rowSelection}
+        columns={columns}
+        dataSource={filteredInvoices}
+        loading={isLoading}
+        rowKey="id"
+        className="custom-table"
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} invoices`,
+        }}
+      />
 
       <EditInvoice
         open={editModalVisible}
@@ -484,7 +427,7 @@ const InvoiceList = ({
         }}
         invoice={selectedInvoice}
       />
-    </>
+    </div>
   );
 };
 
