@@ -12,7 +12,8 @@ import {
     Empty,
     message,
     Input,
-    Divider
+    Divider,
+    Checkbox
 } from 'antd';
 import {
     FiCalendar,
@@ -25,7 +26,8 @@ import {
     FiList,
     FiDownload,
     FiX,
-    FiFileText
+    FiFileText,
+    FiAlertCircle
 } from 'react-icons/fi';
 import { QRCodeCanvas } from 'qrcode.react';
 import dayjs from 'dayjs';
@@ -49,13 +51,12 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
     const [selectedFormUrl, setSelectedFormUrl] = useState('');
     const [selectedFormTitle, setSelectedFormTitle] = useState('');
     const [selectedForm, setSelectedForm] = useState(null);
+    const [selectedForms, setSelectedForms] = useState([]);
     const navigate = useNavigate();
     const { data: settingsData } = useGetAllSettingsQuery();
 
-
     const companyLogo = settingsData?.data[0]?.companylogo;
     const companyName = settingsData?.data[0]?.companyName;
-
 
     const showQrCode = (form) => {
         const formUrl = `${window.location.origin}/forms/${form.id}`;
@@ -278,6 +279,52 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
         navigate(`/dashboard/crm/custom-form/${form.id}/submissions`);
     };
 
+    const handleSelectForm = (formId, checked) => {
+        if (checked) {
+            setSelectedForms(prev => [...prev, formId]);
+        } else {
+            setSelectedForms(prev => prev.filter(id => id !== formId));
+        }
+    };
+
+    const handleSelectAll = (checked) => {
+        if (checked) {
+            setSelectedForms(data.map(form => form.id));
+        } else {
+            setSelectedForms([]);
+        }
+    };
+
+    const handleBulkDelete = () => {
+        if (selectedForms.length === 0) {
+            message.warning('Please select forms to delete');
+            return;
+        }
+
+        Modal.confirm({
+            title: 'Delete Selected Forms',
+            content: `Are you sure you want to delete ${selectedForms.length} selected forms?`,
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            bodyStyle: {
+                padding: "20px",
+            },
+            onOk: async () => {
+                try {
+                    // Process each deletion sequentially
+                    for (const id of selectedForms) {
+                        await onDelete(id);
+                    }
+                    message.success(`${selectedForms.length} forms deleted successfully`);
+                    setSelectedForms([]);
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete forms');
+                }
+            },
+        });
+    };
+
     if (!data || data.length === 0) {
         return (
             <Empty
@@ -289,12 +336,34 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
 
     return (
         <>
+            <div className="bulk-actions" style={{ marginBottom: 16 }}>
+                <Space>
+                    <Checkbox
+                        checked={selectedForms.length === data.length}
+                        indeterminate={selectedForms.length > 0 && selectedForms.length < data.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                    >
+                        Select All
+                    </Checkbox>
+                    {selectedForms.length > 0 && (
+                        <Button
+                            type="primary"
+                            danger
+                            icon={<FiTrash2 size={16} />}
+                            onClick={handleBulkDelete}
+                        >
+                            Delete Selected ({selectedForms.length})
+                        </Button>
+                    )}
+                </Space>
+            </div>
+
             <Row gutter={[24, 24]} className="custom-form-list">
                 {data.map((form) => (
                     <Col xs={24} sm={12} lg={8} key={form.id}>
                         <Card
                             hoverable
-                            className="custom-form-card"
+                            className={`custom-form-card ${selectedForms.includes(form.id) ? 'selected' : ''}`}
                             bodyStyle={{
                                 padding: "0",
                             }}
@@ -314,6 +383,16 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
                             </div>
 
                             <div className="card-content">
+                                <div className="card-checkbox">
+                                    <Checkbox
+                                        checked={selectedForms.includes(form.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        onChange={(e) => {
+                                            e.stopPropagation();
+                                            handleSelectForm(form.id, e.target.checked);
+                                        }}
+                                    />
+                                </div>
                                 <div className="form-header">
                                     <Title level={4} ellipsis={{ tooltip: form.title }}>
                                         {form.title}

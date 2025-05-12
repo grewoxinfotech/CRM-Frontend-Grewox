@@ -17,6 +17,7 @@ import {
   FiHome,
   FiChevronDown,
   FiFilter,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -94,23 +95,39 @@ const CompanyAccount = () => {
     console.log("View company:", record);
   };
 
-  const handleDelete = (id) => {
-    console.log("Delete company:", id);
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
     Modal.confirm({
-      title: 'Delete Company',
-      content: 'Are you sure you want to delete this company?',
-      okText: 'Yes',
+      icon: <FiAlertCircle style={{ color: '#faad14' }} />,
+      title: isMultiple ? 'Delete Selected Companies' : 'Delete Company',
+      content: (
+        <div className="modal-content">
+          <p>
+            {isMultiple
+              ? `Are you sure you want to delete ${recordOrIds.length} selected companies?`
+              : 'Are you sure you want to delete this company?'}
+          </p>
+          <p className="modal-warning">This action cannot be undone.</p>
+        </div>
+      ),
+      okText: 'Delete',
       okType: 'danger',
-      cancelText: 'No',
-      bodyStyle: {
-        padding: '20px',
-      },
+      cancelText: 'Cancel',
+      width: 400,
+      centered: true,
+      className: 'delete-confirmation-modal',
       onOk: async () => {
         try {
-          await deleteCompanyAccount(id).unwrap();
-          // message.success('Company deleted successfully');
+          if (isMultiple) {
+            await Promise.all(recordOrIds.map(id => deleteCompanyAccount(id).unwrap()));
+            message.success(`${recordOrIds.length} companies deleted successfully`);
+          } else {
+            await deleteCompanyAccount(recordOrIds).unwrap();
+            message.success('Company deleted successfully');
+          }
         } catch (error) {
-          message.error('Failed to delete company');
+          console.error("Delete Error:", error);
+          message.error(error?.data?.message || 'Failed to delete company(s)');
         }
       },
     });

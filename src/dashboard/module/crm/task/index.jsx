@@ -105,22 +105,33 @@ const Task = () => {
     console.log("View task:", record);
   };
 
-  const handleDelete = (record) => {
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
     Modal.confirm({
-      title: "Delete Task",
-      content: "Are you sure you want to delete this task?",
-      okText: "Yes",
-      okType: "danger",
-      cancelText: "No",
+      title: isMultiple ? 'Delete Selected Tasks' : 'Delete Task',
+      content: isMultiple
+        ? `Are you sure you want to delete ${recordOrIds.length} selected tasks?`
+        : 'Are you sure you want to delete this task?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
       bodyStyle: {
         padding: "20px",
       },
       onOk: async () => {
         try {
-          await deleteTask(record.id).unwrap();
-          message.success("Task deleted successfully");
+          if (isMultiple) {
+            // Process each deletion sequentially
+            for (const id of recordOrIds) {
+              await deleteTask(id).unwrap();
+            }
+            message.success(`${recordOrIds.length} tasks deleted successfully`);
+          } else {
+            await deleteTask(recordOrIds).unwrap();
+            message.success('Task deleted successfully');
+          }
         } catch (error) {
-          message.error(error?.data?.message || "Failed to delete task");
+          message.error(error?.data?.message || 'Failed to delete task(s)');
         }
       },
     });

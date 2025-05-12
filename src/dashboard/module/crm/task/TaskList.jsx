@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar, Space, Input, DatePicker, Modal } from 'antd';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiUser, FiX, FiCalendar, FiClock, FiPaperclip, FiAlertCircle, FiCheckSquare } from 'react-icons/fi';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar, Space, Input, DatePicker, Modal, message } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiUser, FiX, FiCalendar, FiClock, FiPaperclip, FiAlertCircle, FiCheckSquare, FiPlus } from 'react-icons/fi';
 import dayjs from 'dayjs';
+import './task.scss';
 
 const { Text, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
@@ -261,99 +262,43 @@ const TaskDetailCard = ({ record, users, visible, onClose }) => {
 };
 
 const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tasks = [], users = [] }) => {
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [detailModalVisible, setDetailModalVisible] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
 
-
-    // console.log('Raw Tasks in TaskList:', JSON.stringify(tasks, null, 2));
-
-    const userMap = useMemo(() => {
-        return users.reduce((acc, user) => {
-            acc[user.id] = user;
-            return acc;
-        }, {});
-    }, [users]);
-    // Validate and transform tasks data
-    const validTasks = useMemo(() => {
-        return tasks.map(task => {
-            if (!task.taskName) {
-                console.warn('Task missing taskName:', task);
-            }
-            const validatedTask = {
-                ...task,
-                key: task.id,
-                taskName: task.taskName || task.task_name || 'Untitled Task',
-                assignTo: task.assignTo || '{"assignedusers": []}', // Changed from users to assignedusers
-                priority: task.priority || 'Low',
-                status: task.status || 'Pending',
-                startDate: task.startDate || null,
-                dueDate: task.dueDate || null,
-                created_by: task.created_by || 'Unknown',
-                task_reporter: task.task_reporter || ''
-            };
-            // console.log('Validated task:', validatedTask);
-            return validatedTask;
-        });
-    }, [tasks]);
-
-
-    const filteredTasks = useMemo(() => {
-        const tasksArray = Array.isArray(validTasks) ? validTasks : [];
-
-        const filtered = tasksArray.filter(task => {
-            const taskName = task?.taskName?.toLowerCase() || '';
-            if (!task?.taskName) {
-                console.warn('Task missing taskName in filter:', task);
-            }
-            const description = task?.description?.toLowerCase() || '';
-            const reporter = userMap[task?.task_reporter]?.username?.toLowerCase() || '';
-            const searchLower = searchText.toLowerCase();
-
-            const matchesSearch = !searchText ||
-                taskName.includes(searchLower) ||
-                description.includes(searchLower) ||
-                reporter.includes(searchLower);
-
-            const matchesPriority = !filters.priority ||
-                task?.priority === filters.priority;
-
-            const matchesStatus = !filters.status ||
-                task?.status === filters.status;
-
-            const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(task?.startDate).isAfter(filters.dateRange[0]) &&
-                    dayjs(task?.dueDate).isBefore(filters.dateRange[1]));
-
-            return matchesSearch && matchesPriority && matchesStatus && matchesDateRange;
-        });
-        return filtered;
-    }, [validTasks, searchText, filters, userMap]);
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
+    };
 
     const handleView = (record) => {
         setSelectedTask(record);
-        setModalVisible(true);
+        setDetailModalVisible(true);
     };
 
     const getDropdownItems = (record) => ({
         items: [
             {
                 key: 'view',
-                icon: <FiEye />,
                 label: 'View Details',
+                icon: <FiEye size={14} />,
                 onClick: () => handleView(record),
             },
             {
                 key: 'edit',
-                icon: <FiEdit2 />,
-                label: 'Edit',
-                onClick: () => onEdit?.(record),
+                label: 'Edit Task',
+                icon: <FiEdit2 size={14} />,
+                onClick: () => onEdit(record),
             },
             {
                 key: 'delete',
-                icon: <FiTrash2 />,
-                label: 'Delete',
-                onClick: () => onDelete?.(record),
+                label: 'Delete Task',
+                icon: <FiTrash2 size={14} />,
                 danger: true,
+                onClick: () => onDelete(record.id),
             },
         ],
     });
@@ -376,196 +321,184 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
 
     const columns = [
         {
-            title: 'Title',
+            title: 'Task',
             dataIndex: 'taskName',
             key: 'taskName',
-            width: 200,
-            ellipsis: true,
-            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-                <div style={{ padding: 8 }}>
-                    <Input
-                        placeholder="Search task title"
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => confirm()}
-                        style={{ width: 188, marginBottom: 8, display: 'block' }}
-                    />
-                    <Space>
-                        <Button
-                            type="primary"
-                            onClick={() => confirm()}
-                            size="small"
-                            style={{ width: 90 }}
-                        >
-                            Filter
-                        </Button>
-                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
-                            Reset
-                        </Button>
-                    </Space>
+            render: (text, record) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{ color: "#7C3AED", background: "rgba(124, 58, 237, 0.1)" }}>
+                            <FiCheckSquare className="item-icon" />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name">{text}</div>
+                            {record.description && (
+                                <div className="meta">{record.description}</div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             ),
-            onFilter: (value, record) =>
-                record.taskName?.toLowerCase().includes(value.toLowerCase()),
-            render: (text, record) => (
-                <Tooltip title={text}>
-                    <Text strong style={{ cursor: 'pointer' }} onClick={() => onView?.(record)}>
-                        {text}
-                    </Text>
-                </Tooltip>
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status',
+            key: 'status',
+            render: (status) => {
+                const statusConfig = {
+                    'pending': { color: '#FFA940', bg: '#FFF7E6' },
+                    'in_progress': { color: '#1890FF', bg: '#E6F7FF' },
+                    'completed': { color: '#52C41A', bg: '#F6FFED' },
+                };
+                const config = statusConfig[status] || { color: '#666', bg: '#F5F5F5' };
+                return (
+                    <Tag style={{
+                        color: config.color,
+                        background: config.bg,
+                        border: `1px solid ${config.color}`,
+                        borderRadius: '4px',
+                        padding: '4px 8px'
+                    }}>
+                        {status === 'in_progress' ? 'In Progress' : status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Tag>
+                );
+            },
+        },
+        {
+            title: 'Priority',
+            dataIndex: 'priority',
+            key: 'priority',
+            render: (priority) => {
+                const priorityConfig = {
+                    'highest': { color: '#FF4D4F', bg: '#FFF1F0' },
+                    'high': { color: '#FF4D4F', bg: '#FFF1F0' },
+                    'medium': { color: '#FFA940', bg: '#FFF7E6' },
+                    'low': { color: '#52C41A', bg: '#F6FFED' },
+                };
+                const config = priorityConfig[priority] || { color: '#666', bg: '#F5F5F5' };
+                return (
+                    <Tag style={{
+                        color: config.color,
+                        background: config.bg,
+                        border: `1px solid ${config.color}`,
+                        borderRadius: '4px',
+                        padding: '4px 8px'
+                    }}>
+                        {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                    </Tag>
+                );
+            },
+        },
+        {
+            title: 'Timeline',
+            key: 'timeline',
+            render: (_, record) => (
+                <div className="item-wrapper">
+                    <div className="item-content">
+                        <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
+                            <FiCalendar className="item-icon" />
+                        </div>
+                        <div className="info-wrapper">
+                            <div className="name" style={{ color: '#111827', marginBottom: '4px' }}>
+                                {dayjs(record.startDate).format('MMM DD, YYYY')}
+                            </div>
+                            <div className="meta" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <FiClock size={12} />
+                                {dayjs(record.dueDate).format('MMM DD, YYYY')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             ),
         },
         {
             title: 'Assigned To',
             dataIndex: 'assignTo',
             key: 'assignTo',
-            width: 150,
             render: (assignTo) => {
-                const assignedUsers = getAssignedUsers(assignTo);
-
-                if (assignedUsers.length === 0) {
-                    return <Text type="secondary">-</Text>;
-                }
+                const assignedUsers = getAssignedUsers(assignTo)
+                    .map(id => users?.find(u => u.id === id))
+                    .filter(Boolean);
 
                 return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Avatar
-                            src={userMap[assignedUsers[0]]?.profilePic}
-                            style={{
-                                backgroundColor: userMap[assignedUsers[0]]?.profilePic ? 'transparent' : '#1890ff'
-                            }}
-                        >
-                            {!userMap[assignedUsers[0]]?.profilePic && (userMap[assignedUsers[0]]?.username?.[0] || userMap[assignedUsers[0]]?.email?.[0] || '').toUpperCase()}
-                        </Avatar>
-                        <Text>{userMap[assignedUsers[0]]?.username || userMap[assignedUsers[0]]?.email}</Text>
-                    </div>
+                    <Avatar.Group maxCount={3} maxStyle={{ color: '#1890FF', backgroundColor: '#E6F7FF' }}>
+                        {assignedUsers.map((user, index) => (
+                            <Tooltip key={user.id} title={user.username || user.email}>
+                                <Avatar
+                                    src={user.profilePic}
+                                    style={{
+                                        backgroundColor: !user.profilePic ? '#1890FF' : undefined,
+                                        color: !user.profilePic ? '#fff' : undefined,
+                                    }}
+                                >
+                                    {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
+                                </Avatar>
+                            </Tooltip>
+                        ))}
+                    </Avatar.Group>
                 );
             },
         },
         {
-            title: 'Task Reporter',
-            dataIndex: 'task_reporter',
-            key: 'task_reporter',
-            width: 150,
-            render: (reporterId) => {
-                const user = userMap[reporterId];
-                if (!user) return <Text type="secondary">-</Text>;
-
-                return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Avatar
-                            src={user.profilePic}
-                            style={{
-                                backgroundColor: user.profilePic ? 'transparent' : '#1890ff'
-                            }}
-                        >
-                            {!user.profilePic && (user.username?.[0] || user.email?.[0] || '').toUpperCase()}
-                        </Avatar>
-                        <Text>{user.username || user.email}</Text>
-                    </div>
-                );
-            },
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
-            width: 120,
-            render: (status) => (
-                <Tag color={
-                    status === 'Completed' ? 'success' :
-                        status === 'In Progress' ? 'processing' :
-                            'warning'
-                }>
-                    {status || 'Pending'}
-                </Tag>
-            ),
-        },
-        {
-            title: 'Priority',
-            dataIndex: 'priority',
-            key: 'priority',
-            width: 100,
-            render: (priority) => (
-                <Tag color={
-                    priority === 'High' ? 'error' :
-                        priority === 'Medium' ? 'warning' :
-                            'success'
-                }>
-                    {priority || 'Low'}
-                </Tag>
-            ),
-        },
-        {
-            title: 'Start Date',
-            dataIndex: 'startDate',
-            key: 'startDate',
-            width: 120,
-            render: (date) => date ? dayjs(date).format('MMM DD, YYYY') : '-',
-        },
-        {
-            title: 'Due Date',
-            dataIndex: 'dueDate',
-            key: 'dueDate',
-            width: 120,
-            render: (date) => date ? dayjs(date).format('MMM DD, YYYY') : '-',
-        },
-        {
-            title: 'Files',
+            title: 'File',
             dataIndex: 'file',
             key: 'file',
-            width: 100,
             render: (file) => {
                 if (!file) return <Text type="secondary">-</Text>;
 
-                const files = Array.isArray(file) ? file : [file];
-                return (
-                    <Space>
-                        {files.map((fileUrl, index) => {
-                            const fileName = fileUrl.split('/').pop();
-                            const fileExtension = fileName.split('.').pop().toLowerCase();
-                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+                const fileName = file.split('/').pop();
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
 
-                            return (
-                                <Tooltip key={index} title={fileName}>
-                                    <Button
-                                        type="text"
-                                        icon={isImage ? <img
-                                            src={fileUrl}
-                                            alt={fileName}
-                                            style={{ width: 24, height: 24, objectFit: 'cover' }}
-                                        /> : <FiFile />}
-                                        onClick={() => window.open(fileUrl, '_blank')}
+                return (
+                    <div className="item-wrapper">
+                        <div className="item-content">
+                            <div className="icon-wrapper" style={{ color: "#059669", background: "rgba(5, 150, 105, 0.1)" }}>
+                                {isImage ? (
+                                    <img
+                                        src={file}
+                                        alt={fileName}
+                                        style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'cover',
+                                            borderRadius: '6px'
+                                        }}
                                     />
-                                </Tooltip>
-                            );
-                        })}
-                    </Space>
+                                ) : (
+                                    <FiFile className="item-icon" />
+                                )}
+                            </div>
+                            <div className="info-wrapper">
+                                <Button
+                                    type="link"
+                                    icon={<FiDownload size={14} />}
+                                    onClick={() => window.open(file, '_blank')}
+                                    style={{ padding: 0, height: 'auto' }}
+                                >
+                                    Download
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 );
             },
         },
         {
-            title: 'Created By',
-            dataIndex: 'created_by',
-            key: 'created_by',
-            width: 150,
-            render: (text) => <Text>{text || '-'}</Text>,
-        },
-        {
-            title: 'Action',
-            key: 'action',
-            fixed: 'right',
-            width: 80,
+            title: 'Actions',
+            key: 'actions',
+            width: 60,
             render: (_, record) => (
                 <Dropdown
                     menu={getDropdownItems(record)}
                     trigger={['click']}
                     placement="bottomRight"
+                    overlayClassName="task-actions-dropdown"
                 >
                     <Button
                         type="text"
                         icon={<FiMoreVertical />}
-                        onClick={(e) => e.preventDefault()}
+                        className="action-button"
                     />
                 </Dropdown>
             ),
@@ -573,42 +506,50 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
     ];
 
     return (
-        <div >
+        <div className="task-list-container">
+            {/* Bulk Actions */}
+            {selectedRowKeys.length > 0 && (
+                <div className="bulk-actions">
+                    <Button
+                        type="primary"
+                        danger
+                        icon={<FiTrash2 size={16} />}
+                        onClick={() => {
+                            onDelete(selectedRowKeys);
+                            setSelectedRowKeys([]); // Clear selection after initiating delete
+                        }}
+                    >
+                        Delete Selected ({selectedRowKeys.length})
+                    </Button>
+                </div>
+            )}
+
+            {/* Task Table */}
             <Table
+                rowSelection={rowSelection}
                 columns={columns}
-                dataSource={filteredTasks}
+                dataSource={tasks}
                 rowKey="id"
                 pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                    size: window.innerWidth <= 480 ? 'small' : 'default',
-                    responsive: true,
-                    showLessItems: window.innerWidth <= 480
+                    showTotal: (total) => `Total ${total} tasks`,
                 }}
-                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
                 className="task-table"
-                onRow={(record) => ({
-                    onClick: (e) => {
-                        if (!e.target.closest('.ant-dropdown-trigger') &&
-                            !e.target.closest('.ant-dropdown') &&
-                            !e.target.closest('.ant-dropdown-menu')) {
-                            handleView(record);
-                        }
-                    },
-                    style: { cursor: 'pointer' }
-                })}
             />
 
-            <TaskDetailCard
-                record={selectedTask}
-                users={users}
-                visible={modalVisible}
-                onClose={() => {
-                    setModalVisible(false);
-                    setSelectedTask(null);
-                }}
-            />
+            {/* Task Detail Modal */}
+            {selectedTask && (
+                <TaskDetailCard
+                    record={selectedTask}
+                    users={users}
+                    visible={detailModalVisible}
+                    onClose={() => {
+                        setDetailModalVisible(false);
+                        setSelectedTask(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

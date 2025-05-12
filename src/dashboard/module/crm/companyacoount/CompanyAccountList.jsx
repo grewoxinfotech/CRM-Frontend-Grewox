@@ -9,6 +9,7 @@ import {
   Modal,
   message,
   Avatar,
+  Alert,
 } from "antd";
 import {
   FiEdit2,
@@ -21,11 +22,13 @@ import {
   FiMapPin,
   FiCalendar,
   FiUser,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useDeleteCompanyAccountMutation } from "./services/companyAccountApi";
 import EditCompanyAccount from "./EditCompanyAccount";
+import "./companyaccount.scss";
 
 const { Text } = Typography;
 
@@ -34,12 +37,14 @@ const CompanyAccountList = ({
   isLoading,
   searchText = "",
   loggedInUser,
-  countries
+  countries,
+  onDelete,
 }) => {
   const navigate = useNavigate();
   const [deleteCompanyAccount, { isLoading: isDeleting }] = useDeleteCompanyAccountMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   // Safely handle company accounts data
   const companyAccounts = React.useMemo(() => {
@@ -51,7 +56,11 @@ const CompanyAccountList = ({
     return [];
   }, [companyAccountsResponse]);
 
-  const handleView = (record) => {
+  const handleRowClick = (event, record) => {
+    // Don't navigate if clicking on the actions button or its dropdown
+    if (event.target.closest('.action-button') || event.target.closest('.ant-dropdown')) {
+      return;
+    }
     navigate(`/dashboard/crm/company-account/${record.id}`);
   };
 
@@ -65,254 +74,263 @@ const CompanyAccountList = ({
     setEditModalVisible(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
     Modal.confirm({
-      title: 'Delete Company Account',
-      content: 'Are you sure you want to delete this company account?',
+      title: isMultiple ? 'Delete Selected Companies' : 'Delete Company',
+      content: isMultiple
+        ? `Are you sure you want to delete ${recordOrIds.length} selected companies?`
+        : 'Are you sure you want to delete this company?',
       okText: 'Yes',
       okType: 'danger',
       cancelText: 'No',
       bodyStyle: {
-        padding: '20px',
+        padding: "20px",
       },
       onOk: async () => {
         try {
-          await deleteCompanyAccount(id).unwrap();
-          message.success('Company account deleted successfully');
+          if (isMultiple) {
+            // Process each deletion sequentially
+            for (const id of recordOrIds) {
+              await deleteCompanyAccount(id).unwrap();
+            }
+            message.success(`${recordOrIds.length} companies deleted successfully`);
+            setSelectedRowKeys([]);
+          } else {
+            await deleteCompanyAccount(recordOrIds).unwrap();
+            message.success('Company deleted successfully');
+          }
         } catch (error) {
-          console.error("Delete Error:", error);
-          message.error(error?.data?.message || 'Failed to delete company account');
+          message.error(error?.data?.message || 'Failed to delete company(s)');
         }
       },
     });
+  };
+
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
   };
 
   const getDropdownItems = (record) => ({
     items: [
       {
         key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => handleView(record),
+        label: (
+          <Button
+            type="text"
+            className="dropdown-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRowClick(e, record);
+            }}
+          >
+            <FiEye className="dropdown-icon" /> View Details
+          </Button>
+        ),
       },
       {
         key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => handleEdit(record),
+        label: (
+          <Button
+            type="text"
+            className="dropdown-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(record);
+            }}
+          >
+            <FiEdit2 className="dropdown-icon" /> Edit Company
+          </Button>
+        ),
       },
       {
         key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete",
-        onClick: () => handleDelete(record.id),
-        danger: true,
+        label: (
+          <Button
+            type="text"
+            danger
+            className="dropdown-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(record.id);
+            }}
+          >
+            <FiTrash2 className="dropdown-icon" /> Delete Company
+          </Button>
+        ),
       },
     ],
   });
 
   const columns = [
     {
-      title: "Company Name",
+      title: "Company",
       key: "company_name",
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Avatar
-            style={{
-              backgroundColor: '#1890ff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {record.company_name ? record.company_name[0].toUpperCase() : 'C'}
-          </Avatar>
-          <div>
-            <Text strong style={{ fontSize: '14px', cursor: 'pointer', color: '#1890ff' }} onClick={() => handleView(record)}>
-              {record.company_name}
-            </Text>
-            {record.company_site && (
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                <FiGlobe style={{ marginRight: '4px' }} />
-                {record.company_site}
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
+              {record.company_logo ? (
+                <Avatar src={record.company_logo} />
+              ) : (
+                <FiBriefcase className="item-icon" />
+              )}
+            </div>
+            <div className="info-wrapper">
+              <div className="name">{record.company_name}</div>
+              <div className="meta">
+                <FiGlobe size={12} />
+                {record.company_site || 'No website'}
               </div>
-            )}
+            </div>
           </div>
         </div>
       ),
-      sorter: (a, b) => (a.company_name || '').localeCompare(b.company_name || ''),
     },
     {
-      title: "Account Owner",
-      dataIndex: "created_by",
-      key: "created_by",
-      render: (owner) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FiUser style={{ color: '#8c8c8c' }} />
-          <Text>{owner || '-'}</Text>
-        </div>
-      ),
-      sorter: (a, b) => (a.created_by || '').localeCompare(b.created_by || ''),
-    },
-    {
-      title: "Phone",
-      key: "phone",
+      title: "Contact",
+      key: "contact",
       render: (_, record) => {
-        // Get the selected country's phone code
         const selectedCountry = countries?.find(c => c.id === record.phone_code);
         const phoneCode = selectedCountry?.phoneCode || '';
         const phoneNumber = record.phone_number || '';
         const formattedPhone = phoneNumber ? `${phoneCode} ${phoneNumber}` : '-';
 
         return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FiPhone style={{ color: '#8c8c8c' }} />
-            <Text>{formattedPhone}</Text>
+          <div className="item-wrapper">
+            <div className="item-content">
+              <div className="icon-wrapper" style={{ color: "#059669", background: "rgba(5, 150, 105, 0.1)" }}>
+                <FiPhone className="item-icon" />
+              </div>
+              <div className="info-wrapper">
+                <div className="name">{formattedPhone}</div>
+                <div className="meta">
+                  <FiMapPin size={12} />
+                  {record.city || 'No location'}
+                </div>
+              </div>
+            </div>
           </div>
         );
       },
     },
     {
-      title: "Created Date",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <FiCalendar style={{ color: '#8c8c8c' }} />
-          <Text>{dayjs(date).format("DD-MM-YYYY")}</Text>
+      title: "Owner",
+      key: "created_by",
+      render: (_, record) => (
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
+              <FiUser className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name">{record.created_by || 'No owner'}</div>
+            </div>
+          </div>
         </div>
       ),
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
     {
-      title: "Action",
-      key: "actions",
-      width: 80,
-      align: "center",
+      title: "Created",
+      key: "createdAt",
       render: (_, record) => (
-        <div onClick={(e) => e.stopPropagation()}>
-          <Dropdown
-            menu={getDropdownItems(record)}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              icon={<FiMoreVertical style={{ fontSize: '16px', color: '#8c8c8c' }} />}
-              className="action-btn"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Dropdown>
+        <div className="item-wrapper">
+          <div className="item-content">
+            <div className="icon-wrapper" style={{ color: "#2563EB", background: "rgba(37, 99, 235, 0.1)" }}>
+              <FiCalendar className="item-icon" />
+            </div>
+            <div className="info-wrapper">
+              <div className="name">{dayjs(record.createdAt).format('MMM DD, YYYY')}</div>
+            </div>
+          </div>
         </div>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 60,
+      render: (_, record) => (
+        <Dropdown
+          menu={getDropdownItems(record)}
+          trigger={['click']}
+          placement="bottomRight"
+          overlayClassName="company-actions-dropdown"
+        >
+          <Button
+            type="text"
+            icon={<FiMoreVertical />}
+            className="action-button"
+            onClick={e => e.stopPropagation()}
+          />
+        </Dropdown>
       ),
     },
   ];
 
-  // Filter company accounts based on search text
-  const filteredCompanyAccounts = React.useMemo(() => {
-    if (!searchText) return companyAccounts;
-
-    return companyAccounts.filter((company) => {
-      const searchLower = searchText.toLowerCase();
-      const companyName = (company.company_name || '').toLowerCase();
-      const owner = (company.created_by || '').toLowerCase();
-      const phone = (company.phone_number || '').toLowerCase();
-
-      return (
-        companyName.includes(searchLower) ||
-        owner.includes(searchLower) ||
-        phone.includes(searchLower)
-      );
-    });
-  }, [companyAccounts, searchText]);
+  // Bulk actions component
+  const BulkActions = () => (
+    <div className="bulk-actions">
+      {selectedRowKeys.length > 0 && (
+        <Button
+          type="primary"
+          danger
+          icon={<FiTrash2 size={16} />}
+          onClick={() => handleDelete(selectedRowKeys)}
+          className="delete-button"
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="company-account-list" style={{ background: "#ffffff", borderRadius: "8px", overflow: "hidden" }}>
+    <div className="company-list-container">
+      {/* Bulk Actions */}
+      <BulkActions />
+
+      {/* Company Table */}
       <Table
+        rowSelection={{
+          type: 'checkbox',
+          ...rowSelection,
+          selectedRowKeys,
+          onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+          },
+        }}
+        onRow={(record) => ({
+          onClick: (e) => handleRowClick(e, record),
+          style: { cursor: 'pointer' }
+        })}
         columns={columns}
-        dataSource={filteredCompanyAccounts}
-        rowKey="id"
+        dataSource={companyAccounts}
         loading={isLoading}
+        rowKey="id"
+        className="modern-table"
         pagination={{
           pageSize: 10,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} companies`,
-          style: {
-            margin: "16px 24px",
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-          },
         }}
-        className="company-table"
-        onRow={(record) => ({
-          onClick: () => handleView(record),
-          style: { cursor: 'pointer' }
-        })}
       />
 
-      <EditCompanyAccount
-        open={editModalVisible}
-        onCancel={handleEditModalClose}
-        companyData={selectedCompany}
-        loggedInUser={loggedInUser}
-      />
-
-      <style jsx global>{`
-        .company-table {
-          .ant-table {
-            border-radius: 8px;
-            overflow: hidden;
-
-            .ant-table-thead > tr > th {
-              background: #fafafa !important;
-              color: #1f2937;
-              font-weight: 600;
-              border-bottom: 1px solid #f0f0f0;
-              padding: 16px;
-
-              &::before {
-                display: none;
-              }
-            }
-
-            .ant-table-tbody > tr {
-              &:hover > td {
-                background: rgba(24, 144, 255, 0.04) !important;
-              }
-
-              > td {
-                padding: 16px;
-                transition: all 0.3s ease;
-              }
-
-              &:nth-child(even) {
-                background-color: #fafafa;
-                
-                &:hover > td {
-                  background: rgba(24, 144, 255, 0.04) !important;
-                }
-              }
-            }
-          }
-
-          .action-btn {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 6px;
-            transition: all 0.3s;
-            
-            &:hover {
-              color: #1890ff;
-              background: rgba(24, 144, 255, 0.1);
-            }
-          }
-        }
-      `}</style>
+      {/* Edit Modal */}
+      {editModalVisible && (
+        <EditCompanyAccount
+          open={editModalVisible}
+          onCancel={handleEditModalClose}
+          companyData={selectedCompany}
+          isLoading={isLoading}
+          loggedInUser={loggedInUser}
+          companyAccountsResponse={companyAccountsResponse}
+        />
+      )}
     </div>
   );
 };

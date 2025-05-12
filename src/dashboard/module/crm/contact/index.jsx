@@ -16,6 +16,7 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -29,7 +30,7 @@ import { useGetCompanyAccountsQuery } from "../companyacoount/services/companyAc
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import moment from "moment";
-
+import './contact.scss';
 
 const { Title, Text } = Typography;
 
@@ -59,27 +60,37 @@ const Contact = () => {
     console.log("View contact:", record);
   };
 
-  // const handleDelete = (id) => {
-  //   Modal.confirm({
-  //     title: 'Delete Contact',
-  //     content: 'Are you sure you want to delete this contact?',
-  //     okText: 'Yes',
-  //     okType: 'danger',
-  //     cancelText: 'No',
-  //     bodyStyle: {
-  //       padding: '20px',
-  //     },
-  //     onOk: async () => {
-  //       try {
-  //         await deleteContact(id).unwrap();
-  //         message.success('Contact deleted successfully');
-  //       } catch (error) {
-  //         console.error("Delete Error:", error);
-  //         message.error(error?.data?.message || 'Failed to delete contact');
-  //       }
-  //     },
-  //   });
-  // };
+  const handleDelete = (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
+    Modal.confirm({
+      title: isMultiple ? 'Delete Selected Contacts' : 'Delete Contact',
+      content: isMultiple
+        ? `Are you sure you want to delete ${recordOrIds.length} selected contacts?`
+        : 'Are you sure you want to delete this contact?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      bodyStyle: {
+        padding: "20px",
+      },
+      onOk: async () => {
+        try {
+          if (isMultiple) {
+            // Process each deletion sequentially
+            for (const id of recordOrIds) {
+              await deleteContact(id).unwrap();
+            }
+            message.success(`${recordOrIds.length} contacts deleted successfully`);
+          } else {
+            await deleteContact(recordOrIds).unwrap();
+            message.success('Contact deleted successfully');
+          }
+        } catch (error) {
+          message.error(error?.data?.message || 'Failed to delete contact(s)');
+        }
+      },
+    });
+  };
 
   const handleCreateSubmit = async (values) => {
     try {
@@ -227,14 +238,14 @@ const Contact = () => {
         <div className="header-actions">
           <div className="search-filter-group">
             <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c"  }} />}
+              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search contacts..."
               allowClear
               onChange={(e) => setSearchText(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ 
-                width: '300px', 
+              style={{
+                width: '300px',
                 borderRadius: '20px',
                 height: '38px'
               }}
@@ -267,7 +278,7 @@ const Contact = () => {
         <ContactList
           onEdit={handleEdit}
           onView={handleView}
-          // onDelete={handleDelete}
+          onDelete={handleDelete}
           searchText={searchText}
           isLoading={isLoading}
           loggedInUser={loggedInUser}
