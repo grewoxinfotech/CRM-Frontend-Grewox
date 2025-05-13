@@ -250,6 +250,7 @@ const LeadMembers = ({ leadId }) => {
                     rowKey={(record) => record}
                     pagination={false}
                     style={{ padding: '0 24px 24px' }}
+                    scroll={{ x: 'max-content', y: 'hidden' }}
                 />
             </Card>
 
@@ -374,7 +375,7 @@ const LeadMembers = ({ leadId }) => {
                                     minHeight: '48px'
                                   }}
                                 listHeight={200}
-                                maxTagCount={1}
+                                maxTagCount={2}
                                 maxTagTextLength={15}
                                 dropdownStyle={{
                                     maxHeight: '300px',
@@ -608,6 +609,13 @@ const LeadMembers = ({ leadId }) => {
 
                     .ant-table {
                         background: transparent;
+                        overflow-x: auto;
+                        overflow-y: hidden;
+                    }
+
+                    .ant-table-body {
+                        overflow-x: auto !important;
+                        overflow-y: hidden !important;
                     }
 
                     .ant-table-thead > tr > th {

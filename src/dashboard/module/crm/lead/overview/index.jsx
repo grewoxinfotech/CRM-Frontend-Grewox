@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Card,
@@ -74,9 +74,41 @@ const LeadStageProgress = ({
   isWon,
   isLoading,
 }) => {
+  const [hasScroll, setHasScroll] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const checkScroll = () => {
+      if (containerRef.current) {
+        const hasHorizontalScroll = containerRef.current.scrollWidth > containerRef.current.clientWidth;
+        setHasScroll(hasHorizontalScroll);
+      }
+    };
+
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 1000);
+    };
+
+    // Initial checks
+    checkScroll();
+    checkScreenSize();
+
+    // Add listeners
+    window.addEventListener('resize', checkScroll);
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', checkScroll);
+      window.removeEventListener('resize', checkScreenSize);
+    };
+  }, [stages]);
+
   if (!stages || stages.length === 0) {
     return null;
   }
+
   const currentStageIndex = stages.findIndex(
     (stage) => stage.id === currentStageId
   );
@@ -93,7 +125,21 @@ const LeadStageProgress = ({
 
   return (
     <div
-      className={`lead-stage-progress-container ${isWon ? "converted" : ""}`}
+      ref={containerRef}
+      className={`lead-stage-progress-container ${isWon ? "converted" : ""} ${hasScroll ? "has-scroll" : ""}`}
+      role="progressbar"
+      aria-valuenow={currentStageIndex + 1}
+      aria-valuemin={1}
+      aria-valuemax={stages.length}
+      style={{ 
+        display: 'flex', 
+        justifyContent: isSmallScreen ? 'flex-start' : 'flex-end',
+        transition: 'justify-content 0.3s ease',
+        overflowX: 'auto',
+        scrollbarWidth: 'thin',
+        msOverflowStyle: 'auto',
+        WebkitOverflowScrolling: 'touch'
+      }}
     >
       {stages.map((stage, index) => {
         const isCompleted = currentStageIndex > -1 && index < currentStageIndex;
@@ -109,16 +155,22 @@ const LeadStageProgress = ({
         return (
           <button
             key={stage.id}
-            className={`stage-item ${statusClass} ${isLoading ? "loading" : ""
-              } ${isWon ? "converted" : ""}`}
+            className={`stage-item ${statusClass} ${isLoading ? "loading" : ""} ${
+              isWon ? "converted" : ""
+            }`}
             onClick={(e) => handleItemClick(stage.id, e)}
             disabled={isLoading || isWon}
             type="button"
             aria-label={`Set stage to ${stage.stageName}`}
             aria-current={isCurrent ? "step" : undefined}
-            style={{ cursor: isLoading || isWon ? "not-allowed" : "pointer" }}
+            style={{ 
+              cursor: isLoading || isWon ? "not-allowed" : "pointer",
+              flexShrink: 0
+            }}
           >
-            <span className="stage-name">{stage.stageName}</span>
+            <span className="stage-name" title={stage.stageName}>
+              {stage.stageName}
+            </span>
             {isLoading && isCurrent && (
               <span className="loading-indicator">Updating...</span>
             )}
@@ -1210,7 +1262,7 @@ const LeadOverview = () => {
             </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
-            <Link to="/dashboard/crm/lead">
+            <Link to="/dashboard/crm/leads">
               <FiUser /> Leads
             </Link>
           </Breadcrumb.Item>

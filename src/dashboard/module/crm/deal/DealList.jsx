@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Avatar,
@@ -76,6 +76,26 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
 
   const sources = sourcesData?.data || [];
   const labels = labelsData?.data || [];
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Use only numbers for mobile/tablet, and AntD default for desktop
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
+    className: "deal-list-pagination",
+  };
 
   const getStatusColor = (status, is_won) => {
     // First check is_won flag
@@ -264,7 +284,7 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
           </div>
         );
       },
-      width: "30%",
+      // width: "30%",
     },
     {
       title: "Source",
@@ -420,7 +440,7 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
       title: "Actions",
       key: "actions",
       width: 80,
-      align: "center",
+      fixed: "right",
       render: (_, record) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
@@ -443,27 +463,89 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
 
   return (
     <>
-      <Table
-        columns={columns}
-        dataSource={deals}
-        rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} deals`,
-        }}
-        className="colorful-table"
-        onRow={(record) => ({
-          onClick: () => onDealClick(record),
-          style: { cursor: "pointer" },
-        })}
-      />
+      <div className="deal-list-container">
+        <Table
+          columns={columns}
+          dataSource={deals}
+          rowKey="id"
+          pagination={paginationConfig}
+          scroll={{ x: "max-content", y: "100%" }}
+          // className="colorful-table"
+          onRow={(record) => ({
+            onClick: () => onDealClick(record),
+            style: { cursor: "pointer" },
+          })}
+        />
+      </div>
 
       <style jsx global>{`
+        .deal-list-container {
+          margin-right: 10px;
+          .ant-table-pagination {
+            display: flex !important;
+            visibility: visible !important;
+            .ant-pagination-options {
+              display: flex !important;
+              align-items: center;
+              margin-bottom: 10px;
+              .ant-select-selection-item {
+                width: auto !important;
+                min-width: 40px;
+                height: 20px;
+                max-width: 100%;
+                overflow: visible !important;
+                white-space: normal !important;
+                text-align: center;
+                font-size: 14px;
+                font-weight: 400;
+              }
+            }
+          }
+        }
+
+        @media (min-width: 768px) {
+          .deal-list-container {
+            .ant-table-pagination {
+              .ant-pagination-options {
+                .ant-select-selection-item {
+                  width: 100%;
+                  height: 32px;
+                  color: inherit;
+                }
+              }
+            }
+          }
+        }
+
         .colorful-table {
           .ant-table {
             border-radius: 8px;
             overflow: hidden;
+
+            .ant-table-container {
+              overflow: hidden;
+              border-radius: 8px;
+            }
+
+            .ant-table-content {
+              overflow: auto;
+
+              &::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+                background-color: #f5f5f5;
+              }
+
+              &::-webkit-scrollbar-thumb {
+                background: #1890ff;
+                border-radius: 10px;
+              }
+
+              &::-webkit-scrollbar-track {
+                background: #f5f5f5;
+                border-radius: 10px;
+              }
+            }
 
             .ant-table-thead > tr > th {
               background: #fafafa !important;
@@ -497,6 +579,77 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
             }
           }
 
+          .ant-table-filter-trigger {
+            color: #8c8c8c;
+            &:hover {
+              color: #1890ff;
+            }
+            &.active {
+              color: #1890ff;
+            }
+          }
+
+          .ant-table-filter-dropdown {
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+
+            .ant-dropdown-menu {
+              max-height: 300px;
+              overflow-y: auto;
+              padding: 4px;
+              border-radius: 6px;
+
+              &::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+                background-color: #f5f5f5;
+              }
+
+              &::-webkit-scrollbar-thumb {
+                background: #1890ff;
+                border-radius: 10px;
+              }
+
+              &::-webkit-scrollbar-track {
+                background: #f5f5f5;
+                border-radius: 10px;
+              }
+            }
+
+            .ant-input {
+              border-radius: 4px;
+              &:hover,
+              &:focus {
+                border-color: #1890ff;
+              }
+            }
+
+            .ant-btn {
+              border-radius: 4px;
+              &:not(:last-child) {
+                margin-right: 8px;
+              }
+            }
+
+            .ant-dropdown-menu-item {
+              padding: 8px 12px;
+              margin: 2px 0;
+              border-radius: 4px;
+              font-size: 13px;
+
+              &:hover {
+                background: rgba(24, 144, 255, 0.1);
+              }
+
+              &.ant-dropdown-menu-item-selected {
+                color: #1890ff;
+                font-weight: 500;
+                background: rgba(24, 144, 255, 0.1);
+              }
+            }
+          }
+
           .ant-table-pagination {
             margin: 16px !important;
 
@@ -506,6 +659,85 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
 
               a {
                 color: white;
+              }
+            }
+          }
+        }
+
+        @media (max-width: 768px) {
+          .colorful-table {
+            .ant-table {
+              font-size: 14px;
+
+              .ant-table-thead > tr > th {
+                padding: 8px 12px;
+                font-size: 14px;
+                white-space: nowrap;
+              }
+
+              .ant-table-tbody > tr > td {
+                padding: 8px 12px;
+                font-size: 14px;
+              }
+
+              .ant-tag {
+                font-size: 12px;
+                padding: 2px 6px;
+              }
+
+              .ant-typography {
+                font-size: 14px;
+              }
+
+              .ant-btn {
+                font-size: 14px;
+                padding: 4px 8px;
+                height: 28px;
+              }
+
+              .ant-avatar {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+              }
+            }
+          }
+        }
+
+        @media (max-width: 480px) {
+          .colorful-table {
+            .ant-table {
+              font-size: 13px;
+
+              .ant-table-thead > tr > th {
+                padding: 6px 8px;
+                font-size: 13px;
+              }
+
+              .ant-table-tbody > tr > td {
+                padding: 6px 8px;
+                font-size: 13px;
+              }
+
+              .ant-tag {
+                font-size: 11px;
+                padding: 1px 4px;
+              }
+
+              .ant-typography {
+                font-size: 13px;
+              }
+
+              .ant-btn {
+                font-size: 13px;
+                padding: 3px 6px;
+                height: 24px;
+              }
+
+              .ant-avatar {
+                width: 20px;
+                height: 20px;
+                font-size: 11px;
               }
             }
           }

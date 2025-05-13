@@ -1086,3 +1086,440 @@
         }
     }
 }
+
+// Lead Notes Styles
+.lead-notes {
+    padding: 16px;
+    
+    .notes-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        flex-wrap: wrap;
+        gap: 16px;
+
+        .notes-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+
+            .stats-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: linear-gradient(135deg, #F9FAFB, #F3F4F6);
+                padding: 12px 20px;
+                border-radius: 12px;
+                border: 1px solid #E5E7EB;
+                min-width: 160px;
+
+                .stats-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    background: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+                }
+
+                .stats-label {
+                    font-size: 12px;
+                    color: #6B7280;
+                    font-weight: 500;
+                }
+
+                .stats-value {
+                    font-size: 20px;
+                    color: #111827;
+                    font-weight: 600;
+                }
+            }
+
+            .filter-buttons {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                flex: 1;
+                justify-content: flex-start;
+
+                .filter-button {
+                    height: 40px;
+                    padding: 0 16px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    border-radius: 10px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                    white-space: nowrap;
+
+                    .button-label {
+                        @media (max-width: 768px) {
+                            display: none;
+                        }
+                    }
+
+                    .count-badge {
+                        padding: 2px 8px;
+                        border-radius: 6px;
+                        font-size: 12px;
+                        margin-left: 4px;
+                    }
+
+                    &:hover {
+                        transform: translateY(-2px);
+                    }
+                }
+            }
+        }
+
+        .add-note-btn {
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            border: none;
+            border-radius: 12px;
+            height: 44px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(24, 144, 255, 0.25);
+            }
+        }
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        padding: 40px;
+    }
+
+    .notes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+        padding: 8px;
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+        }
+
+        .note-card {
+            cursor: pointer;
+            background: #FFFFFF;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid;
+            display: flex;
+            flex-direction: column;
+
+            &.urgent {
+                border-color: #FEE2E2;
+                .note-content {
+                    background: linear-gradient(to right, #FEE2E2 0%, #FFFFFF 100%);
+                }
+                .note-icon {
+                    background: rgba(220, 38, 38, 0.1);
+                }
+                .note-title {
+                    color: #991B1B;
+                }
+            }
+
+            &.important {
+                border-color: #FEF3C7;
+                .note-content {
+                    background: linear-gradient(to right, #FEF3C7 0%, #FFFFFF 100%);
+                }
+                .note-icon {
+                    background: rgba(217, 119, 6, 0.1);
+                }
+                .note-title {
+                    color: #92400E;
+                }
+            }
+
+            &.general {
+                border-color: #ECFDF5;
+                .note-content {
+                    background: linear-gradient(to right, #ECFDF5 0%, #FFFFFF 100%);
+                }
+                .note-icon {
+                    background: rgba(5, 150, 105, 0.1);
+                }
+                .note-title {
+                    color: #065F46;
+                }
+            }
+
+            &:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+
+            .note-content {
+                padding: 16px;
+                display: flex;
+                gap: 12px;
+                position: relative;
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 3px;
+                    height: 100%;
+                    background: currentColor;
+                }
+
+                .note-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .note-details {
+                    flex: 1;
+                    min-width: 0;
+
+                    .note-title {
+                        font-size: 16px;
+                        font-weight: 600;
+                        margin-bottom: 4px;
+                        display: block;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    .note-description {
+                        font-size: 13px;
+                        color: #6B7280;
+                        display: -webkit-box;
+                        -webkit-line-clamp: 2;
+                        -webkit-box-orient: vertical;
+                        overflow: hidden;
+                        line-height: 1.4;
+                        margin-bottom: 8px;
+                    }
+                }
+            }
+
+            .note-footer {
+                padding: 12px 16px;
+                border-top: 1px solid #F3F4F6;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-top: auto;
+
+                .note-date {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    color: #6B7280;
+                    font-size: 12px;
+                    font-weight: 500;
+                }
+
+                .note-actions {
+                    display: flex;
+                    gap: 8px;
+
+                    .edit-button,
+                    .delete-button {
+                        width: 32px;
+                        height: 32px;
+                        min-width: 32px;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 8px;
+                    }
+
+                    .edit-button {
+                        color: #1890ff;
+                        background: rgba(24, 144, 255, 0.1);
+                    }
+
+                    .delete-button {
+                        color: #EF4444;
+                        background: rgba(239, 68, 68, 0.1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Responsive styles
+@media (max-width: 1400px) {
+    .lead-notes {
+        .notes-header {
+            .notes-stats {
+                .filter-buttons {
+                    .filter-button {
+                        padding: 0 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 1200px) {
+    .lead-notes {
+        .notes-header {
+            .notes-stats {
+                .stats-card {
+                    min-width: 140px;
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 992px) {
+    .lead-notes {
+        .notes-header {
+            .notes-stats {
+                .stats-card {
+                    min-width: 120px;
+                    padding: 10px 16px;
+                    
+                    .stats-icon {
+                        width: 36px;
+                        height: 36px;
+                    }
+                    
+                    .stats-value {
+                        font-size: 18px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .lead-notes {
+        padding: 12px;
+
+        .notes-header {
+            padding: 16px;
+            flex-direction: column;
+            align-items: stretch;
+
+            .notes-stats {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+
+                .stats-card {
+                    width: 100%;
+                    justify-content: center;
+                }
+
+                .filter-buttons {
+                    justify-content: center;
+                    width: 100%;
+                    
+                    .filter-button {
+                        flex: 1;
+                        justify-content: center;
+                        min-width: 80px;
+                    }
+                }
+            }
+
+            .add-note-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .lead-notes {
+        .notes-header {
+            padding: 12px;
+
+            .notes-stats {
+                .stats-card {
+                    padding: 8px 12px;
+                    
+                    .stats-icon {
+                        width: 32px;
+                        height: 32px;
+                    }
+                    
+                    .stats-value {
+                        font-size: 16px;
+                    }
+                }
+
+                .filter-buttons {
+                    .filter-button {
+                        padding: 0 8px;
+                        min-width: 60px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 1184px) and (min-width: 769px) {
+    .lead-notes {
+        .notes-header {
+            flex-wrap: nowrap !important;
+            .notes-stats {
+                flex-wrap: nowrap !important;
+            }
+            .add-note-btn {
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                max-width: 44px !important;
+                padding: 0 !important;
+                border-radius: 12px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 22px !important;
+                box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+                transition: all 0.3s;
+                margin-left: 8px; // space from filter buttons
+                .add-note-text {
+                    display: none !important; // Hide the text
+                }
+            }
+        }
+    }
+}

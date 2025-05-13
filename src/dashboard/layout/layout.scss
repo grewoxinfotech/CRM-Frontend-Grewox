@@ -39,7 +39,7 @@ $desktop: 1024px;
             min-height: calc(100vh - 70px - 60px);
             background-color: #f8fafc;
 
-            @media (max-width: $tablet) {
+            @media (max-width: $desktop) {
                 padding: 16px;
                 padding-top: 0;
                 padding-bottom: 100px;

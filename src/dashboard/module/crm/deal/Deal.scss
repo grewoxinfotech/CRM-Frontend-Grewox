@@ -203,139 +203,360 @@
 
 .deal-page {
   padding: 24px;
+  background: $background-color;
 
-  :where(.css-dev-only-do-not-override-240cud).ant-card .ant-card-body {
-    padding: 4px !important;
-    border-radius: 0 0 8px 8px;
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
   }
 
   .page-breadcrumb {
     margin-bottom: 16px;
-  }
 
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    background: #fff;
-    padding: 24px;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    .header-left {
-      h2 {
-        margin-bottom: 4px;
-        font-size: 24px;
-        font-weight: 600;
-      }
-
-      .subtitle {
-        margin: 0;
-        color: #6b7280;
-        font-size: 14px;
-      }
+    @media (max-width: 768px) {
+      margin-bottom: 12px;
     }
 
-    .header-actions-wrapper {
-      display: flex;
-      justify-content: flex-end;
-      flex: 1;
-      margin: 0;
+    .ant-breadcrumb {
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
 
-      .header-actions {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: 16px;
-        width: 100%;
-        max-width: 800px;
+      @media (max-width: 480px) {
+        font-size: 12px;
+      }
 
-        .search-input {
-          flex: 1;
-          max-width: 360px;
-          min-width: 200px;
+      .ant-breadcrumb-link {
+        color: $text-color-light;
+        transition: all 0.3s ease;
 
-          .ant-input-affix-wrapper {
-            border-radius: 40px;
-            height: 40px;
-            padding: 4px 16px;
-            transition: all 0.3s ease;
-            border: 1px solid $border-color;
-            width: 100%;
+        a {
+          color: $text-color-light;
+          display: inline-flex;
+          align-items: center;
 
-            .anticon {
-              color: $text-color-light;
-              margin-right: 8px;
-              font-size: 16px;
-            }
+          &:hover {
+            color: #1677ff;
           }
         }
 
-        .action-buttons {
+        &:last-child {
+          color: $text-color-dark;
+          font-weight: 500;
+        }
+      }
+
+      .ant-breadcrumb-separator {
+        margin: 0 8px;
+        color: $text-color-light;
+      }
+    }
+  }
+
+  .page-header {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
+
+    .header-content {
+      padding: 16px 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+
+      @media (max-width: 992px) {
+        padding: 12px 16px;
+        gap: 12px;
+      }
+
+      @media (max-width: 767px) {
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+      }
+
+      @media (max-width: 576px) {
+        padding: 10px 12px;
+        gap: 12px;
+      }
+
+      .page-title {
+        flex: 1;
+        
+        .title-row {
           display: flex;
           align-items: center;
-          gap: 12px;
-          flex-shrink: 0;
+          justify-content: space-between;
+          margin-bottom: 4px;
 
-          .view-toggle {
-            .ant-btn {
-              height: 40px;
-              width: 40px;
-              padding: 0;
+          @media (max-width: 1200px) {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+            width: 100%;
+          }
+
+          h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+
+            @media (max-width: 768px) {
+              font-size: 20px;
+            }
+
+            @media (max-width: 480px) {
+              font-size: 18px;
+            }
+          }
+
+          .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+
+            @media (max-width: 1200px) {
+              width: 100%;
+              justify-content: space-between;
+            }
+
+            .desktop-actions {
               display: flex;
               align-items: center;
-              justify-content: center;
+              gap: 12px;
+              flex-wrap: nowrap;
+
+              @media (max-width: 1200px) {
+                width: 100%;
+                justify-content: space-between;
+              }
+
+              .search-container {
+                position: relative;
+                display: flex;
+                align-items: center;
+
+                .search-input {
+                  width: 240px;
+
+                  @media (max-width: 1200px) {
+                    width: 300px;
+                  }
+
+                  @media (max-width: 992px) {
+                    width: 350px;
+                  }
+
+                  @media (max-width: 767px) {
+                    display: none;
+                  }
+                }
+
+                .search-icon-button {
+                  display: none;
+                  padding: 0 12px;
+                  width: 38px;
+                  height: 38px;
+                  align-items: center;
+                  justify-content: center;
+
+                  @media (max-width: 767px) {
+                    display: flex;
+                  }
+
+                  @media (max-width: 576px) {
+                    width: 34px;
+                    height: 34px;
+                    padding: 0 10px;
+                  }
+                }
+              }
+
+              .action-buttons {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .view-toggle {
+                  display: flex;
+                  align-items: center;
+
+                  .ant-btn {
+                    height: 38px;
+                    width: 38px;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+
+                    @media (max-width: 576px) {
+                      height: 34px;
+                      width: 34px;
+                    }
+                  }
+                }
+              }
+
+              // Add styles for responsive buttons
+              .export-button,
+              .add-button {
+                height: 38px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                @media (max-width: 767px) {
+                  padding: 0 12px;
+                  width: 38px;
+                  height: 38px;
+
+                  .button-text {
+                    display: none;
+                  }
+                }
+
+                @media (max-width: 576px) {
+                  width: 34px;
+                  height: 34px;
+                  padding: 0 10px;
+                }
+              }
             }
           }
+        }
+      }
 
-          .export-button,
-          .add-button {
-            height: 40px;
-            padding: 0 20px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+      .ant-typography-secondary {
+        font-size: 14px;
+        color: #666;
 
-            svg {
-              font-size: 16px;
-            }
-          }
+        @media (max-width: 767px) {
+          text-align: center;
+        }
 
-          .export-button {
-            border: 1px solid $border-color;
-            background: white;
+        @media (max-width: 768px) {
+          font-size: 13px;
+        }
 
-            &:hover {
-              color: #1677ff;
-              border-color: #1677ff;
-              transform: translateY(-2px);
-            }
-          }
-
-          .add-button {
-            background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-            border: none;
-            color: white;
-
-            &:hover {
-              background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-              transform: translateY(-2px);
-            }
-          }
+        @media (max-width: 480px) {
+          font-size: 12px;
         }
       }
     }
   }
 
   .deal-content {
-    background: #fff;
+    // @include hover-shadow;
+    background: white;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .ant-card-body {
+      padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      @media (max-width: 768px) {
+        border-radius: 8px;
+      }
+    }
+  }
+}
+
+// Search Popover Styles
+.search-popover {
+  .ant-popover-inner {
+    padding: 0;
+  }
+
+  .ant-popover-inner-content {
+    padding: 0;
+  }
+
+  .search-popup {
+    width: 280px;
+    padding: 12px;
+
+    .search-input {
+      .ant-input-affix-wrapper {
+        border-radius: 6px;
+        height: 38px;
+        border: 1px solid #e6e6e6;
+        transition: all 0.3s ease;
+
+        &:hover, &:focus {
+          border-color: #1677ff;
+          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+        }
+
+        .anticon {
+          color: #999;
+        }
+
+        input {
+          font-size: 14px;
+          
+          &::placeholder {
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .search-popup {
+      width: 260px;
+      padding: 10px;
+
+      .search-input {
+        .ant-input-affix-wrapper {
+          height: 34px;
+          
+          input {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .search-popup {
+      width: 240px;
+      padding: 8px;
+
+      .search-input {
+        .ant-input-affix-wrapper {
+          height: 32px;
+          
+          input {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Hide search popover on desktop
+@media (min-width: 769px) {
+  .search-popover {
+    display: none;
   }
 }
 
@@ -1748,4 +1969,13 @@
       background-color: #f8fafc !important;
     }
   }
+}
+
+// Common hover effect mixin
+@mixin hover-shadow {
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
 }

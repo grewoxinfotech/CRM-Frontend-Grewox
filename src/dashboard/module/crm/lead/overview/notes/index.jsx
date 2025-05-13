@@ -405,49 +405,19 @@ const LeadNotes = ({ leadId }) => {
 
     return (
         <div className="lead-notes">
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px',
-                background: 'white',
-                padding: '20px',
-                borderRadius: '16px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '20px'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        background: 'linear-gradient(135deg, #F9FAFB, #F3F4F6)',
-                        padding: '12px 20px',
-                        borderRadius: '12px',
-                        border: '1px solid #E5E7EB'
-                    }}>
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '10px',
-                            background: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)'
-                        }}>
+            <div className="notes-header">
+                <div className="notes-stats">
+                    <div className="stats-card">
+                        <div className="stats-icon">
                             <FiFileText style={{ fontSize: '20px', color: '#2563EB' }} />
                         </div>
                         <div>
-                            <div style={{ fontSize: '12px', color: '#6B7280', fontWeight: '500' }}>Total Notes</div>
-                            <div style={{ fontSize: '20px', color: '#111827', fontWeight: '600' }}>{noteCounts.all}</div>
+                            <div className="stats-label">Total Notes</div>
+                            <div className="stats-value">{noteCounts.all}</div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="filter-buttons">
                         {[
                             { key: 'all', icon: FiFileText, label: 'All', color: '#2563EB', bgColor: '#EFF6FF' },
                             { key: 'urgent', icon: FiAlertCircle, label: 'Urgent', color: '#DC2626', bgColor: '#FEF2F2' },
@@ -460,29 +430,18 @@ const LeadNotes = ({ leadId }) => {
                                 <Button
                                     key={item.key}
                                     onClick={() => setFilterType(item.key)}
+                                    className={`filter-button ${isSelected ? 'selected' : ''}`}
                                     style={{
-                                        height: '40px',
-                                        padding: '0 16px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
                                         background: isSelected ? item.bgColor : 'white',
                                         border: `1px solid ${isSelected ? item.color : '#E5E7EB'}`,
-                                        borderRadius: '10px',
                                         color: isSelected ? item.color : '#6B7280',
-                                        fontWeight: '500',
-                                        transition: 'all 0.3s ease'
                                     }}
                                 >
                                     <Icon style={{ fontSize: '16px' }} />
-                                    {item.label}
-                                    <span style={{
+                                    <span className="button-label">{item.label}</span>
+                                    <span className="count-badge" style={{
                                         background: isSelected ? 'white' : item.bgColor,
-                                        padding: '2px 8px',
-                                        borderRadius: '6px',
-                                        fontSize: '12px',
                                         color: item.color,
-                                        marginLeft: '4px'
                                     }}>
                                         {noteCounts[item.key]}
                                     </span>
@@ -496,212 +455,67 @@ const LeadNotes = ({ leadId }) => {
                     type="primary"
                     icon={<FiPlus style={{ fontSize: '18px' }} />}
                     onClick={handleAddNote}
-                    className="add-note-btn"
-                    style={{
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        height: '44px',
-                        padding: '0 24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        transition: 'all 0.3s ease',
-                        ':hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.25)'
-                        }
-                    }}
+                    className={`add-note-btn`}
                 >
-                    Add Note
+                    <span className="add-note-text">Add Note</span>
                 </Button>
             </div>
 
             {isLoading ? (
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: '40px'
-                }}>
+                <div className="loading-container">
                     <Spin size="large" />
                 </div>
             ) : filteredNotes?.length === 0 ? (
                 <EmptyNotesState onAddClick={handleAddNote} />
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div className="notes-grid">
                     {filteredNotes.map(note => (
                         <div
                             key={note.id}
                             onClick={() => handleNoteClick(note)}
-                            style={{
-                                cursor: 'pointer',
-                                background: '#FFFFFF',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                position: 'relative',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                                border: '1px solid',
-                                borderColor: note.notetype === 'urgent'
-                                    ? '#FEE2E2'
-                                    : note.notetype === 'important'
-                                        ? '#FEF3C7'
-                                        : '#ECFDF5'
-                            }}
+                            className={`note-card ${note.notetype}`}
                         >
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                padding: '12px 16px',
-                                gap: '12px',
-                                position: 'relative',
-                                background: note.notetype === 'urgent'
-                                    ? 'linear-gradient(to right, #FEE2E2 0%, #FFFFFF 100%)'
-                                    : note.notetype === 'important'
-                                        ? 'linear-gradient(to right, #FEF3C7 0%, #FFFFFF 100%)'
-                                        : 'linear-gradient(to right, #ECFDF5 0%, #FFFFFF 100%)'
-                            }}>
-                                <div style={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '3px',
-                                    height: '100%',
-                                    background: note.notetype === 'urgent'
-                                        ? '#DC2626'
-                                        : note.notetype === 'important'
-                                            ? '#D97706'
-                                            : '#059669'
-                                }} />
+                            <div className="note-content">
+                                <div className="note-icon">
+                                    {note.notetype === 'urgent' ? (
+                                        <FiAlertCircle style={{ fontSize: '20px', color: '#DC2626' }} />
+                                    ) : note.notetype === 'important' ? (
+                                        <FiStar style={{ fontSize: '20px', color: '#D97706' }} />
+                                    ) : (
+                                        <FiFile style={{ fontSize: '20px', color: '#059669' }} />
+                                    )}
+                                </div>
+                                <div className="note-details">
+                                    <Text className="note-title">{note.note_title}</Text>
+                                    <div className="note-description">{note.description}</div>
+                                    <NoteTypeTag type={note.notetype} />
+                                </div>
+                            </div>
 
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '12px',
-                                        marginBottom: '4px'
-                                    }}>
-                                        <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '10px',
-                                            background: note.notetype === 'urgent'
-                                                ? 'rgba(220, 38, 38, 0.1)'
-                                                : note.notetype === 'important'
-                                                    ? 'rgba(217, 119, 6, 0.1)'
-                                                    : 'rgba(5, 150, 105, 0.1)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            transition: 'all 0.3s ease'
-                                        }}>
-                                            {note.notetype === 'urgent' ? (
-                                                <FiAlertCircle style={{ fontSize: '20px', color: '#DC2626' }} />
-                                            ) : note.notetype === 'important' ? (
-                                                <FiStar style={{ fontSize: '20px', color: '#D97706' }} />
-                                            ) : (
-                                                <FiFile style={{ fontSize: '20px', color: '#059669' }} />
-                                            )}
-                                        </div>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <Text style={{
-                                                fontSize: '19px',
-                                                fontWeight: '600',
-                                                color: note.notetype === 'urgent'
-                                                    ? '#991B1B'
-                                                    : note.notetype === 'important'
-                                                        ? '#92400E'
-                                                        : '#065F46',
-                                                display: 'block',
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                letterSpacing: '-0.01em',
-                                                marginBottom: '2px'
-                                            }}>
-                                                {note.note_title}
-                                            </Text>
-                                            <div style={{
-                                                fontSize: '13px',
-                                                color: '#6B7280',
-                                                display: '-webkit-box',
-                                                WebkitLineClamp: '1',
-                                                WebkitBoxOrient: 'vertical',
-                                                overflow: 'hidden',
-                                                lineHeight: '1.4'
-                                            }}>
-                                                {note.description}
-                                            </div>
-                                        </div>
-                                        <NoteTypeTag type={note.notetype} />
-                                    </div>
-
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        marginTop: '12px'
-                                    }}>
-                                        <span style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            color: '#6B7280',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                        }}>
-                                            <FiClock style={{ fontSize: '14px' }} />
-                                            {formatDate(note.createdAt)}
-                                        </span>
-                                        <div style={{
-                                            display: 'flex',
-                                            gap: '8px'
-                                        }}>
-                                            <Button
-                                                type="text"
-                                                icon={<FiEdit2 style={{ fontSize: '14px' }} />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEdit(note);
-                                                }}
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    minWidth: '32px',
-                                                    padding: 0,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: '#1890ff',
-                                                    background: 'rgba(24, 144, 255, 0.1)',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
-                                            <Button
-                                                type="text"
-                                                icon={<FiTrash2 style={{ fontSize: '14px' }} />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(note.id);
-                                                }}
-                                                style={{
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    minWidth: '32px',
-                                                    padding: 0,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    color: '#EF4444',
-                                                    background: 'rgba(239, 68, 68, 0.1)',
-                                                    borderRadius: '8px'
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
+                            <div className="note-footer">
+                                <span className="note-date">
+                                    <FiClock style={{ fontSize: '14px' }} />
+                                    {formatDate(note.createdAt)}
+                                </span>
+                                <div className="note-actions">
+                                    <Button
+                                        type="text"
+                                        icon={<FiEdit2 style={{ fontSize: '14px' }} />}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEdit(note);
+                                        }}
+                                        className="edit-button"
+                                    />
+                                    <Button
+                                        type="text"
+                                        icon={<FiTrash2 style={{ fontSize: '14px' }} />}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(note.id);
+                                        }}
+                                        className="delete-button"
+                                    />
                                 </div>
                             </div>
                         </div>

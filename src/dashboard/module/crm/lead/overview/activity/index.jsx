@@ -155,7 +155,7 @@ const LeadActivity = ({ leadId }) => {
                     <div className="card-header">
                         <div className="title-section">
                             <div className="title-with-count">
-                                Lead Activity
+                                <span className="lead-title">Lead Activity</span>
                                 <Badge 
                                     count={response?.data?.length || 0} 
                                     style={{ 
@@ -167,15 +167,14 @@ const LeadActivity = ({ leadId }) => {
                             </div>
                         </div>
                         <div className="filter-section">
-                            <Space>
-                                <Input
-                                    placeholder="Search activities..."
-                                    allowClear
-                                    value={searchText}
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    style={{ height: '40px', width: '300px', alignItems: 'center' }}
-                                />
-                            </Space>
+                            <Input
+                                placeholder="Search activities..."
+                                allowClear
+                                value={searchText}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                prefix={<FiSearch />}
+                                className="search-input"
+                            />
                         </div>
                     </div>
                 }

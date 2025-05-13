@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   Avatar,
@@ -77,6 +77,7 @@ const LeadList = ({
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
   const { data: contactsResponse } = useGetContactsQuery();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   console.log(leads);
 
@@ -541,20 +542,22 @@ const LeadList = ({
     {
       title: "Actions",
       key: "actions",
-      width: 80,
-      align: "center",
+      width: "80",
+      fixed: "right",
       render: (_, record) => (
         <div onClick={(e) => e.stopPropagation()}>
           <Dropdown
             menu={getDropdownItems(record)}
             trigger={["click"]}
             placement="bottomRight"
+          
           >
             <Button
               type="text"
               icon={<FiMoreVertical style={{ fontSize: "16px" }} />}
-              className="action-btn"
+              // className="action-btn"
               onClick={(e) => e.stopPropagation()}
+              className="action-dropdown-button"
             />
           </Dropdown>
         </div>
@@ -562,24 +565,43 @@ const LeadList = ({
     },
   ];
 
+  // const isMobile = window.innerWidth < 768;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Use only numbers for mobile/tablet, and AntD default for desktop
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
+    
+  };
+
   return (
     <>
+    <div className="lead-list-container"> 
       <Table
         columns={columns}
         dataSource={leads?.data || []}
         rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} leads`,
-        }}
-        className="colorful-table"
+        pagination={paginationConfig}
+        scroll={{ x: "max-content", y: "100%" }}
+        // className="colorful-table"
         onRow={(record) => ({
           onClick: () => onLeadClick(record),
           style: { cursor: "pointer" },
         })}
       />
-      <style jsx global>{`
+      </div>
+      {/* <style jsx global>{`
         .colorful-table {
           .ant-table {
             border-radius: 8px;
@@ -743,7 +765,7 @@ const LeadList = ({
             background: rgba(24, 144, 255, 0.1);
           }
         }
-      `}</style>
+      `}</style> */}
     </>
   );
 };

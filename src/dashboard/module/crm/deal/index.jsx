@@ -12,6 +12,7 @@ import {
   message,
   Row,
   Col,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -45,6 +46,7 @@ const Deal = () => {
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const navigate = useNavigate();
   // Fetch pipelines and deal stages
   const { data: pipelines = [] } = useGetPipelinesQuery();
@@ -201,32 +203,49 @@ const Deal = () => {
     doc.save(`${filename}.pdf`);
   };
 
-  const exportMenu = {
-    items: [
-      {
-        key: "csv",
-        label: "Export as CSV",
-        icon: <FiDownload />,
-        onClick: () => handleExport("csv"),
-      },
-      {
-        key: "excel",
-        label: "Export as Excel",
-        icon: <FiDownload />,
-        onClick: () => handleExport("excel"),
-      },
-      {
-        key: "pdf",
-        label: "Export as PDF",
-        icon: <FiDownload />,
-        onClick: () => handleExport("pdf"),
-      },
-    ],
-  };
+  const exportMenu = (
+    <Menu>
+      <Menu.Item
+        key="csv"
+        icon={<FiDownload />}
+        onClick={() => handleExport("csv")}
+      >
+        Export as CSV
+      </Menu.Item>
+      <Menu.Item
+        key="excel"
+        icon={<FiDownload />}
+        onClick={() => handleExport("excel")}
+      >
+        Export as Excel
+      </Menu.Item>
+      <Menu.Item
+        key="pdf"
+        icon={<FiDownload />}
+        onClick={() => handleExport("pdf")}
+      >
+        Export as PDF
+      </Menu.Item>
+    </Menu>
+  );
+
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search deals..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
 
   return (
     <div className="deal-page">
-      <div className="page-breadcrumb">
+      <div className="page-breadcrumb" style={{ paddingTop: "0px" }}>
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -239,55 +258,74 @@ const Deal = () => {
       </div>
 
       <div className="page-header">
-        <div className="header-left">
-          <Title level={2}>Deals</Title>
-          <p className="subtitle">Manage all deals in the system</p>
-        </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-            <div className="header-actions">
-              <Input
-                prefix={
-                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
-                }
-                placeholder="Search deals"
-                allowClear
-                onChange={(e) => setSearchText(e.target.value)}
-                value={searchText}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Button.Group className="view-toggle">
-                  <Button
-                    type={viewMode === "table" ? "primary" : "default"}
-                    icon={<FiList size={16} />}
-                    onClick={() => setViewMode("table")}
-                  />
-                  <Button
-                    type={viewMode === "card" ? "primary" : "default"}
-                    icon={<FiGrid size={16} />}
-                    onClick={() => setViewMode("card")}
-                  />
-                </Button.Group>
-                <Dropdown overlay={exportMenu} trigger={["click"]}>
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={handleCreate}
-                  className="add-button"
-                >
-                  Add Deal
-                </Button>
+        <div className="header-content">
+          <div className="page-title">
+            <div className="title-row">
+              <div className="page-title-content">
+                <Title level={2}>Deals</Title>
+                <Text type="secondary">Manage all deals in the system</Text>
+              </div>
+              <div className="header-actions">
+                <div className="desktop-actions">
+                  <div className="action-buttons">
+                    <Button.Group className="view-toggle">
+                      <Button
+                        type={viewMode === "table" ? "primary" : "default"}
+                        icon={<FiList size={16} />}
+                        onClick={() => setViewMode("table")}
+                      />
+                      <Button
+                        type={viewMode === "card" ? "primary" : "default"}
+                        icon={<FiGrid size={16} />}
+                        onClick={() => setViewMode("card")}
+                      />
+                    </Button.Group>
+                  </div>
+
+                  <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                    <div className="search-container">
+                      <Input
+                        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                        placeholder="Search deals..."
+                        allowClear
+                        onChange={(e) => setSearchText(e.target.value)}
+                        value={searchText}
+                        className="search-input"
+                      />
+                      <Popover
+                        content={searchContent}
+                        trigger="click"
+                        open={isSearchVisible}
+                        onOpenChange={setIsSearchVisible}
+                        placement="bottomRight"
+                        className="mobile-search-popover"
+                      >
+                        <Button 
+                          className="search-icon-button"
+                          icon={<FiSearch size={16} />}
+                        />
+                      </Popover>
+                    </div>
+                    <Dropdown overlay={exportMenu} trigger={["click"]}>
+                      <Button className="export-button">
+                        <FiDownload size={16} />
+                        <span className="button-text">Export</span>
+                      </Button>
+                    </Dropdown>
+                    <Button
+                      type="primary"
+                      icon={<FiPlus size={16} />}
+                      onClick={handleCreate}
+                      className="add-button"
+                    >
+                      <span className="button-text">Add Deal</span>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
 
       <Card className="deal-content">

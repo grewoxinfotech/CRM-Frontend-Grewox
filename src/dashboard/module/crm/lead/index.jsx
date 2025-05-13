@@ -15,6 +15,7 @@ import {
   Select,
   message,
   Form,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -24,6 +25,7 @@ import {
   FiGrid,
   FiList,
   FiHome,
+  FiFilter,
 } from "react-icons/fi";
 import "./Lead.scss";
 import CreateLead from "./CreateLead";
@@ -61,6 +63,8 @@ const Lead = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
   const { data: leads, isLoading } = useGetLeadsQuery();
@@ -72,7 +76,7 @@ const Lead = () => {
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
   const { data: stagesData } = useGetLeadStagesQuery();
   const [initialFormData, setInitialFormData] = useState(null);
-  
+
 
   // Handle automatic form opening
   useEffect(() => {
@@ -177,9 +181,8 @@ const Lead = () => {
           statusesData?.data?.find((s) => s.id === lead.status)?.name ||
           lead.status,
         "Interest Level": lead.interest_level,
-        "Lead Value": `${
-          currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
-        } ${lead.leadValue || 0}`,
+        "Lead Value": `${currencies?.find((c) => c.id === lead.currency)?.currencyIcon || ""
+          } ${lead.leadValue || 0}`,
         "Created Date": moment(lead.createdAt).format("DD-MM-YYYY"),
       }));
 
@@ -294,9 +297,38 @@ const Lead = () => {
     console.log("Initial form data updated:", initialFormData);
   }, [initialFormData]);
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search leads..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
+  const filterMenu = (
+    <Menu className="filter-menu">
+      <Menu.Item key="export" className="filter-menu-item">
+        <div className="filter-section">
+          <Dropdown overlay={exportMenu} trigger={["click"]}>
+            <Button className="export-button">
+              <FiDownload size={16} />
+              Export
+            </Button>
+          </Dropdown>
+        </div>
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <div className="lead-page">
-      <div className="page-breadcrumb">
+      <div className="page-breadcrumb" style={{ paddingTop: "0px" }}>
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -309,55 +341,75 @@ const Lead = () => {
       </div>
 
       <div className="page-header">
-        <div className="header-left">
-          <Title level={2}>Leads</Title>
-          <p className="subtitle">Manage all leads in the system</p>
-        </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-            <div className="header-actions">
-              <Input
-                prefix={
-                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
-                }
-                placeholder="Search leads"
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Button.Group className="view-toggle">
-                  <Button
-                    type={viewMode === "table" ? "primary" : "default"}
-                    icon={<FiList size={16} />}
-                    onClick={() => setViewMode("table")}
-                  />
-                  <Button
-                    type={viewMode === "card" ? "primary" : "default"}
-                    icon={<FiGrid size={16} />}
-                    onClick={() => setViewMode("card")}
-                  />
-                </Button.Group>
-                <Dropdown overlay={exportMenu} trigger={["click"]}>
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={handleCreate}
-                  className="add-button"
-                >
-                  Add Lead
-                </Button>
+        <div className="header-content">
+          <div className="page-title">
+            <div className="title-row">
+              <div className="page-title-content">
+                <Title level={2}>Leads</Title>
+                <Text type="secondary">Manage all leads in the system</Text>
+              </div>
+              <div className="header-actions">
+                <div className="desktop-actions">
+                  <div className="action-buttons">
+                    <Button.Group className="view-toggle">
+                      <Button
+                        type={viewMode === "table" ? "primary" : "default"}
+                        icon={<FiList size={16} />}
+                        onClick={() => setViewMode("table")}
+                      />
+                      <Button
+                        type={viewMode === "card" ? "primary" : "default"}
+                        icon={<FiGrid size={16} />}
+                        onClick={() => setViewMode("card")}
+                      />
+                    </Button.Group>
+                  </div>
+
+                  <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                    <div className="search-container">
+                      <Input
+                        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                        placeholder="Search leads..."
+                        allowClear
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchText}
+                        className="search-input"
+                      />
+                      <Popover
+                        content={searchContent}
+                        trigger="click"
+                        open={isSearchVisible}
+                        onOpenChange={setIsSearchVisible}
+                        placement="bottomRight"
+                        className="mobile-search-popover"
+                      >
+                        <Button 
+                          className="search-icon-button"
+                          icon={<FiSearch size={16} />}
+                        />
+                      </Popover>
+                    </div>
+                    <Dropdown overlay={exportMenu} trigger={["click"]}>
+                      <Button className="export-button">
+                        <FiDownload size={16} />
+                        <span className="button-text">Export</span>
+                      </Button>
+                    </Dropdown>
+                    <Button
+                      type="primary"
+                      icon={<FiPlus size={16} />}
+                      onClick={handleCreate}
+                      className="add-button"
+                    >
+                      <span className="button-text">Add Lead</span>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </Col>
-        </Row>
+            
+          </div>
+        </div>
       </div>
 
       <Card className="lead-content">
