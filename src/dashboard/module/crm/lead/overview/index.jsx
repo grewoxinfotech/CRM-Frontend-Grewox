@@ -618,8 +618,8 @@ const LeadOverviewContent = ({
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (
                   <Tooltip
                     title={`${companyData.data[0].billing_address || ""} ${companyData.data[0].billing_city
-                        ? `, ${companyData.data[0].billing_city}`
-                        : ""
+                      ? `, ${companyData.data[0].billing_city}`
+                      : ""
                       }${companyData.data[0].billing_state
                         ? `, ${companyData.data[0].billing_state}`
                         : ""
@@ -796,11 +796,6 @@ const LeadOverviewContent = ({
           .icon-wrapper.default {
             background: linear-gradient(135deg, #f5222d 0%, #cf1322 100%);
             box-shadow: 0 4px 12px rgba(245, 34, 45, 0.15);
-          }
-
-          .icon {
-            color: white;
-            font-size: ${(props) => props.size || "16px"};
           }
 
           .profile-stats {

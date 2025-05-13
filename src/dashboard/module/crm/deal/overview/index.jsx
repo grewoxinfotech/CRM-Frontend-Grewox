@@ -87,9 +87,8 @@ const DealStageProgress = ({
 
   return (
     <div
-      className={`lead-stage-progress-container ${
-        isConverted ? "converted" : ""
-      }`}
+      className={`lead-stage-progress-container ${isConverted ? "converted" : ""
+        }`}
     >
       {stages.map((stage, index) => {
         const isCompleted = currentStageIndex > -1 && index < currentStageIndex;
@@ -105,9 +104,8 @@ const DealStageProgress = ({
         return (
           <button
             key={stage.id}
-            className={`stage-item ${statusClass} ${
-              isLoading ? "loading" : ""
-            } ${isConverted ? "converted" : ""}`}
+            className={`stage-item ${statusClass} ${isLoading ? "loading" : ""
+              } ${isConverted ? "converted" : ""}`}
             onClick={(e) => handleItemClick(stage.id, e)}
             disabled={isLoading || isConverted}
             type="button"
@@ -293,8 +291,8 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
         currentStatus === "won"
           ? true
           : currentStatus === "lost"
-          ? false
-          : null,
+            ? false
+            : null,
     }));
   }, [initialDeal, currentStatus]);
 
@@ -397,8 +395,8 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             currentStatus === "won"
               ? true
               : currentStatus === "lost"
-              ? false
-              : null,
+                ? false
+                : null,
         }));
       }
 
@@ -414,8 +412,8 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
           currentStatus === "won"
             ? true
             : currentStatus === "lost"
-            ? false
-            : null,
+              ? false
+              : null,
       }));
       message.error(error?.data?.message || "Failed to update deal stage");
     }
@@ -509,9 +507,9 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
               <h2 className="company-name">{localDeal?.dealTitle}</h2>
               <div className="contact-details">
                 {localDeal?.company_id &&
-                companyData?.data?.[0] &&
-                localDeal?.contact_id &&
-                contactData?.data ? (
+                  companyData?.data?.[0] &&
+                  localDeal?.contact_id &&
+                  contactData?.data ? (
                   <div className="combined-info">
                     <div className="info-section company-section">
                       <div className="icon-wrapper company">
@@ -615,11 +613,10 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                 <div className="stat-label">Email Address</div>
                 {localDeal?.contact_id && contactData?.data ? (
                   <a
-                    href={`mailto:${
-                      contactData.data.find(
-                        (c) => c.id === localDeal.contact_id
-                      )?.email
-                    }`}
+                    href={`mailto:${contactData.data.find(
+                      (c) => c.id === localDeal.contact_id
+                    )?.email
+                      }`}
                     className="stat-value"
                   >
                     {contactData.data.find((c) => c.id === localDeal.contact_id)
@@ -638,11 +635,10 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                 <div className="stat-label">Phone Number</div>
                 {localDeal?.contact_id && contactData?.data ? (
                   <a
-                    href={`tel:${
-                      contactData.data.find(
-                        (c) => c.id === localDeal.contact_id
-                      )?.phone
-                    }`}
+                    href={`tel:${contactData.data.find(
+                      (c) => c.id === localDeal.contact_id
+                    )?.phone
+                      }`}
                     className="stat-value"
                   >
                     {getPhoneWithCode(
@@ -677,41 +673,34 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                 <div className="stat-label">Location</div>
                 {localDeal?.contact_id && contactData?.data ? (
                   <Tooltip
-                    title={`${
-                      contactData.data.find(
-                        (c) => c.id === localDeal.contact_id
-                      )?.address || ""
-                    } ${
-                      contactData.data.find(
+                    title={`${contactData.data.find(
+                      (c) => c.id === localDeal.contact_id
+                    )?.address || ""
+                      } ${contactData.data.find(
                         (c) => c.id === localDeal.contact_id
                       )?.city
-                        ? `, ${
-                            contactData.data.find(
-                              (c) => c.id === localDeal.contact_id
-                            )?.city
-                          }`
+                        ? `, ${contactData.data.find(
+                          (c) => c.id === localDeal.contact_id
+                        )?.city
+                        }`
                         : ""
-                    }${
-                      contactData.data.find(
+                      }${contactData.data.find(
                         (c) => c.id === localDeal.contact_id
                       )?.state
-                        ? `, ${
-                            contactData.data.find(
-                              (c) => c.id === localDeal.contact_id
-                            )?.state
-                          }`
+                        ? `, ${contactData.data.find(
+                          (c) => c.id === localDeal.contact_id
+                        )?.state
+                        }`
                         : ""
-                    }${
-                      contactData.data.find(
+                      }${contactData.data.find(
                         (c) => c.id === localDeal.contact_id
                       )?.country
-                        ? `, ${
-                            contactData.data.find(
-                              (c) => c.id === localDeal.contact_id
-                            )?.country
-                          }`
+                        ? `, ${contactData.data.find(
+                          (c) => c.id === localDeal.contact_id
+                        )?.country
+                        }`
                         : ""
-                    }`}
+                      }`}
                   >
                     <div className="stat-value truncate">
                       {contactData.data.find(
@@ -720,44 +709,38 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
                       {contactData.data.find(
                         (c) => c.id === localDeal.contact_id
                       )?.city &&
-                        `, ${
-                          contactData.data.find(
-                            (c) => c.id === localDeal.contact_id
-                          )?.city
+                        `, ${contactData.data.find(
+                          (c) => c.id === localDeal.contact_id
+                        )?.city
                         }`}
                       {contactData.data.find(
                         (c) => c.id === localDeal.contact_id
                       )?.state &&
-                        `, ${
-                          contactData.data.find(
-                            (c) => c.id === localDeal.contact_id
-                          )?.state
+                        `, ${contactData.data.find(
+                          (c) => c.id === localDeal.contact_id
+                        )?.state
                         }`}
                       {contactData.data.find(
                         (c) => c.id === localDeal.contact_id
                       )?.country &&
-                        `, ${
-                          contactData.data.find(
-                            (c) => c.id === localDeal.contact_id
-                          )?.country
+                        `, ${contactData.data.find(
+                          (c) => c.id === localDeal.contact_id
+                        )?.country
                         }`}
                     </div>
                   </Tooltip>
                 ) : localDeal?.company_id && companyData?.data?.[0] ? (
                   <Tooltip
-                    title={`${companyData.data[0].billing_address || ""} ${
-                      companyData.data[0].billing_city
-                        ? `, ${companyData.data[0].billing_city}`
-                        : ""
-                    }${
-                      companyData.data[0].billing_state
+                    title={`${companyData.data[0].billing_address || ""} ${companyData.data[0].billing_city
+                      ? `, ${companyData.data[0].billing_city}`
+                      : ""
+                      }${companyData.data[0].billing_state
                         ? `, ${companyData.data[0].billing_state}`
                         : ""
-                    }${
-                      companyData.data[0].billing_country
+                      }${companyData.data[0].billing_country
                         ? `, ${companyData.data[0].billing_country}`
                         : ""
-                    }`}
+                      }`}
                   >
                     <div className="stat-value truncate">
                       {companyData.data[0].billing_address || "-"}
@@ -927,11 +910,6 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
           .icon-wrapper.default {
             background: linear-gradient(135deg, #f5222d 0%, #cf1322 100%);
             box-shadow: 0 4px 12px rgba(245, 34, 45, 0.15);
-          }
-
-          .icon {
-            color: white;
-            font-size: ${(props) => props.size || "16px"};
           }
 
           .profile-stats {

@@ -145,6 +145,18 @@ const CustomFormPage = () => {
         });
     };
 
+    const handleBulkDelete = async (ids) => {
+        try {
+            // Use Promise.all to handle multiple deletions concurrently
+            await Promise.all(ids.map(id => deleteForm(id).unwrap()));
+            await refetch();
+            return Promise.resolve();
+        } catch (error) {
+            console.error('Bulk delete error:', error);
+            return Promise.reject(error);
+        }
+    };
+
     const handleExport = async (type) => {
         try {
             setLoading(true);
@@ -335,6 +347,7 @@ const CustomFormPage = () => {
                     onEdit={handleEditClick}
                     onDelete={handleDelete}
                     onGenerateLink={handleGenerateLink}
+                    onBulkDelete={handleBulkDelete}
                     searchText={searchText}
                 />
             </Card>

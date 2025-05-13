@@ -46,7 +46,7 @@ import { useGetAllSettingsQuery } from '../../../../superadmin/module/settings/g
 
 const { Title, Text } = Typography;
 
-const CustomFormList = ({ data = [], onEdit, onDelete }) => {
+const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
     const [qrModalVisible, setQrModalVisible] = useState(false);
     const [selectedFormUrl, setSelectedFormUrl] = useState('');
     const [selectedFormTitle, setSelectedFormTitle] = useState('');
@@ -312,10 +312,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete }) => {
             },
             onOk: async () => {
                 try {
-                    // Process each deletion sequentially
-                    for (const id of selectedForms) {
-                        await onDelete(id);
-                    }
+                    await onBulkDelete(selectedForms);
                     message.success(`${selectedForms.length} forms deleted successfully`);
                     setSelectedForms([]);
                 } catch (error) {

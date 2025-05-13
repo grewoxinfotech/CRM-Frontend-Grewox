@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Table, Card, Button, Space, Popconfirm, message, Typography, Tag, Tooltip, Avatar, Dropdown } from 'antd';
+import { Table, Card, Button, Space, Popconfirm, message, Typography, Tag, Tooltip, Avatar, Dropdown, Modal } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     useGetFormSubmissionsQuery,
@@ -56,6 +56,7 @@ const FormSubmissions = () => {
     const { data: leads } = useGetLeadsQuery();
     const tableRef = useRef(null);
     const [scrollPosition, setScrollPosition] = useState(0);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
     const handleDelete = async (id) => {
         try {
@@ -64,6 +65,42 @@ const FormSubmissions = () => {
         } catch (error) {
             message.error(error.data?.message || 'Failed to delete submission');
         }
+    };
+
+    const handleBulkDelete = () => {
+        if (selectedRowKeys.length === 0) {
+            message.warning('Please select submissions to delete');
+            return;
+        }
+
+        Modal.confirm({
+            title: 'Delete Selected Submissions',
+            content: `Are you sure you want to delete ${selectedRowKeys.length} selected submissions?`,
+            okText: 'Yes',
+            okType: 'danger',
+            cancelText: 'No',
+            onOk: async () => {
+                try {
+                    await Promise.all(selectedRowKeys.map(id => deleteSubmission(id).unwrap()));
+                    message.success(`${selectedRowKeys.length} submissions deleted successfully`);
+                    setSelectedRowKeys([]);
+                } catch (error) {
+                    message.error(error?.data?.message || 'Failed to delete submissions');
+                }
+            },
+        });
+    };
+
+    // Row selection config
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        },
+        getCheckboxProps: (record) => ({
+            // Disable selection for submissions that are already converted to leads
+            disabled: leads?.data?.some(lead => lead.inquiry_id === record.id),
+        }),
     };
 
     const parseSubmissionData = (submission) => {
@@ -401,6 +438,19 @@ const FormSubmissions = () => {
                     </Button>
                 </Space>
 
+                {selectedRowKeys.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                        <Button
+                            type="primary"
+                            danger
+                            icon={<FiTrash2 />}
+                            onClick={handleBulkDelete}
+                        >
+                            Delete Selected ({selectedRowKeys.length})
+                        </Button>
+                    </div>
+                )}
+
                 <div className="table-container">
                     <style>
                         {`
@@ -553,6 +603,7 @@ const FormSubmissions = () => {
                             }
                         }}
                         size="middle"
+                        rowSelection={rowSelection}
                     />
                 </div>
             </Space>
