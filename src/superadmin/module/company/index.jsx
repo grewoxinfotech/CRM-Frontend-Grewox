@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Typography,
     Button,
@@ -21,7 +21,8 @@ import {
     FiDownload,
     FiGrid,
     FiList,
-    FiHome
+    FiHome,
+    FiX
 } from 'react-icons/fi';
 import './company.scss';
 import moment from 'moment';
@@ -39,72 +40,53 @@ const { Title, Text } = Typography;
 
 const Company = () => {
     // States
-    const [searchText, setSearchText] = useState('');
+    const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
+    const [viewMode, setViewMode] = useState('table');
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
-    const [companies, setCompanies] = useState([]);
-    const [filteredCompanies, setFilteredCompanies] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [viewMode, setViewMode] = useState('table');
-    const [currentPage, setCurrentPage] = useState(1);
+    const searchInputRef = useRef(null);
 
-    const { data: companiesData, isLoading: isLoadingCompanies, refetch } = useGetAllCompaniesQuery();
+    // Get companies with pagination and search
+    const { data: companiesData, isLoading: isLoadingCompanies, isFetching } = useGetAllCompaniesQuery(filters);
+
     const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
 
-    console.log(companiesData);
+    // Filter companies based on search
+    const filteredCompanies = React.useMemo(() => {
+        if (!companiesData?.data) return [];
 
-    useEffect(() => {
-        if (companiesData?.data) {
-            const transformedData = companiesData.data.map(company => ({
-                id: company.id,
-                name: company.username || 'N/A',
-                email: company.email || 'N/A',
-                phone: company.phone || 'N/A',
-                phoneCode: company.phoneCode || '',
-                status: company.role_id ? 'active' : 'inactive',
-                created_at: company.createdAt || '-',
-                firstName: company.firstName || '',
-                lastName: company.lastName || '',
-                bankname: company.bankname || '',
-                ifsc: company.ifsc || '',
-                banklocation: company.banklocation || '',
-                accountholder: company.accountholder || '',
-                accountnumber: company.accountnumber || '',
-                gstIn: company.gstIn || '',
-                city: company.city || '',
-                state: company.state || '',
-                website: company.website || '',
-                accounttype: company.accounttype || '',
-                country: company.country || '',
-                zipcode: company.zipcode || '',
-                address: company.address || '',
-                profilePic: company.profilePic || null
-            }));
-            setCompanies(transformedData);
-            setFilteredCompanies(transformedData);
-        }
-    }, [companiesData]);
+        const searchTerm = filters.search.toLowerCase().trim();
+        if (!searchTerm) return companiesData.data;
 
-    useEffect(() => {
-        const filtered = companies.filter(company =>
-            company.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            company.email.toLowerCase().includes(searchText.toLowerCase()) ||
-            company.phone.includes(searchText) ||
-            (company.firstName && company.firstName.toLowerCase().includes(searchText.toLowerCase())) ||
-            (company.lastName && company.lastName.toLowerCase().includes(searchText.toLowerCase())) ||
-            (company.city && company.city.toLowerCase().includes(searchText.toLowerCase())) ||
-            (company.state && company.state.toLowerCase().includes(searchText.toLowerCase())) ||
-            (company.gstIn && company.gstIn.toLowerCase().includes(searchText.toLowerCase()))
+        return companiesData.data.filter(company =>
+            company.username?.toLowerCase().includes(searchTerm) ||
+            company.email?.toLowerCase().includes(searchTerm) ||
+            company.phone?.toLowerCase().includes(searchTerm) ||
+            `${company.firstName || ''} ${company.lastName || ''}`.toLowerCase().includes(searchTerm)
         );
-        setFilteredCompanies(filtered);
-    }, [companies, searchText]);
+    }, [companiesData, filters.search]);
 
-    // Handlers
-    const handleSearch = (value) => {
-        setSearchText(value);
+    // Handle search
+    const handleSearch = (e) => {
+        const value = e.target.value;
+        setFilters(prev => ({
+            ...prev,
+            search: value,
+            page: 1 // Reset to first page when searching
+        }));
     };
 
+    // Handle pagination change
+    const handlePageChange = (pagination) => {
+        setFilters(prev => ({
+            ...prev,
+            page: pagination.current,
+            limit: pagination.pageSize
+        }));
+    };
+
+    // Handlers
     const handleAddCompany = () => {
         setSelectedCompany(null);
         setIsEditModalVisible(false);
@@ -130,7 +112,6 @@ const Company = () => {
                 try {
                     await deleteCompany(record.id).unwrap();
                     message.success('Company deleted successfully');
-                    refetch();
                 } catch (error) {
                     message.error(error?.data?.message || 'Failed to delete company');
                 }
@@ -148,7 +129,6 @@ const Company = () => {
                 message.success('Company created successfully');
             }
             setIsFormVisible(false);
-            refetch();
         } catch (error) {
             message.error(error?.data?.message || 'Operation failed');
         }
@@ -158,7 +138,7 @@ const Company = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = companies.map(company => ({
+            const data = companiesData.data.map(company => ({
                 'Company Name': company.name,
                 'Email': company.email,
                 'Phone': company.phone,
@@ -255,12 +235,14 @@ const Company = () => {
                     <Col xs={24} sm={24} md={20} lg={16} xl={14}>
                         <div className="header-actions">
                             <Input
+                                ref={searchInputRef}
                                 prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
                                 placeholder="Search companies..."
                                 allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
+                                onChange={(e) => handleSearch(e)}
+                                value={filters.search}
                                 className="search-input"
+                                size="large"
                             />
                             <div className="action-buttons">
                                 <Button.Group className="view-toggle">
@@ -299,33 +281,45 @@ const Company = () => {
             <Card className="company-table-card">
                 {viewMode === 'table' ? (
                     <CompanyList
-                        companies={filteredCompanies}
-                        loading={isLoadingCompanies || isDeleting}
+                        companies={{
+                            data: filteredCompanies,
+                            totalItems: companiesData?.totalItems || 0,
+                            currentPage: filters.page,
+                            pageSize: filters.limit,
+                            totalPages: companiesData?.totalPages || 1
+                        }}
+                        loading={isLoadingCompanies || isFetching}
                         onEdit={handleEditCompany}
                         onDelete={handleDelete}
+                        onPageChange={handlePageChange}
+                        searchText={filters.search}
                     />
                 ) : (
                     <Row gutter={[16, 16]} className="company-cards-grid">
-                        {filteredCompanies
-                            .slice((currentPage - 1) * 10, currentPage * 10)
-                            .map(company => (
-                                <Col xs={24} sm={12} md={8} lg={6} key={company.id}>
-                                    <CompanyCard
-                                        company={company}
-                                        onEdit={handleEditCompany}
-                                        onDelete={handleDelete}
-                                    />
-                                </Col>
-                            ))}
-                        {filteredCompanies.length > 10 && (
+                        {companiesData?.data?.map(company => (
+                            <Col xs={24} sm={12} md={8} lg={6} key={company.id}>
+                                <CompanyCard
+                                    company={company}
+                                    onEdit={handleEditCompany}
+                                    onDelete={handleDelete}
+                                />
+                            </Col>
+                        ))}
+                        {companiesData?.total > filters.limit && (
                             <Col span={24} style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
                                 <Pagination
-                                    current={currentPage}
-                                    pageSize={10}
-                                    total={filteredCompanies.length}
-                                    showSizeChanger={false}
-                                    showQuickJumper={false}
-                                    onChange={(page) => setCurrentPage(page)}
+                                    current={companiesData.currentPage}
+                                    pageSize={filters.limit}
+                                    total={companiesData.total}
+                                    showSizeChanger={true}
+                                    showQuickJumper={true}
+                                    onChange={(page, pageSize) => {
+                                        setFilters({ page, pageSize });
+                                    }}
+                                    onShowSizeChange={(current, size) => {
+                                        setFilters({ page: 1, limit: size });
+                                    }}
+                                    pageSizeOptions={['10', '20', '50', '100']}
                                 />
                             </Col>
                         )}

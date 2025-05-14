@@ -262,7 +262,9 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 marginBottom: '12px'
                             }}
                         >
-                            {company.firstName ? `${company.firstName[0]}${company.lastName[0]}` : company.name[0]}
+                            {company.firstName && company.lastName
+                                ? `${company.firstName[0]}${company.lastName[0]}`
+                                : company.username?.[0]?.toUpperCase() || 'U'}
                         </Avatar>
                         <Text style={{
                             fontSize: '18px',
@@ -271,7 +273,9 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                             textAlign: 'center',
                             marginBottom: '4px'
                         }}>
-                            {company.firstName ? `${company.firstName} ${company.lastName}` : company.name}
+                            {company.firstName && company.lastName
+                                ? `${company.firstName} ${company.lastName}`
+                                : company.username || 'Unknown'}
                         </Text>
                         <Tag
                             className="status-tag"
@@ -305,8 +309,8 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                     }}>
                         {[
                             { icon: <FiMail size={15} />, value: company.email, isLink: true },
-                            { icon: <FiPhone size={15} />, value: `+${company.phoneCode} ${company.phone}` },
-                            { icon: <FiMapPin size={15} />, value: `${company.city}, ${company.state}` }
+                            { icon: <FiPhone size={15} />, value: company.phone ? `+${company.phoneCode || ''} ${company.phone}` : 'N/A' },
+                            { icon: <FiMapPin size={15} />, value: company.city && company.state ? `${company.city}, ${company.state}` : 'N/A' }
                         ].map((item, index) => (
                             <div
                                 key={index}
@@ -327,7 +331,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 }}>
                                     {item.icon}
                                 </div>
-                                {item.isLink ? (
+                                {item.isLink && item.value ? (
                                     <a
                                         href={`mailto:${item.value}`}
                                         style={{
@@ -351,7 +355,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap'
                                     }}>
-                                        {item.value}
+                                        {item.value || 'N/A'}
                                     </div>
                                 )}
                             </div>
@@ -587,7 +591,9 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 justifyContent: 'center'
                             }}
                         >
-                            {company.name[0]}
+                            {company.firstName && company.lastName
+                                ? `${company.firstName[0]}${company.lastName[0]}`
+                                : company.username?.[0]?.toUpperCase() || 'U'}
                         </Avatar>
 
                         <div>
@@ -596,7 +602,9 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 fontWeight: '600',
                                 margin: '0 0 4px 0'
                             }}>
-                                {company.name}
+                                {company.firstName && company.lastName
+                                    ? `${company.firstName} ${company.lastName}`
+                                    : company.username || 'Unknown'}
                             </h3>
                             <span style={{
                                 color: statusStyle.color,
@@ -629,18 +637,20 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         }}
                     >
                         <Descriptions.Item label="Contact Person">
-                            {company.firstName} {company.lastName}
+                            {company.firstName && company.lastName ? `${company.firstName} ${company.lastName}` : 'N/A'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Email">
-                            <a href={`mailto:${company.email}`} style={{ color: '#3B82F6' }}>
-                                {company.email}
-                            </a>
+                            {company.email ? (
+                                <a href={`mailto:${company.email}`} style={{ color: '#3B82F6' }}>
+                                    {company.email}
+                                </a>
+                            ) : 'N/A'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Phone">
-                            +{company.phoneCode} {company.phone}
+                            {company.phone ? `+${company.phoneCode || ''} ${company.phone}` : 'N/A'}
                         </Descriptions.Item>
                         <Descriptions.Item label="GST Number">
-                            {company.gstIn}
+                            {company.gstIn || 'N/A'}
                         </Descriptions.Item>
                         {company.website && (
                             <Descriptions.Item label="Website">
@@ -661,12 +671,14 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                             </Descriptions.Item>
                         )}
                         <Descriptions.Item label="Address">
-                            {company.address}<br />
-                            {company.city}, {company.state}<br />
-                            {company.country} - {company.zipcode}
+                            {[
+                                company.address,
+                                company.city && company.state ? `${company.city}, ${company.state}` : null,
+                                company.country && company.zipcode ? `${company.country} - ${company.zipcode}` : null
+                            ].filter(Boolean).join('\n') || 'N/A'}
                         </Descriptions.Item>
                         <Descriptions.Item label="Created">
-                            {moment(company.created_at).format('MMM DD, YYYY')}
+                            {company.created_at ? moment(company.created_at).format('MMM DD, YYYY') : 'N/A'}
                         </Descriptions.Item>
                     </Descriptions>
 
@@ -708,7 +720,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                         color: '#111827',
                                         fontFamily: item.label === 'Account Number' || item.label === 'IFSC' ? 'monospace' : 'inherit'
                                     }}>
-                                        {item.value}
+                                        {item.value || 'N/A'}
                                     </span>
                                 </div>
                             ))}

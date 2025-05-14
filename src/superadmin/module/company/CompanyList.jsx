@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Tag, Dropdown, Avatar, message, Input, Space } from 'antd';
+import { Table, Button, Tag, Dropdown, Avatar, message, Input, Space, Select } from 'antd';
 import {
     FiEdit2,
     FiTrash2,
@@ -24,7 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGetAllAssignedPlansQuery } from './services/companyApi';
 import CreateUpgradePlan from './CreateUpgradePlan';
 
-const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText }) => {
+const CompanyList = ({ companies, loading, onView, onEdit, onDelete, onPageChange, searchText, disablePagination }) => {
     const [filteredInfo, setFilteredInfo] = useState({});
     const [adminLogin] = useAdminLoginMutation();
     const navigate = useNavigate();
@@ -32,58 +32,53 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
     const [selectedCompany, setSelectedCompany] = useState(null);
 
     const handleTableChange = (pagination, filters, sorter) => {
-        console.log('Table Change:', { pagination, filters, sorter });
         setFilteredInfo(filters);
         if (onPageChange) {
-            onPageChange(pagination, filters, sorter);
+            onPageChange(pagination);
         }
     };
 
     const handleSearch = (selectedKeys, confirm, dataIndex) => {
         confirm();
-        setFilteredInfo(prev => ({
-            ...prev,
+        const newFilters = {
+            ...filteredInfo,
             [dataIndex]: selectedKeys
-        }));
+        };
+        setFilteredInfo(newFilters);
     };
 
     const handleReset = (clearFilters, confirm, dataIndex) => {
         clearFilters();
         confirm();
-        setFilteredInfo(prev => ({
-            ...prev,
-            [dataIndex]: null
-        }));
+        const newFilters = { ...filteredInfo };
+        delete newFilters[dataIndex];
+        setFilteredInfo(newFilters);
     };
 
     const getColumnSearchProps = (dataIndex) => ({
         filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-            <div className="custom-filter-dropdown">
-                <div className="filter-input">
-                    <Input
-                        placeholder={`Search ${dataIndex}`}
-                        value={selectedKeys[0]}
-                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-                        onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
-                        prefix={<FiSearch className="search-icon" />}
-                        allowClear={{
-                            clearIcon: <FiX className="clear-icon" />
-                        }}
-                        autoFocus
-                    />
-                </div>
-                <Space className="filter-actions">
+            <div style={{ padding: 16, background: '#fff', borderRadius: 8 }}>
+                <Input
+                    placeholder={`Search ${dataIndex}`}
+                    value={selectedKeys[0]}
+                    onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                    onPressEnter={() => handleSearch(selectedKeys, confirm, dataIndex)}
+                    style={{ width: 200, marginBottom: 12, display: 'block' }}
+                />
+                <Space>
                     <Button
                         type="primary"
                         onClick={() => handleSearch(selectedKeys, confirm, dataIndex)}
-                        className="filter-button"
                         icon={<FiFilter />}
+                        size="small"
+                        style={{ width: 90 }}
                     >
-                        Apply Filter
+                        Filter
                     </Button>
                     <Button
                         onClick={() => handleReset(clearFilters, confirm, dataIndex)}
-                        className="filter-button"
+                        size="small"
+                        style={{ width: 90 }}
                     >
                         Reset
                     </Button>
@@ -93,14 +88,14 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         filterIcon: filtered => (
             <FiFilter
                 style={{
-                    color: filtered ? '#3b82f6' : '#94a3b8'
+                    color: filtered ? '#1890ff' : '#8c8c8c',
+                    fontSize: '16px'
                 }}
             />
         ),
         onFilter: (value, record) => {
-            return record[dataIndex]
-                ? record[dataIndex].toString().toLowerCase().includes(value.toLowerCase())
-                : '';
+            if (!record[dataIndex]) return false;
+            return record[dataIndex].toString().toLowerCase().includes(value.toLowerCase());
         },
         filteredValue: filteredInfo[dataIndex] || null
     });
@@ -218,7 +213,9 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                         icon={!profilePic && <FiUser />}
                         className={!profilePic ? 'default-avatar' : ''}
                     >
-                        {!profilePic && getInitials(record.name)}
+                        {record.firstName && record.lastName
+                            ? `${record.firstName[0]}${record.lastName[0]}`
+                            : record.username?.[0]?.toUpperCase() || 'U'}
                     </Avatar>
                 </div>
             ),
@@ -230,13 +227,15 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                     <span>Company Name</span>
                 </div>
             ),
-            dataIndex: 'name',
+            dataIndex: 'username',
             key: 'name',
-            ...getColumnSearchProps('name'),
+            ...getColumnSearchProps('username'),
             width: '200px',
-            render: (text) => (
+            render: (username, record) => (
                 <div className="company-name-cell">
-                    {text || 'N/A'}
+                    {record.firstName && record.lastName
+                        ? `${record.firstName} ${record.lastName}`
+                        : username || 'N/A'}
                 </div>
             ),
         },
@@ -309,14 +308,18 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                     <span>Created</span>
                 </div>
             ),
-            dataIndex: 'created_at',
+            dataIndex: 'createdAt',
             key: 'created_at',
-            width: '120px',
+            width: '150px',
             render: (date) => (
                 <div className="date-cell">
-                    {date ? moment(date).format('YYYY-MM-DD') : '-'}
+                    {date ? moment(date).format('MMM DD, YYYY') : '-'}
                 </div>
             ),
+            sorter: (a, b) => {
+                if (!a.createdAt || !b.createdAt) return 0;
+                return moment(a.createdAt).unix() - moment(b.createdAt).unix();
+            }
         },
         {
             title: 'Actions',
@@ -361,27 +364,79 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         }
     ];
 
+    // Calculate if there are more pages
+    const hasNextPage = companies?.data?.length > 0 &&
+        companies.currentPage * companies.pageSize < companies.total;
+
     return (
         <div className="companies-table-wrapper">
             <Table
                 columns={columns}
-                dataSource={companies}
+                dataSource={companies?.data || []}
                 loading={loading}
-                pagination={pagination}
                 onChange={handleTableChange}
                 rowKey="id"
                 className="companies-table"
                 scroll={{ x: 1200 }}
+                pagination={
+                    disablePagination ? false : {
+                        current: companies?.currentPage || 1,
+                        pageSize: companies?.pageSize || 10,
+                        total: companies?.totalItems || 0,
+                        showSizeChanger: true,
+                        showQuickJumper: false,
+                        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+                        pageSizeOptions: ['10', '20', '30'],
+                        position: ['bottomRight']
+                    }
+                }
             />
+            <style jsx="true">{`
+                .companies-table-wrapper {
+                    .ant-table-pagination {
+                        display: flex;
+                        justify-content: flex-end;
+                        align-items: center;
+                        width: 100%;
+                        margin: 16px 0;
+                        
+                        .ant-pagination-prev,
+                        .ant-pagination-next {
+                            margin: 0 4px;
+                        }
+                        
+                        .ant-pagination-item {
+                            margin: 0 4px;
+                        }
+                        
+                        .ant-pagination-total-text {
+                            margin: 0 8px;
+                            order: 2;
+                        }
+                        
+                        .ant-pagination-options {
+                            margin-left: 8px;
+                            order: 3;
+                        }
+                        
+                        .ant-select {
+                            min-width: 60px;
+                            
+                            .ant-select-selector {
+                                border-radius: 6px;
+                                padding: 0 8px;
+                            }
+                        }
+                    }
+                }
+            `}</style>
             <CreateUpgradePlan
                 open={upgradeModalVisible}
                 onCancel={handleUpgradeModalClose}
-                companyId={selectedCompany?.id}
-                isEditing={false}
-                initialValues={null}
+                company={selectedCompany}
             />
         </div>
     );
 };
 
-export default CompanyList; 
+export default CompanyList;
