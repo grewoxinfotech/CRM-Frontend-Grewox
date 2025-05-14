@@ -11,6 +11,7 @@ import {
   Breadcrumb,
   Row,
   Col,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -21,7 +22,7 @@ import {
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import CreateProduct from "./CreateProduct";
-import ProductList from "./ProfductList";
+import ProductList from "./ProductList";
 import EditProduct from "./EditProduct";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -45,9 +46,9 @@ const ProductServices = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const navigate = useNavigate();
-
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
 
   const {
@@ -83,26 +84,6 @@ const ProductServices = () => {
       state: { selectedProduct: product },
     });
   };
-
-  // const handleEdit = (record) => {
-  //   setSelectedProduct(record);
-  //   setIsEditModalOpen(true);
-  // };
-
-  // const handleEditSubmit = async (formData) => {
-  //   try {
-  //     setLoading(true);
-  //     await updateProduct({ id: selectedProduct.id, data: formData }).unwrap();
-  //     message.success("Product updated successfully");
-  //     setIsEditModalOpen(false);
-  //     setSelectedProduct(null);
-  //     refetch();
-  //   } catch (error) {
-  //     message.error(error?.data?.message || "Failed to update product");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleEdit = (record) => {
     setSelectedProduct(record);
@@ -218,8 +199,22 @@ const ProductServices = () => {
     </Menu>
   );
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search products..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   return (
-    <div className="inquiry-page">
+    <div className="product-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
@@ -238,43 +233,51 @@ const ProductServices = () => {
       <div className="page-header">
         <div className="page-title">
           <Title level={2}>Products & Services</Title>
-          <Text type="secondary">
-            Manage all products and services in the organization
-          </Text>
+          <Text className="page-description" type="secondary">Manage all products and services in the organization</Text>
         </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-            <div className="header-actions">
-              <Input
-                prefix={
-                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
-                }
-                placeholder="Search products & services..."
-                allowClear
-                onChange={(e) => setSearchText(e.target.value)}
-                value={searchText}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Dropdown menu={exportMenu} trigger={["click"]}>
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={handleCreate}
-                  className="add-button"
+        <div className="header-actions">
+          <div className="desktop-actions">
+            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                  placeholder="Search products..."
+                  allowClear
+                  onChange={(e) => setSearchText(e.target.value)}
+                  value={searchText}
+                  className="search-input"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
                 >
-                  Add Product
-                </Button>
+                  <Button 
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
               </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleCreate}
+                className="add-button"
+              >
+                <span className="button-text">Add Product</span>
+              </Button>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
 
       <Card className="content-card">
@@ -296,14 +299,6 @@ const ProductServices = () => {
         currenciesData={currenciesData}
         loading={loading}
       />
-      {/* 
-      <EditProduct
-        visible={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSubmit={handleEditSubmit}
-        product={selectedProduct}
-        loading={loading}
-      /> */}
 
       <EditProduct
         open={editModalVisible}
