@@ -575,34 +575,98 @@
 
     .custom-table {
         .ant-table {
-            background: transparent;
+            background: white;
 
-            .ant-table-thead>tr>th {
-                background: #f9fafb;
-                color: #4b5563;
-                font-weight: 600;
-                padding: 16px;
-                border-bottom: 1px solid #e5e7eb;
+            // Header styles
+            .ant-table-thead {
+                >tr {
+                    >th {
+                        position: relative;
+                        background: #fafafa !important;
+                        font-weight: 600;
+                        padding: 16px !important;
+                        border-bottom: 1px solid #f0f0f0;
 
-                &::before {
-                    display: none;
+                        // Selection column specific styles
+                        &.ant-table-selection-column {
+                            background: #fafafa !important;
+                            width: 48px !important;
+                            min-width: 48px !important;
+                            padding: 16px 8px !important;
+
+                            .ant-checkbox-wrapper {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                padding: 0;
+                                margin: 0;
+
+                                .ant-checkbox {
+                                    top: 0;
+                                    margin: 0;
+
+                                    .ant-checkbox-inner {
+                                        width: 16px;
+                                        height: 16px;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            .ant-table-tbody>tr>td {
-                padding: 16px;
-                border-bottom: 1px solid #f3f4f6;
-            }
+            // Body styles
+            .ant-table-tbody {
+                >tr {
+                    transition: all 0.2s ease;
 
-            .ant-table-row {
-                transition: all 0.3s ease;
+                    // Selection column
+                    .ant-table-selection-column {
+                        width: 48px !important;
+                        min-width: 48px !important;
+                        padding: 16px 8px !important;
+                        background: inherit;
 
-                &:hover {
-                    background: #f9fafb;
-                    cursor: pointer;
+                        .ant-checkbox-wrapper {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            padding: 0;
+                            margin: 0;
 
-                    .action-button {
-                        opacity: 1;
+                            .ant-checkbox {
+                                top: 0;
+                                margin: 0;
+
+                                .ant-checkbox-inner {
+                                    width: 16px;
+                                    height: 16px;
+                                }
+                            }
+                        }
+                    }
+
+                    &.ant-table-row-selected {
+                        background-color: rgba(24, 144, 255, 0.1) !important;
+
+                        td {
+                            background: transparent !important;
+                        }
+
+                        &:hover {
+                            background-color: rgba(24, 144, 255, 0.15) !important;
+
+                            td {
+                                background: transparent !important;
+                            }
+                        }
+                    }
+
+                    &:hover {
+                        td {
+                            background: #f5f8ff !important;
+                        }
                     }
                 }
             }
@@ -611,34 +675,49 @@
 
     .item-wrapper {
         .item-content {
+            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 12px;
+            padding: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &:hover {
+                transform: translateX(4px);
+
+                .icon-wrapper {
+                    transform: rotate(-10deg);
+
+                    .item-icon {
+                        transform: scale(1.1);
+                    }
+                }
+            }
 
             .icon-wrapper {
-                width: 36px;
-                height: 36px;
-                border-radius: 8px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                transition: all 0.3s ease;
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
                 .item-icon {
-                    font-size: 16px;
+                    width: 18px;
+                    height: 18px;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 }
             }
 
             .info-wrapper {
-                .name {
-                    font-size: 14px;
-                    line-height: 20px;
-                }
+                flex: 1;
+                min-width: 0;
 
-                .meta {
-                    font-size: 12px;
-                    color: #6b7280;
-                    margin-top: 2px;
+                .name {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
             }
         }
@@ -661,17 +740,35 @@
         }
     }
 
-    .bulk-actions {
-        margin-bottom: 16px;
 
+    .bulk-actions {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        background: #fff;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         .ant-btn {
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
+            height: 36px;
             padding: 0 16px;
+            border-radius: 6px;
             font-weight: 500;
+            &.ant-btn-dangerous {
+                background: #ff4d4f;
+                border: none;
+                color: white;
+                &:hover {
+                    background: #ff7875;
+                }
+                svg {
+                    width: 16px;
+                    height: 16px;
+                }
+            }
         }
     }
 
@@ -819,11 +916,12 @@
     .meeting-list-container {
         padding: 16px;
 
-        .ant-table {
-
-            .ant-table-thead>tr>th,
-            .ant-table-tbody>tr>td {
-                padding: 12px 8px;
+        .custom-table {
+            .ant-table {
+                .ant-table-thead > tr > th,
+                .ant-table-tbody > tr > td {
+                    padding: 12px 8px;
+                }
             }
         }
 
@@ -848,6 +946,46 @@
                     .meta {
                         font-size: 11px;
                     }
+                }
+            }
+        }
+    }
+}
+
+
+@media (max-width: 767px) {
+    .meeting-list-container {
+        .ant-table-pagination {
+            display: flex !important;
+            visibility: visible !important;
+            
+            .ant-pagination-options {
+                display: flex !important;
+                align-items: center;
+                margin-bottom: 20px;
+                .ant-select-selection-item {
+                    width: auto !important;
+                    min-width: 40px;
+                    max-width: 100%;
+                    height: 20px !important;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-align: center;
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+            }
+        }
+    }
+}
+
+@media (min-width: 768px) {
+    .meeting-list-container {
+        .ant-table-pagination {
+            .ant-pagination-options {
+                .ant-select-selection-item {
+                    width: 100%;
+                    color: inherit;
                 }
             }
         }

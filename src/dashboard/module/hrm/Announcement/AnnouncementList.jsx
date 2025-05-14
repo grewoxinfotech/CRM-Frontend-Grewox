@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message, Input, DatePicker } from 'antd';
 import {
     FiEdit2,
@@ -22,7 +22,8 @@ import './announcement.scss';
 const AnnouncementList = ({ announcements, loading, onEdit }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const { data: branchesData, isLoading: branchesLoading } = useGetAllBranchesQuery();
-    const [deleteAnnouncement] = useDeleteAnnouncementMutation();
+        const [deleteAnnouncement] = useDeleteAnnouncementMutation();
+        const [isMobile, setIsMobile] = useState(false);
 
     // Row selection config
     const rowSelection = {
@@ -34,7 +35,7 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
             {selectedRowKeys.length > 0 && (
                 <Button
                     type="primary"
@@ -175,6 +176,7 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
         {
             title: 'Schedule',
             key: 'schedule',
+            width: 200,
             render: (_, record) => (
                 <div className="item-wrapper">
                     <div className="item-content">
@@ -197,6 +199,7 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
             title: 'Actions',
             key: 'actions',
             width: 80,
+            fixed: "right",
             render: (_, record) => (
                 <Dropdown
                     menu={{
@@ -228,6 +231,23 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
         },
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+
+        locale: {
+            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+    };
+
     return (
         <div className="announcement-list-container">
             <BulkActions />
@@ -237,12 +257,14 @@ const AnnouncementList = ({ announcements, loading, onEdit }) => {
                 dataSource={announcements}
                 loading={loading || branchesLoading}
                 rowKey="id"
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                }}
+                pagination={paginationConfig}
                 className="custom-table"
+                scroll={{ x: 1200, y: '' }}
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                }}
             />
         </div>
     );

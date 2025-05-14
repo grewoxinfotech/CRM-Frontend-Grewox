@@ -11,6 +11,7 @@ import {
   Col,
   Breadcrumb,
   Card,
+  Popover,
   Form,
 } from "antd";
 import {
@@ -67,6 +68,9 @@ const Employee = () => {
   } = useGetEmployeesQuery();
 
   const [viewMode, setViewMode] = useState("table");
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
 
   useEffect(() => {
     if (employeesData?.data) {
@@ -118,6 +122,7 @@ const Employee = () => {
     }
   }, [employeesData]);
 
+ 
   useEffect(() => {
     const filtered = employees.filter(
       (employee) =>
@@ -128,6 +133,12 @@ const Employee = () => {
     );
     setFilteredEmployees(filtered);
   }, [employees, searchText]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Handlers
   const handleSearch = (value) => {
@@ -338,6 +349,20 @@ const Employee = () => {
     refetch();
   };
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search employees..."
+        allowClear
+        onChange={(e) => handleSearch(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   return (
     <div className="employee-page">
       <div className="page-breadcrumb">
@@ -360,45 +385,87 @@ const Employee = () => {
         <Row justify="center" className="header-actions-wrapper">
           <Col xs={24} sm={24} md={24} lg={20} xl={18}>
             <div className="header-actions">
-              <Input
-                prefix={
-                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
-                }
-                placeholder="Search employees by name, email, department, or designation"
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Button.Group className="view-toggle">
+              {isMobile ? (
+                <div className="mobile-actions">
+                  <Button.Group className="view-toggle">
+                    <Button
+                      type={viewMode === "table" ? "primary" : "default"}
+                      icon={<FiList size={16} />}
+                      onClick={() => setViewMode("table")}
+                      className="icon-button"
+                    />
+                    <Button
+                      type={viewMode === "card" ? "primary" : "default"}
+                      icon={<FiGrid size={16} />}
+                      onClick={() => setViewMode("card")}
+                      className="icon-button"
+                    />
+                  </Button.Group>
                   <Button
-                    type={viewMode === "table" ? "primary" : "default"}
-                    icon={<FiList size={16} />}
-                    onClick={() => setViewMode("table")}
+                    type="primary"
+                    icon={<FiPlus size={18} />}
+                    onClick={handleAddEmployee}
+                    className="icon-button"
                   />
-                  <Button
-                    type={viewMode === "card" ? "primary" : "default"}
-                    icon={<FiGrid size={16} />}
-                    onClick={() => setViewMode("card")}
-                  />
-                </Button.Group>
-                <Dropdown overlay={exportMenu} trigger={["click"]}>
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={handleAddEmployee}
-                  className="add-button"
+                  <Popover
+                  // content={searchContent}
+                  // trigger="click"
+                  // visible={isSearchVisible}
+                  // onVisibleChange={setIsSearchVisible}
+                  // placement="bottomRight"
+                  // overlayClassName="search-popover"
+                  // getPopupContainer={(triggerNode) => triggerNode.parentNode}
                 >
-                  Add Employee
-                </Button>
-              </div>
+                  <Button
+                    icon={<FiSearch size={18} />}
+                    className="mobile-search-button"
+                  />
+                </Popover>
+                  <Dropdown overlay={exportMenu} trigger={["click"]}>
+                    <Button icon={<FiDownload size={18} />} className="icon-button" />
+                  </Dropdown>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                    placeholder="Search employees by name, email, department, or designation"
+                    allowClear
+                    onChange={(e) => handleSearch(e.target.value)}
+                    value={searchText}
+                    className="search-input"
+                  />
+                  <div className="action-buttons">
+                    <Button.Group className="view-toggle">
+                      <Button
+                        type={viewMode === "table" ? "primary" : "default"}
+                        icon={<FiList size={16} />}
+                        onClick={() => setViewMode("table")}
+                      />
+                      <Button
+                        type={viewMode === "card" ? "primary" : "default"}
+                        icon={<FiGrid size={16} />}
+                        onClick={() => setViewMode("card")}
+                      />
+                    </Button.Group>
+                    <Dropdown overlay={exportMenu} trigger={["click"]}>
+                      <Button className="export-button">
+                        <FiDownload size={16} />
+                        <span>Export</span>
+                        <FiChevronDown size={14} />
+                      </Button>
+                    </Dropdown>
+                    <Button
+                      type="primary"
+                      icon={<FiPlus size={16} />}
+                      onClick={handleAddEmployee}
+                      className="add-button"
+                    >
+                      Add Employee
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </Col>
         </Row>

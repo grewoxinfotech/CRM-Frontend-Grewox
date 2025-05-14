@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message } from "antd";
 import {
     FiEdit2,
@@ -20,6 +20,7 @@ const TrainingList = ({ loading, onEdit, onView, searchText, trainings }) => {
     const { data: trainingsData, isLoading } = useGetAllTrainingsQuery();
     const [deleteTraining] = useDeleteTrainingMutation();
     const data = trainingsData?.data || trainings;
+    const [isMobile, setIsMobile] = useState(false);
 
     // Row selection config
     const rowSelection = {
@@ -31,7 +32,7 @@ const TrainingList = ({ loading, onEdit, onView, searchText, trainings }) => {
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
             {selectedRowKeys.length > 0 && (
                 <Button
                     type="primary"
@@ -162,7 +163,8 @@ const TrainingList = ({ loading, onEdit, onView, searchText, trainings }) => {
         {
             title: "Actions",
             key: "actions",
-            width: 120,
+            width: 80,
+            fixed: 'right',
             render: (_, record) => (
                 <Dropdown
                     menu={{
@@ -200,6 +202,23 @@ const TrainingList = ({ loading, onEdit, onView, searchText, trainings }) => {
         },
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+
+        locale: {
+            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+    };
+
     return (
         <div className="training-list-container">
             <BulkActions />
@@ -209,12 +228,14 @@ const TrainingList = ({ loading, onEdit, onView, searchText, trainings }) => {
                 dataSource={filteredTrainings}
                 loading={loading || isLoading}
                 rowKey="id"
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                }}
+                pagination={paginationConfig}
                 className="custom-table"
+                scroll={{ x: 1000, y: '' }}
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                }}
             />
         </div>
     );

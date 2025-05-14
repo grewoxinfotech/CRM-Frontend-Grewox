@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Space, Button, Tooltip, Tag, message, Modal, Select, Dropdown, Input, Avatar } from 'antd';
 import {
     FiEdit2,
@@ -16,6 +16,7 @@ const { Option } = Select;
 
 const DepartmentList = ({ onEdit, searchText, filters }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     // RTK Query hooks
     const { data: departmentsData = [], isLoading: isLoadingDepartments } = useGetAllDepartmentsQuery();
@@ -107,45 +108,20 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className="bulk-actions">
-            {selectedRowKeys.length > 0 && (
-                <Button
-                    type="primary"
-                    danger
-                    icon={<FiTrash2 size={16} />}
-                    onClick={() => handleDelete(selectedRowKeys)}
-                >
-                    Delete Selected ({selectedRowKeys.length})
-                </Button>
-            )}
+        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
+            <Button
+                type="primary"
+                danger
+                icon={<FiTrash2 size={16} />}
+                onClick={() => handleDelete(selectedRowKeys)}
+            >
+                Delete Selected ({selectedRowKeys.length})
+            </Button>
         </div>
     );
 
     const columns = [
-        {
-            title: '#',
-            dataIndex: 'index',
-            key: 'index',
-            width: '60px',
-            render: (_, __, index) => (
-                <div style={{
-                    color: '#1677ff',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#f0f7ff',
-                    borderRadius: '4px',
-                    padding: '4px 8px',
-                    margin: '0 auto',
-                    width: '28px',
-                    height: '28px'
-                }}>
-                    {index + 1}
-                </div>
-            ),
-        },
+
         {
             title: 'Department Name',
             dataIndex: 'department_name',
@@ -272,7 +248,7 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
             title: 'Actions',
             key: 'actions',
             width: '80px',
-            align: 'center',
+            fixed: 'right',
             render: (_, record) => (
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Dropdown
@@ -308,28 +284,43 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
         },
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+
+        locale: {
+            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+    };
+
     return (
         <>
             <BulkActions />
-            <Table
-                columns={columns}
-                dataSource={departments}
-                loading={isLoadingDepartments}
-                rowKey="id"
-                rowSelection={rowSelection}
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} departments`,
-                }}
-                className="custom-table"
-                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                }}
-            />
+            <div className='department-list-container'>
+                <Table
+                    columns={columns}
+                    dataSource={departments}
+                    loading={isLoadingDepartments}
+                    rowKey="id"
+                    rowSelection={rowSelection}
+                    pagination={paginationConfig}
+                    className="custom-table"
+                    scroll={{ x: 1300, y: '' }}
+                    style={{
+                        background: '#ffffff',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    }}
+                />
+            </div>
         </>
     );
 };

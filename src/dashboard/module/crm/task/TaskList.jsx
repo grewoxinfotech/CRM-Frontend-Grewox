@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar, Space, Input, DatePicker, Modal, message } from 'antd';
-import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiUser, FiX, FiCalendar, FiClock, FiPaperclip, FiAlertCircle, FiCheckSquare, FiPlus } from 'react-icons/fi';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Table, Button, Tag, Dropdown, Tooltip, Typography, Avatar, Space, Input, DatePicker, Modal } from 'antd';
+import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiFile, FiDownload, FiUser, FiX, FiCalendar, FiClock, FiPaperclip, FiAlertCircle, FiCheckSquare } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import './task.scss';
 
@@ -8,6 +8,7 @@ const { Text, Paragraph } = Typography;
 const { RangePicker } = DatePicker;
 
 const TaskDetailCard = ({ record, users, visible, onClose }) => {
+    
     const getAssignedUsers = (assignTo) => {
         try {
             if (typeof assignTo === 'string') {
@@ -273,6 +274,72 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             setSelectedRowKeys(newSelectedRowKeys);
         }
     };
+    const [modalVisible, setModalVisible] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    // console.log('Raw Tasks in TaskList:', JSON.stringify(tasks, null, 2));
+
+    const userMap = useMemo(() => {
+        return users.reduce((acc, user) => {
+            acc[user.id] = user;
+            return acc;
+        }, {});
+    }, [users]);
+    // Validate and transform tasks data
+    const validTasks = useMemo(() => {
+        return tasks.map(task => {
+            if (!task.taskName) {
+                console.warn('Task missing taskName:', task);
+            }
+            const validatedTask = {
+                ...task,
+                key: task.id,
+                taskName: task.taskName || task.task_name || 'Untitled Task',
+                assignTo: task.assignTo || '{"assignedusers": []}', // Changed from users to assignedusers
+                priority: task.priority || 'Low',
+                status: task.status || 'Pending',
+                startDate: task.startDate || null,
+                dueDate: task.dueDate || null,
+                created_by: task.created_by || 'Unknown',
+                task_reporter: task.task_reporter || ''
+            };
+            // console.log('Validated task:', validatedTask);
+            return validatedTask;
+        });
+    }, [tasks]);
+
+
+    const filteredTasks = useMemo(() => {
+        const tasksArray = Array.isArray(validTasks) ? validTasks : [];
+
+        const filtered = tasksArray.filter(task => {
+            const taskName = task?.taskName?.toLowerCase() || '';
+            if (!task?.taskName) {
+                console.warn('Task missing taskName in filter:', task);
+            }
+            const description = task?.description?.toLowerCase() || '';
+            const reporter = userMap[task?.task_reporter]?.username?.toLowerCase() || '';
+            const searchLower = searchText.toLowerCase();
+
+            const matchesSearch = !searchText ||
+                taskName.includes(searchLower) ||
+                description.includes(searchLower) ||
+                reporter.includes(searchLower);
+
+            const matchesPriority = !filters.priority ||
+                task?.priority === filters.priority;
+
+            const matchesStatus = !filters.status ||
+                task?.status === filters.status;
+
+            const matchesDateRange = !filters.dateRange?.length ||
+                (dayjs(task?.startDate).isAfter(filters.dateRange[0]) &&
+                    dayjs(task?.dueDate).isBefore(filters.dateRange[1]));
+
+            return matchesSearch && matchesPriority && matchesStatus && matchesDateRange;
+        });
+        return filtered;
+    }, [validTasks, searchText, filters, userMap]);
 
     const handleView = (record) => {
         setSelectedTask(record);
@@ -505,6 +572,23 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
         },
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+    
+      const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        
+        locale: {
+          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+      };
+
     return (
         <div className="task-list-container">
             {/* Bulk Actions */}
@@ -525,16 +609,14 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             )}
 
             {/* Task Table */}
+        {/* <div className='task-list-container'> */}
             <Table
                 rowSelection={rowSelection}
                 columns={columns}
                 dataSource={tasks}
                 rowKey="id"
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} tasks`,
-                }}
+                pagination={paginationConfig}
+                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
                 className="task-table"
             />
 

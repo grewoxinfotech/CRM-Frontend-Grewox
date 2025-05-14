@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Table, Space, Button, Tooltip, Tag, message, Modal, Dropdown, Input, Avatar } from 'antd';
 import {
     FiEdit2,
@@ -23,7 +23,7 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
     const [deleteBranch] = useDeleteBranchMutation();
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     // Create a map of user IDs to user data for quick lookup
     const userMap = useMemo(() => {
         const map = {};
@@ -116,17 +116,15 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className="bulk-actions">
-            {selectedRowKeys.length > 0 && (
-                <Button
-                    type="primary"
-                    danger
-                    icon={<FiTrash2 size={16} />}
-                    onClick={() => handleDelete(selectedRowKeys)}
-                >
-                    Delete Selected ({selectedRowKeys.length})
-                </Button>
-            )}
+        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
+            <Button
+                type="primary"
+                danger
+                icon={<FiTrash2 size={16} />}
+                onClick={() => handleDelete(selectedRowKeys)}
+            >
+                Delete Selected ({selectedRowKeys.length})
+            </Button>
         </div>
     );
 
@@ -139,34 +137,35 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
     };
 
     const columns = [
-        {
-            title: '#',
-            dataIndex: 'index',
-            key: 'index',
-            width: '60px',
-            render: (_, __, index) => (
-                <div style={{
-                    color: '#1677ff',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#f0f7ff',
-                    borderRadius: '4px',
-                    padding: '4px 8px',
-                    margin: '0 auto',
-                    width: '28px',
-                    height: '28px'
-                }}>
-                    {index + 1}
-                </div>
-            ),
-        },
+        // {
+        //     title: '#',
+        //     dataIndex: 'index',
+        //     key: 'index',
+        //     width: '60px',
+        //     render: (_, __, index) => (
+        //         <div style={{
+        //             color: '#1677ff',
+        //             fontSize: '14px',
+        //             fontWeight: 500,
+        //             display: 'flex',
+        //             alignItems: 'center',
+        //             justifyContent: 'center',
+        //             background: '#f0f7ff',
+        //             borderRadius: '4px',
+        //             padding: '4px 8px',
+        //             margin: '0 auto',
+        //             width: '28px',
+        //             height: '28px'
+        //         }}>
+        //             {index + 1}
+        //         </div>
+        //     ),
+        // },
         {
             title: 'Branch Name',
             dataIndex: 'branchName',
             key: 'branchName',
+            width: 300,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -228,6 +227,7 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
             title: 'Branch Manager',
             dataIndex: 'branchManager',
             key: 'branchManager',
+            width: 300,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -297,6 +297,7 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
             title: 'Address',
             dataIndex: 'branchAddress',
             key: 'branchAddress',
+            
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -356,8 +357,8 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
         {
             title: 'Actions',
             key: 'actions',
-            width: '80px',
-            align: 'center',
+            width: '80',
+            fixed: 'right',
             render: (_, record) => (
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <Dropdown
@@ -393,28 +394,47 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
         },
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+    
+      const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        locale: {
+          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+      };
+
     return (
         <>
             <BulkActions />
+            <div className='branch-list-container'> 
             <Table
                 columns={columns}
                 dataSource={branches}
                 loading={isLoading}
                 rowKey="id"
                 rowSelection={rowSelection}
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} branches`,
-                }}
+                pagination={paginationConfig}
                 className="custom-table"
-                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
+                scroll={{ 
+                    x: 'max-content',
+                    y: 'calc(100vh - 300px)'
+                }}
+                size="middle"
                 style={{
                     background: '#ffffff',
                     borderRadius: '8px',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                 }}
+                responsive={true}
             />
+            </div>
         </>
     );
 };

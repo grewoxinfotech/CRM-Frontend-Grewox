@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, Switch, Avatar, DatePicker } from "antd";
 import {
   FiEdit2,
@@ -81,6 +81,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const [processedSalary, setProcessedSalary] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Define status options
   const statusOptions = [
@@ -344,6 +345,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Employee Name",
       dataIndex: "employeeId",
       key: "employeeId",
+      width: 200,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -394,6 +396,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Payment Date",
       dataIndex: "paymentDate",
       key: "paymentDate",
+      width: 150,
       render: (date) => dayjs(date).format('DD-MM-YYYY'),
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
@@ -436,6 +439,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Payslip Type",
       dataIndex: "payslipType",
       key: "payslipType",
+      width: 150,
       sorter: (a, b) =>
         (a?.payslipType || "").localeCompare(b?.payslipType || ""),
       render: (payslipType) => (
@@ -451,6 +455,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Bank Account",
       dataIndex: "bankAccount",
       key: "bankAccount",
+      width: 150,
       sorter: (a, b) =>
         (a?.bankAccount || "").localeCompare(b?.bankAccount || ""),
       render: (bankAccount) => (
@@ -461,6 +466,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 150,
       filters: statusOptions,
       onFilter: (value, record) => record.status?.toLowerCase() === value.toLowerCase(),
       render: (status, record) => (
@@ -504,7 +510,7 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       title: "Action",
       key: "actions",
       width: 80,
-      align: "center",
+      fixed: "right",
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
@@ -543,26 +549,15 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     };
   }, []);
 
-  // Row selection config
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    }
-  };
-
   // Bulk actions component
   const BulkActions = () => (
-    <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+    <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
       {selectedRowKeys.length > 0 && (
         <Button
           type="primary"
           danger
-          icon={<FiTrash2 size={16} />}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete(selectedRowKeys);
-          }}
+          icon={<FiTrash2 />}
+          onClick={() => handleDelete(selectedRowKeys)}
         >
           Delete Selected ({selectedRowKeys.length})
         </Button>
@@ -570,21 +565,47 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     </div>
   );
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: ['10', '20', '50', '100'],
+    
+    locale: {
+      items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+    },
+  };
+
   return (
     <div className="salary-list-container">
       <BulkActions />
       <Table
-        rowSelection={rowSelection}
+        rowSelection={{
+          type: 'checkbox',
+          selectedRowKeys,
+          onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+          },
+        }}
         columns={columns}
         dataSource={filteredSalary}
         rowKey="id"
         loading={isLoading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
+        pagination={paginationConfig}
+        className=" custom-table"
+        scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
+        size="middle"
+        style={{
+          background: '#ffffff',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
         }}
-        className="custom-table"
       />
       {selectedSalary && (
         <EditSalary

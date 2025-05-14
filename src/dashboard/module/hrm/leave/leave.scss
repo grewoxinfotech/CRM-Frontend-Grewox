@@ -512,141 +512,260 @@
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     padding: 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
     .custom-table {
+        flex: 1;
+        overflow: hidden;
+
         .ant-table {
             background: transparent;
+            height: 100%;
 
-            .ant-table-thead>tr>th {
-                background: #f9fafb;
-                color: #4b5563;
-                font-weight: 600;
-                padding: 16px;
-                border-bottom: 1px solid #e5e7eb;
+            .ant-table-container {
+                height: 100%;
+            }
 
-                &::before {
-                    display: none;
+            .ant-table-thead {
+                tr {
+                    th {
+                        background: transparent;
+                        font-weight: 600;
+                        color: #4B5563;
+                        font-size: 14px;
+                        padding: 16px;
+                        border-bottom: 1px solid #E5E7EB;
+                        white-space: nowrap;
+
+                        &::before {
+                            display: none;
+                        }
+                    }
                 }
             }
 
-            .ant-table-tbody>tr>td {
-                padding: 16px;
-                border-bottom: 1px solid #f3f4f6;
+            .ant-table-tbody {
+                tr {
+                    td {
+                        padding: 16px;
+                        border-bottom: 1px solid #E5E7EB;
+                        white-space: nowrap;
+
+                        .item-wrapper {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+
+                            .item-content {
+                                display: flex;
+                                align-items: center;
+                                gap: 12px;
+
+                                .icon-wrapper {
+                                    width: 36px;
+                                    height: 36px;
+                                    border-radius: 8px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    transition: all 0.3s ease;
+                                    flex-shrink: 0;
+
+                                    .item-icon {
+                                        font-size: 16px;
+                                    }
+                                }
+
+                                .info-wrapper {
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 4px;
+                                    min-width: 0;
+
+                                    .name {
+                                        font-size: 14px;
+                                        line-height: 20px;
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                    }
+
+                                    .meta {
+                                        font-size: 12px;
+                                        color: #6B7280;
+                                        white-space: nowrap;
+                                        overflow: hidden;
+                                        text-overflow: ellipsis;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    &:hover {
+                        td {
+                            background: #F9FAFB;
+                        }
+                    }
+                }
             }
+        }
 
-            .ant-table-row {
-                transition: all 0.3s ease;
+        .ant-table-pagination {
+            margin: 16px 0;
+            padding: 0 16px;
+        }
+    }
+}
 
-                &:hover {
-                    background: #f9fafb;
-                    cursor: pointer;
+// Custom scrollbar styling
+.ant-table-body {
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
 
-                    .action-button {
-                        opacity: 1;
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+
+        &:hover {
+            background: #a8a8a8;
+        }
+    }
+}
+
+
+.bulk-actions {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    .ant-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 6px;
+        font-weight: 500;
+        &.ant-btn-dangerous {
+            background: #ff4d4f;
+            border: none;
+            color: white;
+            &:hover {
+                background: #ff7875;
+            }
+            svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    }
+}
+// Responsive styles
+@media (max-width: 768px) {
+    .leave-list-container {
+        padding: 16px;
+
+        .custom-table {
+            .ant-table {
+                .ant-table-thead {
+                    tr {
+                        th {
+                            padding: 12px 8px;
+                            font-size: 13px;
+                        }
+                    }
+                }
+
+                .ant-table-tbody {
+                    tr {
+                        td {
+                            padding: 12px 8px;
+
+                            .item-wrapper {
+                                .item-content {
+                                    .icon-wrapper {
+                                        width: 32px;
+                                        height: 32px;
+                                    }
+
+                                    .info-wrapper {
+                                        .name {
+                                            font-size: 13px;
+                                        }
+
+                                        .meta {
+                                            font-size: 11px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
-    .item-wrapper {
-        .item-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-
-            .icon-wrapper {
-                width: 36px;
-                height: 36px;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-
-                .item-icon {
-                    font-size: 16px;
-                }
-            }
-
-            .info-wrapper {
-                .name {
-                    font-size: 14px;
-                    line-height: 20px;
-                }
-
-                .meta {
-                    font-size: 12px;
-                    color: #6b7280;
-                    margin-top: 2px;
-                }
-            }
-        }
-    }
-
-    .action-button {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #6b7280;
-        opacity: 0.6;
-        transition: all 0.3s ease;
-
-        &:hover {
-            background: #f3f4f6;
-            color: #374151;
-        }
-    }
-
     .bulk-actions {
-        margin-bottom: 16px;
+        padding: 12px !important;
+        margin-bottom: 12px !important;
 
         .ant-btn {
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 0 16px;
-            font-weight: 500;
+            height: 32px;
+            padding: 0 12px;
+            font-size: 13px;
         }
     }
+}
 
-    // Role indicator animation
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
-        }
-
-        70% {
-            box-shadow: 0 0 0 6px rgba(124, 58, 237, 0);
-        }
-
-        100% {
-            box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+@media (max-width: 767px) {
+    .leave-list-container {
+        .ant-table-pagination {
+            display: flex !important;
+            visibility: visible !important;
+            
+            .ant-pagination-options {
+                display: flex !important;
+                align-items: center;
+                margin-bottom: 20px;
+                .ant-select-selection-item {
+                    width: auto !important;
+                    min-width: 40px;
+                    max-width: 100%;
+                    height: 20px !important;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-align: center;
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+            }
         }
     }
+}
 
-    // Custom scrollbar
-    ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #f9fafb;
-        border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #d1d5db;
-        border-radius: 3px;
-
-        &:hover {
-            background: #9ca3af;
+@media (min-width: 768px) {
+    .leave-list-container {
+        .ant-table-pagination {
+            .ant-pagination-options {
+                .ant-select-selection-item {
+                    width: 100%;
+                    color: inherit;
+                }
+            }
         }
     }
 }

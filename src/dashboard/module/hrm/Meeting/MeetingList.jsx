@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Table, Space, Button, Tag, message, Modal, Dropdown, Input, DatePicker } from 'antd';
 import {
     FiEdit2,
@@ -26,6 +26,7 @@ const MeetingList = ({ searchText }) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingMeeting, setEditingMeeting] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [isMobile, setIsMobile] = useState(false);
 
     // API calls
     const { data: meetings, isLoading } = useGetMeetingsQuery();
@@ -62,7 +63,7 @@ const MeetingList = ({ searchText }) => {
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
             {selectedRowKeys.length > 0 && (
                 <Button
                     type="primary"
@@ -267,6 +268,7 @@ const MeetingList = ({ searchText }) => {
             title: 'Actions',
             key: 'actions',
             width: 80,
+            fixed: "right",
             render: (_, record) => (
                 <Dropdown
                     menu={{
@@ -298,6 +300,23 @@ const MeetingList = ({ searchText }) => {
         },
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+
+        locale: {
+            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+    };
+
     return (
         <div className="meeting-list-container">
             <BulkActions />
@@ -307,12 +326,14 @@ const MeetingList = ({ searchText }) => {
                 dataSource={filteredMeetings}
                 loading={isLoading}
                 rowKey="id"
-                pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                }}
+                pagination={paginationConfig}
                 className="custom-table"
+                scroll={{ x: 1300, y: '' }}
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                }}
             />
             <CreateMeeting
                 open={isCreateModalOpen}

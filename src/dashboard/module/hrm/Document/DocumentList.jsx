@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message, Input } from "antd";
 import {
   FiEdit2,
@@ -26,6 +26,7 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const { data: documentsData, isLoading } = useGetDocumentsQuery();
   const [deleteDocument] = useDeleteDocumentMutation();
+  const [isMobile, setIsMobile] = useState(false);
   const docdata = documentsData?.data || documents;
 
   // Row selection config
@@ -38,7 +39,7 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
 
   // Bulk actions component
   const BulkActions = () => (
-    <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+    <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
       {selectedRowKeys.length > 0 && (
         <Button
           type="primary"
@@ -224,6 +225,7 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           menu={{
@@ -255,6 +257,23 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
     },
   ];
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: ['10', '20', '50', '100'],
+
+    locale: {
+        items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+    },
+};
+
   return (
     <div className="document-list-container">
       <BulkActions />
@@ -264,12 +283,14 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
         dataSource={filteredDocuments}
         loading={loading || isLoading}
         rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
-        }}
+        pagination={paginationConfig}
         className="custom-table"
+        scroll={{ x: 1000, y: '' }}
+        style={{
+          background: '#ffffff',
+          borderRadius: '8px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+        }}
       />
     </div>
   );

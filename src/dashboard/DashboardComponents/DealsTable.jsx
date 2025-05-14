@@ -7,7 +7,8 @@ const { Text } = Typography;
 // Add responsive styles object
 const responsiveStyles = {
     tableWrapper: {
-        overflow: 'auto',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         '@media (max-width: 768px)': {
             margin: '0 -16px',
         }
@@ -161,7 +162,7 @@ const DealsTable = ({
                     </Text>
                 </div>
             ),
-            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
+         
         },
         {
             title: "Stage",
@@ -189,7 +190,6 @@ const DealsTable = ({
                     </Tag>
                 );
             },
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Value",
@@ -204,7 +204,6 @@ const DealsTable = ({
                     </Text>
                 );
             },
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Status",
@@ -239,7 +238,6 @@ const DealsTable = ({
                     </Tag>
                 );
             },
-            responsive: ['md', 'lg', 'xl']
         }
     ];
 
@@ -283,7 +281,6 @@ const DealsTable = ({
                     columns={columns}
                     // loading={loading}
                     rowKey="id"
-                    size="middle"
                     pagination={{
                         pageSize: 5,
                         total: filterDealsByDate(deals)?.length,
@@ -299,13 +296,16 @@ const DealsTable = ({
                     }}
                     style={{
                         borderRadius: '8px',
-                        overflow: 'hidden'
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        width: '100%'
                     }}
+                    className="colorful-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/crm/deal/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: 'max-content' }}
+                    scroll={{ x: '1000px', y: 'hidden' }}
                     locale={{
                         emptyText: (
                             <div style={{

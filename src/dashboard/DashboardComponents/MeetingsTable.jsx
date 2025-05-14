@@ -8,7 +8,8 @@ const { Text } = Typography;
 // Add responsive styles object
 const responsiveStyles = {
     tableWrapper: {
-        overflow: 'auto',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         '@media (max-width: 768px)': {
             margin: '0 -16px',
         }
@@ -165,7 +166,6 @@ const MeetingsTable = ({
                     </div>
                 </div>
             ),
-            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
         },
         {
             title: "Time",
@@ -182,7 +182,6 @@ const MeetingsTable = ({
                     </Text>
                 </div>
             ),
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Participants",
@@ -205,7 +204,6 @@ const MeetingsTable = ({
                     </div>
                 );
             },
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Status",
@@ -242,8 +240,7 @@ const MeetingsTable = ({
                     </Tag>
                 );
             },
-            responsive: ['md', 'lg', 'xl']
-        }
+        },
     ];
 
     return (
@@ -298,12 +295,18 @@ const MeetingsTable = ({
                             borderRadius: '0 0 8px 8px'
                         }
                     }}
+                    style={{
+                        borderRadius: '8px',
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        width: '100%'
+                    }}
                     className="colorful-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/hrm/meeting/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: true }}
+                    scroll={{ x: '1000px', y: 'hidden' }}
                     // loading={loading}
                     locale={{
                         emptyText: (

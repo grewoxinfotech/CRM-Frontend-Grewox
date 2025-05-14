@@ -1043,7 +1043,7 @@ const CreateTask = ({
           name="file"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task File <span style={{ color: "#ff4d4f" }}>*</span>
+              Task File 
             </span>
           }
           valuePropName="fileList"

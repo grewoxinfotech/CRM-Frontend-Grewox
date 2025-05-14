@@ -10,6 +10,7 @@ import {
   Input,
   Space,
   Switch,
+  Modal,
 } from "antd";
 import {
   FiEdit2,
@@ -43,6 +44,7 @@ import {
   useGetSalaryQuery,
   useUpdateSalaryMutation,
 } from "../payRoll/services/salaryApi";
+import { useDeleteEmployeeMutation } from "./services/employeeApi";
 
 // Define styles outside the component
 const switchStyles = `
@@ -92,6 +94,9 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
   const [adminLogin] = useAdminLoginMutation();
   const [loading, setLoading] = useState(false);
   const [updateSalary] = useUpdateSalaryMutation();
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [deleteEmployee] = useDeleteEmployeeMutation();
+  const [isMobile, setIsMobile] = useState(false);
 
   // Fetch roles data
   const { data: rolesData } = useGetRolesQuery();
@@ -265,7 +270,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         key="delete"
         icon={<FiTrash2 />}
         danger
-        onClick={() => onDelete(record)}
+        onClick={() => handleDelete(record.id)}
       >
         Delete Employee
       </Menu.Item>
@@ -295,6 +300,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
       title: "Profile",
       dataIndex: "profilePic",
       key: "profilePic",
+      width: 100,
       sorter: (a, b) => (a.profilePic || "").localeCompare(b.profilePic || ""),
       render: (profilePic, record) => (
         <div style={{ display: "flex", alignItems: "center" }}>
@@ -672,93 +678,81 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
       },
     },
     {
-      title: "Salary Status",
-      key: "salaryStatus",
-      width: 200,
+      title: 'Salary Status',
+      key: 'salaryStatus',
+      width: 230,
       render: (_, record) => {
-        const salaryInfo = getEmployeeSalary(record.id);
-        return (
-          <div
-            className="salary-status"
-            style={{ display: "flex", alignItems: "center", gap: "8px" }}
-          >
-            {salaryInfo ? (
-              <>
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "4px" }}
-                >
-                  <span style={{ color: "#52c41a", fontSize: "14px" }}>₹</span>
-                  <span style={{ fontWeight: 500 }}>
-                    {Number(salaryInfo.salary || 0).toLocaleString("en-IN", {
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span style={{ color: "#8c8c8c", fontSize: "13px" }}>
-                    INR
-                  </span>
-                </div>
-                <Switch
-                  size="small"
-                  checked={salaryInfo.status === "paid"}
-                  onChange={(checked) =>
-                    handleSalaryStatusChange(checked, salaryInfo.id)
-                  }
-                  loading={loading}
-                  className={`status-switch ${
-                    salaryInfo.status === "paid" ? "paid" : ""
-                  }`}
-                />
-                <Tag
-                  color={salaryInfo.status === "paid" ? "success" : "warning"}
-                  style={{
-                    margin: 0,
-                    textTransform: "capitalize",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    padding: "0 8px",
-                    height: "22px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  {salaryInfo.status}
-                </Tag>
-              </>
-            ) : (
-              <Tag
-                color="default"
-                style={{
-                  margin: 0,
-                  borderRadius: "12px",
-                  fontSize: "12px",
-                  padding: "0 8px",
-                  height: "22px",
-                  display: "flex",
-                  alignItems: "center",
-                  background: "#f5f5f5",
-                  border: "none",
-                  color: "#8c8c8c",
-                }}
-              >
-                No Salary Info
-              </Tag>
-            )}
-          </div>
-        );
+          const salaryInfo = getEmployeeSalary(record.id);
+          return (
+              <div className="salary-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {salaryInfo ? (
+                      <>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ color: '#52c41a', fontSize: '14px' }}>₹</span>
+                              <span style={{ fontWeight: 500 }}>
+                                  {Number(salaryInfo.salary || 0).toLocaleString('en-IN', {
+                                      maximumFractionDigits: 2,
+                                      minimumFractionDigits: 2
+                                  })}
+                              </span>
+                              <span style={{ color: '#8c8c8c', fontSize: '13px' }}>INR</span>
+                          </div>
+                          <Switch
+                              size="small"
+                              checked={salaryInfo.status === 'paid'}
+                              onChange={(checked) => handleSalaryStatusChange(checked, salaryInfo.id)}
+                              loading={loading}
+                              className={`status-switch ${salaryInfo.status === 'paid' ? 'paid' : ''}`}
+                          />
+                          <Tag
+                              color={salaryInfo.status === 'paid' ? 'success' : 'warning'}
+                              style={{
+                                  margin: 0,
+                                  textTransform: 'capitalize',
+                                  borderRadius: '12px',
+                                  fontSize: '12px',
+                                  padding: '0 8px',
+                                  height: '22px',
+                                  display: 'flex',
+                                  alignItems: 'center'
+                              }}
+                          >
+                              {salaryInfo.status}
+                          </Tag>
+                      </>
+                  ) : (
+                      <Tag
+                          color="default"
+                          style={{
+                              margin: 0,
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              padding: '0 8px',
+                              height: '22px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              background: '#f5f5f5',
+                              border: 'none',
+                              color: '#8c8c8c'
+                          }}
+                      >
+                          No Salary Info
+                      </Tag>
+                  )}
+              </div>
+          );
       },
     },
     {
       title: "Actions",
       key: "actions",
-      width: "120px",
-      align: "center",
+      fixed: "right",
       render: (_, record) => (
         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
           <Button
             type="primary"
             icon={<FiLogIn size={14} />}
-            size="small"
+            // size="small"
             onClick={() => handleEmployeeLogin(record)}
             className="login-button"
             style={{
@@ -823,46 +817,95 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     };
   }, []);
 
+  const handleDelete = async (recordOrIds) => {
+    const isMultiple = Array.isArray(recordOrIds);
+    const title = isMultiple ? 'Delete Selected Employees' : 'Delete Employee';
+    const content = isMultiple
+      ? `Are you sure you want to delete ${recordOrIds.length} selected employees?`
+      : 'Are you sure you want to delete this employee?';
+
+    Modal.confirm({
+      title,
+      content,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      bodyStyle: { padding: "20px" },
+      onOk: async () => {
+        try {
+          if (isMultiple) {
+            await Promise.all(recordOrIds.map(id => deleteEmployee(id).unwrap()));
+            message.success(`${recordOrIds.length} employees deleted successfully`);
+            setSelectedRowKeys([]);
+          } else {
+            await deleteEmployee(recordOrIds).unwrap();
+            message.success('Employee deleted successfully');
+          }
+        } catch (error) {
+          message.error(error?.data?.message || 'Failed to delete employee(s)');
+        }
+      },
+    });
+  };
+
+  // Bulk actions component
+  const BulkActions = () => (
+    <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
+      <Button
+        type="primary"
+        danger
+        icon={<FiTrash2 size={16} />}
+        onClick={() => handleDelete(selectedRowKeys)}
+      >
+        Delete Selected ({selectedRowKeys.length})
+      </Button>
+    </div>
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: ['10', '20', '50', '100'],
+
+    locale: {
+        items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+    },
+};
   return (
-    <Table
-      columns={columns}
-      dataSource={transformedEmployees}
-      rowKey="id"
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-        showTotal: (total) => `Total ${total} employees`,
-        size: window.innerWidth <= 480 ? "small" : "default",
-        responsive: true,
-        showLessItems: window.innerWidth <= 480,
-      }}
-      className="custom-table"
-      scroll={{ x: 1000, y: "calc(100vh - 350px)" }}
-      style={{
-        background: "#ffffff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-        ".ant-table-body": {
-          overflowX: "auto !important",
-          overflowY: "auto !important",
-          "&::-webkit-scrollbar": {
-            width: "6px",
-            height: "6px",
+    <>
+    <div className="employee-list-container">
+      <BulkActions />
+      <Table
+        rowSelection={{
+          type: 'checkbox',
+          selectedRowKeys,
+          onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
           },
-          "&::-webkit-scrollbar-thumb": {
-            background: "#d9d9d9",
-            borderRadius: "3px",
-            "&:hover": {
-              background: "#bfbfbf",
-            },
-          },
-          "&::-webkit-scrollbar-track": {
-            background: "#f5f5f5",
-            borderRadius: "3px",
-          },
-        },
-      }}
-    />
+        }}
+        columns={columns}
+        dataSource={transformedEmployees}
+        rowKey="id"
+        pagination={paginationConfig}
+        className="custom-table"
+        scroll={{ x: 1200, y: 'calc(100vh - 350px)' }}
+        style={{
+          width: "100%",
+          minWidth: 0,
+          background: "#ffffff",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+        }}
+      />
+    </div>
+    </>
   );
 };
 

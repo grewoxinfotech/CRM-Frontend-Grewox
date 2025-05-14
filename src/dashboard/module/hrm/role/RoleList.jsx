@@ -115,20 +115,15 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-            {selectedRowKeys.length > 0 && (
-                <Button
-                    type="primary"
-                    danger
-                    icon={<FiTrash2 size={16} />}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(selectedRowKeys);
-                    }}
-                >
-                    Delete Selected ({selectedRowKeys.length})
-                </Button>
-            )}
+        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
+            <Button
+                type="primary"
+                danger
+                icon={<FiTrash2 />}
+                onClick={() => handleDelete(selectedRowKeys)}
+            >
+                Delete Selected ({selectedRowKeys.length})
+            </Button>
         </div>
     );
 
@@ -409,6 +404,8 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
             title: "Actions",
             key: "actions",
             width: 80,
+            fixed: 'right',
+            
             render: (_, record) => {
                 const menuItems = [
                     {
@@ -461,7 +458,13 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
         <div className="role-list-container">
             <BulkActions />
             <Table
-                rowSelection={rowSelection}
+                rowSelection={{
+                    type: 'checkbox',
+                    selectedRowKeys,
+                    onChange: (newSelectedRowKeys) => {
+                        setSelectedRowKeys(newSelectedRowKeys);
+                    },
+                }}
                 columns={columns}
                 dataSource={roles}
                 rowKey="id"
@@ -471,8 +474,17 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
                     pageSize: 10,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} items`,
+                    responsive: true,
+                    size: 'default'
                 }}
                 className="custom-table"
+                scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
+                size="middle"
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                }}
                 onRow={(record) => ({
                     onClick: () => showAllPermissions(record)
                 })}

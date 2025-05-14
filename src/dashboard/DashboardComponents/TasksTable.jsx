@@ -8,7 +8,8 @@ const { Text, Paragraph } = Typography;
 // Add responsive styles object
 const responsiveStyles = {
     tableWrapper: {
-        overflow: 'auto',
+        overflowX: 'auto',
+        overflowY: 'hidden',
         '@media (max-width: 768px)': {
             margin: '0 -16px',
         }
@@ -403,7 +404,6 @@ const TasksTable = ({
                     </div>
                 </Tooltip>
             ),
-            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
         },
         {
             title: "Due Date",
@@ -414,7 +414,6 @@ const TasksTable = ({
                     <Text style={{ whiteSpace: 'nowrap' }}>{dayjs(date).format('MMM DD, YYYY')}</Text>
                 </Tooltip>
             ),
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Status",
@@ -434,7 +433,6 @@ const TasksTable = ({
                     {status || 'Todo'}
                 </Tag>
             ),
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Priority",
@@ -454,7 +452,6 @@ const TasksTable = ({
                     {priority || 'Low'}
                 </Tag>
             ),
-            responsive: ['md', 'lg', 'xl']
         }
     ];
 
@@ -510,12 +507,18 @@ const TasksTable = ({
                             borderRadius: '0 0 8px 8px'
                         }
                     }}
+                    style={{
+                        borderRadius: '8px',
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        width: '100%'
+                    }}
                     className="colorful-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => handleRowClick(record),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: true }}
+                    scroll={{ x: '1000px', y: 'hidden' }}
                     // loading={loading}
                     locale={{
                         emptyText: (

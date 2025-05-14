@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, Checkbox } from "antd";
 import {
   FiEdit2,
@@ -36,6 +36,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
   const [processingLeaveId, setProcessingLeaveId] = useState(null);
   const [processedLeaves, setProcessedLeaves] = useState(new Set());
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Create a map of employee IDs to employee names
   const employeeMap = useMemo(() => {
@@ -112,17 +113,15 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
 
   // Bulk actions component
   const BulkActions = () => (
-    <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-      {selectedRowKeys.length > 0 && (
-        <Button
-          type="primary"
-          danger
-          icon={<FiTrash2 size={16} />}
-          onClick={handleBulkDelete}
-        >
-          Delete Selected ({selectedRowKeys.length})
-        </Button>
-      )}
+    <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
+      <Button
+        type="primary"
+        danger
+        icon={<FiTrash2 size={16} />}
+        onClick={handleBulkDelete}
+      >
+        Delete Selected ({selectedRowKeys.length})
+      </Button>
     </div>
   );
 
@@ -225,6 +224,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       title: "Employee Name",
       dataIndex: "employeeId",
       key: "employeeId",
+      width: 200,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -277,6 +277,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       title: "Leave Type",
       dataIndex: "leaveType",
       key: "leaveType",
+      width: 200,
       filters: leaveTypes.map(leaveType => ({
         text: leaveType.name,
         value: leaveType.id
@@ -306,6 +307,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
     {
       title: "Duration",
       key: "duration",
+      width: 200,
       render: (_, record) => {
         const start = dayjs(record.startDate);
         const end = dayjs(record.endDate);
@@ -339,6 +341,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      width: 200,
       filters: statuses.map(status => ({
         text: status.name,
         value: status.id
@@ -391,6 +394,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       title: "Reason",
       dataIndex: "reason",
       key: "reason",
+      width: 200,
       ellipsis: true,
       sorter: (a, b) => (a?.reason || "").localeCompare(b?.reason || ""),
       render: (reason) => (
@@ -449,7 +453,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       title: "Action",
       key: "actions",
       width: 80,
-      align: "center",
+      fixed: "right",
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
@@ -477,6 +481,22 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
     },
   ];
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+}, []);
+
+const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: ['10', '20', '50', '100'],
+    locale: {
+        items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+    },
+};
+
   return (
     <div className="leave-list-container">
       <BulkActions />
@@ -486,12 +506,10 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
         dataSource={filteredLeaves}
         loading={isLoading}
         rowKey="id"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} items`,
-        }}
+        pagination={paginationConfig}
         className="custom-table"
+        scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
+        size="middle"
       />
       {editModalVisible && (
         <EditLeave

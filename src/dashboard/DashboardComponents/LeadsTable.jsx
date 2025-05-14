@@ -8,6 +8,7 @@ const { Text } = Typography;
 const responsiveStyles = {
     tableWrapper: {
         overflow: 'auto',
+        overflowY: 'hidden',
         '@media (max-width: 768px)': {
             margin: '0 -16px',
         }
@@ -161,7 +162,6 @@ const LeadsTable = ({
                     </Text>
                 </div>
             ),
-            responsive: ['xs', 'sm', 'md', 'lg', 'xl']
         },
         {
             title: "Interest Level",
@@ -216,7 +216,6 @@ const LeadsTable = ({
                     </Tag>
                 );
             },
-            responsive: ['sm', 'md', 'lg', 'xl']
         },
         {
             title: "Value",
@@ -261,7 +260,6 @@ const LeadsTable = ({
                     </Tag>
                 );
             },
-            responsive: ['md', 'lg', 'xl']
         }
     ];
 
@@ -305,7 +303,6 @@ const LeadsTable = ({
                     columns={columns}
                     // loading={loading}
                     rowKey="id"
-                    size="middle"
                     pagination={{
                         pageSize: 5,
                         total: filterLeadsByDate(leads)?.length,
@@ -321,13 +318,16 @@ const LeadsTable = ({
                     }}
                     style={{
                         borderRadius: '8px',
-                        overflow: 'hidden'
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        width: '100%'
                     }}
+                    className="colorful-table fixed-height-table"
                     onRow={(record) => ({
                         onClick: () => navigate(`/dashboard/crm/leads/${record.id}`),
                         style: { cursor: 'pointer' }
                     })}
-                    scroll={{ x: 'max-content' }}
+                    scroll={{ x: '1000px', y: 'hidden' }}
                     locale={{
                         emptyText: (
                             <div style={{
