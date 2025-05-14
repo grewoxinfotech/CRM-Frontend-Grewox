@@ -9,6 +9,9 @@ import {
   Dropdown,
   Menu,
   Breadcrumb,
+  Popover,
+  Row,
+  Col,
 } from "antd";
 import {
   FiPlus,
@@ -43,13 +46,14 @@ const Customer = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [createCustomer] = useCreateCustomerMutation();
   const navigate = useNavigate();
 
   const [updateCustomer] = useUpdateCustomerMutation();
 
   // Dummy data for demonstration
- 
+
 
   const handleCreate = () => {
     setSelectedCustomer(null);
@@ -83,8 +87,8 @@ const Customer = () => {
   };
 
   const handleCustomerRevenueClick = (customer) => {
-    navigate(`/dashboard/sales/revenue`, { 
-      state: { selectedCustomer: customer } 
+    navigate(`/dashboard/sales/revenue`, {
+      state: { selectedCustomer: customer }
     });
   };
 
@@ -216,6 +220,20 @@ const Customer = () => {
     </Menu>
   );
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search customers..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   const handleEditSubmit = async (formData) => {
     try {
       setLoading(true);
@@ -253,45 +271,49 @@ const Customer = () => {
       <div className="page-header">
         <div className="page-title">
           <Title level={2}>Customers</Title>
-          <Text type="secondary">Manage all customers in the organization</Text>
+          <Text className="page-description" type="secondary">Manage all customers in the organization</Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
-            <Input
-              prefix={
-                <FiSearch style={{ color: "#8c8c8c" }} />
-              }
-              placeholder="Search customers..."
-              allowClear
-              onChange={(e) => setSearchText(e.target.value)}
-              value={searchText}
-              className="search-input"
-              style={{ 
-                width: '300px', 
-                borderRadius: '20px',
-                height: '38px'
-              }}
-            />
-          </div>
-          <div className="action-buttons">
-            <Dropdown overlay={exportMenu} trigger={["click"]}>
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                  placeholder="Search customers..."
+                  allowClear
+                  onChange={(e) => setSearchText(e.target.value)}
+                  value={searchText}
+                  className="search-input"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
               <Button
-                className="export-button"
-                icon={<FiDownload size={16} />}
-                loading={loading}
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleCreate}
+                className="add-button"
               >
-                Export
-                <FiChevronDown size={16} />
+                <span className="button-text">Add Customer</span>
               </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus size={16} />}
-              onClick={handleCreate}
-              className="add-button"
-            >
-              Add Customer
-            </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -13,8 +13,20 @@
     padding: 24px;
     background: $background-color;
 
+    @media (max-width: 768px) {
+        padding: 16px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 12px;
+    }
+
     .page-breadcrumb {
         margin-bottom: 16px;
+
+        @media (max-width: 768px) {
+            margin-bottom: 12px;
+        }
 
         .ant-breadcrumb {
             font-size: 14px;
@@ -53,7 +65,6 @@
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
-        gap: 24px;
         background: white;
         padding: 24px 32px;
         border-radius: 12px;
@@ -81,95 +92,226 @@
 
         .header-actions {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: flex-end;
-            gap: 16px;
-            width: 100%;
-            max-width: 800px;
+            gap: 12px;
 
-            .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
-
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
-
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
-                    }
-
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
-
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
-                        }
-                    }
-
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                    }
-                }
+            @media (max-width: 1200px) {
+                width: 100%;
+                justify-content: space-between;
             }
 
-            .action-buttons {
+            .desktop-actions {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                flex-shrink: 0;
+                flex-wrap: nowrap;
 
+                @media (max-width: 1200px) {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+
+                .search-container {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+
+                    .search-input {
+                        width: 300px;
+
+                        @media (max-width: 1300px) {
+                            width: 250px;
+                        }
+
+                        @media (max-width: 1200px) {
+                            width: 300px;
+                        }
+
+                        @media (max-width: 992px) {
+                            width: 350px;
+                        }
+
+                        @media (max-width: 767px) {
+                            display: none;
+                        }
+                    }
+
+                    .search-icon-button {
+                        display: none;
+                        padding: 0 12px;
+                        width: 38px;
+                        height: 38px;
+                        align-items: center;
+                        justify-content: center;
+
+                        @media (max-width: 767px) {
+                            display: flex;
+                        }
+
+                        @media (max-width: 576px) {
+                            width: 34px;
+                            height: 34px;
+                            padding: 0 10px;
+                        }
+                    }
+                }
+
+                .action-buttons {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+
+                    .view-toggle {
+                        display: flex;
+                        align-items: center;
+
+                        .ant-btn {
+                            height: 38px;
+                            width: 38px;
+                            padding: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+
+                            @media (max-width: 576px) {
+                                height: 34px;
+                                width: 34px;
+                            }
+                        }
+                    }
+                }
+
+                // Add styles for responsive buttons
                 .export-button,
                 .add-button {
-                    height: 40px;
-                    padding: 0 20px;
-                    display: inline-flex;
+                    height: 38px;
+                    display: flex;
                     align-items: center;
                     justify-content: center;
+
+                    @media (max-width: 767px) {
+                        padding: 0 12px;
+                        width: 38px;
+                        height: 38px;
+
+                        .button-text {
+                            display: none;
+                        }
+                    }
+
+                    @media (max-width: 576px) {
+                        width: 34px;
+                        height: 34px;
+                        padding: 0 10px;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 1200px) {
+            flex-direction: column;
+            padding: 20px;
+
+            .page-title {
+                text-align: center;
+                width: 100%;
+                margin-bottom: 20px;
+
+                h2 {
+                    font-size: 24px;
+                }
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 16px;
+
+                .desktop-actions {
+                    flex-direction: column;
+                    width: 100%;
+                    gap: 16px;
+
+                    > div {
+                        width: 100%;
+                        justify-content: center;
+                    }
+
+                    .search-container {
+                        width: 100%;
+                        max-width: 600px;
+                        margin: 0 auto;
+
+                        .search-input {
+                            width: 100%;
+                        }
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 992px) {
+            .header-actions {
+                .desktop-actions {
+                    .search-container {
+                        max-width: 500px;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 12px;
+
+            .page-title {
+                text-align: left;
+                width: auto;
+                margin-bottom: 0;
+                h2 {
+                    font-size: 18px;
+                }
+            }
+            .header-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px;
+                align-items: center !important;
+                justify-content: flex-end;
+                min-width: max-content;
+                .desktop-actions {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    width: auto;
                     gap: 8px;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    transition: all 0.3s ease;
-
-                    svg {
-                        font-size: 16px;
+                    > div {
+                        width: auto;
+                        justify-content: flex-end;
+                        display: flex !important;
+                    }
+                    .search-container {
+                        max-width: 400px;
+                        display: flex !important;
                     }
                 }
+            }
+        }
 
-                .export-button {
-                    border: 1px solid $border-color;
-                    background: white;
-
-                    &:hover {
-                        color: #1677ff;
-                        border-color: #1677ff;
-                        transform: translateY(-2px);
-                    }
+        @media (max-width: 576px) {
+            .page-title {
+                .ant-typography-secondary {
+                    font-size: 11px;
                 }
+            }
+        }
 
-                .add-button {
-                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                    border: none;
-                    color: white;
-
-                    &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                        transform: translateY(-2px);
-                    }
+        @media (max-width: 400px) {
+            .page-title {
+                .ant-typography-secondary {
+                    font-size: 10px;
                 }
             }
         }
@@ -223,6 +365,96 @@
                 margin: 16px 24px;
             }
         }
+    }
+}
+
+// Search Popover Styles
+.search-popover {
+    .ant-popover-inner {
+        padding: 0;
+    }
+
+    .ant-popover-inner-content {
+        padding: 0;
+    }
+
+    .search-popup {
+        width: 280px;
+        padding: 12px;
+
+        .search-input {
+            .ant-input-affix-wrapper {
+                border-radius: 6px;
+                height: 38px;
+                border: 1px solid #e6e6e6;
+                transition: all 0.3s ease;
+
+                &:hover, &:focus {
+                    border-color: #1677ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+
+                .anticon {
+                    color: #999;
+                }
+
+                input {
+                    font-size: 14px;
+                    
+                    &::placeholder {
+                        color: #999;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-popup {
+            width: 260px;
+            padding: 10px;
+
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 34px;
+                    
+                    input {
+                        font-size: 13px;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 480px) {
+        .search-popup {
+            width: 240px;
+            padding: 8px;
+
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 32px;
+                    
+                    input {
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Hide search popover on desktop but keep it visible on mobile
+@media (min-width: 769px) {
+    .mobile-search-popover {
+        display: none;
+    }
+}
+
+// Make search icon button visible only on mobile
+.search-icon-button {
+    @media (min-width: 768px) {
+        display: none !important;
     }
 }
 
@@ -342,40 +574,6 @@
                         background: #ff7875;
                         border-color: #ff7875;
                     }
-                }
-            }
-        }
-    }
-}
-
-// Responsive styles
-@media (max-width: 768px) {
-    .customer-page {
-        .page-header {
-            flex-direction: column;
-            padding: 16px;
-
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-
-                .search-input {
-                    max-width: 100%;
-                }
-
-                .action-buttons {
-                    width: 100%;
-                    justify-content: space-between;
-                }
-            }
-        }
-
-        .customer-table-card {
-            .ant-table {
-
-                .ant-table-thead>tr>th,
-                .ant-table-tbody>tr>td {
-                    padding: 12px 8px;
                 }
             }
         }
@@ -537,14 +735,14 @@
             .ant-table-row {
                 transition: all 0.3s ease;
 
-                &:hover {
-                    background: #f9fafb;
-                    cursor: pointer;
+                // &:hover {
+                //     background: #f9fafb;
+                //     cursor: pointer;
 
                     .action-button {
                         opacity: 1;
                     }
-                }
+                // }
             }
 
             .item-wrapper {
@@ -693,6 +891,48 @@
 
                 a {
                     color: #ffffff;
+                }
+            }
+        }
+    }
+}
+
+
+@media (max-width: 767px) {
+    .customer-list-container {
+        .ant-table-pagination {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            visibility: visible !important;
+            .ant-pagination-options {
+                display: flex !important;
+                align-items: center;
+                margin-bottom: 10px;
+                .ant-select-selection-item {
+                    width: auto !important;
+                    min-width: 40px;
+                    height: 32px;
+                    max-width: 100%;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-align: center;
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+            }
+        }
+    }
+}
+
+@media (min-width: 768px) {
+    .customer-list-container {
+        .ant-table-pagination {
+            .ant-pagination-options {
+                .ant-select-selection-item {
+                    width: 100%;
+                    height: 32px;
+                    color: inherit;
                 }
             }
         }

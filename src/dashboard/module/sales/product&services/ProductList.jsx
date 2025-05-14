@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -53,7 +53,7 @@ const ProductList = ({
   const { data: productsData = [], isLoading } = useGetProductsQuery(
     currentUser?.id
   );
-
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const products = productsData.data || [];
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -312,6 +312,7 @@ const ProductList = ({
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
@@ -334,6 +335,24 @@ const ProductList = ({
       ),
     },
   ];
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Use only numbers for mobile/tablet, and AntD default for desktop
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} items`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
+    
+  };
 
   const rowSelection = {
     selectedRowKeys,
@@ -386,12 +405,9 @@ const ProductList = ({
         dataSource={filteredProducts}
         loading={isLoading}
         rowKey="id"
+        scroll={{ x: "max-content", y: "100%" }}
         className="custom-table"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} products`,
-        }}
+        pagination={paginationConfig}
       />
 
       <EditProduct
