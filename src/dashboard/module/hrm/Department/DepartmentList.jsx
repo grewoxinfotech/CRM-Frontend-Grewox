@@ -109,14 +109,16 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
     // Bulk actions component
     const BulkActions = () => (
         <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            <Button
-                type="primary"
-                danger
-                icon={<FiTrash2 size={16} />}
-                onClick={() => handleDelete(selectedRowKeys)}
-            >
-                Delete Selected ({selectedRowKeys.length})
-            </Button>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 />}
+                    onClick={() => handleDelete(selectedRowKeys)}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
         </div>
     );
 

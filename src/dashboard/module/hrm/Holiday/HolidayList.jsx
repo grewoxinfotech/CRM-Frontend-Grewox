@@ -105,14 +105,16 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
     // Bulk actions component
     const BulkActions = () => (
         <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            <Button
-                type="primary"
-                danger
-                icon={<FiTrash2 size={16} />}
-                onClick={() => handleDelete(selectedRowKeys)}
-            >
-                Delete Selected ({selectedRowKeys.length})
-            </Button>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 />}
+                    onClick={() => handleDelete(selectedRowKeys)}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
         </div>
     );
 
@@ -313,25 +315,25 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
         <>
             <BulkActions />
             <div className='holiday-list-container'>
-            <Table
-                columns={columns}
-                dataSource={holidays}
-                loading={isLoading}
-                rowKey="id"
-                rowSelection={{
-                    type: 'checkbox',
-                    selectedRowKeys,
-                    onChange: (newSelectedRowKeys) => {
-                        setSelectedRowKeys(newSelectedRowKeys);
-                    },
-                }}
-                pagination={paginationConfig}
-                className="custom-table"
-                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                <Table
+                    columns={columns}
+                    dataSource={holidays}
+                    loading={isLoading}
+                    rowKey="id"
+                    rowSelection={{
+                        type: 'checkbox',
+                        selectedRowKeys,
+                        onChange: (newSelectedRowKeys) => {
+                            setSelectedRowKeys(newSelectedRowKeys);
+                        },
+                    }}
+                    pagination={paginationConfig}
+                    className="custom-table"
+                    scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
+                    style={{
+                        background: '#ffffff',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                     }}
                 />
             </div>

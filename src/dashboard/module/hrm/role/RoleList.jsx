@@ -113,17 +113,18 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
         }
     };
 
-    // Bulk actions component
     const BulkActions = () => (
         <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            <Button
-                type="primary"
-                danger
-                icon={<FiTrash2 />}
-                onClick={() => handleDelete(selectedRowKeys)}
-            >
-                Delete Selected ({selectedRowKeys.length})
-            </Button>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 />}
+                    onClick={() => handleDelete(selectedRowKeys)}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
         </div>
     );
 
@@ -405,7 +406,7 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
             key: "actions",
             width: 80,
             fixed: 'right',
-            
+
             render: (_, record) => {
                 const menuItems = [
                     {

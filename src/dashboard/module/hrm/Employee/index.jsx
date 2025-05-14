@@ -122,7 +122,7 @@ const Employee = () => {
     }
   }, [employeesData]);
 
- 
+
   useEffect(() => {
     const filtered = employees.filter(
       (employee) =>
@@ -415,12 +415,12 @@ const Employee = () => {
                   // placement="bottomRight"
                   // overlayClassName="search-popover"
                   // getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                >
-                  <Button
-                    icon={<FiSearch size={18} />}
-                    className="mobile-search-button"
-                  />
-                </Popover>
+                  >
+                    <Button
+                      icon={<FiSearch size={18} />}
+                      className="mobile-search-button"
+                    />
+                  </Popover>
                   <Dropdown overlay={exportMenu} trigger={["click"]}>
                     <Button icon={<FiDownload size={18} />} className="icon-button" />
                   </Dropdown>

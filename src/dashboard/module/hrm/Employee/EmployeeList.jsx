@@ -189,10 +189,10 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
   const getInitials = (username) => {
     return username
       ? username
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
       : "U";
   };
 
@@ -682,65 +682,65 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
       key: 'salaryStatus',
       width: 230,
       render: (_, record) => {
-          const salaryInfo = getEmployeeSalary(record.id);
-          return (
-              <div className="salary-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {salaryInfo ? (
-                      <>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ color: '#52c41a', fontSize: '14px' }}>₹</span>
-                              <span style={{ fontWeight: 500 }}>
-                                  {Number(salaryInfo.salary || 0).toLocaleString('en-IN', {
-                                      maximumFractionDigits: 2,
-                                      minimumFractionDigits: 2
-                                  })}
-                              </span>
-                              <span style={{ color: '#8c8c8c', fontSize: '13px' }}>INR</span>
-                          </div>
-                          <Switch
-                              size="small"
-                              checked={salaryInfo.status === 'paid'}
-                              onChange={(checked) => handleSalaryStatusChange(checked, salaryInfo.id)}
-                              loading={loading}
-                              className={`status-switch ${salaryInfo.status === 'paid' ? 'paid' : ''}`}
-                          />
-                          <Tag
-                              color={salaryInfo.status === 'paid' ? 'success' : 'warning'}
-                              style={{
-                                  margin: 0,
-                                  textTransform: 'capitalize',
-                                  borderRadius: '12px',
-                                  fontSize: '12px',
-                                  padding: '0 8px',
-                                  height: '22px',
-                                  display: 'flex',
-                                  alignItems: 'center'
-                              }}
-                          >
-                              {salaryInfo.status}
-                          </Tag>
-                      </>
-                  ) : (
-                      <Tag
-                          color="default"
-                          style={{
-                              margin: 0,
-                              borderRadius: '12px',
-                              fontSize: '12px',
-                              padding: '0 8px',
-                              height: '22px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              background: '#f5f5f5',
-                              border: 'none',
-                              color: '#8c8c8c'
-                          }}
-                      >
-                          No Salary Info
-                      </Tag>
-                  )}
-              </div>
-          );
+        const salaryInfo = getEmployeeSalary(record.id);
+        return (
+          <div className="salary-status" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {salaryInfo ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: '#52c41a', fontSize: '14px' }}>₹</span>
+                  <span style={{ fontWeight: 500 }}>
+                    {Number(salaryInfo.salary || 0).toLocaleString('en-IN', {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2
+                    })}
+                  </span>
+                  <span style={{ color: '#8c8c8c', fontSize: '13px' }}>INR</span>
+                </div>
+                <Switch
+                  size="small"
+                  checked={salaryInfo.status === 'paid'}
+                  onChange={(checked) => handleSalaryStatusChange(checked, salaryInfo.id)}
+                  loading={loading}
+                  className={`status-switch ${salaryInfo.status === 'paid' ? 'paid' : ''}`}
+                />
+                <Tag
+                  color={salaryInfo.status === 'paid' ? 'success' : 'warning'}
+                  style={{
+                    margin: 0,
+                    textTransform: 'capitalize',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    padding: '0 8px',
+                    height: '22px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  {salaryInfo.status}
+                </Tag>
+              </>
+            ) : (
+              <Tag
+                color="default"
+                style={{
+                  margin: 0,
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  padding: '0 8px',
+                  height: '22px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: '#f5f5f5',
+                  border: 'none',
+                  color: '#8c8c8c'
+                }}
+              >
+                No Salary Info
+              </Tag>
+            )}
+          </div>
+        );
       },
     },
     {
@@ -848,63 +848,65 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     });
   };
 
-  // Bulk actions component
   const BulkActions = () => (
     <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-      <Button
-        type="primary"
-        danger
-        icon={<FiTrash2 size={16} />}
-        onClick={() => handleDelete(selectedRowKeys)}
-      >
-        Delete Selected ({selectedRowKeys.length})
-      </Button>
+      {selectedRowKeys.length > 0 && (
+        <Button
+          type="primary"
+          danger
+          icon={<FiTrash2 />}
+          onClick={() => handleDelete(selectedRowKeys)}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
     </div>
   );
+
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-}, []);
+  }, []);
 
-const paginationConfig = {
+  const paginationConfig = {
     pageSize: 10,
     showSizeChanger: true,
     showTotal: (total) => `Total ${total} items`,
     pageSizeOptions: ['10', '20', '50', '100'],
 
     locale: {
-        items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+      items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
     },
-};
+  };
   return (
     <>
-    <div className="employee-list-container">
-      <BulkActions />
-      <Table
-        rowSelection={{
-          type: 'checkbox',
-          selectedRowKeys,
-          onChange: (newSelectedRowKeys) => {
-            setSelectedRowKeys(newSelectedRowKeys);
-          },
-        }}
-        columns={columns}
-        dataSource={transformedEmployees}
-        rowKey="id"
-        pagination={paginationConfig}
-        className="custom-table"
-        scroll={{ x: 1200, y: 'calc(100vh - 350px)' }}
-        style={{
-          width: "100%",
-          minWidth: 0,
-          background: "#ffffff",
-          borderRadius: "8px",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-        }}
-      />
-    </div>
+      <div className="employee-list-container">
+        <BulkActions />
+        <Table
+          rowSelection={{
+            type: 'checkbox',
+            selectedRowKeys,
+            onChange: (newSelectedRowKeys) => {
+              setSelectedRowKeys(newSelectedRowKeys);
+            },
+          }}
+          columns={columns}
+          dataSource={transformedEmployees}
+          rowKey="id"
+          pagination={paginationConfig}
+          className="custom-table"
+          scroll={{ x: 1200, y: 'calc(100vh - 350px)' }}
+          style={{
+            width: "100%",
+            minWidth: 0,
+            background: "#ffffff",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+          }}
+        />
+      </div>
     </>
   );
 };

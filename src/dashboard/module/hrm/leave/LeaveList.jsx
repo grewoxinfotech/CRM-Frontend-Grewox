@@ -114,14 +114,16 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
   // Bulk actions component
   const BulkActions = () => (
     <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-      <Button
-        type="primary"
-        danger
-        icon={<FiTrash2 size={16} />}
-        onClick={handleBulkDelete}
-      >
-        Delete Selected ({selectedRowKeys.length})
-      </Button>
+      {selectedRowKeys.length > 0 && (
+        <Button
+          type="primary"
+          danger
+          icon={<FiTrash2 />}
+          onClick={() => handleDelete(selectedRowKeys)}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
     </div>
   );
 
@@ -485,17 +487,17 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-}, []);
+  }, []);
 
-const paginationConfig = {
+  const paginationConfig = {
     pageSize: 10,
     showSizeChanger: true,
     showTotal: (total) => `Total ${total} items`,
     pageSizeOptions: ['10', '20', '50', '100'],
     locale: {
-        items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+      items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
     },
-};
+  };
 
   return (
     <div className="leave-list-container">

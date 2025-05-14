@@ -140,18 +140,18 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
             setSelectedRowKeys(newSelectedRowKeys);
         }
     };
-
-    // Bulk actions component
     const BulkActions = () => (
         <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
-            <Button
-                type="primary"
-                danger
-                icon={<FiTrash2 size={16} />}
-                onClick={() => handleDelete(selectedRowKeys)}
-            >
-                Delete Selected ({selectedRowKeys.length})
-            </Button>
+            {selectedRowKeys.length > 0 && (
+                <Button
+                    type="primary"
+                    danger
+                    icon={<FiTrash2 />}
+                    onClick={() => handleDelete(selectedRowKeys)}
+                >
+                    Delete Selected ({selectedRowKeys.length})
+                </Button>
+            )}
         </div>
     );
 
@@ -346,38 +346,38 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
         const handleResize = () => setIsMobile(window.innerWidth < 768);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-      }, []);
-    
-      const paginationConfig = {
+    }, []);
+
+    const paginationConfig = {
         pageSize: 10,
         showSizeChanger: true,
         showTotal: (total) => `Total ${total} items`,
         pageSizeOptions: ['10', '20', '50', '100'],
-        
+
         locale: {
-          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
         },
-      };
+    };
 
     return (
         <>
             <BulkActions />
             <div className='designation-list-container'>
-            <Table
-                columns={columns}
-                dataSource={designations}
-                loading={isLoadingDesignations}
-                rowKey="id"
-                rowSelection={rowSelection}
-                pagination={paginationConfig}
-                className="custom-table"
-                scroll={{ x: 1000, y: '' }}
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                }}
-            />
+                <Table
+                    columns={columns}
+                    dataSource={designations}
+                    loading={isLoadingDesignations}
+                    rowKey="id"
+                    rowSelection={rowSelection}
+                    pagination={paginationConfig}
+                    className="custom-table"
+                    scroll={{ x: 1000, y: '' }}
+                    style={{
+                        background: '#ffffff',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    }}
+                />
             </div>
 
         </>
