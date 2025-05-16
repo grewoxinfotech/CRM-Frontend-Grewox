@@ -188,54 +188,54 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         opacity: 0.3
                     }} />
 
-                    <div className="ant-card-extra" style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
+                    <div className="ant-card-extra" style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px' 
                     }}>
-
-
-                        <Dropdown
-                            menu={{
-                                items: actionItems,
-                                style: {
-                                    borderRadius: '12px',
-                                    padding: '8px',
-                                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                                }
+                       
+                        
+                       <Dropdown
+                        menu={{
+                            items: actionItems,
+                            style: {
+                                borderRadius: '12px',
+                                padding: '8px',
+                                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                            }
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
+                            style={{
+                                position: 'absolute',
+                                right: '12px',
+                                top: '12px',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '10px',
+                                background: 'rgba(255, 255, 255, 0.1)',
+                                backdropFilter: 'blur(8px)',
+                                border: 'none',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.2s ease'
                             }}
-                            trigger={['click']}
-                            placement="bottomRight"
-                        >
-                            <Button
-                                type="text"
-                                icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-                                style={{
-                                    position: 'absolute',
-                                    right: '12px',
-                                    top: '12px',
-                                    width: '32px',
-                                    height: '32px',
-                                    borderRadius: '10px',
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    backdropFilter: 'blur(8px)',
-                                    border: 'none',
-                                    color: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                                    e.currentTarget.style.transform = 'scale(1.05)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                    e.currentTarget.style.transform = 'scale(1)';
-                                }}
-                            />
-                        </Dropdown>
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                                e.currentTarget.style.transform = 'scale(1.05)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                                e.currentTarget.style.transform = 'scale(1)';
+                            }}
+                        />
+                    </Dropdown>
                     </div>
                 </div>
 
@@ -262,9 +262,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 marginBottom: '12px'
                             }}
                         >
-                            {company.firstName && company.lastName
-                                ? `${company.firstName[0]}${company.lastName[0]}`
-                                : company.username?.[0]?.toUpperCase() || 'U'}
+                            {company.firstName ? `${company.firstName[0]}${company.lastName[0]}` : company.name[0]}
                         </Avatar>
                         <Text style={{
                             fontSize: '18px',
@@ -273,9 +271,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                             textAlign: 'center',
                             marginBottom: '4px'
                         }}>
-                            {company.firstName && company.lastName
-                                ? `${company.firstName} ${company.lastName}`
-                                : company.username || 'Unknown'}
+                            {company.firstName ? `${company.firstName} ${company.lastName}` : company.name}
                         </Text>
                         <Tag
                             className="status-tag"
@@ -309,8 +305,8 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                     }}>
                         {[
                             { icon: <FiMail size={15} />, value: company.email, isLink: true },
-                            { icon: <FiPhone size={15} />, value: company.phone ? `+${company.phoneCode || ''} ${company.phone}` : 'N/A' },
-                            { icon: <FiMapPin size={15} />, value: company.city && company.state ? `${company.city}, ${company.state}` : 'N/A' }
+                            { icon: <FiPhone size={15} />, value: `+${company.phoneCode} ${company.phone}` },
+                            { icon: <FiMapPin size={15} />, value: `${company.city}, ${company.state}` }
                         ].map((item, index) => (
                             <div
                                 key={index}
@@ -331,7 +327,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 }}>
                                     {item.icon}
                                 </div>
-                                {item.isLink && item.value ? (
+                                {item.isLink ? (
                                     <a
                                         href={`mailto:${item.value}`}
                                         style={{
@@ -355,7 +351,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                         textOverflow: 'ellipsis',
                                         whiteSpace: 'nowrap'
                                     }}>
-                                        {item.value || 'N/A'}
+                                        {item.value}
                                     </div>
                                 )}
                             </div>
@@ -591,9 +587,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 justifyContent: 'center'
                             }}
                         >
-                            {company.firstName && company.lastName
-                                ? `${company.firstName[0]}${company.lastName[0]}`
-                                : company.username?.[0]?.toUpperCase() || 'U'}
+                            {company.name[0]}
                         </Avatar>
 
                         <div>
@@ -602,9 +596,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                 fontWeight: '600',
                                 margin: '0 0 4px 0'
                             }}>
-                                {company.firstName && company.lastName
-                                    ? `${company.firstName} ${company.lastName}`
-                                    : company.username || 'Unknown'}
+                                {company.name}
                             </h3>
                             <span style={{
                                 color: statusStyle.color,
@@ -637,20 +629,18 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                         }}
                     >
                         <Descriptions.Item label="Contact Person">
-                            {company.firstName && company.lastName ? `${company.firstName} ${company.lastName}` : 'N/A'}
+                            {company.firstName} {company.lastName}
                         </Descriptions.Item>
                         <Descriptions.Item label="Email">
-                            {company.email ? (
-                                <a href={`mailto:${company.email}`} style={{ color: '#3B82F6' }}>
-                                    {company.email}
-                                </a>
-                            ) : 'N/A'}
+                            <a href={`mailto:${company.email}`} style={{ color: '#3B82F6' }}>
+                                {company.email}
+                            </a>
                         </Descriptions.Item>
                         <Descriptions.Item label="Phone">
-                            {company.phone ? `+${company.phoneCode || ''} ${company.phone}` : 'N/A'}
+                            +{company.phoneCode} {company.phone}
                         </Descriptions.Item>
                         <Descriptions.Item label="GST Number">
-                            {company.gstIn || 'N/A'}
+                            {company.gstIn}
                         </Descriptions.Item>
                         {company.website && (
                             <Descriptions.Item label="Website">
@@ -671,14 +661,12 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                             </Descriptions.Item>
                         )}
                         <Descriptions.Item label="Address">
-                            {[
-                                company.address,
-                                company.city && company.state ? `${company.city}, ${company.state}` : null,
-                                company.country && company.zipcode ? `${company.country} - ${company.zipcode}` : null
-                            ].filter(Boolean).join('\n') || 'N/A'}
+                            {company.address}<br />
+                            {company.city}, {company.state}<br />
+                            {company.country} - {company.zipcode}
                         </Descriptions.Item>
                         <Descriptions.Item label="Created">
-                            {company.created_at ? moment(company.created_at).format('MMM DD, YYYY') : 'N/A'}
+                            {moment(company.created_at).format('MMM DD, YYYY')}
                         </Descriptions.Item>
                     </Descriptions>
 
@@ -720,7 +708,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                                         color: '#111827',
                                         fontFamily: item.label === 'Account Number' || item.label === 'IFSC' ? 'monospace' : 'inherit'
                                     }}>
-                                        {item.value || 'N/A'}
+                                        {item.value}
                                     </span>
                                 </div>
                             ))}
@@ -736,7 +724,7 @@ const CompanyCard = ({ company, onView, onEdit, onDelete, onUpgrade, onEmailUpda
                 loading={false}
             />
 
-            <CreateUpgradePlan
+            <CreateUpgradePlan 
                 open={upgradeModalVisible}
                 onCancel={handleUpgradeModalClose}
                 companyId={company.id}

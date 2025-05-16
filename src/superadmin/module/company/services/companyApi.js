@@ -7,59 +7,11 @@ export const companyApi = createApi({
     tagTypes: ['Companies', 'Subscriptions'],
     endpoints: (builder) => ({
         getAllCompanies: builder.query({
-            query: ({ page = 1, limit = 10, search = '', sort, order }) => {
-                if (search?.trim()) {
-                    return {
-                        url: '/clients/all',
-                        method: 'GET',
-                        params: {
-                            search: search.trim()
-                        }
-                    };
-                }
-
-                return {
-                    url: '/clients',
-                    method: 'GET',
-                    params: {
-                        page,
-                        limit,
-                        sort,
-                        order
-                    }
-                };
-            },
-            transformResponse: (response) => {
-                if (!response?.success) {
-                    return {
-                        data: [],
-                        totalItems: 0,
-                        currentPage: 1,
-                        pageSize: 10,
-                        totalPages: 1
-                    };
-                }
-
-                if (Array.isArray(response.data)) {
-                    return {
-                        data: response.data,
-                        totalItems: response.data.length,
-                        currentPage: 1,
-                        pageSize: response.data.length,
-                        totalPages: 1
-                    };
-                }
-
-                return {
-                    data: response.data.data || [],
-                    totalItems: response.data.totalItems || 0,
-                    currentPage: response.data.currentPage || 1,
-                    pageSize: response.data.pageSize || 10,
-                    totalPages: response.data.totalPages || 1
-                };
-            },
-            keepUnusedDataFor: 0,
-            providesTags: ['Companies']
+            query: () => ({
+                url: '/clients',
+                method: 'GET',
+            }),
+            providesTags: ['Companies'],
         }),
         createCompany: builder.mutation({
             query: (data) => ({
@@ -108,31 +60,25 @@ export const companyApi = createApi({
             invalidatesTags: ['Companies', 'Subscriptions'],
         }),
         verifySignup: builder.mutation({
-            query: ({ otp }) => {
-                const token = localStorage.getItem('verificationToken');
-                return {
-                    url: '/auth/verify-signup',
-                    method: 'POST',
-                    body: { otp },
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                };
-            },
+            query: ({ otp, token }) => ({
+                url: '/auth/verify-signup',
+                method: 'POST',
+                body: { otp },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }),
             invalidatesTags: ['Companies']
         }),
 
         resendSignupOtp: builder.mutation({
-            query: () => {
-                const token = localStorage.getItem('verificationToken');
-                return {
-                    url: '/auth/resend-signup-otp',
-                    method: 'POST',
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                };
-            }
+            query: ({ token }) => ({
+                url: '/auth/resend-signup-otp',
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
         }),
     }),
 });
