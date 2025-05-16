@@ -44,11 +44,11 @@ const { RangePicker } = DatePicker;
 
 const InvoiceList = ({
   searchText = "",
-  invoices,
-  isLoading,
+  // invoices,
+  // isLoading,
   filters = {},
 }) => {
-  // const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery(id);
+  const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [deleteInvoice] = useDeleteInvoiceMutation();
@@ -56,7 +56,7 @@ const InvoiceList = ({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  // const invoices = invoicesdata?.data || [];
+  const invoices = invoicesdata?.data || [];
   const { data: customersData } = useGetCustomersQuery();
 
   const statuses = [
