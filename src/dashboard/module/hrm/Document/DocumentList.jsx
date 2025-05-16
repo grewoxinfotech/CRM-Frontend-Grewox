@@ -1,16 +1,11 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message, Input } from "antd";
+import React, { useState } from "react";
+import { Table, Button, Space, Tooltip, Tag, Dropdown, Modal, message, Menu } from "antd";
 import {
   FiEdit2,
   FiTrash2,
-  FiEye,
   FiMoreVertical,
-  FiLink,
   FiFile,
   FiUserCheck,
-  FiDownload,
-  FiPaperclip,
-  FiAlertCircle,
   FiFileText,
   FiImage,
   FiVideo,
@@ -19,15 +14,18 @@ import {
   FiCode
 } from "react-icons/fi";
 import moment from "moment";
-import { useGetDocumentsQuery, useDeleteDocumentMutation } from "./services/documentApi";
 import './document.scss';
 
-const DocumentList = ({ loading, onEdit, searchText, documents }) => {
+const DocumentList = ({
+  loading,
+  documents = [],
+  pagination = {},
+  onEdit,
+  onDelete,
+  onPageChange,
+  onPageSizeChange
+}) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const { data: documentsData, isLoading } = useGetDocumentsQuery();
-  const [deleteDocument] = useDeleteDocumentMutation();
-  const [isMobile, setIsMobile] = useState(false);
-  const docdata = documentsData?.data || documents;
 
   // Row selection config
   const rowSelection = {
@@ -35,6 +33,11 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
     onChange: (newSelectedRowKeys) => {
       setSelectedRowKeys(newSelectedRowKeys);
     }
+  };
+
+  const handleTableChange = (pagination) => {
+    onPageChange?.(pagination.current);
+    onPageSizeChange?.(pagination.pageSize);
   };
 
   // Bulk actions component
@@ -45,7 +48,7 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
           type="primary"
           danger
           icon={<FiTrash2 size={16} />}
-          onClick={() => handleDelete(selectedRowKeys)}
+          onClick={() => handleBulkDelete(selectedRowKeys)}
         >
           Delete Selected ({selectedRowKeys.length})
         </Button>
@@ -53,46 +56,22 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
     </div>
   );
 
-  // Filter documents based on search text
-  const filteredDocuments = useMemo(() => {
-    if (!docdata) return [];
-
-    if (!searchText) return docdata;
-
-    const searchLower = searchText.toLowerCase();
-    return docdata.filter(doc => {
-      const name = doc.name?.toLowerCase() || '';
-      return name.includes(searchLower);
-    });
-  }, [docdata, searchText]);
-
-  const handleDelete = (recordOrIds) => {
-    const isMultiple = Array.isArray(recordOrIds);
-    const title = isMultiple ? 'Delete Selected Documents' : 'Delete Document';
-    const content = isMultiple
-      ? `Are you sure you want to delete ${recordOrIds.length} selected documents?`
-      : 'Are you sure you want to delete this document?';
-
+  const handleBulkDelete = (ids) => {
     Modal.confirm({
-      title,
-      content,
+      title: 'Delete Selected Documents',
+      content: `Are you sure you want to delete ${ids.length} selected documents?`,
       okText: 'Yes',
       okType: 'danger',
       cancelText: 'No',
-      bodyStyle: { padding: "20px" },
-      onOk: async () => {
-        try {
-          if (isMultiple) {
-            await Promise.all(recordOrIds.map(id => deleteDocument(id).unwrap()));
-            message.success(`${recordOrIds.length} documents deleted successfully`);
+      onOk: () => {
+        Promise.all(ids.map(id => onDelete(id)))
+          .then(() => {
+            message.success(`${ids.length} documents deleted successfully`);
             setSelectedRowKeys([]);
-          } else {
-            await deleteDocument(recordOrIds).unwrap();
-            message.success('Document deleted successfully');
-          }
-        } catch (error) {
-          message.error(error?.data?.message || 'Failed to delete document(s)');
-        }
+          })
+          .catch((error) => {
+            message.error('Failed to delete documents');
+          });
       },
     });
   };
@@ -144,22 +123,6 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search document name"
-            value={selectedKeys[0]}
-            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
-            onPressEnter={() => confirm()}
-            style={{ width: 188, marginBottom: 8, display: 'block' }}
-          />
-          <Space>
-            <Button type="primary" onClick={() => confirm()} size="small" style={{ width: 90 }}>Filter</Button>
-            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>Reset</Button>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) => record.name.toLowerCase().includes(value.toLowerCase()),
       render: (text, record) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -201,8 +164,6 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
         if (!fileUrl) return null;
 
         const fileName = fileUrl.split('/').pop();
-        const extension = fileName.split('.').pop().toLowerCase();
-
         return (
           <div
             className="item-wrapper"
@@ -214,7 +175,9 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
                 {getFileIcon(fileName)}
               </div>
               <div className="info-wrapper">
-                <Tag color="blue" style={{ margin: 0 }}>{extension.toUpperCase()}</Tag>
+                <div className="name" style={{ color: "#059669", fontWeight: 500 }}>
+                  {fileName.length > 30 ? `${fileName.substring(0, 30)}...` : fileName}
+                </div>
               </div>
             </div>
           </div>
@@ -222,34 +185,38 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
       },
     },
     {
+      title: "Created By",
+      dataIndex: "created_by",
+      key: "created_by",
+      render: (text) => <Tag color="blue">{text}</Tag>,
+    },
+    {
+      title: "Created Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => moment(date).format("DD MMM YYYY"),
+    },
+    {
       title: "Actions",
       key: "actions",
-      width: 80,
-      fixed: 'right',
+      width: 100,
       render: (_, record) => (
         <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'edit',
-                icon: <FiEdit2 size={14} />,
-                label: 'Edit',
-                onClick: () => onEdit(record),
-              },
-              {
-                key: 'delete',
-                icon: <FiTrash2 size={14} />,
-                label: 'Delete',
-                danger: true,
-                onClick: () => handleDelete(record.id),
-              },
-            ],
-          }}
-          trigger={['click']}
+          overlay={
+            <Menu>
+              <Menu.Item key="edit" onClick={() => onEdit(record)}>
+                <FiEdit2 /> Edit
+              </Menu.Item>
+              <Menu.Item key="delete" danger onClick={() => onDelete(record.id)}>
+                <FiTrash2 /> Delete
+              </Menu.Item>
+            </Menu>
+          }
+          trigger={["click"]}
         >
           <Button
             type="text"
-            icon={<FiMoreVertical size={16} />}
+            icon={<FiMoreVertical />}
             className="action-button"
           />
         </Dropdown>
@@ -257,39 +224,35 @@ const DocumentList = ({ loading, onEdit, searchText, documents }) => {
     },
   ];
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-}, []);
-
-const paginationConfig = {
-    pageSize: 10,
-    showSizeChanger: true,
-    showTotal: (total) => `Total ${total} items`,
-    pageSizeOptions: ['10', '20', '50', '100'],
-
-    locale: {
-        items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
-    },
-};
-
   return (
     <div className="document-list-container">
       <BulkActions />
       <Table
         rowSelection={rowSelection}
         columns={columns}
-        dataSource={filteredDocuments}
-        loading={loading || isLoading}
+        dataSource={documents}
+        loading={loading}
         rowKey="id"
-        pagination={paginationConfig}
+        onChange={handleTableChange}
+        pagination={{
+          ...pagination,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} items`,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          position: ['bottomRight'],
+          onChange: (page, pageSize) => {
+            onPageChange(page);
+            if (pageSize !== pagination.pageSize) {
+              onPageSizeChange(pageSize);
+            }
+          }
+        }}
         className="custom-table"
-        scroll={{ x: 1000, y: '' }}
+        scroll={{ x: 1000 }}
         style={{
           background: '#ffffff',
-          borderRadius: '8px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)'
         }}
       />
     </div>

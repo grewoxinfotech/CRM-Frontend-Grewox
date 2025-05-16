@@ -4,15 +4,31 @@ import { baseQueryWithReauth } from '../../../../../store/baseQuery';
 export const trainingApi = createApi({
     reducerPath: 'trainingApi',
     baseQuery: baseQueryWithReauth,
-    tagTypes: ['Trainings', 'BranchTypes'],
+    tagTypes: ['Trainings'],
     endpoints: (builder) => ({
-        getAllTrainings: builder.query({
-            query: (params) => ({
+        getTrainings: builder.query({
+            query: ({ page = 1, pageSize = 10, search = '' } = {}) => ({
                 url: '/trainings',
                 method: 'GET',
-                params: params,
+                params: {
+                    page,
+                    pageSize,
+                    search
+                }
             }),
-            providesTags: ['Trainings'],
+            transformResponse: (response) => {
+                // The response structure is:
+                // { success: true, message: { data: [...], pagination: {...} }, data: null }
+                const data = response.message.data.map(training => ({
+                    ...training,
+                    key: training.id
+                }));
+                return {
+                    data,
+                    pagination: response.message.pagination
+                };
+            },
+            providesTags: ['Trainings']
         }),
         getTrainingById: builder.query({
             query: (id) => `/trainings/${id}`,
@@ -22,35 +38,34 @@ export const trainingApi = createApi({
             query: (data) => ({
                 url: '/trainings',
                 method: 'POST',
-                body: data,
+                body: data
             }),
-            invalidatesTags: ['Trainings'],
+            invalidatesTags: ['Trainings']
         }),
         updateTraining: builder.mutation({
             query: ({ id, data }) => ({
                 url: `/trainings/${id}`,
                 method: 'PUT',
-                body: data,
+                body: data
             }),
-            invalidatesTags: ['Trainings'],
+            invalidatesTags: ['Trainings']
         }),
         deleteTraining: builder.mutation({
             query: (id) => ({
                 url: `/trainings/${id}`,
-                method: 'DELETE',
+                method: 'DELETE'
             }),
-            invalidatesTags: ['Trainings'],
-        }),
-       
-    }),
+            invalidatesTags: ['Trainings']
+        })
+    })
 });
 
 export const {
-    useGetAllTrainingsQuery,
+    useGetTrainingsQuery,
     useGetTrainingByIdQuery,
     useCreateTrainingMutation,
     useUpdateTrainingMutation,
-    useDeleteTrainingMutation,
+    useDeleteTrainingMutation
 } = trainingApi;
 export default trainingApi;
 

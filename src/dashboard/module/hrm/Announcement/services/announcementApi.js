@@ -6,59 +6,58 @@ export const announcementApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["Announcements"],
   endpoints: (builder) => ({
-    getAllAnnouncements: builder.query({
-      query: (params) => ({
-        url: "/announcements",
-        method: "GET",
-        params: params,
-      }),
-      providesTags: ["Announcements"],
-      transformResponse: (response) => {
-        if (response.data) {
-          return response.data.map(announcement => ({
-            ...announcement,
-            key: announcement.id
-          }));
+    getAnnouncements: builder.query({
+      query: ({ page = 1, pageSize = 10, search = '' } = {}) => ({
+        url: '/announcements',
+        method: 'GET',
+        params: {
+          page,
+          pageSize,
+          search
         }
-        return [];
+      }),
+      transformResponse: (response) => {
+        // Return the entire response as is, since we're handling the structure in the component
+        return response;
       },
+      providesTags: ["Announcements"]
     }),
     getAnnouncementById: builder.query({
-      query: (id) => `announcements/${id}`,
-      providesTags: ["Announcements"],
+      query: (id) => `/announcements/${id}`,
+      providesTags: ["Announcements"]
     }),
     createAnnouncement: builder.mutation({
       query: (data) => ({
-        url: "/announcements",
-        method: "POST",
-        body: data,
+        url: '/announcements',
+        method: 'POST',
+        body: data
       }),
-      invalidatesTags: ["Announcements"],
+      invalidatesTags: ["Announcements"]
     }),
     updateAnnouncement: builder.mutation({
       query: ({ id, data }) => ({
-        url: `announcements/${id}`,
-        method: "PUT",
-        body: data,
+        url: `/announcements/${id}`,
+        method: 'PUT',
+        body: data
       }),
-      invalidatesTags: ["Announcements"],
+      invalidatesTags: ["Announcements"]
     }),
     deleteAnnouncement: builder.mutation({
       query: (id) => ({
-        url: `announcements/${id}`,
-        method: "DELETE",
+        url: `/announcements/${id}`,
+        method: 'DELETE'
       }),
-      invalidatesTags: ["Announcements"],
-    }),
-  }),
+      invalidatesTags: ["Announcements"]
+    })
+  })
 });
 
 export const {
-  useGetAllAnnouncementsQuery,
+  useGetAnnouncementsQuery,
   useGetAnnouncementByIdQuery,
   useCreateAnnouncementMutation,
   useUpdateAnnouncementMutation,
-  useDeleteAnnouncementMutation,
+  useDeleteAnnouncementMutation
 } = announcementApi;
 
 export default announcementApi;

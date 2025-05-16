@@ -7,8 +7,24 @@ export const documentApi = createApi({
   tagTypes: ["Documents"],
   endpoints: (builder) => ({
     getDocuments: builder.query({
-      query: () => "/documents",
-      providesTags: ["Documents"],
+      query: ({ page = 1, pageSize = 10, search = '' } = {}) => ({
+        url: '/documents',
+        method: 'GET',
+        params: {
+          page,
+          pageSize,
+          search
+        }
+      }),
+      transformResponse: (response) => {
+        // Return the entire response as is, since we're handling the structure in the component
+        return response;
+      },
+      providesTags: ["Documents"]
+    }),
+    getDocumentById: builder.query({
+      query: (id) => `/documents/${id}`,
+      providesTags: ["Documents"]
     }),
     createDocument: builder.mutation({
       query: (data) => {
@@ -28,13 +44,13 @@ export const documentApi = createApi({
         });
 
         return {
-          url: "documents",
+          url: "/documents",
           method: "POST",
           body: formData,
           // Don't set Content-Type header, let the browser set it with boundary
         };
       },
-      invalidatesTags: ["Documents"],
+      invalidatesTags: ["Documents"]
     }),
     updateDocument: builder.mutation({
       query: ({ id, data }) => {
@@ -54,31 +70,28 @@ export const documentApi = createApi({
         });
 
         return {
-          url: `documents/${id}`,
+          url: `/documents/${id}`,
           method: "PUT",
           body: formData,
           // Don't set Content-Type header, let the browser set it with boundary
         };
       },
-      invalidatesTags: ["Documents"],
+      invalidatesTags: ["Documents"]
     }),
     deleteDocument: builder.mutation({
       query: (id) => ({
-        url: `documents/${id}`,
-        method: "DELETE",
+        url: `/documents/${id}`,
+        method: "DELETE"
       }),
-      invalidatesTags: ["Documents"],
-    }),
-    getDocumentById: builder.query({
-      query: (id) => `documents/${id}`,
-    }),
-  }),
+      invalidatesTags: ["Documents"]
+    })
+  })
 });
 
 export const {
   useGetDocumentsQuery,
+  useGetDocumentByIdQuery,
   useCreateDocumentMutation,
   useUpdateDocumentMutation,
-  useDeleteDocumentMutation,
-  useGetDocumentByIdQuery,
+  useDeleteDocumentMutation
 } = documentApi;
