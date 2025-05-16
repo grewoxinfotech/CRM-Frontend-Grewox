@@ -11,7 +11,7 @@ import {
     Space,
     message,
 } from 'antd';
-import { FiUser, FiFileText, FiGrid, FiX, FiCalendar, FiLink, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiUser, FiFileText, FiGrid, FiX, FiCalendar, FiLink, FiPlus, FiTrash2, FiUsers } from 'react-icons/fi';
 import moment from 'moment';
 import { useCreateTrainingMutation, useUpdateTrainingMutation } from './services/trainingApi';
 
@@ -28,40 +28,50 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
     const [createTraining] = useCreateTrainingMutation();
     const [updateTraining] = useUpdateTrainingMutation();
 
-    // Set form values when editing
+    const formatUrl = (url) => {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        return `https://${url.startsWith('www.') ? url : `www.${url}`}`;
+    };
+
+    const validateUrl = (_, value) => {
+        if (!value) {
+            return Promise.reject('Please enter URL');
+        }
+        try {
+            const formattedUrl = formatUrl(value);
+            new URL(formattedUrl);
+            return Promise.resolve();
+        } catch (err) {
+            return Promise.reject('Please enter a valid URL');
+        }
+    };
+
     useEffect(() => {
         if (isEditing && initialValues) {
             try {
-                // Parse the links if it's a string
-                const links = typeof initialValues.links === 'string' 
-                    ? JSON.parse(initialValues.links) 
+                const links = typeof initialValues.links === 'string'
+                    ? JSON.parse(initialValues.links)
                     : initialValues.links;
 
-                // Create training items array from links
-                const trainingItems = Array.isArray(links?.url) 
-                    ? links.url.map((url, index) => ({
-                        title: initialValues.title,
-                        links: url
-                    }))
-                    : [{
-                        title: initialValues.title,
-                        links: links?.url || ''
-                    }];
-
-                // Set form values for editing
                 form.setFieldsValue({
                     category: initialValues.category,
-                    trainingItems: trainingItems
+                    title: initialValues.title,
+                    trainingItems: links.titles.map((title, index) => ({
+                        title: title,
+                        url: links.urls[index]
+                    }))
                 });
             } catch (error) {
                 console.error('Error setting form values:', error);
                 message.error('Error loading training data');
             }
         } else {
-            // Reset form for create mode
             form.resetFields();
             form.setFieldsValue({
-                trainingItems: [{}]
+                trainingItems: [{ title: '', url: '' }]
             });
         }
     }, [initialValues, isEditing, form]);
@@ -69,44 +79,34 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
     const handleSubmit = async (values) => {
         try {
             setLoading(true);
-            
-            // Create arrays for titles and links
-            const titles = values.trainingItems.map(item => item.title.trim());
-            const urls = values.trainingItems.map(item => item.links.trim());
 
-            // Create the final formatted values
-            const formData = {
-                category: values.category.trim(),
-                title: titles[0], // Keep first title as main title
-                links: {
-                    url: urls // Store all URLs as an array
-                }
+            const formattedLinks = {
+                titles: values.trainingItems.map(item => item.title.trim()),
+                urls: values.trainingItems.map(item => formatUrl(item.url.trim()))
             };
 
-            console.log('Submitting form data:', formData); // Debug log
+            const formData = {
+                category: values.category.trim(),
+                title: values.title.trim(),
+                links: formattedLinks
+            };
 
             if (isEditing && initialValues?.id) {
-                // Update existing training
                 await updateTraining({
                     id: initialValues.id,
                     data: formData
                 }).unwrap();
                 message.success('Training updated successfully!');
             } else {
-                // Create new training
                 await createTraining(formData).unwrap();
                 message.success('Training created successfully!');
             }
-            
+
             form.resetFields();
             onCancel();
         } catch (error) {
-            if (error.data?.message) {
-                message.error(error.data.message);
-            } else {
-                message.error('Failed to process training. Please try again.');
-            }
-            console.error('Form submission failed:', error);
+            console.error('Error submitting form:', error);
+            message.error(error?.data?.message || 'Error processing your request');
         } finally {
             setLoading(false);
         }
@@ -118,101 +118,99 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
             open={open}
             onCancel={onCancel}
             footer={null}
-            width={520}
+            width={720}
             destroyOnClose={true}
             centered
             closeIcon={null}
-            className="pro-modal custom-modal"
+            className="training-form-modal"
             style={{
-                '--antd-arrow-background-color': '#ffffff',
+                "--antd-arrow-background-color": "#ffffff",
             }}
             styles={{
                 body: {
                     padding: 0,
-                    borderRadius: '8px',
-                    overflow: 'hidden',
+                    borderRadius: "8px",
+                    overflow: "hidden",
                 }
             }}
         >
             <div
                 className="modal-header"
                 style={{
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                    padding: '24px',
-                    color: '#ffffff',
-                    position: 'relative',
+                    background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
+                    padding: "24px",
+                    color: "#ffffff",
+                    position: "relative",
                 }}
             >
                 <Button
                     type="text"
                     onClick={onCancel}
                     style={{
-                        position: 'absolute',
-                        top: '16px',
-                        right: '16px',
-                        color: '#ffffff',
-                        width: '32px',
-                        height: '32px',
+                        position: "absolute",
+                        top: "16px",
+                        right: "16px",
+                        color: "#ffffff",
+                        width: "32px",
+                        height: "32px",
                         padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        borderRadius: '8px',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        background: "rgba(255, 255, 255, 0.2)",
+                        borderRadius: "8px",
+                        border: "none",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
                     }}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
                     }}
                     onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
                     }}
                 >
-                    <FiX style={{ fontSize: '20px' }} />
+                    <FiX style={{ fontSize: "20px" }} />
                 </Button>
                 <div
                     style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '16px',
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "16px",
                     }}
                 >
                     <div
                         style={{
-                            width: '48px',
-                            height: '48px',
-                            borderRadius: '12px',
-                            background: 'rgba(255, 255, 255, 0.2)',
-                            backdropFilter: 'blur(8px)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            width: "48px",
+                            height: "48px",
+                            borderRadius: "12px",
+                            background: "rgba(255, 255, 255, 0.2)",
+                            backdropFilter: "blur(8px)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                         }}
                     >
-                        <FiGrid style={{ fontSize: '24px', color: '#ffffff' }} />
+                        <FiUsers style={{ fontSize: "24px", color: "#ffffff" }} />
                     </div>
                     <div>
                         <h2
                             style={{
-                                margin: '0',
-                                fontSize: '24px',
-                                fontWeight: '600',
-                                color: '#ffffff',
+                                margin: "0",
+                                fontSize: "24px",
+                                fontWeight: "600",
+                                color: "#ffffff",
                             }}
                         >
-                            {isEditing ? 'Edit Training' : 'Create New Training'}
+                            {isEditing ? "Edit Training" : "Create New Training"}
                         </h2>
                         <Text
                             style={{
-                                fontSize: '14px',
-                                color: 'rgba(255, 255, 255, 0.85)',
+                                fontSize: "14px",
+                                color: "rgba(255, 255, 255, 0.85)",
                             }}
                         >
-                            {isEditing
-                                ? 'Update training information'
-                                : 'Fill in the information to create training'}
+                            Fill in the information to {isEditing ? "update" : "create"} training
                         </Text>
                     </div>
                 </div>
@@ -222,182 +220,155 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
                 form={form}
                 layout="vertical"
                 onFinish={handleSubmit}
-                initialValues={{
-                    ...initialValues,
-                    date: initialValues ? [
-                        moment(initialValues.start_date),
-                        moment(initialValues.end_date)
-                    ] : undefined,
-                    trainingItems: initialValues?.trainingItems || [{}]
-                }}
-                requiredMark={false}
+                initialValues={{ trainingItems: [{ title: '', url: '' }] }}
                 style={{
-                    padding: '24px',
+                    padding: "24px",
                 }}
             >
                 <Form.Item
-                    name="category"
+                    name="title"
                     label={
-                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                            Training Category
+                        <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                            Training Title <span style={{ color: "#ff4d4f" }}>*</span>
                         </span>
                     }
-                    rules={[
-                        { required: true, message: 'Please enter training category' },
-                        { max: 100, message: 'Category cannot exceed 100 characters' }
-                    ]}
+                    rules={[{ required: true, message: 'Please enter training title' }]}
                 >
                     <Input
-                        prefix={<FiGrid style={{ color: '#1890ff', fontSize: '16px' }} />}
-                        placeholder="Enter training category"
+                        prefix={<FiFileText style={{ color: '#1890ff' }} />}
+                        placeholder="Enter training title"
                         size="large"
                         style={{
-                            borderRadius: '10px',
-                            padding: '8px 16px',
-                            height: '48px',
-                            backgroundColor: '#f8fafc',
-                            border: '1px solid #e6e8eb',
-                            transition: 'all 0.3s ease',
+                            borderRadius: "10px",
+                            padding: "8px 16px",
+                            height: "48px",
+                            backgroundColor: "#f8fafc",
+                            border: "1px solid #e6e8eb",
                         }}
                     />
                 </Form.Item>
 
-                <Form.List name="trainingItems" initialValue={[{}]}>
+                <Form.Item
+                    name="category"
+                    label={
+                        <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                            Category <span style={{ color: "#ff4d4f" }}>*</span>
+                        </span>
+                    }
+                    rules={[{ required: true, message: 'Please enter category' }]}
+                >
+                    <Input
+                        prefix={<FiGrid style={{ color: '#1890ff' }} />}
+                        placeholder="Enter Training Category"
+                        size="large"
+                        style={{
+                            borderRadius: "10px",
+                            padding: "8px 16px",
+                            height: "48px",
+                            backgroundColor: "#f8fafc",
+                            border: "1px solid #e6e8eb",
+                        }}
+                    />
+                </Form.Item>
+
+                <Divider orientation="left">Training Links</Divider>
+
+                <Form.List name="trainingItems">
                     {(fields, { add, remove }) => (
                         <>
-                            {fields.map(({ key, name, ...restField }, index) => (
-                                <div key={key} style={{ marginBottom: '16px' }}>
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'flex-start',
-                                        gap: '16px'
-                                    }}>
-                                        <div style={{ flex: 1 }}>
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'title']}
-                                                label={
-                                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                                        Training Title
-                                                    </span>
+                            {fields.map(({ key, name, ...restField }) => (
+                                <Space key={key} style={{ display: 'flex', marginBottom: 8, width: '100%' }} align="baseline">
+                                    <Form.Item
+                                        {...restField}
+                                        name={[name, 'title']}
+                                        rules={[{ required: true, message: 'Missing title' }]}
+                                        style={{ flex: 1 }}
+                                    >
+                                        <Input
+                                            placeholder="Link title"
+                                            size="large"
+                                            style={{
+                                                borderRadius: "10px",
+                                                backgroundColor: "#f8fafc",
+                                            }}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item
+                                        {...restField}
+                                        name={[name, 'url']}
+                                        rules={[
+                                            { required: true, message: 'Missing URL' },
+                                            { validator: validateUrl }
+                                        ]}
+                                        style={{ flex: 2 }}
+                                    >
+                                        <Input
+                                            placeholder="Link URL (e.g., www.github.com)"
+                                            size="large"
+                                            style={{
+                                                borderRadius: "10px",
+                                                backgroundColor: "#f8fafc",
+                                            }}
+                                            onBlur={(e) => {
+                                                const fieldValue = form.getFieldValue(['trainingItems', name, 'url']);
+                                                if (fieldValue) {
+                                                    form.setFieldValue(
+                                                        ['trainingItems', name, 'url'],
+                                                        formatUrl(fieldValue)
+                                                    );
                                                 }
-                                                rules={[
-                                                    { required: true, message: 'Please enter training title' },
-                                                    { max: 100, message: 'Title cannot exceed 100 characters' }
-                                                ]}
-                                                style={{ marginTop: '12px' }}
-                                            >
-                                                <Input
-                                                    prefix={<FiGrid style={{ color: '#1890ff', fontSize: '16px' }} />}
-                                                    placeholder="Enter training title"
-                                                    size="large"
-                                                    style={{
-                                                        borderRadius: '10px',
-                                                        padding: '8px 16px',
-                                                        height: '48px',
-                                                        backgroundColor: '#f8fafc',
-                                                        border: '1px solid #e6e8eb',
-                                                        transition: 'all 0.3s ease',
-                                                    }}
-                                                />
-                                            </Form.Item>
-
-                                            <Form.Item
-                                                {...restField}
-                                                name={[name, 'links']}
-                                                label={
-                                                    <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                                        Training Link
-                                                    </span>
-                                                }
-                                                rules={[
-                                                    { required: true, message: 'Please enter training link' },
-                                                    { type: 'url', message: 'Please enter a valid URL' }
-                                                ]}
-                                                style={{ marginTop: '12px' }}
-                                            >
-                                                <Input
-                                                    prefix={<FiLink style={{ color: '#1890ff', fontSize: '16px' }} />}
-                                                    placeholder="Enter training link"
-                                                    size="large"
-                                                    style={{
-                                                        borderRadius: '10px',
-                                                        padding: '8px 16px',
-                                                        height: '48px',
-                                                        backgroundColor: '#f8fafc',
-                                                        border: '1px solid #e6e8eb',
-                                                        transition: 'all 0.3s ease',
-                                                    }}
-                                                />
-                                            </Form.Item>
-                                        </div>
-                                        
-                                        {fields.length > 1 && (
-                                            <Button
-                                                type="text"
-                                                onClick={() => remove(name)}
-                                                icon={<FiTrash2 style={{ fontSize: '18px', color: '#ff4d4f' }} />}
-                                                style={{
-                                                    marginTop: '32px',
-                                                    width: '32px',
-                                                    height: '32px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #ff4d4f',
-                                                }}
-                                            />
-                                        )}
-                                    </div>
-                                    {index < fields.length - 1 && (
-                                        <Divider style={{ margin: '16px 0' }} />
+                                            }}
+                                        />
+                                    </Form.Item>
+                                    {fields.length > 1 && (
+                                        <Button
+                                            type="text"
+                                            onClick={() => remove(name)}
+                                            icon={<FiTrash2 />}
+                                            style={{
+                                                color: "#ff4d4f",
+                                                borderRadius: "8px",
+                                            }}
+                                        />
                                     )}
-                                </div>
+                                </Space>
                             ))}
-                            
-                            <Form.Item style={{ marginTop: '12px' }}>
+                            <Form.Item>
                                 <Button
                                     type="dashed"
                                     onClick={() => add()}
+                                    block
                                     icon={<FiPlus />}
                                     style={{
-                                        width: '100%',
-                                        borderColor: '#1890ff',
-                                        color: '#1890ff',
-                                        height: '40px',
-                                        borderRadius: '8px',
-                                        marginBottom: '24px'
+                                        borderRadius: "10px",
+                                        height: "44px",
                                     }}
                                 >
-                                    Add Training Item
+                                    Add Training Link
                                 </Button>
                             </Form.Item>
                         </>
                     )}
                 </Form.List>
 
-                <Divider style={{ margin: '24px 0' }} />
+                <Divider style={{ margin: "24px 0" }} />
 
                 <div
                     style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: '12px',
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: "12px",
                     }}
                 >
                     <Button
                         size="large"
                         onClick={onCancel}
                         style={{
-                            padding: '8px 24px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            border: '1px solid #e6e8eb',
-                            fontWeight: '500',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            padding: "8px 24px",
+                            height: "44px",
+                            borderRadius: "10px",
+                            border: "1px solid #e6e8eb",
+                            fontWeight: "500",
                         }}
                     >
                         Cancel
@@ -408,16 +379,13 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
                         htmlType="submit"
                         loading={loading}
                         style={{
-                            padding: '8px 32px',
-                            height: '44px',
-                            borderRadius: '10px',
-                            fontWeight: '500',
-                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                            border: 'none',
-                            boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            padding: "8px 32px",
+                            height: "44px",
+                            borderRadius: "10px",
+                            fontWeight: "500",
+                            background: "linear-gradient(135deg, #4096ff 0%, #1677ff 100%)",
+                            border: "none",
+                            boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
                         }}
                     >
                         {isEditing ? 'Update Training' : 'Create Training'}
@@ -428,4 +396,4 @@ const CreateTraining = ({ open, onCancel, isEditing, initialValues }) => {
     );
 };
 
-export default CreateTraining; 
+export default CreateTraining;

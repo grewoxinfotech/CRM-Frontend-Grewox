@@ -120,7 +120,7 @@ const Training = () => {
             } else {
                 const newTraining = {
                     id: Date.now(),
-                    
+
                     ...formData,
                     created_at: new Date().toISOString(),
                     status: 'active'
@@ -210,7 +210,7 @@ const Training = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
+    return (
         <div className="training-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
