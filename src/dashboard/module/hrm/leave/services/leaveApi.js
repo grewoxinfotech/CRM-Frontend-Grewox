@@ -7,7 +7,27 @@ export const leaveApi = createApi({
   tagTypes: ["Leave"],
   endpoints: (builder) => ({
     getLeave: builder.query({
-      query: () => "/leaves",
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '', ...rest } = params;
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          ...(search && { search }),
+          ...rest
+        }).toString();
+        return `/leaves?${queryParams}`;
+      },
+      transformResponse: (response) => {
+        // Handle the new response structure where data is nested inside message
+        const { message } = response;
+        return {
+          data: message.data.map(leave => ({
+            ...leave,
+            key: leave.id
+          })),
+          pagination: message.pagination
+        };
+      },
       providesTags: ["Leave"],
     }),
     createLeave: builder.mutation({

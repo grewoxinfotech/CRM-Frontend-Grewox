@@ -7,7 +7,24 @@ export const meetingApi = createApi({
   tagTypes: ["Meetings"],
   endpoints: (builder) => ({
     getMeetings: builder.query({
-      query: () => "/meetings",
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '' } = params;
+        return {
+          url: '/meetings',
+          params: {
+            page,
+            pageSize,
+            search
+          }
+        };
+      },
+      transformResponse: (response) => ({
+        data: response.message.data.map(item => ({
+          ...item,
+          key: item.id
+        })),
+        pagination: response.message.pagination
+      }),
       providesTags: ["Meetings"],
     }),
     createMeeting: builder.mutation({
@@ -21,7 +38,7 @@ export const meetingApi = createApi({
     updateMeeting: builder.mutation({
       query: ({ id, data }) => ({
         url: `meetings/${id}`,
-        method: "PUT", 
+        method: "PUT",
         body: data,
       }),
       invalidatesTags: ["Meetings"],

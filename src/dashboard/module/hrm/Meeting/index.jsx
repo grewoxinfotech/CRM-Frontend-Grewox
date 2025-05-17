@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     Typography,
     Button,
-    Modal,
-    message,
     Input,
     Dropdown,
     Menu,
@@ -16,187 +14,91 @@ import {
     FiDownload,
     FiHome,
 } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { useGetMeetingsQuery, useUpdateMeetingMutation, useDeleteMeetingMutation } from './services/meetingApi';
+import { useGetAllDepartmentsQuery } from '../Department/services/departmentApi';
+import MeetingList from './MeetingList';
+import CreateMeeting from './CreateMeeting';
+import EditMeeting from './EditMeeting';
 import './meeting.scss';
 import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import CreateMeeting from './CreateMeeting';
-import MeetingList from './MeetingList';
-import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
 const Meeting = () => {
-    const [meetings, setMeetings] = useState([]);
-    const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    const [selectedMeeting, setSelectedMeeting] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const searchInputRef = useRef(null);
-    const [departmentsData, setDepartmentsData] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingMeeting, setEditingMeeting] = useState(null);
 
-    useEffect(() => {
-        fetchMeetings();
-        fetchDepartments();
-    }, []);
+    // API Queries
+    const { data: meetingsData, isLoading } = useGetMeetingsQuery({
+        page: currentPage,
+        pageSize,
+        search: searchText
+    });
+    const { data: departmentsData } = useGetAllDepartmentsQuery();
+    const [updateMeeting] = useUpdateMeetingMutation();
+    const [deleteMeeting] = useDeleteMeetingMutation();
 
-    const fetchMeetings = async () => {
-        try {
-            setLoading(true);
-            // TODO: Replace with actual API call
-            const mockData = [
-                {
-                    id: 1,
-                    title: 'Team Sync',
-                    type: 'team_meeting',
-                    location: 'Conference Room 1',
-                    date: '2025-01-01',
-                    startTime: '10:00',
-                    endTime: '11:00',
-                    department: 'HR',
-                    meetingLink: 'https://meet.google.com/abc123',
-                    description: 'Weekly team sync meeting',
-                    created_at: dayjs(),
-                    created_by: 'Admin',
-                    status: 'scheduled'
-                }
-            ];
-            setMeetings(mockData);
-        } catch (error) {
-            message.error('Failed to fetch meetings');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchDepartments = async () => {
-        try {
-            // TODO: Replace with actual API call to fetch departments
-            const mockDepartments = [
-                { id: 'HR', department_name: 'Human Resources' },
-                { id: 'IT', department_name: 'Information Technology' },
-                { id: 'Finance', department_name: 'Finance' },
-            ];
-            setDepartmentsData({ data: mockDepartments });
-        } catch (error) {
-            message.error('Failed to fetch departments');
-        }
-    };
-
-    const handleAddMeeting = () => {
-        setSelectedMeeting(null);
-        setIsEditing(false);
-        setIsFormVisible(true);
-    };
-
-    const handleEditMeeting = (meeting) => {
-        // Convert date strings to dayjs objects before editing
-        const formattedMeeting = {
-            ...meeting,
-            date: meeting.date ? dayjs(meeting.date, 'YYYY-MM-DD') : null,
-            startTime: meeting.startTime ? dayjs(meeting.startTime, 'HH:mm:ss') : null,
-            endTime: meeting.endTime ? dayjs(meeting.endTime, 'HH:mm:ss') : null,
-            // employees: meeting.employee ? (Array.isArray(meeting.employee) ? meeting.employee : JSON.parse(meeting.employee)) : [],
-        };
-        setSelectedMeeting(formattedMeeting);
-        setIsEditing(true);
-        setIsFormVisible(true);
-    };
-
-    const handleDeleteConfirm = (meeting) => {
-        setSelectedMeeting(meeting);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteMeeting = async () => {
-        try {
-            setLoading(true);
-            // TODO: Implement delete API call
-            const updatedMeetings = meetings.filter(m => m.id !== selectedMeeting.id);
-            setMeetings(updatedMeetings);
-            message.success('Meeting deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete meeting');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleFormSubmit = async (formData) => {
-        try {
-            setLoading(true);
-            const formatTime = (timeValue) => {
-                if (!timeValue) return null;
-                if (typeof timeValue === 'string') {
-                    if (/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/.test(timeValue)) {
-                        return timeValue;
-                    }
-                    return dayjs(timeValue, 'HH:mm:ss').format('HH:mm:ss');
-                }
-                return dayjs(timeValue).format('HH:mm:ss');
-            };
-
-            const processedData = {
-                ...formData,
-                date: formData.date ? dayjs(formData.date).format('YYYY-MM-DD') : null,
-                startTime: formatTime(formData.startTime),
-                endTime: formatTime(formData.endTime),
-                // employee: formData.employees || [],
-                // updated_by: formData.updated_by,
-                // updated_at: formData.updated_at
-            };
-
-            if (isEditing) {
-                // TODO: Implement update API call
-                const updatedMeetings = meetings.map(m =>
-                    m.id === selectedMeeting.id ? { ...m, ...processedData } : m
-                );
-                setMeetings(updatedMeetings);
-                message.success('Meeting updated successfully');
-            } else {
-                // TODO: Implement create API call
-                const newMeeting = {
-                    id: Date.now(),
-                    ...processedData,
-                    created_at: dayjs(),
-                    created_by: 'Admin',
-                    status: 'scheduled'
-                };
-                setMeetings([...meetings, newMeeting]);
-                message.success('Meeting created successfully');
+    // Create department map for easy lookup
+    const departmentMap = {};
+    if (departmentsData) {
+        departmentsData.forEach(dept => {
+            if (dept && dept.id) {
+                departmentMap[dept.id] = dept.department_name;
             }
-            setIsFormVisible(false);
+        });
+    }
+
+    // Handlers
+    const handleSearch = (value) => {
+        setSearchText(value);
+        setCurrentPage(1); // Reset to first page on new search
+    };
+
+    const handleEdit = (record) => {
+        setEditingMeeting(record);
+        setIsEditModalOpen(true);
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await deleteMeeting(id).unwrap();
         } catch (error) {
-            message.error('Operation failed');
-        } finally {
-            setLoading(false);
+            console.error('Delete error:', error);
         }
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size) => {
+        setPageSize(size);
+        setCurrentPage(1);
     };
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
-            const data = meetings?.map((meeting) => ({
+            const data = meetingsData?.data?.map((meeting) => ({
                 'Title': meeting.title || '-',
-                'Department': departmentsData?.data?.find(d => d.id === meeting.department)?.department_name || '-',
+                'Department': departmentMap[meeting.department] || '-',
                 'Date': meeting.date ? dayjs(meeting.date).format('DD-MM-YYYY') : '-',
                 'Start Time': meeting.startTime || '-',
                 'End Time': meeting.endTime || '-',
-                'Location': meeting.location || '-',
                 'Status': meeting.status || '-',
                 'Description': meeting.description || '-',
                 'Created By': meeting.created_by || '-',
-                'Created At': meeting.created_at ? dayjs(meeting.created_at).format('DD-MM-YYYY') : '-'
+                'Created At': meeting.createdAt ? dayjs(meeting.createdAt).format('DD-MM-YYYY') : '-'
             })) || [];
 
-            if (data.length === 0) {
-                message.warning('No data available to export');
-                return;
-            }
+            if (data.length === 0) return;
 
             const fileName = `meetings_${dayjs().format('DD-MM-YYYY')}`;
 
@@ -204,7 +106,7 @@ const Meeting = () => {
                 case 'csv':
                     const csvContent = [
                         Object.keys(data[0]).join(','),
-                        ...data.map(item => 
+                        ...data.map(item =>
                             Object.values(item)
                                 .map(value => `"${value?.toString().replace(/"/g, '""')}"`)
                                 .join(',')
@@ -219,8 +121,6 @@ const Meeting = () => {
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                    message.success('Successfully exported as CSV');
                     break;
 
                 case 'excel':
@@ -228,7 +128,6 @@ const Meeting = () => {
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Meetings');
                     XLSX.writeFile(wb, `${fileName}.xlsx`);
-                    message.success('Successfully exported as Excel');
                     break;
 
                 case 'pdf':
@@ -237,14 +136,13 @@ const Meeting = () => {
                         head: [Object.keys(data[0])],
                         body: data.map(item => Object.values(item)),
                         margin: { top: 20 },
-                        styles: { 
+                        styles: {
                             fontSize: 8,
                             cellPadding: 2
                         },
                         theme: 'grid'
                     });
                     doc.save(`${fileName}.pdf`);
-                    message.success('Successfully exported as PDF');
                     break;
 
                 default:
@@ -252,9 +150,6 @@ const Meeting = () => {
             }
         } catch (error) {
             console.error('Export error:', error);
-            message.error('Failed to export data');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -286,7 +181,7 @@ const Meeting = () => {
                             prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
                             placeholder="Search meetings..."
                             value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
+                            onChange={(e) => handleSearch(e.target.value)}
                             style={{ width: 360 }}
                             allowClear
                         />
@@ -318,14 +213,14 @@ const Meeting = () => {
                             trigger={['click']}
                             placement="bottomRight"
                         >
-                            <Button className="export-button" loading={loading}>
+                            <Button className="export-button">
                                 <FiDownload /> Export <FiChevronDown />
                             </Button>
                         </Dropdown>
                         <Button
                             type="primary"
                             icon={<FiPlus />}
-                            onClick={handleAddMeeting}
+                            onClick={() => setIsCreateModalOpen(true)}
                             className="add-button"
                         >
                             Add Meeting
@@ -336,36 +231,39 @@ const Meeting = () => {
 
             <div className="meeting-table-card">
                 <MeetingList
-                    searchText={searchText}
-                    loading={loading}
-                    onEdit={handleEditMeeting}
-                    onDelete={handleDeleteConfirm}
+                    loading={isLoading}
+                    meetings={meetingsData?.data || []}
+                    pagination={{
+                        current: currentPage,
+                        pageSize,
+                        total: meetingsData?.pagination?.total || 0,
+                        totalPages: meetingsData?.pagination?.totalPages || 0
+                    }}
+                    departmentMap={departmentMap}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
                 />
             </div>
 
             <CreateMeeting
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
-                isEditing={isEditing}
-                initialValues={selectedMeeting}
-                loading={loading}
+                open={isCreateModalOpen}
+                onCancel={() => setIsCreateModalOpen(false)}
+                departments={departmentsData || []}
             />
 
-            <Modal
-                title="Delete Meeting"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteMeeting}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
-                }}
-            >
-                <p>Are you sure you want to delete this meeting?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
+            {editingMeeting && (
+                <EditMeeting
+                    open={isEditModalOpen}
+                    onCancel={() => {
+                        setIsEditModalOpen(false);
+                        setEditingMeeting(null);
+                    }}
+                    meeting={editingMeeting}
+                    departments={departmentsData || []}
+                />
+            )}
         </div>
     );
 };

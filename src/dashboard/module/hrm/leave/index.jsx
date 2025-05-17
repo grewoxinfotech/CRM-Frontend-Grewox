@@ -7,11 +7,7 @@ import {
   message,
   Input,
   Dropdown,
-  Menu,
   Breadcrumb,
-  Row,
-  Col,
-  Tabs,
   DatePicker,
   Space,
 } from "antd";
@@ -21,8 +17,6 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
-  FiGrid,
-  FiList,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import CreateLeave from "./CreateLeave";
@@ -36,8 +30,7 @@ import { useGetLeaveQuery } from "./services/LeaveApi";
 import "./leave.scss";
 import dayjs from 'dayjs';
 
-const { Title, Text } = Typography;
-const { TabPane } = Tabs;
+const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const Leave = () => {
@@ -46,11 +39,20 @@ const Leave = () => {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [viewType, setViewType] = useState("list"); // 'list' or 'grid'
   const [filters, setFilters] = useState({
     dateRange: [],
   });
-  const { data: leaveData = [], isLoading } = useGetLeaveQuery();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data: response = {}, isLoading: isLeaveLoading } = useGetLeaveQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText,
+    ...filters
+  });
+
+  const { data: leaves = [], pagination = {} } = response;
 
   const handleCreate = () => {
     setSelectedLeave(null);
@@ -104,16 +106,16 @@ const Leave = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = leaveData?.data?.map((leave) => ({
+      const data = leaves?.map((leave) => ({
         'Employee Name': leave.employeeName || '-',
         'Leave Type': leave.leaveType || '-',
         'Start Date': leave.startDate ? moment(leave.startDate).format('DD-MM-YYYY') : '-',
         'End Date': leave.endDate ? moment(leave.endDate).format('DD-MM-YYYY') : '-',
         'Status': leave.status || '-',
         'Reason': leave.reason || '-',
-        'Created At': leave.created_at ? moment(leave.created_at).format('DD-MM-YYYY') : '-',
+        'Created At': leave.createdAt ? moment(leave.createdAt).format('DD-MM-YYYY') : '-',
         'Department': leave.department || '-',
-        'Total Days': leave.totalDays || '-'
+        'Total Days': dayjs(leave.endDate).diff(dayjs(leave.startDate), 'days') + 1 || '-'
       })) || [];
 
       if (data.length === 0) {
@@ -127,7 +129,7 @@ const Leave = () => {
         case 'csv':
           const csvContent = [
             Object.keys(data[0]).join(','),
-            ...data.map(item => 
+            ...data.map(item =>
               Object.values(item)
                 .map(value => `"${value?.toString().replace(/"/g, '""')}"`)
                 .join(',')
@@ -160,7 +162,7 @@ const Leave = () => {
             head: [Object.keys(data[0])],
             body: data.map(item => Object.values(item)),
             margin: { top: 20 },
-            styles: { 
+            styles: {
               fontSize: 8,
               cellPadding: 2
             },
@@ -215,7 +217,7 @@ const Leave = () => {
               prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              style={{ 
+              style={{
                 width: '300px',
                 borderRadius: '40px',
                 height: '40px'
@@ -253,33 +255,39 @@ const Leave = () => {
                   }
                 ]
               }}
-              trigger={['click']}
-              placement="bottomRight"
             >
               <Button className="export-button" loading={loading}>
-                <FiDownload /> Export <FiChevronDown />
+                Export <FiChevronDown />
               </Button>
             </Dropdown>
-            <Button type="primary" className="add-button" onClick={handleCreate}>
-              <FiPlus /> New Leave Request
+            <Button
+              type="primary"
+              icon={<FiPlus />}
+              onClick={handleCreate}
+              className="add-button"
+            >
+              New Leave Request
             </Button>
           </div>
         </div>
       </div>
 
       <LeaveList
+        loading={isLeaveLoading}
+        leaves={leaves}
+        pagination={pagination}
         onEdit={handleEdit}
         onView={handleView}
         searchText={searchText}
         filters={filters}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
       />
 
-      {isCreateModalOpen && (
-        <CreateLeave
-          open={isCreateModalOpen}
-          onCancel={() => setIsCreateModalOpen(false)}
-        />
-      )}
+      <CreateLeave
+        open={isCreateModalOpen}
+        onCancel={() => setIsCreateModalOpen(false)}
+      />
 
       {isEditModalOpen && selectedLeave && (
         <EditLeave

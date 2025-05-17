@@ -61,13 +61,13 @@ export default function Dashboard() {
 
   // Calculate real revenue data
   const calculateRevenue = () => {
-    if (!revenueData?.data) return { total: 0, pending: 0 };
+    if (!revenueData) return { total: 0, pending: 0 };
 
-    const total = revenueData.data.reduce(
+    const total = revenueData.reduce(
       (sum, rev) => sum + (Number(rev.amount) || 0),
       0
     );
-    const pending = revenueData.data
+    const pending = revenueData
       .filter((rev) => rev.status?.toLowerCase() === "pending")
       .reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0);
 
@@ -82,14 +82,14 @@ export default function Dashboard() {
 
   const openLeads = leadsData?.data
     ? leadsData.data.filter(
-        (lead) => lead.status && lead.status.toLowerCase() !== "closed"
-      ).length
+      (lead) => lead.status && lead.status.toLowerCase() !== "closed"
+    ).length
     : 0;
 
   const openDeals = dealsData
     ? dealsData.filter(
-        (deal) => deal.status && deal.status.toLowerCase() !== "closed"
-      ).length
+      (deal) => deal.status && deal.status.toLowerCase() !== "closed"
+    ).length
     : 0;
 
   // Add this after other useEffect hooks
@@ -149,7 +149,7 @@ export default function Dashboard() {
       gradient: "linear-gradient(145deg, #ffffff, #f0fff4)",
       iconGradient: "linear-gradient(135deg, #52c41a, #95de64)",
       color: "#52c41a",
-      tag: `Profit: ₹10`,
+      tag: `Profit: ₹${revenueData ? revenueData.reduce((sum, rev) => sum + (Number(rev.profit) || 0), 0).toFixed(2) : '0.00'}`,
       link: "/dashboard/sales/revenue",
       format: "currency",
     },

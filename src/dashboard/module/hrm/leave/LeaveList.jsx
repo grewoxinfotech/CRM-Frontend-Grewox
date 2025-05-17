@@ -24,9 +24,18 @@ import EditLeave from "./Editleave";
 const { Text } = Typography;
 
 const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
-  const { data: leavedata = [], isLoading } = useGetLeaveQuery();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data: response = {}, isLoading } = useGetLeaveQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText,
+    ...filters
+  });
+
+  const { data: leaves = [], pagination = {} } = response;
   const { data: employeesData } = useGetEmployeesQuery();
-  const leaves = leavedata.data || [];
   const employees = employeesData?.data || [];
   const [deleteLeave] = useDeleteLeaveMutation();
   const [updateLeave] = useUpdateLeaveMutation();
@@ -489,14 +498,14 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const paginationConfig = {
-    pageSize: 10,
-    showSizeChanger: true,
-    showTotal: (total) => `Total ${total} items`,
-    pageSizeOptions: ['10', '20', '50', '100'],
-    locale: {
-      items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
-    },
+  // Handle table change for pagination
+  const handleTableChange = (newPagination, filters, sorter) => {
+    if (newPagination.current !== currentPage) {
+      setCurrentPage(newPagination.current);
+    }
+    if (newPagination.pageSize !== pageSize) {
+      setPageSize(newPagination.pageSize);
+    }
   };
 
   return (
@@ -505,19 +514,34 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
       <Table
         rowSelection={rowSelection}
         columns={columns}
-        dataSource={filteredLeaves}
+        dataSource={leaves}
         loading={isLoading}
         rowKey="id"
-        pagination={paginationConfig}
+        onChange={handleTableChange}
+        pagination={{
+          current: currentPage,
+          pageSize: pageSize,
+          total: pagination.total,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} items`,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          position: ['bottomRight'],
+          hideOnSinglePage: false,
+          showQuickJumper: true
+        }}
         className="custom-table"
-        scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
-        size="middle"
+        scroll={{ x: 1000 }}
+        style={{
+          background: '#ffffff',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)'
+        }}
       />
       {editModalVisible && (
         <EditLeave
-          open={editModalVisible}
-          onCancel={handleEditModalClose}
-          initialValues={selectedLeave}
+          visible={editModalVisible}
+          onClose={handleEditModalClose}
+          leave={selectedLeave}
         />
       )}
     </div>

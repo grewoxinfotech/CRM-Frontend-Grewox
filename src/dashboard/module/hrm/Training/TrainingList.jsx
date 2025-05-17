@@ -380,4 +380,4 @@ const TrainingList = ({
     );
 };
 
-export default TrainingList;
+export default TrainingList; 
