@@ -94,11 +94,11 @@ export default function Dashboard() {
 
   // Add this after other useEffect hooks
   const getActiveCustomersCount = () => {
-    if (!revenueData?.data) return 0;
+    if (!revenueData) return 0;
 
     // Get unique customer IDs from invoices
     const uniqueCustomers = new Set(
-      revenueData.data.map((invoice) => invoice.customer)
+      revenueData.map((invoice) => invoice.customer)
     );
 
     return uniqueCustomers.size;
@@ -115,7 +115,7 @@ export default function Dashboard() {
       gradient: "linear-gradient(145deg, #ffffff, #f0f2ff)",
       iconGradient: "linear-gradient(135deg, #7c3aed, #a78bfa)",
       color: "#7c3aed",
-      tag: `Total customers with orders: ${activeCustomers}`,
+      tag: `Total customers: ${revenueData ? new Set(revenueData.map(rev => rev.customer)).size : 0}`,
       link: "/dashboard/sales/customer",
     },
     {
