@@ -208,12 +208,12 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
         <Dropdown
           overlay={
             <Menu>
-              <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView?.(record)}>
+              {/* <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView?.(record)}>
                 View Details
               </Menu.Item>
               <Menu.Item key="edit" icon={<FiEdit2 style={{ fontSize: "14px" }} />} onClick={() => handleEdit(record)}>
                 Edit Credit Note
-              </Menu.Item>
+              </Menu.Item> */}
               <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => handleDelete(record.id)}>
                 Delete Credit Note
               </Menu.Item>

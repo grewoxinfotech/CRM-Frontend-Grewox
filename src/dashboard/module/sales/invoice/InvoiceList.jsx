@@ -242,12 +242,12 @@ const InvoiceList = ({
         label: "Edit Invoice",
         onClick: () => handleEdit(record),
       },
-      {
-        key: "send_invoice",
-        icon: <FiSend style={{ fontSize: "14px" }} />,
-        label: "Send Invoice to Customer",
-        onClick: () => handleSendInvoice(record),
-      },
+      // {
+      //   key: "send_invoice",
+      //   icon: <FiSend style={{ fontSize: "14px" }} />,
+      //   label: "Send Invoice to Customer",
+      //   onClick: () => handleSendInvoice(record),
+      // },
       // {
       //   key: "download",
       //   icon: <FiDownload />,

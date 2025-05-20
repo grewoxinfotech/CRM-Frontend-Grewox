@@ -65,18 +65,18 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
   };
 
   const getActionItems = (record) => [
-    {
-      key: 'view',
-      icon: <FiEye style={{ fontSize: '16px' }} />,
-      label: 'View',
-      onClick: () => onView(record)
-    },
-    {
-      key: 'edit',
-      icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-      label: 'Edit',
-      onClick: () => onEdit(record)
-    },
+    // {
+    //   key: 'view',
+    //   icon: <FiEye style={{ fontSize: '16px' }} />,
+    //   label: 'View',
+    //   onClick: () => onView(record)
+    // },
+    // {
+    //   key: 'edit',
+    //   icon: <FiEdit2 style={{ fontSize: '16px' }} />,
+    //   label: 'Edit',
+    //   onClick: () => onEdit(record)
+    // },
     {
       key: 'delete',
       icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,

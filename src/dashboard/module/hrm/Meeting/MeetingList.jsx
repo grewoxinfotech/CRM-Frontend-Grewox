@@ -179,9 +179,9 @@ const MeetingList = ({
                 <Dropdown
                     overlay={
                         <Menu>
-                            <Menu.Item key="view" onClick={() => onView?.(record)}>
+                            {/* <Menu.Item key="view" onClick={() => onView?.(record)}>
                                 <FiEye /> View
-                            </Menu.Item>
+                            </Menu.Item> */}
                             <Menu.Item key="edit" onClick={() => onEdit?.(record)}>
                                 <FiEdit2 /> Edit
                             </Menu.Item>

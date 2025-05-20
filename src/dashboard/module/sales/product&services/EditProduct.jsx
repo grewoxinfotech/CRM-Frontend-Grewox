@@ -283,6 +283,18 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
     setAddCategoryVisible(true);
   };
 
+  const handleBuyingPriceChange = (value) => {
+    form.setFieldsValue({ buying_price: value });
+    form.validateFields(['selling_price']);
+  };
+
+  const handleSellingPriceChange = (value) => {
+    form.setFieldsValue({ selling_price: value });
+    if (form.getFieldValue('buying_price')) {
+      form.validateFields(['selling_price']);
+    }
+  };
+
   return (
     <Modal
       title={null}
@@ -407,8 +419,7 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                     return Promise.reject(
                         new Error('Product name must contain both uppercase or lowercase English letters')
                     );
-                }
-                return Promise.resolve();
+                  }
                 }
               }
               ]}  
@@ -508,10 +519,12 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
             name="buying_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Buying Price</span>}
             rules={[
+              { required: true, message: "Please enter buying price" },
               {
                 validator: (_, value) => {
-                  if (value && value % 1 !== 0) {
-                    return Promise.reject('Decimal values are not allowed in buying price');
+                  if (!value) return Promise.reject('Please enter buying price');
+                  if (value <= 0) {
+                    return Promise.reject('Buying price must be greater than 0');
                   }
                   return Promise.resolve();
                 }
@@ -559,13 +572,14 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                     height: '48px',
                     padding: '0 16px',
                   }}
-                  min={0}
+                  min={1}
                   precision={0}
                   className="price-input"
                   parser={value => {
                     const parsedValue = parseInt(value);
                     return isNaN(parsedValue) ? '' : parsedValue;
                   }}
+                  onChange={handleBuyingPriceChange}
                 />
               </Form.Item>
             </div>
@@ -575,26 +589,21 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
             name="selling_price"
             label={<span style={{ color: '#374151', fontWeight: 500 }}>Selling Price</span>}
             rules={[
-             
+              { required: true, message: "Please enter selling price" },
               {
                 validator: (_, value) => {
-                  if (value && value % 1 !== 0) {
-                    return Promise.reject('Decimal values are not allowed in selling price');
+                  if (!value) return Promise.reject('Please enter selling price');
+                  if (value <= 0) {
+                    return Promise.reject('Selling price must be greater than 0');
+                  }
+                  const buyingPrice = form.getFieldValue('buying_price');
+                  if (!buyingPrice) return Promise.reject('Please enter buying price first');
+                  if (parseFloat(value) <= parseFloat(buyingPrice)) {
+                    return Promise.reject('Selling price must be greater than buying price');
                   }
                   return Promise.resolve();
                 }
-              },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  const buyingPrice = getFieldValue('buying_price');
-                  if (!value || !buyingPrice || value >= buyingPrice) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(
-                    new Error('Selling price cannot be lower than buying price')
-                  );
-                },
-              }),
+              }
             ]}
           >
             <div className="price-input-group" style={{
@@ -638,13 +647,14 @@ const EditProduct = ({ open, onCancel, initialValues, currenciesData }) => {
                     height: '48px',
                     padding: '0 16px',
                   }}
-                  min={0}
+                  min={1}
                   precision={0}
                   className="price-input"
                   parser={value => {
                     const parsedValue = parseInt(value);
                     return isNaN(parsedValue) ? '' : parsedValue;
                   }}
+                  onChange={handleSellingPriceChange}
                 />
               </Form.Item>
             </div>

@@ -163,18 +163,18 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
 
   const getDropdownItems = (record) => ({
     items: [
-      {
-        key: "view",
-        icon: <FiEye />,
-        label: "View Details",
-        onClick: () => onView(record),
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 />,
-        label: "Edit",
-        onClick: () => onEdit(record),
-      },
+      // {
+      //   key: "view",
+      //   icon: <FiEye />,
+      //   label: "View Details",
+      //   onClick: () => onView(record),
+      // },
+      // {
+      //   key: "edit",
+      //   icon: <FiEdit2 />,
+      //   label: "Edit",
+      //   onClick: () => onEdit(record),
+      // },
       {
         key: "delete",
         icon: <FiTrash2 />,
