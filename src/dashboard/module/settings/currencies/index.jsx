@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     Card, Typography, Button, Table, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip, Space
+    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip, Space, Popover
 } from 'antd';
 import {
     FiSearch, FiChevronDown,
@@ -23,11 +23,11 @@ const formatDate = (date) => moment(date).format('MMM DD, YYYY');
 const formatDateTime = (date) => moment(date).format('MMM DD, YYYY HH:mm');
 
 const Currencies = () => {
-    const [viewMode, setViewMode] = useState('table');
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
-    const { data: currencies = [], error} = useGetAllCurrenciesQuery({
+    const { data: currencies = [], error, isLoading } = useGetAllCurrenciesQuery({
         page: currentPage,
         limit: 10
     });
@@ -129,11 +129,26 @@ const Currencies = () => {
         doc.save(`${filename}.pdf`);
     };
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search currencies..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
     const columns = [
         {
             title: 'Currency Name',
             dataIndex: 'currencyName',
-            key: 'currencyName',filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+            key: 'currencyName',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                   <Input
                     placeholder="Search currency name"
@@ -158,14 +173,14 @@ const Currencies = () => {
                 </div>
               ),
               onFilter: (value, record) =>
-                record.currencyName.toLowerCase().includes(value.toLowerCase()),
+                record.currencyName.toLowerCase().includes(value.toLowerCase()) ||
+                record.currencyCode?.toLowerCase().includes(value.toLowerCase()),
             render: (text) => <Text strong>{text}</Text>
         },
         {
             title: 'Code',
             dataIndex: 'currencyCode',
             key: 'currencyCode',
-
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                   <Input
@@ -258,27 +273,16 @@ const Currencies = () => {
                 <Row justify="center" className="header-actions-wrapper">
                     <Col xs={24} sm={24} md={20} lg={16} xl={14}>
                         <div className="header-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                placeholder="Search currencies..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Button.Group className="view-toggle">
-                                    <Button
-                                        type={viewMode === 'table' ? 'primary' : 'default'}
-                                        icon={<FiList size={16} />}
-                                        onClick={() => setViewMode('table')}
-                                    />
-                                    <Button
-                                        type={viewMode === 'card' ? 'primary' : 'default'}
-                                        icon={<FiGrid size={16} />}
-                                        onClick={() => setViewMode('card')}
-                                    />
-                                </Button.Group>
+                            {/* Desktop: show full input and export button */}
+                            <div className="desktop-actions">
+                                <Input
+                                    prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                                    placeholder="Search currencies..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
                                 <Dropdown overlay={exportMenu} trigger={['click']}>
                                     <Button className="export-button">
                                         <FiDownload size={16} />
@@ -287,25 +291,48 @@ const Currencies = () => {
                                     </Button>
                                 </Dropdown>
                             </div>
+                            {/* Mobile: show only icons */}
+                            <div className="mobile-actions">
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    visible={isSearchVisible}
+                                    onVisibleChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    overlayClassName="search-popover"
+                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                                >
+                                    <Button
+                                        className="search-icon-btn"
+                                        icon={<FiSearch size={20} />}
+                                    />
+                                </Popover>
+                                <Dropdown overlay={exportMenu} trigger={['click']}>
+                                    <Button className="export-icon-btn" icon={<FiDownload size={20} />} />
+                                </Dropdown>
+                            </div>
                         </div>
                     </Col>
                 </Row>
             </div>
 
             <Card className="currencies-table-card">
-                <Table
-                    dataSource={filteredCurrencies}
-                    columns={columns}
-                    // loading={isLoading}
-                    onChange={handleTableChange}
-                    pagination={{
-                        current: currentPage,
-                        pageSize: 10,
-                        total: currencies.length,
-                        showSizeChanger: false
-                    }}
-                    rowKey="id"
-                />
+                <div className="table-scroll-wrapper">
+                    <Table
+                        dataSource={filteredCurrencies}
+                        columns={columns}
+                        loading={isLoading}
+                        onChange={handleTableChange}
+                        pagination={{
+                            current: currentPage,
+                            pageSize: 10,
+                            total: currencies.length,
+                            showSizeChanger: false
+                        }}
+                        rowKey="id"
+                        scroll={{ x: 1000, y: '' }}
+                    />
+                </div>
             </Card>
         </div>
     );

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiFilter
 } from 'react-icons/fi';
 import './tax.scss';
 import moment from 'moment';
@@ -30,6 +30,9 @@ const Tax = () => {
     const [searchText, setSearchText] = useState('');
     const [loading, setLoading] = useState(false);
     const searchInputRef = useRef(null);
+    const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
 
     const { data: taxesData, isLoading, error } = useGetAllTaxesQuery();
     const [deleteTax] = useDeleteTaxMutation();
@@ -199,6 +202,35 @@ const Tax = () => {
         doc.save(`${filename}.pdf`);
     };
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search taxes..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
+    const filterMenu = (
+        <Menu className="filter-menu">
+            <Menu.Item key="export" className="filter-menu-item">
+                <div className="filter-section">
+                    <Dropdown overlay={exportMenu} trigger={['click']}>
+                        <Button className="export-button">
+                            <FiDownload size={16} />
+                            Export
+                        </Button>
+                    </Dropdown>
+                </div>
+            </Menu.Item>
+        </Menu>
+    );
+
     return (
         <div className="tax-page">
             <div className="page-breadcrumb">   
@@ -217,37 +249,76 @@ const Tax = () => {
             </div>
 
             <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Tax</Title>
-                    <Text type="secondary">Manage all taxes in the organization</Text>
-                </div>
-                <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                        placeholder="Search by GST name..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        style={{ width: '360px' }}
-                        className="search-input"
-                    />
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                <div className="header-content">
+                    <div className="page-title">
+                        <div className="title-row">
+                            <Title level={2}>Tax</Title>
+                            <div className="mobile-actions">
+                                <Button
+                                    type="primary"
+                                    icon={<FiPlus size={18} />}
+                                    onClick={handleAddTax}
+                                    className="mobile-add-button"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    visible={isSearchVisible}
+                                    onVisibleChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    overlayClassName="search-popover"
+                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                                >
+                                    <Button
+                                        icon={<FiSearch size={18} />}
+                                        className="mobile-search-button"
+                                    />
+                                </Popover>
+                                <Dropdown
+                                    overlay={filterMenu}
+                                    trigger={['click']}
+                                    visible={isFilterVisible}
+                                    onVisibleChange={setIsFilterVisible}
+                                    placement="bottomRight"
+                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                                >
+                                    <Button
+                                        icon={<FiFilter size={18} />}
+                                        className="mobile-filter-button"
+                                    />
+                                </Dropdown>
+                            </div>
+                        </div>
+                        <Text type="secondary">Manage all taxes in the organization</Text>
+                    </div>
+
+                    <div className="header-actions">
+                        <div className="desktop-actions">
+                            <Input
+                                prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                                placeholder="Search by GST name..."
+                                allowClear
+                                onChange={(e) => handleSearch(e.target.value)}
+                                value={searchText}
+                                ref={searchInputRef}
+                                className="search-input"
+                            />
+                            <Dropdown overlay={exportMenu} trigger={['click']}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span>Export</span>
+                                    <FiChevronDown size={14} />
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleAddTax}
+                                className="add-button"
+                            >
+                                Add Tax
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleAddTax}
-                            className="add-button"
-                        >
-                            Add Tax
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

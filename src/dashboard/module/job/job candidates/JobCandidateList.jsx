@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Tag, Button, Input, Space, Typography } from 'antd';
 import {
     FiUser,
@@ -17,7 +17,7 @@ const { Text } = Typography;
 
 const JobCandidateList = ({ applications, loading }) => {
     const { data: jobs, isLoading: jobsLoading } = useGetAllJobsQuery();
-
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
         if (!jobs || !jobs.data) return 'N/A';
@@ -37,6 +37,7 @@ const JobCandidateList = ({ applications, loading }) => {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
+            width: 250,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -77,7 +78,11 @@ const JobCandidateList = ({ applications, loading }) => {
                             <FiUser size={16} />
                         </div>
                         <div className="info-wrapper">
-                            <div className="name">{text}</div>
+                            <div className="name" style={{ 
+                                color: "#262626", 
+                                fontWeight: 600, 
+                                fontSize: isMobile ? "13px" : isMobile ? "14px" : "15px" 
+                            }}>{text}</div>
                         </div>
                     </div>
                 </div>
@@ -87,6 +92,7 @@ const JobCandidateList = ({ applications, loading }) => {
             title: 'Job',
             dataIndex: 'job',
             key: 'job',
+            width: 150,
             sorter: (a, b) => {
                 if (!a.job && !b.job) return 0;
                 if (!a.job) return -1;
@@ -101,7 +107,10 @@ const JobCandidateList = ({ applications, loading }) => {
                     }}>
                         <FiBriefcase size={16} />
                     </div>
-                    <Text>{getJobTitle(jobId)}</Text>
+                    <Text style={{ 
+                        fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px",
+                        color: "#4b5563"
+                    }}>{getJobTitle(jobId)}</Text>
                 </div>
             )
         },
@@ -123,7 +132,10 @@ const JobCandidateList = ({ applications, loading }) => {
                     }}>
                         <FiClock size={16} />
                     </div>
-                    <Text>{text}</Text>
+                    <Text style={{ 
+                        fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px",
+                        color: "#4b5563"
+                    }}>{text}</Text>
                 </div>
             )
         },
@@ -145,7 +157,10 @@ const JobCandidateList = ({ applications, loading }) => {
                     }}>
                         <FiPhone size={16} />
                     </div>
-                    <Text>{text}</Text>
+                    <Text style={{ 
+                        fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px",
+                        color: "#4b5563"
+                    }}>{text}</Text>
                 </div>
             )
         },
@@ -167,7 +182,10 @@ const JobCandidateList = ({ applications, loading }) => {
                     }}>
                         <FiHash size={16} />
                     </div>
-                    <Text>{text} years</Text>
+                    <Text style={{ 
+                        fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px",
+                        color: "#4b5563"
+                    }}>{text} years</Text>
                 </div>
             )
         },
@@ -189,7 +207,10 @@ const JobCandidateList = ({ applications, loading }) => {
                     }}>
                         <FiGlobe size={16} />
                     </div>
-                    <Text>{text}</Text>
+                    <Text style={{ 
+                        fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px",
+                        color: "#4b5563"
+                    }}>{text}</Text>
                 </div>
             )
         },
@@ -236,7 +257,8 @@ const JobCandidateList = ({ applications, loading }) => {
                             border: 'none',
                             borderRadius: '4px',
                             padding: '4px 8px',
-                            textTransform: 'capitalize'
+                            textTransform: 'capitalize',
+                            fontSize: isMobile ? "11px" : isMobile ? "12px" : "13px"
                         }}
                     >
                         {status.replace(/_/g, ' ')}
@@ -246,21 +268,37 @@ const JobCandidateList = ({ applications, loading }) => {
         }
     ];
 
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+    
+      const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        locale: {
+          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+      };
+
     return (
         <div className="job-candidates-page">
-            <div className="job-candidates-table-card">
+            <div className="job-candidates-table-card" style={{ 
+                maxHeight: 'calc(100vh - 250px)',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#d4d4d4 #f5f5f5'
+            }}>
                 <Table
                     columns={columns}
                     dataSource={applications || []}
                     rowKey="id"
                     loading={loading}
-                    scroll={{ x: 1500 }}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showTotal: (total, range) =>
-                            `${range[0]}-${range[1]} of ${total} applications`
-                    }}
+                    scroll={{ x: 1500, y: '' }}
+                    pagination={paginationConfig}
                 />
             </div>
         </div>

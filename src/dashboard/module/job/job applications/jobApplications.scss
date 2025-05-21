@@ -135,6 +135,7 @@
         }
 
         .ant-table-wrapper {
+            
             .ant-table {
                 background: transparent;
 
@@ -469,5 +470,108 @@
     &:focus-within {
         border-color: #1890ff !important;
         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .job-applications-page {
+        .ant-table-pagination {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            visibility: visible !important;
+            .ant-pagination-options {
+                display: flex !important;
+                align-items: center;
+                margin-bottom: 10px;
+                .ant-select-selection-item {
+                    width: auto !important;
+                    min-width: 40px;
+                    height: 32px;
+                    max-width: 100%;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-align: center;
+                    font-size: 12px;
+                    font-weight: 400;
+                }
+            }
+        }
+
+        .ant-table {
+            .ant-table-thead > tr > th {
+                font-size: 12px;
+                padding: 12px 16px;
+            }
+
+            .ant-table-tbody > tr > td {
+                font-size: 12px;
+                padding: 12px 16px;
+            }
+        }
+
+        .item-wrapper {
+            .item-content {
+                .icon-wrapper {
+                    width: 28px !important;
+                    height: 28px !important;
+                    
+                    svg {
+                        font-size: 14px !important;
+                    }
+                }
+            }
+        }
+
+        .column-icon {
+            .icon-bg {
+                width: 28px !important;
+                height: 28px !important;
+                
+                svg {
+                    font-size: 14px !important;
+                }
+            }
+        }
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .job-applications-page {
+        .ant-table {
+            .ant-table-thead > tr > th {
+                font-size: 13px;
+                padding: 14px 20px;
+            }
+
+            .ant-table-tbody > tr > td {
+                font-size: 13px;
+                padding: 14px 20px;
+            }
+        }
+
+        .item-wrapper {
+            .item-content {
+                .icon-wrapper {
+                    width: 32px !important;
+                    height: 32px !important;
+                    
+                    svg {
+                        font-size: 16px !important;
+                    }
+                }
+            }
+        }
+
+        .column-icon {
+            .icon-bg {
+                width: 32px !important;
+                height: 32px !important;
+                
+                svg {
+                    font-size: 16px !important;
+                }
+            }
+        }
     }
 }

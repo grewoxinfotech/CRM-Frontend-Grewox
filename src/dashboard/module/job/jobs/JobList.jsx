@@ -22,6 +22,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     // Clear selections when jobs data changes
     useEffect(() => {
@@ -131,6 +132,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Job Title",
             dataIndex: "title",
             key: "title",
+            width: 300,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -175,9 +177,20 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                             <FiBriefcase size={20} />
                         </div>
                         <div className="info-wrapper">
-                            <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>{text}</div>
-                            <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
-                                {record.category} • {record.workExperience} • {record.location}
+                            <div className="name" style={{ 
+                                color: "#262626", 
+                                fontWeight: 600, 
+                                fontSize: isMobile ? "13px" : isMobile ? "14px" : "15px" 
+                            }}>{text}</div>
+                            <div className="subtitle" style={{ 
+                                color: "#8c8c8c", 
+                                fontSize: isMobile ? "11px" : isMobile ? "12px" : "13px" 
+                            }}>
+                                {record.category} 
+                                <br />
+                                • {record.workExperience}
+                                <br />
+                                • {record.location}
                             </div>
                         </div>
                     </div>
@@ -187,6 +200,8 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
         {
             title: "Skills",
             key: "skills",
+            width: 200,
+            sorter: (a, b) => a.skills.length - b.skills.length,
             render: (_, record) => {
                 const skills = parseJsonField(record.skills, 'skills');
                 return (
@@ -213,7 +228,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                                         border: "none",
                                         borderRadius: "4px",
                                         padding: "2px 8px",
-                                        fontSize: "12px",
+                                        fontSize: isMobile ? "10px" : isMobile ? "11px" : "12px",
                                         display: "flex",
                                         alignItems: "center",
                                         gap: "4px"
@@ -236,6 +251,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Type",
             dataIndex: "jobType",
             key: "jobType",
+            width: 150,
             filters: [
                 { text: 'Full-time', value: 'Full-time' },
                 { text: 'Part-time', value: 'Part-time' },
@@ -257,7 +273,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                     }}>
                         <FiClock size={16} />
                     </div>
-                    <span style={{ color: "#4b5563", textTransform: "capitalize" }}>{type}</span>
+                    <span style={{ color: "#4b5563", textTransform: "capitalize", fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px" }}>{type}</span>
                 </div>
             ),
         },
@@ -265,6 +281,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Openings",
             dataIndex: "totalOpenings",
             key: "totalOpenings",
+            width: 150,
             sorter: (a, b) => a.totalOpenings - b.totalOpenings,
             render: (openings) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -280,13 +297,15 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                     }}>
                         <FiUsers size={16} />
                     </div>
-                    <span style={{ color: "#4b5563", fontWeight: "500" }}>{openings}</span>
+                    <span style={{ color: "#4b5563", fontWeight: "500", fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px" }}>{openings}</span>
                 </div>
             ),
         },
         {
             title: "Interview Rounds",
             key: "interviewRounds",
+            width: 200,
+            sorter: (a, b) => a.interviewRounds - b.interviewRounds,
             render: (_, record) => {
                 const rounds = parseJsonField(record.interviewRounds, 'interviewRounds');
                 return (
@@ -313,7 +332,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                                         border: "none",
                                         borderRadius: "4px",
                                         padding: "2px 8px",
-                                        fontSize: "12px"
+                                        fontSize: isMobile ? "10px" : isMobile ? "11px" : "12px"
                                     }}>
                                         {round}
                                     </Tag>
@@ -331,6 +350,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
         {
             title: "Salary",
             key: "salary",
+            width: 200,
             sorter: (a, b) => a.expectedSalary - b.expectedSalary,
             render: (_, record) => {
                 const { icon, code } = getCurrencyDetails(record.currency);
@@ -350,7 +370,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                                 <span style={{ fontSize: '16px' }}>{icon}</span>
                             ) : null}
                         </div>
-                        <span style={{ color: "#059669", fontWeight: "600" }}>
+                        <span style={{ color: "#059669", fontWeight: "600", fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px" }}>
                             {code} {record.expectedSalary}
                         </span>
                     </div>
@@ -361,6 +381,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Posted Date",
             dataIndex: "createdAt",
             key: "createdAt",
+            width: 200,
             sorter: (a, b) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
             render: (date) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -376,7 +397,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                     }}>
                         <FiCalendar size={16} />
                     </div>
-                    <span style={{ color: "#4b5563" }}>{dayjs(date).format('DD MMM YYYY')}</span>
+                    <span style={{ color: "#4b5563", fontSize: isMobile ? "12px" : isMobile ? "13px" : "14px" }}>{dayjs(date).format('DD MMM YYYY')}</span>
                 </div>
             ),
         },
@@ -384,6 +405,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Status",
             dataIndex: "status",
             key: "status",
+            width: 150,
             filters: [
                 { text: 'Active', value: 'active' },
                 { text: 'Closed', value: 'closed' },
@@ -412,6 +434,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Actions",
             key: "actions",
             width: 80,
+            fixed: 'right',
             render: (_, record) => {
                 const menuItems = [
                     {
@@ -459,6 +482,21 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             }
         }
     ];
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+    
+      const paginationConfig = {
+        pageSize: 10,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        locale: {
+          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+        },
+      };
 
     return (
         <div className="job-list-container">
@@ -470,12 +508,20 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                 rowKey="id"
                 loading={loading}
                 onChange={handleChange}
-                pagination={pagination || {
+                pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} items`,
+                    ...pagination,
+                    ...paginationConfig,
                 }}
+            
                 className="custom-table"
+                style={{ 
+                    background: '#ffffff', 
+                    borderRadius: '8px',
+                    overflow: 'hidden' // Ensure proper overflow handling
+                }}
             />
         </div>
     );

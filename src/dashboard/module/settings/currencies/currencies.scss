@@ -93,90 +93,58 @@
                 width: 100%;
                 max-width: 800px;
 
-                .search-input {
-                    flex: 1;
-                    max-width: 360px;
-                    min-width: 200px;
-
-                    .ant-input-affix-wrapper {
-                        border-radius: 40px;
-                        height: 40px;
-                        padding: 4px 16px;
-                        transition: all 0.3s ease;
-                        border: 1px solid $border-color;
-                        width: 100%;
-
-                        .anticon {
-                            color: $text-color-light;
-                            margin-right: 8px;
-                            font-size: 16px;
-                        }
-
-                        .ant-input {
-                            font-size: 14px;
-                            background: transparent;
-                            border: none;
-                            padding: 0;
-                            margin: 0 4px;
-
-                            &::placeholder {
-                                color: rgba($text-color, 0.45);
-                            }
-                        }
-
-                        &:hover,
-                        &:focus,
-                        &-focused {
-                            border-color: #1677ff;
-                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                        }
-                    }
-                }
-
-                .action-buttons {
+                .desktop-actions {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
-                    flex-shrink: 0;
+                    gap: 24px;
+                    flex-wrap: nowrap;
 
-                    .view-toggle {
-                        display: flex;
-                        align-items: center;
+                    @media (min-width: 769px) and (max-width: 1366px) {
+                        display: grid;
+                        grid-template-columns: 1fr 120px;
+                        gap: 12px;
+                    }
 
-                        .ant-btn {
+                    @media (max-width: 768px) {
+                        display: none;
+                    }
+
+                    .search-input {
+                        flex: 1;
+                        max-width: 360px;
+                        min-width: 200px;
+
+                        .ant-input-affix-wrapper {
+                            border-radius: 40px;
                             height: 40px;
-                            width: 40px;
-                            padding: 0;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
+                            padding: 4px 16px;
                             transition: all 0.3s ease;
+                            border: 1px solid $border-color;
+                            width: 100%;
 
-                            &:first-child {
-                                border-top-left-radius: 8px;
-                                border-bottom-left-radius: 8px;
-                            }
-
-                            &:last-child {
-                                border-top-right-radius: 8px;
-                                border-bottom-right-radius: 8px;
-                            }
-
-                            svg {
+                            .anticon {
+                                color: $text-color-light;
+                                margin-right: 8px;
                                 font-size: 16px;
                             }
 
-                            &.ant-btn-primary {
-                                background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                            .ant-input {
+                                font-size: 14px;
+                                background: transparent;
                                 border: none;
+                                padding: 0;
+                                margin: 0 4px;
 
-                                &:hover {
-                                    background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                                &::placeholder {
+                                    color: rgba($text-color, 0.45);
                                 }
                             }
 
-                            &:hover {
-                                transform: translateY(-2px);
+                            &:hover,
+                            &:focus,
+                            &-focused {
+                                border-color: #1677ff;
+                                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
                             }
                         }
                     }
@@ -193,6 +161,7 @@
                         transition: all 0.3s ease;
                         border: 1px solid $border-color;
                         background: white;
+                        white-space: nowrap;
 
                         svg {
                             font-size: 16px;
@@ -202,6 +171,48 @@
                             color: #1677ff;
                             border-color: #1677ff;
                             transform: translateY(-2px);
+                        }
+                    }
+                }
+
+                .mobile-actions {
+                    display: none;
+
+                    @media (max-width: 768px) {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        width: 100%;
+                        justify-content: flex-end;
+                        margin-right: 20px;
+
+                        .search-icon-btn,
+                        .export-icon-btn {
+                            height: 40px;
+                            width: 40px;
+                            padding: 10px;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 8px;
+                            border: 1px solid $border-color;
+                            background: white;
+                            transition: all 0.3s ease;
+
+                            svg {
+                                font-size: 20px;
+                                color: $text-color-dark;
+                            }
+
+                            &:hover {
+                                color: #1677ff;
+                                border-color: #1677ff;
+                                transform: translateY(-2px);
+
+                                svg {
+                                    color: #1677ff;
+                                }
+                            }
                         }
                     }
                 }
@@ -249,21 +260,10 @@
 
             .ant-table-tbody {
                 >tr {
-                    td {
-                        padding: 12px 16px;
-                        transition: all 0.3s ease;
+                    >td {
+                        padding: 16px;
                         border-bottom: 1px solid $border-color;
-
-                        .currency-symbol {
-                            font-size: 18px;
-                            font-weight: 500;
-                        }
-
-                        .ant-tag {
-                            margin: 0;
-                            font-weight: 500;
-                            text-transform: uppercase;
-                        }
+                        transition: all 0.3s ease;
 
                         .date-cell {
                             display: flex;
@@ -274,12 +274,34 @@
                                 color: $text-color-light;
                                 font-size: 14px;
                             }
+
+                            .ant-typography {
+                                color: $text-color;
+                                font-size: 14px;
+                            }
+                        }
+
+                        .currency-symbol {
+                            color: $primary-color;
+                            font-weight: 500;
+                            font-size: 14px;
+                        }
+
+                        .ant-tag {
+                            margin: 0;
+                            padding: 4px 8px;
+                            border-radius: 4px;
+                            font-size: 12px;
+                            line-height: 1;
+                            border: none;
+                            background: rgba(24, 144, 255, 0.1);
+                            color: #1677ff;
                         }
                     }
 
                     &:hover {
-                        td {
-                            background: rgba(24, 144, 255, 0.05);
+                        >td {
+                            background: rgba(24, 144, 255, 0.02);
                         }
                     }
                 }
@@ -458,33 +480,135 @@
     }
 }
 
-// Responsive styles
+// Search Popover Styles
+.search-popover {
+    .ant-popover-inner {
+        padding: 0;
+    }
+
+    .ant-popover-inner-content {
+        padding: 0;
+    }
+
+    .search-popup {
+        width: 280px;
+        padding: 12px;
+
+        .search-input {
+            .ant-input-affix-wrapper {
+                border-radius: 6px;
+                height: 38px;
+                border: 1px solid #e6e6e6;
+                transition: all 0.3s ease;
+
+                &:hover,
+                &:focus {
+                    border-color: #1677ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+
+                .anticon {
+                    color: #999;
+                }
+
+                input {
+                    font-size: 14px;
+
+                    &::placeholder {
+                        color: #999;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-popup {
+            width: 260px;
+            padding: 10px;
+
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 34px;
+
+                    input {
+                        font-size: 13px;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 480px) {
+        .search-popup {
+            width: 240px;
+            padding: 8px;
+
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 32px;
+
+                    input {
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Hide search popover on desktop
+@media (min-width: 769px) {
+    .search-popover {
+        display: none;
+    }
+}
+
+// Mobile Responsive Styles
 @media (max-width: 768px) {
     .currencies-page {
+        padding: 16px;
+
         .page-header {
-            flex-direction: column;
-            padding: 24px;
-            gap: 20px;
+            flex-direction: row;
+            padding: 20px;
+            gap: 16px;
 
             .page-title {
-                text-align: center;
+                // text-align: center;
                 width: 100%;
+
+                h2 {
+                    font-size: 24px;
+                }
+
+                .ant-typography-secondary {
+                    font-size: 14px;
+                }
             }
 
             .header-actions-wrapper {
                 width: 100%;
 
                 .header-actions {
-                    flex-direction: column;
-                    gap: 16px;
+                    justify-content: center;
+                }
+            }
+        }
 
-                    .search-input {
-                        max-width: 100%;
+        .currencies-table-card {
+            .ant-table {
+                .ant-table-thead {
+                    >tr>th {
+                        padding: 10px 12px;
+                        font-size: 13px;
                     }
+                }
 
-                    .action-buttons {
-                        width: 100%;
-                        justify-content: center;
+                .ant-table-tbody {
+                    >tr>td {
+                        padding: 12px;
+                        font-size: 13px;
                     }
                 }
             }

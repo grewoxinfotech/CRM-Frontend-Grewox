@@ -226,7 +226,12 @@ const JobCandidates = () => {
     };
 
   return (
-        <div className="job-applications-page">
+        <div className="job-applications-page" style={{
+            height: '100vh',
+            overflowY: 'auto',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#d4d4d4 #f5f5f5'
+        }}>
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -280,7 +285,12 @@ const JobCandidates = () => {
                 </div>
             </div>
 
-            <Card className="job-applications-table-card">
+            <Card className="job-applications-table-card" style={{
+                maxHeight: 'calc(100vh - 250px)',
+                overflowY: 'auto',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#d4d4d4 #f5f5f5'
+            }}>
                 <JobCandidateList
                     applications={filteredApplications}
                     loading={isLoading}

@@ -86,8 +86,17 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
       limit: 100,
     });
 
-  const { data: branchesData } = useGetAllBranchesQuery();
-  const { data: departmentsData } = useGetAllDepartmentsQuery();
+  const { data: branchesData } = useGetAllBranchesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+  const { data: departmentsData } = useGetAllDepartmentsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+
   const { data: designationsData } = useGetAllDesignationsQuery();
 
     // Get default currency and phone code
@@ -113,7 +122,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
   const departments = React.useMemo(() => {
     if (!departmentsData) return [];
     if (Array.isArray(departmentsData)) return departmentsData;
-    if (Array.isArray(departmentsData)) return departmentsData;
+    if (Array.isArray(departmentsData.data)) return departmentsData.data;
     return [];
   }, [departmentsData]);
 
@@ -121,7 +130,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
   const designations = React.useMemo(() => {
     if (!designationsData) return [];
     if (Array.isArray(designationsData)) return designationsData;
-    if (Array.isArray(designationsData)) return designationsData;
+    if (Array.isArray(designationsData.data)) return designationsData.data;
     return [];
   }, [designationsData]);
 

@@ -63,13 +63,17 @@
 
     .task-calendar-content {
         display: grid;
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 1fr 2fr;
         gap: 24px;
 
         .upcoming-tasks {
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+            width: 100%;
+            min-width: 0;
+            max-width: 100vw;
+            margin: 0;
 
             .section-header {
                 margin-bottom: 16px;
@@ -83,70 +87,138 @@
             }
 
             .task-cards {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
                 padding: 8px;
+                
+                .show-more-button {
+                    grid-column: 1 / -1;
+                    margin-top: 8px;
+                    color: #1890ff;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    padding: 12px;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    background: #f0f7ff;
+                    border: 1px solid #91caff;
+
+                    &:hover {
+                        background: #e6f7ff;
+                        transform: translateY(-1px);
+                        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+                    }
+
+                    svg {
+                        font-size: 16px;
+                    }
+                }
             }
 
             .task-card {
-                display: flex;
-                align-items: center;
-                padding: 16px;
                 background: white;
-                border-radius: 8px;
-                border-left: 4px solid #1890ff;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                border-radius: 12px;
                 transition: all 0.3s ease;
+                border: 1px solid #e5e7eb;
+                position: relative;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                min-width: 0;
+                
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 4px;
+                    height: 100%;
+                    background: linear-gradient(to bottom, #1890ff, #096dd9);
+                    border-radius: 4px 0 0 4px;
+                }
 
                 &:hover {
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
                 }
 
                 .card-content {
-                    flex: 1;
+                    padding: 16px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    gap: 16px;
 
                     .task-info {
                         flex: 1;
 
                         .task-name {
                             font-size: 16px;
-                            font-weight: 500;
-                            color: #2c3e50;
-                            margin-bottom: 4px;
+                            font-weight: 600;
+                            color: #1f2937;
+                            margin-bottom: 12px;
+                            position: relative;
+                            display: inline-block;
+
+                            &::after {
+                                content: '';
+                                position: absolute;
+                                bottom: -4px;
+                                left: 0;
+                                width: 100%;
+                                height: 2px;
+                                background: linear-gradient(to right, #1890ff, transparent);
+                                border-radius: 2px;
+                            }
                         }
 
                         .task-datetime {
-                            font-size: 13px;
-                            color: #666;
-                            line-height: 1.5;
+                            display: flex;
+                            align-items: center;
+                            gap: 16px;
+                            flex-wrap: wrap;
+
+                            .date, .time {
+                                color: #4b5563;
+                                font-size: 14px;
+                                display: flex;
+                                align-items: center;
+                                padding: 4px 12px;
+                                background: #f8fafc;
+                                border-radius: 20px;
+                                border: 1px solid #e5e7eb;
+                                transition: all 0.3s ease;
+
+                                &:hover {
+                                    background: #f0f7ff;
+                                    border-color: #91caff;
+                                }
+                            }
                         }
                     }
 
                     .delete-button {
-                        width: 32px;
-                        height: 32px;
-                        padding: 0;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        border-radius: 6px;
+                        opacity: 0;
+                        transition: all 0.3s ease;
+                        background: #fff1f0;
+                        border: 1px solid #ffccc7;
+                        border-radius: 8px;
+                        padding: 8px;
                         color: #ff4d4f;
-                        background: transparent;
-                        border: 1px solid #ff4d4f;
 
                         &:hover {
-                            background: #ff4d4f;
-                            color: white;
+                            background: #ffccc7;
+                            color: #cf1322;
                         }
+                    }
 
-                        svg {
-                            width: 16px;
-                            height: 16px;
+                    &:hover {
+                        .delete-button {
+                            opacity: 1;
                         }
                     }
                 }
@@ -363,8 +435,31 @@
 @media (max-width: 1200px) {
     .task-calendar-page {
         .task-calendar-content {
-            grid-template-columns: 1fr;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 16px;
+            width: 100%;
+            max-width: 100vw;
         }
+        .upcoming-tasks,
+        .calendar-card {
+            width: 100% !important;
+            min-width: 0;
+            max-width: 100vw;
+            margin: 0 auto;
+        }
+    }
+}
+
+@media (min-width: 576px) and (max-width: 1200px) {
+    .task-cards {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 1000px) {
+    .task-cards {
+        grid-template-columns: 1fr !important;
     }
 }
 
@@ -374,25 +469,60 @@
 
         .page-header {
             padding: 16px;
+            margin-bottom: 16px;
         }
 
-        .calendar-card {
-            .ant-picker-calendar {
-                .ant-picker-calendar-header {
-                    flex-wrap: wrap;
-                    gap: 12px;
-                    padding: 16px;
+        .task-calendar-content {
+            gap: 16px;
 
-                    .ant-select {
-                        flex: 1;
-                        min-width: 140px;
-                    }
+            .upcoming-tasks {
+                .task-cards {
+                    .task-card {
+                        .card-content {
+                            padding: 12px;
 
-                    .ant-radio-group {
-                        width: 100%;
-                        justify-content: center;
+                            .task-info {
+                                .task-name {
+                                    font-size: 14px;
+                                }
+                                .task-datetime {
+                                    gap: 12px;
+                                    .date, .time {
+                                        font-size: 12px;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+            }
+        }
+    }
+}
+
+@media (max-width: 550px) {
+    .task-calendar-page {
+        .task-calendar-content {
+            gap: 4px !important;
+        }
+        .upcoming-tasks,
+        .calendar-card {
+            padding: 2px !important;
+            border-radius: 6px !important;
+        }
+        .task-card {
+            padding: 2px 4px !important;
+            font-size: 11px !important;
+            .task-info {
+                .task-name {
+                    font-size: 11px !important;
+                }
+            }
+        }
+        .page-header {
+            padding: 6px !important;
+            .page-title h2 {
+                font-size: 16px !important;
             }
         }
     }
@@ -494,4 +624,93 @@
 // Ensure proper z-index
 .ant-select-dropdown {
     z-index: 1050 !important;
+}
+
+@media (max-width: 587px) {
+  .calendar-card {
+    .calendar {
+      .task-cell {
+        display: none !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .calendar-card {
+    .calendar {
+      .ant-picker-content th,
+      .ant-picker-content td {
+        min-width: 12px !important;
+        min-height: 12px !important;
+        height: 14px !important;
+        width: 14px !important;
+        box-sizing: border-box;
+      }
+      .task-cell {
+        min-height: 10px !important;
+        height: 14px !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .calendar-card {
+    .calendar {
+      .ant-picker-calendar-header {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        padding: 8px 0 !important;
+
+        .ant-picker-calendar-year-select,
+        .ant-picker-calendar-month-select,
+        .ant-picker-calendar-mode-switch {
+          min-width: 60px !important;
+          font-size: 13px !important;
+          height: 32px !important;
+          padding: 0 8px !important;
+        }
+        .ant-picker-calendar-mode-switch {
+          margin-left: 0 !important;
+        }
+      }
+    }
+  }
+}
+
+// Add these styles for CreateTaskCalendar modal
+.pro-modal {
+  .modal-header {
+    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+    padding: 24px;
+    color: #ffffff;
+    position: relative;
+  }
+
+  .ant-form {
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+
+      @media (max-width: 773px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .full-width {
+      grid-column: span 2;
+    }
+
+    .task-type-field,
+    .task-time-field {
+      @media (max-width: 773px) {
+        grid-column: span 2;
+      }
+    }
+  }
 }

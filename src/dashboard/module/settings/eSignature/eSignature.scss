@@ -522,6 +522,30 @@
   }
 }
 
+@media screen and (max-width: 768px) {
+    .responsive-title {
+        font-size: 20px !important;
+    }
+
+    .responsive-subtitle {
+        font-size: 12px !important;
+    }
+
+    .add-button {
+        .button-text {
+            display: none;
+        }
+
+        .add-icon {
+            margin: 0 !important;
+        }
+
+        padding: 8px !important;
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
+
 .loading-container,
 .signatures-loading {
   display: flex;

@@ -199,14 +199,21 @@ const TicketList = ({ tickets, onEdit, onDelete, onView, loading }) => {
             columns={columns}
             dataSource={tickets}
             rowKey="id"
-            scroll={{ x: 1300 }}
+            scroll={{ 
+                x: 1300,
+                y: '' // This will make the table scrollable vertically
+            }}
             pagination={{
                 pageSize: 10,
                 showSizeChanger: true,
                 showTotal: (total, range) => 
                     `${range[0]}-${range[1]} of ${total} tickets`
             }}
-            style={{ background: '#ffffff', borderRadius: '8px' }}
+            style={{ 
+                background: '#ffffff', 
+                borderRadius: '8px',
+                overflow: 'hidden' // Ensure proper overflow handling
+            }}
         />
     );
 };

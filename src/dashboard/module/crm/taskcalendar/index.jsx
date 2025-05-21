@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Typography, Breadcrumb, Card, message, Button, Empty, Popconfirm, Tag, Badge } from 'antd';
-import { FiHome, FiCalendar, FiPlus, FiTrash2, FiTag, FiClock, FiMapPin, FiPhone } from 'react-icons/fi';
+import { Calendar, Typography, Breadcrumb, Card, message, Button, Empty, Popconfirm, Tag, Badge, Tooltip, Modal } from 'antd';
+import { FiHome, FiCalendar, FiPlus, FiTrash2, FiTag, FiClock, FiMapPin, FiPhone, FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import './taskcalender.scss';
@@ -11,11 +11,28 @@ const { Title, Text } = Typography;
 
 const defaultColor = '#1890ff';
 
+const getTypeColor = (type) => {
+    switch ((type || '').toLowerCase()) {
+        case 'task':
+            return { bg: '#e6f7ff', color: '#1890ff' };
+        case 'meeting':
+            return { bg: '#fffbe6', color: '#faad14' };
+        case 'call':
+            return { bg: '#f6ffed', color: '#52c41a' };
+        case 'reminder':
+            return { bg: '#fff0f6', color: '#eb2f96' };
+        default:
+            return { bg: '#f5f5f5', color: '#8c8c8c' };
+    }
+};
+
 const TaskCalendarPage = () => {
     const [selectedDate, setSelectedDate] = useState(dayjs());
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [tasks, setTasks] = useState([]);
     const [upcomingTasks, setUpcomingTasks] = useState([]);
+    const [showAllTasks, setShowAllTasks] = useState(false);
+    const [moreEvents, setMoreEvents] = useState({ visible: false, events: [], date: null });
 
     const { data: calendarTasks, isLoading, isError } = useGetAllTaskCalendarEventsQuery();
     const [deleteTaskCalendarEvent, { isLoading: isDeleting }] = useDeleteTaskCalendarEventMutation();
@@ -109,33 +126,49 @@ const TaskCalendarPage = () => {
     };
 
     const dateCellRender = (date) => {
-        if (!Array.isArray(tasks)) {
-            return null;
-        }
+        if (!Array.isArray(tasks)) return null;
 
         const dayTasks = tasks.filter(
             task => dayjs(task.taskDate).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
         );
 
-        return dayTasks.length > 0 ? (
+        if (dayTasks.length === 0) return null;
+
+        return (
             <div className="task-cell">
-                {dayTasks.map(task => (
-                    <div key={task.id} className="task-item">
-                        <div className="task-details">
-                            <div className="task-info">
-                                <span className="task-name">
-                                    {task.taskName}
-                                </span>
-                                <span className="task-time">
-                                    {task.taskTime}
-                                </span>
-                            </div>
-                        </div>
+                <Tooltip
+                    title={
+                        <>
+                            <div><strong>{dayTasks[0].taskName}</strong></div>
+                            <div>Time: {dayTasks[0].taskTime?.slice(0, 5)}</div>
+                        </>
+                    }
+                    placement="top"
+                >
+                    <div className="calendar-event">
+                        <div className="event-name">{dayTasks[0].taskName}</div>
+                        <div className="event-time">{dayTasks[0].taskTime?.slice(0, 5)}</div>
                     </div>
-                ))}
+                </Tooltip>
+                {dayTasks.length > 1 && (
+                    <div
+                        className="more-events-link"
+                        onClick={e => {
+                            e.stopPropagation();
+                            setMoreEvents({ visible: true, events: dayTasks, date: date.format('DD-MM-YYYY') });
+                        }}
+                        style={{ color: '#1890ff', cursor: 'pointer', fontSize: 12, marginTop: 2 }}
+                    >
+                        +{dayTasks.length - 1} more
+                    </div>
+                )}
             </div>
-        ) : null;
+        );
     };
+
+    const displayedTasks = showAllTasks 
+        ? upcomingTasks 
+        : upcomingTasks.slice(0, 2);
 
     if (isLoading) {
         return (
@@ -206,32 +239,44 @@ const TaskCalendarPage = () => {
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                             />
                         ) : (
-                            upcomingTasks.map(task => (
-                                <div key={task.id} className="task-card">
-                                    <div className="card-content">
-                                        <div className="task-info">
-                                            <div className="task-name">
-                                                {task.taskName}
-                                            </div>
-                                            <div className="task-datetime">
-                                                <div className="date">
-                                                    {dayjs(task.taskDate).format('MMM DD, YYYY')}
+                            <>
+                                {displayedTasks.map(task => (
+                                    <div key={task.id} className="task-card">
+                                        <div className="card-content">
+                                            <div className="task-info">
+                                                <div className="task-name">
+                                                    {task.taskName}
                                                 </div>
-                                                <div className="time">
-                                                    {task.taskTime}
+                                                <div className="task-datetime">
+                                                    <div className="date">
+                                                        {dayjs(task.taskDate).format('MMM DD, YYYY')}
+                                                    </div>
+                                                    <div className="time">
+                                                        {task.taskTime}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <Button
+                                                className="delete-button"
+                                                type="text"
+                                                danger
+                                                icon={<FiTrash2 size={16} />}
+                                                onClick={() => handleDeleteTask(task.id)}
+                                            />
                                         </div>
-                                        <Button
-                                            className="delete-button"
-                                            type="text"
-                                            danger
-                                            icon={<FiTrash2 size={16} />}
-                                            onClick={() => handleDeleteTask(task.id)}
-                                        />
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                                {upcomingTasks.length > 2 && (
+                                    <Button
+                                        type="text"
+                                        className="show-more-button"
+                                        onClick={() => setShowAllTasks(!showAllTasks)}
+                                        icon={showAllTasks ? <FiChevronUp /> : <FiChevronDown />}
+                                    >
+                                        {showAllTasks ? 'Show Less' : `Show ${upcomingTasks.length - 2} More`}
+                                    </Button>
+                                )}
+                            </>
                         )}
                     </div>
                 </Card>
@@ -251,6 +296,52 @@ const TaskCalendarPage = () => {
                 onSubmit={handleCreateTask}
                 selectedDate={selectedDate}
             />
+
+            <Modal
+                open={moreEvents.visible}
+                title={<span style={{ color: '#fff' }}>{`Events for ${moreEvents.date}`}</span>}
+                footer={null}
+                onCancel={() => setMoreEvents({ visible: false, events: [], date: null })}
+            >
+                {moreEvents.events.map((task, idx) => (
+                    <div
+                        key={idx}
+                        style={{
+                            marginBottom: 12,
+                            padding: 12,
+                            borderRadius: 10,
+                            background: '#f5faff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            minHeight: 48
+                        }}
+                    >
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, fontSize: 15 }}>{task.taskName}</div>
+                            {task.taskType && (
+                                <span
+                                    style={{
+                                        display: 'inline-block',
+                                        background: getTypeColor(task.taskType).bg,
+                                        color: getTypeColor(task.taskType).color,
+                                        borderRadius: 8,
+                                        fontSize: 12,
+                                        fontWeight: 500,
+                                        padding: '2px 10px',
+                                        marginTop: 4
+                                    }}
+                                >
+                                    {task.taskType}
+                                </span>
+                            )}
+                        </div>
+                        <div style={{ color: '#1890ff', fontWeight: 700, fontSize: 15, minWidth: 48, textAlign: 'right' }}>
+                            {task.taskTime?.slice(0, 5)}
+                        </div>
+                    </div>
+                ))}
+            </Modal>
         </div>
     );
 };

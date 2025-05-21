@@ -204,13 +204,7 @@ const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
           padding: "24px",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-          }}
-        >
+        <div className="form-grid">
           {/* Task Title Field */}
           <Form.Item
             name="taskName"
@@ -227,12 +221,12 @@ const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
                     return Promise.reject(
                         new Error('Task title must contain both uppercase or lowercase English letters')
                     );
-                }
-                return Promise.resolve();
+                  }
+                  return Promise.resolve();
                 }
               }
             ]}
-            style={{ gridColumn: "span 2" }}
+            className="full-width"
           >
             <Input
               placeholder="Enter task title"
@@ -255,6 +249,7 @@ const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select a task type" }]}
+            className="task-type-field"
           >
             <Select
               placeholder="Select task type"
@@ -294,6 +289,7 @@ const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
               </span>
             }
             rules={[{ required: true, message: "Please select task time" }]}
+            className="task-time-field"
           >
             <TimePicker
               size="large"
@@ -319,7 +315,7 @@ const CreateTaskCalendar = ({ open, onCancel, selectedDate }) => {
             rules={[
               { required: true, message: "Please enter task description" },
             ]}
-            style={{ gridColumn: "span 2" }}
+            className="full-width"
           >
             <TextArea
               placeholder="Enter task description"

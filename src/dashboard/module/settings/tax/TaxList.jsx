@@ -42,6 +42,7 @@ const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
     {
       title: "Tax Name",
       dataIndex: "gstName",
+      width: 150,
       key: "gstName",
       filterDropdown: ({
         setSelectedKeys,
@@ -85,6 +86,7 @@ const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
     {
       title: "Tax Percentage",
       dataIndex: "gstPercentage",
+      width: 300,
       key: "gstPercentage",
       sorter: (a, b) => a.gstPercentage - b.gstPercentage,
       render: (percentage) => `${percentage}%`,
@@ -92,43 +94,63 @@ const TaxList = ({ taxes, loading, onEdit, onDelete, onView, searchText }) => {
     {
       title: "Actions",
       key: "actions",
-      width: 80,
+      width: 50,
+      fixed: 'right',
       render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: getActionItems(record),
-          }}
-          trigger={["click"]}
-          placement="bottomRight"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical className="text-lg" />}
-            className="action-button"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </Dropdown>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: "edit",
+                  icon: <FiEdit2 style={{ fontSize: '14px', color: '#1890ff' }} />,
+                  label: "Edit Tax",
+                  onClick: () => onEdit?.(record),
+                },
+                {
+                  key: "delete",
+                  icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
+                  label: "Delete Tax",
+                  danger: true,
+                  onClick: () => onDelete?.(record),
+                },
+              ],
+            }}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical size={16} />}
+              className="action-button"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Dropdown>
+        </div>
       ),
     },
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={taxes}
-      // loading={loading}
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: false,
-        showTotal: (total) => `Total ${total} taxes`,
-      }}
-      className="custom-table"
-      style={{
-        background: "#ffffff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-      }}
-    />
+    <div className="table-scroll-wrapper">
+      <Table
+        columns={columns}
+        dataSource={taxes}
+        // loading={loading}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: false,
+          showTotal: (total) => `Total ${total} taxes`,
+        }}
+        className="custom-table"
+        style={{
+          background: "#ffffff",
+          borderRadius: "8px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+        }}
+        scroll={{ x: 1200, y: ''}}
+      />
+    </div>
   );
 };
 

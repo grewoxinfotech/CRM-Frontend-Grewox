@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Table, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip, Space
+    Dropdown, Menu, Row, Col, Breadcrumb, message, Tag, Tooltip, Space,Popover
 } from 'antd';
 import {
     FiSearch, FiChevronDown,
@@ -26,6 +26,8 @@ const Countries = () => {
     const [viewMode, setViewMode] = useState('table');
     const [searchText, setSearchText] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [showMobileSearch, setShowMobileSearch] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const { data: countries = [], error, isLoading } = useGetAllCountriesQuery({
         page: currentPage,
@@ -128,6 +130,20 @@ const Countries = () => {
         });
         doc.save(`${filename}.pdf`);
     };
+
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search countries..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
 
     const columns = [
         {
@@ -260,27 +276,16 @@ const Countries = () => {
                 <Row justify="center" className="header-actions-wrapper">
                     <Col xs={24} sm={24} md={20} lg={16} xl={14}>
                         <div className="header-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                placeholder="Search countries..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Button.Group className="view-toggle">
-                                    <Button
-                                        type={viewMode === 'table' ? 'primary' : 'default'}
-                                        icon={<FiList size={16} />}
-                                        onClick={() => setViewMode('table')}
-                                    />
-                                    <Button
-                                        type={viewMode === 'card' ? 'primary' : 'default'}
-                                        icon={<FiGrid size={16} />}
-                                        onClick={() => setViewMode('card')}
-                                    />
-                                </Button.Group>
+                            {/* Desktop: show full input and export button */}
+                            <div className="desktop-actions">
+                                <Input
+                                    prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                                    placeholder="Search countries..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
                                 <Dropdown overlay={exportMenu} trigger={['click']}>
                                     <Button className="export-button">
                                         <FiDownload size={16} />
@@ -289,25 +294,48 @@ const Countries = () => {
                                     </Button>
                                 </Dropdown>
                             </div>
+                            {/* Mobile: show only icons */}
+                            <div className="mobile-actions">
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    visible={isSearchVisible}                                                                       
+                                    onVisibleChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    overlayClassName="search-popover"
+                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                                >
+                                    <Button
+                                        className="search-icon-btn"
+                                        icon={<FiSearch size={20} />}
+                                    />
+                                </Popover>
+                                <Dropdown overlay={exportMenu} trigger={['click']}>
+                                    <Button className="export-icon-btn" icon={<FiDownload size={20} />} />
+                                </Dropdown>
+                            </div>
                         </div>
                     </Col>
                 </Row>
             </div>
 
             <Card className="countries-table-card">
-                <Table
-                    dataSource={filteredCountries}
-                    columns={columns}
-                    loading={isLoading}
-                    onChange={handleTableChange}
-                    pagination={{
-                        current: currentPage,
-                        pageSize: 10,
-                        total: countries.length,
-                        showSizeChanger: false
-                    }}
-                    rowKey="id"
-                />
+                <div className="table-scroll-wrapper">
+                    <Table
+                        dataSource={filteredCountries}
+                        columns={columns}
+                        loading={isLoading}
+                        onChange={handleTableChange}
+                        pagination={{
+                            current: currentPage,
+                            pageSize: 10,
+                            total: countries.length,
+                            showSizeChanger: false
+                        }}
+                        rowKey="id"
+                        scroll={{ x:1000,y:'' }}
+                    />
+                </div>
             </Card>
         </div>
     );

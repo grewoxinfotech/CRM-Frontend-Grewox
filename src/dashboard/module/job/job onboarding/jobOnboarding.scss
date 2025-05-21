@@ -9,9 +9,38 @@
     }
 }
 
+// Custom scrollbar mixin
+@mixin custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+        
+        &:hover {
+            background: #a8a8a8;
+        }
+    }
+
+    // Firefox scrollbar
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
 .job-onboarding-page {
     padding: 24px;
     background: $background-color;
+    @include custom-scrollbar;
+    height: 100vh;
+    overflow-y: auto;
 
     .page-breadcrumb {
         margin-bottom: 16px;
@@ -177,17 +206,25 @@
 
     .job-onboarding-table-card {
         @include hover-shadow;
+        @include custom-scrollbar;
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+        max-height: calc(100vh - 250px);
+        overflow-y: auto;
 
         .ant-card-body {
             padding: 0;
         }
 
         .ant-table-wrapper {
+            padding: 24px 24px 24px 24px;
             .ant-table {
                 background: transparent;
+
+                .ant-table-body {
+                    @include custom-scrollbar;
+                }
 
                 .ant-table-thead > tr > th {
                     background: #fafafa;
@@ -486,3 +523,43 @@
         }
     }
 } 
+
+@media (max-width: 768px) {
+    .job-onboarding-list-container {
+        .ant-table-pagination {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            visibility: visible !important;
+            .ant-pagination-options {
+                display: flex !important;
+                align-items: center;
+                margin-bottom: 10px;
+                .ant-select-selection-item {
+                    width: auto !important;
+                    min-width: 40px;
+                    height: 32px;
+                    max-width: 100%;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-align: center;
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+            }
+        }
+    }
+}
+@media (min-width: 768px) {
+    .job-onboarding-list-container {
+        .ant-table-pagination {
+            .ant-pagination-options {
+                .ant-select-selection-item {
+                    width: 100%;
+                    height: 32px;
+                    color: inherit;
+                }
+            }
+        }
+    }
+}

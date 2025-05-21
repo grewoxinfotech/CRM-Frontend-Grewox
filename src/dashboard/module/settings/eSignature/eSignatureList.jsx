@@ -138,6 +138,7 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             title: 'Actions',
             key: 'actions',
             width: 80,
+            fixed: 'right',
             render: (_, record) => {
                 const items = [
                     {
@@ -176,18 +177,21 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
 
     return (
         <div className="signature-list">
-            <Table
-                columns={columns}
-                dataSource={signatures}
-                rowKey="id"
-                pagination={{
-                    pageSize: 5,
-                    showSizeChanger: false,
-                    showQuickJumper: false
-                }}
-                className="signatures-table"
-                loading={loading}
-            />
+            <div className="table-scroll-wrapper">
+                <Table
+                    columns={columns}
+                    dataSource={signatures}
+                    rowKey="id"
+                    pagination={{
+                        pageSize: 5,
+                        showSizeChanger: false,
+                        showQuickJumper: false
+                    }}
+                    className="signatures-table"
+                    loading={loading}
+                    scroll={{ x: 1000, y: ''}}
+                />
+            </div>
         </div>
     );
 };
