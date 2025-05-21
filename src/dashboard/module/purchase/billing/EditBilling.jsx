@@ -63,7 +63,6 @@ const EditBilling = ({ open, onCancel, initialData }) => {
   const { data: countries = [], loading: countriesLoading } =
     useGetAllCountriesQuery();
 
-  console.log("initialData", initialData);
 
   // Add this to fetch vendors
   const {
@@ -1381,7 +1380,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               </Form.Item>
                             </td>
                             <td>
-                              <Form.Item {...field} name={[field.name, "taxId"]} style={{marginTop:"-11px"}}>
+                              <Form.Item {...field} name={[field.name, "taxId"]} style={{ marginTop: "-11px" }}>
                                 <Select
                                   placeholder="Select Tax"
                                   loading={taxesLoading}
@@ -1435,7 +1434,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               </Form.Item>
                             </td>
                             <td>
-                              <div className="amount-fieldss" style={{marginTop:"-2px"}}>
+                              <div className="amount-fieldss" style={{ marginTop: "-2px" }}>
                                 <span className="currency-symbolss">
                                   {selectedCurrency}
                                 </span>

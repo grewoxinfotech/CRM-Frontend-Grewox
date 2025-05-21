@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -25,23 +25,28 @@ import { useGetVendorsQuery } from "./services/billingApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import ViewBilling from "./ViewBilling";
 import dayjs from "dayjs";
-import { useGetBillingsQuery, useDeleteBillingMutation } from './services/billingApi';
 
 const { Text } = Typography;
 
-const BillingList = ({ onEdit, onDelete, onView, searchText, loading }) => {
+const BillingList = ({
+  onEdit,
+  onDelete,
+  onView,
+  searchText,
+  loading,
+  billings = [],
+  pagination,
+  onChange
+}) => {
   // Fetch vendors data
   const { data: vendorsData } = useGetVendorsQuery();
-
   const { data: currenciesData } = useGetAllCurrenciesQuery({});
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const { data, isError } = useGetBillingsQuery();
-  const [deleteBilling] = useDeleteBillingMutation();
-
-  const billings = data?.data || [];
+  const [filteredInfo, setFilteredInfo] = useState({});
+  const [sortedInfo, setSortedInfo] = useState({});
 
   // Create a map of vendor IDs to vendor names
   const vendorMap = React.useMemo(() => {
@@ -93,17 +98,57 @@ const BillingList = ({ onEdit, onDelete, onView, searchText, loading }) => {
     return <div style={{ display: 'flex', gap: '8px' }}>{tags}</div>;
   };
 
-  const handleBulkDelete = () => {
-    const idsToDelete = selectedRowKeys.map(key => {
-      const bill = billings.find(bill => bill._id === key || bill.id === key);
-      return bill?.id || bill?._id;
-    }).filter(id => id); // Remove any undefined/null values
+  // Clear selections when billings data changes
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [billings]);
 
-    if (idsToDelete.length > 0) {
-      onDelete(idsToDelete);
-      setSelectedRowKeys([]);
+  const handleChange = (newPagination, filters, sorter) => {
+    setFilteredInfo(filters);
+    setSortedInfo(sorter);
+    if (pagination?.onChange) {
+      pagination.onChange(newPagination, filters, sorter);
     }
   };
+
+  const clearFilters = () => {
+    setFilteredInfo({});
+  };
+
+  const clearAll = () => {
+    setFilteredInfo({});
+    setSortedInfo({});
+  };
+
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    await onDelete(selectedRowKeys);
+    setSelectedRowKeys([]); // Clear selections after delete
+  };
+
+  // Bulk actions component
+  const BulkActions = () => (
+    <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+      {selectedRowKeys.length > 0 && (
+        <Button
+          type="primary"
+          danger
+          icon={<FiTrash2 size={16} />}
+          onClick={handleBulkDelete}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
+    </div>
+  );
 
   const getActionItems = (record) => [
     {
@@ -132,6 +177,32 @@ const BillingList = ({ onEdit, onDelete, onView, searchText, loading }) => {
       title: "Bill Number",
       dataIndex: "billNumber",
       key: "billNumber",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search bill number"
+            value={selectedKeys[0]}
+            onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+            onPressEnter={() => confirm()}
+            style={{ width: 188, marginBottom: 8, display: 'block' }}
+          />
+          <Space>
+            <Button
+              type="primary"
+              onClick={() => confirm()}
+              size="small"
+              style={{ width: 90 }}
+            >
+              Filter
+            </Button>
+            <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+              Reset
+            </Button>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record.billNumber?.toLowerCase().includes(value.toLowerCase()),
       render: (billNumber) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -226,22 +297,6 @@ const BillingList = ({ onEdit, onDelete, onView, searchText, loading }) => {
     },
   ];
 
-  // Filter billings based on search text
-  const filteredBillings = billings.filter(billing =>
-    billing.billNumber?.toLowerCase().includes(searchText?.toLowerCase()) ||
-    billing.discription?.toLowerCase().includes(searchText?.toLowerCase()) ||
-    billing.status?.toLowerCase().includes(searchText?.toLowerCase()) ||
-    billing.bill_status?.toLowerCase().includes(searchText?.toLowerCase())
-  );
-
-  // Row selection config
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    }
-  };
-
   const handleViewBilling = (record) => {
     setSelectedBill(record);
     setIsModalVisible(true);
@@ -249,33 +304,22 @@ const BillingList = ({ onEdit, onDelete, onView, searchText, loading }) => {
 
   return (
     <div className="billing-list-container">
-      {selectedRowKeys.length > 0 && (
-        <div className="bulk-actions">
-          <Button
-            type="primary"
-            danger
-            icon={<FiTrash2 />}
-            onClick={handleBulkDelete}
-          >
-            Delete Selected ({selectedRowKeys.length})
-          </Button>
-        </div>
-      )}
+      <BulkActions />
       <Table
         className="custom-table"
         columns={columns}
-        dataSource={filteredBillings}
+        dataSource={billings}
         rowSelection={rowSelection}
-        rowKey={record => record.id || record._id}
+        rowKey="id"
         loading={loading}
-        scroll={{ x: 1200 }}
-        pagination={{
-          defaultPageSize: 10,
+        onChange={handleChange}
+        pagination={pagination || {
+          pageSize: 10,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} bills`,
+          showTotal: (total) => `Total ${total} items`,
         }}
         locale={{
-          emptyText: ' ',
+          emptyText: 'No billings found',
         }}
       />
 

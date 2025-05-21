@@ -37,9 +37,14 @@ const Revenue = () => {
   const [selectedRevenue, setSelectedRevenue] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const { data: revenueData, isLoading: isRevenueLoading } = useGetRevenueQuery();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const revdata = revenueData || [];
+  const { data: revenueData, isLoading: isRevenueLoading } = useGetRevenueQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText
+  });
 
   const handleCreate = () => {
     setSelectedRevenue(null);
@@ -91,14 +96,14 @@ const Revenue = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = revdata.map((revenue) => ({
+      const data = revenueData?.data?.map((revenue) => ({
         Amount: revenue.amount,
         Date: revenue.date,
         "Payment Method": revenue.payment_method,
         Category: revenue.category,
         Description: revenue.description,
         Status: revenue.status,
-      }));
+      })) || [];
 
       switch (type) {
         case "csv":
@@ -187,6 +192,20 @@ const Revenue = () => {
     </Menu>
   );
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="customer-page">
       <div className="page-breadcrumb">
@@ -217,7 +236,7 @@ const Revenue = () => {
               prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search revenue entries..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
               className="search-input"
               style={{
@@ -238,32 +257,27 @@ const Revenue = () => {
                 <FiChevronDown size={16} />
               </Button>
             </Dropdown>
-            {/* <Button
-              type="primary"
-              icon={<FiPlus size={16} />}
-              onClick={handleCreate}
-              className="add-button"
-            >
-              Add Revenue
-            </Button> */}
           </div>
         </div>
       </div>
 
       <Card className="customer-table-card">
-        {isRevenueLoading ? (
-          <div style={{ textAlign: 'center', padding: '50px' }}>
-            <Spin size="large" />
-          </div>
-        ) : (
-          <RevenueList
-            revdata={revdata}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-            searchText={searchText}
-          />
-        )}
+        <RevenueList
+          data={revenueData?.data || []}
+          loading={isRevenueLoading || loading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onView={handleView}
+          searchText={searchText}
+          pagination={{
+            current: currentPage,
+            pageSize,
+            total: revenueData?.pagination?.total || 0,
+            totalPages: revenueData?.pagination?.totalPages || 0,
+            onChange: handlePageChange,
+            onSizeChange: handlePageSizeChange
+          }}
+        />
       </Card>
 
       <CreateRevenue

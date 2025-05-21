@@ -7,28 +7,66 @@ export const roleApi = createApi({
     tagTypes: ['Roles'],
     endpoints: (builder) => ({
         getRoles: builder.query({
-            query: () => ({
+            query: (params) => ({
                 url: '/roles',
-                method: 'GET'
+                method: 'GET',
+                params: {
+                    page: params?.page || 1,
+                    pageSize: params?.pageSize || 10,
+                    search: params?.search || '',
+                    ...params
+                },
             }),
             transformResponse: (response) => {
-                const roles = Array.isArray(response) ? response : response?.data || [];
                 return {
-                    data: roles,
-                    total: roles.length,
-                    success: true
+                    message: {
+                        data: response?.message?.data || [],
+                        pagination: response?.message?.pagination || {
+                            total: 0,
+                            current: 1,
+                            pageSize: 10,
+                            totalPages: 0
+                        }
+                    }
                 };
             },
-            transformErrorResponse: (response) => ({
-                data: [],
-                total: 0,
-                success: false,
-                error: response.data?.message || 'Failed to fetch roles'
-            }),
-            providesTags: ['Roles']
+            providesTags: (result = []) => [
+                'Roles',
+                ...(result?.message?.data || []).map(({ id }) => ({ type: 'Roles', id }))
+            ],
         }),
 
-       
+        getAllRoles: builder.query({
+            query: (params) => ({
+                url: '/roles',
+                method: 'GET',
+                params: {
+                    page: params?.page || 1,
+                    pageSize: params?.pageSize || 10,
+                    search: params?.search || '',
+                    ...params
+                },
+            }),
+            transformResponse: (response) => {
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {
+                    total: 0,
+                    current: 1,
+                    pageSize: 10,
+                    totalPages: 0
+                };
+
+                return {
+                    data,
+                    pagination
+                };
+            },
+            providesTags: (result = []) => [
+                'Roles',
+                ...(result?.data || []).map(({ id }) => ({ type: 'Roles', id }))
+            ],
+        }),
+
         getRole: builder.query({
             query: (id) => ({
                 url: `/roles/${id}`,
@@ -70,7 +108,7 @@ export const roleApi = createApi({
 
 export const {
     useGetRolesQuery,
-
+    useGetAllRolesQuery,
     useGetRoleQuery,
     useCreateRoleMutation,
     useUpdateRoleMutation,

@@ -18,12 +18,34 @@ import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import './branch.scss';
 
 const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
-    // RTK Query hooks
-    const { data: branchesData = [], isLoading } = useGetAllBranchesQuery();
-    const [deleteBranch] = useDeleteBranchMutation();
-    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
+
+    // RTK Query hooks
+    const { data: branchesResponse = { data: [], pagination: {} }, isLoading } = useGetAllBranchesQuery({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        search: searchText,
+        ...filters
+    });
+    const [deleteBranch] = useDeleteBranchMutation();
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
+
+    // Update pagination when response changes
+    useEffect(() => {
+        if (branchesResponse?.pagination) {
+            setPagination(prev => ({
+                ...prev,
+                total: branchesResponse.pagination.total
+            }));
+        }
+    }, [branchesResponse]);
+
     // Create a map of user IDs to user data for quick lookup
     const userMap = useMemo(() => {
         const map = {};
@@ -37,41 +59,13 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
         return map;
     }, [userData]);
 
-    // Transform branches data
-    const branches = useMemo(() => {
-        let filteredData = [];
-
-        if (!branchesData) return [];
-        if (Array.isArray(branchesData)) {
-            filteredData = branchesData;
-        } else if (Array.isArray(branchesData.data)) {
-            filteredData = branchesData.data;
-        }
-
-        // Apply filters
-        return filteredData.filter(branch => {
-            if (!branch) return false;
-
-            const branchManager = userMap[branch.branchManager] || {};
-            const managerName = branchManager?.username || 'No Manager';
-
-            const matchesSearch = !searchText || searchText.toLowerCase() === '' ||
-                (branch.branchName || '').toLowerCase().includes(searchText.toLowerCase()) ||
-                managerName.toLowerCase().includes(searchText.toLowerCase());
-
-            const matchesDesignationType = !filters.designationType ||
-                branch.designation_type === filters.designationType;
-
-            const matchesStatus = !filters.status ||
-                branch.status === filters.status;
-
-            const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(branch.created_at).isAfter(filters.dateRange[0]) &&
-                    dayjs(branch.created_at).isBefore(filters.dateRange[1]));
-
-            return matchesSearch && matchesDesignationType && matchesStatus && matchesDateRange;
-        });
-    }, [branchesData, searchText, filters, userMap]);
+    const handleTableChange = (newPagination, filters, sorter) => {
+        setPagination(prev => ({
+            ...prev,
+            current: newPagination.current,
+            pageSize: newPagination.pageSize
+        }));
+    };
 
     const handleDelete = async (recordOrIds) => {
         const isMultiple = Array.isArray(recordOrIds);
@@ -403,12 +397,12 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
     }, []);
 
     const paginationConfig = {
-        pageSize: 10,
+        ...pagination,
         showSizeChanger: true,
         showTotal: (total) => `Total ${total} items`,
         pageSizeOptions: ['10', '20', '50', '100'],
         locale: {
-            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+            items_per_page: isMobile ? '' : '/ page',
         },
     };
 
@@ -418,23 +412,19 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
             <div className='branch-list-container'>
                 <Table
                     columns={columns}
-                    dataSource={branches}
+                    dataSource={branchesResponse.data}
                     loading={isLoading}
                     rowKey="id"
                     rowSelection={rowSelection}
                     pagination={paginationConfig}
+                    onChange={handleTableChange}
                     className="custom-table"
-                    scroll={{
-                        x: 'max-content',
-                        y: 'calc(100vh - 300px)'
-                    }}
-                    size="middle"
+                    scroll={{ x: 1000, y: '' }}
                     style={{
                         background: '#ffffff',
                         borderRadius: '8px',
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
                     }}
-                    responsive={true}
                 />
             </div>
         </>

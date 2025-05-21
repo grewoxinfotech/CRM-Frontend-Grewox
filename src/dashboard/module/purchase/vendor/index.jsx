@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
     Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
@@ -32,9 +32,38 @@ const Vendor = () => {
         status: undefined,
         country: undefined
     });
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
 
-    const { data: vendors, isLoading, refetch } = useGetVendorsQuery();
+    const { data: vendors, isLoading, refetch } = useGetVendorsQuery({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        search: searchText,
+        ...filters
+    });
+
     const [deleteVendor] = useDeleteVendorMutation();
+
+    // Update pagination when data changes
+    useEffect(() => {
+        if (vendors?.pagination) {
+            setPagination(prev => ({
+                ...prev,
+                total: vendors.pagination.total
+            }));
+        }
+    }, [vendors]);
+
+    const handleTableChange = (newPagination, filters, sorter) => {
+        setPagination(prev => ({
+            ...prev,
+            current: newPagination.current,
+            pageSize: newPagination.pageSize
+        }));
+    };
 
     const handleCreate = () => {
         setSelectedVendor(null);
@@ -282,6 +311,9 @@ const Vendor = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 loading={isLoading}
+                data={vendors}
+                pagination={pagination}
+                onChange={handleTableChange}
             />
 
             <CreateVendor

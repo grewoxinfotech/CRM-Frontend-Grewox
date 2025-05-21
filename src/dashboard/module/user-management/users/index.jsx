@@ -52,7 +52,11 @@ const Users = () => {
     const [loading, setLoading] = useState(false);
     const loggedInUser = useSelector(selectCurrentUser);
     const { data: usersData, isLoading: isLoadingUsers, refetch } = useGetUsersQuery();
-    const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
+    const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: ''
+    });
     const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
     const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
     const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
@@ -69,7 +73,7 @@ const Users = () => {
                 status: user.status || 'inactive',
                 created_at: user.createdAt || '-',
                 updated_at: user.updatedAt || null,
-                role_name: rolesData?.data?.find(role => role.id === user.role_id)?.role_name || 'N/A',
+                role_name: rolesData?.message?.data?.find(role => role.id === user.role_id)?.role_name || 'N/A',
                 role_id: user.role_id,
                 created_by: user.created_by,
                 updated_by: user.updated_by,

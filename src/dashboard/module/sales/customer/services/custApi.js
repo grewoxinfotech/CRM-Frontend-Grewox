@@ -7,7 +7,35 @@ export const customerApi = createApi({
   tagTypes: ["Customers"],
   endpoints: (builder) => ({
     getCustomers: builder.query({
-      query: () => "/customers",
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '' } = params;
+        return {
+          url: "/customers",
+          params: {
+            page,
+            pageSize,
+            search
+          }
+        };
+      },
+      transformResponse: (response) => {
+        // Handle the nested response structure
+        const data = response?.message?.data || [];
+        const pagination = response?.message?.pagination || {
+          total: 0,
+          current: 1,
+          pageSize: 10,
+          totalPages: 1
+        };
+
+        return {
+          data: data.map(item => ({
+            ...item,
+            key: item.id
+          })),
+          pagination
+        };
+      },
       providesTags: ["Customers"],
     }),
     createCustomer: builder.mutation({

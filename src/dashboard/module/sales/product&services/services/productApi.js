@@ -7,7 +7,36 @@ export const productApi = createApi({
   tagTypes: ["Products"],
   endpoints: (builder) => ({
     getProducts: builder.query({
-      query: () => `/products/`,
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '', id } = params;
+        return {
+          url: `/products/`,
+          params: {
+            page,
+            pageSize,
+            search,
+            id
+          }
+        };
+      },
+      transformResponse: (response) => {
+        // Handle the nested response structure
+        const data = response?.message?.data || [];
+        const pagination = response?.message?.pagination || {
+          total: 0,
+          current: 1,
+          pageSize: 10,
+          totalPages: 1
+        };
+
+        return {
+          data: data.map(item => ({
+            ...item,
+            key: item.id
+          })),
+          pagination
+        };
+      },
       providesTags: ["Products"],
     }),
 

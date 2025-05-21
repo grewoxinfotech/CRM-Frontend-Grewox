@@ -49,16 +49,32 @@ const Task = () => {
     priority: undefined,
   });
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10
+  });
   const user = useSelector(selectCurrentUser);
   const id = user?.id;
   const [deleteTask] = useDeleteTaskMutation();
-  // Fetch tasks using RTK Query
+  // Fetch tasks using RTK Query with pagination
   const {
-    data: tasks = [],
+    data: tasksResponse = { data: [], pagination: {} },
     isLoading: tasksLoading,
     refetch,
-  } = useGetAllTasksQuery(id);
-  const tasksData = tasks?.data || [];
+  } = useGetAllTasksQuery({
+    id,
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    search: searchText,
+    ...(filters.status && { status: filters.status }),
+    ...(filters.priority && { priority: filters.priority }),
+    ...(filters.dateRange?.length === 2 && {
+      startDate: filters.dateRange[0].format('YYYY-MM-DD'),
+      endDate: filters.dateRange[1].format('YYYY-MM-DD')
+    })
+  });
+
+  const tasksData = tasksResponse.data || [];
   // console.log("Raw tasksData:", JSON.stringify(tasksData, null, 2));
 
   // Log any tasks without taskName
@@ -137,9 +153,31 @@ const Task = () => {
     });
   };
 
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page on search
+  };
+
+  const handlePaginationChange = (page, pageSize) => {
+    setPagination({ page, pageSize });
+  };
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
+    }));
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page on filter change
+  };
+
   const handleExport = async (type) => {
     try {
       setLoading(true);
+      if (!tasksData?.length) {
+        message.warning('No data available to export');
+        return;
+      }
+
       const data = tasksData.map((task) => ({
         "Task Name": task.taskName,
         Category: task.category,
@@ -148,7 +186,7 @@ const Task = () => {
         "Assigned To": task.assignedTo,
         "Start Date": moment(task.startDate).format("YYYY-MM-DD"),
         "Due Date": moment(task.dueDate).format("YYYY-MM-DD"),
-        "Created Date": moment(task.created_at).format("YYYY-MM-DD"),
+        "Created Date": moment(task.createdAt).format("YYYY-MM-DD"),
       }));
 
       switch (type) {
@@ -239,10 +277,9 @@ const Task = () => {
   );
 
   const handleDateRangeChange = (dates) => {
-    setFilters((prev) => ({
-      ...prev,
-      dateRange: dates ? [dates[0].startOf("day"), dates[1].endOf("day")] : [],
-    }));
+    handleFilterChange({
+      dateRange: dates ? [dates[0].startOf("day"), dates[1].endOf("day")] : []
+    });
   };
 
   const mobileActionMenu = (
@@ -297,7 +334,7 @@ const Task = () => {
         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
         placeholder="Search tasks..."
         allowClear
-        onChange={(e) => setSearchText(e.target.value)}
+        onChange={(e) => handleSearchChange(e.target.value)}
         value={searchText}
         className="search-input"
         autoFocus
@@ -372,7 +409,7 @@ const Task = () => {
                 prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
                 placeholder="Search tasks..."
                 allowClear
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 value={searchText}
                 className="search-input"
               />
@@ -393,20 +430,6 @@ const Task = () => {
                 icon={<FiPlus size={16} />}
                 onClick={handleCreate}
                 className="add-button"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                  border: "none",
-                  boxShadow: "0 2px 8px rgba(24, 144, 255, 0.15)",
-                  height: "40px",
-                  padding: "0 24px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 500,
-                }}
               >
                 Add Task
               </Button>
@@ -425,6 +448,9 @@ const Task = () => {
           searchText={searchText}
           filters={filters}
           users={users}
+          pagination={tasksResponse.pagination}
+          onPaginationChange={handlePaginationChange}
+          onFilterChange={handleFilterChange}
         />
       </Card>
 

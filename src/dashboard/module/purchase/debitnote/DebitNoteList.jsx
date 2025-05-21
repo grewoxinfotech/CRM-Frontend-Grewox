@@ -36,9 +36,24 @@ const getCompanyId = (state) => {
   return user?.companyId || user?.company_id || user?.id;
 };
 
-const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
+const DebitNoteList = ({
+  onEdit,
+  onDelete,
+  onView,
+  searchText,
+  loading,
+  debitNotes = [],
+  pagination,
+  onChange
+}) => {
   const companyId = useSelector(getCompanyId);
-  const { data: billings } = useGetBillingsQuery(companyId);
+  const { data: billings } = useGetBillingsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  }, {
+    skip: !companyId
+  });
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -54,7 +69,7 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
 
   const handleBulkDelete = () => {
     const idsToDelete = selectedRowKeys.map(key => {
-      const debitNote = data?.data?.find(note => note._id === key || note.id === key);
+      const debitNote = debitNotes?.find(note => note._id === key || note.id === key);
       return debitNote?.id || debitNote?._id;
     }).filter(id => id); // Remove any undefined/null values
 
@@ -176,16 +191,17 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
     },
   ];
 
-  // Filter debit notes based on search text
-  const filteredDebitNotes =
-    data?.data?.filter(
-      (note) =>
-        getBillNumber(note.bill)
-          ?.toLowerCase()
-          .includes(searchText?.toLowerCase()) ||
-        note.description?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        note.amount?.toString().includes(searchText)
-    ) || [];
+  // Remove local filtering since it's now handled by the server
+  const filteredDebitNotes = debitNotes;
+
+  // Update pagination configuration
+  const paginationConfig = {
+    ...pagination,
+    showSizeChanger: true,
+    showQuickJumper: true,
+    showTotal: (total) => `Total ${total} debit notes`,
+    pageSizeOptions: ["10", "20", "50", "100"]
+  };
 
   // Row selection config
   const rowSelection = {
@@ -215,14 +231,12 @@ const DebitNoteList = ({ onEdit, onDelete, onView, data, searchText }) => {
         dataSource={filteredDebitNotes}
         rowSelection={rowSelection}
         rowKey={record => record.id || record._id}
+        loading={loading}
         scroll={{ x: 1200 }}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} debit notes`,
-        }}
+        pagination={paginationConfig}
+        onChange={onChange}
         locale={{
-          emptyText: ' ',
+          emptyText: 'No debit notes found',
         }}
       />
     </div>

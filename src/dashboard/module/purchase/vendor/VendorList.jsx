@@ -8,11 +8,20 @@ import EditVendor from './EditVendor';
 
 const { Text } = Typography;
 
-const VendorList = ({ onEdit, onDelete, onView, searchText, loading }) => {
+const VendorList = ({
+    onEdit,
+    onDelete,
+    onView,
+    searchText,
+    loading,
+    data,
+    pagination,
+    onChange
+}) => {
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [selectedVendorId, setSelectedVendorId] = useState(null);
     const [selectedVendor, setSelectedVendor] = useState(null);
-    const { data, isError } = useGetVendorsQuery();
+    const { isError } = useGetVendorsQuery();
     const [deleteVendor] = useDeleteVendorMutation();
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
@@ -271,16 +280,17 @@ const VendorList = ({ onEdit, onDelete, onView, searchText, loading }) => {
         },
     ];
 
-    // Filter vendors based on search text
-    const filteredVendors = vendors.filter(vendor =>
-        vendor.name?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        vendor.contact?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        vendor.email?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        vendor.address?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        vendor.city?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        vendor.state?.toLowerCase().includes(searchText?.toLowerCase()) ||
-        vendor.country?.toLowerCase().includes(searchText?.toLowerCase())
-    );
+    // Remove local filtering since it's now handled by the server
+    const filteredVendors = vendors;
+
+    // Update pagination configuration
+    const paginationConfig = {
+        ...pagination,
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total) => `Total ${total} vendors`,
+        pageSizeOptions: ["10", "20", "50", "100"]
+    };
 
     // Row selection config
     const rowSelection = {
@@ -311,11 +321,8 @@ const VendorList = ({ onEdit, onDelete, onView, searchText, loading }) => {
                 rowKey="id"
                 loading={loading}
                 scroll={{ x: 1200 }}
-                pagination={{
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} vendors`,
-                }}
+                pagination={paginationConfig}
+                onChange={onChange}
                 style={{
                     background: '#ffffff',
                     borderRadius: '8px',

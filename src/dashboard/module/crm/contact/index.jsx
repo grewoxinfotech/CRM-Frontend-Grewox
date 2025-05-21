@@ -40,11 +40,28 @@ const Contact = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [deleteContact, { isLoading: isDeleteLoading }] = useDeleteContactMutation();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const { data: contactsResponse, isLoading, error } = useGetContactsQuery();
+  const { data: contactsResponse, isLoading } = useGetContactsQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText
+  });
+
   const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+  const [deleteContact] = useDeleteContactMutation();
   const loggedInUser = useSelector(selectCurrentUser);
+
+  const handleTableChange = (pagination, filters, sorter) => {
+    setCurrentPage(pagination.current);
+    setPageSize(pagination.pageSize);
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setCurrentPage(1); // Reset to first page on new search
+  };
 
   const handleCreate = () => {
     setSelectedContact(null);
@@ -76,17 +93,23 @@ const Contact = () => {
       onOk: async () => {
         try {
           if (isMultiple) {
-            // Process each deletion sequentially
-            for (const id of recordOrIds) {
-              await deleteContact(id).unwrap();
+            const results = await Promise.all(recordOrIds.map(id => deleteContact(id).unwrap()));
+            const allSuccessful = results.every(result => result.success);
+            if (allSuccessful) {
+              message.success(`${recordOrIds.length} contacts deleted successfully`);
+            } else {
+              throw new Error('Some contacts could not be deleted');
             }
-            message.success(`${recordOrIds.length} contacts deleted successfully`);
           } else {
-            await deleteContact(recordOrIds).unwrap();
-            message.success('Contact deleted successfully');
+            const result = await deleteContact(recordOrIds).unwrap();
+            if (result.success) {
+              message.success('Contact deleted successfully');
+            } else {
+              throw new Error(result.message || 'Failed to delete contact');
+            }
           }
         } catch (error) {
-          message.error(error?.data?.message || 'Failed to delete contact(s)');
+          message.error(error?.data?.message || error.message || 'Failed to delete contact(s)');
         }
       },
     });
@@ -120,14 +143,19 @@ const Contact = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = contactsResponse.data.map((contact) => ({
+      const data = contactsResponse?.data?.map((contact) => ({
         "Name": `${contact.first_name} ${contact.last_name}`,
         "Email": contact.email,
         "Phone": contact.phone,
-        "Company": contact.company_display_name || contact.company_name,
+        "Company": contact.company_name || 'N/A',
         "Contact Owner": contact.contact_owner === loggedInUser?.id ? loggedInUser?.username : contact.contact_owner,
         "Created Date": moment(contact.createdAt).format("DD-MM-YYYY")
-      }));
+      })) || [];
+
+      if (data.length === 0) {
+        message.warning('No data available to export');
+        return;
+      }
 
       switch (type) {
         case "csv":
@@ -241,7 +269,7 @@ const Contact = () => {
               prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search contacts..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
               className="search-input"
               style={{
@@ -285,6 +313,14 @@ const Contact = () => {
           contactsResponse={contactsResponse}
           companyAccountsResponse={companyAccountsResponse}
           isCompanyAccountsLoading={isCompanyAccountsLoading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: contactsResponse?.pagination?.total || 0,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} contacts`,
+            onChange: handleTableChange
+          }}
         />
       </Card>
 

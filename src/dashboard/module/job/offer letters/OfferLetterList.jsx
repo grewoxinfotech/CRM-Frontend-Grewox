@@ -20,7 +20,7 @@ import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings
 
 const { Text } = Typography;
 
-const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading, searchText }) => {
+const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading, pagination }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
@@ -36,23 +36,38 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
     console.log('Applications Data:', applicationsData);
     console.log('Offer Letters:', offerLetters);
 
-    // Function to get job title by job ID
-    const getJobTitle = (jobId) => {
-        if (!jobsData?.data) return 'Loading...';
-        const job = jobsData.data.find(job => job.id === jobId);
-        console.log('Finding job for ID:', jobId, 'Found:', job);
-        return job ? job.title : 'N/A';
-    };
+    // Create memoized maps for jobs and applications
+    const jobMap = useMemo(() => {
+        if (!jobsData?.data) return {};
+        return jobsData.data.reduce((acc, job) => {
+            acc[job.id] = job;
+            return acc;
+        }, {});
+    }, [jobsData]);
 
     const applicationMap = useMemo(() => {
         if (!applicationsData?.data) return {};
-        const map = applicationsData.data.reduce((acc, application) => {
-            acc[application.id] = application.name || application.applicant_name;
+        return applicationsData.data.reduce((acc, application) => {
+            acc[application.id] = application;
             return acc;
         }, {});
-        console.log('Application Map:', map);
-        return map;
     }, [applicationsData]);
+
+    // Function to get job title
+    const getJobTitle = (jobId) => {
+        const job = jobMap[jobId];
+        return job ? job.title : 'N/A';
+    };
+
+    // Function to get applicant details
+    const getApplicantDetails = (applicantId) => {
+        const application = applicationMap[applicantId];
+        return {
+            name: application?.name || 'Unknown Applicant',
+            email: application?.email || 'N/A',
+            phone: application?.phone || 'N/A'
+        };
+    };
 
     // Function to get currency details
     const getCurrencyDetails = (currencyId) => {
@@ -69,9 +84,12 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
         setSelectedRowKeys([]);
     }, [offerLetters]);
 
-    const handleChange = (pagination, filters, sorter) => {
+    const handleChange = (newPagination, filters, sorter) => {
         setFilteredInfo(filters);
         setSortedInfo(sorter);
+        if (pagination?.onChange) {
+            pagination.onChange(newPagination, filters, sorter);
+        }
     };
 
     // Row selection config
@@ -213,35 +231,38 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                 </div>
             ),
             onFilter: (value, record) => {
-                const applicantName = applicationMap[record.job_applicant] || '';
+                const applicantName = getApplicantDetails(record.job_applicant).name;
                 return applicantName.toLowerCase().includes(value.toLowerCase());
             },
-            render: (applicantId) => (
-                <div className="item-wrapper">
-                    <div className="item-content">
-                        <div className="icon-wrapper" style={{
-                            color: "#52c41a",
-                            background: "rgba(82, 196, 26, 0.1)",
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center"
-                        }}>
-                            <FiUser size={20} />
-                        </div>
-                        <div className="info-wrapper">
-                            <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>
-                                {applicationMap[applicantId] || 'Unknown Applicant'}
+            render: (applicantId) => {
+                const applicant = getApplicantDetails(applicantId);
+                return (
+                    <div className="item-wrapper">
+                        <div className="item-content">
+                            <div className="icon-wrapper" style={{
+                                color: "#52c41a",
+                                background: "rgba(82, 196, 26, 0.1)",
+                                width: "40px",
+                                height: "40px",
+                                borderRadius: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}>
+                                <FiUser size={20} />
                             </div>
-                            <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
-                                Applicant
+                            <div className="info-wrapper">
+                                <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>
+                                    {applicant.name}
+                                </div>
+                                <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
+                                    {applicant.email}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )
+                )
+            }
         },
         {
             title: 'Salary',
@@ -406,11 +427,7 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                 onChange={handleChange}
                 rowKey="id"
                 scroll={{ x: 1500 }}
-                pagination={{
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                }}
+                pagination={pagination}
                 style={{
                     background: '#ffffff',
                     borderRadius: '8px',

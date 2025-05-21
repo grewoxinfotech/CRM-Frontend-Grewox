@@ -7,13 +7,31 @@ export const contactApi = createApi({
   tagTypes: ["Contacts"],
   endpoints: (builder) => ({
     getContacts: builder.query({
-      query: () => "/contacts",
+      query: (params) => {
+        const { page = 1, pageSize = 10, search = '', ...rest } = params || {};
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          ...(search && { search }),
+          ...rest
+        }).toString();
+        return `/contacts?${queryParams}`;
+      },
+      transformResponse: (response) => ({
+        data: response.message.data.map(item => ({ ...item, key: item.id })),
+        pagination: {
+          total: response.message.pagination.total,
+          current: response.message.pagination.current,
+          pageSize: response.message.pagination.pageSize,
+          totalPages: response.message.pagination.totalPages
+        }
+      }),
       providesTags: ["Contacts"],
     }),
     createContact: builder.mutation({
       query: (data) => ({
         url: "contacts",
-        method: "POST", 
+        method: "POST",
         body: data,
       }),
       invalidatesTags: ["Contacts"],

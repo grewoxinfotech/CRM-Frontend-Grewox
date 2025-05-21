@@ -43,10 +43,13 @@ const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const InvoiceList = ({
+  data = [],
+  loading,
+  onEdit,
+  onDelete,
+  onView,
   searchText = "",
-  // invoices,
-  // isLoading,
-  filters = {},
+  pagination = {}
 }) => {
   const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
@@ -82,13 +85,13 @@ const InvoiceList = ({
         status.includes(searchLower);
 
       const matchesDateRange =
-        !filters.dateRange?.length ||
-        (dayjs(invoice?.issueDate).isAfter(filters.dateRange[0]) &&
-          dayjs(invoice?.dueDate).isBefore(filters.dateRange[1]));
+        !pagination.dateRange?.length ||
+        (dayjs(invoice?.issueDate).isAfter(pagination.dateRange[0]) &&
+          dayjs(invoice?.dueDate).isBefore(pagination.dateRange[1]));
 
       return matchesSearch && matchesDateRange;
     });
-  }, [invoices, searchText, filters]);
+  }, [invoices, searchText, pagination]);
 
   const getStatusTag = (status) => {
     const statusConfig = {
@@ -273,10 +276,51 @@ const InvoiceList = ({
     return customer?.name || customer?.companyName || "N/A";
   };
 
+  const getCurrencyDetails = (currencyId) => {
+    if (!currencyId || !currenciesData)
+      return { currencyIcon: "₹", currencyCode: "INR" };
+    const currency = currenciesData.find((c) => c.id === currencyId);
+    return currency || { currencyIcon: "₹", currencyCode: "INR" };
+  };
+
+  const formatAmount = (amount, currencyId) => {
+    if (amount === undefined || amount === null) return "₹ 0.00";
+    const currency = getCurrencyDetails(currencyId);
+    const numericAmount = Number(amount) || 0;
+    return `${currency.currencyIcon} ${numericAmount.toLocaleString("en-IN", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    })}`;
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'paid':
+        return 'success';
+      case 'unpaid':
+        return 'error';
+      case 'partial':
+        return 'warning';
+      case 'overdue':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const handleTableChange = (newPagination, filters, sorter) => {
+    if (newPagination.current !== pagination.current) {
+      pagination.onChange?.(newPagination.current);
+    }
+    if (newPagination.pageSize !== pagination.pageSize) {
+      pagination.onSizeChange?.(newPagination.pageSize);
+    }
+  };
+
   const columns = [
     {
       title: "Invoice Details",
-      key: "invoice",
+      key: "details",
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -300,16 +344,20 @@ const InvoiceList = ({
               <FiFileText className="item-icon" />
             </div>
             <div className="info-wrapper">
-              <div className="name">{record.salesInvoiceNumber}</div>
-              <div className="meta" style={{ color: '#4b5563' }}>{getCustomerName(record.customer)}</div>
+              <div className="name">
+                {record.salesInvoiceNumber}
+              </div>
+              <div className="meta" style={{ color: '#4b5563' }}>
+                {getCustomerName(record.customer)}
+              </div>
             </div>
           </div>
         </div>
       ),
     },
     {
-      title: "Dates",
-      key: "dates",
+      title: "Date",
+      key: "date",
       render: (_, record) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -318,11 +366,11 @@ const InvoiceList = ({
             </div>
             <div className="info-wrapper">
               <div className="main-info">
-                <Text>Issue: {dayjs(record.issueDate).format('DD MMM YYYY')}</Text>
+                <Text>{dayjs(record.issueDate).format('DD MMM YYYY')}</Text>
               </div>
-              <Text type="secondary" className="sub-info">
-                Due: {dayjs(record.dueDate).format('DD MMM YYYY')}
-              </Text>
+              <div className="meta" style={{ color: '#6b7280', fontSize: '13px' }}>
+                Due {dayjs(record.dueDate).format('DD MMM YYYY')}
+              </div>
             </div>
           </div>
         </div>
@@ -331,16 +379,17 @@ const InvoiceList = ({
     {
       title: "Amount",
       key: "amount",
-      sorter: (a, b) => a.total - b.total,
       render: (_, record) => (
         <div className="item-wrapper">
           <div className="item-content">
             <div className="info-wrapper" style={{ padding: '8px 0' }}>
               <div className="name" style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
-                ₹ {record.total?.toFixed(2)}
+                {formatAmount(record.total, record.currency)}
               </div>
               <div className="meta">
-                {getStatusTag(record.payment_status)}
+                <Tag color={getStatusColor(record.payment_status)} style={{ margin: 0 }}>
+                  {record.payment_status}
+                </Tag>
               </div>
             </div>
           </div>
@@ -355,11 +404,15 @@ const InvoiceList = ({
         <Dropdown
           overlay={
             <Menu>
-              {getDropdownItems(record).items.map(item => (
-                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
-                  {item.label}
-                </Menu.Item>
-              ))}
+              <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView(record)}>
+                View Details
+              </Menu.Item>
+              <Menu.Item key="edit" icon={<FiEdit2 style={{ fontSize: "14px" }} />} onClick={() => onEdit(record)}>
+                Edit Invoice
+              </Menu.Item>
+              <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record.id)}>
+                Delete Invoice
+              </Menu.Item>
             </Menu>
           }
           trigger={['click']}
@@ -382,14 +435,14 @@ const InvoiceList = ({
   };
 
   return (
-    <div className="invoice-list-container">
+    <div className="invoice-container">
       {selectedRowKeys.length > 0 && (
-        <div className="bulk-actions">
+        <div className="bulk-actions" style={{ marginBottom: '16px' }}>
           <Button
             type="primary"
             danger
             icon={<FiTrash2 />}
-            onClick={() => handleDelete(selectedRowKeys)}
+            onClick={() => onDelete(selectedRowKeys)}
           >
             Delete Selected ({selectedRowKeys.length})
           </Button>
@@ -402,12 +455,17 @@ const InvoiceList = ({
         dataSource={filteredInvoices}
         loading={isLoading}
         rowKey="id"
-        className="custom-table"
+        className="invoice-table"
         pagination={{
-          pageSize: 10,
+          ...pagination,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} invoices`,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          position: ['bottomRight'],
+          hideOnSinglePage: false,
+          showQuickJumper: true
         }}
+        onChange={handleTableChange}
       />
 
       <EditInvoice

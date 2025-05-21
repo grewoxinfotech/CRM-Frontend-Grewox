@@ -45,10 +45,23 @@ const CompanyAccount = () => {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedCompanyType, setSelectedCompanyType] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10
+  });
+
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteCompanyAccount] = useDeleteCompanyAccountMutation();
   const [createCompanyAccount] = useCreateCompanyAccountMutation();
-  const { data: companyAccountsResponse = { data: [] }, isLoading: isCompanyAccountsLoading } = useGetCompanyAccountsQuery();
+
+  const { data: companyAccountsResponse = { data: [], pagination: {} }, isLoading: isCompanyAccountsLoading } =
+    useGetCompanyAccountsQuery({
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      search: searchText,
+      ...(selectedCompanyType && selectedCompanyType !== 'all' && { companyType: selectedCompanyType })
+    });
+
   const { data: countries = [] } = useGetAllCountriesQuery();
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
 
@@ -62,7 +75,16 @@ const CompanyAccount = () => {
 
   const handleCompanyTypeFilter = (type) => {
     setSelectedCompanyType(type);
-    // You can implement the filtering logic here based on the selected type
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page on filter change
+  };
+
+  const handleSearchChange = (value) => {
+    setSearchText(value);
+    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page on search
+  };
+
+  const handlePaginationChange = (page, pageSize) => {
+    setPagination({ page, pageSize });
   };
 
   const filterMenu = (
@@ -136,11 +158,14 @@ const CompanyAccount = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
+      if (!companyAccountsResponse?.data?.length) {
+        message.warning('No data available to export');
+        return;
+      }
+
       const data = companyAccountsResponse.data.map((company) => ({
         "Company Name": company.company_name,
-        // "Account Owner": company.account_owner,
         "Phone": company.phone_number,
-        // "Status": company.status,
         "Created Date": moment(company.created_at).format("YYYY-MM-DD")
       }));
 
@@ -259,7 +284,7 @@ const CompanyAccount = () => {
               prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
               placeholder="Search companies..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               value={searchText}
               className="search-input"
               style={{ width: 350 }}
@@ -269,14 +294,16 @@ const CompanyAccount = () => {
               trigger={['click']}
               placement="bottomRight"
             >
-              {/* <Button
+              <Button
                 icon={<FiFilter size={16} />}
-                style={{ 
-                  display: 'flex', 
+                style={{
+                  display: 'flex',
                   alignItems: 'center',
                   backgroundColor: selectedCompanyType ? '#e6f7ff' : 'transparent'
                 }}
-              /> */}
+              >
+                {companyTypes.find(t => t.key === selectedCompanyType)?.label || 'All Types'}
+              </Button>
             </Dropdown>
           </div>
           <div className="action-buttons">
@@ -313,6 +340,8 @@ const CompanyAccount = () => {
           companyAccountsResponse={companyAccountsResponse}
           isCompanyAccountsLoading={isCompanyAccountsLoading}
           countries={countries}
+          onSearchChange={handleSearchChange}
+          onPaginationChange={handlePaginationChange}
         />
       </Card>
 

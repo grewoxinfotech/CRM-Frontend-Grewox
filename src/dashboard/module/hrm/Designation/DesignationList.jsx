@@ -22,42 +22,31 @@ const { Option } = Select;
 const DesignationList = ({ onEdit, searchText, filters }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
 
     // RTK Query hooks
-    const { data: designationsData = [], isLoading: isLoadingDesignations } = useGetAllDesignationsQuery();
+    const { data: designationsResponse = { data: [], pagination: {} }, isLoading: isLoadingDesignations } = useGetAllDesignationsQuery({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        search: searchText,
+        ...filters
+    });
     const { data: branchesData = [], isLoading: isLoadingBranches } = useGetAllBranchesQuery();
     const [deleteDesignation] = useDeleteDesignationMutation();
 
-    // Transform designations data
-    const designations = React.useMemo(() => {
-        let filteredData = [];
-
-        if (!designationsData) return [];
-        if (Array.isArray(designationsData)) {
-            filteredData = designationsData;
-        } else if (Array.isArray(designationsData.data)) {
-            filteredData = designationsData.data;
+    // Update pagination when response changes
+    useEffect(() => {
+        if (designationsResponse?.pagination) {
+            setPagination(prev => ({
+                ...prev,
+                total: designationsResponse.pagination.total
+            }));
         }
-
-        // Apply filters
-        return filteredData.filter(designation => {
-            const matchesSearch = !searchText || searchText.toLowerCase() === '' ||
-                designation.designation_name.toLowerCase().includes(searchText.toLowerCase()) ||
-                (designation.company_type || '').toLowerCase().includes(searchText.toLowerCase());
-
-            const matchesCompanyType = !filters.companyType ||
-                designation.company_type === filters.companyType;
-
-            const matchesStatus = !filters.status ||
-                designation.status === filters.status;
-
-            const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(designation.created_at).isAfter(filters.dateRange[0]) &&
-                    dayjs(designation.created_at).isBefore(filters.dateRange[1]));
-
-            return matchesSearch && matchesCompanyType && matchesStatus && matchesDateRange;
-        });
-    }, [designationsData, searchText, filters]);
+    }, [designationsResponse]);
 
     // Transform branches data into a map for quick lookup
     const branchMap = React.useMemo(() => {
@@ -73,6 +62,14 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
         }
         return map;
     }, [branchesData]);
+
+    const handleTableChange = (newPagination, filters, sorter) => {
+        setPagination(prev => ({
+            ...prev,
+            current: newPagination.current,
+            pageSize: newPagination.pageSize
+        }));
+    };
 
     const handleDelete = (recordOrIds) => {
         const isMultiple = Array.isArray(recordOrIds);
@@ -349,13 +346,12 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
     }, []);
 
     const paginationConfig = {
-        pageSize: 10,
+        ...pagination,
         showSizeChanger: true,
         showTotal: (total) => `Total ${total} items`,
         pageSizeOptions: ['10', '20', '50', '100'],
-
         locale: {
-            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+            items_per_page: isMobile ? '' : '/ page',
         },
     };
 
@@ -365,11 +361,12 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
             <div className='designation-list-container'>
                 <Table
                     columns={columns}
-                    dataSource={designations}
+                    dataSource={designationsResponse.data}
                     loading={isLoadingDesignations}
                     rowKey="id"
                     rowSelection={rowSelection}
                     pagination={paginationConfig}
+                    onChange={handleTableChange}
                     className="custom-table"
                     scroll={{ x: 1000, y: '' }}
                     style={{
@@ -379,7 +376,6 @@ const DesignationList = ({ onEdit, searchText, filters }) => {
                     }}
                 />
             </div>
-
         </>
     );
 };

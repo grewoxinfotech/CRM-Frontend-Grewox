@@ -1,6 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "../../../../../store/baseQuery";
-import { fetchBaseQuery } from "@reduxjs/toolkit/query";
 
 export const billingApi = createApi({
   reducerPath: "billingApi",
@@ -9,14 +8,24 @@ export const billingApi = createApi({
   endpoints: (builder) => ({
     // Get all bills for a company
     getBillings: builder.query({
-      query: () => `/bills/`,
+      query: (params) => {
+        const { page = 1, limit = 10, search = '', companyId, ...rest } = params || {};
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+          ...(search && { search }),
+          ...(companyId && { company_id: companyId }),
+          ...rest
+        }).toString();
+        return `/bills?${queryParams}`;
+      },
       providesTags: ["Billings"],
     }),
 
     // Create new bill
     createBilling: builder.mutation({
-      query: ({ id, data }) => ({
-        url: `/bills/${id}`,
+      query: (data) => ({
+        url: '/bills',
         method: "POST",
         body: data,
       }),
@@ -25,10 +34,7 @@ export const billingApi = createApi({
 
     // Get single bill by ID
     getBillById: builder.query({
-      query: (id) => ({
-        url: `/bills/${id}`,
-        method: "GET",
-      }),
+      query: (id) => `/bills/${id}`,
       providesTags: ["Billings"],
     }),
 
@@ -53,29 +59,14 @@ export const billingApi = createApi({
 
     // Download bill
     downloadBill: builder.query({
-      query: (id) => ({
-        url: `/bills/download/${id}`,
-        method: "GET",
-      }),
+      query: (id) => `/bills/download/${id}`,
     }),
 
-    // Add this new endpoint for vendors
+    // Get vendors
     getVendors: builder.query({
-      query: () => ({
-        url: "/vendors",
-        method: "GET",
-      }),
+      query: () => '/vendors',
       providesTags: ["Vendor"],
     }),
-
-    // Add this new endpoint for products
-    // getProducts: builder.query({
-    //     query: () => ({
-    //         url: '/products',
-    //         method: 'GET'
-    //     }),
-    //     providesTags: ['Products']
-    // }),
   }),
 });
 
@@ -88,3 +79,5 @@ export const {
   useDownloadBillQuery,
   useGetVendorsQuery,
 } = billingApi;
+
+export default billingApi;

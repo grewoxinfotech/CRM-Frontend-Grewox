@@ -14,41 +14,24 @@ import './department.scss';
 
 const { Option } = Select;
 
-const DepartmentList = ({ onEdit, searchText, filters }) => {
+const DepartmentList = ({ onEdit, searchText = '', filters = {} }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     // RTK Query hooks
-    const { data: departmentsData = [], isLoading: isLoadingDepartments } = useGetAllDepartmentsQuery();
+    const { data: response = {}, isLoading } = useGetAllDepartmentsQuery({
+        page: currentPage,
+        pageSize,
+        search: searchText,
+        ...filters
+    });
     const { data: branchesData = [], isLoading: isLoadingBranches } = useGetAllBranchesQuery();
     const [deleteDepartment] = useDeleteDepartmentMutation();
 
-    // Transform departments data
-    const departments = React.useMemo(() => {
-        let filteredData = [];
-
-        if (!departmentsData) return [];
-        if (Array.isArray(departmentsData)) {
-            filteredData = departmentsData;
-        } else if (Array.isArray(departmentsData.data)) {
-            filteredData = departmentsData.data;
-        }
-
-        // Apply filters
-        return filteredData.filter(department => {
-            const matchesSearch = !searchText || searchText.toLowerCase() === '' ||
-                department.department_name.toLowerCase().includes(searchText.toLowerCase());
-
-            const matchesStatus = !filters.status ||
-                department.status === filters.status;
-
-            const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(department.created_at).isAfter(filters.dateRange[0]) &&
-                    dayjs(department.created_at).isBefore(filters.dateRange[1]));
-
-            return matchesSearch && matchesStatus && matchesDateRange;
-        });
-    }, [departmentsData, searchText, filters]);
+    // Destructure data and pagination from response
+    const { data: departments = [], pagination = {} } = response;
 
     // Transform branches data into a map for quick lookup
     const branchMap = React.useMemo(() => {
@@ -82,12 +65,10 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
             onOk: async () => {
                 try {
                     if (isMultiple) {
-                        // Handle bulk delete
                         await Promise.all(recordOrIds.map(id => deleteDepartment(id).unwrap()));
                         message.success(`${recordOrIds.length} departments deleted successfully`);
-                        setSelectedRowKeys([]); // Clear selection after delete
+                        setSelectedRowKeys([]);
                     } else {
-                        // Handle single delete
                         await deleteDepartment(recordOrIds).unwrap();
                         message.success('Department deleted successfully');
                     }
@@ -123,7 +104,6 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
     );
 
     const columns = [
-
         {
             title: 'Department Name',
             dataIndex: 'department_name',
@@ -247,6 +227,17 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
             },
         },
         {
+            title: 'Created By',
+            dataIndex: 'created_by',
+            key: 'created_by',
+        },
+        {
+            title: 'Created At',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            render: (date) => dayjs(date).format('DD MMM YYYY'),
+        },
+        {
             title: 'Actions',
             key: 'actions',
             width: '80px',
@@ -293,13 +284,18 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
     }, []);
 
     const paginationConfig = {
-        pageSize: 10,
+        current: currentPage,
+        pageSize: pageSize,
+        total: pagination.total,
+        onChange: (page, size) => {
+            setCurrentPage(page);
+            setPageSize(size);
+        },
         showSizeChanger: true,
         showTotal: (total) => `Total ${total} items`,
         pageSizeOptions: ['10', '20', '50', '100'],
-
         locale: {
-            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
+            items_per_page: isMobile ? '' : '/ page',
         },
     };
 
@@ -310,7 +306,7 @@ const DepartmentList = ({ onEdit, searchText, filters }) => {
                 <Table
                     columns={columns}
                     dataSource={departments}
-                    loading={isLoadingDepartments}
+                    loading={isLoading}
                     rowKey="id"
                     rowSelection={rowSelection}
                     pagination={paginationConfig}

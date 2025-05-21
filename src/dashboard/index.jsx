@@ -61,13 +61,15 @@ export default function Dashboard() {
 
   // Calculate real revenue data
   const calculateRevenue = () => {
-    if (!revenueData) return { total: 0, pending: 0 };
+    if (!revenueData?.data || !Array.isArray(revenueData.data)) {
+      return { total: 0, pending: 0 };
+    }
 
-    const total = revenueData.reduce(
+    const total = revenueData.data.reduce(
       (sum, rev) => sum + (Number(rev.amount) || 0),
       0
     );
-    const pending = revenueData
+    const pending = revenueData.data
       .filter((rev) => rev.status?.toLowerCase() === "pending")
       .reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0);
 
@@ -94,11 +96,11 @@ export default function Dashboard() {
 
   // Add this after other useEffect hooks
   const getActiveCustomersCount = () => {
-    if (!revenueData) return 0;
+    if (!revenueData?.data || !Array.isArray(revenueData.data)) return 0;
 
     // Get unique customer IDs from invoices
     const uniqueCustomers = new Set(
-      revenueData.map((invoice) => invoice.customer)
+      revenueData.data.map((invoice) => invoice.customer)
     );
 
     return uniqueCustomers.size;
@@ -115,7 +117,7 @@ export default function Dashboard() {
       gradient: "linear-gradient(145deg, #ffffff, #f0f2ff)",
       iconGradient: "linear-gradient(135deg, #7c3aed, #a78bfa)",
       color: "#7c3aed",
-      tag: `Total customers: ${revenueData ? new Set(revenueData.map(rev => rev.customer)).size : 0}`,
+      tag: `Total customers: ${revenueData?.data ? new Set(revenueData.data.map(rev => rev.customer)).size : 0}`,
       link: "/dashboard/sales/customer",
     },
     {
@@ -149,7 +151,7 @@ export default function Dashboard() {
       gradient: "linear-gradient(145deg, #ffffff, #f0fff4)",
       iconGradient: "linear-gradient(135deg, #52c41a, #95de64)",
       color: "#52c41a",
-      tag: `Profit: ₹${revenueData ? revenueData.reduce((sum, rev) => sum + (Number(rev.profit) || 0), 0).toFixed(2) : '0.00'}`,
+      tag: `Profit: ₹${revenueData?.data && Array.isArray(revenueData.data) ? revenueData.data.reduce((sum, rev) => sum + (Number(rev.profit) || 0), 0).toFixed(2) : '0.00'}`,
       link: "/dashboard/sales/revenue",
       format: "currency",
     },

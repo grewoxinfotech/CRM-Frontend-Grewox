@@ -7,26 +7,44 @@ export const taskApi = createApi({
   tagTypes: ["Tasks"],
   endpoints: (builder) => ({
     getAllTasks: builder.query({
-      query: (id) => ({
-        url: `/tasks/${id}`,
-        method: "GET",
-      }),
+      query: ({ id, page = 1, pageSize = 10, search = '', ...rest }) => {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          ...(search && { search }),
+          ...rest
+        }).toString();
+        return {
+          url: `/tasks/${id}?${queryParams}`,
+          method: "GET",
+        };
+      },
       transformResponse: (response) => {
-        if (response?.data) {
+        if (response?.message?.data) {
           const transformedData = {
-            ...response,
-            data: response.data.map(task => {
-              if (!task.taskName) {
-              }
-              return {
-                ...task,
-                taskName: task.taskName || task.task_name || 'Untitled Task'
-              };
-            })
+            data: response.message.data.map(task => ({
+              ...task,
+              taskName: task.taskName || task.task_name || 'Untitled Task',
+              key: task.id
+            })),
+            pagination: {
+              total: response.message.pagination.total,
+              current: response.message.pagination.current,
+              pageSize: response.message.pagination.pageSize,
+              totalPages: response.message.pagination.totalPages
+            }
           };
           return transformedData;
         }
-        return response;
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            current: 1,
+            pageSize: 10,
+            totalPages: 0
+          }
+        };
       },
       providesTags: ["Tasks"],
     }),
@@ -38,8 +56,6 @@ export const taskApi = createApi({
       }),
       invalidatesTags: ["Tasks"],
     }),
-
-
     updateTask: builder.mutation({
       query: ({ id, data }) => {
         return {
@@ -50,6 +66,10 @@ export const taskApi = createApi({
       },
       transformResponse: (response) => {
         if (!response?.taskName) {
+          return {
+            ...response,
+            taskName: response.task_name || 'Untitled Task'
+          };
         }
         return response;
       },

@@ -10,9 +10,32 @@ export const branchApi = createApi({
             query: (params) => ({
                 url: '/branches',
                 method: 'GET',
-                params: params,
+                params: {
+                    page: params?.page || 1,
+                    pageSize: params?.pageSize || 10,
+                    search: params?.search || '',
+                    ...params
+                },
             }),
-            providesTags: ['Branches'],
+            transformResponse: (response) => {
+                // Handle the nested message structure
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {
+                    total: 0,
+                    current: 1,
+                    pageSize: 10,
+                    totalPages: 0
+                };
+
+                return {
+                    data,
+                    pagination
+                };
+            },
+            providesTags: (result = []) => [
+                'Branches',
+                ...(result?.data || []).map(({ id }) => ({ type: 'Branches', id }))
+            ],
         }),
         getBranchById: builder.query({
             query: (id) => `/branches/${id}`,

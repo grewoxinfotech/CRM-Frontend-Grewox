@@ -9,7 +9,36 @@ export const debitNoteApi = createApi({
     endpoints: (builder) => ({
         // Get all debit notes for a company
         getDebitNotes: builder.query({
-            query: () => `/bill-debits`,
+            query: (params = {}) => {
+                const { page = 1, pageSize = 10, search = '' } = params;
+                return {
+                    url: "/bill-debits",
+                    params: {
+                        page,
+                        pageSize,
+                        search,
+                        company_id: params.company_id
+                    }
+                };
+            },
+            transformResponse: (response) => {
+                // Handle the nested response structure
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {
+                    total: 0,
+                    current: 1,
+                    pageSize: 10,
+                    totalPages: 1
+                };
+
+                return {
+                    data: data.map(item => ({
+                        ...item,
+                        key: item.id || item._id
+                    })),
+                    pagination
+                };
+            },
             providesTags: ["DebitNotes"],
         }),
 

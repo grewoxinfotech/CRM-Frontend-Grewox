@@ -27,26 +27,38 @@ const { RangePicker } = DatePicker;
 const { confirm } = Modal;
 
 const OfferLetters = () => {
-    const { data: offerLettersData, isLoading, refetch } = useGetAllOfferLettersQuery();
-    const [deleteOfferLetter] = useDeleteOfferLetterMutation();
-    const [createOfferLetter] = useCreateOfferLetterMutation();
-    const [updateOfferLetter] = useUpdateOfferLetterMutation();
-    const [offerLetters, setOfferLetters] = useState([]);
+    const [searchText, setSearchText] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [dateRange, setDateRange] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [selectedLetter, setSelectedLetter] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
-    const [searchText, setSearchText] = useState('');
-    const [dateRange, setDateRange] = useState([]);
-    const [filteredLetters, setFilteredLetters] = useState([]);
     const searchInputRef = useRef(null);
 
-    const { data: jobs } = useGetAllJobsQuery();
-    const { data: applicationsData } = useGetAllJobApplicationsQuery();
+    const { data: offerLettersData, isLoading: offerLettersLoading, refetch } = useGetAllOfferLettersQuery({
+        page: currentPage,
+        pageSize,
+        search: searchText,
+        ...(dateRange?.length === 2 && {
+            startDate: dateRange[0].format('YYYY-MM-DD'),
+            endDate: dateRange[1].format('YYYY-MM-DD')
+        })
+    });
+
+    const [deleteOfferLetter] = useDeleteOfferLetterMutation();
+    const [createOfferLetter] = useCreateOfferLetterMutation();
+    const [updateOfferLetter] = useUpdateOfferLetterMutation();
+
+    const { data: jobsData, isLoading: jobsLoading } = useGetAllJobsQuery();
+    const { data: applicationsData, isLoading: applicationsLoading } = useGetAllJobApplicationsQuery();
+
+    const isLoading = offerLettersLoading || jobsLoading || applicationsLoading;
 
     const getJobTitle = (jobId) => {
-        if (!jobs) return 'Loading...';
-        const job = jobs.data.find(job => job.id === jobId);
+        if (!jobsData) return 'Loading...';
+        const job = jobsData.data.find(job => job.id === jobId);
         return job ? job.title : 'N/A';
     };
 
@@ -58,38 +70,15 @@ const OfferLetters = () => {
         }, {});
     }, [applicationsData]);
 
-    useEffect(() => {
-        if (offerLettersData?.data) {
-            console.log('Offer Letters Data:', offerLettersData.data);
-            if (!searchText) {
-                setFilteredLetters(offerLettersData.data);
-                return;
-            }
+    const handleSearch = (value) => {
+        setSearchText(value);
+        setCurrentPage(1); // Reset to first page on new search
+    };
 
-            const searchLower = searchText.toLowerCase();
-            const filtered = offerLettersData.data.filter(letter => {
-                // Search in job details
-                const jobMatch = letter.job && getJobTitle(letter.job)?.toLowerCase().includes(searchLower);
-
-                // Search in applicant details
-                const applicantMatch = letter.job_applicant &&
-                    applicationMap[letter.job_applicant]?.toLowerCase().includes(searchLower);
-
-                // Search in other fields
-                const otherFieldsMatch = (
-                    letter.description?.toLowerCase().includes(searchLower) ||
-                    letter.salary?.toString().includes(searchLower) ||
-                    (letter.offer_expiry && moment(letter.offer_expiry).format('DD MMM YYYY').toLowerCase().includes(searchLower)) ||
-                    (letter.expected_joining_date && moment(letter.expected_joining_date).format('DD MMM YYYY').toLowerCase().includes(searchLower))
-                );
-
-                return jobMatch || applicantMatch || otherFieldsMatch;
-            });
-
-            console.log('Filtered Letters:', filtered);
-            setFilteredLetters(filtered);
-        }
-    }, [offerLettersData, searchText, applicationMap, jobs]);
+    const handleTableChange = (pagination, filters, sorter) => {
+        setCurrentPage(pagination.current);
+        setPageSize(pagination.pageSize);
+    };
 
     const handleAddLetter = () => {
         setSelectedLetter(null);
@@ -126,22 +115,27 @@ const OfferLetters = () => {
             onOk: async () => {
                 try {
                     if (isMultiple) {
-                        await Promise.all(recordOrIds.map(id => deleteOfferLetter(id).unwrap()));
-                        message.success(`${recordOrIds.length} offer letters deleted successfully`);
+                        const results = await Promise.all(recordOrIds.map(id => deleteOfferLetter(id).unwrap()));
+                        const allSuccessful = results.every(result => result.success);
+                        if (allSuccessful) {
+                            message.success(`${recordOrIds.length} offer letters deleted successfully`);
+                        } else {
+                            throw new Error('Some offer letters could not be deleted');
+                        }
                     } else {
-                        await deleteOfferLetter(recordOrIds.id).unwrap();
-                        message.success('Offer letter deleted successfully');
+                        const result = await deleteOfferLetter(recordOrIds.id).unwrap();
+                        if (result.success) {
+                            message.success('Offer letter deleted successfully');
+                        } else {
+                            throw new Error(result.message || 'Failed to delete offer letter');
+                        }
                     }
                     refetch();
                 } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete offer letter(s)');
+                    message.error(error?.data?.message || error.message || 'Failed to delete offer letter(s)');
                 }
             },
         });
-    };
-
-    const handleSearch = (value) => {
-        setSearchText(value);
     };
 
     const exportMenu = (
@@ -263,14 +257,22 @@ const OfferLetters = () => {
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditing) {
-                await updateOfferLetter({
+                const result = await updateOfferLetter({
                     id: selectedLetter.id,
-                    ...formData
+                    data: formData
                 }).unwrap();
-                message.success('Offer letter updated successfully');
+                if (result.success) {
+                    message.success('Offer letter updated successfully');
+                } else {
+                    throw new Error(result.message || 'Failed to update offer letter');
+                }
             } else {
-                await createOfferLetter(formData).unwrap();
-                message.success('Offer letter created successfully');
+                const result = await createOfferLetter(formData).unwrap();
+                if (result.success) {
+                    message.success('Offer letter created successfully');
+                } else {
+                    throw new Error(result.message || 'Failed to create offer letter');
+                }
             }
             setIsFormVisible(false);
             setSelectedLetter(null);
@@ -278,7 +280,7 @@ const OfferLetters = () => {
             refetch();
         } catch (error) {
             console.error('Form submit error:', error);
-            message.error(error?.data?.message || 'Failed to save offer letter');
+            message.error(error?.data?.message || error.message || 'Failed to save offer letter');
         }
     };
 
@@ -354,11 +356,18 @@ const OfferLetters = () => {
 
             <Card className="offer-letters-table-card">
                 <OfferLetterList
-                    offerLetters={filteredLetters}
+                    offerLetters={offerLettersData?.data || []}
                     onEdit={handleEditLetter}
                     onDelete={handleDelete}
                     loading={isLoading}
-                    searchText={searchText}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: offerLettersData?.pagination?.total || 0,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total ${total} items`,
+                        onChange: handleTableChange
+                    }}
                 />
             </Card>
 

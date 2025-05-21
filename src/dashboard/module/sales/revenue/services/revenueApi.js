@@ -8,21 +8,38 @@ export const revenueApi = createApi({
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getRevenue: builder.query({
-      query: () => "/sales-revenue",
-      transformResponse: (response) => {
-        // Ensure consistent data structure
-        if (response?.data) {
-          return response.data;
-        }
-        if (Array.isArray(response)) {
-          return response;
-        }
-        return [];
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '' } = params;
+        return {
+          url: "/sales-revenue",
+          params: {
+            page,
+            pageSize,
+            search
+          }
+        };
       },
-      providesTags: (result, error, arg) => [
-        { type: "Revenue", id: "LIST" },
-        ...(result?.map(({ id }) => ({ type: "Revenue", id })) ?? [])
-      ],
+      transformResponse: (response) => {
+        // Handle the nested response structure
+        const data = response?.message?.data || [];
+        const pagination = response?.message?.pagination || {
+          total: 0,
+          current: 1,
+          pageSize: 10,
+          totalPages: 1
+        };
+
+        return {
+          data: data.map(item => ({
+            ...item,
+            key: item.id,
+            // Parse products if it's a string
+            products: typeof item.products === 'string' ? JSON.parse(item.products) : item.products
+          })),
+          pagination
+        };
+      },
+      providesTags: ["Revenue"],
     }),
     createRevenue: builder.mutation({
       query: (data) => ({

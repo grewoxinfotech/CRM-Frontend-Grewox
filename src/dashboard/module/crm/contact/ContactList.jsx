@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -47,6 +47,7 @@ const ContactList = ({
   isCompanyAccountsLoading,
   loggedInUser,
   onDelete,
+  pagination
 }) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -60,22 +61,14 @@ const ContactList = ({
 
   // Safely handle contacts data
   const contacts = React.useMemo(() => {
-    if (!contactsResponse) return [];
-    if (Array.isArray(contactsResponse)) return contactsResponse;
-    if (contactsResponse?.data && Array.isArray(contactsResponse.data)) {
-      return contactsResponse.data;
-    }
-    return [];
+    if (!contactsResponse?.data) return [];
+    return contactsResponse.data;
   }, [contactsResponse]);
 
   // Safely handle company accounts data
   const companyAccounts = React.useMemo(() => {
-    if (!companyAccountsResponse) return [];
-    if (Array.isArray(companyAccountsResponse)) return companyAccountsResponse;
-    if (companyAccountsResponse?.data && Array.isArray(companyAccountsResponse.data)) {
-      return companyAccountsResponse.data;
-    }
-    return [];
+    if (!companyAccountsResponse?.data) return [];
+    return companyAccountsResponse.data;
   }, [companyAccountsResponse]);
 
   // Create a map of company IDs to company names
@@ -90,9 +83,20 @@ const ContactList = ({
   const enhancedContacts = React.useMemo(() => {
     return contacts.map(contact => ({
       ...contact,
-      company_display_name: companyMap[contact.company_name] || contact.company_name
+      company_display_name: companyMap[contact.company_name] || contact.company_name || 'N/A'
     }));
   }, [contacts, companyMap]);
+
+  // Clear selections when contacts data changes
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [contacts]);
+
+  const handleChange = (newPagination, filters, sorter) => {
+    if (pagination?.onChange) {
+      pagination.onChange(newPagination, filters, sorter);
+    }
+  };
 
   const handleDelete = (recordOrIds) => {
     if (onDelete) {
@@ -346,15 +350,12 @@ const ContactList = ({
           style: { cursor: 'pointer' }
         })}
         columns={columns}
-        dataSource={filteredContacts}
-        loading={isLoading}
+        dataSource={enhancedContacts}
+        loading={isLoading || isCompanyAccountsLoading}
         rowKey="id"
         className="modern-table"
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} contacts`,
-        }}
+        onChange={handleChange}
+        pagination={pagination}
       />
 
       {/* Edit Modal */}

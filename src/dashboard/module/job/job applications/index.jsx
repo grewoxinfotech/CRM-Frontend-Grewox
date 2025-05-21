@@ -18,67 +18,36 @@ import JobApplicationList from './JobApplicationList';
 import { Link } from 'react-router-dom';
 import { useGetAllJobApplicationsQuery, useDeleteJobApplicationMutation } from './services/jobApplicationApi';
 import { useSelector, useDispatch } from 'react-redux';
-
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
+const { confirm } = Modal;
 
 const JobApplications = () => {
-    const dispatch = useDispatch();
-    const filterState = useSelector(state => state.jobApplication) || {};
-    
-    // Add default values for all potentially undefined properties
-    const { 
-        filters = {}, 
-        pagination = { 
-            current: 1, 
-            pageSize: 10,
-            total: 0 
-        }, 
-        sorting = { 
-            field: undefined, 
-            order: undefined 
-        } 
-    } = filterState;
-    
-    // Use optional chaining and provide default values
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [selectedApplication, setSelectedApplication] = useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [exportLoading, setExportLoading] = useState(false);
+    const searchInputRef = useRef(null);
+
     const { data: applications, isLoading } = useGetAllJobApplicationsQuery({
-        ...filters,
-        page: pagination?.current || 1,
-        limit: pagination?.pageSize || 10,
-        sortField: sorting?.field,
-        sortOrder: sorting?.order,
+        page: currentPage,
+        limit: pageSize,
+        search: searchText
     });
 
     const [deleteApplication] = useDeleteJobApplicationMutation();
 
-    const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    const [selectedApplication, setSelectedApplication] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [searchText, setSearchText] = useState('');
-    const searchInputRef = useRef(null);
-
-    const filteredApplications = React.useMemo(() => {
-        if (!applications?.data) return [];
-        
-        return applications.data.filter(application => {
-            if (!searchText) return true;
-            
-            const searchTerm = searchText.toLowerCase();
-            return (
-                application.name?.toLowerCase().includes(searchTerm) ||
-                application.email?.toLowerCase().includes(searchTerm) ||
-                application.phone?.toLowerCase().includes(searchTerm) ||
-                application.location?.toLowerCase().includes(searchTerm) ||
-                application.total_experience?.toLowerCase().includes(searchTerm) ||
-                application.current_location?.toLowerCase().includes(searchTerm) ||
-                application.notice_period?.toLowerCase().includes(searchTerm) ||
-                application.status?.toLowerCase().includes(searchTerm) ||
-                application.applied_source?.toLowerCase().includes(searchTerm)
-            );
-        });
-    }, [applications, searchText]);
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setCurrentPage(1); // Reset to first page on new search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchText]);
 
     const handleAddApplication = () => {
         setSelectedApplication(null);
@@ -92,23 +61,32 @@ const JobApplications = () => {
         setIsFormVisible(true);
     };
 
-    const handleViewApplication = (application) => {
-        setSelectedApplication(application);
-    };
+    const handleDelete = (recordOrIds) => {
+        const isMultiple = Array.isArray(recordOrIds);
+        const title = isMultiple ? 'Delete Selected Applications' : 'Delete Application';
+        const content = isMultiple
+            ? `Are you sure you want to delete ${recordOrIds.length} selected applications?`
+            : 'Are you sure you want to delete this application?';
 
-    const handleDelete = (record) => {
         Modal.confirm({
-            title: 'Delete Confirmation',
-            content: 'Are you sure you want to delete this application?',
+            title,
+            content,
+            okText: 'Yes',
             okType: 'danger',
-            bodyStyle: { padding: '20px' },
             cancelText: 'No',
+            icon: <ExclamationCircleOutlined />,
+            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
-                    await deleteApplication(record.id).unwrap();
-                    message.success('Application deleted successfully');
+                    if (isMultiple) {
+                        await Promise.all(recordOrIds.map(id => deleteApplication(id).unwrap()));
+                        message.success(`${recordOrIds.length} applications deleted successfully`);
+                    } else {
+                        await deleteApplication(recordOrIds).unwrap();
+                        message.success('Application deleted successfully');
+                    }
                 } catch (error) {
-                    message.error(error?.data?.message || 'Failed to delete application');
+                    message.error(error?.data?.message || 'Failed to delete application(s)');
                 }
             },
         });
@@ -120,9 +98,13 @@ const JobApplications = () => {
         setIsEditing(false);
     };
 
-    const handleSearch = (e) => {
-        const value = e.target.value;
+    const handleSearch = (value) => {
         setSearchText(value);
+    };
+
+    const handleTableChange = (pagination, filters, sorter) => {
+        setCurrentPage(pagination.current);
+        setPageSize(pagination.pageSize);
     };
 
     const exportMenu = (
@@ -153,30 +135,35 @@ const JobApplications = () => {
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
-            const data = filteredApplications.map(application => ({
+            setExportLoading(true);
+            const data = applications?.data?.map(application => ({
+                'Name': application.name || 'N/A',
+                'Email': application.email || 'N/A',
+                'Phone': application.phone || 'N/A',
+                'Job': application.job || 'N/A',
+                'Experience': application.total_experience || 'N/A',
+                'Notice Period': application.notice_period || 'N/A',
+                'Status': application.status || 'N/A',
+                'Applied Date': moment(application.created_at).format('YYYY-MM-DD')
+            })) || [];
 
-                'Applicant Name': application.name,
-                'Email': application.email,
-                'Phone': application.phone,
-                'Position': application.job,
-                'Experience': application.total_experience,
-                'Current Salary': application.current_salary,
-                'Expected Salary': application.expected_salary,
-                'Notice Period': application.notice_period,
-                'Interview Date': application.interview_date,
-                'Status': application.status,
-            }));
+            if (data.length === 0) {
+                message.warning('No data available to export');
+                return;
+            }
+
+            const timestamp = moment().format('YYYY-MM-DD_HH-mm');
+            const filename = `job_applications_export_${timestamp}`;
 
             switch (type) {
                 case 'csv':
-                    exportToCSV(data, 'job_applications_export');
+                    exportToCSV(data, filename);
                     break;
                 case 'excel':
-                    exportToExcel(data, 'job_applications_export');
+                    exportToExcel(data, filename);
                     break;
                 case 'pdf':
-                    exportToPDF(data, 'job_applications_export');
+                    exportToPDF(data, filename);
                     break;
                 default:
                     break;
@@ -185,7 +172,7 @@ const JobApplications = () => {
         } catch (error) {
             message.error(`Failed to export: ${error.message}`);
         } finally {
-            setLoading(false);
+            setExportLoading(false);
         }
     };
 
@@ -227,7 +214,7 @@ const JobApplications = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
+    return (
         <div className="job-applications-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -252,10 +239,11 @@ const JobApplications = () => {
                 <div className="header-actions">
                     <Input
                         prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                        placeholder="Search by name, email, phone, location..."
+                        placeholder="Search applications..."
                         allowClear
-                        onChange={handleSearch}
+                        onChange={(e) => handleSearch(e.target.value)}
                         value={searchText}
+                        ref={searchInputRef}
                         style={{
                             width: '300px',
                             marginRight: '16px',
@@ -263,9 +251,13 @@ const JobApplications = () => {
                         }}
                     />
                     <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
+                        <Dropdown
+                            overlay={exportMenu}
+                            trigger={['click']}
+                            disabled={isLoading || exportLoading}
+                        >
+                            <Button className="export-button" loading={exportLoading}>
+                                {!exportLoading && <FiDownload size={16} />}
                                 <span>Export</span>
                                 <FiChevronDown size={14} />
                             </Button>
@@ -284,11 +276,19 @@ const JobApplications = () => {
 
             <Card className="job-applications-table-card">
                 <JobApplicationList
-                    applications={filteredApplications}
+                    applications={applications?.data || []}
                     loading={isLoading}
                     onEdit={handleEditApplication}
                     onDelete={handleDelete}
-                    onView={handleViewApplication}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: applications?.total || 0,
+                        totalPages: applications?.totalPages || 1,
+                        onChange: handleTableChange,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total ${total} items`
+                    }}
                 />
             </Card>
 
@@ -298,7 +298,6 @@ const JobApplications = () => {
                 isEditing={isEditing}
                 initialValues={selectedApplication}
             />
-
         </div>
     );
 };

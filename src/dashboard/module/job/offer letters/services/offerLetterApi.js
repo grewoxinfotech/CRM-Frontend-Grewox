@@ -7,10 +7,24 @@ export const offerLetterApi = createApi({
     tagTypes: ['OfferLetter'],
     endpoints: (builder) => ({
         getAllOfferLetters: builder.query({
-            query: (params) => ({
-                url: 'offer-letters',
-                method: 'GET',
-                params: params,
+            query: (params) => {
+                const { page = 1, pageSize = 10, search = '', ...rest } = params || {};
+                const queryParams = new URLSearchParams({
+                    page: page.toString(),
+                    pageSize: pageSize.toString(),
+                    ...(search && { search }),
+                    ...rest
+                }).toString();
+                return `offer-letters?${queryParams}`;
+            },
+            transformResponse: (response) => ({
+                data: response.message.data.map(item => ({ ...item, key: item.id })),
+                pagination: {
+                    total: response.message.pagination.total,
+                    current: response.message.pagination.current,
+                    pageSize: response.message.pagination.pageSize,
+                    totalPages: response.message.pagination.totalPages
+                }
             }),
             providesTags: ['OfferLetter'],
         }),

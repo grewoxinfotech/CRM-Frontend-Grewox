@@ -34,24 +34,79 @@ const { Option } = Select;
 const CreateSalary = ({ open, onCancel }) => {
   const [form] = Form.useForm();
   const [createSalary, { isLoading }] = useCreateSalaryMutation();
-  const { data: employeesData, isLoading: isLoadingEmployees } =
-    useGetEmployeesQuery();
-  const { data: rolesData } = useGetRolesQuery();
+  const { data: employeesData, isLoading: isLoadingEmployees } = useGetEmployeesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+  const { data: rolesData } = useGetRolesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
   const { data: currenciesData, isLoading: isLoadingCurrencies } = useGetAllCurrenciesQuery();
-  const employees = React.useMemo(() => {
-    if (!employeesData?.data || !rolesData?.data) return [];
 
-    const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
-    const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
+  const employees = React.useMemo(() => {
+    if (!employeesData?.data || !rolesData?.message?.data) return [];
+
+    const rolesList = rolesData.message.data;
+    const employeesList = employeesData.data;
 
     return employeesList.map(employee => {
       const userRole = rolesList.find(role => role.id === employee.role_id);
+      const roleName = userRole?.role_name || 'N/A';
+
+      // Map common role names to their style configurations
+      const roleStyleMap = {
+        'developer': {
+          color: '#D46B08',
+          bg: '#FFF7E6',
+          border: '#FFD591'
+        },
+        'ui designer': {
+          color: '#531CAD',
+          bg: '#F9F0FF',
+          border: '#D3ADF7'
+        },
+        'project manager': {
+          color: '#237804',
+          bg: '#F6FFED',
+          border: '#B7EB8F'
+        },
+        'team lead': {
+          color: '#096DD9',
+          bg: '#E6F7FF',
+          border: '#91D5FF'
+        },
+        'hr manager': {
+          color: '#C41D7F',
+          bg: '#FFF0F6',
+          border: '#FFADD2'
+        },
+        'qa engineer': {
+          color: '#08979C',
+          bg: '#E6FFFB',
+          border: '#87E8DE'
+        }
+      };
+
+      // Get role style based on role name, with fallback to default style
+      const roleStyle = roleStyleMap[roleName.toLowerCase()] || {
+        color: '#1890FF',
+        bg: '#E6F7FF',
+        border: '#91D5FF'
+      };
+
       return {
         ...employee,
-        role: userRole
+        role: {
+          role_name: roleName,
+          style: roleStyle
+        }
       };
     });
   }, [employeesData, rolesData]);
+
   const currencies = currenciesData || [];
   const [selectedCurrency, setSelectedCurrency] = useState('$');
 
@@ -233,21 +288,6 @@ const CreateSalary = ({ open, onCancel }) => {
                   return label.toLowerCase().includes(input.toLowerCase());
                 }}
                 options={employees.map(employee => {
-                  const roleStyles = {
-                    'employee': {
-                      color: '#D46B08',
-                      bg: '#FFF7E6',
-                      border: '#FFD591'
-                    },
-                    'default': {
-                      color: '#531CAD',
-                      bg: '#F9F0FF',
-                      border: '#D3ADF7'
-                    }
-                  };
-
-                  const roleStyle = roleStyles[employee.role?.role_name?.toLowerCase()] || roleStyles.default;
-
                   return {
                     label: (
                       <div style={{
@@ -308,20 +348,21 @@ const CreateSalary = ({ open, onCancel }) => {
                               width: '8px',
                               height: '8px',
                               borderRadius: '50%',
-                              background: roleStyle.color,
-                              boxShadow: `0 0 8px ${roleStyle.color}`,
+                              background: employee.role?.style?.color || '#1890FF',
+                              boxShadow: `0 0 8px ${employee.role?.style?.color || '#1890FF'}`,
                               animation: 'pulse 2s infinite'
                             }}
                           />
                           <span style={{
-                            padding: '0px 8px',
+                            padding: '2px 8px',
                             borderRadius: '4px',
                             fontSize: '12px',
-                            background: roleStyle.bg,
-                            color: roleStyle.color,
-                            border: `1px solid ${roleStyle.border}`,
+                            background: employee.role?.style?.bg || '#E6F7FF',
+                            color: employee.role?.style?.color || '#1890FF',
+                            border: `1px solid ${employee.role?.style?.border || '#91D5FF'}`,
                             fontWeight: 500,
-                            textTransform: 'capitalize'
+                            textTransform: 'capitalize',
+                            whiteSpace: 'nowrap'
                           }}>
                             {employee.role?.role_name || 'User'}
                           </span>

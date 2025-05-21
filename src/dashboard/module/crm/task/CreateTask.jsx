@@ -111,10 +111,15 @@ const CreateTask = ({
 
   const currentUser = useSelector(selectCurrentUser);
   const { data: usersResponse } = useGetUsersQuery();
-  const { data: rolesData } = useGetRolesQuery();
+  const { data: rolesData } = useGetRolesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+
 
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(
+  const subclientRoleId = rolesData?.message?.data?.find(
     (role) => role?.role_name === "sub-client"
   )?.id;
 
@@ -753,7 +758,7 @@ const CreateTask = ({
             )}
           >
             {teamMembers.map((user) => {
-              const userRole = rolesData?.data?.find(
+              const userRole = rolesData?.message?.data?.find(
                 (role) => role.id === user.role_id
               );
               const roleStyle =
@@ -889,7 +894,7 @@ const CreateTask = ({
             optionFilterProp="children"
           >
             {teamMembers.map((user) => {
-              const userRole = rolesData?.data?.find(
+              const userRole = rolesData?.message?.data?.find(
                 (role) => role.id === user.role_id
               );
               const roleStyle = getRoleColor(userRole?.role_name);
@@ -1043,7 +1048,7 @@ const CreateTask = ({
           name="file"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Task File 
+              Task File
             </span>
           }
           valuePropName="fileList"

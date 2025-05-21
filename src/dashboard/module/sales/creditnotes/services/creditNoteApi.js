@@ -7,7 +7,24 @@ export const creditNoteApi = createApi({
   tagTypes: ["CreditNotes"],
   endpoints: (builder) => ({
     getCreditNotes: builder.query({
-      query: () => "/sales-creditnote",
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '' } = params;
+        return {
+          url: "/sales-creditnote",
+          params: {
+            page,
+            pageSize,
+            search
+          }
+        };
+      },
+      transformResponse: (response) => ({
+        data: response.message.data.map(item => ({
+          ...item,
+          key: item.id
+        })),
+        pagination: response.message.pagination
+      }),
       providesTags: ["CreditNotes"],
     }),
     createCreditNote: builder.mutation({
@@ -17,7 +34,6 @@ export const creditNoteApi = createApi({
         body: data,
         formData: true,
       }),
-
       invalidatesTags: ["CreditNotes"],
     }),
     updateCreditNote: builder.mutation({

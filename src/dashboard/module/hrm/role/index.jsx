@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     Typography,
     Button,
@@ -31,6 +31,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { useSelector } from 'react-redux';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
+import debounce from 'lodash/debounce';
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
@@ -48,15 +49,27 @@ const Role = () => {
 
     // Redux
     const currentUser = useSelector(state => state.auth.user);
-    const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetRolesQuery();
+    const { data: rolesData, isLoading: isLoadingRoles, refetch } = useGetRolesQuery({
+        page: 1,
+        pageSize: 10,
+        search: searchText
+    });
     const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
     const [updateRole, { isLoading: isUpdating }] = useUpdateRoleMutation();
     const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation();
 
+    // Debounced search handler
+    const debouncedSearch = useCallback(
+        debounce((value) => {
+            setSearchText(value);
+        }, 500),
+        []
+    );
+
     // Effects
     useEffect(() => {
-        if (rolesData?.data) {
-            const transformedData = rolesData.data.map(role => ({
+        if (rolesData?.message?.data) {
+            const transformedData = rolesData.message.data.map(role => ({
                 id: role.id,
                 role_name: role.role_name || 'N/A',
                 permissions: role.permissions,
@@ -84,7 +97,7 @@ const Role = () => {
 
     // Handlers
     const handleSearch = (value) => {
-        setSearchText(value);
+        debouncedSearch(value);
     };
 
     const handleAddRole = () => {
@@ -294,6 +307,7 @@ const Role = () => {
                     loading={isLoadingRoles || isDeleting}
                     onEdit={handleEditRole}
                     onDelete={handleDeleteRole}
+                    searchText={searchText}
                 />
             </Card>
 

@@ -7,8 +7,43 @@ export const employeeApi = createApi({
   tagTypes: ["Employees"],
   endpoints: (builder) => ({
     getEmployees: builder.query({
-      query: () => "/employees",
-      providesTags: ["Employees"],
+      query: ({ page = 1, pageSize = -1, search = '' } = {}) => ({
+        url: "/employees",
+        method: "GET",
+        params: {
+          page,
+          pageSize,
+          search
+        }
+      }),
+      transformResponse: (response) => {
+        if (!response?.message?.data) return { data: [], total: 0 };
+
+        const employees = response.message.data.map(employee => ({
+          ...employee,
+          id: employee.id,
+          key: employee.id,
+          employeeId: employee.employeeId,
+          name: employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A',
+          role_id: employee.role_id,
+          branch: employee.branch,
+          department: employee.department,
+          designation: employee.designation,
+          designation_name: employee.designation_name || 'N/A',
+          designation_id: employee.designation,
+          email: employee.email,
+          phone: employee.phone,
+          status: employee.status || 'active',
+          salary: employee.salary || '0.00',
+          profilePic: employee.profilePic
+        }));
+
+        return {
+          data: employees,
+          total: response.message.pagination.total || employees.length,
+          pagination: response.message.pagination
+        };
+      }
     }),
     createEmployee: builder.mutation({
       query: (data) => ({

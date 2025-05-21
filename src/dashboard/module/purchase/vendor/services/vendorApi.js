@@ -7,7 +7,37 @@ export const vendorApi = createApi({
   tagTypes: ["Vendors"],
   endpoints: (builder) => ({
     getVendors: builder.query({
-      query: () => "/vendors",
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '', status, country } = params;
+        return {
+          url: "/vendors",
+          params: {
+            page,
+            pageSize,
+            search,
+            status,
+            country
+          }
+        };
+      },
+      transformResponse: (response) => {
+        // Handle the nested response structure
+        const data = response?.message?.data || [];
+        const pagination = response?.message?.pagination || {
+          total: 0,
+          current: 1,
+          pageSize: 10,
+          totalPages: 1
+        };
+
+        return {
+          data: data.map(item => ({
+            ...item,
+            key: item.id
+          })),
+          pagination
+        };
+      },
       providesTags: ["Vendors"],
     }),
     createVendor: builder.mutation({

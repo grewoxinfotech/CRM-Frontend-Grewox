@@ -38,8 +38,14 @@ const CreditNotes = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCreditNote, setSelectedCreditNote] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
-  const { data: creditNotesData = [], isLoading } = useGetCreditNotesQuery();
+  const { data: creditNotesData = [], isLoading } = useGetCreditNotesQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText
+  });
   const [createCreditNote] = useCreateCreditNoteMutation();
   const [updateCreditNote] = useUpdateCreditNoteMutation();
 
@@ -206,6 +212,20 @@ const CreditNotes = () => {
     </Menu>
   );
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="invoice-page">
       <div className="page-breadcrumb">
@@ -238,7 +258,7 @@ const CreditNotes = () => {
               }
               placeholder="Search credit notes..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
               className="search-input"
               style={{ width: 350 }}
@@ -269,12 +289,20 @@ const CreditNotes = () => {
 
       <Card className="content-card">
         <CreditNotesList
-          data={creditNotesData}
+          data={creditNotesData?.data || []}
           loading={isLoading}
           onEdit={handleEdit}
           onView={handleView}
           onDelete={handleDelete}
           searchText={searchText}
+          pagination={{
+            current: currentPage,
+            pageSize,
+            total: creditNotesData?.pagination?.total || 0,
+            totalPages: creditNotesData?.pagination?.totalPages || 0,
+            onChange: handlePageChange,
+            onSizeChange: handlePageSizeChange
+          }}
         />
       </Card>
 

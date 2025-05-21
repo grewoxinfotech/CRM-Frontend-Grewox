@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Typography,
@@ -50,12 +50,41 @@ const ProductServices = () => {
   const [loading, setLoading] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const currentUser = useSelector(selectCurrentUser);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
 
   const {
     data: productsData = [],
     isLoading,
     refetch,
-  } = useGetProductsQuery(currentUser?.id);
+  } = useGetProductsQuery({
+    id: currentUser?.id,
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+    search: searchText
+  });
+
+  // Update pagination when data changes
+  useEffect(() => {
+    if (productsData?.pagination) {
+      setPagination(prev => ({
+        ...prev,
+        total: productsData.pagination.total
+      }));
+    }
+  }, [productsData]);
+
+  const handleTableChange = (newPagination, filters, sorter) => {
+    setPagination(prev => ({
+      ...prev,
+      current: newPagination.current,
+      pageSize: newPagination.pageSize
+    }));
+  };
+
   const [createProduct] = useCreateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
@@ -237,7 +266,7 @@ const ProductServices = () => {
         </div>
         <div className="header-actions">
           <div className="desktop-actions">
-            <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div className="search-container">
                 <Input
                   prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
@@ -255,7 +284,7 @@ const ProductServices = () => {
                   placement="bottomRight"
                   className="mobile-search-popover"
                 >
-                  <Button 
+                  <Button
                     className="search-icon-button"
                     icon={<FiSearch size={16} />}
                   />
@@ -289,6 +318,8 @@ const ProductServices = () => {
           onView={handleView}
           currenciesData={currenciesData}
           searchText={searchText}
+          pagination={pagination}
+          onChange={handleTableChange}
         />
       </Card>
 

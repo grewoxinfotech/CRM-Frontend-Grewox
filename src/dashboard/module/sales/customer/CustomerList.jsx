@@ -41,6 +41,8 @@ const CustomerList = ({
   onCustomerRevenueClick,
   custdata,
   searchText = "",
+  pagination,
+  onChange
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const customers = custdata?.data;
@@ -344,15 +346,16 @@ const CustomerList = ({
     },
   };
 
-  // Use only numbers for mobile/tablet, and AntD default for desktop
+  // Remove the local paginationConfig and use the server-side pagination
   const paginationConfig = {
-    pageSize: 10,
+    ...pagination,
     showSizeChanger: true,
+    showQuickJumper: true,
     showTotal: (total) => `Total ${total} customers`,
     pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
     locale: {
       items_per_page: isMobile ? "" : "/ page",
-    },
+    }
   };
 
   return (
@@ -377,6 +380,7 @@ const CustomerList = ({
         rowKey="id"
         className="custom-table"
         pagination={paginationConfig}
+        onChange={onChange}
         scroll={{ x: 'max-content', y: '100%' }}
       />
     </div>

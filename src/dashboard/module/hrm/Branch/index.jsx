@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
     Dropdown, Menu, Row, Col, Breadcrumb, Table, Space, Select, DatePicker
@@ -18,6 +18,7 @@ import BranchList from './BranchList';
 import { Link } from 'react-router-dom';
 import { useGetAllBranchesQuery } from './services/branchApi';
 import dayjs from 'dayjs';
+import debounce from 'lodash/debounce';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -38,6 +39,22 @@ const Branch = () => {
 
     // Fetch branches using RTK Query
     const { data: branchData, isLoading } = useGetAllBranchesQuery();
+
+    // Debounced search handler
+    const debouncedSearch = useCallback(
+        debounce((value) => {
+            setSearchText(value);
+        }, 500),
+        []
+    );
+
+    const handleSearchChange = (e) => {
+        const { value } = e.target;
+        // Update the input value immediately for UI responsiveness
+        e.persist();
+        // Debounce the actual search
+        debouncedSearch(value);
+    };
 
     const handleCreate = () => {
         setIsEditing(false);
@@ -209,11 +226,9 @@ const Branch = () => {
                     <div className="search-filter-group">
                         <Input
                             prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                            placeholder="Search branch..."
+                            placeholder="Search branches..."
                             allowClear
-                            onSearch={(value) => setSearchText(value)}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
+                            onChange={handleSearchChange}
                             className="search-input"
                             style={{
                                 width: '300px',

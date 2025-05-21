@@ -34,7 +34,15 @@ import { useGetCustomersQuery } from "../customer/services/custApi";
 
 const { Text } = Typography;
 
-const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
+const CreditNotesList = ({
+  onEdit,
+  onView,
+  searchText = "",
+  data = [],
+  loading,
+  pagination = {},
+  onDelete
+}) => {
   const { data: credtdata = [], isLoading } = useGetCreditNotesQuery();
   const creditNotes = credtdata.data;
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -45,6 +53,16 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
   const { data: customersData } = useGetCustomersQuery();
   const { data: invdata } = useGetInvoicesQuery();
   const invoices = invdata?.data;
+
+  // Handle pagination change
+  const handleTableChange = (newPagination, filters, sorter) => {
+    if (newPagination.current !== pagination.current) {
+      pagination.onChange?.(newPagination.current);
+    }
+    if (newPagination.pageSize !== pagination.pageSize) {
+      pagination.onSizeChange?.(newPagination.pageSize);
+    }
+  };
 
   const getCurrencyIcon = (currencyId) => {
     const currency = currenciesData?.find((curr) => curr.id === currencyId);
@@ -64,7 +82,7 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
   };
 
   const filteredCreditNotes = React.useMemo(() => {
-    return creditNotes?.filter((creditNote) => {
+    return data?.filter((creditNote) => {
       const searchLower = searchText.toLowerCase();
       const amount = creditNote?.amount?.toString().toLowerCase() || "";
       const category = creditNote?.category?.toLowerCase() || "";
@@ -79,7 +97,7 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
         status.includes(searchLower)
       );
     });
-  }, [creditNotes, searchText]);
+  }, [data, searchText]);
 
   const handleDelete = (recordOrIds) => {
     const isMultiple = Array.isArray(recordOrIds);
@@ -251,11 +269,16 @@ const CreditNotesList = ({ onEdit, onView, searchText = "", data }) => {
         columns={columns}
         dataSource={filteredCreditNotes}
         rowKey="id"
-        loading={isLoading}
+        loading={loading}
+        onChange={handleTableChange}
         pagination={{
-          pageSize: 10,
+          ...pagination,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} credit notes`,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          position: ['bottomRight'],
+          hideOnSinglePage: false,
+          showQuickJumper: true
         }}
         className="credit-notes-table"
       />

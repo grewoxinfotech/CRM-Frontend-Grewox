@@ -16,7 +16,7 @@ import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings
 
 const { Text } = Typography;
 
-const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading }) => {
+const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagination = {} }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
@@ -32,9 +32,12 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading }) => {
         setSelectedRowKeys([]);
     }, [onboardings]);
 
-    const handleChange = (pagination, filters, sorter) => {
+    const handleChange = (newPagination, filters, sorter) => {
         setFilteredInfo(filters);
         setSortedInfo(sorter);
+        if (pagination?.onChange) {
+            pagination.onChange(newPagination, filters, sorter);
+        }
     };
 
     const clearFilters = () => {
@@ -346,22 +349,19 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading }) => {
         <div className="job-onboarding-list-container">
             <BulkActions />
             <Table
-                rowSelection={{
-                    ...rowSelection,
-                    selectedRowKeys: selectedRowKeys,
-                    onChange: (newSelectedRowKeys) => {
-                        setSelectedRowKeys(newSelectedRowKeys);
-                    }
-                }}
+                rowSelection={rowSelection}
                 columns={columns}
                 dataSource={onboardings}
-                rowKey="id"
+                rowKey={record => record.id || record._id}
                 loading={loading}
                 onChange={handleChange}
                 pagination={{
-                    pageSize: 10,
+                    current: pagination?.current || 1,
+                    pageSize: pagination?.pageSize || 10,
+                    total: pagination?.total || 0,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} items`,
+                    ...pagination
                 }}
                 className="custom-table"
             />

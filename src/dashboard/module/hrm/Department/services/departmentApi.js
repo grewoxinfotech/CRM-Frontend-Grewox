@@ -1,30 +1,34 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithReauth } from '../../../../../store/baseQuery';
 
 export const departmentApi = createApi({
     reducerPath: 'departmentApi',
-    baseQuery: fetchBaseQuery({
-        baseUrl: import.meta.env.VITE_API_URL,
-        prepareHeaders: (headers, { getState }) => {
-            const token = getState().auth.token;
-            if (token) {
-                headers.set('authorization', `Bearer ${token}`);
-            }
-            return headers;
-        },
-    }),
+    baseQuery: baseQueryWithReauth,
     tagTypes: ['Departments', 'DepartmentTypes'],
     endpoints: (builder) => ({
         // Get all departments
         getAllDepartments: builder.query({
-            query: () => ({
-                url: '/departments',
-                method: 'GET',
-            }),
+            query: (params = {}) => {
+                const { page = 1, pageSize = 10, search = '', ...rest } = params;
+                const queryParams = new URLSearchParams({
+                    page: page.toString(),
+                    pageSize: pageSize.toString(),
+                    ...(search && { search }),
+                    ...rest
+                }).toString();
+                return `/departments?${queryParams}`;
+            },
             transformResponse: (response) => {
-                if (response?.success) {
-                    return response.data;
-                }
-                throw new Error(response?.message || 'Failed to fetch departments');
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {};
+
+                return {
+                    data: data.map(department => ({
+                        ...department,
+                        key: department.id
+                    })),
+                    pagination
+                };
             },
             providesTags: ['Departments'],
         }),
@@ -36,12 +40,6 @@ export const departmentApi = createApi({
                 method: 'POST',
                 body: data,
             }),
-            transformResponse: (response) => {
-                if (response?.success) {
-                    return response.data;
-                }
-                throw new Error(response?.message || 'Failed to create department');
-            },
             invalidatesTags: ['Departments'],
         }),
 
@@ -52,12 +50,6 @@ export const departmentApi = createApi({
                 method: 'PUT',
                 body: data,
             }),
-            transformResponse: (response) => {
-                if (response?.success) {
-                    return response.data;
-                }
-                throw new Error(response?.message || 'Failed to update department');
-            },
             invalidatesTags: ['Departments'],
         }),
 
@@ -67,12 +59,6 @@ export const departmentApi = createApi({
                 url: `/departments/${id}`,
                 method: 'DELETE',
             }),
-            transformResponse: (response) => {
-                if (response?.success) {
-                    return response.data;
-                }
-                throw new Error(response?.message || 'Failed to delete department');
-            },
             invalidatesTags: ['Departments'],
         }),
 

@@ -13,6 +13,7 @@ import {
   Modal,
   DatePicker,
   Space,
+  Spin,
 } from "antd";
 import {
   FiPlus,
@@ -25,6 +26,7 @@ import { Link } from "react-router-dom";
 import InvoiceList from "./InvoiceList";
 import CreateInvoice from "./CreateInvoice";
 import EditInvoice from "./EditInvoice";
+import ViewInvoice from "./ViewInvoice";
 import "./invoice.scss";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -44,22 +46,27 @@ const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const Invoice = () => {
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const loggedInUser = useSelector(selectCurrentUser);
   const id = loggedInUser?.id;
-  const { data: invoicesData, isLoading, error } = useGetInvoicesQuery();
+  const { data: invoicesData, isLoading: isInvoiceLoading } = useGetInvoicesQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText
+  });
   const invoices = (invoicesData?.data || []).filter(
     (invoice) => invoice.related_id === id
   );
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
 
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     dateRange: [],
   });
@@ -71,6 +78,38 @@ const Invoice = () => {
       ...prev,
       dateRange: dates ? [dates[0].startOf("day"), dates[1].endOf("day")] : [],
     }));
+  };
+
+  const handleCreate = () => {
+    setSelectedInvoice(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEdit = (record) => {
+    setSelectedInvoice(record);
+    setIsEditModalOpen(true);
+  };
+
+  const handleView = (record) => {
+    setSelectedInvoice(record);
+    setIsViewModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      setLoading(true);
+      // TODO: Implement API call to delete invoice
+      await fetch(`/api/invoices/${id}`, {
+        method: "DELETE",
+      });
+      message.success("Invoice deleted successfully");
+      fetchInvoices();
+    } catch (error) {
+      console.error("Delete Error:", error);
+      message.error("Failed to delete invoice");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleExport = async (type) => {
@@ -107,7 +146,7 @@ const Invoice = () => {
     }
   };
 
-  const handleCreate = async (formData) => {
+  const handleCreateInvoice = async (formData) => {
     try {
       setLoading(true);
       // TODO: Implement API call to create invoice
@@ -116,7 +155,7 @@ const Invoice = () => {
         body: formData,
       });
       message.success("Invoice created successfully");
-      setCreateModalVisible(false);
+      setIsCreateModalOpen(false);
       fetchInvoices();
     } catch (error) {
       console.error("Create Error:", error);
@@ -126,7 +165,7 @@ const Invoice = () => {
     }
   };
 
-  const handleEdit = async (formData) => {
+  const handleUpdateInvoice = async (formData) => {
     try {
       setLoading(true);
       // TODO: Implement API call to update invoice
@@ -135,7 +174,7 @@ const Invoice = () => {
         body: formData,
       });
       message.success("Invoice updated successfully");
-      setEditModalVisible(false);
+      setIsEditModalOpen(false);
       setSelectedInvoice(null);
       fetchInvoices();
     } catch (error) {
@@ -144,28 +183,6 @@ const Invoice = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      setLoading(true);
-      // TODO: Implement API call to delete invoice
-      await fetch(`/api/invoices/${id}`, {
-        method: "DELETE",
-      });
-      message.success("Invoice deleted successfully");
-      fetchInvoices();
-    } catch (error) {
-      console.error("Delete Error:", error);
-      message.error("Failed to delete invoice");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleView = (invoice) => {
-    // TODO: Implement view invoice functionality
-    console.log("View invoice:", invoice);
   };
 
   const exportToCSV = (data, filename) => {
@@ -234,6 +251,20 @@ const Invoice = () => {
     </Menu>
   );
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="invoice-page">
       <div className="page-breadcrumb">
@@ -265,7 +296,7 @@ const Invoice = () => {
               prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search invoices..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
               className="search-input"
               style={{
@@ -296,7 +327,7 @@ const Invoice = () => {
             <Button
               type="primary"
               icon={<FiPlus size={16} />}
-              onClick={() => setCreateModalVisible(true)}
+              onClick={handleCreate}
               className="add-button"
             >
               Create Invoice
@@ -307,39 +338,53 @@ const Invoice = () => {
 
       <Card className="invoice-table-card">
         <InvoiceList
-          loading={isLoading}
+          loading={isInvoiceLoading || loading}
           invoices={invoices}
           searchText={searchText}
-          onEdit={(invoice) => {
-            setSelectedInvoice(invoice);
-            setEditModalVisible(true);
-          }}
+          onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
           filters={filters}
+          pagination={{
+            current: currentPage,
+            pageSize,
+            total: invoicesData?.pagination?.total || 0,
+            totalPages: invoicesData?.pagination?.totalPages || 0,
+            onChange: handlePageChange,
+            onSizeChange: handlePageSizeChange
+          }}
         />
       </Card>
 
       <CreateInvoice
-        open={createModalVisible}
-        onSubmit={handleCreate}
+        open={isCreateModalOpen}
+        onSubmit={handleCreateInvoice}
         id={id}
         productsData={productsData}
         productsLoading={productsLoading}
-        setCreateModalVisible={setCreateModalVisible}
-        onCancel={() => setCreateModalVisible(false)}
+        setCreateModalVisible={setIsCreateModalOpen}
+        onCancel={() => setIsCreateModalOpen(false)}
       />
 
       <EditInvoice
-        open={editModalVisible}
+        open={isEditModalOpen}
         onCancel={() => {
-          setEditModalVisible(false);
+          setIsEditModalOpen(false);
           setSelectedInvoice(null);
         }}
-        onSubmit={handleEdit}
+        onSubmit={handleUpdateInvoice}
         productsData={productsData}
         productsLoading={productsLoading}
         initialValues={selectedInvoice}
+      />
+
+      <ViewInvoice
+        open={isViewModalOpen}
+        onCancel={() => {
+          setIsViewModalOpen(false);
+          setSelectedInvoice(null);
+        }}
+        invoice={selectedInvoice}
       />
     </div>
   );

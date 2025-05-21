@@ -17,9 +17,16 @@ const { Option } = Select;
 const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     // RTK Query hooks
-    const { data: holidaysData = [], isLoading } = useGetAllHolidaysQuery();
+    const { data: response = {}, isLoading } = useGetAllHolidaysQuery({
+        page: currentPage,
+        pageSize,
+        search: searchText,
+        ...filters
+    });
     const [deleteHoliday] = useDeleteHolidayMutation();
 
     // Define leave types
@@ -28,38 +35,9 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
         { text: 'Unpaid', value: 'unpaid' }
     ];
 
-    // Transform holidays data
-    const holidays = React.useMemo(() => {
-        let filteredData = [];
+    // Destructure data and pagination from response
+    const { data: holidays = [], pagination = {} } = response;
 
-        if (!holidaysData) return [];
-        if (Array.isArray(holidaysData)) {
-            filteredData = holidaysData;
-        } else if (Array.isArray(holidaysData.data)) {
-            filteredData = holidaysData.data;
-        }
-
-        // Apply filters
-        return filteredData.filter(holiday => {
-            if (!holiday) return false;
-
-            const matchesSearch = !searchText || searchText.toLowerCase() === '' ||
-                (holiday.holiday_name || '').toLowerCase().includes(searchText.toLowerCase());
-
-            const matchesType = !filters.leave_type ||
-                holiday.leave_type === filters.leave_type;
-
-            const matchesStatus = !filters.status ||
-                holiday.status === filters.status;
-
-            const matchesDateRange = !filters.dateRange?.length ||
-                (dayjs(holiday.start_date).isValid() && dayjs(holiday.end_date).isValid() &&
-                    dayjs(holiday.start_date).isAfter(dayjs(filters.dateRange[0])) &&
-                    dayjs(holiday.end_date).isBefore(dayjs(filters.dateRange[1])));
-
-            return matchesSearch && matchesType && matchesStatus && matchesDateRange;
-        });
-    }, [holidaysData, searchText, filters]);
 
     const handleDelete = (recordOrIds) => {
         const isMultiple = Array.isArray(recordOrIds);
@@ -301,16 +279,6 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const paginationConfig = {
-        pageSize: 10,
-        showSizeChanger: true,
-        showTotal: (total) => `Total ${total} items`,
-        pageSizeOptions: ['10', '20', '50', '100'],
-        locale: {
-            items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
-        },
-    };
-
     return (
         <>
             <BulkActions />
@@ -327,7 +295,17 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
                             setSelectedRowKeys(newSelectedRowKeys);
                         },
                     }}
-                    pagination={paginationConfig}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: pagination.total,
+                        onChange: (page, size) => {
+                            setCurrentPage(page);
+                            setPageSize(size);
+                        },
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total ${total} items`,
+                    }}
                     className="custom-table"
                     scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
                     style={{

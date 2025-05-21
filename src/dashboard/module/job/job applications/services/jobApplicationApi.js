@@ -7,11 +7,37 @@ export const jobApplicationApi = createApi({
     tagTypes: ['JobApplications'],
     endpoints: (builder) => ({
         getAllJobApplications: builder.query({
-            query: (params) => ({
-                url: 'job-applications',
-                method: 'GET',
-                params: params,
-            }),
+            query: (params) => {
+                const { page = 1, limit = 10, search = '', ...rest } = params || {};
+                const queryParams = new URLSearchParams({
+                    page: page.toString(),
+                    limit: limit.toString(),
+                    ...(search && { search }),
+                    ...rest
+                }).toString();
+                return `/job-applications?${queryParams}`;
+            },
+            transformResponse: (response) => {
+                // Handle the nested response structure
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {
+                    total: 0,
+                    current: 1,
+                    pageSize: 10,
+                    totalPages: 1
+                };
+
+                return {
+                    data: data.map(item => ({
+                        ...item,
+                        key: item.id || item._id
+                    })),
+                    total: pagination.total,
+                    current: pagination.current,
+                    pageSize: pagination.pageSize,
+                    totalPages: pagination.totalPages
+                };
+            },
             providesTags: ['JobApplications'],
         }),
 

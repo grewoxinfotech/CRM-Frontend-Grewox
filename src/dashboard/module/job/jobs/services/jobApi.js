@@ -7,7 +7,38 @@ export const jobApi = createApi({
     tagTypes: ['Jobs'],
     endpoints: (builder) => ({
         getAllJobs: builder.query({
-            query: () => '/jobs',
+            query: (params) => {
+                const { page = 1, limit = 10, search = '', companyId, ...rest } = params || {};
+                const queryParams = new URLSearchParams({
+                    page: page.toString(),
+                    limit: limit.toString(),
+                    ...(search && { search }),
+                    ...(companyId && { company_id: companyId }),
+                    ...rest
+                }).toString();
+                return `/jobs?${queryParams}`;
+            },
+            transformResponse: (response) => {
+                // Handle the nested response structure
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {
+                    total: 0,
+                    current: 1,
+                    pageSize: 10,
+                    totalPages: 1
+                };
+
+                return {
+                    data: data.map(item => ({
+                        ...item,
+                        key: item.id || item._id
+                    })),
+                    total: pagination.total,
+                    current: pagination.current,
+                    pageSize: pagination.pageSize,
+                    totalPages: pagination.totalPages
+                };
+            },
             providesTags: ['Jobs'],
         }),
         createJob: builder.mutation({
@@ -33,7 +64,6 @@ export const jobApi = createApi({
             }),
             invalidatesTags: ['Jobs'],
         }),
-
     }),
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Card,
   Typography,
@@ -10,6 +10,7 @@ import {
   Menu,
   Breadcrumb,
   Alert,
+  DatePicker,
 } from "antd";
 import {
   FiPlus,
@@ -17,6 +18,7 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
+  FiCalendar,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import BillingList from "./BillingList";
@@ -36,6 +38,7 @@ import { useGetVendorsQuery } from "./services/billingApi";
 import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const getCompanyId = (state) => {
   const user = state.auth.user;
@@ -52,11 +55,34 @@ const Billing = () => {
   const [selectedBilling, setSelectedBilling] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [createBilling] = useCreateBillingMutation();
   const [deleteBilling] = useDeleteBillingMutation();
 
-  const { data: billings, isLoading, isError, refetch } = useGetBillingsQuery();
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [dateRange, setDateRange] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [exportLoading, setExportLoading] = useState(false);
+  const searchInputRef = useRef(null);
+
+  const { data: billingsData, isLoading, error } = useGetBillingsQuery({
+    page: currentPage,
+    limit: pageSize,
+    search: searchText,
+    ...(dateRange?.length === 2 && {
+      startDate: dateRange[0].format('YYYY-MM-DD'),
+      endDate: dateRange[1].format('YYYY-MM-DD')
+    })
+  });
   const { data: vendorsData } = useGetVendorsQuery();
 
   // Create a map of vendor IDs to vendor names
@@ -67,6 +93,33 @@ const Billing = () => {
       return acc;
     }, {});
   }, [vendorsData]);
+
+  // Update pagination when data changes
+  useEffect(() => {
+    if (billingsData?.pagination) {
+      setPagination(prev => ({
+        ...prev,
+        total: billingsData.pagination.total
+      }));
+    }
+  }, [billingsData]);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1); // Reset to first page on new search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchText, dateRange]);
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+  };
+
+  const handleTableChange = (pagination, filters, sorter) => {
+    setCurrentPage(pagination.current);
+    setPageSize(pagination.pageSize);
+  };
 
   useEffect(() => {
     if (!companyId) {
@@ -102,7 +155,7 @@ const Billing = () => {
             const promises = ids.map(id => deleteBilling(id).unwrap());
             await Promise.all(promises);
             message.success(`Successfully deleted ${ids.length} bill${ids.length > 1 ? 's' : ''}`);
-            refetch();
+            billingsData.refetch();
           } catch (error) {
             console.error("Delete Error:", error);
             message.error(error.data?.message || error.message || "Failed to delete bill(s)");
@@ -117,9 +170,9 @@ const Billing = () => {
 
   const handleExport = async (type) => {
     try {
-      setLoading(true);
+      setExportLoading(true);
       const data =
-        billings?.data?.map((billing) => {
+        billingsData?.data?.map((billing) => {
           // Parse items to get tax name
           const items =
             typeof billing.items === "string"
@@ -174,7 +227,7 @@ const Billing = () => {
     } catch (error) {
       message.error(`Failed to export: ${error.message}`);
     } finally {
-      setLoading(false);
+      setExportLoading(false);
     }
   };
 
@@ -259,7 +312,7 @@ const Billing = () => {
       if (response.data?.success) {
         // message.success("Bill created successfully");
         setIsCreateModalVisible(false);
-        refetch();
+        billingsData.refetch();
       } else {
         message.error(response.error?.data?.message || "Failed to create bill");
       }
@@ -288,23 +341,28 @@ const Billing = () => {
 
       <div className="page-header">
         <div className="page-title">
-          <Title level={2}>Billings</Title>
+          <Title level={2}>Billing</Title>
           <Text type="secondary">Manage all billings in the organization</Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+              prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
               placeholder="Search billings..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
+              ref={searchInputRef}
               className="search-input"
-              style={{
-                width: "300px",
-                borderRadius: "20px",
-                height: "38px",
-              }}
+              style={{ width: '300px' }}
+            />
+            <RangePicker
+              suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+              onChange={(dates) => setDateRange(dates)}
+              value={dateRange}
+              allowClear
+              style={{ width: '300px', height: '40px' }}
+              placeholder={['Start Date', 'End Date']}
             />
           </div>
           <div className="action-buttons">
@@ -312,7 +370,7 @@ const Billing = () => {
               <Button
                 className="export-button"
                 icon={<FiDownload size={16} />}
-                loading={loading}
+                loading={exportLoading}
               >
                 Export
                 <FiChevronDown size={16} />
@@ -342,18 +400,23 @@ const Billing = () => {
 
       <Card className="billing-table-card">
         <BillingList
-          billings={billings?.data || []}
+          billings={billingsData?.data || []}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
-          searchText={searchText}
           loading={isLoading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: billingsData?.total || 0,
+            onChange: handleTableChange
+          }}
         />
       </Card>
 
       <CreateBilling
         open={isCreateModalVisible}
-        billings={billings?.data || []}
+        billings={billingsData?.data || []}
         onCancel={() => setIsCreateModalVisible(false)}
         onSubmit={handleCreateBilling}
       />

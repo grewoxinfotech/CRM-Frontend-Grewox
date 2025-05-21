@@ -1,78 +1,60 @@
-import React, { useState } from "react";
-import { Table, Button, Tag, Space, Dropdown, Modal, Tabs, Row, Col, Typography, Tooltip, message, Input } from "antd";
-import { FiEdit2, FiTrash2, FiMoreVertical, FiEye, FiX, FiShield, FiCheck, FiPlus, FiEdit, FiUsers } from "react-icons/fi";
-import EditRole from "./EditRole";
+import React, { useState, useEffect } from 'react';
+import { Table, Space, Button, Tooltip, Tag, message, Modal, Select, Dropdown, Input } from 'antd';
+import {
+    FiEdit2,
+    FiTrash2,
+    FiMoreVertical,
+    FiEye,
+    FiX,
+    FiShield,
+    FiCheck,
+    FiPlus,
+    FiEdit,
+    FiUsers
+} from 'react-icons/fi';
+import { useGetAllRolesQuery, useDeleteRoleMutation } from './services/roleApi';
 
-const { Text } = Typography;
-
-const RoleList = ({ roles, onEdit, onDelete }) => {
+const RoleList = ({ onEdit, searchText, filters }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
     const [viewPermissionsModal, setViewPermissionsModal] = useState(false);
     const [selectedPermissions, setSelectedPermissions] = useState(null);
     const [selectedRole, setSelectedRole] = useState(null);
     const [activeTab, setActiveTab] = useState('CRM');
-    const [currentPage, setCurrentPage] = useState(1);
 
-    const modules = ['User Management', 'CRM', 'Communication', 'HRM', 'Job'];
-    const subModules = {
-        'User Management': [
-            { key: 'extra-users-list', title: 'Users' },
-            { key: 'extra-users-client-list', title: 'Clients' }
-        ],
-        CRM: [
-            { key: 'dashboards-project-list', title: 'Project' },
-            { key: 'dashboards-sales', title: 'Sales' },
-            { key: 'dashboards-lead', title: 'Leads' },
-            { key: 'dashboards-deal', title: 'Deals' },
-            { key: 'dashboards-proposal', title: 'Proposal' },
-            { key: 'dashboards-task', title: 'Task' },
-            { key: 'dashboards-TaskCalendar', title: 'Task Calendar' },
-            { key: 'dashboards-systemsetup', title: 'CRM System Setup' }
-        ],
-        // Communication: [
-        //     { key: 'dashboards-mail', title: 'Mail' },
-        //     { key: 'dashboards-chat', title: 'Chat' },
-        //     { key: 'dashboards-calendar', title: 'Calendar' },
-        // ],
-        HRM: [
-            { key: 'extra-hrm-employee', title: 'Employee' },
-            { key: 'extra-hrm-payroll', title: 'Payroll' },
-            { key: 'extra-hrm-performance-indicator', title: 'Indicator' },
-            { key: 'extra-hrm-role', title: 'Role' },
-            { key: 'extra-hrm-designation', title: 'Designation' },
-            { key: 'extra-hrm-department', title: 'Department' },
-            { key: 'extra-hrm-attendance-attendancelist', title: 'Attendance' },
-            { key: 'extra-hrm-leave-leavelist', title: 'Leave Management' },
-            { key: 'extra-hrm-meeting', title: 'Meeting' },
-            { key: 'extra-hrm-announcement', title: 'Announcement' },
-            { key: 'extra-hrm-jobs-joblist', title: 'Job' },
-            { key: 'extra-hrm-document', title: 'Document' },
-            { key: 'extra-hrm-trainingSetup', title: 'Training Setup' }
-        ],
-        Job: [
-            { key: 'extra-hrm-jobs-joblist', title: 'Jobs' },
-            { key: 'extra-hrm-jobs-jobcandidate', title: 'Job Candidates' },
-            { key: 'extra-hrm-jobs-jobonbording', title: 'Job On-Boarding' },
-            { key: 'extra-hrm-jobs-jobapplication', title: 'Job Applications' },
-            { key: 'extra-hrm-jobs-jobofferletter', title: 'Offer Letters' },
-            { key: 'extra-hrm-jobs-interview', title: 'Interviews' }
-        ]
+    // RTK Query hooks
+    const { data: rolesResponse = { data: [], pagination: {} }, isLoading } = useGetAllRolesQuery({
+        page: pagination.current,
+        pageSize: pagination.pageSize,
+        search: searchText,
+        ...filters
+    });
+    const [deleteRole] = useDeleteRoleMutation();
+
+    // Update pagination when response changes
+    useEffect(() => {
+        if (rolesResponse?.pagination) {
+            setPagination(prev => ({
+                ...prev,
+                total: rolesResponse.pagination.total
+            }));
+        }
+    }, [rolesResponse]);
+
+    const handleTableChange = (newPagination, filters, sorter) => {
+        setPagination(prev => ({
+            ...prev,
+            current: newPagination.current,
+            pageSize: newPagination.pageSize
+        }));
     };
 
-    const handleEdit = (record) => {
-        // Close permissions modal if it's open
-        if (viewPermissionsModal) {
-            setViewPermissionsModal(false);
-            setSelectedPermissions(null);
-        }
-
-        // Call the parent's onEdit handler with the record
-        if (onEdit) {
-            onEdit(record);
-        }
-    };
-
-    const handleDelete = async (recordOrIds) => {
+    const handleDelete = (recordOrIds) => {
         const isMultiple = Array.isArray(recordOrIds);
         const title = isMultiple ? 'Delete Selected Roles' : 'Delete Role';
         const content = isMultiple
@@ -84,18 +66,16 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
             content,
             okText: 'Yes',
             okType: 'danger',
+            bodyStyle: { padding: '20px' },
             cancelText: 'No',
-            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
                     if (isMultiple) {
-                        // Handle bulk delete
-                        await Promise.all(recordOrIds.map(id => onDelete(id)));
+                        await Promise.all(recordOrIds.map(id => deleteRole(id).unwrap()));
                         message.success(`${recordOrIds.length} roles deleted successfully`);
-                        setSelectedRowKeys([]); // Clear selection after successful delete
+                        setSelectedRowKeys([]); // Clear selection after delete
                     } else {
-                        // Handle single delete
-                        await onDelete(recordOrIds);
+                        await deleteRole(recordOrIds).unwrap();
                         message.success('Role deleted successfully');
                     }
                 } catch (error) {
@@ -378,21 +358,35 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
 
     const columns = [
         {
-            title: "Role",
-            dataIndex: "role_name",
-            key: "role_name",
-            render: (text, record) => (
-                <div className="item-wrapper">
-                    <div className="item-content">
-                        <div className="icon-wrapper" style={{ color: "#1890ff", background: "rgba(24, 144, 255, 0.1)" }}>
-                            <FiUsers className="item-icon" />
-                        </div>
-                        <div className="info-wrapper">
-                            <div className="name" style={{ color: "#262626", fontWeight: 600 }}>{text}</div>
-                        </div>
-                    </div>
+            title: 'Role Name',
+            dataIndex: 'role_name',
+            key: 'role_name',
+            filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                <div style={{ padding: 8 }}>
+                    <Input
+                        placeholder="Search role name"
+                        value={selectedKeys[0]}
+                        onChange={e => setSelectedKeys(e.target.value ? [e.target.value] : [])}
+                        onPressEnter={() => confirm()}
+                        style={{ width: 188, marginBottom: 8, display: 'block' }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Filter
+                        </Button>
+                        <Button onClick={() => clearFilters()} size="small" style={{ width: 90 }}>
+                            Reset
+                        </Button>
+                    </Space>
                 </div>
             ),
+            onFilter: (value, record) =>
+                (record.role_name?.toLowerCase() || '').includes(value.toLowerCase()),
         },
         {
             title: "Permissions",
@@ -402,95 +396,85 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
             render: (permissions, record) => renderPermissionTags(permissions, record),
         },
         {
-            title: "Actions",
-            key: "actions",
-            width: 80,
+            title: 'Actions',
+            key: 'actions',
+            width: '80px',
             fixed: 'right',
-
-            render: (_, record) => {
-                const menuItems = [
-                    {
-                        key: 'edit',
-                        icon: <FiEdit2 size={14} />,
-                        label: 'Edit',
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleEdit(record);
-                        }
-                    }
-                ];
-
-                if (record.role_name !== 'super-admin' && record.role_name !== 'client') {
-                    menuItems.push({
-                        key: 'delete',
-                        icon: <FiTrash2 size={14} />,
-                        label: 'Delete',
-                        danger: true,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleDelete(record.id);
-                        }
-                    });
-                }
-
-                return (
-                    <div onClick={(e) => e.stopPropagation()}>
-                        <Dropdown
-                            menu={{
-                                items: menuItems,
-                                onClick: (e) => e.domEvent.stopPropagation()
-                            }}
-                            trigger={['click']}
-                            placement="bottomRight"
-                        >
-                            <Button
-                                type="text"
-                                icon={<FiMoreVertical size={16} />}
-                                className="action-button"
-                            />
-                        </Dropdown>
-                    </div>
-                );
-            }
-        }
+            render: (_, record) => (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <Dropdown
+                        menu={{
+                            items: [
+                                {
+                                    key: 'edit',
+                                    icon: <FiEdit2 style={{ fontSize: '14px', color: '#1890ff' }} />,
+                                    label: 'Edit Role',
+                                    onClick: () => onEdit(record),
+                                },
+                                {
+                                    key: 'delete',
+                                    icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
+                                    label: 'Delete Role',
+                                    danger: true,
+                                    onClick: () => handleDelete(record.id),
+                                }
+                            ]
+                        }}
+                        placement="bottomRight"
+                        trigger={['click']}
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical size={16} />}
+                            className="action-button"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </Dropdown>
+                </div>
+            ),
+        },
     ];
 
-    return (
-        <div className="role-list-container">
-            <BulkActions />
-            <Table
-                rowSelection={{
-                    type: 'checkbox',
-                    selectedRowKeys,
-                    onChange: (newSelectedRowKeys) => {
-                        setSelectedRowKeys(newSelectedRowKeys);
-                    },
-                }}
-                columns={columns}
-                dataSource={roles}
-                rowKey="id"
-                pagination={{
-                    current: currentPage,
-                    onChange: (page) => setCurrentPage(page),
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} items`,
-                    responsive: true,
-                    size: 'default'
-                }}
-                className="custom-table"
-                scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
-                size="middle"
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                }}
-                onRow={(record) => ({
-                    onClick: () => showAllPermissions(record)
-                })}
-            />
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
+    const paginationConfig = {
+        ...pagination,
+        showSizeChanger: true,
+        showTotal: (total) => `Total ${total} items`,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        locale: {
+            items_per_page: isMobile ? '' : '/ page',
+        },
+    };
+
+    return (
+        <>
+            <BulkActions />
+            <div className='role-list-container'>
+                <Table
+                    columns={columns}
+                    dataSource={rolesResponse.data}
+                    loading={isLoading}
+                    rowKey="id"
+                    rowSelection={rowSelection}
+                    pagination={paginationConfig}
+                    onChange={handleTableChange}
+                    className="custom-table"
+                    scroll={{ x: 1000, y: '' }}
+                    style={{
+                        background: '#ffffff',
+                        borderRadius: '8px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    }}
+                    onRow={(record) => ({
+                        onClick: () => showAllPermissions(record)
+                    })}
+                />
+            </div>
             {viewPermissionsModal && (
                 <Modal
                     title={
@@ -509,7 +493,7 @@ const RoleList = ({ roles, onEdit, onDelete }) => {
                     {selectedPermissions && renderFullPermissions(selectedPermissions)}
                 </Modal>
             )}
-        </div>
+        </>
     );
 };
 

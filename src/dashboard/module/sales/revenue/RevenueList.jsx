@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   Button,
@@ -13,9 +13,6 @@ import {
   Statistic,
   Tag,
   Tooltip,
-  Input,
-  Space,
-  DatePicker,
   Menu,
 } from "antd";
 import {
@@ -33,10 +30,6 @@ import {
   FiArrowDownRight,
 } from "react-icons/fi";
 import dayjs from "dayjs";
-import {
-  useGetRevenueQuery,
-  useDeleteRevenueMutation,
-} from "./services/revenueApi";
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useGetCustomersQuery } from "../customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
@@ -44,6 +37,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import './revenue.scss';
+
 const { Text } = Typography;
 const { Option } = Select;
 
@@ -51,8 +45,10 @@ const RevenueList = ({
   onEdit,
   onDelete,
   onView,
-  revdata,
+  data = [],
+  loading,
   searchText = "",
+  pagination = {}
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -65,7 +61,7 @@ const RevenueList = ({
   const productFromList = location.state?.selectedProduct;
 
   // Set initial customer if coming from customer list
-  useEffect(() => {
+  React.useEffect(() => {
     if (customerFromList) {
       setSelectedCustomer(customerFromList.id);
     }
@@ -77,31 +73,17 @@ const RevenueList = ({
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: productsData } = useGetProductsQuery(loggedInUser?.id);
   const { data: customersData } = useGetCustomersQuery();
-  const [deleteRevenue] = useDeleteRevenueMutation();
   const { data: currencies } = useGetAllCurrenciesQuery();
 
-  // const revdata = revenueData?.data || [];
   const products = productsData?.data || [];
   const customers = customersData?.data || [];
 
   // Process revenue data to include parsed products
   const processedRevenue = useMemo(() => {
     try {
-      return (revdata || []).map((revenue) => {
-        let parsedProducts = [];
-        try {
-          if (revenue?.products) {
-            parsedProducts =
-              typeof revenue.products === "string"
-                ? JSON.parse(revenue.products)
-                : Array.isArray(revenue.products)
-                  ? revenue.products
-                  : [];
-          }
-        } catch (error) {
-          console.error("Error parsing products:", error);
-          parsedProducts = [];
-        }
+      return (data || []).map((revenue) => {
+        // Products are already parsed in the API response
+        const parsedProducts = Array.isArray(revenue.products) ? revenue.products : [];
 
         return {
           ...revenue,
@@ -112,7 +94,7 @@ const RevenueList = ({
       console.error("Error processing revenue data:", error);
       return [];
     }
-  }, [revdata]);
+  }, [data]);
 
   // Calculate product-wise revenue
   const productRevenue = useMemo(() => {
@@ -263,21 +245,19 @@ const RevenueList = ({
       okText: "Delete",
       okType: "danger",
       cancelText: "No",
-      onOk: async () => {
-        try {
-          if (isMultiple) {
-            await Promise.all(recordOrIds.map(id => deleteRevenue(id).unwrap()));
-            message.success(`${recordOrIds.length} revenues deleted successfully`);
-            setSelectedRowKeys([]);
-          } else {
-            await deleteRevenue(recordOrIds).unwrap();
-            message.success("Revenue deleted successfully");
-          }
-        } catch (error) {
-          message.error(error?.data?.message || "Failed to delete revenue(s)");
-        }
+      onOk: () => {
+        onDelete(recordOrIds);
       },
     });
+  };
+
+  const handleTableChange = (newPagination, filters, sorter) => {
+    if (newPagination.current !== pagination.current) {
+      pagination.onChange?.(newPagination.current);
+    }
+    if (newPagination.pageSize !== pagination.pageSize) {
+      pagination.onSizeChange?.(newPagination.pageSize);
+    }
   };
 
   const getCurrencyDetails = (currencyId) => {
@@ -301,6 +281,13 @@ const RevenueList = ({
     if (!customerId || !customersData?.data) return "N/A";
     const customer = customersData.data.find(c => c.id === customerId);
     return customer?.name || customer?.companyName || "N/A";
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
   };
 
   const columns = [
@@ -396,37 +383,6 @@ const RevenueList = ({
     },
   ];
 
-  // Calculate totals for stats
-  const stats = useMemo(() => {
-    return filteredRevenue.reduce(
-      (acc, rev) => ({
-        total_revenue: acc.total_revenue + (Number(rev.amount) || 0),
-        total_profit: acc.total_profit + (Number(rev.profit) || 0),
-        total_margin:
-          acc.total_margin + (Number(rev.profit_margin_percentage) || 0),
-        count: acc.count + 1,
-      }),
-      { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 }
-    );
-  }, [filteredRevenue]);
-
-  const clearCustomerFilter = () => {
-    setSelectedCustomer(null);
-    navigate("/dashboard/sales/revenue", { replace: true });
-  };
-
-  const clearProductFilter = () => {
-    setSelectedProduct(null);
-    navigate("/dashboard/sales/revenue", { replace: true });
-  };
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    },
-  };
-
   return (
     <div className="overview-content">
       <Row gutter={[16, 16]} className="metrics-row">
@@ -438,7 +394,7 @@ const RevenueList = ({
             <div className="metric-content">
               <div className="metric-label">TOTAL REVENUE</div>
               <div className="metric-value">
-                ₹{stats.total_revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                ₹{filteredRevenue.reduce((sum, rev) => sum + (Number(rev.amount) || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </div>
               <div className="metric-subtitle">
                 {filteredRevenue.length} Total Transactions
@@ -455,10 +411,10 @@ const RevenueList = ({
             <div className="metric-content">
               <div className="metric-label">TOTAL PROFIT</div>
               <div className="metric-value">
-                ₹{Math.abs(stats.total_profit).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                ₹{Math.abs(filteredRevenue.reduce((sum, rev) => sum + (Number(rev.profit) || 0), 0)).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </div>
               <div className="metric-subtitle">
-                {stats.total_profit >= 0 ? 'Net Profit' : 'Net Loss'}
+                Net {filteredRevenue.reduce((sum, rev) => sum + (Number(rev.profit) || 0), 0) >= 0 ? 'Profit' : 'Loss'}
               </div>
             </div>
           </Card>
@@ -472,7 +428,11 @@ const RevenueList = ({
             <div className="metric-content">
               <div className="metric-label">PROFIT MARGIN</div>
               <div className="metric-value">
-                {(stats.count > 0 ? (stats.total_margin / stats.count).toFixed(2) : '0.00')}%
+                {(filteredRevenue.length > 0
+                  ? filteredRevenue.reduce((sum, rev) => sum + (Number(rev.profit_margin_percentage) || 0), 0) /
+                  filteredRevenue.length
+                  : 0
+                ).toFixed(2)}%
               </div>
               <div className="metric-subtitle">
                 Average Margin
@@ -553,10 +513,16 @@ const RevenueList = ({
             columns={columns}
             dataSource={filteredRevenue}
             rowKey="id"
+            loading={loading}
+            onChange={handleTableChange}
             pagination={{
-              pageSize: 10,
+              ...pagination,
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} items`,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              position: ['bottomRight'],
+              hideOnSinglePage: false,
+              showQuickJumper: true
             }}
             className="revenue-table"
           />

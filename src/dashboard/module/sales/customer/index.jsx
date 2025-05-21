@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Typography,
@@ -38,15 +38,41 @@ import {
 const { Title, Text } = Typography;
 
 const Customer = () => {
-
-  const { data: custdata, isLoading, error } = useGetCustomersQuery();
-  const customersData = custdata?.data;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  const { data: custdata, isLoading, error } = useGetCustomersQuery({
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+    search: searchText
+  });
+
+  useEffect(() => {
+    if (custdata?.pagination) {
+      setPagination(prev => ({
+        ...prev,
+        total: custdata.pagination.total
+      }));
+    }
+  }, [custdata]);
+
+  const handleTableChange = (newPagination, filters, sorter) => {
+    setPagination(prev => ({
+      ...prev,
+      current: newPagination.current,
+      pageSize: newPagination.pageSize
+    }));
+  };
+
   const [createCustomer] = useCreateCustomerMutation();
   const navigate = useNavigate();
 
@@ -123,7 +149,7 @@ const Customer = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = customersData.map((customer) => ({
+      const data = custdata?.data.map((customer) => ({
         Name: customer.name,
         Email: customer.email,
         Phone: customer.contact,
@@ -328,6 +354,8 @@ const Customer = () => {
           onCustomerClick={handleCustomerClick}
           onCustomerRevenueClick={handleCustomerRevenueClick}
           searchText={searchText}
+          pagination={pagination}
+          onChange={handleTableChange}
         />
       </Card>
 

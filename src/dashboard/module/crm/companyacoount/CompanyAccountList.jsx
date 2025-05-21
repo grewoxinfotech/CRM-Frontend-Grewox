@@ -39,6 +39,8 @@ const CompanyAccountList = ({
   loggedInUser,
   countries,
   onDelete,
+  onSearchChange,
+  onPaginationChange,
 }) => {
   const navigate = useNavigate();
   const [deleteCompanyAccount, { isLoading: isDeleting }] = useDeleteCompanyAccountMutation();
@@ -49,11 +51,7 @@ const CompanyAccountList = ({
   // Safely handle company accounts data
   const companyAccounts = React.useMemo(() => {
     if (!companyAccountsResponse) return [];
-    if (Array.isArray(companyAccountsResponse)) return companyAccountsResponse;
-    if (companyAccountsResponse?.data && Array.isArray(companyAccountsResponse.data)) {
-      return companyAccountsResponse.data;
-    }
-    return [];
+    return companyAccountsResponse.data || [];
   }, [companyAccountsResponse]);
 
   const handleRowClick = (event, record) => {
@@ -90,7 +88,6 @@ const CompanyAccountList = ({
       onOk: async () => {
         try {
           if (isMultiple) {
-            // Process each deletion sequentially
             for (const id of recordOrIds) {
               await deleteCompanyAccount(id).unwrap();
             }
@@ -100,6 +97,7 @@ const CompanyAccountList = ({
             await deleteCompanyAccount(recordOrIds).unwrap();
             message.success('Company deleted successfully');
           }
+          if (onDelete) onDelete();
         } catch (error) {
           message.error(error?.data?.message || 'Failed to delete company(s)');
         }
@@ -184,7 +182,7 @@ const CompanyAccountList = ({
               <div className="name">{record.company_name}</div>
               <div className="meta">
                 <FiGlobe size={12} />
-                {record.company_site || 'No website'}
+                {record.website || 'No website'}
               </div>
             </div>
           </div>
@@ -314,9 +312,16 @@ const CompanyAccountList = ({
         rowKey="id"
         className="modern-table"
         pagination={{
-          pageSize: 10,
+          total: companyAccountsResponse?.pagination?.total || 0,
+          current: companyAccountsResponse?.pagination?.current || 1,
+          pageSize: companyAccountsResponse?.pagination?.pageSize || 10,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} companies`,
+          onChange: (page, pageSize) => {
+            if (onPaginationChange) {
+              onPaginationChange(page, pageSize);
+            }
+          }
         }}
       />
 

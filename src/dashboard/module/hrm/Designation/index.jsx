@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, Typography, Button, Input, Breadcrumb, Dropdown, Menu, message, Row, Col, Select, DatePicker } from 'antd';
 import { FiPlus, FiSearch, FiHome, FiDownload, FiFilter } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
@@ -10,6 +10,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import dayjs from 'dayjs';
 import { useGetAllDesignationsQuery } from './services/designationApi';
+import debounce from 'lodash/debounce';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -27,6 +28,22 @@ const Designation = () => {
     const [showFilters, setShowFilters] = useState(false);
 
     const { data: designationData } = useGetAllDesignationsQuery();
+
+    // Debounced search handler
+    const debouncedSearch = useCallback(
+        debounce((value) => {
+            setSearchText(value);
+        }, 500),
+        []
+    );
+
+    const handleSearchChange = (e) => {
+        const { value } = e.target;
+        // Update the input value immediately for UI responsiveness
+        e.persist();
+        // Debounce the actual search
+        debouncedSearch(value);
+    };
 
     const handleCreate = () => {
         setIsEditing(false);
@@ -101,10 +118,13 @@ const Designation = () => {
 
     const handleExport = (type) => {
         try {
-            const formattedData = designationData?.data?.map(designation => ({
+            const formattedData = designationData?.message?.data?.map(designation => ({
                 'Designation Name': designation.designation_name,
-                'Branch': designation.branch_name || '-',
-                'Created At': dayjs(designation.created_at).format('YYYY-MM-DD'),
+                'Branch': designation.branch || '-',
+                'Created At': dayjs(designation.createdAt).format('YYYY-MM-DD'),
+                'Created By': designation.created_by || '-',
+                'Updated At': designation.updatedAt ? dayjs(designation.updatedAt).format('YYYY-MM-DD') : '-',
+                'Updated By': designation.updated_by || '-'
             })) || [];
 
             if (formattedData.length === 0) {
@@ -175,12 +195,10 @@ const Designation = () => {
                             prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
                             placeholder="Search designations..."
                             allowClear
-                            onSearch={(value) => setSearchText(value)}
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
+                            onChange={handleSearchChange}
                             className="search-input"
-                            style={{ 
-                                width: '300px', 
+                            style={{
+                                width: '300px',
                                 borderRadius: '20px',
                                 height: '38px'
                             }}

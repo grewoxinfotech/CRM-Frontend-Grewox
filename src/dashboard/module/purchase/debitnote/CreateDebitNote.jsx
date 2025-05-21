@@ -39,7 +39,12 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
     data: billsData,
     isLoading: billsLoading,
     refetch: refetchBills,
-  } = useGetBillingsQuery(companyId);
+  } = useGetBillingsQuery({
+    page: 1,
+    pageSize: -1,
+    search: '',
+    company_id: companyId
+  });
   const { data: currenciesData } = useGetAllCurrenciesQuery();
 
   const [loading, setLoading] = useState(false);
@@ -414,7 +419,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                     ""
                   );
                 }}
-                // prefix={form.getFieldValue('currency_icon')   ||  ''}
+              // prefix={form.getFieldValue('currency_icon')   ||  ''}
               />
             </Form.Item>
           </Col>

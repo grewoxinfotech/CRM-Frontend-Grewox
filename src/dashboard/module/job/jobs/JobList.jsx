@@ -18,7 +18,7 @@ import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings
 const { Text } = Typography;
 const { Option } = Select;
 
-const JobList = ({ jobs = [], onEdit, onDelete, loading, searchText }) => {
+const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
@@ -33,9 +33,12 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, searchText }) => {
         limit: 100
     });
 
-    const handleChange = (pagination, filters, sorter) => {
+    const handleChange = (newPagination, filters, sorter) => {
         setFilteredInfo(filters);
         setSortedInfo(sorter);
+        if (pagination?.onChange) {
+            pagination.onChange(newPagination, filters, sorter);
+        }
     };
 
     const clearFilters = () => {
@@ -467,7 +470,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, searchText }) => {
                 rowKey="id"
                 loading={loading}
                 onChange={handleChange}
-                pagination={{
+                pagination={pagination || {
                     pageSize: 10,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} items`,

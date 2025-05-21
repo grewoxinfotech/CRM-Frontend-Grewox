@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, DatePicker
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiCalendar
 } from 'react-icons/fi';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import './jobOnboarding.scss';
@@ -21,41 +21,53 @@ import { useGetAllJobOnboardingQuery, useDeleteJobOnboardingMutation } from './s
 
 const { Title, Text } = Typography;
 const { confirm } = Modal;
+const { RangePicker } = DatePicker;
 
 const JobOnboarding = () => {
-    const [onboardings, setOnboardings] = useState([]);
     const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedOnboarding, setSelectedOnboarding] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [filteredOnboardings, setFilteredOnboardings] = useState([]);
+    const [dateRange, setDateRange] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [exportLoading, setExportLoading] = useState(false);
     const searchInputRef = useRef(null);
 
-    // Use RTK Query hooks
-    const { data: onboardingsData, isLoading, refetch } = useGetAllJobOnboardingQuery();
+    const { data: onboardingsData, isLoading, error } = useGetAllJobOnboardingQuery({
+        page: currentPage,
+        limit: pageSize,
+        search: searchText,
+        ...(dateRange?.length === 2 && {
+            startDate: dateRange[0].format('YYYY-MM-DD'),
+            endDate: dateRange[1].format('YYYY-MM-DD')
+        })
+    });
     const [deleteOnboarding] = useDeleteJobOnboardingMutation();
 
-    useEffect(() => {
-        if (onboardingsData?.data) {
-            setOnboardings(onboardingsData.data);
-            setFilteredOnboardings(onboardingsData.data);
-        }
-    }, [onboardingsData]);
+    // Ensure we have default pagination values
+    const paginationData = {
+        current: currentPage,
+        pageSize: pageSize,
+        total: onboardingsData?.pagination?.total || 0
+    };
 
+    // Debounce search
     useEffect(() => {
-        let result = [...onboardings];
-        if (searchText) {
-            result = result.filter(onboarding =>
-                onboarding.Interviewer?.toLowerCase().includes(searchText.toLowerCase()) ||
-                onboarding.Status?.toLowerCase().includes(searchText.toLowerCase()) ||
-                onboarding.SalaryType?.toLowerCase().includes(searchText.toLowerCase()) ||
-                onboarding.JobType?.toLowerCase().includes(searchText.toLowerCase())
-            );
-        }
-        setFilteredOnboardings(result);
-    }, [onboardings, searchText]);
+        const timer = setTimeout(() => {
+            setCurrentPage(1); // Reset to first page on new search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchText, dateRange]);
+
+    const handleSearch = (value) => {
+        setSearchText(value);
+    };
+
+    const handleTableChange = (pagination, filters, sorter) => {
+        setCurrentPage(pagination.current || 1);
+        setPageSize(pagination.pageSize || 10);
+    };
 
     const handleAddOnboarding = () => {
         setSelectedOnboarding(null);
@@ -67,10 +79,6 @@ const JobOnboarding = () => {
         setSelectedOnboarding(onboarding);
         setIsEditing(true);
         setIsFormVisible(true);
-    };
-
-    const handleViewOnboarding = (onboarding) => {
-        setSelectedOnboarding(onboarding);
     };
 
     const handleDelete = (recordOrIds) => {
@@ -97,8 +105,6 @@ const JobOnboarding = () => {
                         await deleteOnboarding(recordOrIds).unwrap();
                         message.success('Onboarding deleted successfully');
                     }
-                    // Refetch the data after successful delete
-                    refetch();
                 } catch (error) {
                     message.error(error?.data?.message || 'Failed to delete onboarding(s)');
                 }
@@ -109,28 +115,14 @@ const JobOnboarding = () => {
     const handleFormSubmit = async (formData) => {
         try {
             if (isEditing) {
-                const updatedOnboardings = onboardings.map(o =>
-                    o.id === selectedOnboarding.id ? { ...o, ...formData } : o
-                );
-                setOnboardings(updatedOnboardings);
                 message.success('Onboarding record updated successfully');
             } else {
-                const newOnboarding = {
-                    id: Date.now(),
-                    ...formData,
-                    created_at: new Date().toISOString(),
-                };
-                setOnboardings([...onboardings, newOnboarding]);
                 message.success('Onboarding record created successfully');
             }
             setIsFormVisible(false);
         } catch (error) {
             message.error('Operation failed');
         }
-    };
-
-    const handleSearch = (value) => {
-        setSearchText(value);
     };
 
     const exportMenu = (
@@ -161,8 +153,8 @@ const JobOnboarding = () => {
 
     const handleExport = async (type) => {
         try {
-            setLoading(true);
-            const data = onboardings.map(onboarding => ({
+            setExportLoading(true);
+            const data = onboardingsData?.data.map(onboarding => ({
                 'Employee Name': onboarding.employee_name,
                 'Position': onboarding.position,
                 'Department': onboarding.department,
@@ -191,7 +183,7 @@ const JobOnboarding = () => {
         } catch (error) {
             message.error(`Failed to export: ${error.message}`);
         } finally {
-            setLoading(false);
+            setExportLoading(false);
         }
     };
 
@@ -256,21 +248,35 @@ const JobOnboarding = () => {
                     <Text type="secondary">Manage employee onboarding process</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search by interviewer, status, salary type..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search onboardings..."
+                            allowClear
+                            onChange={(e) => handleSearch(e.target.value)}
+                            value={searchText}
+                            ref={searchInputRef}
+                            className="search-input"
+                            style={{ width: '300px' }}
+                        />
+                        <RangePicker
+                            suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            onChange={(dates) => setDateRange(dates)}
+                            value={dateRange}
+                            allowClear
+                            style={{ width: '300px', height: '40px' }}
+                            placeholder={['Start Date', 'End Date']}
+                        />
+                    </div>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                            <Button
+                                className="export-button"
+                                icon={<FiDownload size={16} />}
+                                loading={exportLoading}
+                            >
+                                Export
+                                <FiChevronDown size={16} />
                             </Button>
                         </Dropdown>
                         <Button
@@ -287,11 +293,16 @@ const JobOnboarding = () => {
 
             <Card className="job-onboarding-table-card">
                 <JobOnboardingList
-                    onboardings={filteredOnboardings}
-                    loading={isLoading}
+                    onboardings={onboardingsData?.data || []}
                     onEdit={handleEditOnboarding}
                     onDelete={handleDelete}
-                    onView={handleViewOnboarding}
+                    loading={isLoading}
+                    pagination={{
+                        ...paginationData,
+                        onChange: handleTableChange,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total ${total} items`
+                    }}
                 />
             </Card>
 
@@ -300,12 +311,8 @@ const JobOnboarding = () => {
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 isEditing={isEditing}
-
                 initialValues={selectedOnboarding}
-                loading={loading}
             />
-
-
         </div>
     );
 };

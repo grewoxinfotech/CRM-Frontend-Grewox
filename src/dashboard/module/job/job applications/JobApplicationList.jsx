@@ -8,8 +8,10 @@ import './jobApplications.scss';
 
 const { Text } = Typography;
 
-const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading }) => {
+const JobApplicationList = ({ applications, onEdit, onDelete, loading, pagination }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [filteredInfo, setFilteredInfo] = useState({});
+    const [sortedInfo, setSortedInfo] = useState({});
     const [updateJobApplication] = useUpdateJobApplicationMutation();
     const { data: jobs, isLoading: jobsLoading } = useGetAllJobsQuery();
 
@@ -18,12 +20,22 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
         setSelectedRowKeys([]);
     }, [applications]);
 
-    const statuses = [
-        { id: 'pending', name: 'Pending' },
-        { id: 'shortlisted', name: 'Shortlisted' },
-        { id: 'selected', name: 'Selected' },
-        { id: 'rejected', name: 'Rejected' },
-    ];
+    const handleChange = (newPagination, filters, sorter) => {
+        setFilteredInfo(filters);
+        setSortedInfo(sorter);
+        if (pagination?.onChange) {
+            pagination.onChange(newPagination, filters, sorter);
+        }
+    };
+
+    const clearFilters = () => {
+        setFilteredInfo({});
+    };
+
+    const clearAll = () => {
+        setFilteredInfo({});
+        setSortedInfo({});
+    };
 
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
@@ -31,23 +43,6 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
         const job = jobs.data.find(job => job.id === jobId);
         return job ? job.title : 'N/A';
     };
-
-    // Function to get menu items for each row
-    const getActionItems = (record) => [
-        {
-            key: 'edit',
-            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-            label: 'Edit',
-            onClick: () => onEdit?.(record)
-        },
-        {
-            key: 'delete',
-            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
-            label: 'Delete',
-            danger: true,
-            onClick: () => onDelete?.(record)
-        }
-    ];
 
     // Row selection config
     const rowSelection = {
@@ -188,10 +183,12 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            filters: statuses.map(status => ({
-                text: status.name,
-                value: status.id
-            })),
+            filters: [
+                { text: 'Pending', value: 'pending' },
+                { text: 'Shortlisted', value: 'shortlisted' },
+                { text: 'Selected', value: 'selected' },
+                { text: 'Rejected', value: 'rejected' },
+            ],
             onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color;
@@ -238,40 +235,53 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
             key: 'actions',
             fixed: 'right',
             width: 80,
-            render: (_, record) => (
-                <Dropdown
-                    menu={{ items: getActionItems(record) }}
-                    trigger={['click']}
-                    placement="bottomRight"
-                    overlayStyle={{ minWidth: '150px' }}
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical style={{ fontSize: '18px' }} />}
-                        style={{
-                            width: '32px',
-                            height: '32px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '6px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#f0f2f5';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                        }}
-                    />
-                </Dropdown>
-            )
+            render: (_, record) => {
+                const menuItems = [
+                    {
+                        key: 'edit',
+                        icon: <FiEdit2 size={14} />,
+                        label: 'Edit',
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            onEdit(record);
+                        }
+                    },
+                    {
+                        key: 'delete',
+                        icon: <FiTrash2 size={14} />,
+                        label: 'Delete',
+                        danger: true,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            onDelete(record.id);
+                        }
+                    }
+                ];
+
+                return (
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <Dropdown
+                            menu={{
+                                items: menuItems,
+                                onClick: (e) => e.domEvent.stopPropagation()
+                            }}
+                            trigger={['click']}
+                            placement="bottomRight"
+                        >
+                            <Button
+                                type="text"
+                                icon={<FiMoreVertical size={16} />}
+                                className="action-button"
+                            />
+                        </Dropdown>
+                    </div>
+                );
+            }
         }
     ];
 
     return (
-        <div className="job-applications-page">
-            {/* Bulk Actions */}
+        <div className="job-list-container">
             {selectedRowKeys.length > 0 && (
                 <div className="bulk-actions">
                     <Button
@@ -285,21 +295,17 @@ const JobApplicationList = ({ applications, onEdit, onDelete, onView, loading })
                 </div>
             )}
 
-            <div className="job-applications-table-card">
-                <Table
-                    rowSelection={rowSelection}
-                    columns={columns}
-                    dataSource={applications}
-                    rowKey="id"
-                    scroll={{ x: 1500 }}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showTotal: (total, range) =>
-                            `${range[0]}-${range[1]} of ${total} applications`
-                    }}
-                />
-            </div>
+            <Table
+                rowSelection={rowSelection}
+                columns={columns}
+                dataSource={applications}
+                rowKey="id"
+                loading={loading}
+                onChange={handleChange}
+                pagination={pagination}
+                scroll={{ x: 1200 }}
+                className="custom-table"
+            />
         </div>
     );
 };

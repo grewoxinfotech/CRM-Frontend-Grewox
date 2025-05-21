@@ -29,37 +29,40 @@ import { useGetSalaryQuery } from './services/salaryApi';
 const { Title, Text } = Typography;
 
 const Salary = () => {
-    const [salaries, setSalaries] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [searchText, setSearchText] = useState('');
     const [isFormVisible, setIsFormVisible] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [selectedSalary, setSelectedSalary] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [searchText, setSearchText] = useState('');
     const [filteredSalaries, setFilteredSalaries] = useState([]);
     const searchInputRef = useRef(null);
-    const { data: salaryData, isLoading: isSalaryLoading } = useGetSalaryQuery();
+    const { data: salaryData, isLoading: isSalaryLoading } = useGetSalaryQuery({
+        page: currentPage,
+        pageSize,
+        search: searchText
+    });
 
     useEffect(() => {
         if (salaryData?.data) {
-            setSalaries(salaryData.data);
+            setFilteredSalaries(salaryData.data);
         }
     }, [salaryData]);
 
-    useEffect(() => {
-        handleSearch(searchText);
-    }, [salaries, searchText]);
-
     const handleSearch = (value) => {
         setSearchText(value);
-        let result = [...salaries];
-        if (value) {
-            result = result.filter(salary =>
-                salary.employeeName?.toLowerCase().includes(value.toLowerCase()) ||
-                salary.payslipType?.toLowerCase().includes(value.toLowerCase())
-            );
-        }
-        setFilteredSalaries(result);
+        setCurrentPage(1);
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size) => {
+        setPageSize(size);
+        setCurrentPage(1);
     };
 
     const handleAddSalary = () => {
@@ -87,8 +90,8 @@ const Salary = () => {
         try {
             setLoading(true);
             // TODO: Implement delete API call
-            const updatedSalaries = salaries.filter(s => s.id !== selectedSalary.id);
-            setSalaries(updatedSalaries);
+            const updatedSalaries = filteredSalaries.filter(s => s.id !== selectedSalary.id);
+            setFilteredSalaries(updatedSalaries);
             message.success('Salary deleted successfully');
             setIsDeleteModalVisible(false);
         } catch (error) {
@@ -108,10 +111,10 @@ const Salary = () => {
 
             if (isEditing) {
                 // TODO: Implement update API call
-                const updatedSalaries = salaries.map(s =>
+                const updatedSalaries = filteredSalaries.map(s =>
                     s.id === selectedSalary.id ? { ...s, ...processedData } : s
                 );
-                setSalaries(updatedSalaries);
+                setFilteredSalaries(updatedSalaries);
                 message.success('Salary updated successfully');
             } else {
                 // TODO: Implement create API call
@@ -122,7 +125,7 @@ const Salary = () => {
                     created_by: 'Admin',
                     status: 'pending'
                 };
-                setSalaries([...salaries, newSalary]);
+                setFilteredSalaries([...filteredSalaries, newSalary]);
                 message.success('Salary created successfully');
             }
             setIsFormVisible(false);
@@ -174,7 +177,7 @@ const Salary = () => {
     const handleExport = async (type) => {
         try {
             setLoading(true);
-            const data = salaries.map(salary => ({
+            const data = filteredSalaries.map(salary => ({
                 'Employee Name': salary.employeeName,
                 'Payslip Type': salary.payslipType,
                 'Currency': salary.currency,
@@ -243,15 +246,19 @@ const Salary = () => {
                     <Text type="secondary">Manage all salary records in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search salaries..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
+                    <div className="search-input">
+                        <Input
+                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            placeholder="Search by employee name, payslip type..."
+                            allowClear
+                            onChange={(e) => handleSearch(e.target.value)}
+                            value={searchText}
+                            ref={searchInputRef}
+                            className="search-input"
+                            style={{ width: 300 }}
+                            onPressEnter={(e) => handleSearch(e.target.value)}
+                        />
+                    </div>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
                             <Button className="export-button">
@@ -278,6 +285,15 @@ const Salary = () => {
                     loading={isSalaryLoading}
                     onEdit={handleEditSalary}
                     onDelete={handleDeleteConfirm}
+                    pagination={{
+                        current: currentPage,
+                        pageSize,
+                        total: salaryData?.pagination?.total || 0,
+                        totalPages: salaryData?.pagination?.totalPages || 0,
+                        onChange: handlePageChange,
+                        onSizeChange: handlePageSizeChange
+                    }}
+                    searchText={searchText}
                 />
             </div>
 

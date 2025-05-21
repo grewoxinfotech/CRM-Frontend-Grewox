@@ -7,13 +7,31 @@ export const companyAccountApi = createApi({
   tagTypes: ["CompanyAccounts"],
   endpoints: (builder) => ({
     getCompanyAccounts: builder.query({
-      query: () => "/company-accounts",
+      query: (params) => {
+        const { page = 1, pageSize = 10, search = '', ...rest } = params || {};
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          ...(search && { search }),
+          ...rest
+        }).toString();
+        return `/company-accounts?${queryParams}`;
+      },
+      transformResponse: (response) => ({
+        data: response.message.data.map(item => ({ ...item, key: item.id })),
+        pagination: {
+          total: response.message.pagination.total,
+          current: response.message.pagination.current,
+          pageSize: response.message.pagination.pageSize,
+          totalPages: response.message.pagination.totalPages
+        }
+      }),
       providesTags: ["CompanyAccounts"],
     }),
     createCompanyAccount: builder.mutation({
       query: (data) => ({
         url: "company-accounts",
-        method: "POST", 
+        method: "POST",
         body: data,
       }),
       invalidatesTags: ["CompanyAccounts"],

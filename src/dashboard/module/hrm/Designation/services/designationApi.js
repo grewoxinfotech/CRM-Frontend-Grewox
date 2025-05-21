@@ -10,15 +10,31 @@ export const designationApi = createApi({
             query: (params) => ({
                 url: '/designations',
                 method: 'GET',
-                params: params,
+                params: {
+                    page: params?.page || 1,
+                    pageSize: params?.pageSize || 10,
+                    search: params?.search || '',
+                    ...params
+                },
             }),
             transformResponse: (response) => {
-                if (Array.isArray(response)) return response;
-                return response?.data || [];
+                // Handle the nested message structure
+                const data = response?.message?.data || [];
+                const pagination = response?.message?.pagination || {
+                    total: 0,
+                    current: 1,
+                    pageSize: 10,
+                    totalPages: 0
+                };
+
+                return {
+                    data,
+                    pagination
+                };
             },
             providesTags: (result = []) => [
                 'Designations',
-                ...result.map(({ id }) => ({ type: 'Designations', id }))
+                ...(result?.data || []).map(({ id }) => ({ type: 'Designations', id }))
             ],
         }),
 

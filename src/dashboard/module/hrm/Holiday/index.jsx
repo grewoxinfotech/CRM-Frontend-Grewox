@@ -222,8 +222,8 @@ const Holiday = () => {
                             onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
                             className="search-input"
-                            style={{ 
-                                width: '300px', 
+                            style={{
+                                width: '300px',
                                 borderRadius: '20px',
                                 height: '38px'
                             }}
@@ -232,7 +232,7 @@ const Holiday = () => {
                             onChange={(dates) => handleFilterChange('dateRange', dates)}
                             value={filters.dateRange}
                             allowClear
-                            style={{ width: 300 , height: 40}}
+                            style={{ width: 300, height: 40 }}
                             placeholder={['Start Date', 'End Date']}
                         />
                     </div>
@@ -258,8 +258,8 @@ const Holiday = () => {
             </div>
 
             <Card className="holiday-table-card">
-                <HolidayList 
-                    onEdit={handleEdit} 
+                <HolidayList
+                    onEdit={handleEdit}
                     searchText={searchText}
                     filters={filters}
                 />

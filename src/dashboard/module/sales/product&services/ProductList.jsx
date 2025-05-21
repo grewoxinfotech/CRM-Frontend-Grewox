@@ -45,16 +45,16 @@ const ProductList = ({
   selectedCategory = null,
   onProductRevenueClick,
   currenciesData,
+  data,
+  loading,
+  pagination,
+  onChange
 }) => {
   const currentUser = useSelector(selectCurrentUser);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-
-  const { data: productsData = [], isLoading } = useGetProductsQuery(
-    currentUser?.id
-  );
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const products = productsData.data || [];
+  const products = data?.data || [];
   const [deleteProduct] = useDeleteProductMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -342,16 +342,16 @@ const ProductList = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Use only numbers for mobile/tablet, and AntD default for desktop
+  // Update pagination configuration to use server-side pagination
   const paginationConfig = {
-    pageSize: 10,
+    ...pagination,
     showSizeChanger: true,
+    showQuickJumper: true,
     showTotal: (total) => `Total ${total} items`,
     pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
     locale: {
       items_per_page: isMobile ? "" : "/ page",
-    },
-    
+    }
   };
 
   const rowSelection = {
@@ -403,11 +403,12 @@ const ProductList = ({
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredProducts}
-        loading={isLoading}
+        loading={loading}
         rowKey="id"
         scroll={{ x: "max-content", y: "100%" }}
         className="custom-table"
         pagination={paginationConfig}
+        onChange={onChange}
       />
 
       <EditProduct

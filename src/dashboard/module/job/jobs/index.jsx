@@ -31,28 +31,28 @@ const Job = () => {
     const [searchText, setSearchText] = useState('');
     const [dateRange, setDateRange] = useState([]);
     const [exportLoading, setExportLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const searchInputRef = useRef(null);
 
-    const { data: jobsData, isLoading, error, refetch } = useGetAllJobsQuery();
+    const { data: jobsData, isLoading, error, refetch } = useGetAllJobsQuery({
+        page: currentPage,
+        limit: pageSize,
+        search: searchText,
+        ...(dateRange?.length === 2 && {
+            startDate: dateRange[0].format('YYYY-MM-DD'),
+            endDate: dateRange[1].format('YYYY-MM-DD')
+        })
+    });
     const [deleteJob] = useDeleteJobMutation();
 
-    const filteredJobs = React.useMemo(() => {
-        if (!jobsData?.data) return [];
-
-        const searchTerm = searchText.toLowerCase().trim();
-
-        return jobsData.data.filter(job => {
-            const matchesSearch = !searchTerm ||
-                job.title?.toLowerCase().includes(searchTerm);
-
-            const matchesDateRange = !dateRange?.length || (
-                moment(job.startDate).isSameOrAfter(dateRange[0], 'day') &&
-                moment(job.endDate).isSameOrBefore(dateRange[1], 'day')
-            );
-
-            return matchesSearch && matchesDateRange;
-        });
-    }, [jobsData, searchText, dateRange]);
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setCurrentPage(1); // Reset to first page on new search
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchText, dateRange]);
 
     const handleAddJob = () => {
         setSelectedJob(null);
@@ -130,6 +130,11 @@ const Job = () => {
 
     const handleSearch = (value) => {
         setSearchText(value);
+    };
+
+    const handleTableChange = (pagination, filters, sorter) => {
+        setCurrentPage(pagination.current);
+        setPageSize(pagination.pageSize);
     };
 
     const exportMenu = (
@@ -310,10 +315,19 @@ const Job = () => {
 
             <Card className="job-table-card">
                 <JobList
-                    jobs={filteredJobs}
+                    jobs={jobsData?.data || []}
                     onEdit={handleEditJob}
                     onDelete={handleDelete}
                     loading={isLoading}
+                    pagination={{
+                        current: currentPage,
+                        pageSize: pageSize,
+                        total: jobsData?.total || 0,
+                        totalPages: jobsData?.totalPages || 1,
+                        onChange: handleTableChange,
+                        showSizeChanger: true,
+                        showTotal: (total) => `Total ${total} items`
+                    }}
                 />
             </Card>
 

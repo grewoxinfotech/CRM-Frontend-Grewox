@@ -7,7 +7,32 @@ export const salaryApi = createApi({
   tagTypes: ["Salary"],
   endpoints: (builder) => ({
     getSalary: builder.query({
-      query: () => "/salary",
+      query: (params = {}) => {
+        const { page = 1, pageSize = 10, search = '' } = params;
+        const queryParams = new URLSearchParams();
+
+        queryParams.append('page', page);
+        queryParams.append('pageSize', pageSize);
+        if (search) {
+          queryParams.append('search', search);
+        }
+
+        return {
+          url: `/salary?${queryParams.toString()}`,
+        };
+      },
+      transformResponse: (response) => ({
+        data: response.message.data.map(item => ({
+          ...item,
+          key: item.id,
+          amount: item.salary,
+          employeeId: item.employeeId,
+          employee_id: item.employeeId,
+          status: item.status || 'unpaid',
+          payment_date: item.paymentDate
+        })),
+        pagination: response.message.pagination
+      }),
       providesTags: ["Salary"],
     }),
     createSalary: builder.mutation({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
     Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
@@ -16,86 +16,50 @@ import 'jspdf-autotable';
 import CreateDepartment from './CreateDepartment';
 import { Link } from 'react-router-dom';
 import DepartmentList from './DepartmentList';
+import { useGetAllDepartmentsQuery } from './services/departmentApi';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Department = () => {
-    const [departments, setDepartments] = useState([]);
-    const [isFormVisible, setIsFormVisible] = useState(false);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedDepartment, setSelectedDepartment] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [filters, setFilters] = useState({
         branch: undefined
     });
-    const searchInputRef = useRef(null);
 
-   
+    // Fetch departments using RTK Query
+    const { data: departmentData, isLoading } = useGetAllDepartmentsQuery({
+        search: searchText,
+        ...filters
+    });
 
-    const handleAddDepartment = () => {
+    const handleCreate = () => {
+        setIsCreateModalOpen(true);
+    };
+
+    const handleEdit = (department) => {
+        setSelectedDepartment(department);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCreateSubmit = () => {
+        setIsCreateModalOpen(false);
+        message.success('Department created successfully');
+    };
+
+    const handleEditSubmit = () => {
+        setIsEditModalOpen(false);
         setSelectedDepartment(null);
-        setIsEditing(false);
-        setIsFormVisible(true);
+        message.success('Department updated successfully');
     };
 
-    const handleEditDepartment = (department) => {
-        setSelectedDepartment(department);
-        setIsEditing(true);
-        setIsFormVisible(true);
-    };
-
-    const handleDeleteConfirm = (department) => {
-        setSelectedDepartment(department);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handleDeleteDepartment = async () => {
-        try {
-            // TODO: Implement delete API call
-            const updatedDepartments = departments.filter(d => d.id !== selectedDepartment.id);
-            setDepartments(updatedDepartments);
-            message.success('Department deleted successfully');
-            setIsDeleteModalVisible(false);
-        } catch (error) {
-            message.error('Failed to delete department');
-        }
-    };
-
-    const handleFormSubmit = async (formData) => {
-        try {
-            if (isEditing) {
-                const updatedDepartments = departments.map(d =>
-                    d.id === selectedDepartment.id ? { ...d, ...formData } : d
-                );
-                setDepartments(updatedDepartments);
-                message.success('Department updated successfully');
-            } else {
-                const newDepartment = {
-                    id: Date.now(),
-                    ...formData,
-                    created_at: new Date().toISOString(),
-                    created_by: 'Admin'
-                };
-                setDepartments([...departments, newDepartment]);
-                message.success('Department created successfully');
-            }
-            setIsFormVisible(false);
-        } catch (error) {
-            message.error('Operation failed');
-        }
-    };
-
-    const handleSearch = (value) => {
-        setSearchText(value);
-    };
-
-    const handleFilterChange = (type, value) => {
+    const handleFilterChange = (key, value) => {
         setFilters(prev => ({
             ...prev,
-            [type]: value
+            [key]: value
         }));
     };
 
@@ -104,94 +68,25 @@ const Department = () => {
             branch: undefined
         });
         setSearchText('');
-        if (searchInputRef.current) {
-            searchInputRef.current.input.value = '';
-        }
+    };
+
+    const exportToExcel = (data) => {
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Departments');
+        XLSX.writeFile(wb, 'departments_export.xlsx');
     };
 
     const exportMenu = (
         <Menu>
-            <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
+            <Menu.Item key="excel" onClick={() => exportToExcel(departmentData?.data || [])}>
+                Export to Excel
             </Menu.Item>
-            <Menu.Item
-                key="excel"
-                icon={<FiDownload />}
-                onClick={() => handleExport('excel')}
-            >
-                Export as Excel
-            </Menu.Item>
-            <Menu.Item
-                key="pdf"
-                icon={<FiDownload />}
-                onClick={() => handleExport('pdf')}
-            >
-                Export as PDF
+            <Menu.Item key="pdf" onClick={() => exportToPDF(departmentData?.data || [], 'departments_export')}>
+                Export to PDF
             </Menu.Item>
         </Menu>
     );
-
-    const handleExport = async (type) => {
-        try {
-            setLoading(true);
-            const data = departments.map(department => ({
-                'Department': department.department,
-                'Branch': department.branch,
-                'Created Date': moment(department.created_at).format('YYYY-MM-DD'),
-                'Created By': department.created_by
-            }));
-
-            switch (type) {
-                case 'csv':
-                    exportToCSV(data, 'departments_export');
-                    break;
-                case 'excel':
-                    exportToExcel(data, 'departments_export');
-                    break;
-                case 'pdf':
-                    exportToPDF(data, 'departments_export');
-                    break;
-                default:
-                    break;
-            }
-            message.success(`Successfully exported as ${type.toUpperCase()}`);
-        } catch (error) {
-            message.error(`Failed to export: ${error.message}`);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const exportToCSV = (data, filename) => {
-        const csvContent = [
-            Object.keys(data[0]).join(','),
-            ...data.map(item => Object.values(item).map(value =>
-                `"${value?.toString().replace(/"/g, '""')}"`
-            ).join(','))
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `${filename}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    };
-
-    const exportToExcel = (data, filename) => {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Departments');
-        XLSX.writeFile(wb, `${filename}.xlsx`);
-    };
 
     const exportToPDF = (data, filename) => {
         const doc = new jsPDF('l', 'pt', 'a4');
@@ -204,7 +99,7 @@ const Department = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
+    return (
         <div className="department-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
@@ -217,7 +112,7 @@ const Department = () => {
                     <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>Department</Breadcrumb.Item>
+                    <Breadcrumb.Item>Departments</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
@@ -227,31 +122,34 @@ const Department = () => {
                     <Text type="secondary">Manage all departments in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Space size={16} className="filter-section">
+                    <div className="search-filter-group">
                         <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
                             placeholder="Search departments..."
                             allowClear
-                            onChange={(e) => handleSearch(e.target.value)}
+                            onChange={(e) => setSearchText(e.target.value)}
                             value={searchText}
-                            ref={searchInputRef}
                             className="search-input"
-                            style={{ width: '250px' }}
+                            style={{
+                                width: '300px',
+                                borderRadius: '20px',
+                                height: '38px'
+                            }}
                         />
-                      
-                    </Space>
+                    </div>
                     <div className="action-buttons">
                         <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                            <Button
+                                icon={<FiDownload size={16} />}
+                                className="export-button"
+                            >
+                                Export
                             </Button>
                         </Dropdown>
                         <Button
                             type="primary"
                             icon={<FiPlus size={16} />}
-                            onClick={handleAddDepartment}
+                            onClick={handleCreate}
                             className="add-button"
                         >
                             Add Department
@@ -262,35 +160,28 @@ const Department = () => {
 
             <Card className="department-table-card">
                 <DepartmentList
+                    onEdit={handleEdit}
                     searchText={searchText}
                     filters={filters}
-                    onEdit={handleEditDepartment}
                 />
             </Card>
 
             <CreateDepartment
-                open={isFormVisible}
-                onCancel={() => setIsFormVisible(false)}
-                onSubmit={handleFormSubmit}
-                isEditing={isEditing}
-                initialValues={selectedDepartment}
-                loading={loading}
+                open={isCreateModalOpen}
+                onCancel={() => setIsCreateModalOpen(false)}
+                onSubmit={handleCreateSubmit}
             />
 
-            <Modal
-                title="Delete Department"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteDepartment}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Delete"
-                okButtonProps={{
-                    danger: true,
-                    loading: loading
+            <CreateDepartment
+                open={isEditModalOpen}
+                onCancel={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedDepartment(null);
                 }}
-            >
-                <p>Are you sure you want to delete this department?</p>
-                <p>This action cannot be undone.</p>
-            </Modal>
+                onSubmit={handleEditSubmit}
+                isEditing={true}
+                initialValues={selectedDepartment}
+            />
         </div>
     );
 };

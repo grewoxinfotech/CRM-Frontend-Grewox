@@ -82,8 +82,10 @@ const Employee = () => {
 
       const transformedData = filteredData.map((employee) => ({
         id: employee.id,
+        employeeId: employee.employeeId,
         firstName: employee.firstName || "N/A",
         lastName: employee.lastName || "N/A",
+        name: employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || "N/A",
         username: employee.username || "N/A",
         phoneCode: employee.phoneCode || "N/A",
         address: employee.address || "N/A",
@@ -96,7 +98,7 @@ const Employee = () => {
         gender: employee.gender || "N/A",
         joiningDate: employee.joiningDate || "N/A",
         leaveDate: employee.leaveDate || "N/A",
-        salary: employee.salary || "N/A",
+        salary: employee.salary || "0.00",
         currency: employee.currency || "N/A",
         accountholder: employee.accountholder || "N/A",
         accountnumber: employee.accountnumber || "N/A",
@@ -106,22 +108,22 @@ const Employee = () => {
         branch: employee.branch || "N/A",
         department: employee.department || "N/A",
         designation: employee.designation || "N/A",
+        designation_name: employee.designation_name || "N/A",
         status: employee.status || "inactive",
         created_at: employee.createdAt || "-",
         updated_at: employee.updatedAt || null,
         created_by: employee.created_by,
         updated_by: employee.updated_by,
         profilePic: employee.profilePic || null,
-        salary: employee.salary || null,
         ifsc: employee.ifsc || null,
         banklocation: employee.banklocation || null,
         role_id: employee.role_id,
+        key: employee.id
       }));
       setEmployees(transformedData);
       setFilteredEmployees(transformedData);
     }
-  }, [employeesData]);
-
+  }, [employeesData, loggedInUser]);
 
   useEffect(() => {
     const filtered = employees.filter(
@@ -129,7 +131,8 @@ const Employee = () => {
         employee.name?.toLowerCase().includes(searchText.toLowerCase()) ||
         employee.email?.toLowerCase().includes(searchText.toLowerCase()) ||
         employee.department?.toLowerCase().includes(searchText.toLowerCase()) ||
-        employee.designation?.toLowerCase().includes(searchText.toLowerCase())
+        employee.designation_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        employee.role_id?.toString().toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredEmployees(filtered);
   }, [employees, searchText]);

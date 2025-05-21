@@ -51,6 +51,11 @@ const DebitNote = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [selectedDebitNote, setSelectedDebitNote] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
   const [loading, setLoading] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [createDebitNote] = useCreateDebitNoteMutation();
@@ -61,13 +66,29 @@ const DebitNote = () => {
     isLoading,
     isError,
     refetch,
-  } = useGetDebitNotesQuery(companyId);
+  } = useGetDebitNotesQuery({
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+    search: searchText,
+    company_id: companyId
+  }, {
+    skip: !companyId
+  });
 
   useEffect(() => {
     if (!companyId) {
       console.warn("No company ID found in user data");
     }
   }, [companyId]);
+
+  useEffect(() => {
+    if (debitNotes?.pagination) {
+      setPagination(prev => ({
+        ...prev,
+        total: debitNotes.pagination.total
+      }));
+    }
+  }, [debitNotes]);
 
   const handleEdit = (record) => {
     console.log("Edit record:", record);
@@ -236,6 +257,22 @@ const DebitNote = () => {
     }
   };
 
+  const handleSearch = (e) => {
+    setSearchText(e.target.value);
+    setPagination(prev => ({
+      ...prev,
+      current: 1
+    }));
+  };
+
+  const handleTableChange = (newPagination, filters, sorter) => {
+    setPagination(prev => ({
+      ...prev,
+      current: newPagination.current,
+      pageSize: newPagination.pageSize
+    }));
+  };
+
   return (
     <div className="debitnote-page">
       <div className="page-breadcrumb">
@@ -263,10 +300,10 @@ const DebitNote = () => {
         <div className="header-actions">
           <div className="search-filter-group">
             <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+              prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
               placeholder="Search debit notes..."
               allowClear
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={handleSearch}
               value={searchText}
               className="search-input"
               style={{
@@ -311,12 +348,14 @@ const DebitNote = () => {
 
       <Card className="debitnote-table-card">
         <DebitNoteList
-          data={debitNotes}
+          debitNotes={debitNotes?.data || []}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
           searchText={searchText}
           loading={isLoading}
+          pagination={pagination}
+          onChange={handleTableChange}
         />
       </Card>
 

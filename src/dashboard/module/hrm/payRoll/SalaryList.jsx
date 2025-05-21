@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { Table, Button, Tag, Dropdown, Typography, Modal, message, Input, Space, Switch, Avatar, DatePicker } from "antd";
 import {
   FiEdit2,
@@ -66,13 +66,20 @@ const switchStyles = `
   }
 `;
 
-const SalaryList = ({ onEdit, onView, searchText = "" }) => {
-  const { data: salarydata = [], isLoading } = useGetSalaryQuery();
+const SalaryList = ({ onEdit, onView, searchText = "", pagination }) => {
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Updated query to include search
+  const { data: salarydata = [], isLoading } = useGetSalaryQuery({
+    page: pagination?.current || 1,
+    pageSize: pagination?.pageSize || 10,
+    search: searchText.trim()
+  });
+
+  const salary = salarydata?.data || [];
   const { data: employeesData } = useGetEmployeesQuery();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
-  const salary = salarydata.data || [];
-  const employees = employeesData?.data || [];
-  const currencies = currenciesData?.data || [];
   const [deleteSalary] = useDeleteSalaryMutation();
   const [updateSalary] = useUpdateSalaryMutation();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -80,8 +87,6 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
   const [processingSalaryId, setProcessingSalaryId] = useState(null);
   const [processedSalary, setProcessedSalary] = useState(new Set());
   const [loading, setLoading] = useState(false);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Define status options
   const statusOptions = [
@@ -89,22 +94,19 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     { text: 'Unpaid', value: 'unpaid' },
   ];
 
-  // Create a map of employee IDs to employee names
+  // Create a map of employee IDs to employee names with null check
   const employeeMap = useMemo(() => {
-    return employees.reduce((acc, employee) => {
+    if (!employeesData?.data) return {};
+    return employeesData.data.reduce((acc, employee) => {
       acc[employee.id] = `${employee.firstName} ${employee.lastName}`;
       return acc;
     }, {});
-  }, [employees]);
+  }, [employeesData]);
 
-
-  const getCurrencyIcon = (currencyId) => {
-    const currency = currenciesData?.find(curr => curr.id === currencyId);
-    return currency?.currencyIcon || '₹';
-  };
-  // Create a map of currency IDs to currency details
+  // Create a map of currency IDs to currency details with null check
   const currencyMap = useMemo(() => {
-    return currencies.reduce((acc, currency) => {
+    if (!currenciesData?.data) return {};
+    return currenciesData.data.reduce((acc, currency) => {
       acc[currency.id] = {
         name: currency.currencyName,
         code: currency.currencyCode,
@@ -112,25 +114,17 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
       };
       return acc;
     }, {});
-  }, [currencies]);
+  }, [currenciesData]);
 
+  const getEmployeeDetails = useCallback((employeeId) => {
+    if (!employeesData?.data) return {};
+    return employeesData.data.find(emp => emp.id === employeeId) || {};
+  }, [employeesData]);
 
-
-  const filteredSalary = React.useMemo(() => {
-    return salary?.filter((salary) => {
-      const searchLower = searchText.toLowerCase();
-      const payslipType = salary?.payslipType?.toLowerCase() || "";
-      const status = salary?.status?.toLowerCase() || "";
-      const currency = salary?.currency?.toLowerCase() || "";
-
-      return (
-        !searchText ||
-        payslipType.includes(searchLower) ||
-        status.includes(searchLower) ||
-        currency.includes(searchLower)
-      );
-    });
-  }, [salary, searchText]);
+  const getCurrencyIcon = (currencyId) => {
+    const currency = currenciesData?.find(curr => curr.id === currencyId);
+    return currency?.currencyIcon || '₹';
+  };
 
   const handleDelete = (recordOrIds) => {
     const isMultiple = Array.isArray(recordOrIds);
@@ -291,10 +285,6 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getEmployeeDetails = (employeeId) => {
-    return employees.find(emp => emp.id === employeeId) || {};
   };
 
   const getDropdownItems = (record) => ({
@@ -571,17 +561,6 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const paginationConfig = {
-    pageSize: 10,
-    showSizeChanger: true,
-    showTotal: (total) => `Total ${total} items`,
-    pageSizeOptions: ['10', '20', '50', '100'],
-    
-    locale: {
-      items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
-    },
-  };
-
   return (
     <div className="salary-list-container">
       <BulkActions />
@@ -594,11 +573,22 @@ const SalaryList = ({ onEdit, onView, searchText = "" }) => {
           },
         }}
         columns={columns}
-        dataSource={filteredSalary}
+        dataSource={salary}
         rowKey="id"
         loading={isLoading}
-        pagination={paginationConfig}
-        className=" custom-table"
+        pagination={{
+          ...pagination,
+          showSizeChanger: true,
+          showTotal: (total) => `Total ${total} items`,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          onChange: (page, pageSize) => {
+            pagination?.onChange?.(page);
+            if (pageSize !== pagination?.pageSize) {
+              pagination?.onSizeChange?.(pageSize);
+            }
+          }
+        }}
+        className="custom-table"
         scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
         size="middle"
         style={{
