@@ -37,7 +37,7 @@ import {
   FiCalendar,
   FiUser,
 } from "react-icons/fi";
-import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
+import { useGetDealsQuery, useDeleteDealMutation } from "./services/DealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import {
@@ -56,7 +56,16 @@ import { formatCurrency } from "../../../utils/currencyUtils";
 
 const { Text } = Typography;
 
-const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
+const DealList = ({
+  deals = [],
+  onEdit,
+  onView,
+  onDelete,
+  onDealClick,
+  loading,
+  pagination,
+  onTableChange,
+}) => {
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteDeal] = useDeleteDealMutation();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
@@ -85,16 +94,17 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Use only numbers for mobile/tablet, and AntD default for desktop
+  // Update pagination configuration to use server response
   const paginationConfig = {
-    pageSize: 10,
+    total: pagination?.total || 0,
+    current: pagination?.current || 1,
+    pageSize: pagination?.pageSize || 10,
     showSizeChanger: true,
     showTotal: (total) => `Total ${total} items`,
     pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
     locale: {
       items_per_page: isMobile ? "" : "/ page",
     },
-    className: "deal-list-pagination",
   };
 
   const getStatusColor = (status, is_won) => {
@@ -470,7 +480,8 @@ const DealList = ({ onEdit, onView, onDelete, onDealClick, deals = [] }) => {
           rowKey="id"
           pagination={paginationConfig}
           scroll={{ x: "max-content", y: "100%" }}
-          // className="colorful-table"
+          loading={loading}
+          onChange={onTableChange}
           onRow={(record) => ({
             onClick: () => onDealClick(record),
             style: { cursor: "pointer" },

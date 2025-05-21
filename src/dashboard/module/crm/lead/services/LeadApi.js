@@ -8,11 +8,38 @@ export const leadApi = createApi({
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
     getLeads: builder.query({
-      query: (params) => ({
-        url: "/leads",
-        method: "GET",
-        params,
-      }),
+      query: ({ page = 1, pageSize = 10, search = '', ...rest }) => {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          ...(search && { search }),
+          ...rest
+        }).toString();
+        return {
+          url: `/leads?${queryParams}`,
+          method: "GET",
+        };
+      },
+      transformResponse: (response) => {
+        if (response?.message) {
+          return {
+            data: response.message.data.map(lead => ({
+              ...lead,
+              key: lead.id
+            })),
+            pagination: response.message.pagination
+          };
+        }
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            current: 1,
+            pageSize: 10,
+            totalPages: 0
+          }
+        };
+      },
       providesTags: ["Lead"],
     }),
 

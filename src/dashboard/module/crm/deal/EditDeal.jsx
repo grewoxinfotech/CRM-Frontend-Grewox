@@ -31,7 +31,7 @@ import {
   FiTrash2,
   FiLayers,
 } from "react-icons/fi";
-import { useUpdateDealMutation, useGetDealsQuery } from "./services/dealApi";
+import { useUpdateDealMutation, useGetDealsQuery } from "./services/DealApi";
 import {
   useGetAllCurrenciesQuery,
   useGetAllCountriesQuery,
@@ -346,9 +346,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             phone_code: values.phoneCode || "",
             phone: values.telephone ? values.telephone.toString() : "",
             contact_source: "deal",
-            description: `Contact created from deal form by ${
-              loggedInUser?.username || "user"
-            } on ${new Date().toLocaleDateString()}`,
+            description: `Contact created from deal form by ${loggedInUser?.username || "user"
+              } on ${new Date().toLocaleDateString()}`,
             address: values.address || "",
             client_id: loggedInUser?.client_id,
           };
@@ -394,8 +393,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
           values.status === "won"
             ? true
             : values.status === "lost"
-            ? false
-            : null,
+              ? false
+              : null,
       };
 
       // Update the deal
@@ -896,15 +895,15 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 { max: 100, message: "Deal title cannot exceed 100 characters" },
                 {
                   validator: (_, value) => {
-                      if (!value) return Promise.resolve();
-                      if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                          return Promise.reject(
-                              new Error('Deal title must contain both uppercase or lowercase English letters')
-                          );
-                      }
-                      return Promise.resolve();
+                    if (!value) return Promise.resolve();
+                    if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                      return Promise.reject(
+                        new Error('Deal title must contain both uppercase or lowercase English letters')
+                      );
+                    }
+                    return Promise.resolve();
                   }
-              }
+                }
               ]}
             >
               <Input
@@ -1585,9 +1584,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             }}
           >
             <div
-              className={`mode-option ${
-                contactMode === "existing" ? "active" : ""
-              }`}
+              className={`mode-option ${contactMode === "existing" ? "active" : ""
+                }`}
               onClick={() => handleContactModeChange("existing")}
               style={{
                 padding: "12px 24px",
@@ -1740,9 +1738,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                         (c) => c.id === option.value
                       );
                       if (!contact) return false;
-                      const fullName = `${contact.first_name || ""} ${
-                        contact.last_name || ""
-                      }`.toLowerCase();
+                      const fullName = `${contact.first_name || ""} ${contact.last_name || ""
+                        }`.toLowerCase();
                       const companyName =
                         companyAccountsData?.data
                           ?.find((c) => c.id === contact.company_name)
@@ -1789,9 +1786,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                 }}
-                              >{`${contact.first_name || ""} ${
-                                contact.last_name || ""
-                              }`}</span>
+                              >{`${contact.first_name || ""} ${contact.last_name || ""
+                                }`}</span>
                               <span
                                 style={{
                                   color: "#6B7280",

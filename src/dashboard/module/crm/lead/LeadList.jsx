@@ -63,7 +63,9 @@ const LeadList = ({
   onView,
   onLeadClick,
   onDelete,
-  onCreateLead,
+  loading,
+  pagination,
+  onTableChange,
 }) => {
   const [deleteLead] = useDeleteLeadMutation();
   const loggedInUser = useSelector(selectCurrentUser);
@@ -88,27 +90,11 @@ const LeadList = ({
   const statuses = statusesData?.data || [];
   const contacts = contactsResponse?.data || [];
 
-  // Handle automatic form opening
   useEffect(() => {
-    if (location.state?.openCreateForm) {
-      onCreateLead?.(location.state.initialFormData);
-      navigate(location.pathname, {
-        replace: true,
-        state: {},
-      });
-    }
-  }, [location.state, onCreateLead, navigate]);
-
-  // const handleDelete = async (record) => {
-  //   try {
-  //     await deleteLead(record.id).unwrap();
-  //     message.success("Lead deleted successfully");
-  //   } catch (error) {
-  //     message.error(
-  //       "Failed to delete lead: " + (error.data?.message || "Unknown error")
-  //     );
-  //   }
-  // };
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const getContactName = (record) => {
     // First check direct contact
@@ -126,9 +112,8 @@ const LeadList = ({
     const relatedContact = contacts.find((c) => c.related_id === record.id);
     if (relatedContact) {
       return {
-        name: `${relatedContact.first_name || ""} ${
-          relatedContact.last_name || ""
-        }`.trim(),
+        name: `${relatedContact.first_name || ""} ${relatedContact.last_name || ""
+          }`.trim(),
         contact: relatedContact,
       };
     }
@@ -550,7 +535,7 @@ const LeadList = ({
             menu={getDropdownItems(record)}
             trigger={["click"]}
             placement="bottomRight"
-          
+
           >
             <Button
               type="text"
@@ -565,208 +550,35 @@ const LeadList = ({
     },
   ];
 
-  // const isMobile = window.innerWidth < 768;
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Use only numbers for mobile/tablet, and AntD default for desktop
+  // Update pagination configuration to use server response
   const paginationConfig = {
-    pageSize: 10,
+    total: leads?.pagination?.total || 0,
+    current: leads?.pagination?.current || 1,
+    pageSize: leads?.pagination?.pageSize || 10,
     showSizeChanger: true,
     showTotal: (total) => `Total ${total} items`,
     pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
     locale: {
       items_per_page: isMobile ? "" : "/ page",
     },
-    
   };
 
   return (
-    <>
-    <div className="lead-list-container"> 
+    <div className="lead-list-container">
       <Table
         columns={columns}
         dataSource={leads?.data || []}
         rowKey="id"
         pagination={paginationConfig}
         scroll={{ x: "max-content", y: "100%" }}
-        // className="colorful-table"
+        loading={loading}
+        onChange={onTableChange}
         onRow={(record) => ({
           onClick: () => onLeadClick(record),
           style: { cursor: "pointer" },
         })}
       />
-      </div>
-      {/* <style jsx global>{`
-        .colorful-table {
-          .ant-table {
-            border-radius: 8px;
-            overflow: hidden;
-
-            .ant-table-container {
-              overflow: hidden;
-              border-radius: 8px;
-            }
-
-            .ant-table-content {
-              overflow: auto;
-
-              &::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-                background-color: #f5f5f5;
-              }
-
-              &::-webkit-scrollbar-thumb {
-                background: #1890ff;
-                border-radius: 10px;
-              }
-
-              &::-webkit-scrollbar-track {
-                background: #f5f5f5;
-                border-radius: 10px;
-              }
-            }
-
-            .ant-table-thead > tr > th {
-              background: #fafafa !important;
-              color: #1f2937;
-              font-weight: 600;
-              border-bottom: 1px solid #f0f0f0;
-              padding: 16px;
-
-              &::before {
-                display: none;
-              }
-            }
-
-            .ant-table-tbody > tr {
-              &:hover > td {
-                background: rgba(24, 144, 255, 0.04) !important;
-              }
-
-              > td {
-                padding: 16px;
-                transition: all 0.3s ease;
-              }
-
-              &:nth-child(even) {
-                background-color: #fafafa;
-
-                &:hover > td {
-                  background: rgba(24, 144, 255, 0.04) !important;
-                }
-              }
-            }
-          }
-
-          .ant-table-filter-trigger {
-            color: #8c8c8c;
-            &:hover {
-              color: #1890ff;
-            }
-            &.active {
-              color: #1890ff;
-            }
-          }
-
-          .ant-table-filter-dropdown {
-            padding: 8px;
-            border-radius: 8px;
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-
-            .ant-dropdown-menu {
-              max-height: 300px;
-              overflow-y: auto;
-              padding: 4px;
-              border-radius: 6px;
-
-              &::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-                background-color: #f5f5f5;
-              }
-
-              &::-webkit-scrollbar-thumb {
-                background: #1890ff;
-                border-radius: 10px;
-              }
-
-              &::-webkit-scrollbar-track {
-                background: #f5f5f5;
-                border-radius: 10px;
-              }
-            }
-
-            .ant-input {
-              border-radius: 4px;
-              &:hover,
-              &:focus {
-                border-color: #1890ff;
-              }
-            }
-
-            .ant-btn {
-              border-radius: 4px;
-              &:not(:last-child) {
-                margin-right: 8px;
-              }
-            }
-
-            .ant-dropdown-menu-item {
-              padding: 8px 12px;
-              margin: 2px 0;
-              border-radius: 4px;
-              font-size: 13px;
-
-              &:hover {
-                background: rgba(24, 144, 255, 0.1);
-              }
-
-              &.ant-dropdown-menu-item-selected {
-                color: #1890ff;
-                font-weight: 500;
-                background: rgba(24, 144, 255, 0.1);
-              }
-            }
-          }
-
-          .ant-table-pagination {
-            margin: 16px !important;
-
-            .ant-pagination-item-active {
-              border-color: #1890ff;
-              background: #1890ff;
-
-              a {
-                color: white;
-              }
-            }
-          }
-        }
-
-        .action-btn {
-          width: 32px;
-          height: 32px;
-          padding: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          color: #6b7280;
-          transition: all 0.3s;
-
-          &:hover {
-            color: #1890ff;
-            background: rgba(24, 144, 255, 0.1);
-          }
-        }
-      `}</style> */}
-    </>
+    </div>
   );
 };
 

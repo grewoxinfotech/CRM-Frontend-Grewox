@@ -31,7 +31,7 @@ import DealList from "./DealList";
 import EditDeal from "./EditDeal";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
-import { useDeleteDealMutation, useGetDealsQuery } from "./services/dealApi";
+import { useDeleteDealMutation, useGetDealsQuery } from "./services/DealApi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -47,23 +47,31 @@ const Deal = () => {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
   const navigate = useNavigate();
-  // Fetch pipelines and deal stages
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: dealStages = [] } = useGetLeadStagesQuery();
   const [deleteDeal] = useDeleteDealMutation();
-  const { data, isLoading, error } = useGetDealsQuery();
+  const { data: deals, isLoading } = useGetDealsQuery({
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+    search: searchText,
+  });
 
-  console.log(data);
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page on search
+  };
 
-  // Filter deals based on search text
-  const filteredDeals = React.useMemo(() => {
-    if (!data) return [];
-    if (!searchText) return data;
-    return data.filter((deal) =>
-      deal.dealTitle?.toLowerCase().includes(searchText.toLowerCase())
-    );
-  }, [data, searchText]);
+  const handleTableChange = (newPagination, filters, sorter) => {
+    setPagination({
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+    });
+  };
 
   const handleCreate = () => {
     setIsModalOpen(true);
@@ -103,7 +111,7 @@ const Deal = () => {
   const handleExport = async (type) => {
     try {
       setLoading(true);
-      const data = filteredDeals.map((deal) => ({
+      const data = deals?.data?.map((deal) => ({
         "Deal Name": deal.dealTitle,
         Company: deal.company_name,
         Source:
@@ -111,15 +119,14 @@ const Deal = () => {
           deal.source,
         Stage:
           dealStages?.find((s) => s.id === deal.stage)?.stageName || deal.stage,
-        Value: `${
-          currencies?.find((c) => c.id === deal.currency)?.currencyIcon || ""
-        } ${deal.value || 0}`,
+        Value: `${currencies?.find((c) => c.id === deal.currency)?.currencyIcon || ""
+          } ${deal.value || 0}`,
         Status:
           deal.is_won === true
             ? "Won"
             : deal.is_won === false
-            ? "Lost"
-            : "Pending",
+              ? "Lost"
+              : "Pending",
         "Created Date": moment(deal.createdAt).format("DD-MM-YYYY"),
       }));
 
@@ -235,7 +242,7 @@ const Deal = () => {
         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
         placeholder="Search deals..."
         allowClear
-        onChange={(e) => setSearchText(e.target.value)}
+        onChange={(e) => handleSearch(e.target.value)}
         value={searchText}
         className="search-input"
         autoFocus
@@ -282,13 +289,13 @@ const Deal = () => {
                     </Button.Group>
                   </div>
 
-                  <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <div className="search-container">
                       <Input
                         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
                         placeholder="Search deals..."
                         allowClear
-                        onChange={(e) => setSearchText(e.target.value)}
+                        onChange={(e) => handleSearch(e.target.value)}
                         value={searchText}
                         className="search-input"
                       />
@@ -300,7 +307,7 @@ const Deal = () => {
                         placement="bottomRight"
                         className="mobile-search-popover"
                       >
-                        <Button 
+                        <Button
                           className="search-icon-button"
                           icon={<FiSearch size={16} />}
                         />
@@ -331,19 +338,25 @@ const Deal = () => {
       <Card className="deal-content">
         {viewMode === "table" ? (
           <DealList
-            deals={filteredDeals}
+            deals={deals?.data || []}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
             onDealClick={handleDealClick}
+            loading={isLoading}
+            pagination={deals?.pagination}
+            onTableChange={handleTableChange}
           />
         ) : (
           <DealCard
-            deals={filteredDeals}
+            deals={deals?.data || []}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
             onDealClick={handleDealClick}
+            loading={isLoading}
+            pagination={deals?.pagination}
+            onTableChange={handleTableChange}
           />
         )}
       </Card>

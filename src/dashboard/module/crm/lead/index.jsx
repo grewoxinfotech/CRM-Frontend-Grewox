@@ -63,11 +63,19 @@ const Lead = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [viewMode, setViewMode] = useState("table");
   const [searchText, setSearchText] = useState("");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  });
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
-  const { data: leads, isLoading } = useGetLeadsQuery();
+  const { data: leads, isLoading } = useGetLeadsQuery({
+    page: pagination.current,
+    pageSize: pagination.pageSize,
+    search: searchText,
+  });
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
@@ -105,21 +113,15 @@ const Lead = () => {
 
   const handleSearch = (value) => {
     setSearchText(value);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page on search
   };
 
-  const filteredLeads = React.useMemo(() => {
-    if (!leads?.data) return [];
-
-    return leads.data.filter((lead) => {
-      const searchLower = searchText.toLowerCase();
-      return (
-        lead.leadTitle?.toLowerCase().includes(searchLower) ||
-        lead.company_name?.toLowerCase().includes(searchLower) ||
-        lead.email?.toLowerCase().includes(searchLower) ||
-        lead.phone?.toLowerCase().includes(searchLower)
-      );
+  const handleTableChange = (newPagination, filters, sorter) => {
+    setPagination({
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
     });
-  }, [leads?.data, searchText]);
+  };
 
   const handleLeadClick = (lead) => {
     navigate(`/dashboard/crm/leads/${lead.id}`);
@@ -365,7 +367,7 @@ const Lead = () => {
                     </Button.Group>
                   </div>
 
-                  <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                     <div className="search-container">
                       <Input
                         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
@@ -375,19 +377,6 @@ const Lead = () => {
                         value={searchText}
                         className="search-input"
                       />
-                      <Popover
-                        content={searchContent}
-                        trigger="click"
-                        open={isSearchVisible}
-                        onOpenChange={setIsSearchVisible}
-                        placement="bottomRight"
-                        className="mobile-search-popover"
-                      >
-                        <Button 
-                          className="search-icon-button"
-                          icon={<FiSearch size={16} />}
-                        />
-                      </Popover>
                     </div>
                     <Dropdown overlay={exportMenu} trigger={["click"]}>
                       <Button className="export-button">
@@ -407,7 +396,7 @@ const Lead = () => {
                 </div>
               </div>
             </div>
-            
+
           </div>
         </div>
       </div>
@@ -415,15 +404,18 @@ const Lead = () => {
       <Card className="lead-content">
         {viewMode === "table" ? (
           <LeadList
-            leads={{ data: filteredLeads }}
+            leads={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
             onLeadClick={handleLeadClick}
+            loading={isLoading}
+            pagination={pagination}
+            onTableChange={handleTableChange}
           />
         ) : (
           <LeadCard
-            leads={{ data: filteredLeads }}
+            lead={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             categoriesData={categoriesData}
@@ -434,6 +426,9 @@ const Lead = () => {
             pipelines={pipelines}
             onView={handleView}
             onLeadClick={handleLeadClick}
+            loading={isLoading}
+            pagination={pagination}
+            onTableChange={handleTableChange}
           />
         )}
       </Card>

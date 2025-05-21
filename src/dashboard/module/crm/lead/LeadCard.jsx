@@ -578,8 +578,7 @@ const SortableColumn = ({ stage, leads, children, index }) => {
   );
 };
 
-const LeadCard = ({ currencies, countries, sourcesData, statusesData, categoriesData }) => {
-  const { data: leadsData, isLoading: isLoadingLeads, error: errorLeads } = useGetLeadsQuery();
+const LeadCard = ({ lead, currencies, countries, sourcesData, statusesData, categoriesData }) => {
   const { data: stageQueryData, isLoading: isLoadingStages, error: errorStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const [updateLead] = useUpdateLeadMutation();
@@ -636,7 +635,9 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     }
   }, [stages, dispatch, savedStageOrder.length]);
 
-  const leads = leadsData?.data || [];
+  const leads = lead?.data || [];
+
+  console.log(lead);
 
   const leadsByStage = React.useMemo(() => {
     return orderedStages.reduce((acc, stage) => {
@@ -724,8 +725,8 @@ const LeadCard = ({ currencies, countries, sourcesData, statusesData, categories
     }
   };
 
-  if (isLoadingLeads || isLoadingStages || isLoadingPipelines) return <div>Loading...</div>;
-  if (errorLeads || errorStages) return <div>Error loading data. Please try again.</div>;
+  if (isLoadingStages || isLoadingPipelines) return <div>Loading...</div>;
+  if (errorStages) return <div>Error loading data. Please try again.</div>;
 
   return (
     <div className="lead-kanban" style={{

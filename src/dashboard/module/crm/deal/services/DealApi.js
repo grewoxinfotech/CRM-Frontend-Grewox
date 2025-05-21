@@ -9,24 +9,39 @@ export const dealApi = createApi({
   keepUnusedDataFor: 0,
   endpoints: (builder) => ({
 
-    
+
     getDeals: builder.query({
-      query: (params) => ({
-        url: "/deals",
-        method: "GET",
-        params,
-      }),
+      query: ({ page = 1, pageSize = 10, search = '', ...rest }) => {
+        const queryParams = new URLSearchParams({
+          page: page.toString(),
+          pageSize: pageSize.toString(),
+          ...(search && { search }),
+          ...rest
+        }).toString();
+        return {
+          url: `/deals?${queryParams}`,
+          method: "GET",
+        };
+      },
       transformResponse: (response) => {
-        if (Array.isArray(response)) {
-          return response;
+        if (response?.message) {
+          return {
+            data: response.message.data.map(deal => ({
+              ...deal,
+              key: deal.id
+            })),
+            pagination: response.message.pagination
+          };
         }
-        if (response?.data && Array.isArray(response.data)) {
-          return response.data;
-        }
-        if (response?.deals && Array.isArray(response.deals)) {
-          return response.deals;
-        }
-        return [];
+        return {
+          data: [],
+          pagination: {
+            total: 0,
+            current: 1,
+            pageSize: 10,
+            totalPages: 0
+          }
+        };
       },
       providesTags: ["Deal"],
     }),

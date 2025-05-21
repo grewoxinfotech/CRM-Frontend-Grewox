@@ -50,12 +50,12 @@ const { Option } = Select;
 
 // Update the findIndianDefaults function to return IDs instead of codes
 const findIndianDefaults = (currencies, countries) => {
-    const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
-    const indiaCountry = countries?.find(c => c.countryCode === 'IN');
-    return {
-        defaultCurrency: inrCurrency?.id || '',  // Changed to return ID instead of code
-        defaultPhoneCode: indiaCountry?.id || ''
-    };
+  const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
+  const indiaCountry = countries?.find(c => c.countryCode === 'IN');
+  return {
+    defaultCurrency: inrCurrency?.id || '',  // Changed to return ID instead of code
+    defaultPhoneCode: indiaCountry?.id || ''
+  };
 };
 
 const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
@@ -96,19 +96,22 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
     pageSize: -1,
     search: ''
   });
+  const { data: designationsData } = useGetAllDesignationsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
 
-  const { data: designationsData } = useGetAllDesignationsQuery();
+  // Get default currency and phone code
+  const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
 
-    // Get default currency and phone code
-    const { defaultCurrency, defaultPhoneCode } = findIndianDefaults(currencies, countries);
-
-    // Add this useEffect to set default currency when form is initialized
-    React.useEffect(() => {
-        form.setFieldsValue({
-            currency: defaultCurrency,
-            phoneCode: defaultPhoneCode
-        });
-    }, [form, defaultCurrency, defaultPhoneCode]);
+  // Add this useEffect to set default currency when form is initialized
+  React.useEffect(() => {
+    form.setFieldsValue({
+      currency: defaultCurrency,
+      phoneCode: defaultPhoneCode
+    });
+  }, [form, defaultCurrency, defaultPhoneCode]);
 
   // Transform branch data
   const branches = React.useMemo(() => {
@@ -307,7 +310,7 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
         setIsOtpModalVisible(true);
         message.success(
           response.message ||
-            "Please verify your email to complete registration"
+          "Please verify your email to complete registration"
         );
       } else {
         message.error(response.message || "Failed to create employee");
@@ -819,15 +822,15 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   { min: 3, message: "Username must be at least 3 characters" },
                   {
                     validator: (_, value) => {
-                        if (!value) return Promise.resolve();
-                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                            return Promise.reject(
-                                new Error('Username must contain both uppercase and lowercase English letters')
-                            );
-                        }
-                        return Promise.resolve();
+                      if (!value) return Promise.resolve();
+                      if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
+                        return Promise.reject(
+                          new Error('Username must contain both uppercase and lowercase English letters')
+                        );
+                      }
+                      return Promise.resolve();
                     }
-                }
+                  }
                 ]}
               >
                 <Input

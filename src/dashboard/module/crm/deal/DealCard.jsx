@@ -15,7 +15,7 @@ import {
   FiPlus
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation } from "./services/dealApi";
+import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation } from "./services/DealApi";
 import { useGetLeadStagesQuery, useUpdateLeadStageMutation } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLabelsQuery, useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
@@ -569,10 +569,10 @@ const SortableColumn = ({ stage, dealsInStage, children, index }) => {
   );
 };
 
-const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
+const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
   const [updateDeal] = useUpdateDealMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
-  const { data: dealsData, isLoading: isLoadingDeals, error: dealsError } = useGetDealsQuery();
+  const dealsData = deals?.data || [];
   const { data: stageQueryData, isLoading: isLoadingStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const currentUser = useSelector(selectCurrentUser);
@@ -583,8 +583,6 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
   const [orderedStages, setOrderedStages] = useState([]);
   const [selectedPipeline, setSelectedPipeline] = useState(null);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
-  const [deals, setDeals] = useState([]);
-
   const pipelines = pipelinesData || [];
 
   // Initialize selected pipeline if not set
@@ -594,17 +592,6 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
     }
   }, [selectedPipeline, pipelines]);
 
-  useEffect(() => {
-    if (dealsData) {
-      if (Array.isArray(dealsData)) {
-        setDeals(dealsData);
-      } else if (dealsData.data && Array.isArray(dealsData.data)) {
-        setDeals(dealsData.data);
-      } else {
-        setDeals([]);
-      }
-    }
-  }, [dealsData]);
 
   // Filter and order deal stages
   const stages = React.useMemo(() => {
@@ -747,8 +734,7 @@ const DealCard = ({ onEdit, onDelete, onView, onDealClick }) => {
     }
   };
 
-  if (isLoadingDeals || isLoadingStages || isLoadingPipelines) return <div>Loading...</div>;
-  if (dealsError) return <div>Error loading data. Please try again.</div>;
+  if (isLoadingStages || isLoadingPipelines) return <div>Loading...</div>;
 
   return (
     <div className="deal-kanban" style={{
