@@ -51,7 +51,6 @@ const InvoiceList = ({
   searchText = "",
   pagination = {}
 }) => {
-  const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [deleteInvoice] = useDeleteInvoiceMutation();
@@ -59,39 +58,16 @@ const InvoiceList = ({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const invoices = invoicesdata?.data || [];
   const { data: customersData } = useGetCustomersQuery();
+
+  // Use data directly without filtering as it's already filtered by the API
+  const filteredInvoices = data;
 
   const statuses = [
     { id: "paid", name: "Paid" },
     { id: "unpaid", name: "Unpaid" },
     { id: "partial", name: "Partial" },
   ];
-
-  // Filter invoices based on search text and date range
-  const filteredInvoices = React.useMemo(() => {
-    return invoices?.filter((invoice) => {
-      const searchLower = searchText.toLowerCase();
-      const invoiceNumber = invoice?.salesInvoiceNumber?.toLowerCase() || "";
-      const customerName = invoice?.customer?.toLowerCase() || "";
-      const total = invoice?.total?.toString().toLowerCase() || "";
-      const status = invoice?.payment_status?.toLowerCase() || "";
-
-      const matchesSearch =
-        !searchText ||
-        invoiceNumber.includes(searchLower) ||
-        customerName.includes(searchLower) ||
-        total.includes(searchLower) ||
-        status.includes(searchLower);
-
-      const matchesDateRange =
-        !pagination.dateRange?.length ||
-        (dayjs(invoice?.issueDate).isAfter(pagination.dateRange[0]) &&
-          dayjs(invoice?.dueDate).isBefore(pagination.dateRange[1]));
-
-      return matchesSearch && matchesDateRange;
-    });
-  }, [invoices, searchText, pagination]);
 
   const getStatusTag = (status) => {
     const statusConfig = {
@@ -303,11 +279,11 @@ const InvoiceList = ({
   };
 
   const handleTableChange = (newPagination, filters, sorter) => {
-    if (newPagination.current !== pagination.current) {
-      pagination.onChange?.(newPagination.current);
+    if (pagination.onChange && newPagination.current !== pagination.current) {
+      pagination.onChange(newPagination.current);
     }
-    if (newPagination.pageSize !== pagination.pageSize) {
-      pagination.onSizeChange?.(newPagination.pageSize);
+    if (pagination.onSizeChange && newPagination.pageSize !== pagination.pageSize) {
+      pagination.onSizeChange(newPagination.pageSize);
     }
   };
 
@@ -447,7 +423,7 @@ const InvoiceList = ({
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredInvoices}
-        loading={isLoading}
+        loading={loading}
         rowKey="id"
         className="invoice-table"
         pagination={{

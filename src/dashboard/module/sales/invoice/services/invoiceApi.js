@@ -8,33 +8,32 @@ export const invoiceApi = createApi({
   endpoints: (builder) => ({
     getInvoices: builder.query({
       query: (params = {}) => {
-        const { page = 1, pageSize = 10, search = '' } = params;
+        const { page = 1, pageSize = 10, search = '', related_id = '' } = params;
         return {
           url: "/sales-invoices",
           params: {
             page,
             pageSize,
-            search
+            search,
+            related_id
           }
         };
       },
       transformResponse: (response) => {
-        // Handle the nested response structure
-        const data = response?.message?.data || [];
-        const pagination = response?.message?.pagination || {
-          total: 0,
-          current: 1,
-          pageSize: 10,
-          totalPages: 1
-        };
-
-        return {
-          data: data.map(item => ({
-            ...item,
-            key: item.id
-          })),
-          pagination
-        };
+        if (!response?.success) {
+          return {
+            message: {
+              data: [],
+              pagination: {
+                total: 0,
+                current: 1,
+                pageSize: 10,
+                totalPages: 1
+              }
+            }
+          };
+        }
+        return response;
       },
       providesTags: ["Invoices"],
     }),
