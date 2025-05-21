@@ -17,7 +17,6 @@ import moment from 'moment';
 import { useGetAllJobsQuery } from '../jobs/services/jobApi';
 import { useGetAllJobApplicationsQuery } from '../job applications/services/jobApplicationApi';
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
-import './offerLetters.scss';
 
 const { Text } = Typography;
 
@@ -25,7 +24,6 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     // Fetch jobs and applications data
     const { data: jobsData, isLoading: jobsLoading } = useGetAllJobsQuery();
@@ -34,9 +32,9 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
     // Fetch currency data
     const { data: currencyData } = useGetAllCurrenciesQuery();
 
-    // console.log('Jobs Data:', jobsData);
-    // console.log('Applications Data:', applicationsData);
-    // console.log('Offer Letters:', offerLetters);
+    console.log('Jobs Data:', jobsData);
+    console.log('Applications Data:', applicationsData);
+    console.log('Offer Letters:', offerLetters);
 
     // Create memoized maps for jobs and applications
     const jobMap = useMemo(() => {
@@ -149,7 +147,6 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
             title: 'Job',
             dataIndex: 'job',
             key: 'job',
-            width: 200,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -184,27 +181,20 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                         <div className="icon-wrapper" style={{
                             color: "#1890ff",
                             background: "rgba(24, 144, 255, 0.1)",
-                            width: isMobile ? "32px" : "40px",
-                            height: isMobile ? "32px" : "40px",
+                            width: "40px",
+                            height: "40px",
                             borderRadius: "8px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center"
                         }}>
-                            <FiBriefcase size={isMobile ? 16 : 20} />
+                            <FiBriefcase size={20} />
                         </div>
                         <div className="info-wrapper">
-                            <div className="name" style={{ 
-                                color: "#262626", 
-                                fontWeight: 600, 
-                                fontSize: isMobile ? "13px" : "15px" 
-                            }}>
+                            <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>
                                 {getJobTitle(jobId)}
                             </div>
-                            <div className="subtitle" style={{ 
-                                color: "#8c8c8c", 
-                                fontSize: isMobile ? "11px" : "13px" 
-                            }}>
+                            <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
                                 Job Position
                             </div>
                         </div>
@@ -284,16 +274,16 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                         <div className="icon-wrapper" style={{
                             color: "#722ed1",
                             background: "rgba(114, 46, 209, 0.1)",
-                            width: isMobile ? "28px" : "32px",
-                            height: isMobile ? "28px" : "32px",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "6px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center"
                         }}>
-                            <FiDollarSign size={isMobile ? 14 : 16} />
+                            <FiDollarSign size={16} />
                         </div>
-                        <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>
+                        <Text>
                             {salary ? `${getCurrencyDetails(record.currency).symbol} ${Number(salary).toLocaleString()}` : 'N/A'}
                         </Text>
                     </div>
@@ -315,18 +305,16 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                         <div className="icon-wrapper" style={{
                             color: "#f5222d",
                             background: "rgba(245, 34, 45, 0.1)",
-                            width: isMobile ? "28px" : "32px",
-                            height: isMobile ? "28px" : "32px",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "6px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center"
                         }}>
-                            <FiCalendar size={isMobile ? 14 : 16} />
+                            <FiCalendar size={16} />
                         </div>
-                        <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>
-                            {date ? moment(date).format('DD MMM YYYY') : 'N/A'}
-                        </Text>
+                        <Text>{date ? moment(date).format('DD MMM YYYY') : 'N/A'}</Text>
                     </div>
                 </div>
             )
@@ -341,18 +329,16 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                         <div className="icon-wrapper" style={{
                             color: "#fa8c16",
                             background: "rgba(250, 140, 22, 0.1)",
-                            width: isMobile ? "28px" : "32px",
-                            height: isMobile ? "28px" : "32px",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "6px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center"
                         }}>
-                            <FiClock size={isMobile ? 14 : 16} />
+                            <FiClock size={16} />
                         </div>
-                        <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>
-                            {date ? moment(date).format('DD MMM YYYY') : 'N/A'}
-                        </Text>
+                        <Text>{date ? moment(date).format('DD MMM YYYY') : 'N/A'}</Text>
                     </div>
                 </div>
             )
@@ -370,8 +356,7 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                         border: 'none',
                         padding: '4px 12px',
                         borderRadius: '6px',
-                        textTransform: 'capitalize',
-                        fontSize: isMobile ? "11px" : "12px"
+                        textTransform: 'capitalize'
                     }}>
                         {status || 'N/A'}
                     </Tag>
@@ -382,7 +367,6 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
             title: "Actions",
             key: "actions",
             width: 80,
-            fixed: 'right',
             render: (_, record) => (
                 <Dropdown
                     overlay={
@@ -421,36 +405,6 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
         },
     ];
 
-    // Bulk actions component
-    const BulkActions = () => (
-        <div className={`bulk-actions${selectedRowKeys.length > 0 ? ' active' : ''}`}>
-            <Button
-                type="primary"
-                danger
-                icon={<FiTrash2 size={16} />}
-                onClick={() => handleBulkDelete()}
-            >
-                Delete Selected ({selectedRowKeys.length})
-            </Button>
-        </div>
-    );
-
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
-    
-      const paginationConfig = {
-        pageSize: 10,
-        showSizeChanger: true,
-        showTotal: (total) => `Total ${total} items`,
-        pageSizeOptions: ['10', '20', '50', '100'],
-        locale: {
-          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
-        },
-      };
-
     return (
         <>
             {selectedRowKeys.length > 0 && (
@@ -473,15 +427,11 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                 onChange={handleChange}
                 rowKey="id"
                 scroll={{ x: 1500 }}
-                pagination={{
-                    ...pagination,
-                    ...paginationConfig,
-                }}
+                pagination={pagination}
                 style={{
                     background: '#ffffff',
                     borderRadius: '8px',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                    // ...pagination
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
                 }}
             />
         </>

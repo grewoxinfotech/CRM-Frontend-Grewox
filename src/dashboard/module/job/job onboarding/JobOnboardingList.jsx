@@ -20,7 +20,6 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [filteredInfo, setFilteredInfo] = useState({});
     const [sortedInfo, setSortedInfo] = useState({});
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     // Fetch currencies
     const { data: currencies } = useGetAllCurrenciesQuery({
@@ -83,13 +82,13 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
 
     // Bulk actions component
     const BulkActions = () => (
-        <div className={`bulk-actions ${selectedRowKeys.length > 0 ? 'active' : ''}`}>
+        <div className="bulk-actions" style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
             {selectedRowKeys.length > 0 && (
                 <Button
                     type="primary"
                     danger
-                    icon={<FiTrash2 />}
-                    onClick={() => handleBulkDelete()}
+                    icon={<FiTrash2 size={16} />}
+                    onClick={handleBulkDelete}
                 >
                     Delete Selected ({selectedRowKeys.length})
                 </Button>
@@ -117,7 +116,6 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
             title: 'Interviewer',
             dataIndex: 'Interviewer',
             key: 'Interviewer',
-            width: 250,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -308,7 +306,6 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
             title: 'Actions',
             key: 'actions',
             width: 80,
-            fixed: 'right',
             render: (_, record) => {
                 const menuItems = [
                     {
@@ -348,22 +345,6 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
         }
     ];
 
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-      }, []);
-    
-      const paginationConfig = {
-        pageSize: 10,
-        showSizeChanger: true,
-        showTotal: (total) => `Total ${total} items`,
-        pageSizeOptions: ['10', '20', '50', '100'],
-        locale: {
-          items_per_page: isMobile ? '' : '/ page', // Hide '/ page' on mobile/tablet
-        },
-      };
-
     return (
         <div className="job-onboarding-list-container">
             <BulkActions />
@@ -380,10 +361,8 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
                     total: pagination?.total || 0,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} items`,
-                    ...pagination,
-                    ...paginationConfig,
+                    ...pagination
                 }}
-                // pagination={paginationConfig}
                 className="custom-table"
             />
         </div>

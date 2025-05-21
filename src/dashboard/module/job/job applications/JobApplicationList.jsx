@@ -14,7 +14,6 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
     const [sortedInfo, setSortedInfo] = useState({});
     const [updateJobApplication] = useUpdateJobApplicationMutation();
     const { data: jobs, isLoading: jobsLoading } = useGetAllJobsQuery();
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     // Clear selections when applications data changes
     useEffect(() => {
@@ -37,18 +36,6 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
         setFilteredInfo({});
         setSortedInfo({});
     };
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const statuses = [
-        { id: 'pending', name: 'Pending' },
-        { id: 'shortlisted', name: 'Shortlisted' },
-        { id: 'selected', name: 'Selected' },
-        { id: 'rejected', name: 'Rejected' },
-    ];
 
     // Function to get job title by job ID
     const getJobTitle = (jobId) => {
@@ -71,26 +58,11 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
         setSelectedRowKeys([]); // Clear selections after delete
     };
 
-    // Bulk actions component
-    const BulkActions = () => (
-        <div className={`bulk-actions${selectedRowKeys.length > 0 ? ' active' : ''}`}>
-            <Button
-                type="primary"
-                danger
-                icon={<FiTrash2 size={16} />}
-                onClick={handleBulkDelete}
-            >
-                Delete Selected ({selectedRowKeys.length})
-            </Button>
-        </div>
-    );
-
     const columns = [
         {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            width: 250,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -123,20 +95,17 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
                         <div className="icon-wrapper" style={{
                             color: "#1890ff",
                             background: "rgba(24, 144, 255, 0.1)",
-                            width: isMobile ? "28px" : "32px",
-                            height: isMobile ? "28px" : "32px",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "6px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center"
                         }}>
-                            <FiUser size={isMobile ? 14 : 16} />
+                            <FiUser size={16} />
                         </div>
                         <div className="info-wrapper">
-                            <div className="name" style={{ 
-                                fontSize: isMobile ? "13px" : "14px",
-                                fontWeight: 600
-                            }}>{text}</div>
+                            <div className="name">{text}</div>
                         </div>
                     </div>
                 </div>
@@ -146,19 +115,16 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
             title: 'Job',
             dataIndex: 'job',
             key: 'job',
-            width: 150,
             sorter: (a, b) => a.job.localeCompare(b.job),
             render: (jobId) => (
                 <div className="column-icon">
                     <div className="icon-bg" style={{
                         color: "#8b5cf6",
-                        background: "rgba(139, 92, 246, 0.1)",
-                        width: isMobile ? "28px" : "32px",
-                        height: isMobile ? "28px" : "32px"
+                        background: "rgba(139, 92, 246, 0.1)"
                     }}>
-                        <FiBriefcase size={isMobile ? 14 : 16} />
+                        <FiBriefcase size={16} />
                     </div>
-                    <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>{getJobTitle(jobId)}</Text>
+                    <Text>{getJobTitle(jobId)}</Text>
                 </div>
             )
         },
@@ -166,19 +132,16 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
             title: 'Notice Period',
             dataIndex: 'notice_period',
             key: 'notice_period',
-            width: 150,
             sorter: (a, b) => a.notice_period.localeCompare(b.notice_period),
             render: (text) => (
                 <div className="column-icon">
                     <div className="icon-bg" style={{
                         color: "#10b981",
-                        background: "rgba(16, 185, 129, 0.1)",
-                        width: isMobile ? "28px" : "32px",
-                        height: isMobile ? "28px" : "32px"
+                        background: "rgba(16, 185, 129, 0.1)"
                     }}>
-                        <FiClock size={isMobile ? 14 : 16} />
+                        <FiClock size={16} />
                     </div>
-                    <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>{text}</Text>
+                    <Text>{text}</Text>
                 </div>
             )
         },
@@ -186,19 +149,16 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
-            width: 150,
             sorter: (a, b) => a.phone.localeCompare(b.phone),
             render: (text) => (
                 <div className="column-icon">
                     <div className="icon-bg" style={{
                         color: "#f59e0b",
-                        background: "rgba(245, 158, 11, 0.1)",
-                        width: isMobile ? "28px" : "32px",
-                        height: isMobile ? "28px" : "32px"
+                        background: "rgba(245, 158, 11, 0.1)"
                     }}>
-                        <FiPhone size={isMobile ? 14 : 16} />
+                        <FiPhone size={16} />
                     </div>
-                    <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>{text}</Text>
+                    <Text>{text}</Text>
                 </div>
             )
         },
@@ -206,19 +166,16 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
             title: 'Experience',
             dataIndex: 'total_experience',
             key: 'total_experience',
-            width: 150,
             sorter: (a, b) => a.total_experience.localeCompare(b.total_experience),
             render: (text) => (
                 <div className="column-icon">
                     <div className="icon-bg" style={{
                         color: "#6366f1",
-                        background: "rgba(99, 102, 241, 0.1)",
-                        width: isMobile ? "28px" : "32px",
-                        height: isMobile ? "28px" : "32px"
+                        background: "rgba(99, 102, 241, 0.1)"
                     }}>
-                        <FiHash size={isMobile ? 14 : 16} />
+                        <FiHash size={16} />
                     </div>
-                    <Text style={{ fontSize: isMobile ? "12px" : "13px" }}>{text} years</Text>
+                    <Text>{text} years</Text>
                 </div>
             )
         },
@@ -226,11 +183,12 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            width: 150,
-            filters: statuses.map(status => ({
-                text: status.name,
-                value: status.id
-            })),
+            filters: [
+                { text: 'Pending', value: 'pending' },
+                { text: 'Shortlisted', value: 'shortlisted' },
+                { text: 'Selected', value: 'selected' },
+                { text: 'Rejected', value: 'rejected' },
+            ],
             onFilter: (value, record) => record.status === value,
             render: (status) => {
                 let color;
@@ -264,8 +222,7 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
                             border: 'none',
                             borderRadius: '4px',
                             padding: '4px 8px',
-                            textTransform: 'capitalize',
-                            fontSize: isMobile ? "11px" : "12px"
+                            textTransform: 'capitalize'
                         }}
                     >
                         {status?.replace(/_/g, ' ') || 'N/A'}

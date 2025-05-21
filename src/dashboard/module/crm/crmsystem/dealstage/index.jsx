@@ -31,16 +31,16 @@ const DealStages = () => {
 
   const { data: stagesData = [], isLoading } = useGetDealStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
-  const { data: leadsResponse } = useGetLeadsQuery();
-  const { data: dealsResponse } = useGetDealsQuery();
+  const { data: dealsResponse } = useGetDealsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
   const [deleteDealStage] = useDeleteDealStageMutation();
   const [updateDealStage] = useUpdateDealStageMutation();
 
   // Ensure data is always an array
-  const leadsData = Array.isArray(leadsResponse?.data) ? leadsResponse.data :
-    Array.isArray(leadsResponse) ? leadsResponse : [];
-  const dealsData = Array.isArray(dealsResponse?.data) ? dealsResponse.data :
-    Array.isArray(dealsResponse) ? dealsResponse : [];
+  const dealsData = dealsResponse?.data || [];
 
   // Filter for deal stages only
   const dealStages = stagesData?.filter(stage => stage?.stageType === "deal") || [];

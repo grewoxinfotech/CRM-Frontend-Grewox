@@ -285,27 +285,7 @@ const OfferLetters = () => {
     };
 
     return (
-        <div className="offer-letters-page" style={{
-            height: '100vh',
-            overflowY: 'auto',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#d4d4d4 #f5f5f5',
-            '&::-webkit-scrollbar': {
-                width: '8px',
-                height: '8px'
-            },
-            '&::-webkit-scrollbar-track': {
-                background: '#f5f5f5',
-                borderRadius: '4px'
-            },
-            '&::-webkit-scrollbar-thumb': {
-                background: '#d4d4d4',
-                borderRadius: '4px',
-                '&:hover': {
-                    background: '#bfbfbf'
-                }
-            }
-        }}>
+        <div className="offer-letters-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -374,27 +354,7 @@ const OfferLetters = () => {
                 </div>
             </div>
 
-            <Card className="offer-letters-table-card" style={{
-                maxHeight: 'calc(100vh - 250px)',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#d4d4d4 #f5f5f5',
-                '&::-webkit-scrollbar': {
-                    width: '8px',
-                    height: '8px'
-                },
-                '&::-webkit-scrollbar-track': {
-                    background: '#f5f5f5',
-                    borderRadius: '4px'
-                },
-                '&::-webkit-scrollbar-thumb': {
-                    background: '#d4d4d4',
-                    borderRadius: '4px',
-                    '&:hover': {
-                        background: '#bfbfbf'
-                    }
-                }
-            }}>
+            <Card className="offer-letters-table-card">
                 <OfferLetterList
                     offerLetters={offerLettersData?.data || []}
                     onEdit={handleEditLetter}

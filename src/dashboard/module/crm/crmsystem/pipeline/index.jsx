@@ -22,13 +22,20 @@ const Pipeline = () => {
   const pageSize = 10;
 
   const { data, isLoading, error } = useGetPipelinesQuery();
-  const { data: leadsResponse } = useGetLeadsQuery();
-  const { data: dealsResponse } = useGetDealsQuery();
+  const { data: leadsResponse } = useGetLeadsQuery({
+    page: 1,
+    pageSize: 100 // Get more leads since we need to check pipeline usage
+  });
+  const { data: dealsResponse } = useGetDealsQuery({
+    page: 1,
+    pageSize: 100 // Get more deals since we need to check pipeline usage
+  });
   const [deletePipeline] = useDeletePipelineMutation();
 
   // Ensure data is always an array
   const leadsData = leadsResponse?.data || [];
-  const dealsData = dealsResponse || []
+  const dealsData = dealsResponse?.data || [];
+
   // Ensure pipelines is always an array
   const pipelines = Array.isArray(data?.pipelines)
     ? data.pipelines

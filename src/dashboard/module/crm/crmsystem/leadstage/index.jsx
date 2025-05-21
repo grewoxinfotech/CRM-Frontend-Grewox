@@ -28,16 +28,18 @@ const LeadStages = () => {
 
   const { data: stagesData = [], isLoading } = useGetLeadStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
-  const { data: leadsResponse } = useGetLeadsQuery();
-  const { data: dealsResponse } = useGetDealsQuery();
+
   const [deleteLeadStage] = useDeleteLeadStageMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
 
   // Ensure data is always an array
-  const leadsData = Array.isArray(leadsResponse?.data) ? leadsResponse.data :
-    Array.isArray(leadsResponse) ? leadsResponse : [];
-  const dealsData = Array.isArray(dealsResponse?.data) ? dealsResponse.data :
-    Array.isArray(dealsResponse) ? dealsResponse : [];
+  const { data: leadsResponse } = useGetLeadsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+
+  const leadsData = leadsResponse?.data || [];
 
   // Filter for lead stages only
   const leadStages = stagesData?.filter(stage => stage?.stageType === "lead") || [];

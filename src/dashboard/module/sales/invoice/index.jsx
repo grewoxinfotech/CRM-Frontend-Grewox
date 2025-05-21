@@ -59,16 +59,11 @@ const Invoice = () => {
   const { data: invoicesData, isLoading: isInvoiceLoading } = useGetInvoicesQuery({
     page: currentPage,
     pageSize,
-    search: searchText,
-    related_id: id
+    search: searchText
   });
-  const invoices = invoicesData?.message?.data || [];
-  const paginationData = invoicesData?.message?.pagination || {
-    total: 0,
-    current: 1,
-    pageSize: 10,
-    totalPages: 1
-  };
+  const invoices = (invoicesData?.data || []).filter(
+    (invoice) => invoice.related_id === id
+  );
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
 
@@ -260,7 +255,7 @@ const Invoice = () => {
     setCurrentPage(page);
   };
 
-  const handlePageSizeChange = (current, size) => {
+  const handlePageSizeChange = (size) => {
     setPageSize(size);
     setCurrentPage(1);
   };
@@ -344,16 +339,17 @@ const Invoice = () => {
       <Card className="invoice-table-card">
         <InvoiceList
           loading={isInvoiceLoading || loading}
-          data={invoices}
+          invoices={invoices}
           searchText={searchText}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
           filters={filters}
           pagination={{
-            current: paginationData.current,
-            pageSize: paginationData.pageSize,
-            total: paginationData.total,
+            current: currentPage,
+            pageSize,
+            total: invoicesData?.pagination?.total || 0,
+            totalPages: invoicesData?.pagination?.totalPages || 0,
             onChange: handlePageChange,
             onSizeChange: handlePageSizeChange
           }}

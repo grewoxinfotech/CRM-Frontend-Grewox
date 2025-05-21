@@ -115,8 +115,6 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     refetchOnMountOrArgChange: true
   });
 
-  // console.log(salaryData, 'salaryData');
-
   // Helper functions to find names using find method
   const getBranchName = (branchId) => {
     const branch = branchesData?.data?.find((b) => b.id === branchId);
@@ -233,12 +231,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
   const getEmployeeSalary = (employeeId) => {
     if (!salaryData?.data) return null;
 
-    // console.log(salaryData, 'salaryData');
-  
-
     const foundSalary = salaryData.data.find(salary => salary.employeeId === employeeId);
-
-    // console.log(foundSalary, 'foundSalary');
 
     if (!foundSalary) return null;
 

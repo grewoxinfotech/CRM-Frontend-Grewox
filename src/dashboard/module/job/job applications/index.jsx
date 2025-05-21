@@ -73,9 +73,9 @@ const JobApplications = () => {
             content,
             okText: 'Yes',
             okType: 'danger',
-            okText: 'Yes',
             cancelText: 'No',
-            bodyStyle: { padding: '20px' },
+            icon: <ExclamationCircleOutlined />,
+            bodyStyle: { padding: "20px" },
             onOk: async () => {
                 try {
                     if (isMultiple) {
@@ -214,13 +214,8 @@ const JobApplications = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
-        <div className="job-applications-page" style={{
-            height: '100vh',
-            overflowY: 'auto',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#d4d4d4 #f5f5f5'
-        }}>
+    return (
+        <div className="job-applications-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -279,12 +274,7 @@ const JobApplications = () => {
                 </div>
             </div>
 
-            <Card className="job-applications-table-card" style={{
-                maxHeight: 'calc(100vh - 250px)',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#d4d4d4 #f5f5f5'
-            }}>
+            <Card className="job-applications-table-card">
                 <JobApplicationList
                     applications={applications?.data || []}
                     loading={isLoading}

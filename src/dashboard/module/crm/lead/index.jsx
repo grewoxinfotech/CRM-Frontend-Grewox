@@ -415,7 +415,7 @@ const Lead = () => {
           />
         ) : (
           <LeadCard
-            lead={leads}
+            leads={leads}
             onEdit={handleEdit}
             onDelete={handleDelete}
             categoriesData={categoriesData}
