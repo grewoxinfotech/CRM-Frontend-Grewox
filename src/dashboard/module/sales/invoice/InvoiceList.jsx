@@ -231,44 +231,38 @@ const InvoiceList = ({
     }
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
+  const getDropdownItems = (record) => {
+    // Create base items array without edit option
+    const items = [
       {
         key: "view",
         icon: <FiEye style={{ fontSize: "14px" }} />,
         label: "View Invoice",
         onClick: () => handleView(record),
-      },
-      {
+      }
+    ];
+
+    // Only add edit option if invoice is not paid or partially paid
+    if (record.payment_status !== 'paid') {
+      items.push({
         key: "edit",
         icon: <FiEdit2 style={{ fontSize: "14px" }} />,
         label: "Edit Invoice",
         onClick: () => handleEdit(record),
-      },
-      // {
-      //   key: "send_invoice",
-      //   icon: <FiSend style={{ fontSize: "14px" }} />,
-      //   label: "Send Invoice to Customer",
-      //   onClick: () => handleSendInvoice(record),
-      // },
-      // {
-      //   key: "download",
-      //   icon: <FiDownload />,
-      //   label: "Download Invoice",
-      //   onClick: () => {
-      //     setSelectedInvoice(record);
-      //     setIsViewModalOpen(true);
-      //   },
-      // },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete Invoice",
-        onClick: () => handleDelete(record.id),
-        danger: true,
-      },
-    ],
-  });
+      });
+    }
+
+    // Add delete option at the end
+    items.push({
+      key: "delete",
+      icon: <FiTrash2 />,
+      label: "Delete Invoice",
+      onClick: () => handleDelete(record.id),
+      danger: true,
+    });
+
+    return { items };
+  };
 
   const getCustomerName = (customerId) => {
     if (!customerId || !customersData?.data) return "N/A";

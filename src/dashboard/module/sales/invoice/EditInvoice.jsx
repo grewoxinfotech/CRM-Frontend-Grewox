@@ -1121,6 +1121,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                 borderRadius: "10px",
               }}
               onChange={(value) => setPaymentStatus(value)}
+              disabled={true}
             >
               <Option value="paid">Paid</Option>
               <Option value="unpaid">Unpaid</Option>
