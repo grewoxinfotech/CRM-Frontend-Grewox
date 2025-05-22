@@ -8,13 +8,39 @@ const initialState = {
     isLogin: false,
     message: null,
     success: false,
-    userRole: null
+    userRole: null,
+    isRegistering: false,
+    registrationError: null,
+    registrationSuccess: false
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        registerStart: (state) => {
+            state.isRegistering = true;
+            state.registrationError = null;
+            state.registrationSuccess = false;
+        },
+        registerSuccess: (state, action) => {
+            state.isRegistering = false;
+            state.registrationSuccess = true;
+            state.registrationError = null;
+            state.message = action.payload.message;
+        },
+        registerFailure: (state, action) => {
+            state.isRegistering = false;
+            state.registrationSuccess = false;
+            state.registrationError = action.payload;
+            state.message = action.payload;
+        },
+        clearRegistrationState: (state) => {
+            state.isRegistering = false;
+            state.registrationError = null;
+            state.registrationSuccess = false;
+            state.message = null;
+        },
         loginStart: (state) => {
             state.isLoading = true;
             state.error = null;
@@ -78,7 +104,11 @@ export const {
     logout,
     clearError,
     updateUser,
-    setLoading
+    setLoading,
+    registerStart,
+    registerSuccess,
+    registerFailure,
+    clearRegistrationState
 } = authSlice.actions;
 
 // Export selectors with null checks
@@ -90,5 +120,8 @@ export const selectIsLogin = (state) => Boolean(state.auth?.isLogin);
 export const selectAuthMessage = (state) => state.auth?.message || null;
 export const selectAuthSuccess = (state) => Boolean(state.auth?.success);
 export const selectUserRole = (state) => state.auth?.userRole || null;
+export const selectIsRegistering = (state) => Boolean(state.auth?.isRegistering);
+export const selectRegistrationError = (state) => state.auth?.registrationError || null;
+export const selectRegistrationSuccess = (state) => Boolean(state.auth?.registrationSuccess);
 
 export default authSlice.reducer;

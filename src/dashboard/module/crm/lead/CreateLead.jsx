@@ -166,11 +166,17 @@ const CreateLead = ({
 
       // Get default stage for selected pipeline
       const defaultStage = stages.find(stage => stage.pipeline === values.pipeline && stage.isDefault);
+      
+      // Validate that we have a default stage
+      if (!defaultStage?.id) {
+        message.error("No default stage found for selected pipeline");
+        return;
+      }
 
       // Prepare the base lead data
       const leadFormData = {
         leadTitle: values.leadTitle,
-        leadStage: defaultStage?.id,
+        leadStage: defaultStage.id, // Now we know this exists
         pipeline: values.pipeline,
         currency: values.currency,
         leadValue: values.leadValue,

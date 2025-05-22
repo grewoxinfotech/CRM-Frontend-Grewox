@@ -31,7 +31,7 @@ import {
   FiInfo,
   FiTrash2,
 } from "react-icons/fi";
-import { useCreateDealMutation, useGetDealsQuery } from "./services/dealApi";
+import { useCreateDealMutation, useGetDealsQuery } from "./services/DealApi";
 import { PlusOutlined } from "@ant-design/icons";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
@@ -75,7 +75,7 @@ const findIndianDefaults = (currencies, countries) => {
 };
 
 const CreateDeal = ({ open, onCancel, leadData }) => {
-  console.log("leadData", leadData);
+  // console.log("leadData", leadData);
   const loggedInUser = useSelector(selectCurrentUser);
 
   const [form] = Form.useForm();
@@ -149,22 +149,26 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
 
   // Get default stage for selected pipeline
   const getDefaultStage = (pipelineId) => {
-    return dealStages?.find(
+    const defaultStage = dealStages?.find(
       (stage) =>
         stage.stageType === "deal" &&
         stage.pipeline === pipelineId &&
         stage.isDefault
-    )?.id;
+    );
+    return defaultStage?.id;
   };
+
 
   // Handle pipeline selection change
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
     // Set the default stage for this pipeline
     const defaultStage = getDefaultStage(value);
-    form.setFieldsValue({
-      stage: defaultStage,
-    });
+    if (defaultStage) {
+      form.setFieldsValue({
+        stage: defaultStage,
+      });
+    }
   };
 
   // Handle manual value change
@@ -387,12 +391,19 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
         ? `+${values.phoneCode} ${values.telephone}`
         : null;
 
+      // Get the default stage for the selected pipeline
+      const defaultStage = getDefaultStage(values.pipeline);
+      if (!defaultStage) {
+        message.error("No default stage found for selected pipeline");
+        return;
+      }
+
       const dealData = {
         dealTitle: values.dealTitle,
         email: values.email,
         phone: formattedPhone,
         pipeline: values.pipeline,
-        stage: values.stage,
+        stage: defaultStage, // Use the default stage
         value: parseFloat(values.value) || 0,
         currency: values.currency,
         closedDate: values.closedDate

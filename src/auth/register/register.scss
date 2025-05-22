@@ -1,14 +1,14 @@
 @use 'sass:color';
 @use '../../styles/theme/theme' as *;
 
-.otp-container {
+.register-container {
     min-height: 100vh;
     @include flex-center;
     background: $background-color;
     @include gradient-background;
     padding: 20px;
 
-    .otp-split {
+    .register-split {
         display: flex;
         width: 100%;
         max-width: 1200px;
@@ -100,25 +100,7 @@
             background: white;
             position: relative;
 
-            .back-link {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                color: #64748b;
-                font-weight: 500;
-                margin-bottom: 32px;
-                transition: all 0.2s ease;
-
-                svg {
-                    font-size: 18px;
-                }
-
-                &:hover {
-                    color: $primary-color;
-                }
-            }
-
-            .otp-header {
+            .register-header {
                 margin-bottom: 40px;
 
                 h1 {
@@ -138,51 +120,70 @@
                 }
             }
 
-            .otp-form {
-                .otp-inputs {
-                    display: flex;
-                    gap: 12px;
-                    margin-bottom: 32px;
-                    justify-content: center;
+            .register-form {
+                .ant-form-item {
+                    margin-bottom: 24px;
 
-                    .otp-input {
-                        width: 56px;
-                        height: 56px;
-                        font-size: 24px;
-                        font-weight: 600;
-                        text-align: center;
-                        padding: 0;
-                        border: 2px solid $border-color;
+                    .ant-input-affix-wrapper {
+                        padding: 12px 16px;
                         border-radius: 12px;
+                        border: 2px solid $border-color;
                         transition: all 0.3s ease;
 
                         &:hover {
                             border-color: $secondary-color;
                         }
 
-                        &:focus {
+                        &-focused {
                             border-color: $primary-color;
                             box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+                        }
+
+                        .ant-input {
+                            font-size: 15px;
+
+                            &::placeholder {
+                                color: #94a3b8;
+                            }
+                        }
+
+                        .anticon {
+                            color: #64748b;
+                        }
+                    }
+
+                    &.remember-me {
+                        margin-bottom: 0;
+
+                        .ant-checkbox-wrapper {
+                            color: #64748b;
+                            font-weight: 500;
+
+                            &:hover {
+                                color: $primary-color;
+                            }
                         }
                     }
                 }
 
-                .verify-button {
-                    @include primary-button;
-                    width: 100%;
-                    margin-bottom: 32px;
-                }
+                .form-footer {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 24px;
 
-                .resend-section {
-                    text-align: center;
+                    .remember-me {
+                        .ant-checkbox-wrapper {
+                            color: #64748b;
+                            font-weight: 500;
 
-                    p {
-                        color: #64748b;
-                        font-size: 15px;
-                        margin-bottom: 8px;
+                            &:hover {
+                                color: $primary-color;
+                            }
+                        }
                     }
 
-                    .resend-button {
+                    .forgot-link {
                         @include text-button;
                         color: $primary-color;
                         font-weight: 500;
@@ -192,14 +193,33 @@
                         }
                     }
                 }
+
+                .register-button {
+                    @include primary-button;
+                    width: 100%;
+                    margin-bottom: 32px;
+                }
+
+                .login-button {
+                    @include primary-button;
+                    width: 100%;
+                    margin-bottom: 16px;
+                    background: $secondary-color;
+                    border-color: $secondary-color;
+
+                    &:hover {
+                        background: darken($secondary-color, 5%);
+                        border-color: darken($secondary-color, 5%);
+                    }
+                }
             }
         }
     }
 }
 
 @media (max-width: 992px) {
-    .otp-container {
-        .otp-split {
+    .register-container {
+        .register-split {
             flex-direction: column;
             max-width: 500px;
             margin: 20px;
@@ -215,16 +235,6 @@
 
             .form-side {
                 padding: 40px 32px;
-
-                .otp-inputs {
-                    gap: 8px;
-
-                    .otp-input {
-                        width: 48px;
-                        height: 48px;
-                        font-size: 20px;
-                    }
-                }
             }
         }
     }
@@ -270,12 +280,6 @@
 
 .error-icon {
     color: $error-color;
-    font-weight: bold;
-    margin-right: 8px;
-}
-
-.info-icon {
-    color: $info-color;
     font-weight: bold;
     margin-right: 8px;
 }

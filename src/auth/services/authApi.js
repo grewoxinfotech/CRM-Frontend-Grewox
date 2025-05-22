@@ -1,5 +1,12 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { loginSuccess, loginFailure, loginStart } from './authSlice';
+import {
+    loginSuccess,
+    loginFailure,
+    loginStart,
+    registerStart,
+    registerSuccess,
+    registerFailure
+} from './authSlice';
 import { baseQueryWithReauth } from '../../store/baseQuery';
 import { resetState, resetApiState } from '../../store/actions';
 
@@ -23,6 +30,34 @@ export const authApi = createApi({
     reducerPath: 'authApi',
     baseQuery: baseQueryWithReauth,
     endpoints: (builder) => ({
+        register: builder.mutation({
+            query: (userData) => ({
+                url: '/auth/register',
+                method: 'POST',
+                body: {
+                    username: userData.username,
+                    email: userData.email,
+                    password: userData.password
+                },
+            }),
+            async onQueryStarted(_, { dispatch, queryFulfilled }) {
+                dispatch(registerStart());
+                try {
+                    const { data: response } = await queryFulfilled;
+                    if (response.success) {
+                        localStorage.setItem('verificationToken', response.data.sessionToken);
+                        dispatch(registerSuccess({
+                            message: response.message
+                        }));
+                    } else {
+                        dispatch(registerFailure(response.message || 'Registration failed'));
+                    }
+                } catch (error) {
+                    dispatch(registerFailure(error.error?.message || 'Registration failed'));
+                }
+            },
+        }),
+
         login: builder.mutation({
             query: (credentials) => ({
                 url: '/auth/login',
@@ -60,6 +95,8 @@ export const authApi = createApi({
                 }
             },
         }),
+
+
         adminLogin: builder.mutation({
             query: (credentials) => ({
                 url: '/auth/admin-login',
@@ -102,4 +139,9 @@ export const authApi = createApi({
     }),
 });
 
-export const { useLoginMutation, useAdminLoginMutation, useGetRoleQuery } = authApi;
+export const {
+    useLoginMutation,
+    useAdminLoginMutation,
+    useGetRoleQuery,
+    useRegisterMutation
+} = authApi;

@@ -5,6 +5,7 @@ import { FiBox, FiArrowLeft } from 'react-icons/fi';
 import form_graphic from '../../assets/auth/form_grapihc.png';
 import { Link, useNavigate } from 'react-router-dom';
 import './otp.scss';
+import { useResendSignupOtpMutation, useVerifySignupMutation } from '../../dashboard/module/user-management/users/services/userApi';
 
 export default function OTPVerification() {
     const [loading, setLoading] = useState(false);
@@ -12,8 +13,17 @@ export default function OTPVerification() {
     const inputRefs = useRef([]);
     const [timer, setTimer] = useState(30);
     const navigate = useNavigate();
+    const [verifySignup] = useVerifySignupMutation();
+    const [resendSignupOtp] = useResendSignupOtpMutation();
 
     useEffect(() => {
+        // Check if we have verification token
+        const token = localStorage.getItem('verificationToken');
+        if (!token) {
+            navigate('/register');
+            return;
+        }
+
         let interval;
         if (timer > 0) {
             interval = setInterval(() => {
@@ -21,7 +31,7 @@ export default function OTPVerification() {
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [timer]);
+    }, [timer, navigate]);
 
     const handleChange = (value, index) => {
         if (value.length > 1) {
@@ -62,12 +72,27 @@ export default function OTPVerification() {
         }
     };
 
-    const resendOTP = () => {
-        setTimer(30);
-        message.info({
-            content: 'New OTP has been sent to your email!',
-            icon: <span className="info-icon">i</span>
-        });
+    const resendOTP = async () => {
+        try {
+            const token = localStorage.getItem('verificationToken');
+            if (!token) {
+                message.error('Verification token not found. Please try registering again.');
+                navigate('/register');
+                return;
+            }
+            const result = await resendSignupOtp({ token }).unwrap();
+            if (result.success) {
+                setTimer(30);
+                message.success('New OTP has been sent to your email!');
+                if (result.data?.sessionToken) {
+                    localStorage.setItem('verificationToken', result.data.sessionToken);
+                }
+            } else {
+                message.error(result.message || 'Failed to resend OTP');
+            }
+        } catch (error) {
+            message.error(error?.data?.message || 'Failed to resend OTP');
+        }
     };
 
     const onFinish = async () => {
@@ -79,23 +104,31 @@ export default function OTPVerification() {
                 throw new Error('Please enter complete OTP');
             }
 
+            const token = localStorage.getItem('verificationToken');
+            if (!token) {
+                message.error('Verification token not found. Please try registering again.');
+                navigate('/register');
+                return;
+            }
 
+            const result = await verifySignup({ 
+                otp: otpString,
+                token: token
+            }).unwrap();
 
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (result.success) {
+                // Clear stored data
+                localStorage.removeItem('verificationToken');
+                localStorage.removeItem('registrationData');
+                message.success('Registration completed successfully!');
 
-            message.success({
-                content: 'OTP verified successfully!',
-                icon: <span className="success-icon">✓</span>
-            });
-
-            // Navigate to next step
-            navigate('/reset-password');
+                // Redirect to login
+                navigate('/login', { replace: true });
+            } else {
+                throw new Error(result.message || 'Verification failed');
+            }
         } catch (error) {
-            message.error({
-                content: error?.message || 'Failed to verify OTP. Please try again.',
-                icon: <span className="error-icon">×</span>
-            });
+            message.error(error?.data?.message || error.message || 'Failed to verify OTP');
         } finally {
             setLoading(false);
         }
@@ -167,7 +200,7 @@ export default function OTPVerification() {
 
                         <Button
                             type="primary"
-                            onClick={() => navigate('/reset-password')}
+                            onClick={onFinish}
                             loading={loading}
                             className="verify-button"
                             block

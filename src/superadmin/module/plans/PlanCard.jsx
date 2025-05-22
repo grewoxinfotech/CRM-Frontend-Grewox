@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Button, Tag, Dropdown, Switch } from 'antd';
+import { Card, Typography, Button, Tag, Dropdown, Switch, message } from 'antd';
 import {
     FiEye,
     FiEdit2,
@@ -13,10 +13,13 @@ import {
     FiCheck
 } from 'react-icons/fi';
 import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
+import { useUpdatePlanMutation } from './services/planApi';
 
-const { Text, Title } = Typography;
+const { Text, Title } = Typography; 
 
 const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
+    const [updatePlan] = useUpdatePlanMutation();
+
     const statusInfo = {
         active: {
             color: '#52c41a',
@@ -65,6 +68,27 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
         onToggleStatus?.(plan.id, checked ? 'active' : 'inactive');
     };
 
+    const handleToggleDefault = async (checked) => {
+        try {
+            const { features, ...restPlan } = plan;
+            const updateData = {
+                ...restPlan,
+                is_default: checked,
+                features: typeof features === 'string' ? JSON.parse(features) : features || {}
+            };
+            
+            const response = await updatePlan({ idd: plan.id, updateData }).unwrap();
+            if (response.success) {
+                message.success(`Plan ${checked ? 'set as' : 'removed from'} default successfully`);
+            } else {
+                throw new Error(response.message || 'Failed to update plan');
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            message.error(error?.data?.message || error?.message || 'Failed to update plan default status');
+        }
+    };
+
     const formatStorageSize = (sizeInMB) => {
         const size = parseFloat(sizeInMB);
         if (size >= 1024) {
@@ -96,6 +120,15 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                             className={`switch-${status}`}
                         />
                     </div>
+                    <div className="default-switch">
+                        <Switch
+                            checked={plan.is_default}
+                            onChange={handleToggleDefault}
+                            checkedChildren="Default"
+                            unCheckedChildren="Not Default"
+                            className={`switch-${plan.is_default ? 'default' : 'not-default'}`}
+                        />
+                    </div>
                     <Dropdown
                         menu={{ items: actionItems }}
                         trigger={['click']}
@@ -111,17 +144,24 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
             }
         >
             <div className="plan-card-header">
-                <Title level={3} className="plan-name">
-                    {plan.name}
-                </Title>
+                <div className="plan-title-section">
+                    <Title level={3} className="plan-name">
+                        {plan.name}
+                    </Title>
+                    {plan.is_default && (
+                        <Tag color="blue" className="default-tag">
+                            Default Plan
+                        </Tag>
+                    )}
+                </div>
                 <div className="price-section">
-                    <span className="icon">
-                        <small className="currency-icon">
+                    <div className="price-amount">
+                        <span className="currency-icon">
                             {getCurrencyIcon(plan.currency)}
-                        </small>
-                        {Number(plan.price || 0).toFixed(2)}
-                    </span>
-                    <span className="amount">/{plan.duration.toLowerCase()}</span>
+                        </span>
+                        <span className="amount">{Number(plan.price || 0).toFixed(2)}</span>
+                    </div>
+                    <span className="duration">/{plan.duration.toLowerCase()}</span>
                 </div>
             </div>
 
@@ -166,6 +206,149 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                     </ul>
                 </div>
             </div>
+
+            <style jsx>{`
+                .plan-card-header {
+                    text-align: left;
+                    margin-bottom: 24px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+                }
+
+                .plan-title-section {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 12px;
+
+                    .plan-name {
+                        margin: 0 !important;
+                        font-size: 20px;
+                        color: #1e293b;
+                        font-weight: 600;
+                    }
+
+                    .default-tag {
+                        font-size: 12px;
+                        padding: 2px 8px;
+                        border-radius: 4px;
+                        font-weight: 500;
+                        background: rgba(24, 144, 255, 0.1);
+                        border: none;
+                    }
+                }
+
+                .price-section {
+                    display: flex;
+                    align-items: baseline;
+                    gap: 4px;
+
+                    .price-amount {
+                        display: flex;
+                        align-items: baseline;
+                        gap: 2px;
+                        color: #1e293b;
+
+                        .currency-icon {
+                            font-size: 16px;
+                            color: #1890ff;
+                            font-weight: 500;
+                        }
+
+                        .amount {
+                            font-size: 24px;
+                            font-weight: 600;
+                            line-height: 1;
+                        }
+                    }
+
+                    .duration {
+                        color: #64748b;
+                        font-size: 14px;
+                        font-weight: 400;
+                    }
+                }
+
+                @media (max-width: 576px) {
+                    .plan-card-header {
+                        margin-bottom: 16px;
+                        padding-bottom: 12px;
+                    }
+
+                    .plan-title-section {
+                        margin-bottom: 8px;
+
+                        .plan-name {
+                            font-size: 18px;
+                        }
+
+                        .default-tag {
+                            font-size: 11px;
+                            padding: 1px 6px;
+                        }
+                    }
+
+                    .price-section {
+                        .price-amount {
+                            .currency-icon {
+                                font-size: 14px;
+                            }
+
+                            .amount {
+                                font-size: 20px;
+                            }
+                        }
+
+                        .duration {
+                            font-size: 13px;
+                        }
+                    }
+                }
+
+                .card-actions {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+
+                .status-switch, .default-switch {
+                    .ant-switch {
+                        min-width: 80px;
+                        height: 24px;
+                        line-height: 22px;
+                        
+                        &.switch-active {
+                            background-color: #52c41a;
+                        }
+                        
+                        &.switch-inactive {
+                            background-color: #ff4d4f;
+                        }
+
+                        &.switch-default {
+                            background-color: #1890ff;
+                        }
+
+                        &.switch-not-default {
+                            background-color: #8c8c8c;
+                        }
+                    }
+                }
+
+                .more-actions-button {
+                    width: 32px;
+                    height: 32px;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    
+                    &:hover {
+                        background-color: rgba(0, 0, 0, 0.04);
+                    }
+                }
+            `}</style>
         </Card>
     );
 };

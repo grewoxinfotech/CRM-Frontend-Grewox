@@ -77,6 +77,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 trial_period: values.trial_period.toString(),
                 features: {},
                 status: values.status ? 'active' : 'inactive',
+                is_default: values.is_default || false,
                 max_users: values.max_users.toString(),
                 max_clients: values.max_clients.toString(),
                 max_customers: values.max_customers.toString(),
@@ -327,6 +328,7 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                 onFinish={handleSubmit}
                 initialValues={{
                     status: true,
+                    is_default: false,
                     duration: 'Per Month',
                     trial_period: '7',
                     max_users: '5',
@@ -734,6 +736,28 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                     <Switch
                         checkedChildren="Active"
                         unCheckedChildren="Inactive"
+                        style={{
+                            minWidth: '80px'
+                        }}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    name="is_default"
+                    label={
+                        <span style={{
+                            fontSize: '14px',
+                            fontWeight: '500',
+                        }}>
+                            Default Plan
+                        </span>
+                    }
+                    valuePropName="checked"
+                    style={{ marginTop: "22px" }}
+                >
+                    <Switch
+                        checkedChildren="Yes"
+                        unCheckedChildren="No"
                         style={{
                             minWidth: '80px'
                         }}

@@ -51,6 +51,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 max_vendors: initialValues.max_vendors?.toString(),
                 max_customers: initialValues.max_customers?.toString(),
                 status: initialValues.status === 'active',
+                is_default: initialValues.is_default || false,
                 duration: initialValues.duration
             };
 
@@ -120,7 +121,8 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 max_clients: values.max_clients?.toString(),
                 max_vendors: values.max_vendors?.toString(),
                 max_customers: values.max_customers?.toString(),
-                status: values.status ? 'active' : 'inactive'
+                status: values.status ? 'active' : 'inactive',
+                is_default: values.is_default || false
             };
 
             const response = await updatePlan({ idd, updateData }).unwrap();
@@ -343,6 +345,7 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                 requiredMark={false}
                 initialValues={{
                     status: true,
+                    is_default: false,
                     trial_period: '7',
                     max_users: '5',
                     max_clients: '10',
@@ -742,6 +745,29 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
                             minWidth: '80px'
                         }}
                         onChange={(value) => form.setFieldsValue({ status: value })}
+                    />
+                </Form.Item>
+
+                <Form.Item
+                    name="is_default"
+                    label={
+                        <span style={{
+                            fontSize: '14px',
+                            fontWeight: '500',
+                        }}>
+                            Default Plan
+                        </span>
+                    }
+                    valuePropName="checked"
+                    style={{ marginTop: "22px" }}
+                >
+                    <Switch
+                        checkedChildren="Yes"
+                        unCheckedChildren="No"
+                        style={{
+                            minWidth: '80px'
+                        }}
+                        onChange={(value) => form.setFieldsValue({ is_default: value })}
                     />
                 </Form.Item>
 

@@ -108,6 +108,11 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         { text: 'Inactive', value: 'inactive' }
     ];
 
+    const planTypes = [
+        { text: 'Default Sign Up Plan', value: true },
+        { text: 'Regular Plan', value: false }
+    ];
+
     const getCurrencyIcon = (currencyId) => {
         const currency = currencies?.find(c => c.id === currencyId);
         return currency?.currencyIcon || '₹';
@@ -198,8 +203,38 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             dataIndex: 'name',
             key: 'name',
             ...getColumnSearchProps('name'),
+            filters: planTypes,
+            onFilter: (value, record) => record.is_default === value,
             width: '20%',
-            fixed: 'left'
+            fixed: 'left',
+            render: (_, record) => (
+                <div className="name-cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {highlightText(record.name, searchText)}
+                    {record.is_default && (
+                        <Tooltip title="This plan will be automatically assigned to new users during signup">
+                            <Tag 
+                                color="#1890ff"
+                                style={{
+                                    borderRadius: '4px',
+                                    padding: '0 6px',
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    textTransform: 'uppercase',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    background: '#e6f4ff',
+                                    border: '1px solid #91caff',
+                                    color: '#0958d9',
+                                    cursor: 'help'
+                                }}
+                            >
+                                <FiPackage style={{ fontSize: '12px' }} /> Default Sign Up Plan
+                            </Tag>
+                        </Tooltip>
+                    )}
+                </div>
+            ),
         },
         {
             title: (

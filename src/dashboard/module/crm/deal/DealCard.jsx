@@ -572,7 +572,7 @@ const SortableColumn = ({ stage, dealsInStage, children, index }) => {
 const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
   const [updateDeal] = useUpdateDealMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
-  const dealsData = deals?.data || [];
+  // const dealsData = deals?.data || [];
   const { data: stageQueryData, isLoading: isLoadingStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const currentUser = useSelector(selectCurrentUser);

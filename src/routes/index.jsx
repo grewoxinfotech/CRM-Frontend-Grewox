@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "../auth/login";
+import Register from "../auth/register";
 import AuthRedirect from "./AuthRedirect/index.jsx";
 import DashboardLayout from "../dashboard/layout";
 import Dashboard from "../dashboard";
@@ -96,6 +97,10 @@ const routes = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
   },
   {
     path: "/form-submitted",

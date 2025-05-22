@@ -1,26 +1,29 @@
 import React, { useEffect } from "react";
 import { Form, Input, Button, Checkbox, notification } from "antd";
 import { motion } from "framer-motion";
-import { FiLock, FiMail, FiBox } from "react-icons/fi";
+import { FiLock, FiMail, FiBox, FiUser } from "react-icons/fi";
 import * as yup from "yup";
 import { useNavigate, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectIsLogin } from "../services/authSlice";
 import form_graphic from "../../assets/auth/form_grapihc.png";
-import "./login.scss";
-import { useLoginMutation } from "../services/authApi";
+import "./register.scss";
+import { useRegisterMutation } from "../services/authApi";
 
 const validationSchema = yup.object().shape({
-  login: yup.string().required("Email/Username is required").trim(),
-  password: yup.string().required("Password is required"),
-  remember: yup.boolean(),
+  username: yup.string().required("Username is required").trim(),
+  email: yup.string().email("Invalid email format").required("Email is required").trim(),
+  password: yup.string()
+    .required("Password is required")
+    .min(8, "Password must be at least 8 characters long")
+    .matches(/^[a-zA-Z0-9!@#$%^&*]{8,30}$/, "Create a strong password"),
 });
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
   const isAuthenticated = useSelector(selectIsLogin);
   const [form] = Form.useForm();
-  const [login, { isLoading }] = useLoginMutation();
+  const [register, { isLoading }] = useRegisterMutation();
 
   const [api, contextHolder] = notification.useNotification();
 
@@ -64,26 +67,29 @@ export default function Login() {
     }
   };
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     const values = await form.validateFields();
     const isValid = await validateForm(values);
     if (!isValid) return;
 
     try {
-      const result = await login(values).unwrap();
+      const result = await register(values).unwrap();
       if (result.success) {
-        showNotification("success", "Login Successful", result.message);
-        navigate("/auth-redirect", { replace: true });
+        showNotification("success", "Registration initiated", "Please verify your email to complete registration");
+        // Store form data in localStorage for after OTP verification
+        localStorage.setItem('registrationData', JSON.stringify(values));
+        // Navigate to OTP verification page
+        navigate("/otp"); 
       } else {
         showNotification(
           "error",
-          "Login Failed",
-          result.message || "Invalid credentials"
+          "Registration Failed",
+          result.message || "Registration failed"
         );
       }
     } catch (error) {
-      let errorMessage = "Invalid credentials";
+      let errorMessage = "Registration failed";
 
       if (error.data?.message) {
         errorMessage = error.data.message;
@@ -94,14 +100,14 @@ export default function Login() {
         errorMessage = error.message;
       }
 
-      showNotification("error", "Login Failed", errorMessage);
+      showNotification("error", "Registration Failed", errorMessage);
     }
   };
 
   return (
-    <div className="login-container">
+    <div className="register-container">
       {contextHolder}
-      <div className="login-split">
+      <div className="register-split">
         <motion.div
           className="illustration-side"
           initial={{ opacity: 0, x: -20 }}
@@ -125,7 +131,7 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <p>Sign in to continue your workflow</p>
+            <p>Sign up to start your workflow</p>
           </motion.div>
         </motion.div>
 
@@ -135,35 +141,54 @@ export default function Login() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="login-header">
-            <h1>Sign In to Work Software</h1>
-            <p>Enter your details to access your account</p>
+          <div className="register-header">
+            <h1>Sign Up to Work Software</h1>
+            <p>Enter your details to create an account</p>
           </div>
 
           <Form
             form={form}
-            name="login"
-            className="login-form"
+            name="register"
+            className="register-form"
             layout="vertical"
             validateTrigger={["onBlur", "onChange"]}
           >
             <Form.Item
-              label="Email/Username"
-              name="login"
+              label="Username"
+              name="username"
               validateTrigger={["onBlur", "onChange"]}
               rules={[
                 {
-                  validator: async (_, value) => {
-                    if (!value)
-                      return Promise.reject("Email/Username is required");
-                    return Promise.resolve();
-                  },
+                  required: true,
+                  message: "Username is required",
+                },
+              ]}
+            >
+              <Input
+                prefix={<FiUser className="site-form-item-icon" />}
+                placeholder="Enter your username"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Email"
+              name="email"
+              validateTrigger={["onBlur", "onChange"]}
+              rules={[
+                {
+                  type: "email",
+                  message: "Invalid email format",
+                },
+                {
+                  required: true,
+                  message: "Email is required",
                 },
               ]}
             >
               <Input
                 prefix={<FiMail className="site-form-item-icon" />}
-                placeholder="Enter your email or username"
+                placeholder="Enter your email"
                 size="large"
               />
             </Form.Item>
@@ -176,6 +201,14 @@ export default function Login() {
                 {
                   required: true,
                   message: "Password is required",
+                },
+                {
+                  min: 8,
+                  message: "Password must be at least 8 characters long",
+                },
+                {
+                  pattern: /^[a-zA-Z0-9!@#$%^&*]{8,30}$/,
+                  message: "Create a strong password",
                 },
               ]}
             >
@@ -203,23 +236,23 @@ export default function Login() {
             <Form.Item>
               <Button
                 type="primary"
-                onClick={handleLogin}
+                onClick={handleRegister}
                 loading={isLoading}
-                className="login-button"
+                className="register-button"
                 block
               >
-                {isLoading ? "Signing in..." : "Sign In →"}
+                {isLoading ? "Signing up..." : "Sign Up →"}
               </Button>
             </Form.Item>
 
             <Form.Item>
               <Button
                 type="default"
-                onClick={() => navigate('/register')}
-                className="register-button"
+                onClick={() => navigate('/login')}
+                className="login-button"
                 block
               >
-                Sign Up
+                Already have an account? Sign In
               </Button>
             </Form.Item>
           </Form>

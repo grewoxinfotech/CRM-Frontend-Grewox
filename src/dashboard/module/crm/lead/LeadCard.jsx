@@ -578,7 +578,7 @@ const SortableColumn = ({ stage, leads, children, index }) => {
   );
 };
 
-const LeadCard = ({ lead, currencies, countries, sourcesData, statusesData, categoriesData }) => {
+const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, categoriesData, onLeadClick }) => {
   const { data: stageQueryData, isLoading: isLoadingStages, error: errorStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const [updateLead] = useUpdateLeadMutation();
@@ -591,6 +591,7 @@ const LeadCard = ({ lead, currencies, countries, sourcesData, statusesData, cate
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
 
   const pipelines = pipelinesData || [];
+  const leadsData = leads?.data || [];
 
   // Initialize selected pipeline if not set
   useEffect(() => {
@@ -635,16 +636,12 @@ const LeadCard = ({ lead, currencies, countries, sourcesData, statusesData, cate
     }
   }, [stages, dispatch, savedStageOrder.length]);
 
-  const leads = lead?.data || [];
-
-  console.log(lead);
-
   const leadsByStage = React.useMemo(() => {
     return orderedStages.reduce((acc, stage) => {
-      acc[stage.id] = leads.filter(lead => lead.leadStage === stage.id);
+      acc[stage.id] = leadsData.filter(lead => lead.leadStage === stage.id);
       return acc;
     }, {});
-  }, [orderedStages, leads]);
+  }, [orderedStages, leadsData]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -688,9 +685,9 @@ const LeadCard = ({ lead, currencies, countries, sourcesData, statusesData, cate
       }
     } else if (isCard && over.id !== active.id) {
       const draggedId = active.id;
-      const destinationId = over.id.toString().replace('column-', '');
+      const destinationId = over.id;
 
-      const draggedLead = leads.find(lead => lead.id === draggedId);
+      const draggedLead = leadsData.find(lead => lead.id === draggedId);
 
       if (draggedLead?.is_converted) {
         message.error("Cannot move a converted lead");

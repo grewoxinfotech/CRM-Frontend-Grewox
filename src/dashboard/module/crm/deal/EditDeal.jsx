@@ -108,8 +108,8 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   });
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
   const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
-  const { data: companyAccountsData } = useGetCompanyAccountsQuery();
-  const { data: contactsData } = useGetContactsQuery();
+  const { data: companyAccountsData, isLoading: isCompanyLoading } = useGetCompanyAccountsQuery();
+  const { data: contactsData, isLoading: isContactLoading } = useGetContactsQuery();
   const [createContact] = useCreateContactMutation();
 
   // Find default country (India) for phone code
@@ -226,6 +226,17 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         }
       }
 
+      // Parse deal_members if it's a string
+      let dealMembers = [];
+      if (typeof initialValues.deal_members === "string") {
+        try {
+          const parsedDealMembers = JSON.parse(initialValues.deal_members);
+          dealMembers = parsedDealMembers.deal_members || [];
+        } catch (e) {
+          dealMembers = [];
+        }
+      }
+
       // Set contact mode based on whether there's an existing contact
       setContactMode(initialValues.contact_id ? "existing" : "new");
 
@@ -237,7 +248,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       const formValues = {
         dealTitle: initialValues.dealTitle,
         value: initialValues.value || 0,
-        currency: currencyObj?.currencyCode || "INR",
+        currency: initialValues.currency,
         pipeline: initialValues.pipeline,
         stage: initialValues.stage,
         company_id: initialValues.company_id,
@@ -245,11 +256,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         source: initialValues.source,
         category: initialValues.category,
         products: selectedProducts,
-        closedDate: initialValues.closedDate
-          ? dayjs(initialValues.closedDate)
-          : null,
+        closedDate: initialValues.closedDate ? dayjs(initialValues.closedDate) : null,
         status: initialValues.status || "pending",
-        assigned_to: assignedTo?.assigned_to || [],
+        assigned_to: dealMembers,
         is_won: initialValues.is_won,
         // Add contact details for 'new' mode
         firstName: initialValues.firstName || "",
@@ -266,25 +275,35 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       // Set form values
       form.setFieldsValue(formValues);
     }
-  }, [initialValues, form, currencies, defaultPhoneCode]);
+  }, [initialValues, form, currencies, defaultPhoneCode, defaultCurrency]);
 
-  // Add a new useEffect to handle data loading
+  // Add a new useEffect to handle data loading and form updates
   useEffect(() => {
     if (companyAccountsData?.data && contactsData?.data && initialValues) {
-      // Verify the company and contact exist in the loaded data
-      const companyExists = companyAccountsData.data.some(
+      const selectedCompany = companyAccountsData.data.find(
         (company) => company.id === initialValues.company_id
       );
-      const contactExists = contactsData.data.some(
+      const selectedContact = contactsData.data.find(
         (contact) => contact.id === initialValues.contact_id
       );
 
-      if (companyExists && contactExists) {
-        form.setFieldsValue({
-          company_id: initialValues.company_id,
-          contact_id: initialValues.contact_id,
-        });
-        setContactMode("existing");
+      if (selectedCompany || selectedContact) {
+        const updatedValues = {};
+        
+        if (selectedCompany) {
+          updatedValues.company_id = selectedCompany.id;
+        }
+        
+        if (selectedContact) {
+          updatedValues.contact_id = selectedContact.id;
+          updatedValues.firstName = selectedContact.first_name || "";
+          updatedValues.lastName = selectedContact.last_name || "";
+          updatedValues.email = selectedContact.email || "";
+          updatedValues.telephone = selectedContact.phone || "";
+          updatedValues.address = selectedContact.address || "";
+        }
+
+        form.setFieldsValue(updatedValues);
       }
     }
   }, [companyAccountsData?.data, contactsData?.data, initialValues, form]);
@@ -546,6 +565,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       if (contactMode === "existing") {
         form.setFieldsValue({
           company_id: undefined,
+          contact_id: undefined // Clear contact when company is cleared
         });
       } else {
         // If in new contact mode, clear all contact fields
@@ -561,10 +581,25 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
       return;
     }
 
-    // Set the company ID
-    form.setFieldsValue({
-      company_id: companyId,
-    });
+    // Find the selected company
+    const selectedCompany = companyAccountsData?.data?.find(
+      (company) => company.id === companyId
+    );
+
+    if (selectedCompany) {
+      // Set the company ID
+      form.setFieldsValue({
+        company_id: companyId,
+      });
+
+      // If in existing contact mode, filter contacts for this company
+      if (contactMode === "existing") {
+        // Clear the contact field to allow selecting a new one
+        form.setFieldsValue({
+          contact_id: undefined
+        });
+      }
+    }
   };
 
   // Handler for adding new company
@@ -594,55 +629,38 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
     }
   };
 
-  // Update the currency selection part in the form
-  const currencySelectSection = (
-    <Form.Item
-      name="currency"
-      noStyle
-      initialValue={selectedCurrency}
-      rules={[{ required: true, message: "Currency is required" }]}
-    >
-      <Select
-        style={{ width: "120px" }}
-        className="currency-select"
-        dropdownMatchSelectWidth={false}
-        suffixIcon={<FiChevronDown size={14} />}
-        showSearch
-        optionFilterProp="children"
-        filterOption={(input, option) => {
-          const currencyData = currencies?.find((c) => c.id === option.value);
-          return (
-            currencyData?.currencyName
-              ?.toLowerCase()
-              .includes(input.toLowerCase()) ||
-            currencyData?.currencyCode
-              ?.toLowerCase()
-              .includes(input.toLowerCase())
-          );
-        }}
-        onChange={(value) => {
-          const currency = currencies?.find((c) => c.id === value);
-          if (currency) {
-            form.setFieldValue("currency", currency.id);
-          }
-        }}
-        dropdownStyle={{ minWidth: "180px" }}
-        popupClassName="custom-select-dropdown"
-      >
-        {currencies?.map((currency) => (
-          <Option key={currency.id} value={currency.id}>
-            <div className="currency-option">
-              <span className="currency-icon">{currency.currencyIcon}</span>
-              <div className="currency-details">
-                <span className="currency-code">{currency.currencyCode}</span>
-                <span className="currency-name">{currency.currencyName}</span>
-              </div>
-            </div>
-          </Option>
-        ))}
-      </Select>
-    </Form.Item>
-  );
+  // Add this style to make currency display better
+  <style jsx>{`
+    .currency-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .currency-icon {
+      font-size: 16px;
+      color: #1890ff;
+    }
+    .currency-details {
+      display: flex;
+      flex-direction: column;
+    }
+    .currency-code {
+      font-weight: 500;
+      color: #111827;
+    }
+    .currency-name {
+      font-size: 12px;
+      color: #6B7280;
+    }
+    .ant-select-selection-item .currency-option {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ant-select-selection-item .currency-details {
+      display: none;
+    }
+  `}</style>
 
   // Add handlers for source and category
   const handleAddSourceClick = (e) => {
@@ -922,7 +940,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                 <Form.Item
                   name="currency"
                   noStyle
-                  initialValue={defaultCurrency}
+                  initialValue={initialValues?.currency || defaultCurrency}
                   rules={[{ required: true, message: "Currency is required" }]}
                 >
                   <Select
@@ -933,34 +951,22 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     showSearch
                     optionFilterProp="children"
                     filterOption={(input, option) => {
-                      const currencyData = currencies.find(
-                        (c) => c.currencyCode === option.value
-                      );
+                      const currencyData = currencies?.find((c) => c.id === option.value);
                       return (
-                        currencyData?.currencyName
-                          ?.toLowerCase()
-                          .includes(input.toLowerCase()) ||
-                        currencyData?.currencyCode
-                          ?.toLowerCase()
-                          .includes(input.toLowerCase())
+                        currencyData?.currencyName?.toLowerCase().includes(input.toLowerCase()) ||
+                        currencyData?.currencyCode?.toLowerCase().includes(input.toLowerCase())
                       );
                     }}
                     dropdownStyle={{ minWidth: "180px" }}
                     popupClassName="custom-select-dropdown"
                   >
                     {currencies?.map((currency) => (
-                      <Option key={currency.id} value={currency.currencyCode}>
+                      <Option key={currency.id} value={currency.id}>
                         <div className="currency-option">
-                          <span className="currency-icon">
-                            {currency.currencyIcon}
-                          </span>
+                          <span className="currency-icon">{currency.currencyIcon}</span>
                           <div className="currency-details">
-                            <span className="currency-code">
-                              {currency.currencyCode}
-                            </span>
-                            <span className="currency-name">
-                              {currency.currencyName}
-                            </span>
+                            <span className="currency-code">{currency.currencyCode}</span>
+                            <span className="currency-name">{currency.currencyName}</span>
                           </div>
                         </div>
                       </Option>
@@ -1661,7 +1667,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   label={<span style={formItemStyle}>Company Name</span>}
                 >
                   <Select
-                    placeholder="Select company"
+                    placeholder={isCompanyLoading ? "Loading companies..." : "Select company"}
                     onChange={handleCompanyChange}
                     style={{
                       ...selectStyle,
@@ -1673,6 +1679,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                     allowClear
                     suffixIcon={null}
                     value={form.getFieldValue("company_id")}
+                    loading={isCompanyLoading}
                   >
                     {companyAccountsData?.data?.map((company) => (
                       <Option key={company.id} value={company.id}>

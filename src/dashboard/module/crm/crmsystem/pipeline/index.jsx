@@ -9,7 +9,7 @@ import {
 import "./pipeline.scss";
 import { Button, Card, Table, Dropdown, message, Modal, Tooltip, Space, Tag, Typography } from "antd";
 import { useGetLeadsQuery } from "../../lead/services/LeadApi";
-import { useGetDealsQuery } from "../../deal/services/dealApi";
+import { useGetDealsQuery } from "../../deal/services/DealApi";
 
 const { Title } = Typography;
 
@@ -365,7 +365,7 @@ const Pipeline = () => {
             }}
             className="pipeline-table"
           />
-        )}
+        )}  
       </div>
 
       <AddPipelineModal
