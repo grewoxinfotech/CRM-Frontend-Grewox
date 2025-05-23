@@ -303,8 +303,15 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
                 loading={loading}
                 onChange={handleChange}
                 pagination={pagination}
-                scroll={{ x: 1200 }}
+                scroll={{ x: 1200, y: ''}}
                 className="custom-table"
+                style={{
+                    width: "100%",
+                    minWidth: 0,
+                    background: "#ffffff", 
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+                }}
             />
         </div>
     );

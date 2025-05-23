@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Typography, Breadcrumb, Card, message, Button, Empty, Popconfirm, Tag, Badge } from 'antd';
+import { Calendar, Typography, Breadcrumb, Card, message, Button, Empty, Popconfirm, Tag, Badge, Modal, Tooltip } from 'antd';
 import { FiHome, FiCalendar, FiPlus, FiTrash2, FiTag, FiClock, FiMapPin, FiPhone, FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -17,6 +17,7 @@ const CalendarPage = () => {
     const [events, setEvents] = useState([]);
     const [upcomingEvents, setUpcomingEvents] = useState([]);
     const [showAllEvents, setShowAllEvents] = useState(false);
+    const [moreEvents, setMoreEvents] = useState({ visible: false, events: [], date: null });
 
     console.log('Upcoming Events:', upcomingEvents);
 
@@ -44,11 +45,15 @@ const CalendarPage = () => {
         }
 
         const today = dayjs();
+        // const upcoming = events
+        //     .filter(event => dayjs(event.startDate).isSameOrAfter(today, 'day'))
+        //     .sort((a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)))
+        //     .slice(0, 5);
+        // setUpcomingEvents(upcoming);
         const upcoming = events
-            .filter(event => dayjs(event.startDate).isSameOrAfter(today, 'day'))
-            .sort((a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)))
-            .slice(0, 5);
-        setUpcomingEvents(upcoming);
+        .filter(event => dayjs(event.startDate).isSameOrAfter(today, 'day'))
+        .sort((a, b) => dayjs(a.startDate).diff(dayjs(b.startDate)));
+    setUpcomingEvents(upcoming);
     };
 
     const handleDateSelect = (date) => {
@@ -116,72 +121,59 @@ const CalendarPage = () => {
         if (!Array.isArray(events)) {
             return null;
         }
-
         const dayEvents = events.filter(
             event => dayjs(event.startDate).format('YYYY-MM-DD') === date.format('YYYY-MM-DD')
         );
-
-        return dayEvents.length > 0 ? (
-            <div className="event-cell" style={{
-                height: '100%',
-                width: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                backgroundColor: `${dayEvents[0].color}15`,
-                borderLeft: `4px solid ${dayEvents[0].color}`,
-                padding: '4px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-            }}>
-                {dayEvents.map(event => (
+        if (dayEvents.length === 0) return null;
+        return (
+            <div className="event-cell">
+                <Tooltip
+                    title={
+                        <>
+                            <div><strong>{dayEvents[0].name}</strong></div>
+                            <div>Time: {dayEvents[0].startDate ? dayjs(dayEvents[0].startDate).format('HH:mm') : ''}</div>
+                            {dayEvents[0].label && (
+                                <div>Type: {getEventLabelText(dayEvents[0].label)}</div>
+                            )}
+                        </>
+                    }
+                    placement="top"
+                >
                     <div
-                        key={event.id}
-                        className="event-item"
-                        style={{
-                            marginBottom: '4px',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            width: '95%',
-                            transition: 'all 0.3s ease'
+                        className="calendar-event"
+                        style={{ cursor: 'pointer' }}
+                        onClick={e => {
+                            e.stopPropagation();
+                            setMoreEvents({ visible: true, events: dayEvents, date: date.format('DD-MM-YYYY') });
                         }}
                     >
-                        <div className="event-details">
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'start',
-                                gap: '2px'
+                        <div className="event-name">{dayEvents[0].name}</div>
+                        <div className="event-time">{dayEvents[0].startDate ? dayjs(dayEvents[0].startDate).format('HH:mm') : ''}</div>
+                        {dayEvents[0].label && (
+                            <div className="event-label" style={{
+                                fontSize: '11px',
+                                color: dayEvents[0].color,
+                                marginTop: '2px'
                             }}>
-
-                                <span className="event-title" style={{
-                                    fontSize: '14px',
-                                    color: '#333',
-                                    textAlign: 'left',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    width: '100%',
-                                    maxWidth: '120px'
-                                }}>
-                                    {event.name}
-                                </span>
-                                <span className="event-time" style={{
-                                    color: event.color || defaultColor,
-                                    fontSize: '15px',
-                                    fontWeight: '750'
-                                }}>
-                                    {dayjs(event.startDate).format('HH:mm')}
-                                </span>
+                                {getEventLabelText(dayEvents[0].label)}
                             </div>
-                        </div>
+                        )}
                     </div>
-                ))}
+                </Tooltip>
+                {dayEvents.length > 1 && (
+                    <div
+                        className="more-events-link"
+                        onClick={e => {
+                            e.stopPropagation();
+                            setMoreEvents({ visible: true, events: dayEvents, date: date.format('DD-MM-YYYY') });
+                        }}
+                        style={{ color: '#1890ff', cursor: 'pointer', fontSize: 12, marginTop: 2 }}
+                    >
+                        +{dayEvents.length - 1} more
+                    </div>
+                )}
             </div>
-        ) : null;
+        );
     };
 
     const displayedEvents = showAllEvents ? upcomingEvents : upcomingEvents.slice(0, 2);
@@ -258,142 +250,58 @@ const CalendarPage = () => {
                     </div>
                     <div className="event-cards-list">
                         <div className="event-cards">
-                            {isLoading ? (
-                                <div style={{ textAlign: 'center', padding: '20px' }}>Loading events...</div>
-                            ) : isError ? (
-                                <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Error loading events</div>
-                            ) : !upcomingEvents.length ? (
-                                <Empty
-                                    description="No upcoming events"
-                                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                />
-                            ) : (
+                        {isLoading ? (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>Loading events...</div>
+                        ) : isError ? (
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>Error loading events</div>
+                        ) : !upcomingEvents.length ? (
+                            <Empty
+                                description="No upcoming events"
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            />
+                        ) : (
                                 <>
                                     {displayedEvents.map(event => (
-                                        <div
-                                            key={event.id}
-                                            className="event-card"
-                                            style={{
-                                                backgroundColor: `${event.color}15`,
-                                                borderLeft: `4px solid ${event.color || defaultColor}`,
-                                                padding: '16px',
-                                                borderRadius: '8px',
-                                                marginBottom: '12px',
-                                                position: 'relative',
-                                                transition: 'all 0.3s ease',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            <div className="card-content">
-                                                <div className="event-info" style={{ width: '100%' }}>
-                                                    <div className="event-header" style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'start',
-                                                        marginBottom: '12px',
-                                                        textAlign: 'center'
-                                                    }}>
-                                                        <div className="event-title-container" style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '8px',
-                                                            marginBottom: '8px'
-                                                        }}>
-                                                            {getEventTypeIcon(event.event_type)}
-                                                            <span className="event-title" style={{
-                                                                fontSize: '16px',
-                                                                fontWeight: '500',
-                                                                color: '#333',
-                                                                maxWidth: '200px',
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                whiteSpace: 'nowrap'
-                                                            }}>{event.name}</span>
-                                                        </div>
-                                                        {event.label && (
-                                                            <Tag
-                                                                color={getEventLabelColor(event.label)}
-                                                                style={{
-                                                                    padding: '4px 12px',
-                                                                    borderRadius: '4px',
-                                                                    fontSize: '12px'
-                                                                }}
-                                                            >
-                                                                <FiTag
-                                                                    style={{
-                                                                        marginRight: '4px',
-                                                                        fontSize: '12px',
-                                                                        verticalAlign: 'middle'
-                                                                    }}
-                                                                />
-                                                                {getEventLabelText(event.label)}
-                                                            </Tag>
-                                                        )}
-                                                    </div>
-                                                    <div className="event-datetime" style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'start',
-                                                        gap: '8px'
-                                                    }}>
-                                                        <div className="event-date" style={{
-                                                            display: 'flex',
-                                                            alignItems: '   ',
-                                                            color: event.color || defaultColor,
-                                                            fontSize: '14px',
-                                                            fontWeight: '500'
-                                                        }}>
-                                                            <FiCalendar style={{ marginRight: '8px' }} />
-                                                            {dayjs(event.startDate).format('MMM DD, YYYY')}
-                                                        </div>
-                                                        <div className="event-time" style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            color: event.color || defaultColor,
-                                                            fontSize: '14px',
-                                                            fontWeight: '500'
-                                                        }}>
-                                                            <FiClock style={{ marginRight: '8px' }} />
-                                                            {dayjs(event.startDate).format('HH:mm')} - {dayjs(event.endDate).format('HH:mm')}
-                                                        </div>
-                                                    </div>
-                                                    <div className="event-header" style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'start',
-                                                        marginBottom: '12px',
-                                                        textAlign: 'center'
-                                                    }}>
-
-                                                    </div>
+                                <div key={event.id} className="interview-card" style={{ marginBottom: '8px' }}>
+                                    <div className="card-content">
+                                        <div className="candidate-info">
+                                            <div className="candidate-name" style={{ fontSize: '14px', marginBottom: '8px' }}>
+                                                {event.name}
+                                            </div>
+                                            <div className="interview-datetime" style={{ flexWrap: 'wrap', gap: '4px' }}>
+                                                <div className="date" style={{ fontSize: '12px', padding: '2px 8px' }}>
+                                                    <FiCalendar style={{ marginRight: '4px', color: '#1890ff' }} />
+                                                    {dayjs(event.startDate).format('MMM DD')}
                                                 </div>
-                                                <Popconfirm
-                                                    title="Delete Event"
-                                                    description="Are you sure you want to delete this event?"
-                                                    onConfirm={() => handleDeleteEvent(event.id)}
-                                                    okText="Yes"
-                                                    cancelText="No"
-                                                    placement="left"
-                                                >
-                                                    <Button
-                                                        className="delete-button"
-                                                        type="text"
-                                                        danger
-                                                        icon={<FiTrash2 size={16} />}
-                                                        style={{
-                                                            position: 'absolute',
-                                                            top: '12px',
-                                                            right: '12px',
-                                                            opacity: 0.6,
-                                                            transition: 'opacity 0.3s ease',
-                                                            ':hover': {
-                                                                opacity: 1
-                                                            }
-                                                        }}
-                                                    />
-                                                </Popconfirm>
+                                                <div className="time" style={{ fontSize: '12px', padding: '2px 8px' }}>
+                                                    <FiClock style={{ marginRight: '4px', color: '#722ed1' }} />
+                                                    {dayjs(event.startDate).format('HH:mm')}
+                                                </div>
+                                                {event.label && (
+                                                    <div className="type" style={{
+                                                        background: getEventLabelColor(event.label),
+                                                        color: '#fff',
+                                                        border: 'none',
+                                                        borderRadius: '20px',
+                                                        padding: '2px 8px',
+                                                        fontSize: '12px',
+                                                        fontWeight: 500
+                                                    }}>
+                                                        {getEventLabelText(event.label)}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
+                                        <Button
+                                            className="delete-button"
+                                            type="text"
+                                            danger
+                                            icon={<FiTrash2 size={14} />}
+                                            onClick={() => handleDeleteEvent(event.id)}
+                                            style={{ padding: '4px' }}
+                                        />
+                                    </div>
+                                </div>
                                     ))}
                                 </>
                             )}
@@ -447,6 +355,116 @@ const CalendarPage = () => {
                 onSubmit={handleCreateEvent}
                 selectedDate={selectedDate}
             />
+
+            <Modal
+                open={moreEvents.visible}
+                title={<span style={{ color: '#fff' }}>{`Events for ${moreEvents.date}`}</span>}
+                footer={null}
+                onCancel={() => setMoreEvents({ visible: false, events: [], date: null })}
+                width={600}
+                className="event-details-modal"
+            >
+                {moreEvents.events.map((event, idx) => (
+                    <div
+                        key={idx}
+                        style={{
+                            marginBottom: 16,
+                            padding: 16,
+                            borderRadius: 12,
+                            background: '#f5faff',
+                            border: `1px solid ${event.color || '#1890ff'}20`,
+                            borderLeft: `4px solid ${event.color || '#1890ff'}`,
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ 
+                                    fontWeight: 600, 
+                                    fontSize: 16,
+                                    color: '#1f2937',
+                                    marginBottom: 8
+                                }}>
+                                    {event.name}
+                                </div>
+                                
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {/* <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <FiCalendar style={{ color: '#64748b' }} />
+                                        <span style={{ color: '#64748b', fontSize: 14 }}>
+                                            {dayjs(event.startDate).format('MMM DD, YYYY')}
+                                        </span>
+                                    </div> */}
+                                    
+                                    {/* <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <FiClock style={{ color: '#64748b' }} />
+                                        <span style={{ color: '#64748b', fontSize: 14 }}>
+                                            {dayjs(event.startDate).format('HH:mm')} - {dayjs(event.endDate).format('HH:mm')}
+                                        </span>
+                                    </div> */}
+
+                                    {event.label && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <FiTag style={{ color: '#64748b' }} />
+                                            <span style={{ 
+                                                display: 'inline-block',
+                                                background: `${event.color}15`,
+                                                color: event.color,
+                                                padding: '4px 12px',
+                                                borderRadius: 6,
+                                                fontSize: 13,
+                                                fontWeight: 500
+                                            }}>
+                                                {getEventLabelText(event.label)}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <FiHome style={{ color: '#64748b' }} />
+                                        <span style={{ color: '#64748b', fontSize: 14 }}>
+                                            Created by: {event.created_by}
+                                        </span>
+                                    </div> */}
+                                </div>
+                            </div>
+
+                            <div style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'flex-end',
+                                gap: 8
+                            }}>
+                                <div style={{ 
+                                    color: event.color || '#1890ff',
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    padding: '4px 12px',
+                                    background: `${event.color}15`,
+                                    borderRadius: 6
+                                }}>
+                                    {dayjs(event.startDate).format('HH:mm')}
+                                </div>
+                                
+                                {/* <Popconfirm
+                                    title="Delete Event"
+                                    description="Are you sure you want to delete this event?"
+                                    onConfirm={() => handleDeleteEvent(event.id)}
+                                    okText="Yes"
+                                    cancelText="No"
+                                    placement="left"
+                                >
+                                    <Button
+                                        className="delete-button"
+                                        type="text"
+                                        danger
+                                        icon={<FiTrash2 size={16} />}
+                                    />
+                                </Popconfirm> */}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </Modal>
         </div>
     );
 };

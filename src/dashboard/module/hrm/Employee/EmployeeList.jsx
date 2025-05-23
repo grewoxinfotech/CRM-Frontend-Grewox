@@ -744,7 +744,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
           rowKey="id"
           pagination={paginationConfig}
           className="custom-table"
-          scroll={{ x: 1200, y: 'calc(100vh - 350px)' }}
+          scroll={{ x: 1200, y: '' }}
           style={{
             width: "100%",
             minWidth: 0,

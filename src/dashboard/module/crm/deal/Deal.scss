@@ -1133,3 +1133,37 @@
         transform: translateY(-2px);
     }
 }
+
+.bulk-actions {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.delete-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  font-weight: 500;
+  font-size: 16px;
+  border-radius: 6px;
+  margin-left: 20px;
+  margin-top: 15px;
+  background: #DC2626;
+  border-color: #DC2626;
+  color: white;
+  transition: all 0.2s ease;
+
+  &:hover, &:focus {
+    background: #ff7875 !important;
+    color: #fff !important;
+}
+
+  svg {
+    width: 16px;
+    height: 16px;
+    // margin-right: 8px;
+  }
+}

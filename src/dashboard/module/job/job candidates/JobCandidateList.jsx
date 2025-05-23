@@ -286,21 +286,29 @@ const JobCandidateList = ({ applications, loading }) => {
 
     return (
         <div className="job-candidates-page">
-            <div className="job-candidates-table-card" style={{ 
-                maxHeight: 'calc(100vh - 250px)',
+            {/* <div className="job-candidates-table-card" style={{ 
+                // maxHeight: 'calc(100vh - 250px)',
                 overflowY: 'auto',
                 scrollbarWidth: 'thin',
                 scrollbarColor: '#d4d4d4 #f5f5f5'
-            }}>
+            }}> */}
                 <Table
                     columns={columns}
                     dataSource={applications || []}
                     rowKey="id"
                     loading={loading}
+                    className="custom-table"
                     scroll={{ x: 1500, y: '' }}
                     pagination={paginationConfig}
+                    style={{
+                        width: "100%",
+                        minWidth: 0,
+                        background: "#ffffff", 
+                        borderRadius: "8px",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+                    }}
                 />
-            </div>
+            {/* </div> */}
         </div>
     );
 };

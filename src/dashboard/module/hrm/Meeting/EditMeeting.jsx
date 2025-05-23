@@ -50,6 +50,14 @@ const EditMeeting = ({
     // Add this to get client_id from Redux state
     const auth = useSelector((state) => state.auth);
 
+    // Transform departments data
+    const departments = React.useMemo(() => {
+        if (!departmentsData) return [];
+        if (Array.isArray(departmentsData)) return departmentsData;
+        if (Array.isArray(departmentsData.data)) return departmentsData.data;
+        return [];
+    }, [departmentsData]);
+
     // Transform subclients data
     const subclients = React.useMemo(() => {
         if (!subClientsData) return [];
@@ -376,7 +384,7 @@ const EditMeeting = ({
                                     height: '48px',
                                     backgroundColor: '#f8fafc',
                                 }}
-                                options={departmentsData?.map(dept => ({
+                                options={departments.map(dept => ({
                                     value: dept.id,
                                     label: dept.department_name
                                 })) || []}

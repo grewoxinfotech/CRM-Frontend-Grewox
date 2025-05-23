@@ -86,18 +86,26 @@ const CreateJob = ({ open, onCancel, onSubmit, isEditing, initialValues, loading
         page: 1,
         limit: 100
     });
-    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
-    const { data: rolesData } = useGetRolesQuery();
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery({
+        page: 1,
+        pageSize: -1,
+        search: ''
+    });
+    const { data: rolesData } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: ''
+    });
 
     // Add array of excluded role names - adjust these based on your needs
     const excludedRoleNames = ['employee', 'client', 'sub-client', 'super-admin'];
 
     // Filter users based on roles
     const filteredUsers = React.useMemo(() => {
-        if (!userData?.data || !rolesData?.data) return [];
+        if (!userData?.data || !rolesData?.message?.data) return [];
 
         const usersList = Array.isArray(userData.data) ? userData.data : [];
-        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+        const rolesList = Array.isArray(rolesData.message.data) ? rolesData.message.data : [];
 
         return usersList.filter(user => {
             const userRole = rolesList.find(role => role.id === user.role_id);

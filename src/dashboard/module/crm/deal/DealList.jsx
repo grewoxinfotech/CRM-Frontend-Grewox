@@ -13,6 +13,7 @@ import {
   Input,
   Select,
   DatePicker,
+  Modal,
 } from "antd";
 import {
   FiEdit2,
@@ -87,6 +88,7 @@ const DealList = ({
   const labels = labelsData?.data || [];
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -472,9 +474,44 @@ const DealList = ({
     },
   ];
 
+  const handleBulkDelete = () => {
+    if (selectedRowKeys.length === 0) return;
+    Modal.confirm({
+      title: 'Delete Selected Deals',
+      content: `Are you sure you want to delete ${selectedRowKeys.length} selected deals?`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await Promise.all(selectedRowKeys.map(id => deleteDeal(id).unwrap()));
+          message.success(`${selectedRowKeys.length} deals deleted successfully`);
+          setSelectedRowKeys([]);
+        } catch (error) {
+          message.error('Failed to delete selected deals');
+        }
+      },
+    });
+  };
+
+  const BulkActions = () => (
+    <div className="bulk-actions">
+      {selectedRowKeys.length > 0 && (
+        <Button
+          className="delete-button"
+          icon={<FiTrash2 size={16} style={{ marginRight: 8 }} />}
+          onClick={handleBulkDelete}
+        >
+          Delete Selected ({selectedRowKeys.length})
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <>
       <div className="deal-list-container">
+        <BulkActions />
         <Table
           columns={columns}
           dataSource={deals}
@@ -487,6 +524,11 @@ const DealList = ({
             onClick: () => onDealClick(record),
             style: { cursor: "pointer" },
           })}
+          rowSelection={{
+            type: 'checkbox',
+            selectedRowKeys,
+            onChange: (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys),
+          }}
         />
       </div>
 

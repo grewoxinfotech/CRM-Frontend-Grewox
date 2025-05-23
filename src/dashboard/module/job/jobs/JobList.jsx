@@ -14,6 +14,7 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
+import './Job.scss';
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -131,6 +132,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Job Title",
             dataIndex: "title",
             key: "title",
+            width: 200,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -177,7 +179,9 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                         <div className="info-wrapper">
                             <div className="name" style={{ color: "#262626", fontWeight: 600, fontSize: "15px" }}>{text}</div>
                             <div className="subtitle" style={{ color: "#8c8c8c", fontSize: "13px" }}>
-                                {record.category} • {record.workExperience} • {record.location}
+                            •   {record.category} <br />
+                                •{record.workExperience} <br />
+                                 •{record.location}
                             </div>
                         </div>
                     </div>
@@ -412,6 +416,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Actions",
             key: "actions",
             width: 80,
+            fixed: 'right',
             render: (_, record) => {
                 const menuItems = [
                     {
@@ -476,6 +481,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                     showTotal: (total) => `Total ${total} items`,
                 }}
                 className="custom-table"
+                scroll={{ x: 1200 , y : '' }}
             />
         </div>
     );

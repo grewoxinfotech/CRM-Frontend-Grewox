@@ -38,9 +38,9 @@
 .job-onboarding-page {
     padding: 24px;
     background: $background-color;
-    @include custom-scrollbar;
+    // @include custom-scrollbar;
     height: 100vh;
-    overflow-y: auto;
+    // overflow-y: auto;
 
     .page-breadcrumb {
         margin-bottom: 16px;
@@ -211,7 +211,7 @@
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba($primary-color, 0.08);
         max-height: calc(100vh - 250px);
-        overflow-y: auto;
+        // overflow-y: auto;
 
         .ant-card-body {
             padding: 0;

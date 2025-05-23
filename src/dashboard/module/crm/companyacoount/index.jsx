@@ -289,22 +289,6 @@ const CompanyAccount = () => {
               className="search-input"
               style={{ width: 350 }}
             />
-            <Dropdown
-              overlay={filterMenu}
-              trigger={['click']}
-              placement="bottomRight"
-            >
-              <Button
-                icon={<FiFilter size={16} />}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  backgroundColor: selectedCompanyType ? '#e6f7ff' : 'transparent'
-                }}
-              >
-                {companyTypes.find(t => t.key === selectedCompanyType)?.label || 'All Types'}
-              </Button>
-            </Dropdown>
           </div>
           <div className="action-buttons">
             <Dropdown overlay={exportMenu} trigger={["click"]}>

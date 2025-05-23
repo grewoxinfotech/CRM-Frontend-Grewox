@@ -12,6 +12,8 @@
 .job-applications-page {
     padding: 24px;
     background: $background-color;
+    max-width: 100%;
+    overflow-x: hidden;
 
     .page-breadcrumb {
         margin-bottom: 16px;
@@ -129,14 +131,27 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+        overflow-x: auto;
+        overflow-y: hidden;
 
         .ant-card-body {
             padding: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
         .ant-table-wrapper {
+            overflow-x: auto;
+            overflow-y: hidden;
+            
             .ant-table {
                 background: transparent;
+               
+
+                // Hide vertical scrollbar but keep functionality
+                .ant-table-body {
+                    overflow-y: hidden !important;
+                }
 
                 .ant-table-thead {
                     tr {

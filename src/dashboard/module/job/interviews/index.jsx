@@ -109,7 +109,14 @@ const Interviews = () => {
                     }
                     placement="top"
                 >
-                    <div className="interview-item">
+                    <div
+                        className="interview-item"
+                        style={{ cursor: 'pointer' }}
+                        onClick={e => {
+                            e.stopPropagation();
+                            setMoreEvents({ visible: true, events: dayInterviews, date: date.format('DD-MM-YYYY') });
+                        }}
+                    >
                         <div className="interview-details">
                             <div className="interview-info">
                                 <span className="interview-candidate">
@@ -149,6 +156,7 @@ const Interviews = () => {
         }
     };
 
+    // Update displayedInterviews to handle show more functionality
     const displayedInterviews = showAllInterviews 
         ? interviews?.data 
         : interviews?.data?.slice(0, 2);

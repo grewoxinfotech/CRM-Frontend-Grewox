@@ -11,7 +11,11 @@ const CreateUser = ({ visible, onCancel }) => {
     const [otpForm] = Form.useForm();
     const [createUser, { isLoading }] = useCreateUserMutation();
     const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
-    const { data: rolesData, refetch: refetchRoles } = useGetRolesQuery();
+    const { data: rolesData, refetch: refetchRoles } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: ''
+        });
     const currentUser = useSelector(state => state.auth.user);
     const [isCreateRoleVisible, setIsCreateRoleVisible] = useState(false);
     const [isOtpModalVisible, setIsOtpModalVisible] = useState(false);
@@ -85,7 +89,7 @@ const CreateUser = ({ visible, onCancel }) => {
         }
     };
 
-    const filteredRoles = rolesData?.data?.filter(role =>
+    const filteredRoles = rolesData?.message?.data?.filter(role =>
         role.created_by === currentUser?.username
     ) || [];
 

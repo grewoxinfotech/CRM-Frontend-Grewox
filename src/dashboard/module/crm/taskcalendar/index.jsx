@@ -60,8 +60,7 @@ const TaskCalendarPage = () => {
         const today = dayjs();
         const upcoming = tasks
             .filter(task => dayjs(task.taskDate).isSameOrAfter(today, 'day'))
-            .sort((a, b) => dayjs(a.taskDate).diff(dayjs(b.taskDate)))
-            .slice(0, 5);
+            .sort((a, b) => dayjs(a.taskDate).diff(dayjs(b.taskDate)));
         setUpcomingTasks(upcoming);
     };
 
@@ -145,7 +144,14 @@ const TaskCalendarPage = () => {
                     }
                     placement="top"
                 >
-                    <div className="calendar-event">
+                    <div
+                        className="calendar-event"
+                        style={{ cursor: 'pointer' }}
+                        onClick={e => {
+                            e.stopPropagation();
+                            setMoreEvents({ visible: true, events: dayTasks, date: date.format('DD-MM-YYYY') });
+                        }}
+                    >
                         <div className="event-name">{dayTasks[0].taskName}</div>
                         <div className="event-time">{dayTasks[0].taskTime?.slice(0, 5)}</div>
                     </div>
@@ -166,9 +172,7 @@ const TaskCalendarPage = () => {
         );
     };
 
-    const displayedTasks = showAllTasks 
-        ? upcomingTasks 
-        : upcomingTasks.slice(0, 2);
+    const displayedTasks = showAllTasks ? upcomingTasks : upcomingTasks.slice(0, 2);
 
     if (isLoading) {
         return (
@@ -249,9 +253,11 @@ const TaskCalendarPage = () => {
                                                 </div>
                                                 <div className="task-datetime">
                                                     <div className="date">
+                                                        <FiCalendar style={{ marginRight: '4px', color: '#1890ff' }} />
                                                         {dayjs(task.taskDate).format('MMM DD, YYYY')}
                                                     </div>
                                                     <div className="time">
+                                                        <FiClock style={{ marginRight: '4px', color: '#1890ff' }} />
                                                         {task.taskTime}
                                                     </div>
                                                 </div>

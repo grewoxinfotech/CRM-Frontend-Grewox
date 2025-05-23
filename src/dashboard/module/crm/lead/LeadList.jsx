@@ -10,6 +10,7 @@ import {
   Space,
   Input,
   Tooltip,
+  Modal,
 } from "antd";
 import {
   FiEdit2,
@@ -80,6 +81,7 @@ const LeadList = ({
   const { data: companyAccountsResponse } = useGetCompanyAccountsQuery();
   const { data: contactsResponse } = useGetContactsQuery();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   console.log(leads);
 
@@ -563,8 +565,39 @@ const LeadList = ({
     },
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedRowKeys.length === 0) return;
+    Modal.confirm({
+      title: 'Delete Selected Leads',
+      content: `Are you sure you want to delete ${selectedRowKeys.length} selected leads?`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await Promise.all(selectedRowKeys.map(id => deleteLead(id).unwrap()));
+          message.success(`${selectedRowKeys.length} leads deleted successfully`);
+          setSelectedRowKeys([]);
+        } catch (error) {
+          message.error('Failed to delete selected leads');
+        }
+      },
+    });
+  };
+
   return (
     <div className="lead-list-container">
+      {selectedRowKeys.length > 0 && (
+        <div className="bulk-actions lead-bulk-actions">
+          <Button
+            className="lead-bulk-delete-btn"
+            icon={<FiTrash2 size={16} style={{ marginRight: 8 }} />}
+            onClick={handleBulkDelete}
+          >
+            Delete Selected ({selectedRowKeys.length})
+          </Button>
+        </div>
+      )}
       <Table
         columns={columns}
         dataSource={leads?.data || []}
@@ -577,6 +610,11 @@ const LeadList = ({
           onClick: () => onLeadClick(record),
           style: { cursor: "pointer" },
         })}
+        rowSelection={{
+          type: 'checkbox',
+          selectedRowKeys,
+          onChange: (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys),
+        }}
       />
     </div>
   );
