@@ -11,6 +11,7 @@ import {
     Col,
     Breadcrumb,
     Card,
+    Popover,
 } from 'antd';
 import {
     FiPlus,
@@ -46,6 +47,7 @@ const Role = () => {
     const [roles, setRoles] = useState([]);
     const [filteredRoles, setFilteredRoles] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     // Redux
     const currentUser = useSelector(state => state.auth.user);
@@ -249,6 +251,20 @@ const Role = () => {
         </Menu>
     );
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search roles..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
     return (
         <div className="role-page">
             <div className="page-breadcrumb">
@@ -266,39 +282,51 @@ const Role = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Roles</Title>
-                    <Text type="secondary">Manage all roles in the system</Text>
+                    <Text className="page-description" type="secondary">Manage all roles in the system</Text>
                 </div>
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-                        <div className="header-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                                placeholder="Search roles..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Dropdown overlay={exportMenu} trigger={["click"]}>
-                                    <Button className="export-button">
-                                        <FiDownload size={16} />
-                                        <span>Export</span>
-                                        <FiChevronDown size={14} />
-                                    </Button>
-                                </Dropdown>
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={16} />}
-                                    onClick={handleAddRole}
-                                    className="add-button"
+                <div className="header-actions">
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search roles..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
                                 >
-                                    Add Role
-                                </Button>
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
                             </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleAddRole}
+                                className="add-button"
+                            >
+                                <span className="button-text">Add Role</span>
+                            </Button>
                         </div>
-                    </Col>
-                </Row>
+                    </div>
+                </div>
             </div>
 
             <Card className="role-table-card">

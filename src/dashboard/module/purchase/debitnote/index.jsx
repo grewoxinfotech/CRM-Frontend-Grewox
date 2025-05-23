@@ -10,6 +10,7 @@ import {
   Menu,
   Breadcrumb,
   Alert,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -42,9 +43,7 @@ const getCompanyId = (state) => {
 
 const DebitNote = () => {
   const entireState = useSelector((state) => state);
-
   const loggedInUser = useSelector((state) => state.auth.user);
-
   const companyId = useSelector(getCompanyId);
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
@@ -57,7 +56,7 @@ const DebitNote = () => {
     total: 0
   });
   const [loading, setLoading] = useState(false);
-  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [createDebitNote] = useCreateDebitNoteMutation();
   const [deleteDebitNote] = useDeleteDebitNoteMutation();
 
@@ -230,6 +229,20 @@ const DebitNote = () => {
     </Menu>
   );
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search debit notes..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   const handleCreateDebitNote = async (formData) => {
     try {
       if (!companyId) {
@@ -293,45 +306,54 @@ const DebitNote = () => {
       <div className="page-header">
         <div className="page-title">
           <Title level={2}>Debit Notes</Title>
-          <Text type="secondary">
-            Manage all debit notes in the organization
-          </Text>
+          <Text className="page-description" type="secondary">Manage all debit notes in the organization</Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
-            <Input
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+              <Input
               prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
               placeholder="Search debit notes..."
               allowClear
               onChange={handleSearch}
               value={searchText}
               className="search-input"
-              style={{
-                width: "300px",
-                borderRadius: "20px",
-                height: "38px",
-              }}
+              // style={{
+              //   width: "300px",
+              //   borderRadius: "20px",
+              //   height: "38px",
+              // }}
             />
-          </div>
-          <div className="action-buttons">
-            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
               <Button
-                className="export-button"
-                icon={<FiDownload size={16} />}
-                loading={loading}
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={() => setIsCreateModalVisible(true)}
+                className="add-button"
               >
-                Export
-                <FiChevronDown size={16} />
+                <span className="button-text">Add Debit Note</span>
               </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              onClick={() => setIsCreateModalVisible(true)}
-              className="add-button"
-              icon={<FiPlus size={16} />}
-            >
-              Add Debit Note
-            </Button>
+            </div>
           </div>
         </div>
       </div>

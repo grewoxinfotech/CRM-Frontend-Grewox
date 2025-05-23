@@ -8,6 +8,7 @@ import {
     Dropdown,
     Menu,
     Breadcrumb,
+    Popover,
 } from 'antd';
 import {
     FiPlus,
@@ -243,38 +244,59 @@ const Salary = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Payroll Management</Title>
-                    <Text type="secondary">Manage all salary records in the organization</Text>
+                    <Text type="secondary" className="page-description">Manage all salary records in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-input">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search by employee name, payslip type..."
-                            allowClear
-                            onChange={(e) => handleSearch(e.target.value)}
-                            value={searchText}
-                            ref={searchInputRef}
-                            className="search-input"
-                            style={{ width: 300 }}
-                            onPressEnter={(e) => handleSearch(e.target.value)}
-                        />
-                    </div>
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                                    placeholder="Search by employee name, payslip type..."
+                                    allowClear
+                                    onChange={e => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={
+                                        <div className="search-popup">
+                                            <Input
+                                                prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                                                placeholder="Search by employee name, payslip type..."
+                                                allowClear
+                                                onChange={e => handleSearch(e.target.value)}
+                                                value={searchText}
+                                                className="search-input"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleAddSalary}
+                                className="add-button"
+                            >
+                                <span className="button-text">Add Salary</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleAddSalary}
-                            className="add-button"
-                        >
-                            Add Salary
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

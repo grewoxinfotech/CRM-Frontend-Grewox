@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Select, DatePicker
+    Dropdown, Menu, Row, Col, Breadcrumb, Select, DatePicker, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch, FiDownload,
@@ -31,6 +31,7 @@ const Attendance = () => {
         dateRange: [],
     });
     const [showFilters, setShowFilters] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     // Status options for the filter
     const statusOptions = [
@@ -143,6 +144,20 @@ const Attendance = () => {
         </Menu>
     );
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search employee..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
     return (
         <div className="attendance-page">
             <div className="page-breadcrumb">
@@ -166,37 +181,46 @@ const Attendance = () => {
                     <Text type="secondary">Manage employee attendance records</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                            placeholder="Search employee..."
-                            allowClear
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
-                            className="search-input"
-                            style={{ 
-                                width: '300px', 
-                                borderRadius: '20px',
-                                height: '38px'
-                            }}
-                        />
-                    </div>
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search employee..."
+                                    allowClear
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={['click']}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleCreate}
+                                className="add-button"
+                            >
+                                <span className="button-text">Create Attendance</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleCreate}
-                            className="add-button"
-                        >
-                            Create Attendance
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

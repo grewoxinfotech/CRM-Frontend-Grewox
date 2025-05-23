@@ -247,12 +247,13 @@ const CreateCreditNotes = ({ open, onCancel }) => {
         layout="vertical"
         onFinish={handleSubmit}
         requiredMark={false}
+        className="credit-notes-form"
         style={{
           padding: "24px",
         }}
       >
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="invoice"
               label={
@@ -316,9 +317,10 @@ const CreateCreditNotes = ({ open, onCancel }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="customer"
+              className="customer-field"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   <FiUser style={{ marginRight: "8px", color: "#1890ff" }} />
@@ -347,7 +349,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
         </Form.Item>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="date"
               label={
@@ -374,7 +376,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="currency"
               label={
@@ -407,7 +409,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               </Select>
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="amount"
               label={

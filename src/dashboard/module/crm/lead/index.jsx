@@ -330,7 +330,7 @@ const Lead = () => {
 
   return (
     <div className="lead-page">
-      <div className="page-breadcrumb" style={{ paddingTop: "0px" }}>
+      <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -367,8 +367,8 @@ const Lead = () => {
                     </Button.Group>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div className="search-container">
+                  <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
+                    <div className="search-container" style={{flex: 1}}>
                       <Input
                         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
                         placeholder="Search leads..."
@@ -378,20 +378,35 @@ const Lead = () => {
                         className="search-input"
                       />
                     </div>
-                    <Dropdown overlay={exportMenu} trigger={["click"]}>
-                      <Button className="export-button">
-                        <FiDownload size={16} />
-                        <span className="button-text">Export</span>
+                    <div className="action-buttons-group">
+                      <Popover
+                        content={searchContent}
+                        trigger="click"
+                        open={isSearchVisible}
+                        onOpenChange={setIsSearchVisible}
+                        placement="bottomRight"
+                        className="mobile-search-popover"
+                      >
+                        <Button 
+                          className="search-icon-button"
+                          icon={<FiSearch size={16} />}
+                        />
+                      </Popover>
+                      <Dropdown overlay={exportMenu} trigger={["click"]}>
+                        <Button className="export-button">
+                          <FiDownload size={16} />
+                          <span className="button-text">Export</span>
+                        </Button>
+                      </Dropdown>
+                      <Button
+                        type="primary"
+                        icon={<FiPlus size={16} />}
+                        onClick={handleCreate}
+                        className="add-button"
+                      >
+                        <span className="button-text">Add Lead</span>
                       </Button>
-                    </Dropdown>
-                    <Button
-                      type="primary"
-                      icon={<FiPlus size={16} />}
-                      onClick={handleCreate}
-                      className="add-button"
-                    >
-                      <span className="button-text">Add Lead</span>
-                    </Button>
+                    </div>
                   </div>
                 </div>
               </div>

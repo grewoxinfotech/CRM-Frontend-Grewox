@@ -363,6 +363,7 @@ const DealList = ({
       title: "Expected Date",
       dataIndex: "closedDate",
       key: "closedDate",
+      width: "15%",
       render: (date) => dayjs(date).format("DD-MM-YYYY"),
       filterDropdown: ({
         setSelectedKeys,

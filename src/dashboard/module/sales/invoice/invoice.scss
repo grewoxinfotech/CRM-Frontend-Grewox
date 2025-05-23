@@ -19,6 +19,7 @@ $border-radius: 6px;
 
   &:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -340,13 +341,34 @@ $border-radius: 6px;
 }
 
 .invoice-page {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 24px;
+  background: $background-color;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 
   .page-breadcrumb {
     margin-bottom: 16px;
 
+    @media (max-width: 768px) {
+      margin-bottom: 12px;
+    }
+
     .ant-breadcrumb {
-      font-size: 14px;
+      @media (max-width: 768px) {
+        font-size: 13px;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 12px;
+      }
 
       .ant-breadcrumb-link {
         color: $text-color-light;
@@ -376,127 +398,300 @@ $border-radius: 6px;
   }
 
   .page-header {
-    @include hover-shadow;
-    margin-bottom: 24px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    gap: 24px;
     background: white;
-    padding: 24px 32px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
 
-    .page-title {
-      text-align: left;
-      margin-bottom: 0;
-      flex-shrink: 0;
-
-      h2 {
-        color: $text-color-dark;
-        margin-bottom: 4px;
-        font-size: 28px;
-        font-weight: 600;
-        line-height: 1.2;
-      }
-
-      .ant-typography-secondary {
-        color: $text-color-light;
-        font-size: 15px;
-        display: block;
-      }
-    }
-
-    .header-actions {
+    .header-content {
+      padding: 16px 24px;
       display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 16px;
-      width: 100%;
-      max-width: 800px;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
 
-      .search-filter-group {
-        max-width: 360px;
-        min-width: 200px;
+      @media (max-width: 1366px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+      }
 
-        .ant-input-affix-wrapper {
-          border-radius: 40px;
-          height: 40px;
-          padding: 4px 16px;
-          transition: all 0.3s ease;
-          border: 1px solid $border-color;
-          width: 100%;
+      @media (max-width: 768px) {
+        padding: 12px 16px;
+        gap: 12px;
+      }
 
-          .anticon {
-            color: $text-color-light;
-            margin-right: 8px;
-            font-size: 16px;
+      @media (max-width: 480px) {
+        padding: 10px 12px;
+        gap: 8px;
+      }
+
+      .page-title {
+        flex: 1;
+
+        .title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 4px;
+
+         
+            @media (min-width: 769px) and (max-width: 1367px) {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              text-align: center; 
+            
           }
 
-          .ant-input {
-            font-size: 14px;
-            background: transparent;
-            border: none;
-            padding: 0;
-            margin: 0 4px;
+          h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
 
-            &::placeholder {
-              color: rgba($text-color, 0.45);
+            @media (max-width: 768px) {
+              font-size: 20px;
+            }
+
+            @media (max-width: 480px) {
+              font-size: 18px;
             }
           }
 
-          &:hover,
-          &:focus,
-          &-focused {
-            border-color: #1677ff;
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+          .mobile-actions {
+            display: none;
+
+            @media (max-width: 768px) {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+
+            .mobile-add-button {
+              width: 34px;
+              height: 34px;
+              padding: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 6px;
+              background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+              border: none;
+              color: white;
+              transition: all 0.3s ease;
+              box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+
+              &:hover,
+              &:active {
+                background: linear-gradient(135deg, #40a9ff 0%, #1677ff 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+              }
+
+              @media (max-width: 480px) {
+                width: 32px;
+                height: 32px;
+              }
+            }
+
+            .mobile-search-button,
+            .mobile-filter-button {
+              width: 34px;
+              height: 34px;
+              padding: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 6px;
+              border: 1px solid #e6e6e6;
+              background: white;
+              color: #666;
+              transition: all 0.3s ease;
+
+              &:hover,
+              &:active {
+                color: #1677ff;
+                border-color: #1677ff;
+                background: #f0f5ff;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(24, 144, 255, 0.1);
+              }
+
+              @media (max-width: 480px) {
+                width: 32px;
+                height: 32px;
+              }
+
+              &.ant-dropdown-open {
+                color: #1677ff;
+                border-color: #1677ff;
+                background: #f0f5ff;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(24, 144, 255, 0.1);
+              }
+
+              svg {
+                font-size: 16px;
+
+                @media (max-width: 480px) {
+                  font-size: 15px;
+                }
+              }
+            }
+          }
+        }
+
+        .ant-typography-secondary {
+          font-size: 14px;
+          color: #666;
+
+          @media (max-width: 768px) {
+            font-size: 13px;
+          }
+
+          @media (max-width: 480px) {
+            font-size: 12px;
           }
         }
       }
 
-      .action-buttons {
+      .header-actions {
         display: flex;
         align-items: center;
         gap: 12px;
-        flex-shrink: 0;
+        flex-wrap: wrap;
 
-        .export-button,
-        .add-button {
-          height: 40px;
-          padding: 0 20px;
-          display: inline-flex;
+        .desktop-actions {
+          display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 8px;
-          border-radius: 8px;
-          font-weight: 500;
-          transition: all 0.3s ease;
+          gap: 12px;
+          flex-wrap: nowrap;
 
-          svg {
-            font-size: 16px;
+          @media (min-width: 769px) and (max-width: 1367px) {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 120px 120px;
+            gap: 0 4px;
           }
-        }
 
-        .export-button {
-          border: 1px solid $border-color;
-          background: white;
-
-          &:hover {
-            color: #1677ff;
-            border-color: #1677ff;
-            transform: translateY(-2px);
+          @media (max-width: 768px) {
+            display: none;
           }
-        }
 
-        .add-button {
-          background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-          border: none;
-          color: white;
+          .search-input {
+            width: 240px;
 
-          &:hover {
-            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-            transform: translateY(-2px);
+            @media (min-width: 769px) and (max-width: 1367px) {
+              width: 100%;
+              min-width: unset;
+            }
+
+            .ant-input-affix-wrapper {
+              border-radius: 6px;
+              height: 38px;
+              border: 1px solid #e6e6e6;
+              transition: all 0.3s ease;
+
+              &:hover,
+              &:focus {
+                border-color: #1677ff;
+                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+              }
+
+              .anticon {
+                color: #999;
+              }
+
+              input {
+                font-size: 14px;
+
+                &::placeholder {
+                  color: #999;
+                }
+              }
+            }
+          }
+
+          .ant-picker {
+            width: 240px;
+
+            @media (min-width: 769px) and (max-width: 1367px) {
+              width: 100%;
+              min-width: unset;
+            }
+
+            height: 38px;
+            border-radius: 6px;
+            border: 1px solid #e6e6e6;
+
+            &:hover {
+              border-color: #1677ff;
+            }
+
+            input {
+              font-size: 14px;
+              color: #333;
+
+              &::placeholder {
+                color: #999;
+              }
+            }
+          }
+
+          .export-button {
+            @media (min-width: 769px) and (max-width: 1367px) {
+              width: 100%;
+              min-width: unset;
+              justify-content: center;
+            }
+
+            height: 38px;
+            padding: 0 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 6px;
+            border: 1px solid #e6e6e6;
+            color: #666;
+            background: white;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+          }
+
+          .add-button {
+            @media (min-width: 769px) and (max-width: 1367px) {
+              width: 100%;
+              min-width: unset;
+              justify-content: center;
+              height: 40px;
+              padding: 0 70px 0 64px;
+              font-size: 14px;
+              font-weight: 500;
+              background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+              border: none;
+              box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+              margin-right: 24px;
+            }
+
+            height: 38px;
+            padding: 0 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+
+            &:hover {
+              background: linear-gradient(135deg, #40a9ff 0%, #1677ff 100%);
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+            }
           }
         }
       }
@@ -511,11 +706,25 @@ $border-radius: 6px;
 
     .ant-card-body {
       padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+
+      @media (max-width: 768px) {
+        border-radius: 8px;
+      }
     }
 
     .ant-table-wrapper {
       .ant-table {
         background: transparent;
+
+        .ant-table-container {
+          overflow-y: hidden;
+        }
+
+        .ant-table-body {
+          overflow-y: hidden !important;
+        }
 
         .ant-table-thead>tr>th {
           background: #fafafa;
@@ -542,66 +751,545 @@ $border-radius: 6px;
           transition: all 0.3s ease;
 
           &:hover {
-            background: $primary-light;
+            background: #fafafa;
+          }
+        }
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+
+          .ant-table-thead>tr>th {
+            padding: 12px 16px;
+            font-size: 14px;
+            white-space: nowrap;
+          }
+
+          .ant-table-tbody>tr>td {
+            padding: 12px 16px;
+            font-size: 14px;
+          }
+
+          .ant-tag {
+            font-size: 12px;
+            padding: 2px 6px;
+          }
+
+          .ant-typography {
+            font-size: 14px;
+          }
+
+          .ant-btn {
+            font-size: 14px;
+            padding: 4px 8px;
+            height: 32px;
+          }
+
+          .ant-avatar {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          font-size: 13px;
+
+          .ant-table-thead>tr>th {
+            padding: 10px 12px;
+            font-size: 13px;
+          }
+
+          .ant-table-tbody>tr>td {
+            padding: 10px 12px;
+            font-size: 13px;
+          }
+
+          .ant-tag {
+            font-size: 11px;
+            padding: 1px 4px;
+          }
+
+          .ant-typography {
+            font-size: 13px;
+          }
+
+          .ant-btn {
+            font-size: 13px;
+            padding: 3px 6px;
+            height: 28px;
+          }
+
+          .ant-avatar {
+            width: 24px;
+            height: 24px;
+            font-size: 11px;
           }
         }
       }
 
-      .ant-table-pagination {
+      .ant-table-pagination.ant-pagination {
         margin: 16px 24px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+
+        @media (max-width: 768px) {
+          margin: 12px 16px;
+          justify-content: center;
+
+          .ant-pagination-total-text {
+            display: none;
+          }
+
+          .ant-pagination-item,
+          .ant-pagination-prev,
+          .ant-pagination-next {
+            min-width: 32px;
+            height: 32px;
+            line-height: 30px;
+
+            a {
+              padding: 0;
+              font-size: 14px;
+            }
+          }
+        }
+
+        @media (max-width: 480px) {
+          margin: 10px;
+          gap: 4px;
+
+          .ant-pagination-item,
+          .ant-pagination-prev,
+          .ant-pagination-next {
+            min-width: 28px;
+            height: 28px;
+            line-height: 26px;
+            margin: 0;
+
+            a {
+              font-size: 13px;
+            }
+          }
+
+          .ant-pagination-item-ellipsis {
+            line-height: 26px;
+          }
+
+          .ant-select-selector {
+            height: 28px !important;
+
+            .ant-select-selection-item {
+              line-height: 26px !important;
+              font-size: 13px;
+            }
+          }
+        }
+
+        // Style for active page
+        .ant-pagination-item-active {
+          background: #1677ff;
+          border-color: #1677ff;
+
+          a {
+            color: white;
+          }
+
+          &:hover {
+            background: #4096ff;
+            border-color: #4096ff;
+
+            a {
+              color: white;
+            }
+          }
+        }
+
+        // Hover effects for pagination items
+        .ant-pagination-item,
+        .ant-pagination-prev,
+        .ant-pagination-next {
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: #1677ff;
+
+            a {
+              color: #1677ff;
+            }
+          }
+        }
       }
     }
   }
 }
 
-// Form Elements
-.form-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  font-size: 14px;
+// Mobile Menu Styles
+.mobile-action-menu {
+  padding: 16px;
+  min-width: 280px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 
-  .icon {
-    color: #1890ff;
-  }
+  .mobile-menu-item {
+    padding: 8px 0;
+    line-height: normal;
+    margin-bottom: 8px;
 
-  .required {
-    color: #ff4d4f;
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background: none;
+    }
+
+    .search-input {
+      width: 100%;
+
+      .ant-input-affix-wrapper {
+        border-radius: 6px;
+        height: 38px;
+      }
+    }
+
+    .ant-picker {
+      width: 100%;
+      height: 38px;
+      border-radius: 6px;
+    }
+
+    .export-button,
+    .add-button {
+      width: 100%;
+      height: 38px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .export-button {
+      border: 1px solid #e6e6e6;
+      color: #666;
+      background: white;
+
+      &:hover {
+        color: #1677ff;
+        border-color: #1677ff;
+      }
+    }
+
+    .add-button {
+      background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+      border: none;
+      color: white;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+
+      &:hover {
+        background: linear-gradient(135deg, #40a9ff 0%, #1677ff 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+      }
+
+      @media (max-width: 480px) {
+        height: 34px;
+        font-size: 13px;
+      }
+    }
   }
 }
 
-// Items & Services Section
+// Search Popover Styles
+.search-popover {
+  .ant-popover-inner {
+    padding: 0;
+  }
+
+  .ant-popover-inner-content {
+    padding: 0;
+  }
+
+  .search-popup {
+    width: 280px;
+    padding: 12px;
+
+    .search-input {
+      .ant-input-affix-wrapper {
+        border-radius: 6px;
+        height: 38px;
+        border: 1px solid #e6e6e6;
+        transition: all 0.3s ease;
+
+        &:hover,
+        &:focus {
+          border-color: #1677ff;
+          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+        }
+
+        .anticon {
+          color: #999;
+        }
+
+        input {
+          font-size: 14px;
+
+          &::placeholder {
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .search-popup {
+      width: 260px;
+      padding: 10px;
+
+      .search-input {
+        .ant-input-affix-wrapper {
+          height: 34px;
+
+          input {
+            font-size: 13px;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .search-popup {
+      width: 240px;
+      padding: 8px;
+
+      .search-input {
+        .ant-input-affix-wrapper {
+          height: 32px;
+
+          input {
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Hide search popover on desktop
+@media (min-width: 769px) {
+  .search-popover {
+    display: none;
+  }
+}
+
+// Filter Menu Styles
+.filter-menu {
+  min-width: 280px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+
+  .filter-menu-item {
+    padding: 0;
+    margin-bottom: 12px;
+    height: auto;
+    line-height: normal;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background: none;
+    }
+
+    .filter-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .ant-typography {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .ant-picker {
+        width: 100%;
+        height: 38px;
+        border-radius: 6px;
+        border: 1px solid #e6e6e6;
+
+        &:hover {
+          border-color: #1677ff;
+        }
+
+        input {
+          font-size: 14px;
+          color: #333;
+
+          &::placeholder {
+            color: #999;
+          }
+        }
+      }
+
+      .export-button {
+        width: 100%;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border-radius: 6px;
+        border: 1px solid #e6e6e6;
+        background: white;
+        color: #666;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: #1677ff;
+          border-color: #1677ff;
+        }
+
+        svg {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    min-width: 260px;
+    padding: 10px;
+
+    .filter-menu-item {
+      .filter-section {
+        .ant-picker {
+          height: 34px;
+          font-size: 13px;
+        }
+
+        .export-button {
+          height: 34px;
+          font-size: 13px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    min-width: 240px;
+    padding: 8px;
+
+    .filter-menu-item {
+      .filter-section {
+        .ant-picker {
+          height: 32px;
+          font-size: 12px;
+        }
+
+        .export-button {
+          height: 32px;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+}
+
+// Hide filter menu on desktop
+@media (min-width: 769px) {
+  .filter-menu {
+    display: none;
+  }
+}
+
+// Responsive styles for invoice list container
+@media (max-width: 767px) {
+  .invoice-list-container {
+    .ant-table-pagination {
+      display: flex !important;
+      visibility: visible !important;
+      
+      .ant-pagination-options {
+        display: flex !important;
+        align-items: center;
+        margin-bottom: 20px;
+        .ant-select-selection-item {
+          width: auto !important;
+          min-width: 40px;
+          max-width: 100%;
+          height: 20px !important;
+          overflow: visible !important;
+          white-space: normal !important;
+          text-align: center;
+          font-size: 14px;
+          font-weight: 400;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .invoice-list-container {
+    .ant-table-pagination {
+      .ant-pagination-options {
+        .ant-select-selection-item {
+          width: 100%;
+          color: inherit;
+        }
+      }
+    }
+  }
+}
+
+// Table styles update
 .table-style-container {
   background: white;
   border-radius: 12px;
-  // padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-top: 24px;
+  overflow: hidden;
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 16px;
-      font-weight: 500;
-      color: #1f2937;
-
-      .header-icon {
-        color: #1890ff;
+  @media (max-width: 1200px) {
+    .invoice-items-table-wrapper {
+      overflow-x: auto;
+      overflow-y: hidden;
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: thin;  /* Firefox */
+      position: relative; /* Add position relative */
+      
+      &::-webkit-scrollbar {
+        height: 6px;  /* Height of horizontal scrollbar */
+        width: 6px;   /* Width of vertical scrollbar */
       }
-    }
-
-    .tax-switch {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 3px;
+        
+        &:hover {
+          background: #555;
+        }
+      }
+      
+      &::-webkit-scrollbar-corner {
+        background: #f1f1f1;
+      }
     }
   }
 
@@ -609,18 +1297,41 @@ $border-radius: 6px;
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    // min-width: 1000px; // Ensure minimum width for table
 
     th,
     td {
-      padding: 16px;
+      padding: 16px 12px;
       text-align: left;
       border-bottom: 1px solid #f0f0f0;
+      white-space: nowrap; // Prevent text wrapping
+    }
+
+    // Add styles for fixed action column
+    @media (max-width: 1200px) {
+      th:last-child,
+      td:last-child {
+        position: sticky;
+        right: 0;
+        background: white;
+        z-index: 1;
+        box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+      }
+
+      th:last-child {
+        background: #fafafa;
+      }
+
+      tr:hover td:last-child {
+        background: #fafafa;
+      }
     }
 
     th {
       background: #fafafa;
       font-weight: 600;
       color: #1f2937;
+      font-size: 14px;
     }
 
     tr:hover td {
@@ -635,20 +1346,26 @@ $border-radius: 6px;
     .quantity-input,
     .price-input,
     .item-discount-input,
-    .hsn-input
-   {
+    .hsn-input {
       height: 48px !important;
       min-height: 48px !important;
       border-radius: 8px !important;
       font-size: 15px !important;
       display: flex;
       align-items: center;
+      background: #f8fafc;
+      border: 1px solid #e6e8eb;
+
+      &:hover,
+      &:focus {
+        border-color: #1677ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+      }
     }
 
     .amount-fields {
       display: flex;
       align-items: center;
-      //   justify-content: flex-end;
       background-color: #f1f6fa;
       border: 1px solid #d9d9d9;
       border-radius: 6px;
@@ -657,7 +1374,6 @@ $border-radius: 6px;
       transition: all 0.3s;
       font-weight: 500;
       margin-top: 10px;
-      // color: #262626;
 
       &:hover {
         background-color: #f0f7ff;
@@ -677,6 +1393,13 @@ $border-radius: 6px;
 
     .delete-btn {
       color: #ff4d4f;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
 
       &:hover {
         background: #fff1f0;
@@ -685,8 +1408,10 @@ $border-radius: 6px;
   }
 
   .add-item-container {
-    // margin-top: 16px;
-    text-align: center;
+    padding: 16px;
+    background-color: #fafafa;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
 
     .add-item-btn {
       background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
@@ -695,478 +1420,137 @@ $border-radius: 6px;
       height: 40px;
       padding: 0 24px;
       font-weight: 500;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
 
       &:hover {
         background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
       }
-    }
-  }
-}
-
-// Summary Card
-.summary-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-
-  .summary-content {
-    .ant-divider {
-      margin: 16px 0;
-    }
-  }
-}
-
-// Form Footer
-.form-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-
-  .cancel-btn {
-    height: 40px;
-    padding: 0 24px;
-    border-radius: 8px;
-    font-weight: 500;
-  }
-
-  .create-btn {
-    height: 40px;
-    padding: 0 24px;
-    border-radius: 8px;
-    font-weight: 500;
-    background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-    border: none;
-
-    &:hover {
-      background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-    }
-  }
-}
-
-// Responsive styles
-@media (max-width: 768px) {
-  .invoice-page {
-    .page-header {
-      flex-direction: column;
-      padding: 16px;
-
-      .header-actions {
-        flex-direction: column;
-        width: 100%;
-
-        .search-filter-group {
-          max-width: 100%;
-        }
-
-        .action-buttons {
-          width: 100%;
-          justify-content: space-between;
-        }
-      }
-    }
-
-    .invoice-table-card {
-      .ant-table {
-
-        .ant-table-thead>tr>th,
-        .ant-table-tbody>tr>td {
-          padding: 12px 8px;
-        }
-      }
-    }
-  }
-
-  .summary-card {
-    .summary-content {
-      width: 100%;
-    }
-  }
-
-  .form-footer {
-    flex-direction: column;
-
-    .cancel-btn,
-    .create-btn {
-      width: 100%;
-    }
-  }
-}
-
-// Product selector styles
-.ant-select-dropdown {
-  padding: 8px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-  .ant-select-item {
-    padding: 8px 12px;
-    border-radius: 6px;
-    margin-bottom: 4px;
-
-    &:hover {
-      background-color: #f0f7ff;
-    }
-
-    &-option-selected {
-      background-color: #e6f4ff;
-      font-weight: 500;
-    }
-  }
-}
-
-// Form item styles
-.ant-form-item {
-  margin-bottom: 24px;
-
-  .ant-form-item-label {
-    padding-bottom: 8px;
-
-    label {
-      height: 24px;
-      display: flex;
-      align-items: center;
-      color: #374151;
-    }
-  }
-
-  .ant-select-selector {
-    height: 48px !important;
-    padding: 0 16px !important;
-    border-radius: 10px !important;
-    border: 1px solid #e5e7eb !important;
-    background-color: #f8fafc !important;
-
-    .ant-select-selection-search-input {
-      height: 46px !important;
-    }
-
-    // .ant-select-selection-item {
-    //     // line-height: 46px !important;
-    // }
-  }
-}
-
-// Table styles update
-.table-style-container {
-  .invoice-items-table {
-    th {
-      background: #f8fafc;
-      padding: 12px 16px;
-      font-size: 14px;
-      color: #4b5563;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    td {
-      padding: 16px;
-      vertical-align: top;
-
-      .ant-form-item {
-        margin-bottom: 0;
-      }
-
-      .ant-input,
-      .ant-input-number,
-      .ant-select-selector {
-        height: 40px !important;
-        border-radius: 8px !important;
-        background-color: #f8fafc !important;
-      }
-    }
-  }
-}
-
-// Summary card update
-.summary-card {
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-
-  .summary-content {
-    .ant-input-number {
-      background-color: white !important;
-    }
-  }
-}
-
-// Form footer update
-.form-footer {
-  padding-top: 24px;
-  // border-top: 1px solid #e5e7eb;
-
-  .cancel-btn,
-  .create-btn {
-    min-width: 120px;
-    height: 44px;
-  }
-}
-
-// Add this at the end of the file
-.status-badge {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  min-width: 100px;
-
-  &.status-paid {
-    color: #059669;
-    background: #d1fae5;
-  }
-
-  &.status-unpaid {
-    color: #dc2626;
-    background: #fee2e2;
-  }
-
-  &.status-partial {
-    color: #7c3aed;
-    background: #ede9fe;
-  }
-
-  &.status-gray {
-    background-color: #f1f3f4;
-    color: #5f6368;
-  }
-}
-
-// Custom styles for items and services section
-.invoice-items-section {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-
-    h3 {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
 
       svg {
-        color: #4070FF;
-      }
-    }
-
-    .tax-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      label {
-        font-size: 14px;
-        color: #4b5563;
-      }
-
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 24px;
-
-        input {
-          opacity: 0;
-          width: 0;
-          height: 0;
-
-          &:checked+.slider {
-            background-color: #4070FF;
-          }
-
-          &:checked+.slider:before {
-            transform: translateX(20px);
-          }
-        }
-
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: #e5e7eb;
-          transition: .3s;
-          border-radius: 24px;
-
-          &:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-          }
-        }
+        font-size: 16px;
       }
     }
   }
+}
 
-  .items-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-bottom: 16px;
+// Responsive: 2 columns for 1200px to 992px
+@media (max-width: 992px) and (min-width: 768px) {
+  .create-invoice-form-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+}
 
-    th {
-      background: #f9fafb;
-      padding: 12px 16px;
-      text-align: left;
-      font-size: 13px;
-      font-weight: 600;
-      color: #4b5563;
-      border-bottom: 1px solid #e5e7eb;
+@media (max-width: 767px) {
+  .create-invoice-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+}
 
-      &:first-child {
-        border-top-left-radius: 8px;
-      }
+.invoice-list-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 24px;
 
-      &:last-child {
-        border-top-right-radius: 8px;
-      }
-    }
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
 
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 14px;
-      color: #1f2937;
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 
-      .form-control {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        font-size: 14px;
-        color: #1f2937;
-        transition: all 0.2s;
+  .custom-table {
+    .ant-table {
+      background: transparent;
 
-        &:focus {
-          outline: none;
-          border-color: #4070FF;
-          box-shadow: 0 0 0 2px rgba(64, 112, 255, 0.1);
-        }
+      .ant-table-thead > tr > th {
+        background: #f9fafb;
+        color: #4b5563;
+        font-weight: 600;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e5e7eb;
 
-        &:disabled {
-          background: #f9fafb;
-          cursor: not-allowed;
+        &::before {
+          display: none;
         }
       }
 
-      select.form-control {
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        padding-right: 32px;
+      .ant-table-tbody > tr > td {
+        padding: 16px 24px;
+        border-bottom: 1px solid #f3f4f6;
       }
 
-      .delete-btn {
-        padding: 6px;
-        border: none;
-        background: none;
-        color: #ef4444;
-        cursor: pointer;
-        border-radius: 4px;
-        transition: all 0.2s;
+      .ant-table-row {
+        transition: all 0.3s ease;
 
         &:hover {
-          background: #fee2e2;
-        }
-
-        svg {
-          width: 16px;
-          height: 16px;
+          background: #f9fafb;
         }
       }
     }
-  }
 
-  .add-item-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: #4070FF;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #3058cc;
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-  }
-
-  .totals-section {
-    margin-top: 24px;
-    border-top: 1px solid #e5e7eb;
-    padding-top: 16px;
-
-    .total-row {
+    .ant-table-pagination {
+      margin: 16px 24px;
       display: flex;
       justify-content: flex-end;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
 
-      label {
-        font-size: 14px;
-        color: #4b5563;
-        min-width: 120px;
+      @media (max-width: 768px) {
+        margin: 12px 16px;
+        justify-content: center;
+
+        .ant-pagination-total-text {
+          display: none;
+        }
+      }
+    }
+  }
+
+  .bulk-actions {
+    margin-bottom: 16px;
+    padding: 0 24px;
+
+    @media (max-width: 768px) {
+      padding: 0 16px;
+    }
+
+    @media (max-width: 480px) {
+      padding: 0 12px;
+    }
+
+    .ant-btn {
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      font-weight: 500;
+      background: #ff4d4f;
+      border-color: #ff4d4f;
+      color: white;
+
+      &:hover {
+        background: #ff7875;
+        border-color: #ff7875;
       }
 
-      .amount {
-        font-size: 14px;
-        font-weight: 500;
-        color: #1f2937;
-        min-width: 100px;
-        text-align: right;
-      }
-
-      &.grand-total {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid #e5e7eb;
-
-        label {
-          font-weight: 600;
-          color: #1f2937;
-        }
-
-        .amount {
-          font-size: 16px;
-          font-weight: 600;
-          color: #4070FF;
-        }
+      svg {
+        width: 16px;
+        height: 16px;
       }
     }
   }

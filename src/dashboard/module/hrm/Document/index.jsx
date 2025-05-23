@@ -9,6 +9,7 @@ import {
   Menu,
   Breadcrumb,
   Card,
+  Popover
 } from "antd";
 import {
   FiPlus,
@@ -34,6 +35,7 @@ const Document = () => {
   const [searchText, setSearchText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   const searchInputRef = useRef(null);
   const [deleteDocument, { isLoading: isDeleting }] = useDeleteDocumentMutation();
@@ -144,6 +146,20 @@ const Document = () => {
     }
   };
 
+  const searchContent = (
+    <div className="search-content">
+      <Input
+        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+        placeholder="Search documents..."
+        allowClear
+        onChange={(e) => handleSearch(e.target.value)}
+        value={searchText}
+        ref={searchInputRef}
+        className="search-input"
+      />
+    </div>
+  );
+
   return (
     <div className="document-page">
       <div className="page-breadcrumb">
@@ -167,40 +183,56 @@ const Document = () => {
           <Text type="secondary">Manage all documents in the organization</Text>
         </div>
         <div className="header-actions">
-          <Input
-            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-            placeholder="Search documents..."
-            allowClear
-            onChange={(e) => handleSearch(e.target.value)}
-            value={searchText}
-            ref={searchInputRef}
-            className="search-input"
-          />
-          <div className="action-buttons">
-            <Dropdown overlay={
-              <Menu>
-                <Menu.Item key="csv" onClick={() => handleExport('csv')}>
-                  Export as CSV
-                </Menu.Item>
-                <Menu.Item key="excel" onClick={() => handleExport('excel')}>
-                  Export as Excel
-                </Menu.Item>
-              </Menu>
-            } trigger={['click']}>
-              <Button className="export-button">
-                <FiDownload size={16} />
-                <span>Export</span>
-                <FiChevronDown size={14} />
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                  placeholder="Search documents..."
+                  allowClear
+                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchText}
+                  ref={searchInputRef}
+                  className="search-input"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
+              <Dropdown overlay={
+                <Menu>
+                  <Menu.Item key="csv" onClick={() => handleExport('csv')}>
+                    Export as CSV
+                  </Menu.Item>
+                  <Menu.Item key="excel" onClick={() => handleExport('excel')}>
+                    Export as Excel
+                  </Menu.Item>
+                </Menu>
+              } trigger={['click']}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleAddDocument}
+                className="add-button"
+              >
+                <span className="button-text">Create Document</span>
               </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus size={16} />}
-              onClick={handleAddDocument}
-              className="add-button"
-            >
-              Create Document
-            </Button>
+            </div>
           </div>
         </div>
       </div>

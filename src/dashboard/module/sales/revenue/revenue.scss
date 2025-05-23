@@ -57,7 +57,7 @@ $border-radius: 6px;
     }
 
     .revenue-filters {
-        margin: 24px;
+        margin:0 24px 24px;
 
         .ant-select {
             width: 100%;
@@ -78,6 +78,10 @@ $border-radius: 6px;
                 .ant-select-selection-placeholder {
                     color: $text-color-light;
                 }
+            }
+
+            @media (max-width: 768px) {
+                margin-bottom: 16px;
             }
         }
     }
@@ -151,23 +155,54 @@ $border-radius: 6px;
                 background: transparent;
 
                 .ant-table-thead>tr>th {
-                    // background: linear-gradient(135deg, #f0f5ff 0%, #e6f7ff 100%);
+                    background: #f8fafc;
                     font-weight: 600;
-                    color: $text-color-dark;
+                    color: #1a1a1a;
                     padding: 16px 24px;
                     border-bottom: 1px solid $border-color;
-
-                    &::before {
-                        display: none;
+                    
+                    @media (max-width: 1200px) {
+                        padding: 12px 20px;
+                        font-size: 14px;
+                    }
+                    
+                    @media (max-width: 992px) {
+                        padding: 10px 16px;
+                        font-size: 13px;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        padding: 8px 14px;
+                    }
+                    
+                    @media (max-width: 576px) {
+                        padding: 6px 12px;
                     }
                 }
 
                 .ant-table-tbody>tr>td {
                     padding: 16px 24px;
-                    border-bottom: 1px solid $border-color;
-
-                    &:last-child {
-                        padding-right: 24px;
+                    border-bottom: 1px solid #f0f0f0;
+                    transition: all 0.3s ease;
+                    
+                    @media (max-width: 1200px) {
+                        padding: 12px 20px;
+                        font-size: 14px;
+                    }
+                    
+                    @media (max-width: 992px) {
+                        padding: 10px 16px;
+                        font-size: 13px;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        padding: 8px 14px;
+                        font-size: 12px;
+                    }
+                    
+                    @media (max-width: 576px) {
+                        padding: 6px 12px;
+                        font-size: 11px;
                     }
 
                     // Currency and amount styling
@@ -179,6 +214,13 @@ $border-radius: 6px;
                         .currency-symbol {
                             margin-right: 4px;
                             opacity: 0.8;
+                        }
+
+                        @media (max-width: 768px) {
+                            font-size: 13px;
+                        }
+                        @media (max-width: 576px) {
+                            font-size: 12px;
                         }
                     }
 
@@ -194,7 +236,7 @@ $border-radius: 6px;
                             font-weight: 500;
                             margin-bottom: 4px;
                         }
-
+ 
                         .product-meta {
                             font-size: 12px;
                             color: $text-color-light;
@@ -207,6 +249,38 @@ $border-radius: 6px;
                             color: #52c41a;
                             font-size: 13px;
                             margin-top: 4px;
+                        }
+
+                        @media (max-width: 768px) {
+                            margin-bottom: 8px;
+                            
+                            .product-name {
+                                font-size: 13px;
+                            }
+                            
+                            .product-meta {
+                                font-size: 11px;
+                            }
+                            
+                            .product-total {
+                                font-size: 12px;
+                            }
+                        }
+                        
+                        @media (max-width: 576px) {
+                            margin-bottom: 6px;
+                            
+                            .product-name {
+                                font-size: 12px;
+                            }
+                            
+                            .product-meta {
+                                font-size: 10px;
+                            }
+                            
+                            .product-total {
+                                font-size: 11px;
+                            }
                         }
                     }
 
@@ -228,24 +302,88 @@ $border-radius: 6px;
                             align-items: center;
                             gap: 4px;
                         }
+
+                        @media (max-width: 768px) {
+                            .profit-amount {
+                                font-size: 13px;
+                                gap: 4px;
+                            }
+                            
+                            .profit-percentage {
+                                font-size: 11px;
+                            }
+                        }
+                        
+                        @media (max-width: 576px) {
+                            .profit-amount {
+                                font-size: 12px;
+                                gap: 3px;
+                            }
+                            
+                            .profit-percentage {
+                                font-size: 10px;
+                            }
+                        }
                     }
                 }
 
                 .ant-table-row {
+                    @media (max-width: 1200px) {
+                        height: auto;
+                    }
+                    
+                    @media (max-width: 992px) {
+                        height: auto;
+                    }
+                    
+                    @media (max-width: 768px) {
+                        height: auto;
+                    }
+                    
+                    @media (max-width: 576px) {
+                        height: auto;
+                    }
+                    
                     transition: all 0.3s ease;
 
                     &:hover {
-                        background: #fafafa;
-
-                        td {
-                            background: transparent;
-                        }
+                        background: #f8fafc;
                     }
                 }
             }
 
             .ant-table-pagination {
-                margin: 16px 24px;
+                @media (max-width: 768px) {
+                    margin: 12px;
+                    
+                    .ant-pagination-item {
+                        min-width: 28px;
+                        height: 28px;
+                        line-height: 26px;
+                    }
+                    
+                    .ant-pagination-prev,
+                    .ant-pagination-next {
+                        min-width: 28px;
+                        height: 28px;
+                    }
+                }
+                
+                @media (max-width: 576px) {
+                    margin: 8px;
+                    
+                    .ant-pagination-item {
+                        min-width: 24px;
+                        height: 24px;
+                        line-height: 22px;
+                    }
+                    
+                    .ant-pagination-prev,
+                    .ant-pagination-next {
+                        min-width: 24px;
+                        height: 24px;
+                    }
+                }
             }
         }
     }
@@ -419,14 +557,14 @@ $border-radius: 6px;
         .ant-table-row {
             transition: all 0.3s ease;
 
-            &:hover {
-                background: #f9fafb;
-                cursor: pointer;
+            // &:hover {
+            //     background: #f9fafb;
+            //     cursor: pointer;
 
                 .action-button {
                     opacity: 1;
                 }
-            }
+            // }
         }
 
         .item-wrapper {
@@ -483,12 +621,16 @@ $border-radius: 6px;
             align-items: center;
             justify-content: center;
             border-radius: 6px;
-            opacity: 0.8;
+            opacity: 0.6;
             transition: all 0.3s ease;
 
             &:hover {
                 background: #f3f4f6;
-                color: $secondary-color;
+                opacity: 1;
+            }
+
+            svg {
+                color: #6b7280;
             }
         }
     }
@@ -636,7 +778,7 @@ $border-radius: 6px;
 
 // Table styles
 .revenue-tables {
-    margin: 0 24px 24px;
+    margin: 0 5px 5px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
@@ -685,7 +827,7 @@ $border-radius: 6px;
     }
 
     .revenue-tables {
-        margin: 0 16px 16px;
+        margin: 0 7px 7px 7px;
 
         .ant-table-wrapper {
             .ant-table {
@@ -693,6 +835,292 @@ $border-radius: 6px;
                 .ant-table-thead>tr>th,
                 .ant-table-tbody>tr>td {
                     padding: 12px 16px;
+                }
+            }
+        }
+    }
+}
+
+.page-headers {
+    @include hover-shadow;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+
+    .page-titles {
+        text-align: left;
+        margin-bottom: 0;
+        flex-shrink: 0;
+
+        h2 {
+            color: $text-color-dark;
+            margin-bottom: 4px;
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .ant-typography-secondary {
+            color: #666;
+            font-size: 14px;
+            display: block;
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+
+        .desktop-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: nowrap;
+
+            .search-container {
+                position: relative;
+                display: flex;
+                align-items: center;
+
+                .search-input {
+                    width: 300px;
+
+                    @media (max-width: 1300px) {
+                        width: 250px;
+                    }
+
+                    @media (max-width: 992px) {
+                        width: 200px;
+                    }
+
+                    @media (max-width: 767px) {
+                        display: none;
+                    }
+                }
+
+                .search-icon-button {
+                    display: none;
+                    padding: 0 12px;
+                    width: 38px;
+                    height: 38px;
+                    align-items: center;
+                    justify-content: center;
+
+                    @media (max-width: 767px) {
+                        display: flex;
+                    }
+                }
+            }
+
+            .export-button {
+                height: 38px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                @media (max-width: 767px) {
+                    padding: 0 12px;
+                    width: 38px;
+                    height: 38px;
+
+                    .button-text {
+                        display: none;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 12px;
+
+        .page-titles {
+            text-align: left;
+            width: auto;
+            margin-bottom: 0;
+            h2 {
+                font-size: 18px;
+            }
+        }
+        .header-actions {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px;
+            align-items: center !important;
+            justify-content: flex-end;
+            min-width: max-content;
+            .desktop-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                width: auto;
+                gap: 8px;
+                > div {
+                    width: auto;
+                    justify-content: flex-end;
+                    display: flex !important;
+                }
+                .search-container {
+                    max-width: 400px;
+                    display: flex !important;
+                }
+            }
+        }
+    }
+
+    @media (max-width: 576px) {
+        .page-titles {
+            .ant-typography-secondary {
+                font-size: 13px;
+            }
+        }
+    }
+
+    @media (max-width: 400px) {
+        .page-titles {
+            .ant-typography-secondary {
+                font-size: 11px;
+            }
+        }
+    }
+}
+
+// Search Popover Styles
+.search-popover {
+    .ant-popover-inner {
+        padding: 0;
+    }
+
+    .ant-popover-inner-content {
+        padding: 0;
+    }
+
+    .search-popup {
+        width: 280px;
+        padding: 12px;
+
+        .search-input {
+            .ant-input-affix-wrapper {
+                border-radius: 6px;
+                height: 38px;
+                border: 1px solid #e6e6e6;
+                transition: all 0.3s ease;
+
+                &:hover, &:focus {
+                    border-color: #1677ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+
+                .anticon {
+                    color: #999;
+                }
+
+                input {
+                    font-size: 14px;
+                    
+                    &::placeholder {
+                        color: #999;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-popup {
+            width: 260px;
+            padding: 10px;
+
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 34px;
+                    
+                    input {
+                        font-size: 13px;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 480px) {
+        .search-popup {
+            width: 240px;
+            padding: 8px;
+
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 32px;
+                    
+                    input {
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Hide search popover on desktop but keep it visible on mobile
+@media (min-width: 769px) {
+    .mobile-search-popover {
+        display: none;
+    }
+}
+
+// Make search icon button visible only on mobile
+.search-icon-button {
+    @media (min-width: 768px) {
+        display: none !important;
+    }
+}
+
+
+@media (max-width: 767px) {
+    .revenue-table {
+        .ant-table-pagination {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            visibility: visible !important;
+            .ant-pagination-options {
+                display: flex !important;
+                align-items: center;
+                margin-bottom: 10px;
+                .ant-select-selection-item {
+                    width: auto !important;
+                    min-width: 40px;
+                    height: 32px;
+                    max-width: 100%;
+                    overflow: visible !important;
+                    white-space: normal !important;
+                    text-align: center;
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+            }
+        }
+    }
+}
+
+@media (min-width: 768px) {
+    .customer-list-container {
+        .ant-table-pagination {
+            .ant-pagination-options {
+                .ant-select-selection-item {
+                    width: 100%;
+                    height: 32px;
+                    color: inherit;
                 }
             }
         }

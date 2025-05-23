@@ -7,7 +7,8 @@ import {
     Input,
     Dropdown,
     Menu,
-    Breadcrumb
+    Breadcrumb,
+    Popover
 } from 'antd';
 import {
     FiPlus,
@@ -36,6 +37,7 @@ const Announcement = () => {
     const searchInputRef = useRef(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     // RTK Query mutations
     const [createAnnouncement] = useCreateAnnouncementMutation();
@@ -168,13 +170,41 @@ const Announcement = () => {
         }
     };
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search announcements..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
+    const exportMenu = (
+        <Menu>
+            <Menu.Item key="csv" onClick={() => handleExport('csv')}>
+                Export as CSV
+            </Menu.Item>
+            <Menu.Item key="excel" onClick={() => handleExport('excel')}>
+                Export as Excel
+            </Menu.Item>
+            <Menu.Item key="pdf" onClick={() => handleExport('pdf')}>
+                Export as PDF
+            </Menu.Item>
+        </Menu>
+    );
+
     return (
         <div className="announcement-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
                         <Link to="/dashboard">
-                            <FiHome style={{ marginRight: '4px' }} />
+                            <FiHome style={{ marginRight: "4px" }} />
                             Home
                         </Link>
                     </Breadcrumb.Item>
@@ -191,43 +221,46 @@ const Announcement = () => {
                     <Text type="secondary">Manage all announcements in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search announcements..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
-                    <div className="action-buttons">
-                        <Dropdown overlay={
-                            <Menu>
-                                <Menu.Item key="csv" onClick={() => handleExport('csv')}>
-                                    Export as CSV
-                                </Menu.Item>
-                                <Menu.Item key="excel" onClick={() => handleExport('excel')}>
-                                    Export as Excel
-                                </Menu.Item>
-                                <Menu.Item key="pdf" onClick={() => handleExport('pdf')}>
-                                    Export as PDF
-                                </Menu.Item>
-                            </Menu>
-                        } trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search announcements..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleOpenModal}
+                                className="add-button"
+                            >
+                                <span className="button-text">Create Announcement</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleOpenModal}
-                            className="add-button"
-                        >
-                            Create Announcement
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

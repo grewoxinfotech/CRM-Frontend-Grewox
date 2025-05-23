@@ -266,7 +266,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
         }}
       >
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="name"
               label="Name"
@@ -298,7 +298,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item label="Contact" style={{ marginBottom: 0 }} required>
               <Input.Group
                 compact
@@ -389,7 +389,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="email"
               label="Email"
@@ -406,7 +406,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="taxNumber" label="Tax Number">
               <Input
                 placeholder="Enter tax number (optional)"
@@ -434,7 +434,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
         </Form.Item>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="city" label="City">
               <Input
                 placeholder="Enter city (optional)"
@@ -447,7 +447,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="state" label="State">
               <Input
                 placeholder="Enter state (optional)"
@@ -463,7 +463,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="country" label="Country">
               <Input
                 placeholder="Enter country (optional)"
@@ -476,7 +476,7 @@ const EditVendor = ({ onCancel, initialValues, open }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item name="zipcode" label="Zipcode">
               <Input
                 placeholder="Enter zipcode (optional)"

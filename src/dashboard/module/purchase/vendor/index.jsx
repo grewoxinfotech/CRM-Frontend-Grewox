@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
+    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -44,6 +44,8 @@ const Vendor = () => {
         search: searchText,
         ...filters
     });
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [deleteVendor] = useDeleteVendorMutation();
 
@@ -206,6 +208,20 @@ const Vendor = () => {
         </Menu>
     );
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search vendors..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
     return (
         <div className="vendor-page">
             <div className="page-breadcrumb">
@@ -226,51 +242,64 @@ const Vendor = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Vendors</Title>
-                    <Text type="secondary">Manage all vendors in the organization</Text>
+                    <Text className="page-description" type="secondary">Manage all vendors in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search vendors..."
-                            allowClear
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
-                            className="search-input"
-                            style={{ width: '300px' }}
-                        />
-                        <Button
-                            icon={<FiFilter />}
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={showFilters ? 'filter-button active' : 'filter-button'}
-                        >
-                            Filters
-                        </Button>
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button icon={<FiDownload />}>
-                                Export <FiChevronDown style={{ marginLeft: '4px' }} />
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                                    placeholder="Search vendors..."
+                                    allowClear
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            {/* <Button
+                                icon={<FiFilter />}
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={showFilters ? 'filter-button active' : 'filter-button'}
+                            >
+                                <span className="button-text">Filters</span>
+                            </Button> */}
+                            <Dropdown overlay={exportMenu} trigger={['click']}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleCreate}
+                                className="add-button"
+                            >
+                                <span className="button-text">Add Vendor</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus />}
-                            onClick={handleCreate}
-                            style={{
-                                background: 'linear-gradient(135deg, #1890ff 0%, #1677ff 100%)',
-                                border: 'none',
-                                boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)'
-                            }}
-                        >
-                            Add Vendor
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {showFilters && (
-                <Card className="filter-card" style={{ marginBottom: '24px' }}>
-                    <Row gutter={16}>
-                        <Col span={8}>
+            {/* {showFilters && (
+                <Card className="filter-card">
+                    <Row gutter={[16, 16]}>
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
                             <Select
                                 placeholder="Filter by status"
                                 style={{ width: '100%' }}
@@ -282,7 +311,7 @@ const Vendor = () => {
                                 <Option value="inactive">Inactive</Option>
                             </Select>
                         </Col>
-                        <Col span={8}>
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
                             <Select
                                 placeholder="Filter by country"
                                 style={{ width: '100%' }}
@@ -295,8 +324,8 @@ const Vendor = () => {
                                 ))}
                             </Select>
                         </Col>
-                        <Col span={8}>
-                            <Space>
+                        <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+                            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
                                 <Button type="primary" onClick={clearFilters}>
                                     Clear Filters
                                 </Button>
@@ -304,7 +333,7 @@ const Vendor = () => {
                         </Col>
                     </Row>
                 </Card>
-            )}
+            )} */}
 
             <VendorList
                 searchText={searchText}

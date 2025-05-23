@@ -14,6 +14,7 @@ import {
   DatePicker,
   Space,
   Spin,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -21,6 +22,7 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
+  FiFilter,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import InvoiceList from "./InvoiceList";
@@ -72,6 +74,10 @@ const Invoice = () => {
   });
   const [createInvoice] = useCreateInvoiceMutation();
   const [updateInvoice] = useUpdateInvoiceMutation();
+
+  const [isMobileMenuVisible, setIsMobileMenuVisible] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
 
   const handleDateRangeChange = (dates) => {
     setFilters((prev) => ({
@@ -264,6 +270,65 @@ const Invoice = () => {
     setSearchText(value);
     setCurrentPage(1);
   };
+  const mobileActionMenu = (
+    <Menu className="mobile-action-menu">
+      <Menu.Item key="date" className="mobile-menu-item">
+        <RangePicker
+          onChange={handleDateRangeChange}
+          value={filters.dateRange}
+          allowClear
+          placeholder={["Start Date", "End Date"]}
+        />
+      </Menu.Item>
+      <Menu.Item key="export" className="mobile-menu-item">
+        <Dropdown overlay={exportMenu} trigger={["click"]}>
+          <Button className="export-button">
+            <FiDownload size={16} />
+            Export
+          </Button>
+        </Dropdown>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const filterMenu = (
+    <Menu className="filter-menu">
+      <Menu.Item key="date" className="filter-menu-item">
+        <div className="filter-section">
+          <RangePicker
+            onChange={handleDateRangeChange}
+            value={filters.dateRange}
+            allowClear
+            placeholder={["Start Date", "End Date"]}
+          />
+        </div>
+      </Menu.Item>
+      <Menu.Item key="export" className="filter-menu-item">
+        <div className="filter-section">
+          <Dropdown overlay={exportMenu} trigger={["click"]}>
+            <Button className="export-button">
+              <FiDownload size={16} />
+              Export
+            </Button>
+          </Dropdown>
+        </div>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search invoices..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
 
   return (
     <div className="invoice-page">
@@ -283,15 +348,54 @@ const Invoice = () => {
       </div>
 
       <div className="page-header">
-        <div className="page-title">
-          <Title level={2}>Invoices</Title>
-          <Text type="secondary">Manage all invoices in the organization</Text>
-        </div>
-        <div className="header-actions">
-          <div
-            className="search-filter-group"
-            style={{ display: "flex", gap: "16px", alignItems: "center" }}
-          >
+        <div className="header-content">
+          <div className="page-title">
+            <div className="title-row">
+              <div className="title-content">
+              <Title level={2}>Invoices</Title>
+              <Text type="secondary">Manage all invoices in the organization</Text>
+              </div>
+              <div className="mobile-actions">
+                <Button
+                  type="primary"
+                  icon={<FiPlus size={18} />}
+                  onClick={() => setCreateModalVisible(true)}
+                  className="mobile-add-button"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  visible={isSearchVisible}
+                  onVisibleChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  overlayClassName="search-popover"
+                  getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                >
+                  <Button
+                    icon={<FiSearch size={18} />}
+                    className="mobile-search-button"
+                  />
+                </Popover>
+                <Dropdown
+                  overlay={filterMenu}
+                  trigger={["click"]}
+                  visible={isFilterVisible}
+                  onVisibleChange={setIsFilterVisible}
+                  placement="bottomRight"
+                  getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                >
+                  <Button
+                    icon={<FiFilter size={18} />}
+                    className="mobile-filter-button"
+                  />
+                </Dropdown>
+              </div>
+            </div>
+            
+          </div>
+
+          <div className="header-actions">
+            <div className="desktop-actions">
             <Input
               prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search invoices..."
@@ -312,26 +416,21 @@ const Invoice = () => {
               style={{ width: 400 }}
               placeholder={["Start Date", "End Date"]}
             />
-          </div>
-          <div className="action-buttons">
-            <Dropdown overlay={exportMenu} trigger={["click"]}>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  Export
+                </Button>
+              </Dropdown>
               <Button
-                className="export-button"
-                icon={<FiDownload size={16} />}
-                loading={loading}
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={() => handleCreate()}
+                className="add-button"
               >
-                Export
-                <FiChevronDown size={16} />
+                <span className="button-text">Create Invoice</span>
               </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus size={16} />}
-              onClick={handleCreate}
-              className="add-button"
-            >
-              Create Invoice
-            </Button>
+            </div>
           </div>
         </div>
       </div>

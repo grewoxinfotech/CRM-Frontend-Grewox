@@ -527,7 +527,7 @@ const LeadList = ({
     {
       title: "Actions",
       key: "actions",
-      width: "80",
+      width: 80,
       fixed: "right",
       render: (_, record) => (
         <div onClick={(e) => e.stopPropagation()}>

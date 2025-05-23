@@ -833,6 +833,7 @@ const CreateInvoice = ({
         }}
       >
         <div
+          className="create-invoice-form-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr",
@@ -1001,7 +1002,7 @@ const CreateInvoice = ({
             name="currency"
             label={
               <span className="form-label">
-                Currency <span className="required"></span>
+                Currency  <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select currency" }]}
@@ -1037,24 +1038,25 @@ const CreateInvoice = ({
               ))}
             </Select>
           </Form.Item>
-        </div>
+        {/* </div>
 
         <div
+        className="create-invoice-form-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr",
             gap: "16px",
           }}
-        >
+        > */}
           <Form.Item
             name="issueDate"
             label={
               <span className="form-label">
-                Issue Date <span className="required"></span>
+                Issue Date <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select issue date" }]}
-            style={{ marginTop: '12px' }}
+            // style={{ marginTop: '12px' }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1072,11 +1074,11 @@ const CreateInvoice = ({
             name="dueDate"
             label={
               <span className="form-label">
-                Due Date <span className="required"></span>
+                Due Date  <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
             rules={[{ required: true, message: "Please select due date" }]}
-            style={{ marginTop: '12px' }}
+            // style={{ marginTop: '12px' }}
           >
             <DatePicker
               format="DD-MM-YYYY"
@@ -1100,7 +1102,7 @@ const CreateInvoice = ({
             rules={[
               { required: true, message: "Please select payment status" },
             ]}
-            style={{ marginTop: '12px' }}
+            // style={{ marginTop: '12px' }}
           >
             <Select
               placeholder="Select Status"
@@ -1159,333 +1161,339 @@ const CreateInvoice = ({
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
-                <table className="invoice-items-table">
-                  <thead>
-                    <tr>
-                      <th>Item</th>
-                      <th>Quantity</th>
-                      <th>Unit Price</th>
-                      <th>HSN/SAC</th>
-                      <th>Discount</th>
-                      <th>Tax</th>
-                      <th>Amount</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fields.map(({ key, name, ...restField }, index) => (
-                      <tr key={key} className="item-data-row">
-                        <td>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "item_name"]}
-                            rules={[{ required: true, message: "Required" }]}
-                          >
-                            <Select
-                              showSearch
-                              placeholder="Select Product"
-                              optionFilterProp="children"
-                              style={{ width: "100%" }}
-                              onChange={(value) => {
-                                const selectedProduct =
-                                  productsData?.data?.find(
-                                    (product) => product.id === value
-                                  );
-                                if (selectedProduct) {
-                                  const productCurrency = currenciesData?.find(
-                                    (c) => c.id === selectedProduct.currency
-                                  );
-                                  if (productCurrency) {
-                                    setSelectedCurrency(
-                                      productCurrency.currencyIcon
-                                    );
-                                    setSelectedCurrencyId(productCurrency.id);
-                                    setIsCurrencyDisabled(true);
-                                  }
-
-                                  const items =
-                                    form.getFieldValue("items") || [];
-                                  items[index] = {
-                                    ...items[index],
-                                    id: selectedProduct.id,
-                                    item_name: selectedProduct.name,
-                                    unit_price: selectedProduct.selling_price,
-                                    hsn_sac: selectedProduct.hsn_sac,
-                                    tax: selectedProduct.tax,
-                                    profilePic: selectedProduct.image,
-                                    currency: selectedProduct.currency,
-                                  };
-                                  form.setFieldsValue({
-                                    items,
-                                    currency: selectedProduct.currency,
-                                  });
-                                  calculateTotals(items);
-                                }
-                              }}
+                <div className="invoice-items-table-wrapper">
+                  <table className="invoice-items-table">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>HSN/SAC</th>
+                        <th>Discount</th>
+                        <th>Tax</th>
+                        <th>Amount</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fields.map(({ key, name, ...restField }, index) => (
+                        <tr key={key} className="item-data-row">
+                          <td >
+                            <Form.Item
+                              {...restField}
+                              name={[name, "item_name"]}
+                              style={{marginTop:"-10px"}}
                             >
-                              {productsData?.data?.map((product) => (
-                                <Option key={product.id} value={product.id}>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "10px",
-                                    }}
-                                  >
-                                    <div
-                                      style={{
-                                        width: "30px",
-                                        height: "30px",
-                                        borderRadius: "4px",
-                                        overflow: "hidden",
-                                      }}
-                                    >
-                                      <img
-                                        src={product.image}
-                                        alt={product.name}
-                                        style={{
-                                          width: "100%",
-                                          height: "100%",
-                                          objectFit: "cover",
-                                        }}
-                                      />
-                                    </div>
+                              <Select
+                                showSearch
+                                placeholder="Select Product"
+                                optionFilterProp="children"
+                                style={{ width: "100%" }}
+                                onChange={(value) => {
+                                  const selectedProduct =
+                                    productsData?.data?.find(
+                                      (product) => product.id === value
+                                    );
+                                  if (selectedProduct) {
+                                    const productCurrency = currenciesData?.find(
+                                      (c) => c.id === selectedProduct.currency
+                                    );
+                                    if (productCurrency) {
+                                      setSelectedCurrency(
+                                        productCurrency.currencyIcon
+                                      );
+                                      setSelectedCurrencyId(productCurrency.id);
+                                      setIsCurrencyDisabled(true);
+                                    }
+
+                                    const items =
+                                      form.getFieldValue("items") || [];
+                                    items[index] = {
+                                      ...items[index],
+                                      id: selectedProduct.id,
+                                      item_name: selectedProduct.name,
+                                      unit_price: selectedProduct.selling_price,
+                                      hsn_sac: selectedProduct.hsn_sac,
+                                      tax: selectedProduct.tax,
+                                      profilePic: selectedProduct.image,
+                                      currency: selectedProduct.currency,
+                                    };
+                                    form.setFieldsValue({
+                                      items,
+                                      currency: selectedProduct.currency,
+                                    });
+                                    calculateTotals(items);
+                                  }
+                                }}
+                              >
+                                {productsData?.data?.map((product) => (
+                                  <Option key={product.id} value={product.id}>
                                     <div
                                       style={{
                                         display: "flex",
-                                        flexDirection: "column",
+                                        alignItems: "center",
+                                        gap: "10px",
                                       }}
                                     >
-                                      <span style={{ fontWeight: 500 }}>
-                                        {product.name}
-                                      </span>
+                                      <div
+                                        style={{
+                                          width: "30px",
+                                          height: "30px",
+                                          borderRadius: "4px",
+                                          overflow: "hidden",
+                                        }}
+                                      >
+                                        <img
+                                          src={product.image}
+                                          alt={product.name}
+                                          style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "cover",
+                                          }}
+                                        />
+                                      </div>
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          flexDirection: "column",
+                                        }}
+                                      >
+                                        <span style={{ fontWeight: 500 }}>
+                                          {product.name}
+                                        </span>
+                                      </div>
                                     </div>
-                                  </div>
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "quantity"]}
-                            rules={[
-                              { required: true, message: "Required" },
-                              {
-                                validator: (_, value) => {
-                                  if (!value) return Promise.resolve();
-                                  if (!Number.isInteger(value)) {
-                                    return Promise.reject(
-                                      "Please enter a valid quantity"
-                                    );
-                                  }
-                                  if (value < 1) {
-                                    return Promise.reject(
-                                      "Quantity must be at least 1"
-                                    );
-                                  }
-                                  return Promise.resolve();
+                                  </Option>
+                                ))}
+                              </Select>
+                            </Form.Item>
+                          </td>
+                          <td>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "quantity"]}
+                              rules={[
+                                { required: true, message: "Required" },
+                                {
+                                  validator: (_, value) => {
+                                    if (!value) return Promise.resolve();
+                                    if (!Number.isInteger(value)) {
+                                      return Promise.reject(
+                                        "Please enter a valid quantity"
+                                      );
+                                    }
+                                    if (value < 1) {
+                                      return Promise.reject(
+                                        "Quantity must be at least 1"
+                                      );
+                                    }
+                                    return Promise.resolve();
+                                  },
                                 },
-                              },
-                            ]}
-                            initialValue={1}
-                            style={{ height: "48px" }}
-                          >
-                            <InputNumber
-                              min={1}
-                              precision={0}
-                              className="quantity-input"
-                              onChange={() =>
-                                calculateTotals(form.getFieldValue("items"))
-                              }
-                            />
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "unit_price"]}
-                            rules={[{ required: true, message: "Required" }]}
-                          >
-                            <InputNumber
-                              className="price-input"
-                              min={0}
-                              disabled={true}
-                              onChange={() =>
-                                calculateTotals(form.getFieldValue("items"))
-                              }
-                              formatter={(value) =>
-                                `${selectedCurrency}${value}`.replace(
-                                  /\B(?=(\d{3})+(?!\d))/g,
-                                  ","
-                                )
-                              }
-                              parser={(value) => value.replace(/[^\d.]/g, "")}
-                            />
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <Form.Item {...restField} name={[name, "hsn_sac"]}>
-                            <Input
-                              placeholder="HSN/SAC"
-                              className="hsn-input"
-                              disabled={true}
-                            />
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "discount"]}
-                            style={{ marginTop: "-8px" }}
-                          >
-                            <Space>
-                              <Form.Item
-                                {...restField}
-                                name={[name, "discount_type"]}
-                                style={{ margin: 0 }}
-                              >
-                                <Select
-                                  size="large"
-                                  style={{
-                                    width: "120px",
-                                    borderRadius: "8px",
-                                    height: "48px",
-                                  }}
-                                  defaultValue="percentage"
-                                  onChange={() =>
-                                    calculateTotals(form.getFieldValue("items"))
-                                  }
-                                >
-                                  <Option value="percentage">Percentage</Option>
-                                  <Option value="fixed">Fixed Amount</Option>
-                                </Select>
-                              </Form.Item>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                }}
-                              >
+                              ]}
+                              initialValue={1}
+                              style={{ height: "48px",marginTop:"-10px",width:"100px" }}
+                            >
+                              <InputNumber
+                                min={1}
+                                precision={0}
+                                className="quantity-input"
+                                style={{padding:"0px"}}
+                                onChange={() =>
+                                  calculateTotals(form.getFieldValue("items"))
+                                }
+                              />
+                            </Form.Item>
+                          </td>
+                          <td>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "unit_price"]}
+                              style={{width:"150px"}}
+                            >
+                              <InputNumber
+                                className="price-input"
+                                style={{padding:"0px"}}
+                                min={0}
+                                disabled={true}
+                                onChange={() =>
+                                  calculateTotals(form.getFieldValue("items"))
+                                }
+                                formatter={(value) =>
+                                  `${selectedCurrency}${value}`.replace(
+                                    /\B(?=(\d{3})+(?!\d))/g,
+                                    ","
+                                  )
+                                }
+                                parser={(value) => value.replace(/[^\d.]/g, "")}
+                              />
+                            </Form.Item>
+                          </td>
+                          <td>
+                            <Form.Item {...restField} name={[name, "hsn_sac"]} style={{width:"150px"}}>
+                              <Input
+                                placeholder="HSN/SAC"
+                                className="hsn-input"
+                                disabled={true}
+                              />
+                            </Form.Item>
+                          </td>
+                          <td>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "discount"]}
+                              style={{ marginTop: "-8px" }}
+                            >
+                              <Space>
                                 <Form.Item
                                   {...restField}
-                                  name={[name, "discount"]}
+                                  name={[name, "discount_type"]}
                                   style={{ margin: 0 }}
                                 >
-                                  <InputNumber
-                                    className="item-discount-input"
-                                    placeholder={
-                                      form.getFieldValue("items")?.[index]
-                                        ?.discount_type === "fixed"
-                                        ? "Amount"
-                                        : "%"
-                                    }
-                                    formatter={(value) => {
-                                      if (!value && value !== 0) return "";
-                                      return value
-                                        .toString()
-                                        .replace(/[^\d.]/g, "");
-                                    }}
-                                    parser={(value) => {
-                                      const parsed = value?.replace(
-                                        /[^\d.]/g,
-                                        ""
-                                      );
-                                      return parsed || "0";
-                                    }}
-                                    onStep={(value) => {
-                                      const items = form.getFieldValue("items");
-                                      if (items?.[index]) {
-                                        items[index].discount = value || 0;
-                                        form.setFieldsValue({ items });
-                                        calculateTotals(items);
-                                      }
-                                    }}
-                                    onChange={(value) => {
-                                      const items = form.getFieldValue("items");
-                                      if (items?.[index]) {
-                                        items[index].discount = value || 0;
-                                        form.setFieldsValue({ items });
-                                        calculateTotals(items);
-                                      }
-                                    }}
-                                    onKeyUp={() => {
-                                      calculateTotals(
-                                        form.getFieldValue("items")
-                                      );
-                                    }}
+                                  <Select
+                                    size="large"
                                     style={{
-                                      width: "100px",
+                                      width: "100%",
                                       borderRadius: "8px",
-                                      height: "40px",
+                                      height: "48px",
                                     }}
-                                  />
+                                    defaultValue="percentage"
+                                    onChange={() =>
+                                      calculateTotals(form.getFieldValue("items"))
+                                    }
+                                  >
+                                    <Option value="percentage">Percentage</Option>
+                                    <Option value="fixed">Fixed Amount</Option>
+                                  </Select>
                                 </Form.Item>
-                                <Text style={{ marginLeft: "4px" }}>
-                                  {form.getFieldValue("items")?.[index]
-                                    ?.discount_type === "fixed"
-                                    ? selectedCurrency
-                                    : "%"}
-                                </Text>
-                              </div>
-                            </Space>
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-2px"}}>
-                            <Select
-                              placeholder="Select Tax"
-                              loading={taxesLoading}
-                              disabled={!isTaxEnabled}
-                              allowClear
-                              onChange={(value, option) => {
-                                const items = form.getFieldValue("items") || [];
-                                items[index].tax = option?.taxRate;
-                                form.setFieldsValue({ items });
-                                calculateTotals(items);
-                              }}
-                            >
-                              {taxesData?.data?.map((tax) => (
-                                <Option
-                                  key={tax.id}
-                                  value={tax.id}
-                                  taxRate={tax.gstPercentage}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
                                 >
-                                  {tax.gstName} ({tax.gstPercentage}%)
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                        </td>
-                        <td>
-                          <div className="amount-fields">
-                            <span className="currency-symbols">
-                              {selectedCurrency}
-                            </span>
-                            <span className="amount-values">
-                              {calculateItemTotal(
-                                form.getFieldValue("items")[index]
-                              )?.toFixed(2) || "0.00"}
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                          {fields.length > 1 && (
-                            <Button
-                              type="text"
-                              icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
-                              onClick={() => {
-                                remove(name);
-                                calculateTotals(form.getFieldValue("items"));
-                              }}
-                            />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                                  <Form.Item
+                                    {...restField}
+                                    name={[name, "discount"]}
+                                    style={{ margin: 0 }}
+                                  >
+                                    <InputNumber
+                                      className="item-discount-input"
+                                      placeholder={
+                                        form.getFieldValue("items")?.[index]
+                                          ?.discount_type === "fixed"
+                                          ? "Amount"
+                                          : "%"
+                                      }
+                                      formatter={(value) => {
+                                        if (!value && value !== 0) return "";
+                                        return value
+                                          .toString()
+                                          .replace(/[^\d.]/g, "");
+                                      }}
+                                      parser={(value) => {
+                                        const parsed = value?.replace(
+                                          /[^\d.]/g,
+                                          ""
+                                        );
+                                        return parsed || "0";
+                                      }}
+                                      onStep={(value) => {
+                                        const items = form.getFieldValue("items");
+                                        if (items?.[index]) {
+                                          items[index].discount = value || 0;
+                                          form.setFieldsValue({ items });
+                                          calculateTotals(items);
+                                        }
+                                      }}
+                                      onChange={(value) => {
+                                        const items = form.getFieldValue("items");
+                                        if (items?.[index]) {
+                                          items[index].discount = value || 0;
+                                          form.setFieldsValue({ items });
+                                          calculateTotals(items);
+                                        }
+                                      }}
+                                      onKeyUp={() => {
+                                        calculateTotals(
+                                          form.getFieldValue("items")
+                                        );
+                                      }}
+                                      style={{
+                                        width: "150px",
+                                        borderRadius: "8px",
+                                        height: "40px",
+                                        padding:"0px"
+                                      }}
+                                    />
+                                  </Form.Item>
+                                  <Text style={{ marginLeft: "4px" }}>
+                                    {form.getFieldValue("items")?.[index]
+                                      ?.discount_type === "fixed"
+                                      ? selectedCurrency
+                                      : "%"}
+                                  </Text>
+                                </div>
+                              </Space>
+                            </Form.Item>
+                          </td>
+                          <td>
+                            <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-15px"}}>
+                              <Select
+                                placeholder="Select Tax"
+                                style={{width:"120px"}}
+                                loading={taxesLoading}
+                                disabled={!isTaxEnabled}
+                                allowClear
+                                onChange={(value, option) => {
+                                  const items = form.getFieldValue("items") || [];
+                                  items[index].tax = option?.taxRate;
+                                  form.setFieldsValue({ items });
+                                  calculateTotals(items);
+                                }}
+                              >
+                                {taxesData?.data?.map((tax) => (
+                                  <Option
+                                    key={tax.id}
+                                    value={tax.id}
+                                    taxRate={tax.gstPercentage}
+                                  >
+                                    {tax.gstName} ({tax.gstPercentage}%)
+                                  </Option>
+                                ))}
+                              </Select>
+                            </Form.Item>
+                          </td>
+                          <td>
+                            <div className="amount-fields" style={{marginTop:"-8px"}}>
+                              <span className="currency-symbols">
+                                {selectedCurrency}
+                              </span>
+                              <span className="amount-values">
+                                {calculateItemTotal(
+                                  form.getFieldValue("items")[index]
+                                )?.toFixed(2) || "0.00"}
+                              </span>
+                            </div>
+                          </td>
+                          <td>
+                            {fields.length > 1 && (
+                              <Button
+                                type="text"
+                                icon={<FiTrash2 style={{ color: "#ff4d4f" }} />}
+                                onClick={() => {
+                                  remove(name);
+                                  calculateTotals(form.getFieldValue("items"));
+                                }}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
                 <div className="add-item-container">
                   <Button
@@ -1508,7 +1516,7 @@ const CreateInvoice = ({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "16px",
+                // marginBottom: "16px",
                 padding: "12px",
                 background: "#f8fafc",
                 borderRadius: "8px",
@@ -1546,7 +1554,7 @@ const CreateInvoice = ({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "16px",
+                // marginBottom: "16px",
                 padding: "12px",
                 background: "#f8fafc",
                 borderRadius: "8px",

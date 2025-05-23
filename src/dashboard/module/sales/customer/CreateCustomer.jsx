@@ -257,7 +257,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
         }}
       >
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="name"
               label={
@@ -297,7 +297,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="tax_number"
               label={
@@ -325,7 +325,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="email"
               label={
@@ -351,7 +351,7 @@ const CreateCustomer = ({ open, onCancel, onSubmit, loading }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="phone"
                className="combined-input-item"

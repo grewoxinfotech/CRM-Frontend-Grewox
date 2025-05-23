@@ -314,7 +314,6 @@ const EditBilling = ({ open, onCancel, initialData }) => {
         overallTaxAmount: Number(form.getFieldValue("overall_tax_amount") || 0),
       };
 
-      console.log("Submitting update data:", formattedData); // Debug log
 
       const response = await updateBilling({
         id: initialData.id,
@@ -1072,6 +1071,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                 marginBottom: "24px",
                 marginLeft: "16px",
                 marginRight: "16px",
+                marginTop: "16px",
               }}
             >
               <span
@@ -1104,6 +1104,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
             <Form.List name="items" style={{ marginTop: "20px" }}>
               {(fields, { add, remove }) => (
                 <>
+                <div className="billing-items-table-wrapper">
                   <table className="billing-items-table">
                     <thead>
                       <tr>
@@ -1234,6 +1235,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                   }
                                   style={{
                                     width: "100%",
+                                    padding:"0px"
                                   }}
                                 />
                               </Form.Item>
@@ -1242,6 +1244,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               <Form.Item
                                 {...field}
                                 name={[field.name, "unit_price"]}
+                                style={{width:"140px"}}
                               >
                                 <InputNumber
                                   className="price-input"
@@ -1256,6 +1259,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                   }
                                   style={{
                                     width: "100%",
+                                    padding:"0px"
                                   }}
                                 />
                               </Form.Item>
@@ -1264,6 +1268,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                               <Form.Item
                                 {...field}
                                 name={[field.name, "hsn_sac"]}
+                                style={{width:"140px"}}
                               >
                                 <Input
                                   placeholder="HSN/SAC"
@@ -1290,7 +1295,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                     <Select
                                       size="large"
                                       style={{
-                                        width: "120px",
+                                        width: "100%",
                                         borderRadius: "8px",
                                         height: "40px",
                                       }}
@@ -1363,9 +1368,10 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                                           );
                                         }}
                                         style={{
-                                          width: "100px",
+                                          width: "140px",
                                           borderRadius: "8px",
                                           height: "40px",
+                                          padding:"0px"
                                         }}
                                       />
                                     </Form.Item>
@@ -1467,6 +1473,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                       ))}
                     </tbody>
                   </table>
+                  </div>
 
                   <div className="add-item-container">
                     <Button
@@ -1577,7 +1584,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     disabled
                     size="large"
                     style={{
-                      width: "120px",
+                      width: "100%",
                       borderRadius: "8px",
                       height: "40px",
                     }}
@@ -1603,7 +1610,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     disabled
                     size="large"
                     style={{
-                      width: "120px",
+                      width: "100%",
                       borderRadius: "8px",
                       height: "40px",
                     }}
@@ -1629,7 +1636,7 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     <Select
                       size="large"
                       style={{
-                        width: "120px",
+                        width: "100%",
                         borderRadius: "8px",
                         height: "40px",
                       }}
@@ -1646,9 +1653,10 @@ const EditBilling = ({ open, onCancel, initialData }) => {
                     <InputNumber
                       size="large"
                       style={{
-                        width: "100px",
+                        width: "100%",
                         borderRadius: "8px",
                         height: "40px",
+                        padding:"0px"
                       }}
                       placeholder={
                         form.getFieldValue("discount_type") === "fixed"

@@ -222,6 +222,7 @@ const CreditNotesList = ({
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
@@ -271,6 +272,7 @@ const CreditNotesList = ({
         rowKey="id"
         loading={loading}
         onChange={handleTableChange}
+        scroll={{ x: "max-content", y: "100%" }}
         pagination={{
           ...pagination,
           showSizeChanger: true,

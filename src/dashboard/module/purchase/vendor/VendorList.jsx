@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Button, Tag, Dropdown, Tooltip, Typography, Modal, Spin, Alert, Menu, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiEye, FiMoreVertical, FiUser, FiPhone, FiMail, FiMapPin, FiGlobe } from 'react-icons/fi';
 import dayjs from 'dayjs';
@@ -24,6 +24,13 @@ const VendorList = ({
     const { isError } = useGetVendorsQuery();
     const [deleteVendor] = useDeleteVendorMutation();
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const vendors = data?.data || [];
 
@@ -242,6 +249,7 @@ const VendorList = ({
             title: "Actions",
             key: "actions",
             width: 80,
+            fixed: 'right',
             render: (_, record) => (
                 <Dropdown
                     overlay={
@@ -300,14 +308,16 @@ const VendorList = ({
         }
     };
 
+ 
+
     return (
-        <>
+        <div className="vendor-list-container">
             {selectedRowKeys.length > 0 && (
                 <div className="bulk-actions">
                     <Button
                         type="primary"
                         danger
-                        icon={<FiTrash2 size={16} />}
+                        icon={<FiTrash2 />}
                         onClick={handleBulkDelete}
                     >
                         Delete Selected ({selectedRowKeys.length})
@@ -320,9 +330,10 @@ const VendorList = ({
                 rowSelection={rowSelection}
                 rowKey="id"
                 loading={loading}
-                scroll={{ x: 1200 }}
+                scroll={{ x: 'max-content', y: '100%' }}
                 pagination={paginationConfig}
                 onChange={onChange}
+                
                 style={{
                     background: '#ffffff',
                     borderRadius: '8px',
@@ -335,8 +346,8 @@ const VendorList = ({
                 visible={isEditModalVisible}
                 onCancel={handleCancel}
                 initialValues={selectedVendor}
-            /> */}
-        </>
+                /> */}
+                </div>
     );
 };
 

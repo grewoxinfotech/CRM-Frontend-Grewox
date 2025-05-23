@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   Button,
@@ -77,6 +77,14 @@ const RevenueList = ({
 
   const products = productsData?.data || [];
   const customers = customersData?.data || [];
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Process revenue data to include parsed products
   const processedRevenue = useMemo(() => {
@@ -283,12 +291,12 @@ const RevenueList = ({
     return customer?.name || customer?.companyName || "N/A";
   };
 
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    },
-  };
+  // const rowSelection = {
+  //   selectedRowKeys,
+  //   onChange: (newSelectedRowKeys) => {
+  //     setSelectedRowKeys(newSelectedRowKeys);
+  //   },
+  // };
 
   const columns = [
     {
@@ -356,16 +364,17 @@ const RevenueList = ({
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
             <Menu>
-              <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView(record)}>
+              {/* <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView(record)}>
                 View Details
               </Menu.Item>
               <Menu.Item key="edit" icon={<FiEdit2 style={{ fontSize: "14px" }} />} onClick={() => onEdit(record)}>
                 Edit Revenue
-              </Menu.Item>
+              </Menu.Item> */}
               <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => handleDelete(record.id)}>
                 Delete Revenue
               </Menu.Item>
@@ -383,10 +392,52 @@ const RevenueList = ({
     },
   ];
 
+  // Calculate totals for stats
+  const stats = useMemo(() => {
+    return filteredRevenue.reduce(
+      (acc, rev) => ({
+        total_revenue: acc.total_revenue + (Number(rev.amount) || 0),
+        total_profit: acc.total_profit + (Number(rev.profit) || 0),
+        total_margin:
+          acc.total_margin + (Number(rev.profit_margin_percentage) || 0),
+        count: acc.count + 1,
+      }),
+      { total_revenue: 0, total_profit: 0, total_margin: 0, count: 0 }
+    );
+  }, [filteredRevenue]);
+
+  const clearCustomerFilter = () => {
+    setSelectedCustomer(null);
+    navigate("/dashboard/sales/revenue", { replace: true });
+  };
+
+  const clearProductFilter = () => {
+    setSelectedProduct(null);
+    navigate("/dashboard/sales/revenue", { replace: true });
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
+  };
+
+  // Use only numbers for mobile/tablet, and AntD default for desktop
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} customers`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
+  };
+
   return (
     <div className="overview-content">
       <Row gutter={[16, 16]} className="metrics-row">
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12}>
           <Card className="Metric-card revenue-card">
             <div className="metric-icon">
               <FiDollarSign />
@@ -403,7 +454,7 @@ const RevenueList = ({
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12}>
           <Card className="Metric-card deals-card">
             <div className="metric-icon">
               <FiTrendingUp />
@@ -420,7 +471,7 @@ const RevenueList = ({
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12}>
           <Card className="Metric-card leads-card">
             <div className="metric-icon">
               <FiPercent />
@@ -441,7 +492,7 @@ const RevenueList = ({
           </Card>
         </Col>
 
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12}>
           <Card className="Metric-card created-card">
             <div className="metric-icon">
               <FiPackage />
@@ -517,6 +568,7 @@ const RevenueList = ({
             onChange={handleTableChange}
             pagination={{
               ...pagination,
+              ...paginationConfig,
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} items`,
               pageSizeOptions: ['10', '20', '50', '100'],
@@ -524,6 +576,8 @@ const RevenueList = ({
               hideOnSinglePage: false,
               showQuickJumper: true
             }}
+            scroll={{x:"max-content",y:"100%"}}
+
             className="revenue-table"
           />
         </div>

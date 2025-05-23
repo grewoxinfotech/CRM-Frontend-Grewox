@@ -9,6 +9,7 @@ import {
   Dropdown,
   Menu,
   Breadcrumb,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -46,6 +47,8 @@ const CreditNotes = () => {
     pageSize,
     search: searchText
   });
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+
   const [createCreditNote] = useCreateCreditNoteMutation();
   const [updateCreditNote] = useUpdateCreditNoteMutation();
 
@@ -225,9 +228,22 @@ const CreditNotes = () => {
     setSearchText(value);
     setCurrentPage(1);
   };
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search credit notes..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
 
   return (
-    <div className="invoice-page">
+    <div className="credit-notes-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
@@ -246,13 +262,15 @@ const CreditNotes = () => {
       <div className="page-header">
         <div className="page-title">
           <Title level={2}>Credit Notes</Title>
-          <Text type="secondary">
+          <Text className="page-description" type="secondary">
             Manage all credit notes in the organization
           </Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
-            <Input
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+              <Input
               prefix={
                 <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
               }
@@ -261,28 +279,39 @@ const CreditNotes = () => {
               onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ width: 350 }}
+              // style={{ width: 350 }}
             />
-          </div>
-          <div className="action-buttons">
-            <Dropdown overlay={exportMenu} trigger={["click"]}>
-              <Button
-                className="export-button"
-                icon={<FiDownload size={16} />}
-                loading={loading}
-              >
-                Export
-                <FiChevronDown size={16} />
-              </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus />}
-              onClick={handleCreate}
-              className="add-button"
-            >
-              Add Credit Note
-            </Button>
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
+              <div className="action-buttons">
+                <Dropdown overlay={exportMenu} trigger={["click"]}>
+                  <Button className="export-button">
+                    <FiDownload size={16} />
+                    <span className="button-text">Export</span>
+                  </Button>
+                </Dropdown>
+                <Button
+                  type="primary"
+                  icon={<FiPlus size={16} />}
+                  onClick={handleCreate}
+                  className="add-button"
+                >
+                  <span className="button-text">Add Credit Note</span>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -310,13 +339,18 @@ const CreditNotes = () => {
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateSubmit}
+        loading={loading}
       />
 
       <EditCreditNotes
         open={isEditModalOpen}
-        onCancel={() => setIsEditModalOpen(false)}
+        onCancel={() => {
+          setIsEditModalOpen(false);
+          setSelectedCreditNote(null);
+        }}
         onSubmit={handleEditSubmit}
         creditNote={selectedCreditNote}
+        loading={loading}
       />
     </div>
   );

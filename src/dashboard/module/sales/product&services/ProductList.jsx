@@ -35,6 +35,7 @@ import { useGetCategoriesQuery } from "../../crm/crmsystem/souce/services/Source
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
+import { useNavigate } from "react-router-dom";
 
 const { Text } = Typography;
 
@@ -53,6 +54,11 @@ const ProductList = ({
   const currentUser = useSelector(selectCurrentUser);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const navigate = useNavigate();
+
+  const { data: productsData = [], isLoading } = useGetProductsQuery(
+    currentUser?.id
+  );
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const products = data?.data || [];
   const [deleteProduct] = useDeleteProductMutation();
@@ -129,27 +135,15 @@ const ProductList = ({
     setEditModalVisible(true);
   };
 
-  const getActionItems = (record) => [
-    {
-      key: 'view',
-      icon: <FiEye style={{ fontSize: '16px' }} />,
-      label: 'View',
-      onClick: () => onView(record)
-    },
-    {
-      key: 'edit',
-      icon: <FiEdit2 style={{ fontSize: '16px' }} />,
-      label: 'Edit',
-      onClick: () => onEdit(record)
-    },
-    {
-      key: 'delete',
-      icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
-      label: 'Delete',
-      danger: true,
-      onClick: () => handleDelete(record.id)
+  const handleRowClick = (record, event) => {
+    // Check if the click is from action buttons
+    if (event.target.closest('.action-button') || event.target.closest('.ant-dropdown')) {
+      return;
     }
-  ];
+    navigate('/dashboard/sales/revenue', {
+      state: { selectedProduct: record }
+    });
+  };
 
   const columns = [
     {
@@ -173,7 +167,7 @@ const ProductList = ({
       ),
       onFilter: (value, record) => record.name.toLowerCase().includes(value.toLowerCase()),
       render: (name, record) => (
-        <div className="item-wrapper">
+        <div className="item-wrapper" onClick={(e) => handleRowClick(record, e)} style={{ cursor: 'pointer' }}>
           <div className="item-content">
             <div className="icon-wrapper product-icon">
               {record.image ? (
@@ -313,26 +307,45 @@ const ProductList = ({
       key: "actions",
       width: 80,
       fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          overlay={
-            <Menu>
-              {getActionItems(record).map(item => (
-                <Menu.Item key={item.key} icon={item.icon} onClick={item.onClick} danger={item.danger}>
-                  {item.label}
-                </Menu.Item>
-              ))}
-            </Menu>
+      render: (_, record) => {
+        const items = [
+          {
+            key: 'edit',
+            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
+            label: 'Edit',
+            onClick: () => {
+              handleEdit(record);
+            }
+          },
+          {
+            key: 'delete',
+            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
+            label: 'Delete',
+            danger: true,
+            onClick: () => {
+              handleDelete(record.id);
+            }
           }
-          trigger={['click']}
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical size={16} />}
-            className="action-button"
-          />
-        </Dropdown>
-      ),
+        ];
+
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={['click']}
+            placement="bottomRight"
+            overlayClassName="action-dropdown"
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical size={16} />}
+              className="action-button"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+          </Dropdown>
+        );
+      }
     },
   ];
 
@@ -403,21 +416,26 @@ const ProductList = ({
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredProducts}
-        loading={loading}
         rowKey="id"
         scroll={{ x: "max-content", y: "100%" }}
         className="custom-table"
         pagination={paginationConfig}
         onChange={onChange}
+        loading={isLoading}    
+        onRow={(record) => ({
+          onClick: (e) => handleRowClick(record, e),
+          style: { cursor: 'pointer' }
+        })}
       />
 
       <EditProduct
-        visible={editModalVisible}
+        open={editModalVisible}
         onCancel={() => {
           setEditModalVisible(false);
           setSelectedProduct(null);
         }}
-        product={selectedProduct}
+        initialValues={selectedProduct}
+        currenciesData={currenciesData}
       />
     </div>
   );

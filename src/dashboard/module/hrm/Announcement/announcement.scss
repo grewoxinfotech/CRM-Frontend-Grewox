@@ -13,6 +13,14 @@
     padding: 24px;
     background: $background-color;
 
+    @media (max-width: 768px) {
+        padding: 16px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 12px;
+    }
+
     .page-breadcrumb {
         margin-bottom: 16px;
 
@@ -53,7 +61,6 @@
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
-        gap: 24px;
         background: white;
         padding: 24px 32px;
         border-radius: 12px;
@@ -73,103 +80,203 @@
             }
 
             .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
+                color: #666;
+                font-size: 14px;
                 display: block;
             }
         }
 
         .header-actions {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: flex-end;
-            gap: 16px;
-            width: 100%;
-            max-width: 800px;
+            gap: 12px;
 
-            .search-input {
-                flex: 1;
-                max-width: 360px;
-                min-width: 200px;
-
-                .ant-input-affix-wrapper {
-                    border-radius: 40px;
-                    height: 40px;
-                    padding: 4px 16px;
-                    transition: all 0.3s ease;
-                    border: 1px solid $border-color;
-                    width: 100%;
-
-                    .anticon {
-                        color: $text-color-light;
-                        margin-right: 8px;
-                        font-size: 16px;
-                    }
-
-                    .ant-input {
-                        font-size: 14px;
-                        background: transparent;
-                        border: none;
-                        padding: 0;
-                        margin: 0 4px;
-
-                        &::placeholder {
-                            color: rgba($text-color, 0.45);
-                        }
-                    }
-
-                    &:hover,
-                    &:focus,
-                    &-focused {
-                        border-color: #1677ff;
-                        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                    }
-                }
+            @media (max-width: 1200px) {
+                width: 100%;
+                justify-content: space-between;
             }
 
-            .action-buttons {
+            .desktop-actions {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                flex-shrink: 0;
+                flex-wrap: nowrap;
+
+                @media (max-width: 1200px) {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+
+                .search-container {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+
+                    .search-input {
+                        width: 300px;
+
+                        @media (max-width: 1300px) {
+                            width: 250px;
+                        }
+
+                        @media (max-width: 1200px) {
+                            width: 300px;
+                        }
+
+                        @media (max-width: 992px) {
+                            width: 350px;
+                        }
+
+                        @media (max-width: 768px) {
+                            display: none;
+                        }
+                    }
+
+                    .search-icon-button {
+                        display: none;
+                        padding: 0 12px;
+                        width: 38px;
+                        height: 38px;
+                        align-items: center;
+                        justify-content: center;
+
+                        @media (max-width: 768px) {
+                            display: flex;
+                        }
+
+                        @media (max-width: 576px) {
+                            width: 34px;
+                            height: 34px;
+                            padding: 0 10px;
+                        }
+                    }
+                }
 
                 .export-button,
                 .add-button {
-                    height: 40px;
-                    padding: 0 20px;
-                    display: inline-flex;
+                    height: 38px;
+                    display: flex;
                     align-items: center;
                     justify-content: center;
+
+                    @media (max-width: 768px) {
+                        padding: 0 12px !important;
+                        width: 38px;
+                        height: 38px;
+
+                        .button-text {
+                            display: none;
+                        }
+                    }
+
+                    @media (max-width: 576px) {
+                        width: 34px;
+                        height: 34px;
+                        padding: 0 10px !important;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 1200px) {
+            flex-direction: column;
+            padding: 20px;
+
+            .page-title {
+                text-align: center;
+                width: 100%;
+                margin-bottom: 20px;
+
+                h2 {
+                    font-size: 24px;
+                }
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 16px;
+
+                .desktop-actions {
+                    flex-direction: column;
+                    width: 100%;
+                    gap: 16px;
+
+                    > div {
+                        width: 100%;
+                        justify-content: center;
+                    }
+
+                    .search-container {
+                        width: 100%;
+                        max-width: 600px;
+                        margin: 0 auto;
+
+                        .search-input {
+                            width: 100%;
+                        }
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 12px;
+
+            .page-title {
+                text-align: left;
+                width: auto;
+                margin-bottom: 0;
+                h2 {
+                    font-size: 18px;
+                }
+                .ant-typography-secondary {
+                    font-size: 11px;
+                }
+            }
+
+            .header-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px;
+                align-items: center !important;
+                justify-content: flex-end;
+                min-width: max-content;
+
+                .desktop-actions {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    width: auto;
                     gap: 8px;
-                    border-radius: 8px;
-                    font-weight: 500;
-                    transition: all 0.3s ease;
-
-                    svg {
-                        font-size: 16px;
+                    > div {
+                        width: auto;
+                        justify-content: flex-end;
+                        display: flex !important;
+                    }
+                    .search-container {
+                        max-width: 400px;
+                        display: flex !important;
                     }
                 }
+            }
+        }
 
-                .export-button {
-                    border: 1px solid $border-color;
-                    background: white;
-
-                    &:hover {
-                        color: #1677ff;
-                        border-color: #1677ff;
-                        transform: translateY(-2px);
-                    }
+        @media (max-width: 576px) {
+            .page-title {
+                .ant-typography-secondary {
+                    font-size: 11px;
                 }
+            }
+        }
 
-                .add-button {
-                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                    border: none;
-                    color: white;
-
-                    &:hover {
-                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                        transform: translateY(-2px);
-                    }
+        @media (max-width: 400px) {
+            .page-title {
+                .ant-typography-secondary {
+                    font-size: 10px;
                 }
             }
         }

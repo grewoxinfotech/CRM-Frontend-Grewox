@@ -42,11 +42,19 @@ const BillingList = ({
   const { data: vendorsData } = useGetVendorsQuery();
   const { data: currenciesData } = useGetAllCurrenciesQuery({});
 
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedBill, setSelectedBill] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedBilling, setSelectedBilling] = useState(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [filteredInfo, setFilteredInfo] = useState({});
   const [sortedInfo, setSortedInfo] = useState({});
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+      const handleResize = () => setIsMobile(window.innerWidth <= 768);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Create a map of vendor IDs to vendor names
   const vendorMap = React.useMemo(() => {
@@ -121,12 +129,12 @@ const BillingList = ({
   };
 
   // Row selection config
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    }
-  };
+  // const rowSelection = {
+  //   selectedRowKeys,
+  //   onChange: (newSelectedRowKeys) => {
+  //     setSelectedRowKeys(newSelectedRowKeys);
+  //   }
+  // };
 
   // Handle bulk delete
   const handleBulkDelete = async () => {
@@ -172,6 +180,50 @@ const BillingList = ({
     }
   ];
 
+  const handleViewBilling = (record) => {
+    // Ensure we have valid data
+    if (record) {
+      let items = [];
+      try {
+        // Parse items if it's a string
+        if (typeof record.items === "string") {
+          items = JSON.parse(record.items);
+        } else if (Array.isArray(record.items)) {
+          items = record.items;
+        }
+
+        // Format items to ensure consistent structure
+        items = items.map((item) => ({
+          itemName: item.itemName || item.name || item.description,
+          hsnSac: item.hsnSac || item.hsn_sac || item.hsn_code,
+          quantity: Number(item.quantity) || 0,
+          unitPrice: Number(item.unitPrice) || 0,
+          tax: item.tax || "", // Keep the tax ID as is
+          taxAmount: Number(item.taxAmount) || 0,
+          discount: Number(item.discount) || 0,
+          discountAmount: Number(item.discountAmount) || 0,
+          amount: Number(item.amount) || 0,
+          currencyIcon: item.currencyIcon || '₹',
+          discount_type: item.discount_type || 'fixed'
+        }));
+
+        setSelectedBilling({
+          ...record,
+          items: items,
+          discount: Number(record.discount) || 0,
+          tax: Number(record.tax) || 0, // Add overall tax
+          overallTax: record.overallTax || "", // Add overall tax ID
+          overallTaxAmount: Number(record.overallTaxAmount) || 0 // Add overall tax amount
+        });
+
+        setIsViewModalOpen(true);
+      } catch (error) {
+        console.error("Error parsing billing items:", error);
+        message.error("Error loading billing details");
+      }
+    }
+  };
+
   const columns = [
     {
       title: "Bill Number",
@@ -203,8 +255,8 @@ const BillingList = ({
       ),
       onFilter: (value, record) =>
         record.billNumber?.toLowerCase().includes(value.toLowerCase()),
-      render: (billNumber) => (
-        <div className="item-wrapper">
+      render: (billNumber, record) => (
+        <div className="item-wrapper" style={{ cursor: 'pointer' }} onClick={() => handleViewBilling(record)}>
           <div className="item-content">
             <div className="icon-wrapper bill-icon">
               <FiFileText className="item-icon" />
@@ -273,6 +325,7 @@ const BillingList = ({
     {
       title: "Actions",
       key: "actions",
+      fixed: 'right',
       width: 80,
       render: (_, record) => (
         <Dropdown
@@ -297,9 +350,31 @@ const BillingList = ({
     },
   ];
 
-  const handleViewBilling = (record) => {
-    setSelectedBill(record);
-    setIsModalVisible(true);
+  // Filter billings based on search text
+  const filteredBillings = billings.filter(billing =>
+    billing.billNumber?.toLowerCase().includes(searchText?.toLowerCase()) ||
+    billing.discription?.toLowerCase().includes(searchText?.toLowerCase()) ||
+    billing.status?.toLowerCase().includes(searchText?.toLowerCase()) ||
+    billing.bill_status?.toLowerCase().includes(searchText?.toLowerCase())
+  );
+
+  // Row selection config
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
+
+  // Use only numbers for mobile/tablet, and AntD default for desktop
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} vendors`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
   };
 
   return (
@@ -317,17 +392,18 @@ const BillingList = ({
           pageSize: 10,
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} items`,
+          ...paginationConfig
         }}
         locale={{
           emptyText: 'No billings found',
         }}
       />
 
-      {isModalVisible && (
+      {isViewModalOpen && selectedBilling && (
         <ViewBilling
-          visible={isModalVisible}
-          onClose={() => setIsModalVisible(false)}
-          bill={selectedBill}
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          data={selectedBilling}
         />
       )}
     </div>

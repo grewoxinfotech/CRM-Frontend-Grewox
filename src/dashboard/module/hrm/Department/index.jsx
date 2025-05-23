@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select
+    Dropdown, Menu, Row, Col, Breadcrumb, Space, Select, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -29,6 +29,7 @@ const Department = () => {
     const [filters, setFilters] = useState({
         branch: undefined
     });
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     // Fetch departments using RTK Query
     const { data: departmentData, isLoading } = useGetAllDepartmentsQuery({
@@ -122,38 +123,58 @@ const Department = () => {
                     <Text type="secondary">Manage all departments in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                            placeholder="Search departments..."
-                            allowClear
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
-                            className="search-input"
-                            style={{
-                                width: '300px',
-                                borderRadius: '20px',
-                                height: '38px'
-                            }}
-                        />
-                    </div>
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search departments..."
+                                    allowClear
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={
+                                        <div className="search-popup">
+                                            <Input
+                                                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                                                placeholder="Search departments..."
+                                                allowClear
+                                                onChange={(e) => setSearchText(e.target.value)}
+                                                value={searchText}
+                                                className="search-input"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
                             <Button
-                                icon={<FiDownload size={16} />}
-                                className="export-button"
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleCreate}
+                                className="add-button"
                             >
-                                Export
+                                <span className="button-text">Add Department</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleCreate}
-                            className="add-button"
-                        >
-                            Add Department
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

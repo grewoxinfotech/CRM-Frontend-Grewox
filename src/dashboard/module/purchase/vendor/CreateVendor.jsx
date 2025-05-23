@@ -158,7 +158,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                 }}
             >
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="name"
                             label={<span style={{ color: "#374151", fontWeight: 500 }}>Name <span style={{ color: "#ff4d4f" }}>*</span></span>}
@@ -178,7 +178,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                         >
                             <Input
                                 placeholder="Enter name"
-                                size="large"
+                                // size="large"
                                 style={{
                                     borderRadius: '10px',
                                     height: '48px',
@@ -187,7 +187,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             label={<span style={{ color: "#374151", fontWeight: 500 }}>Contact <span style={{ color: "#ff4d4f" }}>*</span></span>}
                             style={{ marginBottom: 0 }}
@@ -277,7 +277,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                 </Row>
 
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="email"
                             label="Email"
@@ -294,7 +294,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="taxNumber"
                             label="Tax Number"
@@ -329,7 +329,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                 </Form.Item>
 
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="city"
                             label="City"
@@ -346,7 +346,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="state"
                             label="State"
@@ -366,7 +366,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                 </Row>
 
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="country"
                             label="Country"
@@ -383,7 +383,7 @@ const CreateVendor = ({ open, onCancel, onSubmit }) => {
                             />
                         </Form.Item>
                     </Col>
-                    <Col span={12}>
+                    <Col xs={24} sm={24} md={12} lg={12} xl={12}>
                         <Form.Item
                             name="zipcode"
                             label="Zipcode"

@@ -261,7 +261,7 @@ const AttendanceList = ({ searchText, filters }) => {
             dataIndex: 'name',
             key: 'name',
             fixed: 'left',
-            width: 280,
+            width: 200,
             render: (text, record) => {
                 const attendance = calculateAttendanceRatio(record);
                 return (
@@ -384,34 +384,39 @@ const AttendanceList = ({ searchText, filters }) => {
     return (
         <div className="attendance-list-container">
             <div className="attendance-header">
-                {/* Add month filter */}
                 <div className="filter-section">
-                    <DatePicker
-                        picker="month"
-                        value={selectedMonth}
-                        onChange={handleMonthChange}
-                        allowClear={false}
-                        format="MMMM YYYY"
-                        className="month-picker"
-                    />
-                
-
-                <div className="status-legend">
-                    {Object.entries(statusConfig).map(([key, value]) => (
-                        <div key={key} className="legend-item">
-                            <Tag
-                                style={{
-                                    color: value.color,
-                                    backgroundColor: value.background,
-                                    border: `1px solid ${value.color}`
-                                }}
-                            >
-                                {key}
-                            </Tag>
-                            <span>{value.text}</span>
-                        </div>
-                    ))}
-                </div>
+                    <div className="month-picker-wrapper">
+                        <DatePicker
+                            picker="month"
+                            value={selectedMonth}
+                            onChange={handleMonthChange}
+                            allowClear={false}
+                            format="MMMM YYYY"
+                            className="month-picker"
+                            suffixIcon={<FiCalendar style={{ color: '#1677ff' }} />}
+                        />
+                    </div>
+                    <div className="status-legend">
+                        {Object.entries(statusConfig).map(([key, value]) => (
+                            <div key={key} className="legend-item">
+                                <Tag
+                                    style={{
+                                        color: value.color,
+                                        backgroundColor: value.background,
+                                        border: `1px solid ${value.color}`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        minWidth: '32px',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    {key}
+                                </Tag>
+                                <span>{value.text}</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

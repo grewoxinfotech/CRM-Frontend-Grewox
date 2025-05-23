@@ -289,7 +289,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         }}
       >
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="name"
               label={
@@ -331,7 +331,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
               />
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="tax_number"
               label={
@@ -360,7 +360,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="email"
               label={
@@ -391,7 +391,7 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
             </Form.Item>
           </Col>
 
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item  className="combined-input-item" label="Contact" style={{ marginBottom: 0, marginTop: '12px' }} required>
               <Input.Group
                 compact

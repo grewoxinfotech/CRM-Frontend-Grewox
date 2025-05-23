@@ -84,7 +84,6 @@
             }
 
             @media (max-width: 767px) {
-                // flex-direction: column;
                 align-items: center;
                 text-align: center;
                 gap: 16px;
@@ -153,23 +152,30 @@
                                 position: relative;
                                 display: flex;
                                 align-items: center;
+                                width: 100%;
 
                                 .search-input {
                                     width: 240px;
 
                                     @media (max-width: 1200px) {
-                                        width: 300px;
+                                        width: 100%;
                                     }
 
 
                                     @media (max-width: 992px) {
-                                        width: 350px;
+                                        width: 100%;
                                     }
 
                                     @media (max-width: 767px) {
                                         display: none;
                                     }
                                 }
+                            }
+
+                            .action-buttons-group {
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
 
                                 .search-icon-button {
                                     display: none;
@@ -189,55 +195,29 @@
                                         padding: 0 10px;
                                     }
                                 }
-                            }
 
-                            .action-buttons {
-                                display: flex;
-                                align-items: center;
-                                gap: 8px;
-
-                                .view-toggle {
+                                .export-button,
+                                .add-button {
+                                    height: 38px;
                                     display: flex;
                                     align-items: center;
+                                    justify-content: center;
 
-                                    .ant-btn {
-                                        height: 38px;
+                                    @media (max-width: 767px) {
+                                        padding: 0 12px !important;
                                         width: 38px;
-                                        padding: 0;
-                                        display: flex;
-                                        align-items: center;
-                                        justify-content: center;
+                                        height: 38px;
 
-                                        @media (max-width: 576px) {
-                                            height: 34px;
-                                            width: 34px;
+                                        .button-text {
+                                            display: none;
                                         }
                                     }
-                                }
-                            }
 
-                            // Add styles for responsive buttons
-                            .export-button,
-                            .add-button {
-                                height: 38px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-
-                                @media (max-width: 767px) {
-                                    padding: 0 12px;
-                                    width: 38px;
-                                    height: 38px;
-
-                                    .button-text {
-                                        display: none;
+                                    @media (max-width: 576px) {
+                                        width: 34px;
+                                        height: 34px;
+                                        padding: 0 10px;
                                     }
-                                }
-
-                                @media (max-width: 576px) {
-                                    width: 34px;
-                                    height: 34px;
-                                    padding: 0 10px;
                                 }
                             }
                         }

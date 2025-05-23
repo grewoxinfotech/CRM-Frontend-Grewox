@@ -260,7 +260,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
         </Form.Item>
 
         <Row gutter={16}>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Form.Item
               name="bill"
               label={
@@ -330,7 +330,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
               </Select>
             </Form.Item>
           </Col>
-          <Col span={12}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12} className="date-picker-col">
             <Form.Item
               name="date"
               label={
@@ -358,7 +358,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
         </Row>
 
         <Row gutter={16}>
-          <Col span={12} style={{ marginTop: '12px' }}>
+          <Col xs={24} sm={24} md={12} lg={12} xl={12} style={{ marginTop: '12px' }}>
             <Form.Item
               name="amount"
               label={

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Card, Typography, Button, Input, Breadcrumb, Dropdown, Menu, message, Row, Col, Select, DatePicker } from 'antd';
+import { Card, Typography, Button, Input, Breadcrumb, Dropdown, Menu, message, Row, Col, Select, DatePicker, Popover } from 'antd';
 import { FiPlus, FiSearch, FiHome, FiDownload, FiFilter } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import CreateDesignation from './CreateDesignation';
@@ -16,6 +16,21 @@ const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
+// Separate search content component
+const SearchContent = ({ searchText, handleSearchChange }) => (
+    <div className="search-popup">
+        <Input
+            prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+            placeholder="Search designations..."
+            allowClear
+            onChange={handleSearchChange}
+            value={searchText}
+            className="search-input"
+            autoFocus
+        />
+    </div>
+);
+
 const Designation = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +41,7 @@ const Designation = () => {
         status: undefined
     });
     const [showFilters, setShowFilters] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const { data: designationData } = useGetAllDesignationsQuery();
 
@@ -190,38 +206,46 @@ const Designation = () => {
                     <Text type="secondary">Manage all designations in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                            placeholder="Search designations..."
-                            allowClear
-                            onChange={handleSearchChange}
-                            className="search-input"
-                            style={{
-                                width: '300px',
-                                borderRadius: '20px',
-                                height: '38px'
-                            }}
-                        />
-                    </div>
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search designations..."
+                                    allowClear
+                                    onChange={handleSearchChange}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={<SearchContent searchText={searchText} handleSearchChange={handleSearchChange} />}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
                             <Button
-                                icon={<FiDownload size={16} />}
-                                className="export-button"
-                                style={{ marginRight: '10px' }}
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleCreate}
+                                className="add-button"
                             >
-                                Export
+                                <span className="button-text">Add Designation</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleCreate}
-                            className="add-button"
-                        >
-                            Add Designation
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

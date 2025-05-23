@@ -10,6 +10,7 @@ import {
   Menu,
   Breadcrumb,
   Spin,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -39,6 +40,8 @@ const Revenue = () => {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  // const { data: revenueData, isLoading: isRevenueLoading } = useGetRevenueQuery();
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   const { data: revenueData, isLoading: isRevenueLoading } = useGetRevenueQuery({
     page: currentPage,
@@ -205,6 +208,19 @@ const Revenue = () => {
     setSearchText(value);
     setCurrentPage(1);
   };
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search customers..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
 
   return (
     <div className="customer-page">
@@ -223,16 +239,18 @@ const Revenue = () => {
         </Breadcrumb>
       </div>
 
-      <div className="page-header">
-        <div className="page-title">
+      <div className="page-headers">
+        <div className="page-titles">
           <Title level={2}>Revenue</Title>
           <Text type="secondary">
             Manage all revenue entries in the organization
           </Text>
         </div>
         <div className="header-actions">
-          <div className="search-filter-group">
-            <Input
+          <div className="desktop-actions">
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="search-container">
+          <Input
               prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
               placeholder="Search revenue entries..."
               allowClear
@@ -245,18 +263,27 @@ const Revenue = () => {
                 height: "38px",
               }}
             />
-          </div>
-          <div className="action-buttons">
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
             <Dropdown overlay={exportMenu} trigger={["click"]}>
-              <Button
-                className="export-button"
-                icon={<FiDownload size={16} />}
-                loading={loading}
-              >
-                Export
-                <FiChevronDown size={16} />
+              <Button className="export-button">
+                <FiDownload size={16} />
+                <span className="button-text">Export</span>
               </Button>
             </Dropdown>
+            </div>
           </div>
         </div>
       </div>

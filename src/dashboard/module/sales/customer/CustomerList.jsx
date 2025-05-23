@@ -23,7 +23,9 @@ import {
   FiUser,
   FiUsers,
   FiMapPin,
+  FiDollarSign,
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import {
   useGetCustomersQuery,
@@ -44,6 +46,7 @@ const CustomerList = ({
   pagination,
   onChange
 }) => {
+  const navigate = useNavigate();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const customers = custdata?.data;
   const [deleteCustomer] = useDeleteCustomerMutation();
@@ -86,13 +89,17 @@ const CustomerList = ({
     });
   };
 
+  const handleRowClick = (record, event) => {
+    // Check if the click is from action buttons
+    if (event.target.closest('.action-button') || event.target.closest('.ant-dropdown')) {
+      return;
+    }
+    navigate('/dashboard/sales/revenue', {
+      state: { selectedCustomer: record }
+    });
+  };
+
   const getActionItems = (record) => [
-    {
-      key: 'view',
-      icon: <FiEye style={{ fontSize: '16px' }} />,
-      label: 'View',
-      onClick: () => onView(record)
-    },
     {
       key: 'edit',
       icon: <FiEdit2 style={{ fontSize: '16px' }} />,
@@ -154,7 +161,7 @@ const CustomerList = ({
         );
       },
       render: (_, record) => (
-        <div className="item-wrapper">
+        <div className="item-wrapper" onClick={(event) => handleRowClick(record, event)} style={{ cursor: 'pointer' }}>
           <div className="item-content">
             <div className="icon-wrapper customer-icon">
               {record.avatar ? (
@@ -382,6 +389,10 @@ const CustomerList = ({
         pagination={paginationConfig}
         onChange={onChange}
         scroll={{ x: 'max-content', y: '100%' }}
+        onRow={(record) => ({
+          onClick: (event) => handleRowClick(record, event),
+          style: { cursor: 'pointer' }
+        })}
       />
     </div>
   );

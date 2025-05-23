@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import {
     Typography, Button, Modal, message,
     Input, Dropdown, Menu, Breadcrumb,
-    Card, Row, Col, Space
+    Card, Row, Col, Space, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -28,6 +28,7 @@ const Training = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [isViewTrainingVisible, setIsViewTrainingVisible] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const searchInputRef = useRef(null);
     const [deleteTraining, { isLoading: isDeleting }] = useDeleteTrainingMutation();
@@ -144,6 +145,20 @@ const Training = () => {
         }
     };
 
+    const searchContent = (
+        <div className="search-content">
+            <Input
+                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
+                placeholder="Search trainings..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                ref={searchInputRef}
+                className="search-input"
+            />
+        </div>
+    );
+
     return (
         <div className="training-page">
             <div className="page-breadcrumb">
@@ -164,43 +179,59 @@ const Training = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Trainings</Title>
-                    <Text type="secondary">Manage all trainings in the organization</Text>
+                    <Text className="page-description" type="secondary">Manage all trainings in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search trainings..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        className="search-input"
-                    />
-                    <div className="action-buttons">
-                        <Dropdown overlay={
-                            <Menu>
-                                <Menu.Item key="csv" onClick={() => handleExport('csv')}>
-                                    Export as CSV
-                                </Menu.Item>
-                                <Menu.Item key="excel" onClick={() => handleExport('excel')}>
-                                    Export as Excel
-                                </Menu.Item>
-                            </Menu>
-                        } trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search trainings..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    ref={searchInputRef}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={
+                                <Menu>
+                                    <Menu.Item key="csv" onClick={() => handleExport('csv')}>
+                                        Export as CSV
+                                    </Menu.Item>
+                                    <Menu.Item key="excel" onClick={() => handleExport('excel')}>
+                                        Export as Excel
+                                    </Menu.Item>
+                                </Menu>
+                            } trigger={['click']}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleAddTraining}
+                                className="add-button"
+                            >
+                                <span className="button-text">Create Training</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleAddTraining}
-                            className="add-button"
-                        >
-                            Create Training
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -219,7 +250,7 @@ const Training = () => {
             </div>
 
             <CreateTraining
-                visible={isFormVisible}
+                open={isFormVisible}
                 onCancel={() => setIsFormVisible(false)}
                 onSubmit={handleFormSubmit}
                 initialValues={selectedTraining}

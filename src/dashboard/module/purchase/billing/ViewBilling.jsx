@@ -71,9 +71,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
   // State for debit note amount
   const [debitNoteAmount, setDebitNoteAmount] = useState(0);
 
-  console.log("data", data);
 
-  console.log("taxesData", taxesData);
 
   // Share menu items
   const shareItems = {
@@ -695,32 +693,29 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {Array.isArray(items) &&
-                        items.map((item, index) => {
+                      {data?.items && Array.isArray(data.items) ? (
+                        data.items.map((item, index) => {
                           const quantity = Number(item.quantity) || 0;
-                          const rate =
-                            Number(item.unitPrice || item.price) || 0;
-                          // Find tax percentage from taxesData
+                          const rate = Number(item.unitPrice) || 0;
                           const taxData = taxesData?.data?.find(
                             (tax) => tax.id === item.tax
                           );
-                          const taxPercent = taxData
-                            ? Number(taxData.gstPercentage)
-                            : 0;
+                          const taxPercent = taxData ? Number(taxData.gstPercentage) : 0;
                           const taxAmount = Number(item.taxAmount) || 0;
-                          const discount = item.discountValue
-                            ? `${item.discountValue}${item.discountType === "percentage" ? "%" : "₹"
-                            }`
-                            : "-";
+                          const discount = item.discount_type === "percentage" 
+                            ? `${item.discount}% (₹${Number(item.discountAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })})`
+                            : item.discountAmount 
+                              ? `₹${Number(item.discountAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+                              : "-";
                           const amount = Number(item.amount) || 0;
 
                           return (
                             <tr key={index}>
-                              <td>{item.itemName || item.name}</td>
+                              <td>{item.itemName || "-"}</td>
                               <td>{item.hsnSac || "-"}</td>
                               <td>{quantity}</td>
                               <td>
-                                ₹
+                                {item.currencyIcon || "₹"}
                                 {rate.toLocaleString("en-IN", {
                                   minimumFractionDigits: 2,
                                 })}
@@ -731,21 +726,28 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                                   : "None (0%)"}
                               </td>
                               <td>
-                                ₹
+                                {item.currencyIcon || "₹"}
                                 {taxAmount.toLocaleString("en-IN", {
                                   minimumFractionDigits: 2,
                                 })}
                               </td>
                               <td>{discount}</td>
                               <td>
-                                ₹
+                                {item.currencyIcon || "₹"}
                                 {amount.toLocaleString("en-IN", {
                                   minimumFractionDigits: 2,
                                 })}
                               </td>
                             </tr>
                           );
-                        })}
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="8" style={{ textAlign: "center", padding: "20px" }}>
+                            No items found
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
 
@@ -753,8 +755,8 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="total-row">
                       <div className="total-label">Sub Total</div>
                       <div className="total-value">
-                        ₹
-                        {Number(data?.subtotal || 0).toLocaleString("en-IN", {
+                        {data?.currencyIcon || "₹"}
+                        {Number(data?.subTotal || 0).toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                         })}
                       </div>
@@ -762,7 +764,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="total-row">
                       <div className="total-label">Tax</div>
                       <div className="total-value">
-                        ₹
+                        {data?.currencyIcon || "₹"}
                         {Number(data?.tax || 0).toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                         })}
@@ -771,10 +773,10 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="total-row">
                       <div className="total-label">Discount</div>
                       <div className="total-value">
-                        {data?.discountType === "percentage" ? (
+                        {data?.overallDiscountType === "percentage" ? (
                           <span>
-                            {data?.discount || 0}% (₹
-                            {Number(data?.discountValue || 0).toLocaleString(
+                            {data?.overallDiscount || 0}% ({data?.currencyIcon || "₹"}
+                            {Number(data?.overallDiscountAmount || 0).toLocaleString(
                               "en-IN",
                               {
                                 minimumFractionDigits: 2,
@@ -784,8 +786,8 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                           </span>
                         ) : (
                           <span>
-                            ₹
-                            {Number(data?.discountValue || 0).toLocaleString(
+                            {data?.currencyIcon || "₹"}
+                            {Number(data?.discount || 0).toLocaleString(
                               "en-IN",
                               {
                                 minimumFractionDigits: 2,
@@ -798,7 +800,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="total-row">
                       <div className="total-label">Total Amount</div>
                       <div className="total-value">
-                        ₹
+                        {data?.currencyIcon || "₹"}
                         {Number(data?.total || 0).toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                         })}
@@ -808,7 +810,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                       <div className="total-row debit-note-row">
                         <div className="total-label">Debit Note</div>
                         <div className="total-value debit-note">
-                          -₹
+                          -{data?.currencyIcon || "₹"}
                           {Number(debitNoteAmount).toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                           })}
@@ -818,7 +820,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                     <div className="total-row final-amount">
                       <div className="total-label">Final Amount</div>
                       <div className="total-value">
-                        ₹
+                        {data?.currencyIcon || "₹"}
                         {Number(
                           data?.total - debitNoteAmount || 0
                         ).toLocaleString("en-IN", { minimumFractionDigits: 2 })}

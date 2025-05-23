@@ -870,6 +870,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         }}
       >
         <div
+         className="create-invoice-form-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr 1fr",
@@ -1050,7 +1051,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               ))}
             </Select>
           </Form.Item>
-        </div>
+        {/* </div>
 
         <div
           style={{
@@ -1058,7 +1059,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
             gridTemplateColumns: "1fr 1fr 1fr",
             gap: "16px",
           }}
-        >
+        > */}
           <Form.Item
             name="issueDate"
             label={
@@ -1171,6 +1172,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
           <Form.List name="items">
             {(fields, { add, remove }) => (
               <>
+              <div className="invoice-items-table-wrapper">
                 <table className="invoice-items-table">
                   <thead>
                     <tr>
@@ -1192,6 +1194,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             {...restField}
                             name={[name, "item_name"]}
                             rules={[{ required: true, message: "Required" }]}
+                            style={{marginTop:"-10px"}}
                           >
                             <Select
                               showSearch
@@ -1304,12 +1307,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               },
                             ]}
                             initialValue={1}
-                            style={{ height: "48px" }}
+                            style={{ height: "48px",marginTop:"-10px",width:"100px" }}
                           >
                             <InputNumber
                               min={1}
                               precision={0}
                               className="quantity-input"
+                              style={{padding:"0px"}}
                               disabled={paymentStatus === "paid"}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
@@ -1322,11 +1326,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             {...restField}
                             name={[name, "unit_price"]}
                             rules={[{ required: true, message: "Required" }]}
+                            style={{width:"150px"}}
                           >
                             <InputNumber
                               className="price-input"
                               min={0}
                               disabled={true}
+                              style={{padding:"0px"}}
                               onChange={() =>
                                 calculateTotals(form.getFieldValue("items"))
                               }
@@ -1341,7 +1347,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           </Form.Item>
                         </td>
                         <td>
-                          <Form.Item {...restField} name={[name, "hsn_sac"]}>
+                          <Form.Item {...restField} name={[name, "hsn_sac"]} style={{width:"150px"}} >
                             <Input
                               placeholder="HSN/SAC"
                               className="hsn-input"
@@ -1364,7 +1370,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                 <Select
                                   size="large"
                                   style={{
-                                    width: "120px",
+                                    width: "100%",
                                     borderRadius: "8px",
                                     height: "48px",
                                   }}
@@ -1436,6 +1442,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                       width: "100px",
                                       borderRadius: "8px",
                                       height: "40px",
+                                       padding:"0px"
                                     }}
                                   />
                                 </Form.Item>
@@ -1450,7 +1457,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           </Form.Item>
                         </td>
                         <td>
-                          <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-2px"}}>
+                          <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-15px"}}>
                             <Select
                               placeholder="Select Tax"
                               loading={taxesLoading}
@@ -1476,7 +1483,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                           </Form.Item>
                         </td>
                         <td>
-                          <div className="amount-fields">
+                          <div className="amount-fields" style={{marginTop:"-8px"}}>
                             <span className="currency-symbols">
                               {selectedCurrency}
                             </span>
@@ -1504,6 +1511,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                     ))}
                   </tbody>
                 </table>
+                </div>
 
                 <div className="add-item-container">
                   <Button
@@ -1527,7 +1535,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "16px",
+                // marginBottom: "16px",
                 padding: "12px",
                 background: "#f8fafc",
                 borderRadius: "8px",
@@ -1565,7 +1573,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                marginBottom: "16px",
+                // marginBottom: "16px",
                 padding: "12px",
                 background: "#f8fafc",
                 borderRadius: "8px",

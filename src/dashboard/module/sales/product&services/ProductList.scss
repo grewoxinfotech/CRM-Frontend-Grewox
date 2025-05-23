@@ -500,3 +500,55 @@ $border-radius: 6px;
         }
     }
 }
+
+.action-dropdown {
+    .ant-dropdown-menu {
+        padding: 4px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .ant-dropdown-menu-item {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background-color: #f5f5f5;
+        }
+
+        .anticon {
+            font-size: 16px;
+        }
+
+        &.ant-dropdown-menu-item-danger {
+            color: #ff4d4f;
+
+            &:hover {
+                background-color: #fff1f0;
+            }
+        }
+    }
+}
+
+.action-button {
+    padding: 4px 8px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+
+    &:hover {
+        background-color: #f5f5f5;
+    }
+
+    .anticon {
+        font-size: 16px;
+        color: #666;
+    }
+}

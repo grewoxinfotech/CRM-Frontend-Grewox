@@ -28,6 +28,29 @@ const ViewTraining = ({ open, onCancel, training }) => {
         ? JSON.parse(training.links)
         : training.links;
 
+    // Handle different link formats
+    let urls = [];
+    let titles = [];
+
+    if (links?.urls && links?.titles) {
+        // Format: {urls: Array, titles: Array}
+        urls = links.urls;
+        titles = links.titles;
+    } else if (links?.url) {
+        // Format: {url: Array}
+        urls = Array.isArray(links.url) ? links.url : [links.url];
+        titles = urls.map((url, index) => `Link ${index + 1}`);
+    } else if (Array.isArray(links)) {
+        // Format: Array of URLs
+        urls = links;
+        titles = links.map((_, index) => `Link ${index + 1}`);
+    }
+
+    const linkItems = urls.map((url, index) => ({
+        title: titles[index] || `Link ${index + 1}`,
+        url: url
+    }));
+
     return (
         <Modal
             title={null}
@@ -75,11 +98,8 @@ const ViewTraining = ({ open, onCancel, training }) => {
                     <div className="links-section">
                         <Title level={5}>Training Links</Title>
                         <List
-                            dataSource={links.titles.map((title, index) => ({
-                                title,
-                                url: links.urls[index]
-                            }))}
-                            renderItem={(item, index) => (
+                            dataSource={linkItems}
+                            renderItem={(item) => (
                                 <List.Item>
                                     <Card
                                         size="small"

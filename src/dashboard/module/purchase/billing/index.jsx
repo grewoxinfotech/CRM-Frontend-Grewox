@@ -11,6 +11,7 @@ import {
   Breadcrumb,
   Alert,
   DatePicker,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -62,6 +63,7 @@ const Billing = () => {
   });
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [createBilling] = useCreateBillingMutation();
   const [deleteBilling] = useDeleteBillingMutation();
 
@@ -83,6 +85,8 @@ const Billing = () => {
       endDate: dateRange[1].format('YYYY-MM-DD')
     })
   });
+
+  // console.log("billingsData", billingsData);
   const { data: vendorsData } = useGetVendorsQuery();
 
   // Create a map of vendor IDs to vendor names
@@ -230,7 +234,6 @@ const Billing = () => {
       setExportLoading(false);
     }
   };
-
   const exportToCSV = (data, filename) => {
     const csvContent = [
       Object.keys(data[0]).join(","),
@@ -273,13 +276,6 @@ const Billing = () => {
 
   const exportMenu = (
     <Menu>
-      {/* <Menu.Item
-                key="csv"
-                icon={<FiDownload />}
-                onClick={() => handleExport('csv')}
-            >
-                Export as CSV
-            </Menu.Item> */}
       <Menu.Item
         key="excel"
         icon={<FiDownload />}
@@ -310,7 +306,6 @@ const Billing = () => {
       });
 
       if (response.data?.success) {
-        // message.success("Bill created successfully");
         setIsCreateModalVisible(false);
         billingsData.refetch();
       } else {
@@ -321,6 +316,20 @@ const Billing = () => {
       console.error("Create billing error:", error);
     }
   };
+
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search billings..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
 
   return (
     <div className="billing-page">
@@ -345,8 +354,10 @@ const Billing = () => {
           <Text type="secondary">Manage all billings in the organization</Text>
         </div>
         <div className="header-actions">
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Input
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+              <Input
               prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
               placeholder="Search billings..."
               allowClear
@@ -354,36 +365,37 @@ const Billing = () => {
               value={searchText}
               ref={searchInputRef}
               className="search-input"
-              style={{ width: '300px' }}
+              // style={{ width: '300px' }}
             />
-            <RangePicker
-              suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-              onChange={(dates) => setDateRange(dates)}
-              value={dateRange}
-              allowClear
-              style={{ width: '300px', height: '40px' }}
-              placeholder={['Start Date', 'End Date']}
-            />
-          </div>
-          <div className="action-buttons">
-            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
               <Button
-                className="export-button"
-                icon={<FiDownload size={16} />}
-                loading={exportLoading}
+                type="primary"
+                onClick={() => setIsCreateModalVisible(true)}
+                className="add-button"
+                icon={<FiPlus size={16} />}
               >
-                Export
-                <FiChevronDown size={16} />
+                <span className="button-text">Create Billing</span>
               </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              onClick={() => setIsCreateModalVisible(true)}
-              className="add-button"
-              icon={<FiPlus size={16} />}
-            >
-              Add Billing
-            </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -398,7 +410,7 @@ const Billing = () => {
         />
       )}
 
-      <Card className="billing-table-card">
+      <Card className="billing-list-container">
         <BillingList
           billings={billingsData?.data || []}
           onEdit={handleEdit}

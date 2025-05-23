@@ -84,8 +84,8 @@
             }
 
             .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
+                color: #666;
+                font-size: 14px;
                 display: block;
             }
         }
@@ -122,6 +122,11 @@
 
                         @media (max-width: 1300px) {
                             width: 250px;
+                        }
+
+
+                        @media (min-width: 1199px) and (max-width: 1260px) {
+                            width: 180px;
                         }
 
                         @media (max-width: 1200px) {
@@ -191,9 +196,9 @@
                     justify-content: center;
 
                     @media (max-width: 767px) {
-                        padding: 0 12px;
-                        width: 38px;
-                        height: 38px;
+                        padding: 0 12px !important; 
+                        width: 38px !important;
+                        height: 38px !important;
 
                         .button-text {
                             display: none;
@@ -201,9 +206,9 @@
                     }
 
                     @media (max-width: 576px) {
-                        width: 34px;
-                        height: 34px;
-                        padding: 0 10px;
+                        width: 34px !important;
+                        height: 34px !important;
+                        padding: 0 10px !important;
                     }
                 }
             }
@@ -642,6 +647,7 @@
 @media (min-width: 769px) {
     .mobile-search-popover {
         display: none;
+        
     }
 }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Button, Tag, Dropdown, Menu, Avatar, message, Input, Space } from 'antd';
 import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiShield, FiUser, FiBriefcase, FiUsers, FiEye, FiLogIn } from 'react-icons/fi';
 import moment from 'moment';
@@ -8,6 +8,14 @@ import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
+    
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
     // Filter out users with "employee" role
     const filteredUsers = users?.filter(user => user.role_name?.toLowerCase() !== 'employee') || [];
@@ -124,7 +132,7 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             title: 'Profile',
             dataIndex: 'profilePic',
             key: 'profilePic',
-            width: 80,
+            width: 100,
             sorter: (a, b) => (a.profilePic || '').localeCompare(b.profilePic || ''),
             render: (profilePic, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -185,7 +193,6 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
                 </div>
             ),
 
-            width: '200px'
         },
         {
             title: 'Email',
@@ -197,13 +204,11 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
                     {text || 'N/A'}
                 </span>
             ),
-            width: '30%',
         },
         {
             title: 'Role',
             dataIndex: 'role_name',
             key: 'role_name',
-            width: '20%',
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -301,7 +306,6 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
                 </div>
             ),
             sorter: (a, b) => moment(a.created_at).unix() - moment(b.created_at).unix(),
-            width: '180px'
         },
         {
             title: 'Updated At',
@@ -328,13 +332,12 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
                 if (!b.updated_at) return 1;
                 return moment(a.updated_at).unix() - moment(b.updated_at).unix();
             },
-            width: '180px'
         },
         {
             title: 'Actions',
             key: 'actions',
-            width: '120px',
-            align: 'center',
+            width: '80px',
+            fixed: 'right',
             render: (_, record) => (
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     {record.role_name !== 'super-admin' && (
@@ -389,22 +392,27 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
         },
     ];
 
+     // Use only numbers for mobile/tablet, and AntD default for desktop
+   const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} customers`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
+  };
+
     return (
-        <Table
-            dataSource={filteredUsers}
-            columns={columns}
-            // loading={loading}
-            rowKey="id"
-            pagination={{
-                current: currentPage,
-                pageSize: 10,
-                total: filteredUsers.length,
-                showSizeChanger: true,
-                showQuickJumper: false,
-                onChange: onPageChange,
-                showTotal: (total) => `Total ${total} items`,
-            }}
-        />
+        <div className="user-list-container">
+            <Table
+                dataSource={filteredUsers}
+                columns={columns}
+                rowKey="id"
+                scroll={{ x: 'max-content', y: "100%" }}
+                pagination={paginationConfig}
+            />
+        </div>
     );
 };
 

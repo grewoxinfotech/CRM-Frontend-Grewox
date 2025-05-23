@@ -252,7 +252,7 @@ const Deal = () => {
 
   return (
     <div className="deal-page">
-      <div className="page-breadcrumb" style={{ paddingTop: "0px" }}>
+      <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
             <Link to="/dashboard">
@@ -289,8 +289,8 @@ const Deal = () => {
                     </Button.Group>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div className="search-container">
+                  <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
+                    <div className="search-container" style={{flex: 1}}>
                       <Input
                         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
                         placeholder="Search deals..."
@@ -299,6 +299,8 @@ const Deal = () => {
                         value={searchText}
                         className="search-input"
                       />
+                    </div>
+                    <div className="action-buttons-group">
                       <Popover
                         content={searchContent}
                         trigger="click"
@@ -312,21 +314,21 @@ const Deal = () => {
                           icon={<FiSearch size={16} />}
                         />
                       </Popover>
-                    </div>
-                    <Dropdown overlay={exportMenu} trigger={["click"]}>
-                      <Button className="export-button">
-                        <FiDownload size={16} />
-                        <span className="button-text">Export</span>
+                      <Dropdown overlay={exportMenu} trigger={["click"]}>
+                        <Button className="export-button">
+                          <FiDownload size={16} />
+                          <span className="button-text">Export</span>
+                        </Button>
+                      </Dropdown>
+                      <Button
+                        type="primary"
+                        icon={<FiPlus size={16} />}
+                        onClick={handleCreate}
+                        className="add-button"
+                      >
+                        <span className="button-text">Add Deal</span>
                       </Button>
-                    </Dropdown>
-                    <Button
-                      type="primary"
-                      icon={<FiPlus size={16} />}
-                      onClick={handleCreate}
-                      className="add-button"
-                    >
-                      <span className="button-text">Add Deal</span>
-                    </Button>
+                    </div>
                   </div>
                 </div>
               </div>

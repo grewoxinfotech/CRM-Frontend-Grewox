@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -56,6 +56,14 @@ const DebitNoteList = ({
   });
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const getBillNumber = (billId) => {
     const foundBill = billings?.data?.find((bill) => bill.id === billId);
@@ -168,6 +176,7 @@ const DebitNoteList = ({
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
@@ -232,12 +241,15 @@ const DebitNoteList = ({
         rowSelection={rowSelection}
         rowKey={record => record.id || record._id}
         loading={loading}
-        scroll={{ x: 1200 }}
+        // scroll={{ x: 1200 }}
+        scroll={{ x: 'max-content', y: '100%' }}
+
         pagination={paginationConfig}
         onChange={onChange}
         locale={{
           emptyText: 'No debit notes found',
         }}
+        
       />
     </div>
   );

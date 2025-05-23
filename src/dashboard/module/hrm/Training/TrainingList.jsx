@@ -104,7 +104,25 @@ const TrainingList = ({
         try {
             const links = typeof linksString === 'string' ? JSON.parse(linksString) : linksString;
 
-            if (!Array.isArray(links?.urls) || !Array.isArray(links?.titles)) {
+            // Handle different link formats
+            let urls = [];
+            let titles = [];
+
+            if (links?.urls && links?.titles) {
+                // Format: {urls: Array, titles: Array}
+                urls = links.urls;
+                titles = links.titles;
+            } else if (links?.url) {
+                // Format: {url: Array}
+                urls = Array.isArray(links.url) ? links.url : [links.url];
+                titles = urls.map((url, index) => `Link ${index + 1}`);
+            } else if (Array.isArray(links)) {
+                // Format: Array of URLs
+                urls = links;
+                titles = links.map((_, index) => `Link ${index + 1}`);
+            }
+
+            if (!Array.isArray(urls) || urls.length === 0) {
                 console.error('Invalid links format:', links);
                 return null;
             }
@@ -116,14 +134,14 @@ const TrainingList = ({
                     flexWrap: 'wrap',
                     alignItems: 'center'
                 }}>
-                    {links.titles.map((title, index) => {
-                        const url = links.urls[index];
+                    {urls.map((url, index) => {
                         if (!url || !isValidUrl(url)) {
                             console.warn(`Invalid URL at index ${index}:`, url);
                             return null;
                         }
 
                         const formattedUrl = formatUrl(url);
+                        const title = titles[index] || `Link ${index + 1}`;
                         const isYoutube = formattedUrl.includes('youtube.com') || formattedUrl.includes('youtu.be');
                         const isDoc = formattedUrl.toLowerCase().includes('doc') || formattedUrl.toLowerCase().includes('pdf');
                         const isGithub = formattedUrl.includes('github.com');
@@ -227,6 +245,7 @@ const TrainingList = ({
             title: "Title",
             dataIndex: "title",
             key: "title",
+            width: 200,
             render: (text, record) => (
                 <div className="item-wrapper">
                     <div className="item-content" style={{
@@ -268,7 +287,7 @@ const TrainingList = ({
             title: "Links",
             dataIndex: "links",
             key: "links",
-            width: '50%',
+            width: 200,
             render: (links) => (
                 <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
                     {renderLinks(links)}
@@ -279,6 +298,7 @@ const TrainingList = ({
             title: "Created",
             dataIndex: "createdAt",
             key: "createdAt",
+            width: 200,
             render: (date) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{
@@ -369,12 +389,12 @@ const TrainingList = ({
                     position: ['bottomRight']
                 }}
                 className="custom-table"
-                scroll={{ x: 1000 }}
-                style={{
-                    background: '#ffffff',
-                    borderRadius: '12px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)'
-                }}
+                scroll={{ x: 'max-content', y: '100%' }}
+                // style={{
+                //     background: '#ffffff',
+                //     borderRadius: '12px',
+                //     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)'
+                // }}
             />
         </div>
     );

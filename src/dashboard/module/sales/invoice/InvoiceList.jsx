@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -60,6 +60,8 @@ const InvoiceList = ({
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const invoices = invoicesdata?.data || [];
+  // const invoices = invoicesdata?.data || [];
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const { data: customersData } = useGetCustomersQuery();
 
   const statuses = [
@@ -338,18 +340,14 @@ const InvoiceList = ({
       ),
       onFilter: (value, record) => record.salesInvoiceNumber?.toLowerCase().includes(value.toLowerCase()),
       render: (_, record) => (
-        <div className="item-wrapper">
+        <div className="item-wrapper" style={{ cursor: 'pointer' }} onClick={() => handleView(record)}>
           <div className="item-content">
             <div className="icon-wrapper" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
               <FiFileText className="item-icon" />
             </div>
             <div className="info-wrapper">
-              <div className="name">
-                {record.salesInvoiceNumber}
-              </div>
-              <div className="meta" style={{ color: '#4b5563' }}>
-                {getCustomerName(record.customer)}
-              </div>
+              <div className="name" style={{ color: '#1890ff' }}>{record.salesInvoiceNumber}</div>
+              <div className="meta" style={{ color: '#4b5563' }}>{getCustomerName(record.customer)}</div>
             </div>
           </div>
         </div>
@@ -400,6 +398,7 @@ const InvoiceList = ({
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
@@ -434,6 +433,24 @@ const InvoiceList = ({
     },
   };
 
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Use only numbers for mobile/tablet, and AntD default for desktop
+  const paginationConfig = {
+    pageSize: 10,
+    showSizeChanger: true,
+    showTotal: (total) => `Total ${total} customers`,
+    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
+    locale: {
+      items_per_page: isMobile ? "" : "/ page",
+    },
+  };
+
   return (
     <div className="invoice-container">
       {selectedRowKeys.length > 0 && (
@@ -453,18 +470,22 @@ const InvoiceList = ({
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredInvoices}
-        loading={isLoading}
         rowKey="id"
-        className="invoice-table"
+        // className="invoice-table"
+        className="custom-table"
         pagination={{
           ...pagination,
+          ...paginationConfig,
           showSizeChanger: true,
+
           showTotal: (total) => `Total ${total} invoices`,
           pageSizeOptions: ['10', '20', '50', '100'],
           position: ['bottomRight'],
+          
           hideOnSinglePage: false,
           showQuickJumper: true
         }}
+        scroll={{ x: 1000, y: "100%" }}
         onChange={handleTableChange}
       />
 

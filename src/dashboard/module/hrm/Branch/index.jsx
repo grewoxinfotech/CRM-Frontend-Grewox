@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, Space, Select, DatePicker
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Space, Select, DatePicker, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -36,6 +36,7 @@ const Branch = () => {
         designationType: undefined
     });
     const [showFilters, setShowFilters] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     // Fetch branches using RTK Query
     const { data: branchData, isLoading } = useGetAllBranchesQuery();
@@ -50,9 +51,7 @@ const Branch = () => {
 
     const handleSearchChange = (e) => {
         const { value } = e.target;
-        // Update the input value immediately for UI responsiveness
         e.persist();
-        // Debounce the actual search
         debouncedSearch(value);
     };
 
@@ -200,6 +199,20 @@ const Branch = () => {
         </Menu>
     );
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search branches..."
+                allowClear
+                onChange={handleSearchChange}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
     return (
         <div className="branch-page">
             <div className="page-breadcrumb">
@@ -220,41 +233,49 @@ const Branch = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Branches</Title>
-                    <Text type="secondary">Manage all branches in the organization</Text>
+                    <Text className="page-description" type="secondary">Manage all branches in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                            placeholder="Search branches..."
-                            allowClear
-                            onChange={handleSearchChange}
-                            className="search-input"
-                            style={{
-                                width: '300px',
-                                borderRadius: '20px',
-                                height: '38px'
-                            }}
-                        />
-                    </div>
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search branches..."
+                                    allowClear
+                                    onChange={handleSearchChange}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
                             <Button
-                                icon={<FiDownload size={16} />}
-                                className="export-button"
-                                style={{ marginRight: '10px' }}
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleCreate}
+                                className="add-button"
                             >
-                                Export
+                                <span className="button-text">Add Branch</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleCreate}
-                            className="add-button"
-                        >
-                            Add Branch
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>
