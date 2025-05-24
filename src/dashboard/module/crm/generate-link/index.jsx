@@ -11,6 +11,7 @@ import {
     Breadcrumb,
     Space,
     Popconfirm,
+    Popover,
 } from "antd";
 import {
     FiPlus,
@@ -48,6 +49,7 @@ const CustomFormPage = () => {
     const [generateLinkModalVisible, setGenerateLinkModalVisible] = useState(false);
     const [selectedForm, setSelectedForm] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
     const navigate = useNavigate();
 
     const {
@@ -284,7 +286,7 @@ const CustomFormPage = () => {
     ];
 
     return (
-        <div className="invoice-page">
+        <div className="custom-form-container">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -306,36 +308,58 @@ const CustomFormPage = () => {
                     <Text type="secondary">Manage all custom forms in the organization</Text>
                 </div>
                 <div className="header-actions">
-                    <div className="search-filter-group">
-                        <Input
-                            prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                            placeholder="Search forms..."
-                            allowClear
-                            onChange={(e) => setSearchText(e.target.value)}
-                            value={searchText}
-                            className="search-input"
-                            style={{ width: 300 }}
-                        />
-                    </div>
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={["click"]}>
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search forms..."
+                                    allowClear
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={
+                                        <div className="search-popup">
+                                            <Input
+                                                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                                                placeholder="Search forms..."
+                                                allowClear
+                                                onChange={(e) => setSearchText(e.target.value)}
+                                                value={searchText}
+                                                className="search-input"
+                                                autoFocus
+                                            />
+                                        </div>
+                                    }
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
                             <Button
-                                className="export-button"
-                                icon={<FiDownload size={16} />}
-                                loading={loading}
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={() => setCreateModalVisible(true)}
+                                className="add-button"
                             >
-                                Export
-                                <FiChevronDown size={16} />
+                                <span className="button-text">New Form</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus />}
-                            onClick={() => setCreateModalVisible(true)}
-                            className="add-button"
-                        >
-                            New Form
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

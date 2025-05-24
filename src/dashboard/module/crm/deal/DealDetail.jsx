@@ -21,7 +21,7 @@ import DealPayments from './overview/payments';
 import DealNotes from './overview/notes';
 import DealActivity from './overview/activity';
 import './Deal.scss';
-import { useGetDealsQuery, useUpdateDealMutation } from './services/dealApi';
+import { useGetDealsQuery, useUpdateDealMutation } from './services/DealApi';
 import DealFollowup from './overview/followup';
 
 const { Title, Text } = Typography;

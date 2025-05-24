@@ -58,7 +58,7 @@ const ProfileHeader = ({ user, userRole, onEditClick }) => {
         <div className="profile-header">
             <div className="profile-header-content">
                 <div className="profile-avatar-container">
-                    <Badge dot status="success" offset={[-10, 106]} className="status-badge">
+                    <Badge dot status="success" className="status-badge">
                         <div className="profile-avatar">
                             {user?.profilePic ? (
                                 <img

@@ -897,8 +897,16 @@ $border-radius: 6px;
                         width: 250px;
                     }
 
-                    @media (max-width: 992px) {
+                    @media (max-width: 1200px) {
+                        width: 300px;
+                    }
+
+                    @media (max-width: 1100px) and (min-width: 1000px) {
                         width: 200px;
+                    }
+
+                    @media (max-width: 992px) {
+                        width: 350px;
                     }
 
                     @media (max-width: 767px) {
@@ -916,6 +924,12 @@ $border-radius: 6px;
 
                     @media (max-width: 767px) {
                         display: flex;
+                    }
+
+                    @media (max-width: 576px) {
+                        width: 34px;
+                        height: 34px;
+                        padding: 0 10px;
                     }
                 }
             }

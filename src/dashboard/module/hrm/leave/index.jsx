@@ -10,6 +10,8 @@ import {
   Breadcrumb,
   DatePicker,
   Space,
+  Popover,
+  Menu,
 } from "antd";
 import {
   FiPlus,
@@ -17,6 +19,7 @@ import {
   FiDownload,
   FiHome,
   FiChevronDown,
+  FiFilter,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import CreateLeave from "./CreateLeave";
@@ -44,6 +47,8 @@ const Leave = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
 
   const { data: response = {}, isLoading: isLeaveLoading } = useGetLeaveQuery({
     page: currentPage,
@@ -183,8 +188,61 @@ const Leave = () => {
     }
   };
 
+  const exportMenu = (
+    <Menu>
+      <Menu.Item key="csv" icon={<FiDownload />} onClick={() => handleExport('csv')}>
+        Export as CSV
+      </Menu.Item>
+      <Menu.Item key="excel" icon={<FiDownload />} onClick={() => handleExport('excel')}>
+        Export as Excel
+      </Menu.Item>
+      <Menu.Item key="pdf" icon={<FiDownload />} onClick={() => handleExport('pdf')}>
+        Export as PDF
+      </Menu.Item>
+    </Menu>
+  );
+
+  const filterMenu = (
+    <Menu className="filter-menu">
+      <Menu.Item key="date" className="filter-menu-item">
+        <div className="filter-section">
+          <RangePicker
+            onChange={handleDateRangeChange}
+            value={filters.dateRange}
+            allowClear
+            placeholder={['Start Date', 'End Date']}
+          />
+        </div>
+      </Menu.Item>
+      <Menu.Item key="export" className="filter-menu-item">
+        <div className="filter-section">
+          <Dropdown overlay={exportMenu} trigger={["click"]}>
+            <Button className="export-button">
+              <FiDownload size={16} />
+              Export
+            </Button>
+          </Dropdown>
+        </div>
+      </Menu.Item>
+    </Menu>
+  );
+
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search leave requests..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   return (
-    <div className="revenue-page">
+    <div className="leave-page">
       <div className="page-breadcrumb">
         <Breadcrumb
           items={[
@@ -206,68 +264,83 @@ const Leave = () => {
       </div>
 
       <div className="page-header">
-        <div className="page-title">
-          <h2>Leave Management</h2>
-          <Text type="secondary">Manage employee leave requests</Text>
-        </div>
-        <div className="header-actions">
-          <div className="search-filter-group" style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <Input
-              placeholder="Search leave requests..."
-              prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{
-                width: '300px',
-                borderRadius: '40px',
-                height: '40px'
-              }}
-            />
-            <RangePicker
-              onChange={handleDateRangeChange}
-              value={filters.dateRange}
-              allowClear
-              style={{ width: 300, height: 40 }}
-              placeholder={['Start Date', 'End Date']}
-            />
+        <div className="header-content">
+          <div className="page-title">
+            <div className="title-row">
+              <div className="title-column">
+                <h2>Leave Management</h2>
+                <Text type="secondary">Manage employee leave requests</Text>
+              </div>
+              <div className="mobile-actions">
+                <Button
+                  type="primary"
+                  icon={<FiPlus size={18} />}
+                  onClick={handleCreate}
+                  className="mobile-add-button"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  visible={isSearchVisible}
+                  onVisibleChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  overlayClassName="search-popover"
+                  getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                >
+                  <Button
+                    icon={<FiSearch size={18} />}
+                    className="mobile-search-button"
+                  />
+                </Popover>
+                <Dropdown
+                  overlay={filterMenu}
+                  trigger={["click"]}
+                  visible={isFilterVisible}
+                  onVisibleChange={setIsFilterVisible}
+                  placement="bottomRight"
+                  getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                >
+                  <Button
+                    icon={<FiFilter size={18} />}
+                    className="mobile-filter-button"
+                  />
+                </Dropdown>
+              </div>
+            </div>
           </div>
-          <div className="action-buttons">
-            <Dropdown
-              menu={{
-                items: [
-                  {
-                    key: 'csv',
-                    label: 'Export as CSV',
-                    icon: <FiDownload />,
-                    onClick: () => handleExport('csv')
-                  },
-                  {
-                    key: 'excel',
-                    label: 'Export as Excel',
-                    icon: <FiDownload />,
-                    onClick: () => handleExport('excel')
-                  },
-                  {
-                    key: 'pdf',
-                    label: 'Export as PDF',
-                    icon: <FiDownload />,
-                    onClick: () => handleExport('pdf')
-                  }
-                ]
-              }}
-            >
-              <Button className="export-button" loading={loading}>
-                Export <FiChevronDown />
+
+          <div className="header-actions">
+            <div className="desktop-actions">
+              <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search leave requests..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+              />
+              <RangePicker
+                onChange={handleDateRangeChange}
+                value={filters.dateRange}
+                allowClear
+                placeholder={['Start Date', 'End Date']}
+                style={{ width: '70%' }}
+              />
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button" loading={loading}>
+                  <FiDownload size={16} />
+                  Export
+                </Button>
+              </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleCreate}
+                className="add-button"
+              >
+                New Leave Request
               </Button>
-            </Dropdown>
-            <Button
-              type="primary"
-              icon={<FiPlus />}
-              onClick={handleCreate}
-              className="add-button"
-            >
-              New Leave Request
-            </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -435,27 +435,27 @@ $border-radius: 6px;
           justify-content: space-between;
           margin-bottom: 4px;
 
-         
-            @media (min-width: 769px) and (max-width: 1367px) {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              text-align: center; 
-            
+          @media (min-width: 769px) and (max-width: 1366px) {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
           }
 
-          h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin: 0;
+          .title-column {
+            h2 {
+              font-size: 24px;
+              font-weight: 600;
+              color: #1a1a1a;
+              margin: 0;
 
-            @media (max-width: 768px) {
-              font-size: 20px;
-            }
+              @media (max-width: 768px) {
+                font-size: 20px;
+              }
 
-            @media (max-width: 480px) {
-              font-size: 18px;
+              @media (max-width: 480px) {
+                font-size: 18px;
+              }
             }
           }
 
@@ -568,11 +568,11 @@ $border-radius: 6px;
           gap: 12px;
           flex-wrap: nowrap;
 
-          @media (min-width: 769px) and (max-width: 1367px) {
-            width: 100%;
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 120px 120px;
-            gap: 0 4px;
+          @media (min-width: 769px) and (max-width: 1366px) {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: nowrap;
           }
 
           @media (max-width: 768px) {
@@ -580,9 +580,14 @@ $border-radius: 6px;
           }
 
           .search-input {
-            width: 240px;
+            @media (min-width: 769px) and (max-width: 1366px) {
+              width: 100%;
+              min-width: 200px;
+              max-width: 400px;
+              transition: width 0.3s ease;
+            }
 
-            @media (min-width: 769px) and (max-width: 1367px) {
+            @media (max-width: 768px) {
               width: 100%;
               min-width: unset;
             }
@@ -614,11 +619,8 @@ $border-radius: 6px;
           }
 
           .ant-picker {
-            width: 240px;
-
-            @media (min-width: 769px) and (max-width: 1367px) {
-              width: 100%;
-              min-width: unset;
+            @media (min-width: 769px) and (max-width: 1366px) {
+              width: 300px;
             }
 
             height: 38px;
@@ -640,8 +642,8 @@ $border-radius: 6px;
           }
 
           .export-button {
-            @media (min-width: 769px) and (max-width: 1367px) {
-              width: 100%;
+            @media (min-width: 769px) and (max-width: 1366px) {
+              width: 300px;
               min-width: unset;
               justify-content: center;
             }
@@ -660,18 +662,10 @@ $border-radius: 6px;
           }
 
           .add-button {
-            @media (min-width: 769px) and (max-width: 1367px) {
-              width: 100%;
+            @media (min-width: 769px) and (max-width: 1366px) {
+              width: 300px;
               min-width: unset;
               justify-content: center;
-              height: 40px;
-              padding: 0 70px 0 64px;
-              font-size: 14px;
-              font-weight: 500;
-              background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-              border: none;
-              box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
-              margin-right: 24px;
             }
 
             height: 38px;

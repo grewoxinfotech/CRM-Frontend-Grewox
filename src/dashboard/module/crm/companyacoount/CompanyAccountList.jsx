@@ -251,7 +251,8 @@ const CompanyAccountList = ({
     {
       title: "Actions",
       key: "actions",
-      width: 60,
+      width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
@@ -311,6 +312,7 @@ const CompanyAccountList = ({
         loading={isLoading}
         rowKey="id"
         className="modern-table"
+        scroll={{ x: "max-content", y: "100%" }}
         pagination={{
           total: companyAccountsResponse?.pagination?.total || 0,
           current: companyAccountsResponse?.pagination?.current || 1,

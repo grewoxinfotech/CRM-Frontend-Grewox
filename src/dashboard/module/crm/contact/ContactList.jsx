@@ -294,7 +294,8 @@ const ContactList = ({
     {
       title: "Actions",
       key: "actions",
-      width: 60,
+      width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
@@ -356,6 +357,7 @@ const ContactList = ({
         className="modern-table"
         onChange={handleChange}
         pagination={pagination}
+        scroll={{ x: "max-content", y: "100%" }}
       />
 
       {/* Edit Modal */}

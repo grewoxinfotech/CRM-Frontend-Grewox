@@ -351,15 +351,15 @@ const Invoice = () => {
         <div className="header-content">
           <div className="page-title">
             <div className="title-row">
-              <div className="title-content">
-              <Title level={2}>Invoices</Title>
-              <Text type="secondary">Manage all invoices in the organization</Text>
+              <div className="title-column">
+                <Title level={2}>Invoices</Title>
+                <Text type="secondary">Manage all invoices in the organization</Text>
               </div>
               <div className="mobile-actions">
                 <Button
                   type="primary"
                   icon={<FiPlus size={18} />}
-                  onClick={() => setCreateModalVisible(true)}
+                  onClick={() => handleCreate()}
                   className="mobile-add-button"
                 />
                 <Popover
@@ -391,31 +391,25 @@ const Invoice = () => {
                 </Dropdown>
               </div>
             </div>
-            
           </div>
 
           <div className="header-actions">
             <div className="desktop-actions">
-            <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-              placeholder="Search invoices..."
-              allowClear
-              onChange={(e) => handleSearch(e.target.value)}
-              value={searchText}
-              className="search-input"
-              style={{
-                width: "300px",
-                borderRadius: "20px",
-                height: "38px",
-              }}
-            />
-            <RangePicker
-              onChange={handleDateRangeChange}
-              value={filters.dateRange}
-              allowClear
-              style={{ width: 400 }}
-              placeholder={["Start Date", "End Date"]}
-            />
+              <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search invoices..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
+              />
+              <RangePicker
+                onChange={handleDateRangeChange}
+                value={filters.dateRange}
+                allowClear
+                style={{ width: '70%' }}
+                placeholder={["Start Date", "End Date"]}
+              />
               <Dropdown overlay={exportMenu} trigger={["click"]}>
                 <Button className="export-button">
                   <FiDownload size={16} />
@@ -428,7 +422,7 @@ const Invoice = () => {
                 onClick={() => handleCreate()}
                 className="add-button"
               >
-                <span className="button-text">Create Invoice</span>
+                Create Invoice
               </Button>
             </div>
           </div>

@@ -212,7 +212,7 @@ const Revenue = () => {
     <div className="search-popup">
       <Input
         prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-        placeholder="Search customers..."
+        placeholder="Search revenue entries..."
         allowClear
         onChange={(e) => setSearchText(e.target.value)}
         value={searchText}
@@ -257,11 +257,11 @@ const Revenue = () => {
               onChange={(e) => handleSearch(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{
-                width: "300px",
-                borderRadius: "20px",
-                height: "38px",
-              }}
+              // style={{
+              //   width: "300px",
+              //   borderRadius: "20px",
+              //   height: "38px",
+              // }}
             />
                 <Popover
                   content={searchContent}

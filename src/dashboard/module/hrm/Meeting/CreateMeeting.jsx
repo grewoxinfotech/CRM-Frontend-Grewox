@@ -41,6 +41,14 @@ const CreateMeeting = ({ open, onCancel, loading }) => {
     useGetEmployeesQuery();
   const { data: rolesData } = useGetRolesQuery();
 
+  // Transform departments data
+  const departments = React.useMemo(() => {
+    if (!departmentsData) return [];
+    if (Array.isArray(departmentsData)) return departmentsData;
+    if (Array.isArray(departmentsData.data)) return departmentsData.data;
+    return [];
+  }, [departmentsData]);
+
   // Transform subclients data
   const subclients = React.useMemo(() => {
     if (!subClientsData) return [];
@@ -312,7 +320,7 @@ const CreateMeeting = ({ open, onCancel, loading }) => {
                   backgroundColor: "#f8fafc",
                 }}
                 options={
-                  departmentsData?.map((dept) => ({
+                  departments.map((dept) => ({
                     value: dept.id,
                     label: dept.department_name,
                   })) || []

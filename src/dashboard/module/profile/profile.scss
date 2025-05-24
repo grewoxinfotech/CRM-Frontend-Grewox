@@ -243,6 +243,16 @@
                     height: 14px !important;
                     box-shadow: 0 0 0 3px white;
                     animation: pulse 2s infinite;
+
+                    @media (min-width: 768px) {
+                        margin-top: 100px;
+                        right: 20px;
+                    }
+
+                    @media (max-width: 767px) {
+                        margin-top: 65px;
+                        right: 12px;
+                    }
                 }
             }
         }
@@ -501,64 +511,115 @@
         padding: 16px;
 
         .page-header {
-            flex-direction: column;
-            padding: 24px;
-            gap: 20px;
+            flex-direction: row;
+            padding: 16px 24px;
+            gap: 16px;
 
             .page-title {
-                text-align: center;
-                width: 100%;
+                text-align: left;
+                width: auto;
 
                 h2 {
+                    font-size: 24px;
                     margin-bottom: 4px;
+                }
+
+                .ant-typography-secondary {
+                    font-size: 14px;
                 }
             }
         }
 
         .profile-details-card {
             .profile-header {
-                flex-direction: column;
+                flex-direction: row;
                 align-items: center;
-                text-align: center;
+                text-align: left;
                 gap: 24px;
-                padding-bottom: 32px;
+                padding: 16px 12px 24px;
 
                 .profile-header-content {
-                    flex-direction: column;
-                    gap: 16px;
+                    flex-direction: row;
+                    gap: 24px;
                     align-items: center;
+                    max-width: 100%;
                 }
 
                 .profile-avatar-container {
-                    min-width: auto;
-                    margin-bottom: 8px;
+                    min-width: 80px;
+                    margin-bottom: 0;
+
+                    .profile-avatar {
+                        width: 80px;
+                        height: 80px;
+                        border-width: 3px;
+
+                        .avatar-initials {
+                            font-size: 32px;
+                        }
+                    }
                 }
 
                 .profile-title {
-                    text-align: center;
+                    text-align: left;
+                    width: auto;
 
                     h3.ant-typography {
-                        font-size: 24px;
+                        font-size: 20px;
+                        margin-bottom: 4px;
                     }
 
                     .username {
-                        justify-content: center;
-                        margin: 8px auto 12px;
+                        font-size: 14px;
+                        margin: 0 0 4px 0;
                     }
 
                     .role-badge {
-                        display: inline-flex;
-                        margin: 0 auto;
+                        font-size: 12px;
+                        padding: 4px 10px;
+                        margin: 4px 0 0 0;
                     }
                 }
 
                 .profile-actions {
-                    width: 100%;
-                    margin-top: 8px;
+                    width: auto;
+                    margin-top: 0;
 
                     .ant-btn {
-                        width: 100%;
-                        justify-content: center;
+                        width: auto;
+                        justify-content: flex-start;
+                        height: 32px;
+                        font-size: 12px;
+                        padding: 0 12px;
+                    }
+                }
+            }
+
+            .profile-info-section {
+                padding: 16px 0;
+
+                h4.ant-typography {
+                    font-size: 16px;
+                    margin-bottom: 16px;
+                }
+
+                .info-item {
+                    padding: 12px;
+
+                    .info-label {
+                        margin-bottom: 6px;
+
+                        .info-icon {
+                            font-size: 14px;
+                        }
+
+                        .ant-typography {
+                            font-size: 12px;
+                        }
+                    }
+
+                    .ant-typography-strong {
+                        font-size: 13px;
                     }
                 }
             }

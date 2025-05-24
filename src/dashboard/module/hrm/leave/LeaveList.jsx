@@ -530,7 +530,7 @@ const LeaveList = ({ onEdit, onView, searchText = "", filters = {} }) => {
           showQuickJumper: true
         }}
         className="custom-table"
-        scroll={{ x: 1000 }}
+        scroll={{ x: "max-content" ,y:"100%"}}
         style={{
           background: '#ffffff',
           borderRadius: '12px',

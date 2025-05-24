@@ -175,6 +175,7 @@ const MeetingList = ({
             title: 'Actions',
             key: 'actions',
             width: 100,
+            fixed: 'right',
             render: (_, record) => (
                 <Dropdown
                     overlay={
@@ -222,7 +223,7 @@ const MeetingList = ({
                     showQuickJumper: true
                 }}
                 className="custom-table"
-                scroll={{ x: 1000 }}
+                scroll={{ x: "max-content", y: "100%" }}
                 style={{
                     background: '#ffffff',
                     borderRadius: '12px',

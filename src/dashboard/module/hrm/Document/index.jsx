@@ -250,7 +250,7 @@ const Document = () => {
       </div>
 
       <CreateDocument
-        visible={isFormVisible}
+        open={isFormVisible}
         onCancel={() => setIsFormVisible(false)}
         onSubmit={handleFormSubmit}
         initialValues={selectedDocument}
