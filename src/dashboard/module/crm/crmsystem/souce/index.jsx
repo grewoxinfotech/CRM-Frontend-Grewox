@@ -20,7 +20,7 @@ const Source = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
-  const { data: sourcesData = [], isLoading } = useGetSourcesQuery(userdata?.id);
+  const { data: sourcesData = [], isLoading, refetch } = useGetSourcesQuery(userdata?.id);
   const [deleteSource] = useDeleteSourceMutation();
 
   const sources = sourcesData?.data?.filter(item => item.lableType === "source") || [];

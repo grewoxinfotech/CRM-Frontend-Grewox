@@ -13,13 +13,14 @@ import {
     FiToggleRight,
     FiSearch,
     FiFilter,
-    FiX
+    FiX,
+    FiUserCheck
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
 import moment from 'moment';
 
-const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText }) => {
+const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText, subscribedUsers }) => {
     const { data: currencies } = useGetAllCurrenciesQuery({
         page: 1,
         limit: 100
@@ -192,6 +193,11 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         return `${size} MB`;
     };
 
+    const getAssignedUsersCount = (planId) => {
+        if (!subscribedUsers || !Array.isArray(subscribedUsers)) return 0;
+        return subscribedUsers.filter(user => user.plan_id === planId && user.status !== 'cancelled').length;
+    };
+
     const columns = [
         {
             title: (
@@ -342,6 +348,27 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             width: '12%',
         },
         {
+            title: (
+                <div className="column-header">
+                    <FiUserCheck className="header-icon" />
+                    <span>Assigned Users</span>
+                </div>
+            ),
+            key: 'assigned_users',
+            width: '15%',
+            render: (_, record) => {
+                const count = getAssignedUsersCount(record.id);
+                return (
+                    <Tooltip title="Number of users assigned to this plan">
+                        <Tag className="assigned-users-tag">
+                            <FiUsers className="tag-icon" /> {count} Users
+                        </Tag>
+                    </Tooltip>
+                );
+            },
+            sorter: (a, b) => getAssignedUsersCount(a.id) - getAssignedUsersCount(b.id),
+        },
+        {
             title: 'Actions',
             key: 'actions',
             align: 'right',
@@ -418,9 +445,26 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                 onChange={handleTableChange}
                 rowKey="id"
                 className="plans-table"
-                scroll={{ x: 1200 }}
+                scroll={{ x: 1300 }}
                 rowSelection={rowSelection}
             />
+            <style jsx>{`
+                .assigned-users-tag {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    background: #e6f4ff;
+                    border: 1px solid #91caff;
+                    color: #0958d9;
+                    font-weight: 500;
+                    
+                    .tag-icon {
+                        font-size: 14px;
+                    }
+                }
+            `}</style>
         </div>
     );
 };

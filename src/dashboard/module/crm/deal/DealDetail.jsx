@@ -28,15 +28,25 @@ const { Title, Text } = Typography;
 
 const DealDetail = () => {
     const { dealId } = useParams();
+    // console.log("dealId", dealId);
     const navigate = useNavigate();
-    const { data, isLoading, refetch } = useGetDealsQuery();
+    const { data, isLoading, refetch } = useGetDealsQuery({
+        page: 1,
+        pageSize: 10,
+        search: ''
+    });
+
+
     const [updateDeal] = useUpdateDealMutation();
 
     // Get deals array first
-    const deals = Array.isArray(data) ? data : [];
+    const deals = Array.isArray(data?.data) ? data?.data : [];
+ 
     // Then find the deal
     const deal = deals.find(deal => deal.id === dealId);
 
+
+    
     // Local state for deal and status
     const [localDeal, setLocalDeal] = useState(deal);
     const [currentStatus, setCurrentStatus] = useState('pending');

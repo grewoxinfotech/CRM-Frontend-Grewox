@@ -24,7 +24,7 @@ import {
   useGetDealQuery,
   useUploadDealFilesMutation,
   useDeleteDealFileMutation,
-} from "../../services/dealApi";
+} from "../../services/DealApi";
 import "./files.scss";
 
 const { Text, Title } = Typography;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Table,
   Button,
@@ -44,14 +44,17 @@ const { RangePicker } = DatePicker;
 
 const InvoiceList = ({
   data = [],
+  invoices = [],
   loading,
+  deals = [],
   onEdit,
   onDelete,
   onView,
   searchText = "",
   pagination = {}
 }) => {
-  const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
+  const { data: invoicesdata = [], isLoading, refetch } = useGetInvoicesQuery();
+
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [deleteInvoice] = useDeleteInvoiceMutation();
@@ -59,10 +62,12 @@ const InvoiceList = ({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const invoices = invoicesdata?.data || [];
-  // const invoices = invoicesdata?.data || [];
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
   const { data: customersData } = useGetCustomersQuery();
+
+  console.log("deals", deals);
+
+  console.log("invoicesdata", invoicesdata);
 
   const statuses = [
     { id: "paid", name: "Paid" },
@@ -233,45 +238,7 @@ const InvoiceList = ({
     }
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
-      {
-        key: "view",
-        icon: <FiEye style={{ fontSize: "14px" }} />,
-        label: "View Invoice",
-        onClick: () => handleView(record),
-      },
-      {
-        key: "edit",
-        icon: <FiEdit2 style={{ fontSize: "14px" }} />,
-        label: "Edit Invoice",
-        onClick: () => handleEdit(record),
-      },
-      // {
-      //   key: "send_invoice",
-      //   icon: <FiSend style={{ fontSize: "14px" }} />,
-      //   label: "Send Invoice to Customer",
-      //   onClick: () => handleSendInvoice(record),
-      // },
-      // {
-      //   key: "download",
-      //   icon: <FiDownload />,
-      //   label: "Download Invoice",
-      //   onClick: () => {
-      //     setSelectedInvoice(record);
-      //     setIsViewModalOpen(true);
-      //   },
-      // },
-      {
-        key: "delete",
-        icon: <FiTrash2 />,
-        label: "Delete Invoice",
-        onClick: () => handleDelete(record.id),
-        danger: true,
-      },
-    ],
-  });
-
+ 
   const getCustomerName = (customerId) => {
     if (!customerId || !customersData?.data) return "N/A";
     const customer = customersData.data.find(c => c.id === customerId);
@@ -340,14 +307,23 @@ const InvoiceList = ({
       ),
       onFilter: (value, record) => record.salesInvoiceNumber?.toLowerCase().includes(value.toLowerCase()),
       render: (_, record) => (
-        <div className="item-wrapper" style={{ cursor: 'pointer' }} onClick={() => handleView(record)}>
+        <div className="item-wrapper">
           <div className="item-content">
             <div className="icon-wrapper" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
               <FiFileText className="item-icon" />
             </div>
             <div className="info-wrapper">
-              <div className="name" style={{ color: '#1890ff' }}>{record.salesInvoiceNumber}</div>
-              <div className="meta" style={{ color: '#4b5563' }}>{getCustomerName(record.customer)}</div>
+              <div className="name">
+                {record.salesInvoiceNumber}
+                {record.related_id && deals?.data?.some(deal => deal.id === record.related_id) && (
+                  <Tag style={{ marginLeft: '8px', fontSize: '11px', backgroundColor: '#f0f9ff', color: '#0369a1', borderColor: '#93c5fd' }}>
+                    Deal Invoice
+                  </Tag>
+                )}
+              </div>
+              <div className="meta" style={{ color: '#4b5563' }}>
+                {getCustomerName(record.customer)}
+              </div>
             </div>
           </div>
         </div>
@@ -398,7 +374,6 @@ const InvoiceList = ({
       title: "Actions",
       key: "actions",
       width: 80,
-      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
@@ -406,9 +381,11 @@ const InvoiceList = ({
               <Menu.Item key="view" icon={<FiEye style={{ fontSize: "14px" }} />} onClick={() => onView(record)}>
                 View Details
               </Menu.Item>
-              <Menu.Item key="edit" icon={<FiEdit2 style={{ fontSize: "14px" }} />} onClick={() => onEdit(record)}>
-                Edit Invoice
-              </Menu.Item>
+              {record.payment_status !== 'paid' && (
+                <Menu.Item key="edit" icon={<FiEdit2 style={{ fontSize: "14px" }} />} onClick={() => onEdit(record)}>
+                  Edit Invoice
+                </Menu.Item>
+              )}
               <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record.id)}>
                 Delete Invoice
               </Menu.Item>
@@ -433,24 +410,6 @@ const InvoiceList = ({
     },
   };
 
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Use only numbers for mobile/tablet, and AntD default for desktop
-  const paginationConfig = {
-    pageSize: 10,
-    showSizeChanger: true,
-    showTotal: (total) => `Total ${total} customers`,
-    pageSizeOptions: isMobile ? ["5", "10", "15", "20", "25"] : ["10", "20", "50", "100"],
-    locale: {
-      items_per_page: isMobile ? "" : "/ page",
-    },
-  };
-
   return (
     <div className="invoice-container">
       {selectedRowKeys.length > 0 && (
@@ -470,22 +429,18 @@ const InvoiceList = ({
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredInvoices}
+        loading={isLoading}
         rowKey="id"
-        // className="invoice-table"
-        className="custom-table"
+        className="invoice-table"
         pagination={{
           ...pagination,
-          ...paginationConfig,
           showSizeChanger: true,
-
           showTotal: (total) => `Total ${total} invoices`,
           pageSizeOptions: ['10', '20', '50', '100'],
           position: ['bottomRight'],
-          
           hideOnSinglePage: false,
           showQuickJumper: true
         }}
-        scroll={{ x: 1000, y: "100%" }}
         onChange={handleTableChange}
       />
 

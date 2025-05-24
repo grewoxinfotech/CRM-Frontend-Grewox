@@ -36,7 +36,7 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
   const [form] = Form.useForm();
   const [createDebitNote] = useCreateDebitNoteMutation();
   const {
-    data: billsData,
+    data: billsDataa,
     isLoading: billsLoading,
     refetch: refetchBills,
   } = useGetBillingsQuery({
@@ -45,17 +45,16 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
     search: '',
     company_id: companyId
   });
+
+  const billsData = billsDataa?.message;
+
   const { data: currenciesData } = useGetAllCurrenciesQuery();
 
   const [loading, setLoading] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState("");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
 
-  useEffect(() => {
-    if (billsData) {
-      console.log("Bills Data:", billsData);
-    }
-  }, [billsData]);
+ 
 
   const handleBillSelect = (value) => {
     const selectedBill = billsData?.data?.find(

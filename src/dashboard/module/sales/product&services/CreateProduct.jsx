@@ -155,6 +155,7 @@ const CreateProduct = ({
         formData.append("image", fileList[0].originFileObj);
       }
 
+      console.log("🚀 ~ handleSubmit ~ formData:", formData)
       await onSubmit(formData);
       form.resetFields();
       setFileList([]);

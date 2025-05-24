@@ -35,7 +35,7 @@ const Categories = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const currentUser = useSelector(selectCurrentUser);
 
-  const { data: categoriesData, isLoading } = useGetCategoriesQuery(currentUser?.id);
+  const { data: categoriesData, isLoading,  refetch } = useGetCategoriesQuery(currentUser?.id);
   const [deleteCategory] = useDeleteCategoryMutation();
 
   const handleDelete = async (record) => {

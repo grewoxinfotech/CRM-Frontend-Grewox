@@ -34,7 +34,7 @@ import {
     useDeletePlanMutation,
     useUpdatePlanMutation
 } from './services/planApi';
-
+import { useGetAllSubscribedUsersQuery } from '../SubscribedUser/services/SubscribedUserApi';
 import PlanList from './PlanList';
 import PlanCard from './PlanCard';
 import AddPlan from './AddPlan';
@@ -64,6 +64,11 @@ const Plans = () => {
 
     const [deletePlan] = useDeletePlanMutation();
     const [updatePlan] = useUpdatePlanMutation();
+
+    const {
+        data: subscribedUsersData,
+        isLoading: isSubscribedUsersLoading
+    } = useGetAllSubscribedUsersQuery();
 
     const filteredPlans = React.useMemo(() => {
         if (!plansData?.data) return [];
@@ -374,16 +379,19 @@ const Plans = () => {
                     <PlanList
                         plans={filteredPlans}
                         loading={isLoading || isFetching}
+                        onView={() => {}}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
-                        onToggleStatus={handleToggleStatus}
                         pagination={{
                             current: filters.page,
                             pageSize: filters.limit,
-                            total: plansData?.total || 0
+                            total: plansData?.total || 0,
+                            showSizeChanger: true,
+                            showTotal: (total) => `Total ${total} items`
                         }}
                         onPageChange={handlePageChange}
                         searchText={filters.search}
+                        subscribedUsers={subscribedUsersData?.data || []}
                     />
                 ) : (
                     renderCardView()

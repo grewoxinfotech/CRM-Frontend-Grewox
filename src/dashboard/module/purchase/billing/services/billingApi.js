@@ -24,8 +24,8 @@ export const billingApi = createApi({
 
     // Create new bill
     createBilling: builder.mutation({
-      query: (data) => ({
-        url: '/bills',
+      query: ({ id, data }) => ({
+        url: `/bills/${id}`,
         method: "POST",
         body: data,
       }),

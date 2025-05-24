@@ -36,10 +36,7 @@ import { PlusOutlined } from "@ant-design/icons";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import AddPipelineModal from "../crmsystem/pipeline/AddPipelineModal";
 import "./Deal.scss";
-import {
-  useGetSourcesQuery,
-  useDeleteSourceMutation,
-} from "../crmsystem/souce/services/SourceApi";
+
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
@@ -59,6 +56,8 @@ import {
 import {
   useGetCategoriesQuery,
   useDeleteCategoryMutation,
+  useGetSourcesQuery,
+  useDeleteSourceMutation,
 } from "../crmsystem/souce/services/SourceApi";
 import AddSourceModal from "../crmsystem/souce/AddSourceModal";
 import AddCategoryModal from "../crmsystem/souce/AddCategoryModal";
@@ -77,6 +76,7 @@ const findIndianDefaults = (currencies, countries) => {
 const CreateDeal = ({ open, onCancel, leadData }) => {
   // console.log("leadData", leadData);
   const loggedInUser = useSelector(selectCurrentUser);
+
 
   const [form] = Form.useForm();
   const [fileList, setFileList] = React.useState([]);

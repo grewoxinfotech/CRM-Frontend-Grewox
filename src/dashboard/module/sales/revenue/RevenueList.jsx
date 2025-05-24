@@ -37,6 +37,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import { useSelector } from "react-redux";
 import './revenue.scss';
+import { useGetInvoicesQuery } from "../invoice/services/invoiceApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -50,6 +51,8 @@ const RevenueList = ({
   searchText = "",
   pagination = {}
 }) => {
+
+  const { data: invoicesdata = [], isLoading } = useGetInvoicesQuery();
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -85,6 +88,14 @@ const RevenueList = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const invoices = invoicesdata?.data;
+
+  console.log("🚀 ~ invoices:", invoices)
+
+  const revenues = data;
+  console.log("🚀 ~ revenues:", revenues)
+
 
   // Process revenue data to include parsed products
   const processedRevenue = useMemo(() => {

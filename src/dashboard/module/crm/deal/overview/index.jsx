@@ -244,6 +244,9 @@ const DealStageProgress = ({
 };
 
 const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
+
+  console.log("initialDeal", initialDeal);
+
   const [localDeal, setLocalDeal] = useState({
     ...initialDeal,
     status: currentStatus,

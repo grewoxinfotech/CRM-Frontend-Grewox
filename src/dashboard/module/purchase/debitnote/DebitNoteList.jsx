@@ -47,7 +47,7 @@ const DebitNoteList = ({
   onChange
 }) => {
   const companyId = useSelector(getCompanyId);
-  const { data: billings } = useGetBillingsQuery({
+  const { data: billingss } = useGetBillingsQuery({
     page: 1,
     pageSize: -1,
     search: ''
@@ -65,6 +65,9 @@ const DebitNoteList = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+
+  const billings = billingss?.message;
+  
   const getBillNumber = (billId) => {
     const foundBill = billings?.data?.find((bill) => bill.id === billId);
     return foundBill?.billNumber || "N/A";

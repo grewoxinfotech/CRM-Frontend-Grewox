@@ -10,15 +10,18 @@ import {
     FiHardDrive,
     FiCheckCircle,
     FiXCircle,
-    FiCheck
+    FiCheck,
+    FiUserCheck
 } from 'react-icons/fi';
 import { useGetAllCurrenciesQuery } from '../settings/services/settingsApi';
 import { useUpdatePlanMutation } from './services/planApi';
+import { useGetAllSubscribedUsersQuery } from '../SubscribedUser/services/SubscribedUserApi';
 
 const { Text, Title } = Typography; 
 
 const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
     const [updatePlan] = useUpdatePlanMutation();
+    const { data: subscribedUsersData } = useGetAllSubscribedUsersQuery();
 
     const statusInfo = {
         active: {
@@ -97,6 +100,13 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
             return `${Number.isInteger(gbValue) ? gbValue.toFixed(0) : gbValue.toFixed(2)} GB`;
         }
         return `${Math.round(size)} MB`;
+    };
+
+    const getAssignedUsersCount = () => {
+        if (!subscribedUsersData?.data || !Array.isArray(subscribedUsersData.data)) return 0;
+        return subscribedUsersData.data.filter(user => 
+            user.plan_id === plan.id && user.status !== 'cancelled'
+        ).length;
     };
 
     return (
@@ -192,7 +202,7 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
 
                 <div className="features-group">
                     <Title level={5} className="features-title">
-                        <FiHardDrive className="section-icon" /> Resources
+                        <FiHardDrive className="section-icon" /> Resources & Usage
                     </Title>
                     <ul className="features-list">
                         <li>
@@ -202,6 +212,10 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                         <li>
                             <FiCheck className="check-icon" />
                             <span><strong>{plan.trial_period} Days</strong> Free Trial</span>
+                        </li>
+                        <li>
+                            <FiUserCheck className="check-icon" />
+                            <span><strong>{getAssignedUsersCount()} Users</strong> Currently Assigned</span>
                         </li>
                     </ul>
                 </div>
@@ -346,6 +360,46 @@ const PlanCard = ({ plan, onEdit, onDelete, onView, onToggleStatus }) => {
                     
                     &:hover {
                         background-color: rgba(0, 0, 0, 0.04);
+                    }
+                }
+
+                .features-list li {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    margin-bottom: 8px;
+                    color: #4b5563;
+                    font-size: 14px;
+
+                    .check-icon {
+                        color: #10b981;
+                        font-size: 16px;
+                    }
+
+                    strong {
+                        color: #1e293b;
+                        font-weight: 600;
+                    }
+                }
+
+                .features-group {
+                    margin-bottom: 24px;
+
+                    &:last-child {
+                        margin-bottom: 0;
+                    }
+
+                    .features-title {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        margin-bottom: 16px;
+                        color: #1e293b;
+                        font-size: 16px;
+
+                        .section-icon {
+                            color: #3b82f6;
+                        }
                     }
                 }
             `}</style>

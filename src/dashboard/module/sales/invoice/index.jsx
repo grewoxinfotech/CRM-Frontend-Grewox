@@ -43,6 +43,7 @@ import {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
 } from "./services/invoiceApi";
+import { useGetDealsQuery } from "../../crm/deal/services/dealApi";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -58,14 +59,22 @@ const Invoice = () => {
   const [pageSize, setPageSize] = useState(10);
   const loggedInUser = useSelector(selectCurrentUser);
   const id = loggedInUser?.id;
+  const { data:deals, isLoading, refetch } = useGetDealsQuery({ 
+    page: 1,
+    pageSize: -1,
+    search: ''
+});
+
   const { data: invoicesData, isLoading: isInvoiceLoading } = useGetInvoicesQuery({
     page: currentPage,
     pageSize,
     search: searchText
   });
-  const invoices = (invoicesData?.data || []).filter(
-    (invoice) => invoice.related_id === id
-  );
+
+
+  const invoices = invoicesData?.data || [];
+
+
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
 
@@ -433,6 +442,7 @@ const Invoice = () => {
         <InvoiceList
           loading={isInvoiceLoading || loading}
           invoices={invoices}
+          deals={deals}
           searchText={searchText}
           onEdit={handleEdit}
           onDelete={handleDelete}

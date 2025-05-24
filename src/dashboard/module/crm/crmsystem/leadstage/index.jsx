@@ -11,7 +11,7 @@ import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
 import "./leadstage.scss";
 import { Button, Modal, message, Table, Tooltip, Dropdown, Select, Typography, Space, Tag } from "antd";
 import { useGetLeadsQuery } from "../../lead/services/LeadApi";
-import { useGetDealsQuery } from "../../deal/services/dealApi";
+import { useGetDealsQuery } from "../../deal/services/DealApi";
 
 const { Text } = Typography;
 
@@ -26,8 +26,8 @@ const LeadStages = () => {
   const [isSelectDefaultModalOpen, setIsSelectDefaultModalOpen] = useState(false);
   const [stageToDelete, setStageToDelete] = useState(null);
 
-  const { data: stagesData = [], isLoading } = useGetLeadStagesQuery();
-  const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: stagesData = [], isLoading , refetch } = useGetLeadStagesQuery();
+  const { data: pipelines = [] , refetch: refetchPipelines } = useGetPipelinesQuery();
 
   const [deleteLeadStage] = useDeleteLeadStageMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();

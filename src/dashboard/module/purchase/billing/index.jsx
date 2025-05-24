@@ -412,7 +412,7 @@ const Billing = () => {
 
       <Card className="billing-list-container">
         <BillingList
-          billings={billingsData?.data || []}
+          billings={billingsData?.message?.data || []}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onView={handleView}
@@ -428,7 +428,7 @@ const Billing = () => {
 
       <CreateBilling
         open={isCreateModalVisible}
-        billings={billingsData?.data || []}
+        billings={billingsData?.message?.data || []}
         onCancel={() => setIsCreateModalVisible(false)}
         onSubmit={handleCreateBilling}
       />
