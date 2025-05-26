@@ -290,6 +290,7 @@ const InvoiceList = ({
     {
       title: "Invoice Details",
       key: "details",
+      width: 150,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -332,6 +333,7 @@ const InvoiceList = ({
     {
       title: "Date",
       key: "date",
+      width: 200,
       render: (_, record) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -353,6 +355,7 @@ const InvoiceList = ({
     {
       title: "Amount",
       key: "amount",
+      width: 150,
       render: (_, record) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -374,6 +377,7 @@ const InvoiceList = ({
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           overlay={
@@ -413,7 +417,7 @@ const InvoiceList = ({
   return (
     <div className="invoice-container">
       {selectedRowKeys.length > 0 && (
-        <div className="bulk-actions" style={{ marginBottom: '16px' }}>
+        <div className="bulk-actions" style={{ marginBottom: '16px', width: '100%'  }}>
           <Button
             type="primary"
             danger
@@ -442,6 +446,7 @@ const InvoiceList = ({
           showQuickJumper: true
         }}
         onChange={handleTableChange}
+        scroll={{ x: "1000px", y: "100%" }}
       />
 
       <EditInvoice

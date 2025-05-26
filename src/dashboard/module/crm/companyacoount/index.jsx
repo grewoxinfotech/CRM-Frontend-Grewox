@@ -291,7 +291,7 @@ const CompanyAccount = () => {
               onChange={(e) => handleSearchChange(e.target.value)}
               value={searchText}
               className="search-input"
-              style={{ width: 350 }}
+              // style={{ width: 350 }}
             />
                 <Popover
                   content={

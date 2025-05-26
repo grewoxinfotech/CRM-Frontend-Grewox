@@ -381,13 +381,14 @@ const BillingList = ({
     <div className="billing-list-container">
       <BulkActions />
       <Table
-        className="custom-table"
+        // className="custom-table"
         columns={columns}
         dataSource={billings}
         rowSelection={rowSelection}
         rowKey="id"
         loading={loading}
         onChange={handleChange}
+        scroll={{ x: "max-content", y: "100%" }}
         pagination={pagination || {
           pageSize: 10,
           showSizeChanger: true,

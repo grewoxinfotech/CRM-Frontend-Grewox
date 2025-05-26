@@ -43,7 +43,7 @@ import {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
 } from "./services/invoiceApi";
-import { useGetDealsQuery } from "../../crm/deal/services/dealApi";
+import { useGetDealsQuery } from "../../crm/deal/services/DealApi";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;

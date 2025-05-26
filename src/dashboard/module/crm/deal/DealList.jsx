@@ -38,7 +38,7 @@ import {
   FiCalendar,
   FiUser,
 } from "react-icons/fi";
-import { useGetDealsQuery, useDeleteDealMutation } from "./services/dealApi";
+import { useGetDealsQuery, useDeleteDealMutation } from "./services/DealApi";
 import { useGetLeadStagesQuery } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import {

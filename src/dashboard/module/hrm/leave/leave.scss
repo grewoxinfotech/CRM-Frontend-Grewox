@@ -722,9 +722,9 @@
     display: flex;
     flex-direction: column;
 
-    .custom-table {
-        flex: 1;
-        overflow: hidden;
+    // .custom-table {
+    //     flex: 1;
+    //     overflow: hidden;
 
         .ant-table {
             background: transparent;
@@ -824,7 +824,7 @@
             padding: 0 16px;
         }
     }
-}
+// }
 
 // Custom scrollbar styling
 .ant-table-body {

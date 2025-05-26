@@ -463,7 +463,7 @@ const RoleList = ({ onEdit, searchText, filters }) => {
                     rowSelection={rowSelection}
                     pagination={paginationConfig}
                     onChange={handleTableChange}
-                    className="custom-table"
+                    // className="custom-table"
                     scroll={{ x: 1000, y: '' }}
                     style={{
                         background: '#ffffff',

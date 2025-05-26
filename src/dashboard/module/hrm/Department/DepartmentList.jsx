@@ -310,7 +310,7 @@ const DepartmentList = ({ onEdit, searchText = '', filters = {} }) => {
                     rowKey="id"
                     rowSelection={rowSelection}
                     pagination={paginationConfig}
-                    className="custom-table"
+                    // className="custom-table"
                     scroll={{ x: 1300, y: '' }}
                     style={{
                         background: '#ffffff',

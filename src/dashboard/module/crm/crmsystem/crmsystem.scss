@@ -3,6 +3,10 @@
   height: 100%;
   background-color: #f8f9fa;
 
+  @media screen and (max-width: 768px) {
+    flex-direction: column;
+  }
+
   .crm-sidebar {
     width: 250px;
     background: white;
@@ -11,12 +15,46 @@
     height: 100%;
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+
+    @media screen and (max-width: 768px) {
+      width: 100%;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid rgba(24, 144, 255, 0.1);
+      border-radius: 0;
+      padding: 8px 0;
+    }
 
     .sidebar-content {
       display: flex;
       flex-direction: column;
       gap: 8px;
       padding: 0 12px;
+
+      @media screen and (max-width: 768px) {
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 8px;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #d1d5db transparent;
+
+        &::-webkit-scrollbar {
+          height: 4px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background-color: rgba(24, 144, 255, 0.3);
+          border-radius: 4px;
+        }
+      }
 
       .sidebar-item {
         display: flex;
@@ -27,10 +65,21 @@
         transition: all 0.3s ease;
         color: #495057;
 
+        @media screen and (max-width: 768px) {
+          white-space: nowrap;
+          min-width: fit-content;
+          padding: 8px 12px;
+          flex-shrink: 0;
+        }
+
         &:hover {
           background: rgba(#2563eb, 0.04);
           color: #2563eb;
           transform: translateX(2px);
+
+          @media screen and (max-width: 768px) {
+            transform: translateY(-2px);
+          }
         }
 
         &.active {
@@ -47,11 +96,20 @@
           margin-right: 12px;
           font-size: 18px;
           opacity: 0.8;
+
+          @media screen and (max-width: 768px) {
+            margin-right: 6px;
+            font-size: 16px;
+          }
         }
 
         .title {
           font-size: 14px;
           font-weight: 500;
+
+          @media screen and (max-width: 768px) {
+            font-size: 12px;
+          }
         }
       }
     }
@@ -62,17 +120,29 @@
     padding: 24px;
     overflow-y: auto;
 
+    @media screen and (max-width: 768px) {
+      padding: 16px;
+    }
+
     .content-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
 
+      @media screen and (max-width: 768px) {
+        margin-bottom: 16px;
+      }
+
       h2 {
         font-size: 24px;
         font-weight: 600;
         color: #1a1f36;
         margin: 0;
+
+        @media screen and (max-width: 768px) {
+          font-size: 20px;
+        }
       }
 
       .add-button {
@@ -103,6 +173,11 @@
       padding: 24px;
       min-height: 500px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+
+      @media screen and (max-width: 768px) {
+        padding: 16px;
+        min-height: auto;
+      }
     }
   }
 }

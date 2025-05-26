@@ -54,24 +54,11 @@ const Invoice = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const loggedInUser = useSelector(selectCurrentUser);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
   // const id = loggedInUser?.id;
-  const { data: invoicesData, isLoading, error } = useGetInvoicesQuery({
-    page: currentPage,
-    pageSize,
-    search: searchText,
-    related_id: id
-  });
-
-  // console.log("invoicesData", invoicesData);
+  const { data: invoicesData, isLoading, error } = useGetInvoicesQuery();
   const invoices = (invoicesData?.data || []).filter(
     (invoice) => invoice.related_id === id
   );
-
-  
-
   const { data: productsData, isLoading: productsLoading } =
     useGetProductsQuery(loggedInUser?.id);
 

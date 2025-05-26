@@ -306,7 +306,7 @@ const HolidayList = ({ onEdit, searchText = '', filters = {} }) => {
                         showSizeChanger: true,
                         showTotal: (total) => `Total ${total} items`,
                     }}
-                    className="custom-table"
+                    // className="custom-table"
                     scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
                     style={{
                         background: '#ffffff',

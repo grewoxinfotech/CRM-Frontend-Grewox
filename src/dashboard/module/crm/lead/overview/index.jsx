@@ -389,7 +389,7 @@ const LeadOverviewContent = ({
               )}
             </div>
             <div className="profile-info">
-              <h2 className="company-name">{localLeadData?.leadTitle}</h2>
+              <h2 className="company-names">{localLeadData?.leadTitle}</h2>
               <div className="contact-details">
                 {localLeadData?.company_id &&
                   companyData?.data?.[0] &&
@@ -417,6 +417,7 @@ const LeadOverviewContent = ({
                         </a>
                       )}
                     </div>
+                    <div className="separator-container" style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
                     <span className="separator">•</span>
                     <div className="info-section contact-section">
                       <div className="icon-wrapper contact">
@@ -434,6 +435,7 @@ const LeadOverviewContent = ({
                           )?.last_name
                         }
                       </span>
+                    </div>
                     </div>
                   </div>
                 ) : localLeadData?.company_id && companyData?.data?.[0] ? (
@@ -655,11 +657,11 @@ const LeadOverviewContent = ({
             transition: all 0.3s ease;
           }
 
-          .profile-header {
-            padding: 24px;
-            background: linear-gradient(135deg, #f6f8fd 0%, #f0f5ff 100%);
-            border-bottom: 1px solid #e6e8f0;
-          }
+          // .profile-header {
+          //   padding: 24px;
+          //   background: linear-gradient(135deg, #f6f8fd 0%, #f0f5ff 100%);
+          //   border-bottom: 1px solid #e6e8f0;
+          // }
 
           .profile-main {
             display: flex;
@@ -683,7 +685,7 @@ const LeadOverviewContent = ({
             flex: 1;
           }
 
-          .company-name {
+          .company-names {
             font-size: 24px;
             font-weight: 600;
             color: #1f2937;

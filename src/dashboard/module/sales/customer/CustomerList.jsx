@@ -229,6 +229,7 @@ const CustomerList = ({
     {
       title: "Billing Address",
       key: "billing",
+      width: 400,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -385,7 +386,7 @@ const CustomerList = ({
         columns={columns}
         dataSource={filteredCustomers}
         rowKey="id"
-        className="custom-table"
+        // className="custom-table"
         pagination={paginationConfig}
         onChange={onChange}
         scroll={{ x: 'max-content', y: '100%' }}

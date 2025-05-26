@@ -388,7 +388,8 @@ const TrainingList = ({
                     pageSizeOptions: ['10', '20', '50', '100'],
                     position: ['bottomRight']
                 }}
-                className="custom-table"
+                // className="custom-table"
+                
                 scroll={{ x: 'max-content', y: '100%' }}
                 // style={{
                 //     background: '#ffffff',

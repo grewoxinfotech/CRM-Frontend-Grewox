@@ -222,7 +222,7 @@ const MeetingList = ({
                     hideOnSinglePage: false,
                     showQuickJumper: true
                 }}
-                className="custom-table"
+                // className="custom-table"
                 scroll={{ x: "max-content", y: "100%" }}
                 style={{
                     background: '#ffffff',

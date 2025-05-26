@@ -198,7 +198,7 @@ const AnnouncementList = ({
                         }
                     }
                 }}
-                className="custom-table"
+                // className="custom-table"
                 scroll={{ x: 'max-content', y: '100%' }}
                 style={{
                     background: '#ffffff',

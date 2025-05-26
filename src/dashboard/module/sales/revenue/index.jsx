@@ -239,8 +239,8 @@ const Revenue = () => {
         </Breadcrumb>
       </div>
 
-      <div className="page-headers">
-        <div className="page-titles">
+        <div className="page-header">
+        <div className="page-title">
           <Title level={2}>Revenue</Title>
           <Text type="secondary">
             Manage all revenue entries in the organization
@@ -248,21 +248,16 @@ const Revenue = () => {
         </div>
         <div className="header-actions">
           <div className="desktop-actions">
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div className="search-container">
-          <Input
-              prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-              placeholder="Search revenue entries..."
-              allowClear
-              onChange={(e) => handleSearch(e.target.value)}
-              value={searchText}
-              className="search-input"
-              // style={{
-              //   width: "300px",
-              //   borderRadius: "20px",
-              //   height: "38px",
-              // }}
-            />
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                  placeholder="Search revenue entries..."
+                  allowClear
+                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchText}
+                  className="search-input"
+                />
                 <Popover
                   content={searchContent}
                   trigger="click"

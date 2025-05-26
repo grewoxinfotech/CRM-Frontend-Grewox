@@ -1477,12 +1477,12 @@
                     display: inline-block;
 
                     @media (max-width: 768px) {
-                        font-size: 24px;
+                        font-size: 20px;
                         margin-bottom: 10px;
                     }
 
                     @media (max-width: 576px) {
-                        font-size: 20px;
+                        font-size: 18px;
                         margin-bottom: 8px;
                     }
                 }
@@ -1508,6 +1508,11 @@
                         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
                         border: 1px solid rgba(0, 0, 0, 0.04);
                         transition: all 0.3s ease;
+
+                        @media (max-width: 992px) {
+                            flex-wrap: wrap;
+                            gap: 12px;
+                        }
 
                         @media (max-width: 768px) {
                             padding: 10px 16px;
@@ -1590,18 +1595,30 @@
                             }
                         }
 
+
+
                         .separator {
                             color: #d9d9d9;
                             font-size: 24px;
                             margin: 0 4px;
 
-                            @media (max-width: 768px) {
-                                font-size: 20px;
-                            }
 
-                            @media (max-width: 576px) {
+
+                            @media (max-width: 992px) {
                                 display: none;
                             }
+
+                            @media (max-width: 768px) {
+                                display: none;
+                            }
+
+                            // @media (max-width: 768px) {
+                            //     font-size: 20px;
+                            // }
+
+                            // @media (max-width: 576px) {
+                            //     display: none;
+                            // }
                         }
 
                         .website {

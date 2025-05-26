@@ -588,8 +588,8 @@ const SalaryList = ({ onEdit, onView, searchText = "", pagination }) => {
             }
           }
         }}
-        className="custom-table"
-        scroll={{ x: 'max-content', y: 'calc(100vh - 300px)' }}
+        // className="custom-table"
+        scroll={{ x: 'max-content', y: '100%' }}
         size="middle"
         style={{
           background: '#ffffff',

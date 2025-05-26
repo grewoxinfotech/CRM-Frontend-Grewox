@@ -37,7 +37,7 @@ import {
 } from "../../../../module/settings/services/settingsApi";
 import { useGetDealStagesQuery } from "../../crmsystem/dealstage/services/dealStageApi";
 import { useGetPipelinesQuery } from "../../crmsystem/pipeline/services/pipelineApi";
-import { useUpdateDealMutation } from "../services/dealApi";
+import { useUpdateDealMutation } from "../services/DealApi";
 import { useSelector } from "react-redux";
 import { selectDealStageOrder } from "../services/DealStageSlice";
 import { selectCurrentUser } from "../../../../../auth/services/authSlice";
