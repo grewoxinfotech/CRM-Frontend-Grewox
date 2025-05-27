@@ -43,19 +43,21 @@ import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
 const { Text } = Typography;
 const { Option } = Select;
 
-const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
+const CreateBilling = ({ open, onCancel, onSubmit, billings, vendorsData,vendorsLoading }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true);
-  const [isTaxEnabled, setIsTaxEnabled] = useState(false);
+  const [isTaxEnabled, setIsTaxEnabled] = useState(true);
   const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
   const [vendorForm] = Form.useForm();
   const [createVendor] = useCreateVendorMutation();
   const loggedInUser = useSelector(selectCurrentUser);
   const [selectedCountry, setSelectedCountry] = useState(null);
-  const { data: vendorsData, isLoading: vendorsLoading } = useGetVendorsQuery();
+
+
+ 
 
   // Fetch currencies
   const { data: currenciesData, isLoading: currenciesLoading } =
@@ -69,7 +71,11 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
 
   // Fetch products
   const { data: productsData, isLoading: productsLoading } =
-    useGetProductsQuery(loggedInUser?.id);
+    useGetProductsQuery(loggedInUser?.id,{
+      page: 1,
+      pageSize: -1,
+      search: ''
+    });
   // Fetch countries
   const { data: countries = [], loading: countriesLoading } =
     useGetAllCountriesQuery();
@@ -94,6 +100,15 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
       }
     }
   }, [countries]);
+
+  // Add a useEffect to recalculate totals when tax toggle changes
+  useEffect(() => {
+    // Recalculate totals whenever tax toggle changes
+    const items = form.getFieldValue("items");
+    if (items && items.length > 0) {
+      calculateTotals(items);
+    }
+  }, [isTaxEnabled]);
 
   const handleCurrencyChange = (value, option) => {
     const currency = currenciesData?.find((c) => c.id === value);
@@ -143,7 +158,9 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
           item_name: selectedProduct.name,
           unit_price: selectedProduct.selling_price,
           hsn_sac: selectedProduct.hsn_sac,
-          tax: selectedProduct.tax,
+          tax: selectedProduct.tax_percentage || 0,
+          taxId: selectedProduct.taxId,
+          taxName: selectedProduct.tax_name || "",
           profilePic: selectedProduct.image,
           currency: selectedProduct.currency,
           currencyIcon: productCurrency.currencyIcon,
@@ -250,6 +267,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
           unitPrice: price,
           hsnSac: item.hsn_sac || "",
           tax: item.taxId,
+          tax_name: item.taxName,
+          tax_percentage: item.tax,
           taxAmount: itemTaxAmount,
           amount: finalAmount,
           discount_type: itemDiscountType,
@@ -307,8 +326,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
         ),
         overallTax: selectedOverallTaxId || null, // Pass the tax ID here
         overallTaxAmount: Number(form.getFieldValue("overall_tax_amount") || 0),
+        isTaxEnabled: isTaxEnabled, // Add the tax enabled flag
       };
-
 
       const response = await onSubmit(formattedData);
 
@@ -351,16 +370,15 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
-    if (!isTaxEnabled || !item.taxId) return 0;
+    if (!isTaxEnabled || !item.tax) return 0;
 
     // Get amount after item-level discount
     const subtotal = calculateItemSubtotal(item);
     const itemDiscount = calculateItemDiscount(item);
     const amountAfterDiscount = subtotal - itemDiscount;
 
-    // Get tax rate from selected tax
-    const selectedTax = taxesData?.data?.find((tax) => tax.id === item.taxId);
-    const taxRate = selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0;
+    // Get tax rate from item or selected tax
+    const taxRate = Number(item.tax) || 0;
 
     // Calculate tax on discounted amount
     return (amountAfterDiscount * taxRate) / 100;
@@ -376,10 +394,10 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
     const itemDiscount = calculateItemDiscount(item);
     const amountAfterDiscount = subtotal - itemDiscount;
 
-    // Step 3: Apply item tax
-    const itemTax = calculateItemTaxAmount(item);
+    // Step 3: Apply item tax only if tax is enabled
+    const itemTax = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
 
-    // Return total = discounted amount + tax
+    // Return total = discounted amount + tax (if enabled)
     return amountAfterDiscount + itemTax;
   };
 
@@ -396,7 +414,8 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
     items.forEach((item) => {
       const itemSubtotal = calculateItemSubtotal(item);
       const itemDiscount = calculateItemDiscount(item);
-      const itemTax = calculateItemTaxAmount(item);
+      // Only calculate tax if tax is enabled
+      const itemTax = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
 
       totalBeforeOverallDiscount += itemSubtotal - itemDiscount + itemTax;
       totalItemDiscounts += itemDiscount;
@@ -425,11 +444,12 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
     const selectedOverallTax = taxesData?.data?.find(
       (tax) => tax.id === selectedOverallTaxId
     );
-    const overallTaxPercentage = selectedOverallTax
+    const overallTaxPercentage = selectedOverallTax && isTaxEnabled
       ? Number(selectedOverallTax.gstPercentage)
       : 0;
-    const overallTaxAmount =
-      (amountAfterOverallDiscount * overallTaxPercentage) / 100;
+    const overallTaxAmount = isTaxEnabled
+      ? (amountAfterOverallDiscount * overallTaxPercentage) / 100
+      : 0;
 
     // Calculate final amount including overall tax
     const finalAmount = amountAfterOverallDiscount + overallTaxAmount;
@@ -437,16 +457,26 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
     // Update form values
     form.setFieldsValue({
       sub_total: totalBeforeOverallDiscount.toFixed(2),
-      item_tax_amount: totalItemTaxes.toFixed(2),
+      item_tax_amount: isTaxEnabled ? totalItemTaxes.toFixed(2) : "0.00",
       item_discount_value: totalItemDiscounts.toFixed(2),
       discount_value: overallDiscountAmount.toFixed(2),
-      overall_tax_amount: overallTaxAmount.toFixed(2),
+      overall_tax_amount: isTaxEnabled ? overallTaxAmount.toFixed(2) : "0.00",
       total_amount: finalAmount.toFixed(2),
     });
   };
 
   // Update the onChange handler for overall tax select
   const handleOverallTaxChange = (value, option) => {
+    if (!isTaxEnabled) {
+      form.setFieldsValue({
+        overall_tax: null,
+        overall_tax_name: "",
+        overall_tax_amount: "0.00",
+      });
+      calculateTotals(form.getFieldValue("items"));
+      return;
+    }
+    
     const selectedTax = taxesData?.data?.find((tax) => tax.id === value);
     if (selectedTax) {
       form.setFieldsValue({
@@ -1124,8 +1154,10 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                                         item_name: selectedProduct.name,
                                         unit_price: selectedProduct.selling_price,
                                         hsn_sac: selectedProduct.hsn_sac,
-                                        tax: selectedProduct.tax,
+                                        tax: selectedProduct.tax_percentage || 0,
                                         taxId: selectedProduct.taxId,
+                                        taxName: selectedProduct.tax_name || "",
+                                        profilePic: selectedProduct.image,
                                         currency: selectedProduct.currency,
                                         currencyIcon:
                                           productCurrency?.currencyIcon,
@@ -1212,6 +1244,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                                     calculateTotals(form.getFieldValue("items"))
                                   }
                                   style={{padding:"0px"}}
+                                  disabled={true}
                                 />
                               </Form.Item>
                             </td>
@@ -1228,6 +1261,7 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                                     width: "100%",
                                     height: "48px",
                                   }}
+                                  disabled={true}
                                 />
                               </Form.Item>
                             </td>
@@ -1337,33 +1371,118 @@ const CreateBilling = ({ open, onCancel, onSubmit, billings }) => {
                               </Form.Item>
                             </td>
                             <td>
-                              <Form.Item {...field} name={[field.name, "taxId"]} style={{marginTop:"-14px"}}>
-                                <Select
-                                  placeholder="Select Tax"
-                                  loading={taxesLoading}
-                                  disabled={!isTaxEnabled}
-                                  allowClear
-                                  style={{
-                                    width: "100%",
-                                  }}
-                                  onChange={(value, option) => {
-                                    const items =
-                                      form.getFieldValue("items") || [];
-                                    items[index].tax = option?.taxRate;
-                                    form.setFieldsValue({ items });
-                                    calculateTotals(items);
-                                  }}
-                                >
-                                  {taxesData?.data?.map((tax) => (
-                                    <Option
-                                      key={tax.id}
-                                      value={tax.id}
-                                      taxRate={tax.gstPercentage}
-                                    >
-                                      {tax.gstName} ({tax.gstPercentage}%)
-                                    </Option>
-                                  ))}
-                                </Select>
+                              <Form.Item
+                                {...field}
+                                name={[field.name, "tax_info"]}
+                                style={{ marginTop: "-15px" }}
+                              >
+                                <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
+                                  <Input
+                                    value={isTaxEnabled ? 
+                                      (form.getFieldValue("items")?.[index]?.taxName 
+                                        ? `${form.getFieldValue("items")?.[index]?.taxName} ${form.getFieldValue("items")?.[index]?.tax || 0}%` 
+                                        : "No Tax") 
+                                      : "No Tax"}
+                                    placeholder="No Tax"
+                                    readOnly
+                                    disabled={!isTaxEnabled}
+                                    style={{ width: "120px" }}
+                                  />
+                                  {isTaxEnabled && (
+                                    <>
+                                      {form.getFieldValue("items")?.[index]?.tax > 0 ? (
+                                        // Show remove button if tax exists
+                                        <Button
+                                          type="text"
+                                          icon={<FiX style={{ color: "#ff4d4f" }} />}
+                                          onClick={() => {
+                                            // Get current items
+                                            const items = form.getFieldValue("items") || [];
+                                            
+                                            // Store original tax values in temp fields before clearing
+                                            if (items[index]) {
+                                              items[index] = {
+                                                ...items[index],
+                                                _original_taxName: items[index].taxName,
+                                                _original_tax: items[index].tax,
+                                                taxName: "",
+                                                tax: 0,
+                                                taxAmount: 0,
+                                                taxId: null
+                                              };
+                                              
+                                              form.setFieldsValue({ items });
+                                              calculateTotals(items);
+                                            }
+                                          }}
+                                          style={{ 
+                                            padding: "2px", 
+                                            display: "flex", 
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            borderRadius: "50%",
+                                            background: "#fff0f0",
+                                            marginLeft: "4px",
+                                            height: "20px",
+                                            width: "20px",
+                                            border: "1px solid #ffccc7"
+                                          }}
+                                        />
+                                      ) : (
+                                        // Show add button if tax was removed
+                                        <Button
+                                          type="text"
+                                          icon={<FiPlus style={{ color: "#52c41a" }} />}
+                                          onClick={() => {
+                                            // Get current items
+                                            const items = form.getFieldValue("items") || [];
+                                            
+                                            // Check if we have original tax values or need to get from product
+                                            if (items[index]) {
+                                              const originalTaxName = items[index]._original_taxName;
+                                              const originalTax = items[index]._original_tax;
+                                              
+                                              // If we have stored original values, restore them
+                                              if (originalTaxName || originalTax) {
+                                                items[index] = {
+                                                  ...items[index],
+                                                  taxName: originalTaxName || "",
+                                                  tax: originalTax || 0,
+                                                };
+                                              } 
+                                              // Otherwise try to get from product data
+                                              else if (items[index].id) {
+                                                const product = productsData?.data?.find(p => p.id === items[index].id);
+                                                if (product) {
+                                                  items[index] = {
+                                                    ...items[index],
+                                                    taxName: product.tax_name || "",
+                                                    tax: product.tax_percentage || 0,
+                                                  };
+                                                }
+                                              }
+                                              
+                                              form.setFieldsValue({ items });
+                                              calculateTotals(items);
+                                            }
+                                          }}
+                                          style={{ 
+                                            padding: "2px", 
+                                            display: "flex", 
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            borderRadius: "50%",
+                                            background: "#f6ffed",
+                                            marginLeft: "4px",
+                                            height: "20px",
+                                            width: "20px",
+                                            border: "1px solid #b7eb8f"
+                                          }}
+                                        />
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                               </Form.Item>
                             </td>
                             <td>

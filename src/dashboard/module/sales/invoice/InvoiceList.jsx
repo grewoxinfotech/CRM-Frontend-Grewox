@@ -53,6 +53,9 @@ const InvoiceList = ({
   searchText = "",
   pagination = {}
 }) => {
+
+
+  
   const { data: invoicesdata = [], isLoading, refetch } = useGetInvoicesQuery();
 
   const { data: currenciesData } = useGetAllCurrenciesQuery();
@@ -65,9 +68,6 @@ const InvoiceList = ({
 
   const { data: customersData } = useGetCustomersQuery();
 
-  console.log("deals", deals);
-
-  console.log("invoicesdata", invoicesdata);
 
   const statuses = [
     { id: "paid", name: "Paid" },
@@ -318,7 +318,7 @@ const InvoiceList = ({
                 {record.salesInvoiceNumber}
                 {record.related_id && deals?.data?.some(deal => deal.id === record.related_id) && (
                   <Tag style={{ marginLeft: '8px', fontSize: '11px', backgroundColor: '#f0f9ff', color: '#0369a1', borderColor: '#93c5fd' }}>
-                    Deal Invoice
+                   Deal Name: {deals?.data?.find(deal => deal.id === record.related_id)?.dealTitle || 'Deal Invoice'}
                   </Tag>
                 )}
               </div>
@@ -433,7 +433,7 @@ const InvoiceList = ({
         rowSelection={rowSelection}
         columns={columns}
         dataSource={filteredInvoices}
-        loading={isLoading}
+        loading={loading || isLoading}
         rowKey="id"
         className="invoice-table"
         pagination={{

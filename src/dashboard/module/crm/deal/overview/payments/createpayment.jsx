@@ -39,23 +39,21 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
     limit: 100,
   });
 
-  // const { data: invoicesResponse = { data: [] }, refetch: refetchInvoices } =
-  //   useGetInvoicesQuery();
-  // const invoicessData = invoicesResponse.data;
-  // const invoicesData = invoicessData.filter(
-  //   (invoice) => invoice.related_id === dealId
-  // );
-
   const {
     data: invoicesDataa = { data: [] },
     isLoading,
     error,
     refetch: refetchInvoices,
-  } = useGetInvoicesQuery();
+  } = useGetInvoicesQuery({
+    page: 1,
+    pageSize: -1,
+    search: "",
+
+  });
   const invoicesData = (invoicesDataa?.data || []).filter(
     (invoice) => invoice.related_id === dealId
   );
-  // console.log("invoicesData", dealId);
+  console.log("invoicesData", invoicesData);  
 
   // console.log("invoicesData", invoicesData);
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
@@ -285,7 +283,7 @@ const CreatePayment = ({ open, onCancel, dealId, currentUser }) => {
                   ?.filter((invoice) => invoice.payment_status !== "paid")
                   .map((invoice) => (
                     <Option key={invoice.id} value={invoice.id}>
-                      {invoice.salesInvoiceNumber}
+                      {invoice.salesInvoiceNumber} - {currencies.find(curr => curr.id === invoice.currency)?.currencyIcon || "₹"} {invoice.total}
                     </Option>
                   ))}
               </Select>

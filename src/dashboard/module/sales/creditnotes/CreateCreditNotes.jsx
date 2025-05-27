@@ -102,11 +102,18 @@ const CreateCreditNotes = ({ open, onCancel }) => {
     }
   };
 
-  const handleSubmit = async (values) => {
+    const handleSubmit = async (values) => {
     try {
       // Check if amount is 0 or less
       if (!values.amount || values.amount <= 0) {
         message.error("Please enter a valid amount");
+        return;
+      }
+      
+      // Check if amount contains decimal and prevent form submission
+      if (values.amount.toString().includes('.')) {
+        message.error("Form cannot be submitted with decimal values. Please enter a whole number.");
+        // Don't allow form submission with decimal values
         return;
       }
 
@@ -423,6 +430,17 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               style={{ marginTop: "22px" }}
               rules={[
                 { required: true, message: "Please enter amount" },
+                {
+                  validator(_, value) {
+                    if (value && value.toString().includes('.')) {
+                      // Don't clear the field, let validation error show
+                      return Promise.reject(
+                        new Error("Only enter whole numbers, do not enter decimal values")
+                      );
+                    }
+                    return Promise.resolve();
+                  }
+                },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
                     if (!value || value <= 0) {
@@ -444,14 +462,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                 }),
               ]}
             >
-              <Input
+                              <Input
                 type="number"
                 prefix={
                   <span style={{ color: "#1890ff", fontSize: "16px" }}>
                     {selectedCurrency}
                   </span>
                 }
-                placeholder="Enter amount"
+                placeholder="Enter amount (whole numbers only)"
                 size="large"
                 style={{
                   borderRadius: "10px",
@@ -460,6 +478,22 @@ const CreateCreditNotes = ({ open, onCancel }) => {
                   backgroundColor: "#f8fafc",
                   border: "1px solid #e6e8eb",
                   transition: "all 0.3s ease",
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  if (value && value.includes('.')) {
+                    // Show error message for decimal values
+                    message.error("Only enter whole numbers, do not enter decimal values");
+                    // Don't clear field, let the user see the decimal value
+                  }
+                }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value && value.includes('.')) {
+                    // Show error immediately when decimal is typed
+                    message.warning("Only enter whole numbers, do not enter decimal values");
+                    // Don't clear the field, let user see what they typed
+                  }
                 }}
               />
             </Form.Item>
@@ -511,7 +545,7 @@ const CreateCreditNotes = ({ open, onCancel }) => {
           >
             Cancel
           </Button>
-          <Button
+                      <Button
             size="large"
             type="primary"
             htmlType="submit"
@@ -523,6 +557,14 @@ const CreateCreditNotes = ({ open, onCancel }) => {
               background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
               border: "none",
               boxShadow: "0 4px 12px rgba(24, 144, 255, 0.15)",
+            }}
+            onClick={() => {
+              // Final check before form submission
+              const amountValue = form.getFieldValue("amount");
+              if (amountValue && amountValue.toString().includes('.')) {
+                message.error("Form cannot be submitted with decimal values. Please enter a whole number.");
+                return false; // Prevent form submission
+              }
             }}
           >
             Create Credit Note

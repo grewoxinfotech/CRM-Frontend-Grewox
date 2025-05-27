@@ -41,7 +41,6 @@ import {
   useCreateCustomerMutation,
 } from "../customer/services/custApi";
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
-import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
 import { useGetProductsQuery } from "../product&services/services/productApi";
 import { useGetContactsQuery } from "../../crm/contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../crm/companyacoount/services/companyAccountApi";
@@ -71,8 +70,7 @@ const CreateInvoice = ({
   const [createCustomer] = useCreateCustomerMutation();
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null); // INR currency ID
-  const [isTaxEnabled, setIsTaxEnabled] = useState(false);
-  const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
+  const [isTaxEnabled, setIsTaxEnabled] = useState(true); // Enable tax by default
   const [selectedProductCurrency, setSelectedProductCurrency] = useState(null);
   const [isCurrencyDisabled, setIsCurrencyDisabled] = useState(true); // Set to true by default
   const [selectedCategory, setSelectedCategory] = useState("customer");
@@ -84,6 +82,8 @@ const CreateInvoice = ({
       page: 1,
       limit: 100,
     });
+
+  // console.log(productsData, "productsData");
 
   // const id = loggedInUser?.id;
   const { data: invoicesData, error } = useGetInvoicesQuery();
@@ -147,7 +147,7 @@ const CreateInvoice = ({
 
   const calculateItemTaxAmount = (item) => {
     if (!item) return 0;
-    if (!isTaxEnabled || !item.tax) return 0;
+    if (!isTaxEnabled || !item.tax_percentage) return 0;
 
     const quantity = Number(item.quantity) || 0;
     const price = Number(item.unit_price) || 0;
@@ -166,8 +166,7 @@ const CreateInvoice = ({
 
     // Calculate tax on amount after discount
     const amountAfterDiscount = itemAmount - itemDiscountAmount;
-    const selectedTax = taxesData?.data?.find((tax) => tax.id === item.taxId);
-    const taxRate = selectedTax ? Number(selectedTax.gstPercentage) || 0 : 0;
+    const taxRate = Number(item.tax_percentage) || 0;
 
     return (amountAfterDiscount * taxRate) / 100;
   };
@@ -193,10 +192,10 @@ const CreateInvoice = ({
     // Calculate amount after discount
     const amountAfterDiscount = itemAmount - itemDiscountAmount;
 
-    // Calculate tax on discounted amount
+    // Calculate tax on discounted amount only if tax is enabled
     const taxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
 
-    // Final total: discounted amount + tax
+    // Final total: discounted amount + tax (if enabled)
     return amountAfterDiscount + taxAmount;
   };
 
@@ -228,29 +227,59 @@ const CreateInvoice = ({
 
       totalDiscount += itemDiscountAmount;
 
-      if (isTaxEnabled) {
-        totalTax += calculateItemTaxAmount(item);
+      // Only add tax if tax is enabled
+      if (isTaxEnabled && item.tax_percentage) {
+        const amountAfterDiscount = itemAmount - itemDiscountAmount;
+        const taxRate = Number(item.tax_percentage) || 0;
+        const itemTax = (amountAfterDiscount * taxRate) / 100;
+        totalTax += itemTax;
       }
     });
 
-    const totalAmount = subTotal - totalDiscount + totalTax;
+    // Calculate total amount including or excluding tax based on toggle
+    const totalAmount = subTotal - totalDiscount + (isTaxEnabled ? totalTax : 0);
 
     // Update form values
     form.setFieldsValue({
       subtotal: subTotal.toFixed(2),
-      tax: totalTax.toFixed(2),
+      tax: isTaxEnabled ? totalTax.toFixed(2) : "0.00",
       discount: totalDiscount.toFixed(2),
       total: totalAmount.toFixed(2),
     });
 
     // Update individual item amounts
     const updatedItems = items.map((item) => {
-      const taxAmount = calculateItemTaxAmount(item);
-      const total = calculateItemTotal(item);
+      // Calculate item level values
+      const quantity = Number(item.quantity) || 0;
+      const price = Number(item.unit_price) || 0;
+      const itemSubtotal = quantity * price;
+      
+      // Calculate discount
+      const itemDiscount = Number(item.discount || 0);
+      const itemDiscountType = item.discount_type || "percentage";
+      let itemDiscountAmount = 0;
+      
+      if (itemDiscountType === "percentage") {
+        itemDiscountAmount = (itemSubtotal * itemDiscount) / 100;
+      } else {
+        itemDiscountAmount = itemDiscount;
+      }
+      
+      // Calculate tax only if enabled
+      let itemTaxAmount = 0;
+      if (isTaxEnabled && item.tax_percentage) {
+        const amountAfterDiscount = itemSubtotal - itemDiscountAmount;
+        const taxRate = Number(item.tax_percentage) || 0;
+        itemTaxAmount = (amountAfterDiscount * taxRate) / 100;
+      }
+      
+      // Final amount
+      const itemTotal = itemSubtotal - itemDiscountAmount + itemTaxAmount;
+      
       return {
         ...item,
-        amount: total.toFixed(2),
-        tax_amount: taxAmount.toFixed(2),
+        amount: itemTotal.toFixed(2),
+        tax_amount: isTaxEnabled ? itemTaxAmount.toFixed(2) : "0.00",
       };
     });
 
@@ -268,7 +297,8 @@ const CreateInvoice = ({
           product_id: item.id,
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
-          tax: isTaxEnabled ? item.taxId || null : null,
+          tax: isTaxEnabled ? item.tax_percentage || 0 : 0,
+          tax_name: isTaxEnabled ? item.tax_name || "" : "",
           tax_amount: itemTaxAmount,
           discount: Number(item.discount) || 0,
           discount_type: item.discount_type || "percentage",
@@ -706,7 +736,8 @@ const CreateInvoice = ({
         item_name: selectedProduct.name,
         unit_price: selectedProduct.selling_price,
         hsn_sac: selectedProduct.hsn_sac,
-        tax: selectedProduct.tax,
+        tax_name: selectedProduct.tax_name,
+        tax_percentage: selectedProduct.tax_percentage,
         profilePic: selectedProduct.image,
         currency: selectedProduct.currency,
       };
@@ -717,6 +748,15 @@ const CreateInvoice = ({
       calculateTotals(newItems);
     }
   };
+
+  // Add a useEffect to recalculate totals when tax toggle changes
+  useEffect(() => {
+    // Recalculate totals whenever tax toggle changes
+    const items = form.getFieldValue("items");
+    if (items && items.length > 0) {
+      calculateTotals(items);
+    }
+  }, [isTaxEnabled]);
 
   return (
     <Modal
@@ -1142,16 +1182,10 @@ const CreateInvoice = ({
               <Switch
                 checked={isTaxEnabled}
                 onChange={(checked) => {
+                  // Update the state
                   setIsTaxEnabled(checked);
-                  if (!checked) {
-                    const items = form.getFieldValue("items") || [];
-                    items.forEach((item) => {
-                      item.tax = 0;
-                      item.taxId = undefined;
-                    });
-                    form.setFieldsValue({ items });
-                  }
-                  calculateTotals(form.getFieldValue("items"));
+                  
+                  // We'll rely on the useEffect to recalculate totals
                 }}
                 size="small"
               />
@@ -1214,7 +1248,8 @@ const CreateInvoice = ({
                                       item_name: selectedProduct.name,
                                       unit_price: selectedProduct.selling_price,
                                       hsn_sac: selectedProduct.hsn_sac,
-                                      tax: selectedProduct.tax,
+                                      tax_name: selectedProduct.tax_name,
+                                      tax_percentage: selectedProduct.tax_percentage,
                                       profilePic: selectedProduct.image,
                                       currency: selectedProduct.currency,
                                     };
@@ -1439,30 +1474,117 @@ const CreateInvoice = ({
                             </Form.Item>
                           </td>
                           <td>
-                            <Form.Item {...restField} name={[name, "taxId"]} style={{marginTop:"-15px"}}>
-                              <Select
-                                placeholder="Select Tax"
-                                style={{width:"120px"}}
-                                loading={taxesLoading}
-                                disabled={!isTaxEnabled}
-                                allowClear
-                                onChange={(value, option) => {
-                                  const items = form.getFieldValue("items") || [];
-                                  items[index].tax = option?.taxRate;
-                                  form.setFieldsValue({ items });
-                                  calculateTotals(items);
-                                }}
-                              >
-                                {taxesData?.data?.map((tax) => (
-                                  <Option
-                                    key={tax.id}
-                                    value={tax.id}
-                                    taxRate={tax.gstPercentage}
-                                  >
-                                    {tax.gstName} ({tax.gstPercentage}%)
-                                  </Option>
-                                ))}
-                              </Select>
+                            <Form.Item
+                              {...restField}
+                              name={[name, "tax_info"]}
+                              style={{ marginTop: "-15px" }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
+                                <Input
+                                  value={isTaxEnabled ? 
+                                    (form.getFieldValue("items")?.[index]?.tax_name 
+                                      ? `${form.getFieldValue("items")?.[index]?.tax_name} ${form.getFieldValue("items")?.[index]?.tax_percentage || 0}%` 
+                                      : "No Tax") 
+                                    : "No Tax"}
+                                  placeholder="No Tax"
+                                  readOnly
+                                  disabled={!isTaxEnabled}
+                                  style={{ width: "120px" }}
+                                />
+                                {isTaxEnabled && (
+                                  <>
+                                    {form.getFieldValue("items")?.[index]?.tax_percentage > 0 ? (
+                                      // Show remove button if tax exists
+                                      <Button
+                                        type="text"
+                                        icon={<FiX style={{ color: "#ff4d4f" }} />}
+                                        onClick={() => {
+                                          // Get current items
+                                          const items = form.getFieldValue("items") || [];
+                                          
+                                          // Store original tax values in temp fields before clearing
+                                          if (items[index]) {
+                                            items[index] = {
+                                              ...items[index],
+                                              _original_tax_name: items[index].tax_name,
+                                              _original_tax_percentage: items[index].tax_percentage,
+                                              tax_name: "",
+                                              tax_percentage: 0,
+                                              tax_amount: 0,
+                                            };
+                                            
+                                            form.setFieldsValue({ items });
+                                            calculateTotals(items);
+                                          }
+                                        }}
+                                        style={{ 
+                                          padding: "2px", 
+                                          display: "flex", 
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          borderRadius: "50%",
+                                          background: "#fff0f0",
+                                          marginLeft: "4px",
+                                          height: "20px",
+                                          width: "20px",
+                                          border: "1px solid #ffccc7"
+                                        }}
+                                      />
+                                    ) : (
+                                      // Show add button if tax was removed
+                                      <Button
+                                        type="text"
+                                        icon={<FiPlus style={{ color: "#52c41a" }} />}
+                                        onClick={() => {
+                                          // Get current items
+                                          const items = form.getFieldValue("items") || [];
+                                          
+                                          // Check if we have original tax values or need to get from product
+                                          if (items[index]) {
+                                            const originalTaxName = items[index]._original_tax_name;
+                                            const originalTaxPercentage = items[index]._original_tax_percentage;
+                                            
+                                            // If we have stored original values, restore them
+                                            if (originalTaxName || originalTaxPercentage) {
+                                              items[index] = {
+                                                ...items[index],
+                                                tax_name: originalTaxName || "",
+                                                tax_percentage: originalTaxPercentage || 0,
+                                              };
+                                            } 
+                                            // Otherwise try to get from product data
+                                            else if (items[index].id) {
+                                              const product = productsData?.data?.find(p => p.id === items[index].id);
+                                              if (product) {
+                                                items[index] = {
+                                                  ...items[index],
+                                                  tax_name: product.tax_name || "",
+                                                  tax_percentage: product.tax_percentage || 0,
+                                                };
+                                              }
+                                            }
+                                            
+                                            form.setFieldsValue({ items });
+                                            calculateTotals(items);
+                                          }
+                                        }}
+                                        style={{ 
+                                          padding: "2px", 
+                                          display: "flex", 
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                          borderRadius: "50%",
+                                          background: "#f6ffed",
+                                          marginLeft: "4px",
+                                          height: "20px",
+                                          width: "20px",
+                                          border: "1px solid #b7eb8f"
+                                        }}
+                                      />
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             </Form.Item>
                           </td>
                           <td>

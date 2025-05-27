@@ -62,6 +62,8 @@ const Billing = () => {
     total: 0
   });
 
+
+
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [createBilling] = useCreateBillingMutation();
@@ -87,7 +89,23 @@ const Billing = () => {
   });
 
   // console.log("billingsData", billingsData);
-  const { data: vendorsData } = useGetVendorsQuery();
+ 
+    // Add this to fetch vendors
+    const {
+      data: vendorsDataa,
+      isLoading: vendorsLoading,
+      refetch: refetchVendors,
+    } = useGetVendorsQuery({
+      page: 1,
+      pageSize: -1,
+      search: ''
+    });
+
+  
+
+const vendorsData = vendorsDataa?.message || [];
+
+
 
   // Create a map of vendor IDs to vendor names
   const vendorMap = React.useMemo(() => {
@@ -132,6 +150,7 @@ const Billing = () => {
   }, [companyId]);
 
   const handleEdit = (record) => {
+    // console.log("record",record)
     setSelectedBilling(record);
     setIsEditModalVisible(true);
   };
@@ -428,6 +447,8 @@ const Billing = () => {
 
       <CreateBilling
         open={isCreateModalVisible}
+        vendorsLoading={vendorsLoading}
+        vendorsData={vendorsData}
         billings={billingsData?.message?.data || []}
         onCancel={() => setIsCreateModalVisible(false)}
         onSubmit={handleCreateBilling}
@@ -435,6 +456,8 @@ const Billing = () => {
 
       <EditBilling
         open={isEditModalVisible}
+        vendorsLoading={vendorsLoading}
+        vendorsData={vendorsData}
         onCancel={() => {
           setIsEditModalVisible(false);
           setSelectedBilling(null);

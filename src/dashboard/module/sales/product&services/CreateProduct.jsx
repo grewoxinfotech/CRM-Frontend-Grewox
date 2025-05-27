@@ -131,6 +131,17 @@ const CreateProduct = ({
 
   const handleSubmit = async (values) => {
     try {
+      // Check for decimal values in numeric fields and prevent form submission
+      const numericFields = ['buying_price', 'selling_price',  
+                           'stock_quantity', 'min_stock_level', 'max_stock_level', 'reorder_quantity'];
+      
+      for (const field of numericFields) {
+        if (values[field] && values[field].toString().includes('.')) {
+          message.error(`Form cannot be submitted with decimal values. Please enter whole numbers only for ${field.replace('_', ' ')}.`);
+          return; // Prevent form submission
+        }
+      }
+      
       const formData = new FormData();
 
       formData.append("name", values.name);
@@ -142,6 +153,8 @@ const CreateProduct = ({
       formData.append("currencyCode", selectedCurrency?.currencyCode || 'INR');
       formData.append("sku", values.sku || "");
       formData.append("tax", values.tax || "");
+      formData.append("tax_name", values.tax_name || "");
+      formData.append("tax_percentage", values.tax_percentage || 0);
       formData.append("hsn_sac", values.hsn_sac || "");
       formData.append("description", values.description || "");
       formData.append("stock_quantity", values.stock_quantity || 0);
@@ -549,6 +562,9 @@ const CreateProduct = ({
                   if (value <= 0) {
                     return Promise.reject('Buying price must be greater than 0');
                   }
+                  if (value && value.toString().includes('.')) {
+                    return Promise.reject('Only enter whole numbers, do not enter decimal values');
+                  }
                   return Promise.resolve();
                 }
               }
@@ -596,7 +612,12 @@ const CreateProduct = ({
                 parser={value => {
                   const parsedValue = parseFloat(value);
                   if (isNaN(parsedValue)) return '';
-                  return parsedValue % 1 === 0 ? parsedValue : value;
+                  if (value && value.toString().includes('.')) {
+                    message.warning("Only enter whole numbers, do not enter decimal values");
+                    // Keep the decimal value visible but show warning
+                    return parsedValue;
+                  }
+                  return parsedValue;
                 }}
                 onChange={handleBuyingPriceChange}
               />
@@ -617,6 +638,9 @@ const CreateProduct = ({
                   if (!value) return Promise.reject('Please enter selling price');
                   if (value <= 0) {
                     return Promise.reject('Selling price must be greater than 0');
+                  }
+                  if (value && value.toString().includes('.')) {
+                    return Promise.reject('Only enter whole numbers, do not enter decimal values');
                   }
                   const buyingPrice = getFieldValue('buying_price');
                   if (!buyingPrice) return Promise.reject('Please enter buying price first');
@@ -688,7 +712,12 @@ const CreateProduct = ({
                 parser={value => {
                   const parsedValue = parseFloat(value);
                   if (isNaN(parsedValue)) return '';
-                  return parsedValue % 1 === 0 ? parsedValue : value;
+                  if (value && value.toString().includes('.')) {
+                    message.warning("Only enter whole numbers, do not enter decimal values");
+                    // Keep the decimal value visible but show warning
+                    return parsedValue;
+                  }
+                  return parsedValue;
                 }}
                 onChange={handleSellingPriceChange}
               />
@@ -706,6 +735,45 @@ const CreateProduct = ({
           >
             <Input placeholder="Enter HSN/SAC code" style={{ width: "100%" }} />
           </Form.Item>
+          
+          <Form.Item
+            name="tax_name"
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Tax Name
+              </span>
+            }
+          >
+            <Input placeholder="Enter tax name (e.g. GST, VAT)" style={{ width: "100%" }} />
+          </Form.Item>
+          
+          <Form.Item
+            name="tax_percentage"
+            label={
+              <span style={{ color: "#374151", fontWeight: 500 }}>
+                Tax Percentage
+              </span>
+            }
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (value && value < 0) {
+                    return Promise.reject('Tax percentage cannot be negative');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+          >
+            <InputNumber
+              placeholder="Enter tax percentage"
+              min={0}
+              max={100}
+              addonAfter="%"
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+          
           <Form.Item
             name="sku"
             label={
@@ -802,6 +870,16 @@ const CreateProduct = ({
                 border: "1px solid #d1d5db",
                 backgroundColor: "#f9fafb",
               }}
+              parser={value => {
+                const parsedValue = parseFloat(value);
+                if (isNaN(parsedValue)) return '';
+                if (value && value.toString().includes('.')) {
+                  message.warning("Only enter whole numbers, do not enter decimal values");
+                  // Keep decimal values visible but show warning
+                  return parsedValue;
+                }
+                return parsedValue;
+              }}
               prefix={
                 <FiPackage style={{ color: "#6b7280", marginRight: "8px" }} />
               }
@@ -829,6 +907,16 @@ const CreateProduct = ({
                 borderRadius: "10px",
                 border: "1px solid #d1d5db",
                 backgroundColor: "#f9fafb",
+              }}
+              parser={value => {
+                const parsedValue = parseFloat(value);
+                if (isNaN(parsedValue)) return '';
+                if (value && value.toString().includes('.')) {
+                  message.warning("Only enter whole numbers, do not enter decimal values");
+                  // Keep decimal values visible but show warning
+                  return parsedValue;
+                }
+                return parsedValue;
               }}
               prefix={
                 <FiAlertCircle
@@ -858,6 +946,16 @@ const CreateProduct = ({
                 border: "1px solid #d1d5db",
                 backgroundColor: "#f9fafb",
               }}
+              parser={value => {
+                const parsedValue = parseFloat(value);
+                if (isNaN(parsedValue)) return '';
+                if (value && value.toString().includes('.')) {
+                  message.warning("Only enter whole numbers, do not enter decimal values");
+                  // Keep decimal values visible but show warning
+                  return parsedValue;
+                }
+                return parsedValue;
+              }}
               prefix={
                 <FiTrendingUp
                   style={{ color: "#6b7280", marginRight: "8px" }}
@@ -885,6 +983,16 @@ const CreateProduct = ({
                 borderRadius: "10px",
                 border: "1px solid #d1d5db",
                 backgroundColor: "#f9fafb",
+              }}
+              parser={value => {
+                const parsedValue = parseFloat(value);
+                if (isNaN(parsedValue)) return '';
+                if (value && value.toString().includes('.')) {
+                  message.warning("Only enter whole numbers, do not enter decimal values");
+                  // Keep decimal values visible but show warning
+                  return parsedValue;
+                }
+                return parsedValue;
               }}
               prefix={
                 <FiInfo style={{ color: "#6b7280", marginRight: "8px" }} />
@@ -940,7 +1048,12 @@ const CreateProduct = ({
           }}
         >
           <Button onClick={handleCancel}>Cancel</Button>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            loading={loading}
+           
+          >
             Create Product
           </Button>
         </div>

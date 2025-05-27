@@ -112,6 +112,13 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
         message.error("Debit note amount must be greater than zero");
         return;
       }
+      
+      // Check for decimal values in amount field
+      if (values.amount && values.amount.toString().includes('.')) {
+        message.error("Only enter whole numbers. Decimal values are not accepted.");
+        setLoading(false);
+        return;
+      }
 
       const formattedData = {
         bill: values.bill,
@@ -377,6 +384,13 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                         new Error("Amount must be greater than zero")
                       );
                     }
+                    
+                    if (value && value.toString().includes('.')) {
+                      return Promise.reject(
+                        new Error("Only enter whole numbers. Decimal values are not accepted.")
+                      );
+                    }
+                    
                     const maxAmount = getFieldValue("max_amount");
                     if (
                       !maxAmount ||
@@ -413,12 +427,18 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
                   if (!value) return "";
                   const currencyIcon =
                     form.getFieldValue("currency_icon") || "";
-                  return value.replace(
+                  const parsedValue = value.replace(
                     new RegExp(`${currencyIcon}|,|\\s`, "g"),
                     ""
                   );
+                  
+                  if (parsedValue && parsedValue.toString().includes('.')) {
+                    message.warning("Only enter whole numbers. Decimal values are not accepted.");
+                    return parsedValue;
+                  }
+                  
+                  return parsedValue;
                 }}
-              // prefix={form.getFieldValue('currency_icon')   ||  ''}
               />
             </Form.Item>
           </Col>
@@ -471,6 +491,13 @@ const CreateDebitNote = ({ open, onCancel, onSubmit }) => {
             type="primary"
             htmlType="submit"
             loading={loading}
+            onClick={() => {
+              const amount = form.getFieldValue('amount');
+              if (amount && amount.toString().includes('.')) {
+                message.error("Only enter whole numbers. Decimal values are not accepted.");
+                return;
+              }
+            }}
             style={{
               padding: "8px 32px",
               height: "44px",

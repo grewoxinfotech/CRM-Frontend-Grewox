@@ -68,7 +68,8 @@ const Invoice = () => {
   const { data: invoicesData, isLoading: isInvoiceLoading } = useGetInvoicesQuery({
     page: currentPage,
     pageSize,
-    search: searchText
+    search: searchText,
+    id: id
   });
 
 
