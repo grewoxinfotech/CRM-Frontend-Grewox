@@ -198,7 +198,7 @@ const Source = () => {
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.15)",
               }}
             >
-              Add Source
+              <span className="add-source-text">Add Source</span>
             </Button>
           </div>
         </div>

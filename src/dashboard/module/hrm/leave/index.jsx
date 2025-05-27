@@ -253,9 +253,9 @@ const Leave = () => {
                 </Link>
               ),
             },
-            {
-              title: "HRM",
-            },
+            // {
+            //   title: "HRM",
+            // },
             {
               title: "Leave Management",
             },

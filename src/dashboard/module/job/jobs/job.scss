@@ -1,8 +1,3 @@
-
-
-
-
-
 @import '../../../../styles/theme/theme.scss';
 
 // Common hover effect mixin
@@ -17,8 +12,14 @@
 // Custom Scrollbar Styles
 @mixin custom-scrollbar {
     &::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        height: 6px;
+        width: 6px;
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
     }
 
     &::-webkit-scrollbar-track {
@@ -26,15 +27,8 @@
         border-radius: 4px;
     }
 
-    &::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-
-        &:hover {
-            background: #a8a8a8;
-        }
-    }
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
 .job-page {
@@ -88,23 +82,185 @@
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba($primary-color, 0.08);
 
+        @media (max-width: 1366px) {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        @media (max-width: 900px) {
+            padding: 12px 16px;
+            gap: 12px;
+        }
+
+        @media (max-width: 480px) {
+            padding: 10px 12px;
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) and (max-width: 1366px) {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+
+            .page-title {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                width: 100%;
+
+                .title-row {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+
+                    h2 {
+                        text-align: center;
+                        width: 100%;
+                    }
+                }
+            }
+
+            .header-actions {
+                justify-content: center;
+                width: 100%;
+
+                .desktop-actions {
+                    justify-content: center;
+                    width: 100%;
+                }
+            }
+        }
+
         .page-title {
             text-align: left;
             margin-bottom: 0;
             flex-shrink: 0;
 
-            h2 {
-                color: $text-color-dark;
+            .title-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
                 margin-bottom: 4px;
-                font-size: 28px;
-                font-weight: 600;
-                line-height: 1.2;
+
+                h2 {
+                    color: $text-color-dark;
+                    margin-bottom: 4px;
+                    font-size: 28px;
+                    font-weight: 600;
+                    line-height: 1.2;
+
+                    @media (max-width: 900px) {
+                        font-size: 20px;
+                    }
+
+                    @media (max-width: 480px) {
+                        font-size: 18px;
+                    }
+                }
+
+                .mobile-actions {
+                    display: none;
+
+                    @media (max-width: 768px) {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        
+                    }
+
+                    // max-width: 1366px and min-width: 769px
+                    .mobile-add-button {
+                        width: 34px;
+                        height: 34px;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 6px;
+                        background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                        border: none;
+                        color: white;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+
+                        &:hover,
+                        &:active {
+                            background: linear-gradient(135deg, #40a9ff 0%, #1677ff 100%);
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+                        }
+
+                        @media (max-width: 480px) {
+                            width: 32px;
+                            height: 32px;
+                        }
+                    }
+
+                    .mobile-search-button,
+                    .mobile-filter-button {
+                        width: 34px;
+                        height: 34px;
+                        padding: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 6px;
+                        border: 1px solid #e6e6e6;
+                        background: white;
+                        color: #666;
+                        transition: all 0.3s ease;
+
+                        &:hover,
+                        &:active {
+                            color: #1677ff;
+                            border-color: #1677ff;
+                            background: #f0f5ff;
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 8px rgba(24, 144, 255, 0.1);
+                        }
+
+                        @media (max-width: 480px) {
+                            width: 32px;
+                            height: 32px;
+                        }
+
+                        &.ant-dropdown-open {
+                            color: #1677ff;
+                            border-color: #1677ff;
+                            background: #f0f5ff;
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 8px rgba(24, 144, 255, 0.1);
+                        }
+
+                        svg {
+                            font-size: 16px;
+
+                            @media (max-width: 480px) {
+                                font-size: 15px;
+                            }
+                        }
+                    }
+                }
             }
 
             .ant-typography-secondary {
                 color: $text-color-light;
                 font-size: 15px;
                 display: block;
+
+                @media (max-width: 900px) {
+                    font-size: 13px;
+                }
+
+                @media (max-width: 480px) {
+                    font-size: 12px;
+                }
             }
         }
 
@@ -116,10 +272,35 @@
             width: 100%;
             max-width: 800px;
 
+            @media (max-width: 1366px) {
+                max-width: none;
+            }
+
+            .desktop-actions {
+                display: flex;
+                @media (max-width: 768px) {
+                    display: none;
+                }
+                align-items: center;
+                gap: 12px;
+                flex-wrap: nowrap;
+
+                @media (min-width: 901px) and (max-width: 1366px) {
+                    display: grid;
+                    grid-template-columns: 1fr 1.2fr 120px 120px;
+                    gap: 12px;
+                }
+            }
+
             .search-input {
                 flex: 1;
                 max-width: 360px;
                 min-width: 200px;
+
+                @media (min-width: 901px) and (max-width: 1366px) {
+                    width: 100%;
+                    min-width: unset;
+                }
 
                 .ant-input-affix-wrapper {
                     border-radius: 40px;
@@ -165,6 +346,8 @@
                 .export-button,
                 .add-button {
                     height: 40px;
+                    width: 100%;
+                    
                     padding: 0 20px;
                     display: inline-flex;
                     align-items: center;
@@ -174,19 +357,43 @@
                     font-weight: 500;
                     transition: all 0.3s ease;
 
+                    @media (min-width: 901px) and (max-width: 1366px) {
+                        width: 100%;
+                        min-width: unset;
+                        justify-content: center;
+                    }
+
                     svg {
                         font-size: 16px;
                     }
                 }
 
                 .export-button {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
                     border: 1px solid $border-color;
-                    background: white;
+                    background: #fff;
+                    color: #333;
+                    font-weight: 500;
+                    border-radius: 8px;
+                    height: 40px;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+                    transition: all 0.2s;
+                    margin: 8px 0;
+                    font-size: 16px;
 
-                    &:hover {
+                    svg {
+                        font-size: 18px;
+                    }
+
+                    &:hover, &:focus {
                         color: #1677ff;
                         border-color: #1677ff;
-                        transform: translateY(-2px);
+                        background: #f0f5ff;
+                        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.10);
                     }
                 }
 
@@ -215,7 +422,7 @@
             overflow-x: auto;
             overflow-y: hidden;
 
-            @media (max-width: 768px) {
+            @media (max-width: 900px) {
                 border-radius: 8px;
             }
         }
@@ -514,7 +721,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .job-list-container {
         .ant-table-pagination {
             display: flex !important;
@@ -537,6 +744,7 @@
                     font-weight: 400;
                 }
             }
+
         }
 
         .ant-table {
@@ -566,7 +774,7 @@
     }
 }
 
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (min-width: 901px) and (max-width: 1024px) {
     .job-list-container {
         .ant-table {
             .ant-table-thead > tr > th {
@@ -593,4 +801,10 @@
             }
         }
     }
+}
+
+.job-list-container {
+  .ant-table-body, .ant-table-content {
+    @include custom-scrollbar;
+  }
 }

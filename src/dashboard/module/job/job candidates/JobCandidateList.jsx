@@ -37,7 +37,7 @@ const JobCandidateList = ({ applications, loading }) => {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            width: 250,
+            width: 350,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input
@@ -92,7 +92,7 @@ const JobCandidateList = ({ applications, loading }) => {
             title: 'Job',
             dataIndex: 'job',
             key: 'job',
-            width: 150,
+            width: 200,
             sorter: (a, b) => {
                 if (!a.job && !b.job) return 0;
                 if (!a.job) return -1;
@@ -193,6 +193,7 @@ const JobCandidateList = ({ applications, loading }) => {
             title: 'Applied Source',
             dataIndex: 'applied_source',
             key: 'applied_source',
+            width: 200,
             sorter: (a, b) => {
                 if (!a.applied_source && !b.applied_source) return 0;
                 if (!a.applied_source) return -1;

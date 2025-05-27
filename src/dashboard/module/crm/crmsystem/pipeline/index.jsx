@@ -230,6 +230,7 @@ const Pipeline = () => {
               type="primary"
               icon={<FiPlus />}
               onClick={() => setIsModalOpen(true)}
+              className="add-pipeline-btn"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -243,7 +244,7 @@ const Pipeline = () => {
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.15)",
               }}
             >
-              Add Pipeline
+              <span className="add-pipeline-text">Add Pipeline</span>
             </Button>
           </div>
         </div>

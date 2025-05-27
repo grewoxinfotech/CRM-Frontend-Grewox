@@ -208,9 +208,9 @@ const Announcement = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Announcements</Breadcrumb.Item>
                 </Breadcrumb>
             </div>

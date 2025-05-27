@@ -167,9 +167,9 @@ const Meeting = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Meetings</Breadcrumb.Item>
                 </Breadcrumb>
             </div>

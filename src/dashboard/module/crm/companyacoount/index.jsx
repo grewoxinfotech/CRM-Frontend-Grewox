@@ -268,9 +268,9 @@ const CompanyAccount = () => {
               Home
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>
+          {/* <Breadcrumb.Item>
             <Link to="/dashboard/sales">Sales</Link>
-          </Breadcrumb.Item>
+          </Breadcrumb.Item> */}
           <Breadcrumb.Item>Company Accounts</Breadcrumb.Item>
         </Breadcrumb>
       </div>

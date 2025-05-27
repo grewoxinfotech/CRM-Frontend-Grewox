@@ -215,17 +215,17 @@
             flex-direction: row !important;
             justify-content: space-between !important;
             align-items: center !important;
-            padding: 12px;
+            padding: 24px;
 
             .page-title {
                 text-align: left;
                 width: auto;
                 margin-bottom: 0;
                 h2 {
-                    font-size: 18px;
+                    font-size: 25px;
                 }
                 .ant-typography-secondary {
-                    font-size: 11px;
+                    font-size: 14px;
                 }
             }
             .header-actions {
@@ -839,11 +839,11 @@
     .bulk-actions {
         display: flex;
         align-items: center;
-        padding: 16px;
-        background: #fff;
+        // padding: 16px;
+        // background: #fff;
         border-radius: 8px;
         margin-bottom: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         .ant-btn {
             display: inline-flex;
             align-items: center;

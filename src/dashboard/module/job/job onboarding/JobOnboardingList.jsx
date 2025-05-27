@@ -89,6 +89,7 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
                     danger
                     icon={<FiTrash2 size={16} />}
                     onClick={handleBulkDelete}
+                    className="bulk-delete-btn"
                 >
                     Delete Selected ({selectedRowKeys.length})
                 </Button>
@@ -306,6 +307,7 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
             title: 'Actions',
             key: 'actions',
             width: 80,
+            fixed: 'right',
             render: (_, record) => {
                 const menuItems = [
                     {
@@ -355,6 +357,11 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
                 rowKey={record => record.id || record._id}
                 loading={loading}
                 onChange={handleChange}
+                scroll={{ x: 1000, y: ''}}
+                style={{
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: '#c1c1c1 #f1f1f1'
+                }}
                 pagination={{
                     current: pagination?.current || 1,
                     pageSize: pagination?.pageSize || 10,

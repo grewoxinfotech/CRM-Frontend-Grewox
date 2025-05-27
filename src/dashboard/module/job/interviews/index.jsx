@@ -171,9 +171,9 @@ const Interviews = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/job">Job</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Interviews</Breadcrumb.Item>
                 </Breadcrumb>
             </div>

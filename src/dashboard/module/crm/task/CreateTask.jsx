@@ -110,11 +110,15 @@ const CreateTask = ({
   };
 
   const currentUser = useSelector(selectCurrentUser);
-  const { data: usersResponse } = useGetUsersQuery();
+  const { data: usersResponse } = useGetUsersQuery({
+    page: 1,
+    pageSize: -1,
+    search: "",
+  });
   const { data: rolesData } = useGetRolesQuery({
     page: 1,
     pageSize: -1,
-    search: ''
+    search: "",
   });
 
 

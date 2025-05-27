@@ -110,9 +110,9 @@ const Department = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Departments</Breadcrumb.Item>
                 </Breadcrumb>
             </div>

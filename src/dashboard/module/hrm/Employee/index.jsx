@@ -381,63 +381,15 @@ const Employee = () => {
       </div>
 
       <div className="page-header">
-        <div className="page-title">
-          <Title level={2}>Employees</Title>
-          <Text type="secondary">Manage all employees in the system</Text>
-        </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={24} lg={20} xl={18}>
-            <div className="header-actions">
-              {isMobile ? (
-                <div className="mobile-actions">
-                  <Button.Group className="view-toggle">
-                    <Button
-                      type={viewMode === "table" ? "primary" : "default"}
-                      icon={<FiList size={16} />}
-                      onClick={() => setViewMode("table")}
-                      className="icon-button"
-                    />
-                    <Button
-                      type={viewMode === "card" ? "primary" : "default"}
-                      icon={<FiGrid size={16} />}
-                      onClick={() => setViewMode("card")}
-                      className="icon-button"
-                    />
-                  </Button.Group>
-                  <Button
-                    type="primary"
-                    icon={<FiPlus size={18} />}
-                    onClick={handleAddEmployee}
-                    className="icon-button"
-                  />
-                  <Popover
-                  // content={searchContent}
-                  // trigger="click"
-                  // visible={isSearchVisible}
-                  // onVisibleChange={setIsSearchVisible}
-                  // placement="bottomRight"
-                  // overlayClassName="search-popover"
-                  // getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                  >
-                    <Button
-                      icon={<FiSearch size={18} />}
-                      className="mobile-search-button"
-                    />
-                  </Popover>
-                  <Dropdown overlay={exportMenu} trigger={["click"]}>
-                    <Button icon={<FiDownload size={18} />} className="icon-button" />
-                  </Dropdown>
-                </div>
-              ) : (
-                <>
-                  <Input
-                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                    placeholder="Search employees by name, email, department, or designation"
-                    allowClear
-                    onChange={(e) => handleSearch(e.target.value)}
-                    value={searchText}
-                    className="search-input"
-                  />
+        <div className="header-content">
+          <div className="page-title">
+            <div className="title-row">
+              <div className="page-title-content">
+                <Title level={2}>Employees</Title>
+                <Text type="secondary">Manage all employees in the system</Text>
+              </div>
+              <div className="header-actions">
+                <div className="desktop-actions">
                   <div className="action-buttons">
                     <Button.Group className="view-toggle">
                       <Button
@@ -451,27 +403,54 @@ const Employee = () => {
                         onClick={() => setViewMode("card")}
                       />
                     </Button.Group>
-                    <Dropdown overlay={exportMenu} trigger={["click"]}>
-                      <Button className="export-button">
-                        <FiDownload size={16} />
-                        <span>Export</span>
-                        <FiChevronDown size={14} />
-                      </Button>
-                    </Dropdown>
-                    <Button
-                      type="primary"
-                      icon={<FiPlus size={16} />}
-                      onClick={handleAddEmployee}
-                      className="add-button"
-                    >
-                      Add Employee
-                    </Button>
                   </div>
-                </>
-              )}
+
+                  <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
+                    <div className="search-container" style={{flex: 1}}>
+                      <Input
+                        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                        placeholder="Search employees..."
+                        allowClear
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={searchText}
+                        className="search-input"
+                      />
+                    </div>
+                    <div className="action-buttons-group">
+                      <Popover
+                        content={searchContent}
+                        trigger="click"
+                        open={isSearchVisible}
+                        onOpenChange={setIsSearchVisible}
+                        placement="bottomRight"
+                        className="mobile-search-popover"
+                      >
+                        <Button 
+                          className="search-icon-button"
+                          icon={<FiSearch size={16} />}
+                        />
+                      </Popover>
+                      <Dropdown overlay={exportMenu} trigger={["click"]}>
+                        <Button className="export-button">
+                          <FiDownload size={16} />
+                          <span className="button-text">Export</span>
+                        </Button>
+                      </Dropdown>
+                      <Button
+                        type="primary"
+                        icon={<FiPlus size={16} />}
+                        onClick={handleAddEmployee}
+                        className="add-button"
+                      >
+                        <span className="button-text">Add Employee</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
 
       <Card className="employee-card">

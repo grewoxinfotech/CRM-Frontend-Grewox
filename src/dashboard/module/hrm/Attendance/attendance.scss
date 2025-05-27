@@ -297,6 +297,7 @@ $border-radius: 6px;
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            justify-content: center;
 
             .legend-item {
                 display: flex;
@@ -335,7 +336,7 @@ $border-radius: 6px;
 
             .ant-table-body {
                 overflow-x: auto !important;
-                overflow-y: auto !important;
+                overflow-y: hidden !important;
                 max-height: calc(100vh - 300px) !important;
 
                 &::-webkit-scrollbar {
@@ -356,6 +357,11 @@ $border-radius: 6px;
                     &:hover {
                         background: #a8a8a8;
                     }
+                }
+
+                // Hide vertical scrollbar
+                &::-webkit-scrollbar-vertical {
+                    display: none;
                 }
             }
 
@@ -881,17 +887,17 @@ $border-radius: 6px;
             flex-direction: row !important;
             justify-content: space-between !important;
             align-items: center !important;
-            padding: 12px;
+            padding: 24px;
 
             .page-title {
                 text-align: left;
                 width: auto;
                 margin-bottom: 0;
                 h2 {
-                    font-size: 18px;
+                    font-size: 25px;
                 }
                 .ant-typography-secondary {
-                    font-size: 11px;
+                    font-size: 14px;
                 }
             }
             .header-actions {
@@ -942,7 +948,7 @@ $border-radius: 6px;
     @media (max-width: 576px) {
         .page-title {
             .ant-typography-secondary {
-                font-size: 11px;
+                font-size: 15px;
             }
         }
         .search-icon-button {

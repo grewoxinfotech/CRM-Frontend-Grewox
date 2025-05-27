@@ -27,10 +27,20 @@ const CreateLeave = ({ open, onCancel }) => {
   const [form] = Form.useForm();
   const [createLeave, { isLoading }] = useCreateLeaveMutation();
   const { data: employeesData, isLoading: isLoadingEmployees } =
-    useGetEmployeesQuery();
-  const { data: rolesData } = useGetRolesQuery();
+    useGetEmployeesQuery({
+      page: 1,
+      pageSize: -1,
+      search: "",
+    });
+
+
+  const { data: rolesData } = useGetRolesQuery({
+    page: 1,
+    pageSize: -1,
+    search: "",
+  });
   const employees = React.useMemo(() => {
-    if (!employeesData?.data || !rolesData?.data) return [];
+    if (!employeesData?.data || !rolesData?.message?.data) return [];
 
     const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
     const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];

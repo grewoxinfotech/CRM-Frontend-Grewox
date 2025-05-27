@@ -486,3 +486,19 @@
     }
   }
 }
+
+@media (max-width: 576px) {
+  .label-wrapper {
+    .header-section {
+      .ant-btn {
+        padding: 0 12px !important;
+        width: 36px !important;
+        height: 36px !important;
+        
+        .add-label-text {
+          display: none;
+        }
+      }
+    }
+  }
+}

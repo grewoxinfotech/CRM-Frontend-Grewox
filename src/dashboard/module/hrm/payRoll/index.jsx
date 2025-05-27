@@ -234,9 +234,9 @@ const Salary = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Payroll</Breadcrumb.Item>
                 </Breadcrumb>
             </div>

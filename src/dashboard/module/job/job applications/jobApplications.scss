@@ -86,40 +86,125 @@
             gap: 16px;
             margin-top: 16px;
 
-            .search-input {
-                width: 300px;
-
-                .ant-input-prefix {
-                    margin-right: 8px;
-                }
-            }
-
-            .action-buttons {
+            .desktop-actions {
                 display: flex;
+                align-items: center;
                 gap: 12px;
+                flex-wrap: nowrap;
 
-                .export-button {
+                @media (max-width: 1200px) {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+
+                .search-container {
+                    position: relative;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    color: #4b5563;
-                    border-color: #e5e7eb;
 
-                    &:hover {
-                        color: #1890ff;
-                        border-color: #1890ff;
+                    .search-input {
+                        width: 300px;
+
+                        @media (max-width: 1300px) {
+                            width: 250px;
+                        }
+
+                        @media (max-width: 1200px) {
+                            width: 300px;
+                        }
+
+                        @media (max-width: 992px) {
+                            width: 350px;
+                        }
+
+                        @media (max-width: 768px) {
+                            display: none;
+                        }
+                    }
+
+                    .search-icon-button {
+                        display: none;
+                        padding: 0 12px;
+                        width: 38px;
+                        height: 38px;
+                        align-items: center;
+                        justify-content: center;
+
+                        @media (max-width: 768px) {
+                            display: flex;
+                        }
+
+                        @media (max-width: 576px) {
+                            width: 34px;
+                            height: 34px;
+                            padding: 0 10px;
+                        }
                     }
                 }
 
+                .export-button,
                 .add-button {
+                    height: 38px;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    background: linear-gradient(to right, #1890ff, #096dd9);
-                    border: none;
+                    justify-content: center;
 
-                    &:hover {
-                        background: linear-gradient(to right, #096dd9, #0050b3);
+                    @media (max-width: 768px) {
+                        padding: 0 12px !important;
+                        width: 38px;
+                        height: 38px;
+
+                        .button-text {
+                            display: none;
+                        }
+                    }
+
+                    @media (max-width: 576px) {
+                        width: 34px;
+                        height: 34px;
+                        padding: 0 10px !important;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 1200px) {
+            flex-direction: column;
+            padding: 20px;
+
+            .page-title {
+                text-align: center;
+                width: 100%;
+                margin-bottom: 20px;
+
+                h2 {
+                    font-size: 24px;
+                }
+            }
+
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 16px;
+
+                .desktop-actions {
+                    flex-direction: column;
+                    width: 100%;
+                    gap: 16px;
+
+                    > div {
+                        width: 100%;
+                        justify-content: center;
+                    }
+
+                    .search-container {
+                        width: 100%;
+                        max-width: 600px;
+                        margin: 0 auto;
+
+                        .search-input {
+                            width: 100%;
+                        }
                     }
                 }
             }
@@ -484,5 +569,86 @@
     &:focus-within {
         border-color: #1890ff !important;
         box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
+}
+
+// Add responsive styles for mobile
+@media (max-width: 768px) {
+    .job-applications-page {
+        .page-header {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 24px;
+
+            .page-title {
+                text-align: left;
+                width: auto;
+                margin-bottom: 0;
+                h2 {
+                    font-size: 25px;
+                }
+                .ant-typography-secondary {
+                    font-size: 14px;
+                }
+            }
+            .header-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px;
+                align-items: center !important;
+                justify-content: flex-end;
+                min-width: max-content;
+                .desktop-actions {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    width: auto;
+                    gap: 8px;
+                    > div {
+                        width: auto;
+                        justify-content: flex-end;
+                        display: flex !important;
+                    }
+                    .search-container {
+                        max-width: 400px;
+                        display: flex !important;
+                    }
+                }
+            }
+        }
+        .search-input {
+            display: none !important;
+        }
+        .search-icon-button {
+            display: flex !important;
+            padding: 0 12px;
+            width: 38px;
+            height: 38px;
+            align-items: center;
+            justify-content: center;
+        }
+        .export-button,
+        .add-button {
+            padding: 0 12px;
+            width: 38px;
+            height: 38px;
+            .button-text {
+                display: none;
+            }
+        }
+    }
+    @media (max-width: 576px) {
+        .page-title {
+            .ant-typography-secondary {
+                font-size: 11px;
+            }
+        }
+    }
+    @media (max-width: 400px) {
+        .page-title {
+            .ant-typography-secondary {
+                font-size: 10px;
+            }
+        }
     }
 }

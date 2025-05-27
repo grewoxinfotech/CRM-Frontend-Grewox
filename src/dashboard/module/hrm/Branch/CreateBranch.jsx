@@ -25,20 +25,28 @@ const CreateBranch = ({ open, onCancel, onSubmit, isEditing, initialValues, load
     const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
 
     // API hooks
-    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery({
+        page: 1,
+        pageSize: -1,
+        search: "",
+    });
     const [createBranch, { isLoading: isCreating }] = useCreateBranchMutation();
     const [updateBranch, { isLoading: isUpdating }] = useUpdateBranchMutation();
-    const { data: rolesData } = useGetRolesQuery();
+    const { data: rolesData } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: "",
+    });
 
     // Add array of excluded role names
     const excludedRoleNames = ['employee', 'client', 'sub-client', 'super-admin'];
 
     // Modify the users memo to filter out users with excluded roles
     const filteredUsers = React.useMemo(() => {
-        if (!userData?.data || !rolesData?.data) return [];
+        if (!userData?.data || !rolesData?.message?.data) return [];
 
         const usersList = Array.isArray(userData.data) ? userData.data : [];
-        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+        const rolesList = Array.isArray(rolesData.message.data) ? rolesData.message.data : [];
 
         return usersList.filter(user => {
             // Find the role object for this user

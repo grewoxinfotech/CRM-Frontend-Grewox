@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome
+    FiHome, FiFilter
 } from 'react-icons/fi';
 import '../job applications/jobApplications.scss';
 import moment from 'moment';
@@ -56,6 +56,8 @@ const JobCandidates = () => {
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
     const searchInputRef = useRef(null);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
 
     const filteredApplications = React.useMemo(() => {
         if (!applications?.data) return [];
@@ -225,13 +227,37 @@ const JobCandidates = () => {
         doc.save(`${filename}.pdf`);
     };
 
-  return (
-        <div className="job-applications-page" style={{
-            height: '100vh',
-            overflowY: 'auto',
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#d4d4d4 #f5f5f5'
-        }}>
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search candidates..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
+    const filterMenu = (
+        <Menu className="filter-menu">
+            <Menu.Item key="export" className="filter-menu-item">
+                <div className="filter-section">
+                    <Dropdown overlay={exportMenu} trigger={['click']}>
+                        <Button className="export-buttons">
+                            <FiDownload size={16} />
+                            Export
+                        </Button>
+                    </Dropdown>
+                </div>
+            </Menu.Item>
+        </Menu>
+    );
+
+    return (
+        <div className="job-candidates-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -240,57 +266,61 @@ const JobCandidates = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/job">Job</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Job Candidates</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
-            <div className="page-header">
-                <div className="page-title">
+            <div className="page-headers">
+                <div className="page-titles">
                     <Title level={2}>Job Candidates</Title>
                     <Text type="secondary">Manage all job candidates</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                        placeholder="Search by name, email, phone, location..."
-                        allowClear
-                        onChange={handleSearch}
-                        value={searchText}
-                        style={{
-                            width: '300px',
-                            marginRight: '16px',
-                            borderRadius: '20px'
-                        }}
-                    />
-                    <div className="action-buttons">
-                        <Dropdown overlay={exportMenu} trigger={['click']}>
-                            <Button className="export-button">
-                                <FiDownload size={16} />
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
-                            </Button>
-                        </Dropdown>
-                        {/* <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleAddApplication}
-                            className="add-button"
-                        >
-                            Add Application
-                        </Button> */}
+                    <div className="desktop-actions">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                                    placeholder="Search candidates..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                    style={{
+                                        width: '300px',
+                                        borderRadius: '20px',
+                                        height: '38px',
+                                    }}
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={['click']}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <Card className="job-applications-table-card" style={{
-                maxHeight: 'calc(100vh - 250px)',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#d4d4d4 #f5f5f5'
-            }}>
+            <Card className="job-candidates-table-card">
                 <JobCandidateList
                     applications={filteredApplications}
                     loading={isLoading}
@@ -299,8 +329,6 @@ const JobCandidates = () => {
                     onView={handleViewApplication}
                 />
             </Card>
-
-
         </div>
     );
 };

@@ -132,6 +132,7 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
             title: 'Notice Period',
             dataIndex: 'notice_period',
             key: 'notice_period',
+            width: 150,
             sorter: (a, b) => a.notice_period.localeCompare(b.notice_period),
             render: (text) => (
                 <div className="column-icon">
@@ -303,7 +304,7 @@ const JobApplicationList = ({ applications, onEdit, onDelete, loading, paginatio
                 loading={loading}
                 onChange={handleChange}
                 pagination={pagination}
-                scroll={{ x: 1200, y: ''}}
+                scroll={{ x: 'max-content', y: ''}}
                 className="custom-table"
                 style={{
                     width: "100%",

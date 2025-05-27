@@ -423,7 +423,7 @@ const AttendanceList = ({ searchText, filters }) => {
             <Table
                 columns={columns}
                 dataSource={data}
-                scroll={{ x: 'max-content' }}
+                scroll={{ x: 'max-content' , y : '100%'}}
                 pagination={false}
                 className="attendance-table"
                 bordered

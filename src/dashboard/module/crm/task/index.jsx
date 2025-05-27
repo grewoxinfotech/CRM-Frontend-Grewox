@@ -352,9 +352,9 @@ const Task = () => {
               Home
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>
+          {/* <Breadcrumb.Item>
             <Link to="/dashboard/crm">CRM</Link>
-          </Breadcrumb.Item>
+          </Breadcrumb.Item> */}
           <Breadcrumb.Item>Tasks</Breadcrumb.Item>
         </Breadcrumb>
       </div>
@@ -365,12 +365,7 @@ const Task = () => {
             <div className="title-row">
               <Title level={2}>Tasks</Title>
               <div className="mobile-actions">
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={18} />}
-                  onClick={handleCreate}
-                  className="mobile-add-button"
-                />
+              
                 <Popover
                   content={searchContent}
                   trigger="click"
@@ -398,6 +393,12 @@ const Task = () => {
                     className="mobile-filter-button"
                   />
                 </Dropdown>
+                <Button
+                  type="primary"
+                  icon={<FiPlus size={18} />}
+                  onClick={handleCreate}
+                  className="mobile-add-button"
+                />
               </div>
             </div>
             <Text type="secondary">Manage all tasks in the organization</Text>

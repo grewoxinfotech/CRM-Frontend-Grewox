@@ -170,9 +170,9 @@ const Document = () => {
               Home
             </Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>
+          {/* <Breadcrumb.Item>
             <Link to="/dashboard/hrm">HRM</Link>
-          </Breadcrumb.Item>
+          </Breadcrumb.Item> */}
           <Breadcrumb.Item>Documents</Breadcrumb.Item>
         </Breadcrumb>
       </div>

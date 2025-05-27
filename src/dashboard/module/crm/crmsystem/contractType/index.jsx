@@ -157,6 +157,7 @@ const ContractType = () => {
               type="primary"
               icon={<FiPlus />}
               onClick={() => setIsModalOpen(true)}
+              className="add-contract-type-btn"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -170,7 +171,7 @@ const ContractType = () => {
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.15)",
               }}
             >
-              Add Contract Type
+              <span className="add-contract-type-text">Add Contract Type</span>
             </Button>
           </div>
         </div>

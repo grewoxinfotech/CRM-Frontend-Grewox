@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, DatePicker
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, DatePicker, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
     FiChevronDown, FiDownload,
-    FiHome, FiCalendar
+    FiHome, FiCalendar, FiFilter
 } from 'react-icons/fi';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import './offerLetters.scss';
@@ -36,6 +36,8 @@ const OfferLetters = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
     const searchInputRef = useRef(null);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
 
     const { data: offerLettersData, isLoading: offerLettersLoading, refetch } = useGetAllOfferLettersQuery({
         page: currentPage,
@@ -284,6 +286,44 @@ const OfferLetters = () => {
         }
     };
 
+    const searchContent = (
+        <div className="search-content">
+            <Input
+                prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                placeholder="Search offer letters..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                ref={searchInputRef}
+            />
+        </div>
+    );
+
+    const filterMenu = (
+        <Menu className="filter-menu">
+            <Menu.Item key="date" className="filter-menu-item">
+                <div className="filter-section">
+                    <RangePicker
+                        onChange={(dates) => setDateRange(dates)}
+                        value={dateRange}
+                        allowClear
+                        placeholder={['Start Date', 'End Date']}
+                    />
+                </div>
+            </Menu.Item>
+            <Menu.Item key="export" className="filter-menu-item">
+                <div className="filter-section">
+                    <Dropdown overlay={exportMenu} trigger={['click']} getPopupContainer={triggerNode => document.body}>
+                        <Button className="export-button">
+                            <FiDownload size={16} />
+                            Export
+                        </Button>
+                    </Dropdown>
+                </div>
+            </Menu.Item>
+        </Menu>
+    );
+
     return (
         <div className="offer-letters-page">
             <div className="page-breadcrumb">
@@ -294,62 +334,92 @@ const OfferLetters = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/hrm">HRM</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Offer Letters</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 
             <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Offer Letters</Title>
-                    <Text type="secondary">Manage all offer letters in the organization</Text>
-                </div>
-                <div className="header-actions">
-                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                        <Input
-                            prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            placeholder="Search offer letters..."
-                            allowClear
-                            onChange={(e) => handleSearch(e.target.value)}
-                            value={searchText}
-                            ref={searchInputRef}
-                            className="search-input"
-                            style={{ width: '300px' }}
-                        />
-                        <RangePicker
-                            suffixIcon={<FiCalendar style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                            onChange={(dates) => setDateRange(dates)}
-                            value={dateRange}
-                            allowClear
-                            style={{ width: '300px', height: '40px' }}
-                            placeholder={['Start Date', 'End Date']}
-                        />
+                <div className="header-content">
+                    <div className="page-title">
+                        <div className="title-row">
+                            <div className="title-column">
+                                <Title level={2}>Offer Letters</Title>
+                                <Text type="secondary">Manage all offer letters in the organization</Text>
+                            </div>
+                            <div className="mobile-actions">
+                               
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    visible={isSearchVisible}
+                                    onVisibleChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    overlayClassName="search-popover"
+                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                                >
+                                    <Button
+                                        icon={<FiSearch size={18} />}
+                                        className="mobile-search-button"
+                                    />
+                                </Popover>
+                                <Dropdown
+                                    overlay={filterMenu}
+                                    trigger={["click"]}
+                                    visible={isFilterVisible}
+                                    onVisibleChange={setIsFilterVisible}
+                                    placement="bottomRight"
+                                    getPopupContainer={triggerNode => document.body}
+                                >
+                                    <Button
+                                        icon={<FiFilter size={18} />}
+                                        className="mobile-filter-button"
+                                    />
+                                </Dropdown>
+                                <Button
+                                    type="primary"
+                                    icon={<FiPlus size={18} />}
+                                    onClick={handleAddLetter}
+                                    className="mobile-add-button"
+                                />
+                            </div>
+                        </div>
                     </div>
-                    <div className="action-buttons">
-                        <Dropdown
-                            overlay={exportMenu}
-                            trigger={['click']}
-                            disabled={isLoading || exportLoading}
-                        >
+
+                    <div className="header-actions">
+                        <div className="desktop-actions">
+                            <Input
+                                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                                placeholder="Search offer letters..."
+                                allowClear
+                                onChange={(e) => handleSearch(e.target.value)}
+                                value={searchText}
+                                className="search-input"
+                            />
+                            <RangePicker
+                                onChange={(dates) => setDateRange(dates)}
+                                value={dateRange}
+                                allowClear
+                                placeholder={['Start Date', 'End Date']}
+                                style={{ width: '70%' }}
+                            />
+                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                <Button className="export-button" loading={exportLoading}>
+                                    <FiDownload size={16} />
+                                    Export
+                                </Button>
+                            </Dropdown>
                             <Button
-                                className="export-button"
-                                loading={exportLoading}
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleAddLetter}
+                                className="add-button"
                             >
-                                {!exportLoading && <FiDownload size={16} />}
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                                Add Offer Letter
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleAddLetter}
-                            className="add-button"
-                        >
-                            Add Offer Letter
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -313,6 +313,48 @@
 }
 
 .filter-section {
+  .filter-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .pipeline-select {
+      @media (max-width: 576px) {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+
+    .filter-btn {
+      display: none;
+      
+      @media (max-width: 576px) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0;
+        border-radius: 8px;
+        border: 1px solid #e6e8eb;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: #1890ff;
+          background: #f8fafc;
+          color: #1890ff;
+        }
+
+        &:active {
+          transform: translateY(1px);
+        }
+      }
+    }
+  }
+
   .ant-select {
     .ant-select-selector {
       border-radius: 10px;
@@ -392,6 +434,38 @@
 
     .deal-stages-grid {
       grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .deal-stages-wrapper {
+    .header-section {
+      .filter-section {
+        .pipeline-select {
+          width: 40px!important;
+
+          .ant-select-selector {
+            padding: 0 !important;
+            justify-content: center;
+            
+            .ant-select-selection-item,
+            .ant-select-selection-placeholder {
+              display: none;
+            }
+          }
+        }
+      }
+    }
+
+    .add-stage-btn {
+      padding: 0 12px !important;
+      width: 36px !important;
+      height: 36px !important;
+      
+      .add-stage-text {
+        display: none;
+      }
     }
   }
 }

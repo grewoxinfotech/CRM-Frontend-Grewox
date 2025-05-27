@@ -555,6 +555,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Actions',
             key: 'actions',
             width: 60,
+            fixed: 'right',
             render: (_, record) => (
                 <Dropdown
                     menu={getDropdownItems(record)}
@@ -616,7 +617,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                 dataSource={tasks}
                 rowKey="id"
                 pagination={paginationConfig}
-                scroll={{ x: 1000, y: 'calc(100vh - 350px)' }}
+                scroll={{ x: 1000, y: '' }}
                 className="task-table"
             />
 

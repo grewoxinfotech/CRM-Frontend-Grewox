@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Card, Typography, Button, Modal, message, Input,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch,
@@ -32,12 +32,27 @@ const JobApplications = () => {
     const [pageSize, setPageSize] = useState(10);
     const [exportLoading, setExportLoading] = useState(false);
     const searchInputRef = useRef(null);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const { data: applications, isLoading } = useGetAllJobApplicationsQuery({
         page: currentPage,
         limit: pageSize,
         search: searchText
     });
+
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search applications..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
 
     const [deleteApplication] = useDeleteJobApplicationMutation();
 
@@ -213,6 +228,7 @@ const JobApplications = () => {
         });
         doc.save(`${filename}.pdf`);
     };
+    
 
     return (
         <div className="job-applications-page">
@@ -224,9 +240,9 @@ const JobApplications = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/job">Job</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Job Applications</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
@@ -234,42 +250,49 @@ const JobApplications = () => {
             <div className="page-header">
                 <div className="page-title">
                     <Title level={2}>Job Applications</Title>
-                    <Text type="secondary">Manage all job applications</Text>
+                    <Text className="page-description" type="secondary">Manage all job applications</Text>
                 </div>
                 <div className="header-actions">
-                    <Input
-                        prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
-                        placeholder="Search applications..."
-                        allowClear
-                        onChange={(e) => handleSearch(e.target.value)}
-                        value={searchText}
-                        ref={searchInputRef}
-                        style={{
-                            width: '300px',
-                            marginRight: '16px',
-                            borderRadius: '20px'
-                        }}
-                    />
-                    <div className="action-buttons">
-                        <Dropdown
-                            overlay={exportMenu}
-                            trigger={['click']}
-                            disabled={isLoading || exportLoading}
-                        >
-                            <Button className="export-button" loading={exportLoading}>
-                                {!exportLoading && <FiDownload size={16} />}
-                                <span>Export</span>
-                                <FiChevronDown size={14} />
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />}
+                                    placeholder="Search applications..."
+                                    allowClear
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
+                                >
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
+                            </div>
+                            <Dropdown overlay={exportMenu} trigger={["click"]} disabled={isLoading || exportLoading}>
+                                <Button className="export-button" loading={exportLoading}>
+                                    {!exportLoading && <FiDownload size={16} />}
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={handleAddApplication}
+                                className="add-button"
+                            >
+                                <span className="button-text">Add Application</span>
                             </Button>
-                        </Dropdown>
-                        <Button
-                            type="primary"
-                            icon={<FiPlus size={16} />}
-                            onClick={handleAddApplication}
-                            className="add-button"
-                        >
-                            Add Application
-                        </Button>
+                        </div>
                     </div>
                 </div>
             </div>

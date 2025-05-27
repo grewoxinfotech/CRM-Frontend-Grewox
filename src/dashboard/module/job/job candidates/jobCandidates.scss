@@ -10,8 +10,8 @@
 }
 
 .job-candidates-page {
-    padding: 24px;
-    background: $background-color;
+    // padding: 24px;
+    // background: $background-color;
     overflow: hidden;
 
     .page-breadcrumb {
@@ -47,59 +47,155 @@
         }
     }
 
-    .page-header {
+    .page-headers {
+        @include hover-shadow;
         margin-bottom: 24px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        padding: 24px 32px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
 
-        .page-title {
+        .page-titles {
+            text-align: left;
+            margin-bottom: 0;
+            flex-shrink: 0;
+
             h2 {
+                color: $text-color-dark;
                 margin-bottom: 4px;
-                font-size: 24px;
+                font-size: 28px;
                 font-weight: 600;
-                color: #111827;
+                line-height: 1.2;
+            }
+
+            .ant-typography-secondary {
+                color: #666;
+                font-size: 14px;
+                display: block;
             }
         }
 
         .header-actions {
             display: flex;
+            justify-content: flex-end;
             align-items: center;
-            gap: 16px;
-            margin-top: 16px;
+            gap: 12px;
 
-            .search-input {
-                width: 300px;
-
-                .ant-input-prefix {
-                    margin-right: 8px;
-                }
-            }
-
-            .action-buttons {
+            .desktop-actions {
                 display: flex;
+                align-items: center;
                 gap: 12px;
+                flex-wrap: nowrap;
+
+                .search-container {
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+
+                    .search-input {
+                        width: 300px;
+
+                        @media (max-width: 1300px) {
+                            width: 250px;
+                        }
+
+                        @media (max-width: 992px) {
+                            width: 200px;
+                        }
+
+                        @media (max-width: 767px) {
+                            display: none;
+                        }
+                    }
+
+                    .search-icon-button {
+                        display: none;
+                        padding: 0 12px;
+                        width: 38px;
+                        height: 38px;
+                        align-items: center;
+                        justify-content: center;
+
+                        @media (max-width: 767px) {
+                            display: flex;
+                        }
+                    }
+                }
 
                 .export-button {
+                    height: 38px;
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    color: #4b5563;
-                    border-color: #e5e7eb;
+                    justify-content: center;
 
-                    &:hover {
-                        color: #1890ff;
-                        border-color: #1890ff;
+                    @media (max-width: 767px) {
+                        padding: 0 12px;
+                        width: 38px;
+                        height: 38px;
+
+                        .button-text {
+                            display: none;
+                        }
                     }
                 }
+            }
+        }
 
-                .add-button {
-                    display: flex;
-                    align-items: center;
+        @media (max-width: 768px) {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 24px;
+
+            .page-titles {
+                text-align: left;
+                width: auto;
+                margin-bottom: 0;
+                h2 {
+                    font-size: 25px;
+                }
+            }
+            .header-actions {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px;
+                align-items: center !important;
+                justify-content: flex-end;
+                min-width: max-content;
+                .desktop-actions {
+                    display: flex !important;
+                    flex-direction: row !important;
+                    width: auto;
                     gap: 8px;
-                    background: linear-gradient(to right, #1890ff, #096dd9);
-                    border: none;
-
-                    &:hover {
-                        background: linear-gradient(to right, #096dd9, #0050b3);
+                    > div {
+                        width: auto;
+                        justify-content: flex-end;
+                        display: flex !important;
                     }
+                    .search-container {
+                        max-width: 400px;
+                        display: flex !important;
+                    }
+                }
+            }
+        }
+
+        @media (max-width: 576px) {
+            .page-titles {
+                .ant-typography-secondary {
+                    font-size: 13px;
+                }
+            }
+        }
+
+        @media (max-width: 400px) {
+            .page-titles {
+                .ant-typography-secondary {
+                    font-size: 11px;
                 }
             }
         }
@@ -200,11 +296,9 @@
                                 text-transform: capitalize;
                             }
                         }
-
                         &:hover {
                             td {
                                 background: #f9fafb;
-
                                 .icon-wrapper {
                                     transform: scale(1.05);
                                 }
@@ -213,7 +307,6 @@
                     }
                 }
             }
-
             .ant-table-pagination {
                 margin: 16px 24px;
             }
@@ -396,5 +489,85 @@
                 }
             }
         }
+    }
+}
+
+// Search Popover Styles
+.search-popover {
+    .ant-popover-inner {
+        padding: 0;
+    }
+
+    .ant-popover-inner-content {
+        padding: 0;
+    }
+
+    .search-popup {
+        width: 280px;
+        padding: 12px;
+
+        .search-input {
+            .ant-input-affix-wrapper {
+                border-radius: 6px;
+                height: 38px;
+                border: 1px solid #e6e6e6;
+                transition: all 0.3s ease;
+
+                &:hover, &:focus {
+                    border-color: #1677ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+
+                .anticon {
+                    color: #999;
+                }
+
+                input {
+                    font-size: 14px;
+                    &::placeholder {
+                        color: #999;
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        .search-popup {
+            width: 260px;
+            padding: 10px;
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 34px;
+                    input { font-size: 13px; }
+                }
+            }
+        }
+    }
+    @media (max-width: 480px) {
+        .search-popup {
+            width: 240px;
+            padding: 8px;
+            .search-input {
+                .ant-input-affix-wrapper {
+                    height: 32px;
+                    input { font-size: 12px; }
+                }
+            }
+        }
+    }
+}
+
+// Hide search popover on desktop but keep it visible on mobile
+@media (min-width: 769px) {
+    .mobile-search-popover {
+        display: none;
+    }
+}
+
+// Make search icon button visible only on mobile
+.search-icon-button {
+    @media (min-width: 768px) {
+        display: none !important;
     }
 }

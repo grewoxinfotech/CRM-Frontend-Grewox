@@ -113,16 +113,27 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
     const parseJsonField = (jsonString, field) => {
         try {
             if (!jsonString) return [];
-            const parsed = JSON.parse(jsonString);
+            
+            // If the field is already an object, use it directly
+            if (typeof jsonString === 'object') {
+                if (field === 'skills') {
+                    return jsonString.Skills ? jsonString.Skills.split(',').filter(skill => skill.trim()) : [];
+                } else if (field === 'interviewRounds') {
+                    return jsonString.InterviewRounds ? jsonString.InterviewRounds.split(',').filter(round => round.trim()) : [];
+                }
+            }
+            
+            // If it's a string, try to parse it
+            const parsed = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+            
             if (field === 'skills') {
-                const skillsObj = JSON.parse(parsed.Skills);
-                return skillsObj.Skills.split(',').filter(skill => skill.trim());
+                return parsed.Skills ? parsed.Skills.split(',').filter(skill => skill.trim()) : [];
             } else if (field === 'interviewRounds') {
-                const roundsObj = JSON.parse(parsed.InterviewRounds);
-                return roundsObj.InterviewRounds.split(',').filter(round => round.trim());
+                return parsed.InterviewRounds ? parsed.InterviewRounds.split(',').filter(round => round.trim()) : [];
             }
             return [];
         } catch (e) {
+            console.error('Error parsing field:', e);
             return [];
         }
     };
@@ -204,6 +215,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            
                             flexShrink: 0
                         }}>
                             <FiCode size={16} />
@@ -211,18 +223,22 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
                             {skills.length > 0 ? (
                                 skills.map((skill, index) => (
-                                    <Tag key={index} style={{
-                                        background: "#eef2ff",
-                                        color: "#6366f1",
-                                        border: "none",
-                                        borderRadius: "4px",
-                                        padding: "2px 8px",
-                                        fontSize: "12px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "4px"
-                                    }}>
-                                        <FiHash size={12} />
+                                    <Tag
+                                        key={index}
+                                        style={{
+                                            background: "#f4f7fe",
+                                            color: "#6366f1",
+                                            border: "none",
+                                            borderRadius: "6px",
+                                            padding: "6px 12px",
+                                            fontSize: "12px",
+                                            fontWeight: 500,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "6px"
+                                        }}
+                                    >
+                                        <FiHash size={16} style={{ color: "#6366f1" }} />
                                         {skill}
                                     </Tag>
                                 ))
@@ -294,7 +310,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             render: (_, record) => {
                 const rounds = parseJsonField(record.interviewRounds, 'interviewRounds');
                 return (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{
                             color: "#8b5cf6",
                             background: "rgba(139, 92, 246, 0.1)",
@@ -481,10 +497,10 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
                     showTotal: (total) => `Total ${total} items`,
                 }}
                 className="custom-table"
-                scroll={{ x: 1200 , y : '' }}
+                scroll={{ x: "max-content" , y : '' }}
+                
             />
         </div>
     );
 };
-
 export default JobList; 

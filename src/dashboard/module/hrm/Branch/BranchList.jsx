@@ -353,7 +353,7 @@ const BranchList = ({ onEdit, searchText = '', filters = {} }) => {
         {
             title: 'Actions',
             key: 'actions',
-            width: '80',
+            width: '100',
             fixed: 'right',
             render: (_, record) => (
                 <div style={{ display: 'flex', justifyContent: 'center' }}>

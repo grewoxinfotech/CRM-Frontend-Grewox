@@ -375,7 +375,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
       title: "Employee",
       key: "employee",
       width: 200,
-      fixed: "left",
+      // fixed: "left",
       render: (_, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: "12px", width: '100%' }}>
           <Avatar

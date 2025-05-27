@@ -25,6 +25,7 @@ const LeadStages = () => {
   const [selectedPipeline, setSelectedPipeline] = useState('all');
   const [isSelectDefaultModalOpen, setIsSelectDefaultModalOpen] = useState(false);
   const [stageToDelete, setStageToDelete] = useState(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { data: stagesData = [], isLoading , refetch } = useGetLeadStagesQuery();
   const { data: pipelines = [] , refetch: refetchPipelines } = useGetPipelinesQuery();
@@ -317,6 +318,11 @@ const LeadStages = () => {
     },
   ];
 
+  const handleFilterChange = (value) => {
+    setSelectedPipeline(value);
+    setIsFilterOpen(false);
+  };
+
   if (isLoading) {
     return <div className="loading-spinner">Loading lead stages...</div>;
   }
@@ -331,25 +337,36 @@ const LeadStages = () => {
           marginBottom: '24px'
         }}>
           <div className="filter-section">
-            <Select
-              value={selectedPipeline}
-              onChange={setSelectedPipeline}
-              style={{ width: 240 }}
-              placeholder="Filter by Pipeline"
-              suffixIcon={
-                <div className="filter-icon">
-                  <FiFilter size={16} style={{ strokeWidth: 2 }} />
-                </div>
-              }
-              options={[
-                { value: 'all', label: 'All Pipelines' },
-                ...pipelines.map(pipeline => ({
-                  value: pipeline.id,
-                  label: pipeline.pipeline_name
-                }))
-              ]}
-              dropdownStyle={{ minWidth: 240 }}
-            />
+            <div className="filter-wrapper">
+              <Select
+                value={selectedPipeline}
+                onChange={handleFilterChange}
+                style={{ width: 240 }}
+                placeholder="Filter by Pipeline"
+                suffixIcon={
+                  <div className="filter-icon">
+                    <FiFilter size={16} style={{ strokeWidth: 2 }} />
+                  </div>
+                }
+                options={[
+                  { value: 'all', label: 'All Pipelines' },
+                  ...pipelines.map(pipeline => ({
+                    value: pipeline.id,
+                    label: pipeline.pipeline_name
+                  }))
+                ]}
+                dropdownStyle={{ minWidth: 240 }}
+                className="pipeline-select"
+                open={isFilterOpen}
+                onDropdownVisibleChange={setIsFilterOpen}
+              />
+              <Button
+                type="default"
+                icon={<FiFilter size={16} style={{ strokeWidth: 2 }} />}
+                className="filter-btn"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+              />
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div className="view-toggle" style={{ display: 'flex', gap: '8px' }}>
@@ -378,6 +395,7 @@ const LeadStages = () => {
               type="primary"
               icon={<FiPlus />}
               onClick={() => setIsModalOpen(true)}
+              className="add-stage-btn"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -391,7 +409,7 @@ const LeadStages = () => {
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.15)",
               }}
             >
-              Add Stage
+              <span className="add-stage-text">Add Stage</span>
             </Button>
           </div>
         </div>

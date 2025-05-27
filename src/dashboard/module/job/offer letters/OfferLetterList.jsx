@@ -366,6 +366,7 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
         {
             title: "Actions",
             key: "actions",
+            fixed: 'right',
             width: 80,
             render: (_, record) => (
                 <Dropdown
@@ -426,7 +427,7 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
                 loading={loading || jobsLoading}
                 onChange={handleChange}
                 rowKey="id"
-                scroll={{ x: 1500 }}
+                scroll={{ x: 'max-content' , y: ''}}
                 pagination={pagination}
                 style={{
                     background: '#ffffff',

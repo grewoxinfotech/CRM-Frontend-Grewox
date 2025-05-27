@@ -218,9 +218,9 @@ const CalendarPage = () => {
                             Home
                         </Link>
                     </Breadcrumb.Item>
-                    <Breadcrumb.Item>
+                    {/* <Breadcrumb.Item>
                         <Link to="/dashboard/communication">Communication</Link>
-                    </Breadcrumb.Item>
+                    </Breadcrumb.Item> */}
                     <Breadcrumb.Item>Calendar</Breadcrumb.Item>
                 </Breadcrumb>
             </div>

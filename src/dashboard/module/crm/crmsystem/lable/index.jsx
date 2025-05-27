@@ -188,7 +188,7 @@ const Lable = () => {
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.15)",
               }}
             >
-              Add Label
+              <span className="add-label-text">Add Label</span>
             </Button>
           </div>
         </div>

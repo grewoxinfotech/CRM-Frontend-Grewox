@@ -11,7 +11,7 @@ import { useGetPipelinesQuery } from "../pipeline/services/pipelineApi";
 import "./dealstage.scss";
 import { Button, Modal, message, Table, Tooltip, Dropdown, Select, Typography, Space, Tag } from "antd";
 import { useGetLeadsQuery } from "../../lead/services/LeadApi";
-import { useGetDealsQuery } from "../../deal/services/dealApi";
+import { useGetDealsQuery } from "../../deal/services/DealApi";
 
 const { Text } = Typography;
 
@@ -28,6 +28,7 @@ const DealStages = () => {
   const [stageToDelete, setStageToDelete] = useState(null);
   const [remainingStages, setRemainingStages] = useState([]);
   const [newDefaultId, setNewDefaultId] = useState(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { data: stagesData = [], isLoading } = useGetDealStagesQuery();
   const { data: pipelines = [] } = useGetPipelinesQuery();
@@ -320,6 +321,11 @@ const DealStages = () => {
     },
   ];
 
+  const handleFilterChange = (value) => {
+    setSelectedPipeline(value);
+    setIsFilterOpen(false);
+  };
+
   if (isLoading) {
     return <div className="loading-spinner">Loading deal stages...</div>;
   }
@@ -334,25 +340,36 @@ const DealStages = () => {
           marginBottom: '24px'
         }}>
           <div className="filter-section">
-            <Select
-              value={selectedPipeline}
-              onChange={setSelectedPipeline}
-              style={{ width: 240 }}
-              placeholder="Filter by Pipeline"
-              suffixIcon={
-                <div className="filter-icon">
-                  <FiFilter size={16} style={{ strokeWidth: 2 }} />
-                </div>
-              }
-              options={[
-                { value: 'all', label: 'All Pipelines' },
-                ...pipelines.map(pipeline => ({
-                  value: pipeline.id,
-                  label: pipeline.pipeline_name
-                }))
-              ]}
-              dropdownStyle={{ minWidth: 240 }}
-            />
+            <div className="filter-wrapper">
+              <Select
+                value={selectedPipeline}
+                onChange={handleFilterChange}
+                style={{ width: 240 }}
+                placeholder="Filter by Pipeline"
+                suffixIcon={
+                  <div className="filter-icon">
+                    <FiFilter size={16} style={{ strokeWidth: 2 }} />
+                  </div>
+                }
+                options={[
+                  { value: 'all', label: 'All Pipelines' },
+                  ...pipelines.map(pipeline => ({
+                    value: pipeline.id,
+                    label: pipeline.pipeline_name
+                  }))
+                ]}
+                dropdownStyle={{ minWidth: 240 }}
+                className="pipeline-select"
+                open={isFilterOpen}
+                onDropdownVisibleChange={setIsFilterOpen}
+              />
+              <Button
+                type="default"
+                icon={<FiFilter size={16} style={{ strokeWidth: 2 }} />}
+                className="filter-btn"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+              />
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div className="view-toggle" style={{ display: 'flex', gap: '8px' }}>
@@ -381,6 +398,7 @@ const DealStages = () => {
               type="primary"
               icon={<FiPlus />}
               onClick={() => setIsModalOpen(true)}
+              className="add-stage-btn"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -394,7 +412,7 @@ const DealStages = () => {
                 boxShadow: "0 2px 4px rgba(24, 144, 255, 0.15)",
               }}
             >
-              Add Deal Stage
+              <span className="add-stage-text">Add Deal Stage</span>
             </Button>
           </div>
         </div>
