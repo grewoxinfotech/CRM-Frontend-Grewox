@@ -17,7 +17,7 @@ import {
   useDeleteLeaveMutation,
   useUpdateLeaveMutation,
   useApproveLeaveMutation,
-} from "./services/LeaveApi";
+} from "./services/leaveApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 import EditLeave from "./Editleave";
 
