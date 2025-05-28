@@ -41,12 +41,16 @@ const CreateTicket = ({ open, onCancel, isEditing, initialValues }) => {
     const [updateTicket, { isLoading: isUpdating }] = useUpdateTicketMutation();
     
     const { data: employeesData, isLoading: isLoadingEmployees, error: employeesError } = useGetEmployeesQuery();
-    const { data: rolesData } = useGetRolesQuery();
+    const { data: rolesData } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: "",
+    });
     
     const employees = React.useMemo(() => {
-        if (!employeesData || !rolesData?.data) return [];
+        if (!employeesData || !rolesData?.message?.data) return [];
         
-        const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+        const rolesList = Array.isArray(rolesData.message.data) ? rolesData.message.data : [];
         const employeesList = Array.isArray(employeesData) ? employeesData : employeesData.data || [];
 
         return employeesList.map(employee => {
