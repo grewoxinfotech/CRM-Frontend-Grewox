@@ -34,7 +34,7 @@ import { offerLetterApi } from "../dashboard/module/job/offer letters/services/o
 import { interviewApi } from "../dashboard/module/job/interviews/services/interviewApi.js";
 import { documentApi } from "../dashboard/module/hrm/Document/services/documentApi";
 import { leadApi } from "../dashboard/module/crm/lead/services/LeadApi.js";
-import { dealApi } from "../dashboard/module/crm/deal/services/dealApi.js";
+import { dealApi } from "../dashboard/module/crm/deal/services/DealApi.js";
 import { creditNoteApi } from "../dashboard/module/sales/creditnotes/services/creditNoteApi.js";
 import { customerApi } from "../dashboard/module/sales/customer/services/custApi.js";
 import { invoiceApi } from "../dashboard/module/sales/invoice/services/invoiceApi.js";
