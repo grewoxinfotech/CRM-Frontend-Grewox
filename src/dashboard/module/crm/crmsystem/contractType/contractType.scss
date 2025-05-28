@@ -315,16 +315,20 @@
             .contract-type-actions {
               display: flex;
               gap: 8px;
+              align-items: center;
+              flex-shrink: 0;
 
               .edit-button,
               .delete-button {
                 width: 32px;
                 height: 32px;
                 border-radius: 8px;
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 transition: all 0.2s ease;
+                margin: 0;
+                flex-shrink: 0;
 
                 &:hover {
                   background-color: rgba(24, 144, 255, 0.08);

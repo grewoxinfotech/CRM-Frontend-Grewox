@@ -126,18 +126,22 @@
               display: flex;
               gap: 6px;
               margin-left: 12px;
+              align-items: center;
+              flex-shrink: 0;
 
               .edit-button,
               .delete-button {
                 width: 28px;
                 height: 28px;
                 padding: 0;
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 border-radius: 6px;
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 background: transparent;
+                margin: 0;
+                flex-shrink: 0;
 
                 svg {
                   font-size: 14px;

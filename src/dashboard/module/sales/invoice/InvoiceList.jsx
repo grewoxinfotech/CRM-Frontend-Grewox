@@ -290,7 +290,6 @@ const InvoiceList = ({
     {
       title: "Invoice Details",
       key: "details",
-      width: 150,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -446,7 +445,7 @@ const InvoiceList = ({
           showQuickJumper: true
         }}
         onChange={handleTableChange}
-        scroll={{ x: "1000px", y: "100%" }}
+        scroll={{ x: 1000, y: "100%" }}
       />
 
       <EditInvoice

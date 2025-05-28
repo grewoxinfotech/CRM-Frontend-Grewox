@@ -986,7 +986,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   ]}
                 >
                   <Input
-                    style={{ width: "calc(100% - 120px)" }}
+                    style={{ width: "calc(100% - 120px)",height:"48px"  }}
                     placeholder="Enter amount"
                     type="number"
                     onChange={(e) => handleValueChange(e.target.value)}

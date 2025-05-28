@@ -1015,7 +1015,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
                 rules={[{ required: true, message: 'Please enter lead value' }]}
               >
                 <InputNumber
-                  style={{ width: 'calc(100% - 120px)', padding: '0px 16px' }}
+                  style={{ width: 'calc(100% - 120px)', padding: '0px 16px',height:"48px"  }}
                   placeholder="Enter amount"
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}

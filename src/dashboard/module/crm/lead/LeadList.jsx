@@ -240,6 +240,7 @@ const LeadList = ({
       title: "Lead Title",
       dataIndex: "leadTitle",
       key: "leadTitle",
+      width: 300,
       filterDropdown: ({
         setSelectedKeys,
         selectedKeys,
@@ -459,6 +460,7 @@ const LeadList = ({
       title: "Interest Level",
       dataIndex: "interest_level",
       key: "interest_level",
+      width: 200,
       filters: [
         { text: "High Interest", value: "high" },
         { text: "Medium Interest", value: "medium" },
@@ -603,7 +605,7 @@ const LeadList = ({
         dataSource={leads?.data || []}
         rowKey="id"
         pagination={paginationConfig}
-        scroll={{ x: "max-content", y: "100%" }}
+        scroll={{ x: 1000, y: '' }}
         loading={loading}
         onChange={onTableChange}
         onRow={(record) => ({

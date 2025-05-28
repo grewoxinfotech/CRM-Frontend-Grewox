@@ -364,7 +364,7 @@
 
                 .ant-table-body {
                     flex: 1;
-                    overflow-y: auto !important;
+                    overflow-y: hidden !important;
                 }
 
                 .ant-table-thead>tr>th {
