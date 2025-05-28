@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal, Form, Input, Button, Typography, message, Select } from "antd";
 import { FiX, FiFileText, FiUser } from "react-icons/fi";
-import { useUpdateNotesMutation } from "./services/notesApi";
+import { useUpdateNotesMutation } from "./services/NotesApi";
 import { useGetEmployeesQuery } from "../../../dashboard/module/hrm/Employee/services/employeeApi";
 import { useGetRolesQuery } from "../../../dashboard/module/hrm/role/services/roleApi";
 
