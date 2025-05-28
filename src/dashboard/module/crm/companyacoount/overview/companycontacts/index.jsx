@@ -41,19 +41,28 @@ const CompanyContactList = () => {
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { data: contactsResponsee, isLoading, error } = useGetContactsQuery();
+  const { data: contactsResponsee, isLoading, error } = useGetContactsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
   const {
     data: companyAccountsResponse = { data: [] },
     isLoading: isCompanyAccountsLoading,
-  } = useGetCompanyAccountsQuery();
+  } = useGetCompanyAccountsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+  
   const loggedInUser = useSelector(selectCurrentUser);
 
   const idd = useParams();
   const id = idd.accountId;
 
-  const contactsResponse = contactsResponsee?.data?.filter(
-    (contact) => contact.company_name === id
-  );
+    const contactsResponse = contactsResponsee?.data?.filter(
+      (contact) => contact.company_name === id
+    );
 
   const handleEdit = (record) => {
     setSelectedContact(record);

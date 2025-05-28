@@ -56,13 +56,15 @@ const ContactList = ({
   const navigate = useNavigate();
   const [deleteContact] = useDeleteContactMutation();
 
+
+
   // Fetch countries data
   const { data: countriesData } = useGetAllCountriesQuery();
 
   // Safely handle contacts data
   const contacts = React.useMemo(() => {
     if (!contactsResponse?.data) return [];
-    return contactsResponse.data;
+    return contactsResponse?.data;
   }, [contactsResponse]);
 
   // Safely handle company accounts data
