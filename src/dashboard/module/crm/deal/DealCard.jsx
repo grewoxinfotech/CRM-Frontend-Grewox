@@ -15,7 +15,7 @@ import {
   FiPlus
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation } from "./services/dealApi";
+import { useGetDealsQuery, useUpdateDealMutation, useDeleteDealMutation, useUpdateDealStageMutation } from "./services/dealApi";
 import { useGetLeadStagesQuery, useUpdateLeadStageMutation } from "../crmsystem/leadstage/services/leadStageApi";
 import { useGetPipelinesQuery } from "../crmsystem/pipeline/services/pipelineApi";
 import { useGetLabelsQuery, useGetSourcesQuery, useGetCategoriesQuery, useGetStatusesQuery } from "../crmsystem/souce/services/SourceApi";
@@ -358,9 +358,13 @@ const DraggableCard = ({ deal, stage, onEdit, onDelete, onView, onDealClick, isO
   );
 };
 
-const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDealClick }) => {
+const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDealClick, isColumnDragging }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
+    data: {
+      type: 'stage',
+      stage
+    }
   });
 
   return (
@@ -396,10 +400,10 @@ const DroppableStage = ({ stage, children, deals, onEdit, onDelete, onView, onDe
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No deals"
+            description={isOver ? "Drop deal here" : "No deals"}
             style={{
               padding: '40px 0',
-              opacity: 0.75
+              opacity: isOver ? 1 : 0.75
             }}
           />
         )}
@@ -571,8 +575,8 @@ const SortableColumn = ({ stage, dealsInStage, children, index }) => {
 
 const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
   const [updateDeal] = useUpdateDealMutation();
+  const [updateDealStage] = useUpdateDealStageMutation();
   const [updateLeadStage] = useUpdateLeadStageMutation();
-  // const dealsData = deals?.data || [];
   const { data: stageQueryData, isLoading: isLoadingStages, refetch: refetchStages } = useGetLeadStagesQuery();
   const { data: pipelinesData, isLoading: isLoadingPipelines } = useGetPipelinesQuery();
   const currentUser = useSelector(selectCurrentUser);
@@ -583,7 +587,13 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
   const [orderedStages, setOrderedStages] = useState([]);
   const [selectedPipeline, setSelectedPipeline] = useState(null);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
+  const [localDeals, setLocalDeals] = useState([]);
   const pipelines = pipelinesData || [];
+
+  // Initialize local deals state when deals prop changes
+  useEffect(() => {
+    setLocalDeals(deals);
+  }, [deals]);
 
   // Initialize selected pipeline if not set
   useEffect(() => {
@@ -591,7 +601,6 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
       setSelectedPipeline(pipelines[0]?.id);
     }
   }, [selectedPipeline, pipelines]);
-
 
   // Filter and order deal stages
   const stages = React.useMemo(() => {
@@ -628,10 +637,10 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
 
   const dealsByStage = React.useMemo(() => {
     return orderedStages.reduce((acc, stage) => {
-      acc[stage.id] = deals.filter(deal => deal.stage === stage.id);
+      acc[stage.id] = localDeals.filter(deal => deal.stage === stage.id);
       return acc;
     }, {});
-  }, [orderedStages, deals]);
+  }, [orderedStages, localDeals]);
 
   // Update the sensors configuration
   const sensors = useSensors(
@@ -658,6 +667,9 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
 
     if (!over) return;
 
+    console.log("Drag ended - Active:", active);
+    console.log("Drag ended - Over:", over);
+
     const isColumn = active.id.toString().startsWith('column-');
     const isCard = active.data?.current?.type === 'card';
 
@@ -674,51 +686,82 @@ const DealCard = ({ deals, onEdit, onDelete, onView, onDealClick }) => {
         setOrderedStages(newOrder);
         dispatch(setStageOrder(newOrder.map(stage => stage.id)));
       }
-    } else if (isCard) {
+    } else if (isCard && over.id !== active.id) {
+      // આ હિસ્સો લીડ કાર્ડના handleDragEnd ફંક્શન જેવો બનાવીએ
+      const draggedId = active.id;
+      let destinationId = over.id;
+
+      // ડ્રોપ ટાર્ગેટના પ્રકાર મુજબ સાચું ડેસ્ટિનેશન ID મેળવો
+      if (over.data?.current?.type === 'card') {
+        // જો અન્ય કાર્ડ પર ડ્રોપ થયું હોય, તો તે કાર્ડના સ્ટેજને વાપરો
+        destinationId = over.data.current.deal.stage;
+        console.log("Dropped on another card, using its stage:", destinationId);
+      } else if (over.data?.current?.type === 'stage') {
+        // જો સીધા સ્ટેજ પર ડ્રોપ થયું હોય, તો તે સ્ટેજ ID વાપરો
+        destinationId = over.id;
+        console.log("Dropped directly on stage:", destinationId);
+      } else if (typeof destinationId === 'string' && destinationId.startsWith('column-')) {
+        // જો કોલમ હેડર પર ડ્રોપ થયું હોય
+        destinationId = destinationId.replace('column-', '');
+        console.log("Column prefix removed, using stage ID:", destinationId);
+      }
+
       const draggedDeal = active.data.current.deal;
-      const destinationStageId = over.id.toString().startsWith('column-')
-        ? over.id.toString().replace('column-', '')
-        : over.data.current.deal.stage;
+      const originalStage = draggedDeal.stage;
+
+      console.log(`Attempting to move deal ${draggedId} from stage ${originalStage} to ${destinationId}`);
 
       if (draggedDeal?.is_converted) {
         message.error("Cannot move a converted deal");
         return;
       }
 
-      // Only update if moving to a different stage
-      if (draggedDeal.stage !== destinationStageId) {
-        try {
-          // Optimistically update the UI
-          setDeals(prevDeals =>
-            prevDeals.map(deal =>
-              deal.id === draggedDeal.id
-                ? { ...deal, stage: destinationStageId }
-                : deal
-            )
-          );
+      // Check if the destination is the same as the original stage
+      if (originalStage === destinationId) {
+        console.log("Deal is already in this stage, no update needed");
+        return;
+      }
 
-          // Make the API call
-          await updateDeal({
-            id: draggedDeal.id,
-            data: {
-              stage: destinationStageId,
-              updated_by: currentUser?.username || ''
-            }
-          }).unwrap();
+      try {
+        // Optimistically update the UI
+        setLocalDeals(prevDeals =>
+          prevDeals.map(deal =>
+            deal.id === draggedId
+              ? { ...deal, stage: destinationId }
+              : deal
+          )
+        );
 
-          const destinationStage = orderedStages.find(stage => stage.id === destinationStageId);
-          message.success(`Deal moved to ${destinationStage?.stageName || 'new stage'}`);
-        } catch (error) {
-          // Revert the optimistic update on error
-          setDeals(prevDeals =>
-            prevDeals.map(deal =>
-              deal.id === draggedDeal.id
-                ? { ...deal, stage: draggedDeal.stage }
-                : deal
-            )
-          );
-          message.error('Failed to update deal stage');
+        console.log("Sending API request to update deal stage...");
+        console.log("Request payload:", {
+          id: draggedId,
+          stage: destinationId
+        });
+        
+        // Use updateDealStage instead of updateDeal
+        const result = await updateDealStage({
+          id: draggedId,
+          stage: destinationId
+        }).unwrap();
+        console.log("API response:", result);
+
+        if (result) {
+          console.log("Deal stage updated successfully");
+          message.success('Deal stage updated successfully');
         }
+      } catch (error) {
+        console.error("Error updating deal stage:", error);
+        
+        // Revert the optimistic update on error
+        setLocalDeals(prevDeals =>
+          prevDeals.map(deal =>
+            deal.id === draggedId
+              ? { ...deal, stage: originalStage }
+              : deal
+          )
+        );
+        
+        message.error('Failed to update deal stage');
       }
     }
   };
