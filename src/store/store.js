@@ -9,7 +9,7 @@ import superadminProfileReducer from "../superadmin/module/profile/services/supe
 import { settingsApi } from "../superadmin/module/settings/services/settingsApi.js";
 import { planApi } from "../superadmin/module/plans/services/planApi.js";
 import { policyApi } from "../superadmin/module/policy/service/policyApi.js";
-import { notesApi } from "../superadmin/module/notes/services/notesApi.js";
+import { notesApi } from "../superadmin/module/notes/services/NotesApi.js";
 import { inquiryApi } from "../superadmin/module/inquary/services/inquaryApi.js";
 // import { dealInvoiceApi } from "../dashboard/module/crm/deal/overview/invoices/services/dealinvoiceApi.js";
 import { subclientApi } from "../dashboard/module/user-management/subclient/services/subClientApi.js";
