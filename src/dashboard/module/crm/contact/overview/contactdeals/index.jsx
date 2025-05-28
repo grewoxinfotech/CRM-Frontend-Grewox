@@ -31,7 +31,7 @@ import { useGetLeadStagesQuery } from "../../../crmsystem/leadstage/services/lea
 import {
   useDeleteDealMutation,
   useGetDealsQuery,
-} from "../../../deal/services/dealApi";
+} from "../../../deal/services/DealApi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
