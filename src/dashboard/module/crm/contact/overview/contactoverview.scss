@@ -226,8 +226,20 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 24px;
-        padding: 32px;
+        // padding: 32px;
         background: white;
+
+        @media (max-width: 1400px) {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            // padding: 24px;
+        }
+
+        @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+            gap: 16px;
+            // padding: 20px;
+        }
 
         .stat-item {
             display: flex;
@@ -238,6 +250,16 @@
             border-radius: 16px;
             transition: all 0.3s ease;
             border: 1px solid rgba(0, 0, 0, 0.04);
+
+            @media (max-width: 1200px) {
+                padding: 16px;
+                gap: 14px;
+            }
+
+            @media (max-width: 576px) {
+                padding: 14px;
+                gap: 12px;
+            }
 
             &:hover {
                 background: white;

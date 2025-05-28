@@ -140,6 +140,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Assigned To",
       dataIndex: "assigned_to",
       key: "assigned_to",
+      width: 200,
       render: (assignedTo) => {
         try {
           if (!assignedTo) return "-";
@@ -196,6 +197,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Notes",
       dataIndex: "call_notes",
       key: "call_notes",
+      width: 150,
       render: (notes) => notes || "-",
       ellipsis: true,
     },
@@ -203,6 +205,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Priority",
       dataIndex: "priority",
       key: "priority",
+      width: 150,
       render: (priority) => {
         const priorityMap = {
           highest: "High",
@@ -225,6 +228,8 @@ const FollowupCallList = ({ dealId, users }) => {
     {
       title: "Actions",
       key: "actions",
+      width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Space>
           <Dropdown
@@ -270,7 +275,8 @@ const FollowupCallList = ({ dealId, users }) => {
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} calls`,
         }}
-        className="followup-table"
+        scroll={{ x: 'max-content', y: '100%' }}
+        // className="followup-table"
       />
       {editModalVisible && (
         <EditFollowupCall

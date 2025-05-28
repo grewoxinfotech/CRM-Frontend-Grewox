@@ -97,14 +97,30 @@
     }
 
     .ant-table {
-        .ant-table-thead>tr>th {
-            background: #f8fafc;
-            font-weight: 500;
-            color: #4b5563;
+        background: transparent;
+        overflow-x: auto;
+        overflow-y: hidden;
+
+        .ant-table-body {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
         }
 
-        .ant-table-tbody>tr>td {
-            padding: 16px 24px;
+        .ant-table-thead > tr > th {
+            background: transparent;
+            font-weight: 600;
+            color: #4b5563;
+            padding: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .ant-table-tbody > tr > td {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .ant-table-tbody > tr:hover > td {
+            background: #f8fafc;
         }
 
         .ant-tag {
@@ -182,5 +198,22 @@
         .contact-info {
             font-size: 13px;
         }
+    }
+}
+
+.custom-modal {
+    .ant-modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .ant-modal-mask {
+        background-color: rgba(0, 0, 0, 0.45) !important;
+    }
+
+    .ant-modal-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }

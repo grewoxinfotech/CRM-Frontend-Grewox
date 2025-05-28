@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Card, Button, Tabs, Dropdown, Typography } from 'antd';
-import { FiPlus, FiCheckSquare, FiUsers, FiPhoneCall, FiCalendar, FiClock } from 'react-icons/fi';
+import { Card, Button, Tabs, Dropdown, Typography, Input, Popover } from 'antd';
+import { FiPlus, FiCheckSquare, FiUsers, FiPhoneCall, FiCalendar, FiClock, FiSearch, FiDownload } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../../../../auth/services/authSlice';
 import './followup.scss';
@@ -135,7 +135,7 @@ const LeadFollowup = ({ leadId }) => {
           </Breadcrumb>
         </div> */}
   
-        <div className="page-header">
+        <div className="page-headers">
           <div className="header-left">
             <h2>Follow-Ups</h2>
             <Text className="subtitle">Manage your followups</Text>
@@ -160,7 +160,7 @@ const LeadFollowup = ({ leadId }) => {
                             trigger={['click']}
                         >
                             <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
-                                Create New
+                               <span className='create-new-btn'>Create New</span>
                             </Button>
                         </Dropdown>
                     </div>
@@ -186,9 +186,7 @@ const LeadFollowup = ({ leadId }) => {
                         items={tabItems}
                         className="followup-tabs"
                     />
-                   
-                    </div>
-
+                </div>
             </Card>
 
             {/* Modals */}

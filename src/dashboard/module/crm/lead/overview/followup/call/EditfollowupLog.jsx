@@ -753,7 +753,6 @@ const EditLog = ({ open, onCancel, onSubmit, callId, callData, rtiId }) => {
           <Form.Item
             name="call_notes"
             label="Notes"
-            rules={[{ required: true, message: "Please enter call notes" }]}
             style={{ gridColumn: "1 / -1" }}
           >
             <TextArea

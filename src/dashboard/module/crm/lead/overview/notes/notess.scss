@@ -1349,6 +1349,8 @@
                 .note-actions {
                     display: flex;
                     gap: 8px;
+                    flex-direction: row;
+                    align-items: center;
 
                     .edit-button,
                     .delete-button {
@@ -1360,6 +1362,7 @@
                         align-items: center;
                         justify-content: center;
                         border-radius: 8px;
+                        margin: 0;
                     }
 
                     .edit-button {
@@ -1381,12 +1384,40 @@
 @media (max-width: 1400px) {
     .lead-notes {
         .notes-header {
+            flex-wrap: wrap;
+            gap: 16px;
+
             .notes-stats {
+                flex-wrap: wrap;
+                width: 100%;
+                gap: 16px;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+
+                .stats-card {
+                    min-width: auto;
+                    flex: 0 0 auto;
+                }
+
                 .filter-buttons {
+                    width: 100%;
+                    order: 2;
+                    margin-top: 8px;
+                    justify-content: flex-start;
+                    flex-wrap: wrap;
+                    gap: 8px;
+
                     .filter-button {
-                        padding: 0 12px;
+                        flex: 0 0 auto;
                     }
                 }
+            }
+
+            .add-note-btn {
+                margin-left: auto;
+                order: 1;
             }
         }
     }
@@ -1448,6 +1479,7 @@
                 .filter-buttons {
                     justify-content: center;
                     width: 100%;
+                    margin-top: 16px;
                     
                     .filter-button {
                         flex: 1;
@@ -1460,6 +1492,7 @@
             .add-note-btn {
                 width: 100%;
                 justify-content: center;
+                margin-top: 16px;
             }
         }
     }

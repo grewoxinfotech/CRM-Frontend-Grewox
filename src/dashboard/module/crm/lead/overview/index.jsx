@@ -379,7 +379,7 @@ const LeadOverviewContent = ({
       <Card className="info-card contact-card">
         <div className="profile-header">
           <div className="profile-main">
-            <div className="company-avatar">
+            <div className="company-avatars">
               {localLeadData?.company_id ? (
                 <FiBriefcase size={24} />
               ) : localLeadData?.contact_id ? (
@@ -491,7 +491,7 @@ const LeadOverviewContent = ({
           </div>
         </div>
         {(localLeadData?.contact_id || localLeadData?.company_id) && (
-          <div className="profile-stats">
+          <div className="profile-stats" >
             <div className="stat-item">
               <div className="stat-icon">
                 <FiMail />
@@ -669,7 +669,7 @@ const LeadOverviewContent = ({
             gap: 20px;
           }
 
-          .company-avatar {
+          .company-avatars {
             width: 56px;
             height: 56px;
             background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
@@ -804,7 +804,7 @@ const LeadOverviewContent = ({
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
-            padding: 24px;
+            padding-top: 24px;
             background: #ffffff;
           }
 
@@ -885,7 +885,7 @@ const LeadOverviewContent = ({
       </Card>
 
       <Row gutter={[16, 16]} className="metrics-row">
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className="metric-card lead-value-card">
             <div className="metric-icon">
               <FiDollarSign />
@@ -903,7 +903,7 @@ const LeadOverviewContent = ({
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card
             className={`metric-card interest-level-card ${localLeadData?.interest_level || "medium"
               }`}
@@ -939,7 +939,7 @@ const LeadOverviewContent = ({
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className="metric-card created-date-card">
             <div className="metric-icon">
               <FiCalendar className="icon" />
@@ -954,7 +954,7 @@ const LeadOverviewContent = ({
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className="metric-card members-card">
             <div className="metric-icon">
               <FiUsers />
@@ -983,7 +983,7 @@ const LeadOverviewContent = ({
 
       <div className="lead-details-section">
         <Row gutter={[24, 24]}>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card source-card">
               <div className="detail-content">
                 <div className="detail-icon">
@@ -999,7 +999,7 @@ const LeadOverviewContent = ({
               </div>
             </div>
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card category-card">
               <div className="detail-content">
                 <div className="detail-icon">
@@ -1016,7 +1016,7 @@ const LeadOverviewContent = ({
             </div>
           </Col>
 
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card status-card">
               <div className="detail-content">
                 <div className="detail-icon">
@@ -1032,7 +1032,7 @@ const LeadOverviewContent = ({
               </div>
             </div>
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card updated-card">
               <div className="detail-content">
                 <div className="detail-icon">

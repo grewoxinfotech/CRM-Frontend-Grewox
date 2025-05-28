@@ -28,7 +28,8 @@ import InvoiceList from "../../../../sales/invoice/InvoiceList";
 import CreateInvoice from "../../../../sales/invoice/CreateInvoice";
 import EditInvoice from "../../../../sales/invoice/EditInvoice";
 import ViewInvoice from "../../../../sales/invoice/ViewInvoice";
-import "../../../../sales/invoice/invoice.scss";
+// import "../../../../sales/invoice/invoice.scss";
+import "./invoice.scss";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -42,7 +43,8 @@ import {
   useCreateInvoiceMutation,
   useUpdateInvoiceMutation,
 } from "../../../../sales/invoice/services/invoiceApi";
-import { useGetDealsQuery } from "../../../deal/services/dealApi";
+import { useGetDealsQuery } from "../../services/DealApi";
+// import { useGetDealsQuery } from "../../../services/DealApi";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;

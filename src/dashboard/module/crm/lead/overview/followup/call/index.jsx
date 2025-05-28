@@ -141,6 +141,7 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
       title: "Assigned To",
       dataIndex: "assigned_to",
       key: "assigned_to",
+      width: 200,
       render: (assignedTo) => {
         try {
           if (!assignedTo) return "-";
@@ -242,6 +243,8 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
     {
       title: "Actions",
       key: "actions",
+      width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Space>
           <Dropdown
@@ -287,7 +290,8 @@ const FollowupCallList = ({ leadId, users, rtiId }) => {
           showSizeChanger: true,
           showTotal: (total) => `Total ${total} calls`,
         }}
-        className="followup-table"
+        // className="followup-table"
+        scroll={{ x: 'max-content', y: '100%' }}q
       />
       {editModalVisible && (
         <EditFollowupCall

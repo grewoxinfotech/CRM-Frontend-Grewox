@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetContactsQuery, useUpdateContactMutation } from '../services/contactApi';
 import { useGetLeadsQuery } from '../../../crm/lead/services/LeadApi';
-import { useGetDealsQuery } from '../../../crm/deal/services/dealApi';
+import { useGetDealsQuery } from '../../../crm/deal/services/DealApi';
 import { useGetCompanyAccountsQuery } from '../../companyacoount/services/companyAccountApi';
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 import './contactoverview.scss';
@@ -101,7 +101,7 @@ const ContactDetails = () => {
                         </div>
                     </div>
                 </div>
-                <div className="profile-stats">
+                <div className="profile-stats" style={{ padding: '24px' }}>
                     <div className="stat-item">
                         <div className="stat-icon">
                             <FiMail />

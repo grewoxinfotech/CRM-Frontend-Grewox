@@ -5,7 +5,7 @@
         
         .ant-card-head {
             border-bottom: 1px solid #f0f0f0;
-            padding: 16px 24px;
+            padding: 16px 5px 16px 24px;
             
             .card-header {
                 display: flex;
@@ -73,9 +73,11 @@
     .ant-timeline {
         .ant-timeline-item {
             padding-bottom: 24px;
+            position: relative;
 
             .ant-timeline-item-tail {
                 border-left: 2px solid #f0f0f0;
+                left: 16px;
             }
 
             .ant-timeline-item-head {
@@ -83,6 +85,8 @@
                 height: 12px;
                 border: 2px solid transparent;
                 background-color: #fff;
+                left: 6px;
+                top: 1px;
             }
 
             .timeline-dot {
@@ -95,6 +99,9 @@
                 background-color: #fff;
                 border: 2px solid currentColor;
                 font-size: 16px;
+                position: absolute;
+                left: 0;
+                z-index: 2;
             }
         }
     }
@@ -130,7 +137,7 @@
 
             .activity-meta {
                 display: flex;
-                align-items: center;
+                // align-items: center;
                 gap: 16px;
                 margin-bottom: 12px;
 
@@ -201,18 +208,20 @@
         .ant-card {
             .ant-card-head {
                 .card-header {
-                    flex-direction: column;
-                    align-items: stretch;
+                    flex-direction: row;
+                    align-items: center;
                     gap: 12px;
 
                     .title-section {
-                        width: 100%;
-                        justify-content: space-between;
+                        width: auto;
+                        flex: 0 0 auto;
                     }
 
                     .filter-section {
-                        width: 100%;
-                        max-width: 100%;
+                        width: auto;
+                        flex: 1;
+                        min-width: 150px;
+                        max-width: 250px;
                     }
                 }
             }

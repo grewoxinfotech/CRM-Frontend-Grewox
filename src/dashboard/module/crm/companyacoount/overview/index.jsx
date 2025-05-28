@@ -22,7 +22,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from '../services/companyAccountApi';
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 import { useGetLeadsQuery } from '../../lead/services/LeadApi';
-import { useGetDealsQuery } from '../../deal/services/dealApi';
+import { useGetDealsQuery } from '../../deal/services/DealApi';
 import { useGetSourcesQuery, useGetCategoriesQuery } from '../../crmsystem/souce/services/SourceApi';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
@@ -103,7 +103,7 @@ const CompanyDetails = () => {
                         </div>
                     </div>
                 </div>
-                <div className="profile-stats">
+                <div className="profile-stats" style={{ paddingTop: '24px' }}>
                     <div className="stat-item">
                         <div className="stat-icon">
                             <FiMail />

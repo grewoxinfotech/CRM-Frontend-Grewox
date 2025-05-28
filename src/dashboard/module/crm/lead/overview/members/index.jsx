@@ -179,7 +179,7 @@ const LeadMembers = ({ leadId }) => {
                         </Tag>
                         <span className="role-indicator" style={{
                             position: 'absolute',
-                            left: '-2px',
+                            left: '10px',
                             transform: 'translateY(-50%)',
                             width: '7px',
                             height: '7px',
@@ -250,7 +250,7 @@ const LeadMembers = ({ leadId }) => {
                     rowKey={(record) => record}
                     pagination={false}
                     style={{ padding: '0 24px 24px' }}
-                    scroll={{ x: 'max-content', y: 'hidden' }}
+                    scroll={{ x: 1000, y: 'hidden' }}
                 />
             </Card>
 

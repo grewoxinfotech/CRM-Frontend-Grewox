@@ -8,6 +8,7 @@ import {
   Menu,
   Breadcrumb,
   Modal,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -31,6 +32,7 @@ const DealPayments = (deal) => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   const handleCreate = () => {
     setSelectedPayment(null);
@@ -76,45 +78,69 @@ const DealPayments = (deal) => {
     ],
   };
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search payments..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   return (
     <div className="payment-page">
-      {/* <div className="page-breadcrumb">
-        <Breadcrumb>
-          <Breadcrumb.Item>
-            <Link to="/dashboard">
-              <FiHome style={{ marginRight: "4px" }} />
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/dashboard/sales">Sales</Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Payments</Breadcrumb.Item>
-        </Breadcrumb>
-      </div> */}
-
       <div className="page-header">
-        <div className="header-left">
-          <h2>Payments</h2>
-          <Text className="subtitle">Manage your payments</Text>
+        <div className="page-title">
+          <Title level={2}>Payments</Title>
+          <Text className="page-description" type="secondary">Manage your payments</Text>
         </div>
-
-        <div className="header-right">
-          <Input
-            prefix={<FiSearch style={{ color: "#9CA3AF" }} />}
-            placeholder="Search payments..."
-            className="search-input"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <Dropdown menu={exportMenu} trigger={["click"]}>
-            <Button style={{height: '40px'}}>
-              <FiDownload /> Export <FiChevronDown />
-            </Button>
-          </Dropdown>
-          <Button style={{height: '40px'}} type="primary" icon={<FiPlus />} onClick={handleCreate}>
-            Add Payment
-          </Button>
+        <div className="header-actions">
+          <div className="desktop-actions">
+            <div className="action-buttons">
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                  placeholder="Search payments..."
+                  allowClear
+                  onChange={(e) => setSearchText(e.target.value)}
+                  value={searchText}
+                  className="search-input"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
+                >
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
+              </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleCreate}
+                className="add-button"
+              >
+                <span className="button-text">Add Payment</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 

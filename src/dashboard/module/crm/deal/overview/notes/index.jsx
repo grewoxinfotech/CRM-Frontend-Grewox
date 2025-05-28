@@ -383,49 +383,19 @@ const DealNotes = ({ deal }) => {
 
     return (
         <div className="lead-notes">
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '24px',
-                background: 'white',
-                padding: '20px',
-                borderRadius: '16px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '20px'
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        background: 'linear-gradient(135deg, #F9FAFB, #F3F4F6)',
-                        padding: '12px 20px',
-                        borderRadius: '12px',
-                        border: '1px solid #E5E7EB'
-                    }}>
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '10px',
-                            background: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)'
-                        }}>
+            <div className="notes-header">
+                <div className="notes-stats">
+                    <div className="stats-card">
+                        <div className="stats-icon">
                             <FiFileText style={{ fontSize: '20px', color: '#2563EB' }} />
                         </div>
                         <div>
-                            <div style={{ fontSize: '12px', color: '#6B7280', fontWeight: '500' }}>Total Notes</div>
-                            <div style={{ fontSize: '20px', color: '#111827', fontWeight: '600' }}>{noteCounts.all}</div>
+                            <div className="stats-label">Total Notes</div>
+                            <div className="stats-value">{noteCounts.all}</div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="filter-buttons">
                         {[
                             { key: 'all', icon: FiFileText, label: 'All', color: '#2563EB', bgColor: '#EFF6FF' },
                             { key: 'urgent', icon: FiAlertCircle, label: 'Urgent', color: '#DC2626', bgColor: '#FEF2F2' },
@@ -438,29 +408,18 @@ const DealNotes = ({ deal }) => {
                                 <Button
                                     key={item.key}
                                     onClick={() => setFilterType(item.key)}
+                                    className={`filter-button ${isSelected ? 'selected' : ''}`}
                                     style={{
-                                        height: '40px',
-                                        padding: '0 16px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
                                         background: isSelected ? item.bgColor : 'white',
                                         border: `1px solid ${isSelected ? item.color : '#E5E7EB'}`,
-                                        borderRadius: '10px',
                                         color: isSelected ? item.color : '#6B7280',
-                                        fontWeight: '500',
-                                        transition: 'all 0.3s ease'
                                     }}
                                 >
                                     <Icon style={{ fontSize: '16px' }} />
-                                    {item.label}
-                                    <span style={{
+                                    <span className="button-label">{item.label}</span>
+                                    <span className="count-badge" style={{
                                         background: isSelected ? 'white' : item.bgColor,
-                                        padding: '2px 8px',
-                                        borderRadius: '6px',
-                                        fontSize: '12px',
                                         color: item.color,
-                                        marginLeft: '4px'
                                     }}>
                                         {noteCounts[item.key]}
                                     </span>
@@ -475,26 +434,8 @@ const DealNotes = ({ deal }) => {
                     icon={<FiPlus style={{ fontSize: '18px' }} />}
                     onClick={handleAddNote}
                     className="add-note-btn"
-                    style={{
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        height: '44px',
-                        padding: '0 24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        boxShadow: '0 4px 12px rgba(24, 144, 255, 0.15)',
-                        fontSize: '15px',
-                        fontWeight: '500',
-                        transition: 'all 0.3s ease',
-                        ':hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 6px 16px rgba(24, 144, 255, 0.25)'
-                        }
-                    }}
                 >
-                    Add Note
+                    <span className="add-note-text">Add Note</span>
                 </Button>
             </div>
 

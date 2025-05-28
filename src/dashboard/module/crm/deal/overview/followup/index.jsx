@@ -135,7 +135,7 @@ const DealFollowup = ({ deal }) => {
           </Breadcrumb>
         </div> */}
   
-        <div className="page-header">
+        <div className="page-headers">
           <div className="header-left">
             <h2>Follow-Ups</h2>
             <Text className="subtitle">Manage your followups</Text>
@@ -155,14 +155,14 @@ const DealFollowup = ({ deal }) => {
               </Button>
             </Dropdown> */}
             <Dropdown 
-                            menu={{ items, onClick: handleMenuClick }}
-                            placement="bottomRight"
-                            trigger={['click']}
-                        >
-                            <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
-                                Create New
-                            </Button>
-                        </Dropdown>
+                menu={{ items, onClick: handleMenuClick }}
+                placement="bottomRight"
+                trigger={['click']}
+            >
+                <Button style={{height: '40px'}} type="primary" icon={<FiPlus />}>
+                    <span className='create-new-btn'>Create New</span>
+                </Button>
+            </Dropdown>
           </div>
         </div>
 

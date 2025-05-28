@@ -66,6 +66,7 @@ const FollowupMeetingList = ({ dealId, users }) => {
             title: 'Meeting Type',
             dataIndex: 'meeting_type',
             key: 'meeting_type',
+            width: 200,
             render: (type) => {
                 if (!type) return '-';
                 return (
@@ -106,6 +107,7 @@ const FollowupMeetingList = ({ dealId, users }) => {
         {
             title: 'Location/Link',
             key: 'location',
+            width: 200,
             render: (_, record) => {
                 if (record.meeting_type === 'online') {
                     return record.meeting_link || '-';
@@ -117,6 +119,7 @@ const FollowupMeetingList = ({ dealId, users }) => {
             title: 'Assigned To',
             dataIndex: 'assigned_to',
             key: 'assigned_to',
+            width: 200,
             render: (assignedTo) => {
                 if (!assignedTo) return '-';
                 
@@ -153,6 +156,7 @@ const FollowupMeetingList = ({ dealId, users }) => {
         {
             title: 'Reminder',
             key: 'reminder',
+            width: 200,
             render: (_, record) => {
                 if (!record.reminder) return '-';
                 
@@ -187,6 +191,8 @@ const FollowupMeetingList = ({ dealId, users }) => {
         {
             title: 'Actions',
             key: 'actions',
+            width: 80,
+            fixed: 'right',
             render: (_, record) => (
                 <Space>
                     <Dropdown
@@ -232,7 +238,7 @@ const FollowupMeetingList = ({ dealId, users }) => {
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} meetings`
                 }}
-                className="followup-table"
+                scroll={{ x: 'max-content', y: '100%' }}
             />
              {editModalVisible && (
         <EditFollowupCall

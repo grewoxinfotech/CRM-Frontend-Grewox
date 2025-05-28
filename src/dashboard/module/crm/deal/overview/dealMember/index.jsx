@@ -30,7 +30,7 @@ import {
 import {
   useUpdateDealMutation,
   useGetDealsQuery,
-} from "../../services/dealApi";
+} from "../../services/DealApi";
 import { useGetUsersQuery } from "../../../../user-management/users/services/userApi";
 import { useGetRolesQuery } from "../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
@@ -47,12 +47,25 @@ const DealMember = ({ deal }) => {
   const [form] = Form.useForm();
   const [updateDeal] = useUpdateDealMutation();
   const { data: usersResponse = { data: [] }, isLoading: usersLoading } =
-    useGetUsersQuery();
+    useGetUsersQuery({
+      page: 1,
+      pageSize: -1,
+      search: ''
+    });
+
+  console.log("usersResponse", deal);
   const { refetch } = useGetDealsQuery();
-  const { data: rolesData } = useGetRolesQuery();
+  const { data: rolesData } = useGetRolesQuery(
+    {
+      page: 1,
+      pageSize: -1,
+      search: ''
+    }
+  );
   const loggedInUser = useSelector(selectCurrentUser);
   const [teamMembersOpen, setTeamMembersOpen] = useState(false);
   const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
+
 
   // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(
@@ -281,6 +294,7 @@ const DealMember = ({ deal }) => {
           rowKey={(record) => record}
           pagination={false}
           style={{ padding: "0 24px 24px" }}
+          scroll={{ x: 1000, y: 'hidden' }}
         />
       </Card>
 

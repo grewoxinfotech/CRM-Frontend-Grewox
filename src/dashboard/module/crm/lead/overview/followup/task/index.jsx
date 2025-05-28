@@ -51,6 +51,7 @@ const FollowupTaskList = ({ leadId, users }) => {
             title: 'Assigned To',
             dataIndex: 'assigned_to',
             key: 'assigned_to',
+            width: 150,
             render: (assignedTo) => {
                 try {
                     const parsedAssignees = JSON.parse(assignedTo);
@@ -157,6 +158,8 @@ const FollowupTaskList = ({ leadId, users }) => {
         {
             title: 'Actions',
             key: 'actions',
+            width: 80,
+            fixed: 'right',
             render: (_, record) => (
                 <Space>
                     <Dropdown
@@ -203,7 +206,8 @@ const FollowupTaskList = ({ leadId, users }) => {
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} tasks`
                 }}
-                className="followup-table"
+                // className="followup-table"
+                scroll={{ x: "max-content", y: '100%' }}
             />
             {editModalVisible && (
                 <EditFollowupTask

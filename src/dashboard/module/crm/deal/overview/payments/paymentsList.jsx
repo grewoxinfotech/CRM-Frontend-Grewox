@@ -284,6 +284,7 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
       title: "Actions",
       key: "actions",
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Dropdown
           menu={getDropdownItems(record)}
@@ -325,6 +326,7 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
           showTotal: (total) => `Total ${total} payments`,
         }}
         className="payment-table"
+        scroll={{ x: 1000, y: 'hidden' }}
       />
     </div>
   );

@@ -919,7 +919,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
-            padding: 24px;
+            padding-top: 24px;
             background: #ffffff;
           }
 
@@ -1000,7 +1000,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
       </Card>
 
       <Row gutter={[16, 16]} className="metrics-row">
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className="metric-card lead-value-card">
             <div className="metric-icon">
               <FiDollarSign />
@@ -1015,7 +1015,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className={`metric-card status-card ${localDeal?.status}`}>
             <div
               className="metric-icon"
@@ -1041,7 +1041,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className="metric-card created-date-card">
             <div className="metric-icon">
               <FiCalendar className="icon" />
@@ -1056,7 +1056,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={12} lg={12} xl={6}>
           <Card className="metric-card members-card">
             <div className="metric-icon">
               <FiUsers />
@@ -1085,7 +1085,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
 
       <div className="lead-details-section">
         <Row gutter={[24, 24]}>
-          <Col xs={24} sm={12} md={6}>
+          <Col  xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card source-card">
               <div className="detail-content">
                 <div className="detail-icon">
@@ -1102,7 +1102,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             </div>
           </Col>
 
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card category-card">
               <div className="detail-content">
                 <div className="detail-icon">
@@ -1119,7 +1119,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             </div>
           </Col>
 
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card date-card">
               <div className="detail-content">
                 <div className="detail-icon">
@@ -1138,7 +1138,7 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
             </div>
           </Col>
 
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={12} lg={12} xl={6}>
             <div className="detail-card updated-card">
               <div className="detail-content">
                 <div className="detail-icon">

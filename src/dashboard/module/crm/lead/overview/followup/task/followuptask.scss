@@ -140,7 +140,7 @@
     scrollbar-color: #d1d5db transparent;
 
     &::-webkit-scrollbar {
-        width: 6px;
+        width: 0;
         height: 6px;
     }
 
@@ -156,6 +156,9 @@
             background-color: #9ca3af;
         }
     }
+
+    overflow-y: scroll;
+    scrollbar-width: none;
 }
 
 // Empty state styling

@@ -126,6 +126,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
       const formattedValues = {
         ...values,
         call_type: 'log',
+        section: "lead",
         priority: values.priority || 'medium',
         call_start_date: values.call_start_date ? values.call_start_date.format('YYYY-MM-DD') : null,
         call_start_time: values.call_start_time ? values.call_start_time.format('HH:mm:ss') : null,
@@ -604,8 +605,7 @@ const CreateLog = ({ open, onCancel, onSubmit, initialDate, initialTime, leadId 
 
                   <Form.Item
                       name="call_notes"
-                      label={<span style={formItemStyle}>Notes <span style={{ color: "#ff4d4f" }}>*</span></span>}
-                      rules={[{ required: true, message: 'Please enter call notes' }]}
+                      label={<span style={formItemStyle}>Notes</span>}
                       style={{ gridColumn: "1 / -1" }}
                   >
                       <TextArea
