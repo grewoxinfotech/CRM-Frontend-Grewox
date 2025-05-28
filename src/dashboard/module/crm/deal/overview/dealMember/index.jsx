@@ -36,7 +36,7 @@ import { useGetRolesQuery } from "../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../auth/services/authSlice";
 import CreateUser from "../../../../user-management/users/CreateUser";
-import "./dealMember.scss";
+import "./dealmember.scss";
 
 const { Text } = Typography;
 const { Option } = Select;

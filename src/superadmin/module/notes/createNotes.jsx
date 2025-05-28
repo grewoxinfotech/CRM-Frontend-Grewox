@@ -15,7 +15,7 @@ import {
   useCreateNotesMutation,
   useUpdateNotesMutation,
   useGetAllNotesQuery,
-} from "./services/notesApi";
+} from "./services/NotesApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";
 import { useGetEmployeesQuery } from "../../../dashboard/module/hrm/Employee/services/employeeApi";

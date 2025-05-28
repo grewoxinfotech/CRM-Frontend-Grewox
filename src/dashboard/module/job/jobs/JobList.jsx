@@ -14,7 +14,7 @@ import {
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import { useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
-import './Job.scss';
+import './job.scss';
 
 const { Text } = Typography;
 const { Option } = Select;

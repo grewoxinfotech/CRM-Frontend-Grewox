@@ -33,7 +33,7 @@ import CompanyList from "./NotesList";
 import {
   useGetAllNotesQuery,
   useDeleteNotesMutation,
-} from "./services/notesApi";
+} from "./services/NotesApi";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../auth/services/authSlice";

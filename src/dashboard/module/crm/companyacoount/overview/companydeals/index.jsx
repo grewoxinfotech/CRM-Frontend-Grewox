@@ -31,7 +31,7 @@ import { useGetLeadStagesQuery } from "../../../crmsystem/leadstage/services/lea
 import {
   useDeleteDealMutation,
   useGetDealsQuery,
-} from "../../../deal/services/dealApi";
+} from "../../../deal/services/DealApi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -48,10 +48,24 @@ const CompanyDealList = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   // Fetch pipelines and deal stages
-  const { data: pipelines = [] } = useGetPipelinesQuery();
-  const { data: dealStages = [] } = useGetLeadStagesQuery();
+  const { data: pipelines = [] } = useGetPipelinesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+  const { data: dealStages = [] } = useGetLeadStagesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
   const [deleteDeal, { isLoading: isDeleting }] = useDeleteDealMutation();
-  const { data: dataa, isLoading, error } = useGetDealsQuery();
+  const { data: dataaa, isLoading, error } = useGetDealsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+
+  const dataa = dataaa?.data;
 
   const idd = useParams();
   const id = idd.accountId;

@@ -31,7 +31,7 @@ import {
   FiTrash2,
   FiLayers,
 } from "react-icons/fi";
-import { useUpdateDealMutation, useGetDealsQuery } from "./services/dealApi";
+import { useUpdateDealMutation, useGetDealsQuery } from "./services/DealApi";
 import {
   useGetAllCurrenciesQuery,
   useGetAllCountriesQuery,

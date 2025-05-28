@@ -26,7 +26,7 @@ import { useUpdateSalaryMutation } from "./services/salaryApi";
 import { useGetEmployeesQuery } from "../Employee/services/employeeApi";
 import { useGetAllCurrenciesQuery } from "../../settings/services/settingsApi";
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
-import "./salary.scss";
+import "./Salary.scss";
 
 const { Text } = Typography;
 const { Option } = Select;

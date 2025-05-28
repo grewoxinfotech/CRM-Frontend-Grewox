@@ -66,8 +66,16 @@ const CompanyLeadsList = () => {
   const [searchText, setSearchText] = useState("");
   const loggedInUser = useSelector(selectCurrentUser);
   const [deleteLead, { isLoading: isDeleteLoading }] = useDeleteLeadMutation();
-  const { data: leadss, isLoading } = useGetLeadsQuery();
-  const { data: pipelines = [] } = useGetPipelinesQuery();
+  const { data: leadss, isLoading } = useGetLeadsQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
+  const { data: pipelines = [] } = useGetPipelinesQuery({
+    page: 1,
+    pageSize: -1,
+    search: ''
+  });
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
   const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);

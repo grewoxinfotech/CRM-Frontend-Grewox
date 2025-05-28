@@ -19,7 +19,7 @@ import {
   FiPhone,
 } from "react-icons/fi";
 import dayjs from "dayjs";
-import "./followupcall.scss";
+import "./followupCall.scss";
 import {
   useGetFollowupCallsQuery,
   useDeleteFollowupCallMutation,
