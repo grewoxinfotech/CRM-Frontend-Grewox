@@ -110,7 +110,7 @@ export default function Login() {
         >
           <div className="brand">
             <FiBox className="logo" />
-            <span className="brand-name">Grewox Software</span>
+            <span className="brand-name">Grewox CRM</span>
           </div>
           <motion.img
             src={form_graphic}
@@ -125,7 +125,7 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <p>Sign in to continue your workflow</p>
+            <p>Sign in to continue your CRM</p>
           </motion.div>
         </motion.div>
 

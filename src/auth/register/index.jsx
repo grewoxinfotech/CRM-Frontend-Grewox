@@ -116,7 +116,7 @@ export default function Register() {
         >
           <div className="brand">
             <FiBox className="logo" />
-            <span className="brand-name">Grewox Software</span>
+            <span className="brand-name">Grewox CRM</span>
           </div>
           <motion.img
             src={form_graphic}
@@ -131,7 +131,7 @@ export default function Register() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <p>Sign up to start your workflow</p>
+            <p>Sign up to start your CRM</p>
           </motion.div>
         </motion.div>
 
