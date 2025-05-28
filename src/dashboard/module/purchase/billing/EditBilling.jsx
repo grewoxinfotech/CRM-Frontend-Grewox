@@ -40,6 +40,7 @@ import { useSelector } from "react-redux";
 import CreateVendor from "../vendor/CreateVendor";
 import { useCreateVendorMutation } from "../vendor/services/vendorApi";
 import { useGetAllCountriesQuery } from "../../settings/services/settingsApi";
+import { useGetAllTaxesQuery } from "../../settings/tax/services/taxApi";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -61,6 +62,7 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
   const [selectedCountry, setSelectedCountry] = useState(null);
   const { data: countries = [], loading: countriesLoading } =
     useGetAllCountriesQuery();
+    const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
 
   const loggedInUser = useSelector(selectCurrentUser);
   // Fetch currencies
@@ -70,7 +72,6 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
       limit: 100,
     });
 
-  console.log("initialData",initialData);
 
   // Fetch products
   const { data: productsData, isLoading: productsLoading } =
@@ -85,90 +86,81 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
 
   useEffect(() => {
     if (initialData) {
-      console.log("Initial Data Items:", typeof initialData.items === "string" ? JSON.parse(initialData.items) : initialData.items);
+      // console.log("Initial Data Items:", typeof initialData.items === "string" ? JSON.parse(initialData.items) : initialData.items);
     }
   }, [initialData]);
 
   useEffect(() => {
-    if (initialData && currenciesData && vendorsData?.data) {
-      // Parse items if they're in string format
-      const items =
-        typeof initialData.items === "string"
-          ? JSON.parse(initialData.items)
-          : initialData.items;
+    if (initialData && currenciesData) {
+      try {
+        // Parse items if they're in string format
+        const items =
+          typeof initialData.items === "string"
+            ? JSON.parse(initialData.items)
+            : initialData.items || [];
 
-      // Debug the items
-      console.log("Parsed Items:", items);
+        console.log("Parsed items in initialData effect:", items);
+        console.log("Overall tax from initialData:", initialData.overallTax);
 
-      // Check if any item has tax and enable tax switch
-      const hasTax = items?.some((item) => 
-        item.tax || 
-        item.tax_percentage || 
-        (item.taxAmount && item.taxAmount > 0)
-      );
-      
-      // Set tax enabled state
-      setIsTaxEnabled(true); // Always enable tax switch to allow adding taxes
+        // Check if any item has tax and enable tax toggle
+        const hasTax = items?.some(
+          (item) => item.tax || item.taxAmount > 0 || item.tax_percentage > 0
+        ) || initialData.overallTax;
+        
+        setIsTaxEnabled(hasTax);
+        console.log("Setting isTaxEnabled to:", hasTax);
 
-      // Find the selected currency data
-      const selectedCurrencyData = currenciesData.find(
-        (curr) => curr.id === initialData.currency
-      );
+        // Find the selected vendor
+        const selectedVendor = vendorsData?.data?.find(
+          (v) => v.id === initialData.vendor
+        );
 
-      // Set currency symbol and ID if found
-      if (selectedCurrencyData) {
-        setSelectedCurrency(selectedCurrencyData.currencyIcon);
-        setSelectedCurrencyId(selectedCurrencyData.id);
-      }
-
-      // Set initial form values
-      const formValues = {
-        vendor_id: initialData.vendor,
-        bill_date: dayjs(initialData.billDate),
-        currency: initialData.currency,
-        discription: initialData.discription,
-        status: initialData.status || "unpaid",
-        items: items?.map((item) => {
-          // Process tax data properly
-          const taxPercentage = item.tax_percentage || 0;
-          const taxAmount = Number(item.taxAmount || 0);
-          
-          return {
-            item_name: item.itemName,
+        // Set initial values
+        form.setFieldsValue({
+          vendor_id: initialData.vendor,
+          billDate: dayjs(initialData.billDate),
+          discription: initialData.discription,
+          status: initialData.status,
+          currency: initialData.currency,
+          overall_tax: initialData.overallTax, // Set overall tax from initialData
+          items: items.map((item) => ({
             product_id: item.product_id,
-            quantity: Number(item.quantity),
-            unit_price: Number(item.unitPrice),
+            id: item.product_id,
+            item_name: item.itemName,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
             hsn_sac: item.hsnSac,
-            tax: taxPercentage, // Set tax percentage
-            taxId: item.tax,
+            tax: item.tax_percentage || 0,
+            taxId: item.tax || null,
             taxName: item.tax_name || "",
-            taxAmount: taxAmount,
-            amount: Number(item.amount),
+            taxAmount: item.taxAmount || 0,
+            discount: item.discount || 0,
+            discount_type: item.discount_type || "percentage",
             currency: item.currency,
             currencyIcon: item.currencyIcon,
-            discount: Number(item.discount || 0),
-            discount_type: item.discount_type || "percentage",
-          };
-        }) || [{}],
-        sub_total: Number(initialData.subTotal)?.toFixed(2),
-        item_tax_amount: Number(initialData.tax)?.toFixed(2),
-        item_discount_value: Number(initialData.discount)?.toFixed(2),
-        discount: Number(initialData.overallDiscount || 0),
-        discount_type: initialData.overallDiscountType || "percentage",
-        discount_value: Number(initialData.overallDiscountAmount)?.toFixed(2),
-        overall_tax: null, // No overall tax
-        overall_tax_name: "",
-        overall_tax_amount: Number(initialData.overallTaxAmount)?.toFixed(2),
-        total_amount: Number(initialData.total)?.toFixed(2),
-        payment_status: initialData.status || "unpaid",
-      };
+          })),
+          discount: initialData.overallDiscount || 0,
+          discount_type: initialData.overallDiscountType || "percentage",
+        });
 
-      form.setFieldsValue(formValues);
-      
-      // Calculate totals immediately to make sure tax is properly reflected
-      calculateTotals(formValues.items);
+        // Set currency details
+        const selectedCurrency = currenciesData.find(
+          (c) => c.id === initialData.currency
+        );
+        if (selectedCurrency) {
+          setSelectedCurrency(selectedCurrency.currencyIcon);
+          setSelectedCurrencyId(selectedCurrency.id);
+        }
+
+        // Calculate initial totals
+        setTimeout(() => {
+          calculateTotals(form.getFieldValue("items"));
+        }, 100);
+      } catch (error) {
+        console.error("Error parsing initial data:", error);
+      }
     }
-  }, [initialData, form, currenciesData, productsData, vendorsData]);
+  }, [initialData, currenciesData, vendorsData]);
 
   useEffect(() => {
     if (countries.length > 0) {
@@ -234,31 +226,22 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
         // Calculate final amount for this item
         const finalAmount = itemAmount - discountAmount + itemTaxAmount;
 
-        // Log tax info for debugging
-        console.log(`Item ${item.item_name} tax info:`, {
-          taxName: item.taxName,
-          taxPercentage: item.tax,
-          taxId: item.taxId,
-          calculatedTaxAmount: itemTaxAmount
-        });
-
         return {
-          product_id: item.product_id,
+          product_id: item.product_id || item.id,
           itemName: item.item_name,
           quantity: quantity,
           unitPrice: price,
           hsnSac: item.hsn_sac || "",
           tax: item.taxId,
-          tax_name: item.taxName || "",
-          tax_percentage: item.tax || 0,
+          tax_name: item.taxName,
+          tax_percentage: item.tax,
           taxAmount: itemTaxAmount,
-          amount: itemAmount,
+          amount: finalAmount,
           discount_type: itemDiscountType,
           discount: itemDiscount,
           discountAmount: discountAmount,
           currency: item.currency || values.currency,
           currencyIcon: item.currencyIcon || selectedCurrencyData?.currencyIcon,
-          finalAmount: finalAmount,
         };
       });
 
@@ -274,12 +257,19 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
         0
       );
 
-      // Format the data according to API requirements
+      // Get overall tax details
+      const selectedOverallTaxId = form.getFieldValue("overall_tax");
+      const selectedOverallTax = selectedOverallTaxId
+        ? taxesData?.data?.find((tax) => tax.id === selectedOverallTaxId)
+        : null;
+      const overallTaxAmount = Number(form.getFieldValue("overall_tax_amount") || 0);
+
+      // Format the data according to your API requirements
       const formattedData = {
-        id: initialData.id, // Include the bill ID for update
+        id: initialData.id,
         vendor: values.vendor_id,
-        billDate: values.bill_date
-          ? dayjs(values.bill_date).format("YYYY-MM-DD")
+        billDate: values.billDate
+          ? dayjs(values.billDate).format("YYYY-MM-DD")
           : dayjs().format("YYYY-MM-DD"),
         discription: values.discription || "",
         status: values.status,
@@ -287,19 +277,20 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
         currencyCode: selectedCurrencyData?.currencyCode,
         currencyIcon: selectedCurrencyData?.currencyIcon,
         items: formattedItems,
-        amount: subTotal, // Original amount before any calculations
-        subTotal: subTotal, // Same as amount
-        total: totalAmount, // Final amount after all calculations
+        amount: subTotal,
+        subTotal: subTotal,
+        total: totalAmount,
         discount: totalItemDiscounts,
-        tax: totalItemTaxes,
+        tax: totalItemTaxes + overallTaxAmount,
         overallDiscount: Number(form.getFieldValue("discount") || 0),
         overallDiscountType:
           form.getFieldValue("discount_type") || "percentage",
         overallDiscountAmount: Number(
           form.getFieldValue("discount_value") || 0
         ),
-        overallTax: null, // No overall tax
-        overallTaxAmount: 0, // No overall tax amount
+        overallTax: selectedOverallTaxId || null,
+        overallTaxAmount: overallTaxAmount,
+        isTaxEnabled: isTaxEnabled,
       };
 
       // Log formatted data for debugging
@@ -425,10 +416,30 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
     const amountAfterOverallDiscount =
       totalBeforeOverallDiscount - overallDiscountAmount;
 
-    // No need for overall tax calculation - removed
+    // Step 3: Apply overall tax if enabled
+    const selectedOverallTaxId = form.getFieldValue("overall_tax");
+    console.log("Selected overall tax ID:", selectedOverallTaxId);
+    
+    const selectedOverallTax = taxesData?.data?.find(
+      (tax) => tax.id === selectedOverallTaxId
+    );
+    
+    console.log("Selected overall tax object:", selectedOverallTax);
+    
+    const overallTaxPercentage = selectedOverallTax && isTaxEnabled
+      ? Number(selectedOverallTax.gstPercentage)
+      : 0;
+      
+    console.log("Overall tax percentage:", overallTaxPercentage);
+    
+    const overallTaxAmount = isTaxEnabled && selectedOverallTax
+      ? (amountAfterOverallDiscount * overallTaxPercentage) / 100
+      : 0;
+      
+    console.log("Calculated overall tax amount:", overallTaxAmount);
 
-    // Calculate final amount (no overall tax)
-    const finalAmount = amountAfterOverallDiscount;
+    // Calculate final amount including overall tax
+    const finalAmount = amountAfterOverallDiscount + overallTaxAmount;
 
     // Update form values
     form.setFieldsValue({
@@ -436,7 +447,7 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
       item_tax_amount: totalItemTaxes.toFixed(2),
       item_discount_value: totalItemDiscounts.toFixed(2),
       discount_value: overallDiscountAmount.toFixed(2),
-      overall_tax_amount: "0.00", // No overall tax
+      overall_tax_amount: isTaxEnabled ? overallTaxAmount.toFixed(2) : "0.00",
       total_amount: finalAmount.toFixed(2),
     });
   };
@@ -767,12 +778,8 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
     </Modal>
   );
 
-  // Add a log to see the products data
-  useEffect(() => {
-    if (productsData?.data) {
-      console.log("Products Data:", productsData.data);
-    }
-  }, [productsData]);
+  // Add a log to see the products data  
+
 
   // Also let's add a debug log to help troubleshoot
   useEffect(() => {
@@ -960,7 +967,7 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
             </Form.Item>
 
             <Form.Item
-              name="bill_date"
+              name="billDate"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
                   Bill Date <span style={{ color: "#ff4d4f" }}></span>
@@ -1778,6 +1785,63 @@ const EditBilling = ({ open, onCancel, initialData, vendorsData, vendorsLoading 
                     )}
                   </Form.Item>
                 </Space>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "12px",
+                }}
+              >
+                <Text style={{ marginTop: "10px" }}>Overall Tax</Text>
+                <Form.Item name="overall_tax" style={{ margin: 0 }}>
+                  <Select
+                    placeholder="Select Tax"
+                    loading={taxesLoading}
+                    allowClear
+                    style={{
+                      width: "200px",
+                      borderRadius: "8px",
+                    }}
+                    onChange={(value, option) => {
+                      if (!isTaxEnabled) {
+                        form.setFieldsValue({
+                          overall_tax: null,
+                          overall_tax_name: "",
+                          overall_tax_amount: "0.00",
+                        });
+                        calculateTotals(form.getFieldValue("items"));
+                        return;
+                      }
+                      
+                      const selectedTax = taxesData?.data?.find((tax) => tax.id === value);
+                      if (selectedTax) {
+                        form.setFieldsValue({
+                          overall_tax: value,
+                          overall_tax_name: `${selectedTax.gstName} (${selectedTax.gstPercentage}%)`,
+                        });
+                        calculateTotals(form.getFieldValue("items"));
+                      } else {
+                        form.setFieldsValue({
+                          overall_tax: null,
+                          overall_tax_name: "",
+                          overall_tax_amount: "0.00",
+                        });
+                        calculateTotals(form.getFieldValue("items"));
+                      }
+                    }}
+                  >
+                    {taxesData?.data?.map((tax) => (
+                      <Option
+                        key={tax.id}
+                        value={tax.id}
+                        taxRate={tax.gstPercentage}
+                      >
+                        {tax.gstName} ({tax.gstPercentage}%)
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
               </div>
               <div
                 style={{

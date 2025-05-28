@@ -70,8 +70,9 @@ const Header = () => {
         { title: "Products & Services", path: "/dashboard/sales/product-services", parent: "Sales" },
         { title: "Customers", path: "/dashboard/sales/customer", parent: "Sales" },
         { title: "Invoices", path: "/dashboard/sales/invoice", parent: "Sales" },
-        { title: "Revenue", path: "/dashboard/sales/revenue", parent: "Sales" },
         { title: "Credit Notes", path: "/dashboard/sales/credit-notes", parent: "Sales" },
+        { title: "Revenue", path: "/dashboard/sales/revenue", parent: "Sales" },
+
 
         // Purchase
         { title: "Vendors", path: "/dashboard/purchase/vendor", parent: "Purchase" },

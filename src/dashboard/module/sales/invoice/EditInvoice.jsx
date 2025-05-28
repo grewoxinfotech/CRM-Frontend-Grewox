@@ -58,7 +58,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
   const { data: currenciesData } = useGetAllCurrenciesQuery();
   const [selectedCurrency, setSelectedCurrency] = useState("₹");
   const [selectedCurrencyId, setSelectedCurrencyId] = useState(null);
-  const [isTaxEnabled, setIsTaxEnabled] = useState(false);
+  const [isTaxEnabled, setIsTaxEnabled] = useState(true);
   const { data: taxesData, isLoading: taxesLoading } = useGetAllTaxesQuery();
   const loggedInUser = useSelector(selectCurrentUser);
   const { data: productsData, isLoading: productsLoading } =
@@ -109,13 +109,8 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         items = [];
       }
 
-      // Check if any item has tax data and enable tax toggle
-      const hasTax = items?.some((item) => 
-        item.tax > 0 || 
-        item.tax_percentage > 0 || 
-        item.tax_amount > 0
-      );
-      setIsTaxEnabled(hasTax);
+      // Always enable tax toggle by default
+      setIsTaxEnabled(true);
 
       // Set initial category to customer always
       setSelectedCategory("customer");
@@ -1466,7 +1461,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                             <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
                               <Input
                                 value={isTaxEnabled ? 
-                                  (form.getFieldValue("items")?.[index]?.tax_name 
+                                  (form.getFieldValue("items")?.[index]?.tax_name && form.getFieldValue("items")?.[index]?.tax > 0
                                     ? `${form.getFieldValue("items")?.[index]?.tax_name} ${form.getFieldValue("items")?.[index]?.tax || 0}%` 
                                     : "No Tax") 
                                   : "No Tax"}
@@ -1477,7 +1472,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                               />
                               {isTaxEnabled && paymentStatus !== "paid" && (
                                 <>
-                                  {form.getFieldValue("items")?.[index]?.tax > 0 ? (
+                                  {form.getFieldValue("items")?.[index]?.tax_name && form.getFieldValue("items")?.[index]?.tax > 0 ? (
                                     // Show remove button if tax exists
                                     <Button
                                       type="text"
@@ -1515,7 +1510,7 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                       }}
                                     />
                                   ) : (
-                                    // Show add button if tax was removed
+                                    // Show add button if tax was removed or doesn't exist
                                     <Button
                                       type="text"
                                       icon={<FiPlus style={{ color: "#52c41a" }} />}
@@ -1542,10 +1537,24 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
                                             if (product) {
                                               items[index] = {
                                                 ...items[index],
-                                                tax_name: product.tax_name || "",
-                                                tax: product.tax_percentage || product.tax || 0,
+                                                tax_name: product.tax_name || "Tax",
+                                                tax: product.tax_percentage || product.tax || 10, // Default to 10% if no tax found
+                                              };
+                                            } else {
+                                              // If no product or tax found, set default values
+                                              items[index] = {
+                                                ...items[index],
+                                                tax_name: "Tax",
+                                                tax: 10, // Default 10% tax
                                               };
                                             }
+                                          } else {
+                                            // If no product ID, set default values
+                                            items[index] = {
+                                              ...items[index],
+                                              tax_name: "Tax",
+                                              tax: 10, // Default 10% tax
+                                            };
                                           }
                                           
                                           form.setFieldsValue({ items });

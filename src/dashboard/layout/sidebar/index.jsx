@@ -386,18 +386,19 @@ const Sidebar = ({
           path: "/dashboard/sales/invoice",
           permission: "dashboards-sales-invoice"
         },
+       
+        {
+          title: "Credit Notes",
+          icon: <FiFile />,
+          path: "/dashboard/sales/credit-notes",
+          permission: "dashboards-sales-credit-notes"
+        },
         {
           title: "Revenue",
           icon: <FiTrendingUp />,
           path: "/dashboard/sales/revenue",
           permission: "dashboards-sales-revenue"
         },
-        {
-          title: "Credit Notes",
-          icon: <FiFile />,
-          path: "/dashboard/sales/credit-notes",
-          permission: "dashboards-sales-credit-notes"
-        }
       ].filter(item => shouldShowMenuItem(item)),
     },
     {
