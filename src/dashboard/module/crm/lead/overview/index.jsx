@@ -301,13 +301,14 @@ const LeadOverviewContent = ({
   const loggedInUser = useSelector(selectCurrentUser);
   const [localLeadData, setLocalLeadData] = useState(initialLeadData);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
-  const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
-  const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
-  const { data: statusesData } = useGetStatusesQuery(loggedInUser?.id);
-  const { data: companyData } = useGetCompanyAccountsQuery();
-  const { data: contactData } = useGetContactsQuery();
+  const { data: sourcesData = [] } = useGetSourcesQuery(loggedInUser?.id);
+  const { data: categoriesData = [] } = useGetCategoriesQuery(loggedInUser?.id);
+  const { data: statusesData = [] } = useGetStatusesQuery(loggedInUser?.id);
+  const { data: companyData = [] } = useGetCompanyAccountsQuery();
+  const { data: contactData = [] } = useGetContactsQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
 
+console.log(localLeadData, 'localLeadData')
   const sources = sourcesData?.data || [];
   const categories = categoriesData?.data || [];
   const statuses = statusesData?.data || [];
@@ -965,11 +966,14 @@ const LeadOverviewContent = ({
                 {(() => {
                   try {
                     if (!localLeadData?.lead_members) return "0";
-                    const parsedMembers =
-                      typeof localLeadData.lead_members === "string"
-                        ? JSON.parse(localLeadData.lead_members)
-                        : localLeadData.lead_members;
-                    return parsedMembers?.lead_members?.length || "0";
+                    
+                    if (typeof localLeadData.lead_members === "string") {
+                      const parsedMembers = JSON.parse(localLeadData.lead_members);
+                      return parsedMembers?.lead_members?.length || "0";
+                    } else if (typeof localLeadData.lead_members === "object") {
+                      return localLeadData.lead_members?.lead_members?.length || "0";
+                    }
+                    return "0";
                   } catch (error) {
                     console.error("Error parsing lead members:", error);
                     return "0";
@@ -1123,6 +1127,22 @@ const LeadOverview = () => {
 
   const formattedLeadData = useMemo(() => {
     if (!localLeadData) return null;
+    
+    // Parse lead_members safely
+    let leadMembers = [];
+    if (localLeadData.lead_members) {
+      try {
+        if (typeof localLeadData.lead_members === 'string') {
+          const parsed = JSON.parse(localLeadData.lead_members);
+          leadMembers = parsed.lead_members || [];
+        } else if (typeof localLeadData.lead_members === 'object') {
+          leadMembers = localLeadData.lead_members.lead_members || [];
+        }
+      } catch (error) {
+        console.error("Error parsing lead members:", error);
+      }
+    }
+    
     return {
       id: localLeadData.id,
       leadTitle: localLeadData.leadTitle,
@@ -1136,9 +1156,7 @@ const LeadOverview = () => {
       category: localLeadData.category,
       status: localLeadData.status,
       interest_level: localLeadData.interest_level,
-      lead_members: localLeadData.lead_members
-        ? JSON.parse(localLeadData.lead_members).lead_members
-        : [],
+      lead_members: leadMembers,
       is_converted: localLeadData.is_converted,
     };
   }, [localLeadData]);
