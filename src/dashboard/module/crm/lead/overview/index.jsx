@@ -297,7 +297,7 @@ const LeadOverviewContent = ({
   pipelineStages,
   onStageUpdate,
   isUpdating,
-}) => {
+}) => { 
   const loggedInUser = useSelector(selectCurrentUser);
   const [localLeadData, setLocalLeadData] = useState(initialLeadData);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
@@ -308,7 +308,6 @@ const LeadOverviewContent = ({
   const { data: contactData = [] } = useGetContactsQuery();
   const { data: countries = [] } = useGetAllCountriesQuery();
 
-console.log(localLeadData, 'localLeadData')
   const sources = sourcesData?.data || [];
   const categories = categoriesData?.data || [];
   const statuses = statusesData?.data || [];
