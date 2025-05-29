@@ -918,7 +918,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                     ]}
                   >
                     <InputNumber
-                      style={{ width: "calc(100% - 100px)", padding: "0 16px" }}
+                      style={{ width: "calc(100% - 100px)", padding: "0 16px",height:"48px" }}
                       placeholder="Enter amount"
                       min={0}
                       value={manualValue}

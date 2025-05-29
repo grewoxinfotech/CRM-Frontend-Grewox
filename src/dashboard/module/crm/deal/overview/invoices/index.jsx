@@ -283,90 +283,77 @@ const Invoice = () => {
   );
 
   return (
-    <div className="invoice-page">
-      <div className="page-header">
-        <div className="header-content">
-          <div className="page-title">
-            <div className="title-row">
-              <div className="title-column">
-                <Title level={2}>Invoices</Title>
-                <Text type="secondary">Manage all invoices for this deal</Text>
-              </div>
-              <div className="mobile-actions">
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={18} />}
-                  onClick={handleCreate}
-                  className="mobile-add-button"
+    <div className="invoice-pages">
+      <div className="page-headers">
+        <div className="page-titles">
+          <Title level={2}>Invoices</Title>
+          <Text className="page-descriptions" type="secondary">Manage all invoices for this deal</Text>
+        </div>
+        <div className="header-actions">
+          <div className="desktop-actions">
+            <div className="action-buttons">
+              <div className="search-containers">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                  placeholder="Search invoices..."
+                  allowClear
+                  onChange={(e) => setSearchText(e.target.value)}
+                  value={searchText}
+                  className="search-inputs"
                 />
                 <Popover
                   content={searchContent}
                   trigger="click"
-                  visible={isSearchVisible}
-                  onVisibleChange={setIsSearchVisible}
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
                   placement="bottomRight"
-                  overlayClassName="search-popover"
-                  getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                  className="mobile-search-popovers"
                 >
                   <Button
-                    icon={<FiSearch size={18} />}
-                    className="mobile-search-button"
+                    className="search-icon-buttons"
+                    icon={<FiSearch size={16} />}
                   />
                 </Popover>
-                <Dropdown
-                  overlay={filterMenu}
-                  trigger={["click"]}
-                  visible={isFilterVisible}
-                  onVisibleChange={setIsFilterVisible}
-                  placement="bottomRight"
-                  getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                >
-                  <Button
-                    icon={<FiFilter size={18} />}
-                    className="mobile-filter-button"
-                  />
-                </Dropdown>
               </div>
-            </div>
-          </div>
-
-          <div className="header-actions">
-            <div className="desktop-actions">
-              <Input
-                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
-                placeholder="Search invoices..."
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                className="search-input"
-              />
               <RangePicker
                 onChange={handleDateRangeChange}
                 value={filters.dateRange}
                 allowClear
-                style={{ width: '70%' }}
+                className="date-range-pickers"
                 placeholder={["Start Date", "End Date"]}
               />
-              <Dropdown overlay={exportMenu} trigger={["click"]}>
-                <Button className="export-button">
+              <Dropdown menu={exportMenu} trigger={["click"]}>
+                <Button className="export-buttons">
                   <FiDownload size={16} />
-                  Export
+                  <span className="button-texts">Export</span>
                 </Button>
               </Dropdown>
               <Button
                 type="primary"
                 icon={<FiPlus size={16} />}
                 onClick={handleCreate}
-                className="add-button"
+                className="add-buttons"
               >
-                Create Invoice
+                <span className="button-texts">Create Invoice</span>
               </Button>
+              <Dropdown
+                overlay={filterMenu}
+                trigger={["click"]}
+                visible={isFilterVisible}
+                onVisibleChange={setIsFilterVisible}
+                placement="bottomRight"
+              >
+                <Button
+                  icon={<FiFilter size={18} />}
+                  className="mobile-filter-buttons"
+                />
+              </Dropdown>
             </div>
           </div>
         </div>
       </div>
 
-      <Card className="invoice-table-card">
+      <Card className="invoice-content">
         <InvoiceList
           loading={isLoading || loading}
           invoices={invoices}

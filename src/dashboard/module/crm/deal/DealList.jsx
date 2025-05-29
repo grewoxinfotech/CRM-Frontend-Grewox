@@ -517,7 +517,7 @@ const DealList = ({
           dataSource={deals}
           rowKey="id"
           pagination={paginationConfig}
-          scroll={{ x: "max-content", y: "100%" }}
+          scroll={{ x: 1000, y: '' }}
           loading={loading}
           onChange={onTableChange}
           onRow={(record) => ({

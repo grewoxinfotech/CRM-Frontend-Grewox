@@ -7,10 +7,10 @@
 
   .page-breadcrumb {
     margin-bottom: 24px;
-    padding: 16px 24px;
-    background: white;
+    // padding: 16px 24px;
+    // background: white;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
     .ant-breadcrumb {
       font-size: 14px;
@@ -38,10 +38,10 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 24px;
-    padding: 24px;
-    background: white;
+    // padding: 24px;
+    // background: white;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
     .header-left {
       h2 {
@@ -475,7 +475,7 @@
 
         .ant-table-body {
           flex: 1;
-          overflow-y: auto !important;
+          overflow-y: hidden !important;
         }
 
         .ant-table-thead>tr>th {

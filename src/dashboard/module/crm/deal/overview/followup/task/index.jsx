@@ -46,6 +46,7 @@ const FollowupTaskList = ({ dealId, users }) => {
             title: 'Subject',
             dataIndex: 'subject',
             key: 'subject',
+            width: 300,
             render: (text, record) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiCheckSquare style={{ color: '#1890ff' }} />
@@ -211,7 +212,7 @@ const FollowupTaskList = ({ dealId, users }) => {
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} tasks`
                 }}
-                scroll={{ x: "max-content", y: '100%' }}
+                scroll={{ x: 1200, y: '100%' }}
             />
             {editModalVisible && (
                 <EditFollowupTask
