@@ -10,7 +10,8 @@ import {
     Dropdown,
     Menu,
     message,
-    Modal
+    Modal,
+    Popover
 } from 'antd';
 import {
     FiPlus,
@@ -55,6 +56,7 @@ const Plans = () => {
     const searchInputRef = useRef(null);
     const [exportLoading, setExportLoading] = useState(false);
     const [deleteModalData, setDeleteModalData] = useState({ visible: false, ids: [] });
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const {
         data: plansData,
@@ -105,6 +107,20 @@ const Plans = () => {
         setSelectedPlan(editData);
         setIsEditModalOpen(true);
     };
+
+    const searchContent = (
+        <div className="search-popup">
+          <Input
+            prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+            placeholder="Search leads..."
+            allowClear
+            onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            className="search-input"
+            autoFocus
+          />
+        </div>
+      );
 
     const handleDelete = (recordOrIds) => {
         const isMultiple = Array.isArray(recordOrIds);
@@ -318,60 +334,76 @@ const Plans = () => {
             </div>
 
             <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Plans</Title>
-                    <Text type="secondary">Manage subscription plans</Text>
-                </div>
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-                        <div className="header-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                placeholder="Search plans..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={filters.search}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Button.Group className="view-toggle">
-                                    <Button
-                                        type={viewMode === 'table' ? 'primary' : 'default'}
-                                        icon={<FiList size={16} />}
-                                        onClick={() => setViewMode('table')}
-                                    />
-                                    <Button
-                                        type={viewMode === 'card' ? 'primary' : 'default'}
-                                        icon={<FiGrid size={16} />}
-                                        onClick={() => setViewMode('card')}
-                                    />
-                                </Button.Group>
-                                <Dropdown
-                                    overlay={exportMenu}
-                                    trigger={['click']}
-                                    disabled={isLoading || isFetching || exportLoading}
-                                >
-                                    <Button
-                                        className="export-button"
-                                        loading={exportLoading}
-                                    >
-                                        {!exportLoading && <FiDownload size={16} />}
-                                        <span>Export</span>
-                                        <FiChevronDown size={14} />
-                                    </Button>
-                                </Dropdown>
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={16} />}
-                                    onClick={() => setIsAddModalVisible(true)}
-                                    className="add-button"
-                                >
-                                    Add Plan
-                                </Button>
+                <div className="header-content">
+                    <div className="page-title">
+                        <div className="title-row">
+                            <div className="page-title-content">
+                                <Title level={2}>Plans</Title>
+                                <Text type="secondary">Manage subscription plans</Text>
+                            </div>
+                            <div className="header-actions">
+                                <div className="desktop-actions">
+                                    <div className="action-buttons">
+                                        <Button.Group className="view-toggle">
+                                            <Button
+                                                type={viewMode === 'table' ? 'primary' : 'default'}
+                                                icon={<FiList size={16} />}
+                                                onClick={() => setViewMode('table')}
+                                            />
+                                            <Button
+                                                type={viewMode === 'card' ? 'primary' : 'default'}
+                                                icon={<FiGrid size={16} />}
+                                                onClick={() => setViewMode('card')}
+                                            />
+                                        </Button.Group>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+                                        <div className="search-container" style={{ flex: 1 }}>
+                                            <Input
+                                                prefix={<FiSearch style={{ color: '#8c8c8c' }} />}
+                                                placeholder="Search plans..."
+                                                allowClear
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                                value={filters.search}
+                                                className="search-input"
+                                            />
+                                        </div>
+                                        <div className="action-buttons-group">
+                                            <Popover
+                                                content={searchContent}
+                                                trigger="click"
+                                                open={isSearchVisible}
+                                                onOpenChange={setIsSearchVisible}
+                                                placement="bottomRight"
+                                                className="mobile-search-popover"
+                                            >
+                                                <Button
+                                                    className="search-icon-button"
+                                                    icon={<FiSearch size={16} />}
+                                                />
+                                            </Popover>
+                                            <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                                <Button className="export-button">
+                                                    <FiDownload size={16} />
+                                                    <span className="button-text">Export</span>
+                                                </Button>
+                                            </Dropdown>
+                                            <Button
+                                                type="primary"
+                                                icon={<FiPlus size={16} />}
+                                                onClick={() => setIsAddModalVisible(true)}
+                                                className="add-button"
+                                            >
+                                                <span className="button-text">Add Plan</span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </Col>
-                </Row>
+                    </div>
+                </div>
             </div>
 
             <Card className="plans-table-card">

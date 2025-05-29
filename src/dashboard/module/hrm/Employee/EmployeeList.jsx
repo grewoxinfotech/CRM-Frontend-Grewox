@@ -97,6 +97,8 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     pageSize: -1,
     search: ''
   });
+
+  console.log("branchesData", branchesData);
   const { data: departmentsData } = useGetAllDepartmentsQuery({
     page: 1,
     pageSize: -1,

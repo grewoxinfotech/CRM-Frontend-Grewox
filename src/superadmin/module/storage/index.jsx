@@ -9,7 +9,8 @@ import {
     Row,
     Col,
     Breadcrumb,
-    message
+    message,
+    Popover
 } from 'antd';
 import {
     SearchOutlined,
@@ -27,12 +28,14 @@ import StorageCard from './StorageCard';
 import StorageStats from './StorageStats';
 import { Link } from 'react-router-dom';
 import { useGetClientStorageQuery } from './services/storageApi';
+import { FiDownload } from 'react-icons/fi';
 
 const { Title, Text } = Typography;
 
 const Storage = () => {
     const [searchText, setSearchText] = useState('');
     const [viewMode, setViewMode] = useState('table');
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
     const { data: storageData, isLoading } = useGetClientStorageQuery();
 
     const handleExport = async (type) => {
@@ -78,20 +81,34 @@ const Storage = () => {
     const exportMenuItems = [
         {
             key: "excel",
-            icon: <DownloadOutlined />,
+            icon: <FiDownload />,
             label: "Export as Excel",
             onClick: () => handleExport("excel")
         },
         {
             key: "pdf",
-            icon: <DownloadOutlined />,
+            icon: <FiDownload />,
             label: "Export as PDF",
             onClick: () => handleExport("pdf")
         }
     ];
 
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<SearchOutlined style={{ color: "#8c8c8c" }} />}
+                placeholder="Search storage..."
+                allowClear
+                onChange={(e) => setSearchText(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
+
     return (
-        <div className="policy-page">
+        <div className="storage-page">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>
@@ -105,44 +122,68 @@ const Storage = () => {
             </div>
 
             <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Storage</Title>
-                    <Text type="secondary">Manage storage usage across all companies</Text>
-                </div>
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-                        <div className="header-actions">
-                            <Input
-                                prefix={<SearchOutlined style={{ color: "#8c8c8c", fontSize: "16px" }} />}
-                                placeholder="Search storage..."
-                                allowClear
-                                onChange={(e) => setSearchText(e.target.value)}
-                                value={searchText}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Button.Group className="view-toggle">
-                                    <Button
-                                        type={viewMode === 'table' ? 'primary' : 'default'}
-                                        icon={<UnorderedListOutlined size={16} />}
-                                        onClick={() => setViewMode('table')}
-                                    />
-                                    <Button
-                                        type={viewMode === 'card' ? 'primary' : 'default'}
-                                        icon={<AppstoreOutlined size={16} />}
-                                        onClick={() => setViewMode('card')}
-                                    />
-                                </Button.Group>
-                                <Dropdown menu={{ items: exportMenuItems }} trigger={["click"]} placement="bottomRight">
-                                    <Button className="export-button">
-                                        <DownloadOutlined size={16} />
-                                        <span>Export</span>
-                                    </Button>
-                                </Dropdown>
+                <div className="header-content">
+                    <div className="page-title">
+                        <div className="title-row">
+                            <div className="page-title-content">
+                                <Title level={2}>Storage</Title>
+                                <Text type="secondary">Manage storage usage across all companies</Text>
+                            </div>
+                            <div className="header-actions">
+                                <div className="desktop-actions">
+                                    <div className="action-buttons">
+                                        <Button.Group className="view-toggle">
+                                            <Button
+                                                type={viewMode === 'table' ? 'primary' : 'default'}
+                                                icon={<UnorderedListOutlined size={16} />}
+                                                onClick={() => setViewMode('table')}
+                                            />
+                                            <Button
+                                                type={viewMode === 'card' ? 'primary' : 'default'}
+                                                icon={<AppstoreOutlined size={16} />}
+                                                onClick={() => setViewMode('card')}
+                                            />
+                                        </Button.Group>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%" }}>
+                                        <div className="search-container" style={{ flex: 1 }}>
+                                            <Input
+                                                prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
+                                                placeholder="Search storage..."
+                                                allowClear
+                                                onChange={(e) => setSearchText(e.target.value)}
+                                                value={searchText}
+                                                className="search-input"
+                                            />
+                                        </div>
+                                        <div className="action-buttons-group">
+                                            <Popover
+                                                content={searchContent}
+                                                trigger="click"
+                                                open={isSearchVisible}
+                                                onOpenChange={setIsSearchVisible}
+                                                placement="bottomRight"
+                                                className="mobile-search-popover"
+                                            >
+                                                <Button
+                                                    className="search-icon-button"
+                                                    icon={<SearchOutlined size={16} />}
+                                                />
+                                            </Popover>
+                                            <Dropdown menu={{ items: exportMenuItems }} trigger={["click"]}>
+                                                <Button className="export-button">
+                                                    <FiDownload size={16} />
+                                                    <span className="button-text">Export</span>
+                                                </Button>
+                                            </Dropdown>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </Col>
-                </Row>
+                    </div>
+                </div>
             </div>
 
             <StorageStats data={storageData?.data?.clientsStorage} />

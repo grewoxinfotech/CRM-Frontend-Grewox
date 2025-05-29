@@ -11,6 +11,7 @@ import {
     Col,
     Breadcrumb,
     Card,
+    Popover,
 } from 'antd';
 import {
     FiPlus,
@@ -46,6 +47,7 @@ const Company = () => {
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState('table');
     const [currentPage, setCurrentPage] = useState(1);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const { data: companiesData, isLoading: isLoadingCompanies, refetch } = useGetAllCompaniesQuery();
     const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
@@ -230,6 +232,20 @@ const Company = () => {
         </Menu>
     );
 
+    const searchContent = (
+        <div className="search-popup">
+          <Input
+            prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+            placeholder="Search leads..."
+            allowClear
+            onChange={(e) => setSearchText(e.target.value)}
+            value={searchText}
+            className="search-input"
+            autoFocus
+          />
+        </div>
+      );
+
     return (
         <div className="company-page">
             <div className="page-breadcrumb">
@@ -245,53 +261,76 @@ const Company = () => {
             </div>
 
             <div className="page-header">
-                <div className="page-title">
-                    <Title level={2}>Companies</Title>
-                    <Text type="secondary">Manage all companies in the system</Text>
-                </div>
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-                        <div className="header-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                placeholder="Search companies..."
-                                allowClear
-                                onChange={(e) => handleSearch(e.target.value)}
-                                value={searchText}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Button.Group className="view-toggle">
-                                    <Button
-                                        type={viewMode === 'table' ? 'primary' : 'default'}
-                                        icon={<FiList size={16} />}
-                                        onClick={() => setViewMode('table')}
-                                    />
-                                    <Button
-                                        type={viewMode === 'card' ? 'primary' : 'default'}
-                                        icon={<FiGrid size={16} />}
-                                        onClick={() => setViewMode('card')}
-                                    />
-                                </Button.Group>
-                                <Dropdown overlay={exportMenu} trigger={['click']}>
-                                    <Button className="export-button">
-                                        <FiDownload size={16} />
-                                        <span>Export</span>
-                                        <FiChevronDown size={14} />
-                                    </Button>
-                                </Dropdown>
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={16} />}
-                                    onClick={handleAddCompany}
-                                    className="add-button"
-                                >
-                                    Add Company
-                                </Button>
+                <div className="header-content">
+                    <div className="page-title">
+                        <div className="title-row">
+                            <div className="page-title-content">
+                                <Title level={2}>Companies</Title>
+                                <Text type="secondary">Manage all companies in the system</Text>
+                            </div>
+                            <div className="header-actions">
+                                <div className="desktop-actions">
+                                    <div className="action-buttons">
+                                        <Button.Group className="view-toggle">
+                                            <Button
+                                                type={viewMode === 'table' ? 'primary' : 'default'}
+                                                icon={<FiList size={16} />}
+                                                onClick={() => setViewMode('table')}
+                                            />
+                                            <Button
+                                                type={viewMode === 'card' ? 'primary' : 'default'}
+                                                icon={<FiGrid size={16} />}
+                                                onClick={() => setViewMode('card')}
+                                            />
+                                        </Button.Group>
+                                    </div>
+
+                                    <div style={{display:"flex",alignItems:"center",gap:"12px", width: "100%"}}>
+                                        <div className="search-container" style={{flex: 1}}>
+                                            <Input
+                                                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                                                placeholder="Search companies..."
+                                                allowClear
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                                value={searchText}
+                                                className="search-input"
+                                            />
+                                        </div>
+                                        <div className="action-buttons-group">
+                                            <Popover
+                                                content={searchContent}
+                                                trigger="click"
+                                                open={isSearchVisible}
+                                                onOpenChange={setIsSearchVisible}
+                                                placement="bottomRight"
+                                                className="mobile-search-popover"
+                                            >
+                                                <Button 
+                                                    className="search-icon-button"
+                                                    icon={<FiSearch size={16} />}
+                                                />
+                                            </Popover>
+                                            <Dropdown overlay={exportMenu} trigger={['click']}>
+                                                <Button className="export-button">
+                                                    <FiDownload size={16} />
+                                                    <span className="button-text">Export</span>
+                                                </Button>
+                                            </Dropdown>
+                                            <Button
+                                                type="primary"
+                                                icon={<FiPlus size={16} />}
+                                                onClick={handleAddCompany}
+                                                className="add-button"
+                                            >
+                                                <span className="button-text">Add Company</span>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </Col>
-                </Row>
+                    </div>
+                </div>
             </div>
 
             <Card className="company-table-card">

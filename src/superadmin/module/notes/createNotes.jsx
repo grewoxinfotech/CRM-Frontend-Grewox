@@ -40,18 +40,16 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
       pageSize: -1,
       search: ''
     });
+    
     const { data: rolesData } = useGetRolesQuery({
       page: 1,
       pageSize: -1,
       search: ''
     });
-
-
-
       const employees = React.useMemo(() => {
     if (!employeesData?.data || !rolesData?.data) return [];
     
-    const rolesList = Array.isArray(rolesData.data) ? rolesData.data : [];
+    const rolesList = Array.isArray(rolesData?.message?.data) ? rolesData?.message?.data : [];
     const employeesList = Array.isArray(employeesData.data) ? employeesData.data : [];
 
     // Filter only employees with 'employee' role

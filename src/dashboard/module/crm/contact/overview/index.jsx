@@ -141,7 +141,7 @@ const ContactDetails = () => {
             </Card>
 
             <Row gutter={[16, 16]} className="metrics-row">
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
                         className="Metric-card leads-card"
                         style={{
@@ -240,7 +240,7 @@ const ContactDetails = () => {
                     </Card>
                 </Col>
 
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
                         className="Metric-card deals-card"
                         style={{
@@ -323,7 +323,7 @@ const ContactDetails = () => {
                     </Card>
                 </Col>
 
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
                         className="Metric-card revenue-card"
                         style={{
@@ -406,7 +406,7 @@ const ContactDetails = () => {
                     </Card>
                 </Col>
 
-                <Col xs={24} sm={12} md={6}>
+                <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                     <Card
                         className="Metric-card created-card"
                         style={{
@@ -490,17 +490,17 @@ const ContactDetails = () => {
                 </Col>
             </Row>
 
-            <div className="lead-details-section">
+            <div className="lead-details-section" style={{ padding:'24px' }}>
                 <Row gutter={[24, 24]}>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                         <div className="detail-card source-card">
                             <div className="detail-content">
                                 <div className="detail-icon">
                                     <FiActivity />
                                 </div>
-                                <div className="detail-info">
-                                    <div className="detail-label">SOURCE</div>
-                                    <div className="detail-value">
+                                <div className="detail-info" >
+                                    <div className="detail-label" style={{ fontSize: '14px' }}>SOURCE</div>
+                                    <div className="detail-value" style={{ fontSize: '14px' }}>
                                         {getSourceName(contact?.contact_source) || '-'}
                                     </div>
                                 </div>
@@ -509,15 +509,15 @@ const ContactDetails = () => {
                         </div>
                     </Col>
 
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                         <div className="detail-card stage-card">
                             <div className="detail-content">
                                 <div className="detail-icon">
                                     <FiFolder />
                                 </div>
                                 <div className="detail-info">
-                                    <div className="detail-label">Company</div>
-                                    <div className="detail-value">
+                                    <div className="detail-label" style={{ fontSize: '14px' }}>Company</div>
+                                    <div className="detail-value" style={{ fontSize: '14px' }}>
                                         {companyDetails?.company_name || '-'}
                                     </div>
                                 </div>
@@ -526,15 +526,15 @@ const ContactDetails = () => {
                         </div>
                     </Col>
 
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                         <div className="detail-card ownership-card">
                             <div className="detail-content">
                                 <div className="detail-icon">
                                     <FiUsers />
                                 </div>
                                 <div className="detail-info">
-                                    <div className="detail-label">OWNERSHIP</div>
-                                    <div className="detail-value">
+                                    <div className="detail-label" style={{ fontSize: '14px' }}>OWNERSHIP</div>
+                                    <div className="detail-value" style={{ fontSize: '14px' }}>
                                         {contactOwnerName}
                                     </div>
                                 </div>
@@ -542,15 +542,15 @@ const ContactDetails = () => {
                         </div>
                     </Col>
 
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={12} lg={12} xl={6}>
                         <div className="detail-card status-card">
                             <div className="detail-content">
                                 <div className="detail-icon">
                                     <FiGlobe />
                                 </div>
                                 <div className="detail-info">
-                                    <div className="detail-label">Website</div>
-                                    <div className="detail-value">
+                                    <div className="detail-label" style={{ fontSize: '14px' }}>Website</div>
+                                    <div className="detail-value" style={{ fontSize: '14px' }}>
                                         <a href={contact?.website} target="_blank" rel="noopener noreferrer">
                                             {contact?.website || '-'}
                                         </a>

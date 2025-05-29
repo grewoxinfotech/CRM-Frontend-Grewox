@@ -14,7 +14,8 @@ const StorageList = ({ data = [], searchText = '', loading = false }) => {
         {
             title: 'Profile',
             key: 'profile',
-            width: '5%',
+            width: '13%',
+            fixed: 'left',
             render: () => (
                 <Avatar
                     icon={<FolderFilled />}
@@ -26,7 +27,7 @@ const StorageList = ({ data = [], searchText = '', loading = false }) => {
         {
             title: 'Client Name',
             key: 'clientName',
-            width: '20%',
+            width: '25%',
             render: (_, record) => (
                 <span className="client-name">
                     {record.clientName !== "null null" ? record.clientName : record.username}
@@ -46,7 +47,7 @@ const StorageList = ({ data = [], searchText = '', loading = false }) => {
         {
             title: 'Storage Size',
             key: 'size',
-            width: '15%',
+            width: '20%',
             render: (_, record) => (
                 <Tag color={record.totalFiles > 0 ? 'green' : 'default'}>
                     {record.totalSize || '0 MB'}
@@ -57,7 +58,7 @@ const StorageList = ({ data = [], searchText = '', loading = false }) => {
             title: 'Storage Path',
             dataIndex: 's3Path',
             key: 's3Path',
-            width: '45%',
+            width: '50%',
             render: (text) => <code className="storage-path">{text}</code>,
         }
     ];
@@ -74,6 +75,8 @@ const StorageList = ({ data = [], searchText = '', loading = false }) => {
                 showTotal: (total) => `Total ${total} items`
             }}
             className="storage-table"
+            scroll={{ x: 'max-content', y: '' }}
+            bordered
         />
     );
 };

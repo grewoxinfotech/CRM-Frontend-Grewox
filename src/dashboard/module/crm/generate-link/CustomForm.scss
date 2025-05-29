@@ -502,6 +502,42 @@
                     display: flex;
                     gap: 4px;
 
+                    .desktop-actions {
+                        display: flex;
+                        gap: 4px;
+
+                        @media (max-width: 1300px) {
+                            display: none;
+                        }
+                    }
+
+                    .mobile-actions {
+                        display: none;
+
+                        @media (max-width: 1300px) {
+                            display: flex;
+                            align-items: center;
+                            justify-content: flex-end;
+                        }
+
+                        .ant-btn {
+                            width: 32px;
+                            height: 32px;
+                            padding: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 8px;
+                            transition: all 0.3s ease;
+                            color: #595959;
+
+                            &:hover {
+                                background: #f5f5f5;
+                                color: #1890ff;
+                            }
+                        }
+                    }
+
                     .action-button {
                         width: 32px;
                         height: 32px;
@@ -526,6 +562,22 @@
                         &.delete:hover {
                             background: #fff1f0;
                             color: #ff4d4f;
+                        }
+                    }
+                }
+            }
+            @media (max-width: 1300px) {
+                .form-footer {
+                    flex-direction: row !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    .action-buttons {
+                        width: auto !important;
+                        justify-content: flex-end !important;
+                        .mobile-actions {
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: flex-end !important;
                         }
                     }
                 }
@@ -617,35 +669,17 @@
     }
 
     // Responsive Styles
-    @media (max-width: 768px) {
-        .custom-form-container {
-            .header {
-                flex-direction: column;
-                gap: 16px;
-
-                .right {
-                    width: 100%;
-                    flex-wrap: wrap;
-
-                    .search-input {
-                        width: 100%;
-                    }
-                }
-            }
+    @media (max-width: 900px) {
+        .ant-col-lg-8 {
+            max-width: 50% !important;
+            flex: 0 0 50% !important;
         }
     }
-
-    @media (max-width: 576px) {
-        .custom-form-list {
-            padding: 8px;
-        }
-
-        .custom-form-card {
-            .form-meta {
-                flex-direction: column;
-                gap: 8px;
-                align-items: flex-start;
-            }
+    @media (max-width: 768px) {
+        .ant-col-lg-8,
+        .ant-col-sm-12 {
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
         }
     }
 

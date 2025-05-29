@@ -15,7 +15,7 @@ import EmailList from "./components/EmailList";
 import Sidebar from "./components/Sidebar";
 import MailHeader from "./components/MailHeader";
 import ScheduleModal from "./components/ScheduleModal";
-import { FiMenu } from "react-icons/fi";
+import { FiMenu, FiUser } from "react-icons/fi";
 import "./mail.scss";
 
 const Mail = () => {

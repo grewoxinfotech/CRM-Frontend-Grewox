@@ -242,29 +242,31 @@ const CompanyLeadsList = () => {
       </div> */}
 
       <Card className="lead-content">
-        {viewMode === "table" ? (
-          <LeadList
-            leads={{ data: filteredLeads }}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onView={handleView}
-            onLeadClick={handleLeadClick}
-          />
-        ) : (
-          <LeadCard
-            leads={{ data: filteredLeads }}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            categoriesData={categoriesData}
-            sourcesData={sourcesData}
-            statusesData={statusesData}
-            currencies={currencies}
-            countries={countries}
-            pipelines={pipelines}
-            onView={handleView}
-            onLeadClick={handleLeadClick}
-          />
-        )}
+        <div className="scrollable-content">
+          {viewMode === "table" ? (
+            <LeadList
+              leads={{ data: filteredLeads }}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onView={handleView}
+              onLeadClick={handleLeadClick}
+            />
+          ) : (
+            <LeadCard
+              leads={{ data: filteredLeads }}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              categoriesData={categoriesData}
+              sourcesData={sourcesData}
+              statusesData={statusesData}
+              currencies={currencies}
+              countries={countries}
+              pipelines={pipelines}
+              onView={handleView}
+              onLeadClick={handleLeadClick}
+            />
+          )}
+        </div>
       </Card>
 
       <EditLead

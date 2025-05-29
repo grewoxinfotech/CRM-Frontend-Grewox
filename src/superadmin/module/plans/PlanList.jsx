@@ -202,7 +202,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: (
                 <div className="column-header">
-                    <FiPackage className="header-icon" />
+                    {/* <FiPackage className="header-icon" /> */}
                     <span>Plan Name</span>
                 </div>
             ),
@@ -211,8 +211,8 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
             ...getColumnSearchProps('name'),
             filters: planTypes,
             onFilter: (value, record) => record.is_default === value,
-            width: '20%',
-            fixed: 'left',
+            width: '25%',
+            
             render: (_, record) => (
                 <div className="name-cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {highlightText(record.name, searchText)}
@@ -245,7 +245,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: (
                 <div className="column-header">
-                    <FiDollarSign className="header-icon" />
+                    {/* <FiDollarSign className="header-icon" /> */}
                     <span>Price</span>
                 </div>
             ),
@@ -260,16 +260,18 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                     </div>
                 </div>
             ),
-            width: '15%',
+            width: '25%',
         },
         {
             title: (
                 <div className="column-header">
-                    <FiUsers className="header-icon" />
+                    {/* <FiUsers className="header-icon" /> */}
                     <span>Limits</span>
+                    
                 </div>
             ),
             key: 'limits',
+            sorter: (a, b) => (a.price || 0) - (b.price || 0),
             render: (_, record) => (
                 <div className="limits-cell">
                     <div className="limits-group">
@@ -303,11 +305,13 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: (
                 <div className="column-header">
-                    <FiHardDrive className="header-icon" />
+                    {/* <FiHardDrive className="header-icon" /> */}
                     <span>Storage & Trial</span>
                 </div>
             ),
             key: 'storage_trial',
+            sorter: (a, b) => (a.price || 0) - (b.price || 0),
+
             render: (_, record) => (
                 <div className="storage-trial-cell">
                     <Tooltip title="Storage Limit">
@@ -327,7 +331,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: (
                 <div className="column-header status-header">
-                    <FiToggleRight className="header-icon" />
+                    {/* <FiToggleRight className="header-icon" /> */}
                     <span>Status</span>
                 </div>
             ),
@@ -350,12 +354,12 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: (
                 <div className="column-header">
-                    <FiUserCheck className="header-icon" />
+                    {/* <FiUserCheck className="header-icon" /> */}
                     <span>Assigned Users</span>
                 </div>
             ),
             key: 'assigned_users',
-            width: '15%',
+            width: '20%',
             render: (_, record) => {
                 const count = getAssignedUsersCount(record.id);
                 return (
@@ -371,31 +375,24 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
         {
             title: 'Actions',
             key: 'actions',
-            align: 'right',
+            width: '120px',
+            fixed: 'right',
             render: (_, record) => (
-                <div className="action-cell">
-                    <Button
-                        type="text"
-                        icon={<FiEye className="action-icon" />}
-                        onClick={() => onView(record)}
-                        className="action-button view"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiEdit2 className="action-icon" />}
-                        onClick={() => onEdit(record)}
-                        className="action-button edit"
-                    />
-                    <Button
-                        type="text"
-                        icon={<FiTrash2 className="action-icon" />}
-                        onClick={() => onDelete(record)}
-                        className="action-button delete"
-                    />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <Dropdown
+                        menu={getDropdownItems(record)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                        overlayClassName="plan-actions-dropdown"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical className="action-icon" />}
+                            className="action-button more"
+                        />
+                    </Dropdown>
                 </div>
             ),
-            width: '15%',
-            fixed: 'right'
         }
     ];
 
@@ -445,7 +442,7 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                 onChange={handleTableChange}
                 rowKey="id"
                 className="plans-table"
-                scroll={{ x: 1300 }}
+                scroll={{ x: 1300 , y: '' }}
                 rowSelection={rowSelection}
             />
             <style jsx>{`
@@ -462,6 +459,44 @@ const PlanList = ({ plans, loading, onView, onEdit, onDelete, pagination, onPage
                     
                     .tag-icon {
                         font-size: 14px;
+                    }
+                }
+                .edit-button {
+                    background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
+                    border: none;
+                    border-radius: 8px;
+                    color: white;
+                    height: 32px;
+                    padding: 0 12px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                    &:hover {
+                        background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+                        color: white;
+                    }
+                }
+                .action-button.more {
+                    width: 32px;
+                    height: 32px;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    background: transparent;
+                    transition: all 0.3s ease;
+                    &:hover {
+                        background: #f1f5f9;
+                        .action-icon {
+                            color: #3b82f6;
+                        }
+                    }
+                    .action-icon {
+                        font-size: 16px;
+                        color: #64748b;
                     }
                 }
             `}</style>

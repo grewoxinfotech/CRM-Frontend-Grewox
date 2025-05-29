@@ -296,18 +296,11 @@ const Tickets = () => {
                                         className="mobile-search-button"
                                     />
                                 </Popover>
-                                <Dropdown
-                                    overlay={filterMenu}
-                                    trigger={['click']}
-                                    visible={isFilterVisible}
-                                    onVisibleChange={setIsFilterVisible}
-                                    placement="bottomRight"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
-                                >
-                                    <Button
-                                        icon={<FiFilter size={18} />}
-                                        className="mobile-filter-button"
-                                    />
+                                <Dropdown overlay={exportMenu} trigger={["click"]}>
+                                    <Button className="export-button">
+                                        <FiDownload size={18} />
+                                        <span className="button-text">Export</span>
+                                    </Button>
                                 </Dropdown>
                             </div>
                         </div>

@@ -118,6 +118,7 @@ const SubscribedUserList = ({ data, loading }) => {
             title: 'Storage Usage',
             dataIndex: 'storage',
             key: 'storage',
+            width: "25%",
             sorter: (a, b) => {
                 const aUsed = a.storage?.used || 0;
                 const bUsed = b.storage?.used || 0;
@@ -138,6 +139,7 @@ const SubscribedUserList = ({ data, loading }) => {
             title: 'Payment Status',
             dataIndex: 'payment_status',
             key: 'payment_status',
+            // width: "20%",
             filters: paymentStatuses,
             onFilter: (value, record) =>
                 (record.payment_status?.toLowerCase() || '') === value.toLowerCase(),
@@ -223,7 +225,7 @@ const SubscribedUserList = ({ data, loading }) => {
                 showTotal: (total) => `Total ${total} items`,
             }}
             className="custom-table"
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1200, y: ''}}
             style={{
                 background: '#ffffff',
                 borderRadius: '8px',

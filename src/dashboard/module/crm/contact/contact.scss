@@ -23,7 +23,7 @@
     }
 
     // Styles for the breadcrumb container
-    .page-breadcrumbs {
+    .page-breadcrumb {
         margin-bottom: 24px;
         padding: 16px 24px;
         background: white; // White background
@@ -189,7 +189,7 @@
         }
 
         @media (max-width: 1200px) {
-            flex-direction: column;
+            // flex-direction: column;
             padding: 20px;
 
             .page-title {

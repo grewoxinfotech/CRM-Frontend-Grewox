@@ -136,7 +136,7 @@ const RoleList = ({ onEdit, searchText, filters }) => {
             setViewPermissionsModal(true);
         } catch (error) {
             console.error('Error parsing permissions:', error);
-            message.error("Failed to parse permissions");
+            // message.error("Failed to parse permissions");
         }
     };
 

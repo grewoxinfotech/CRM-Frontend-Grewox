@@ -391,6 +391,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Task',
             dataIndex: 'taskName',
             key: 'taskName',
+            width: 200,
             render: (text, record) => (
                 <div className="item-wrapper">
                     <div className="item-content">
@@ -459,6 +460,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
         {
             title: 'Timeline',
             key: 'timeline',
+            width: 200,
             render: (_, record) => (
                 <div className="item-wrapper">
                     <div className="item-content">
@@ -482,6 +484,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'Assigned To',
             dataIndex: 'assignTo',
             key: 'assignTo',
+            width: 150,
             render: (assignTo) => {
                 const assignedUsers = getAssignedUsers(assignTo)
                     .map(id => users?.find(u => u.id === id))
@@ -510,6 +513,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
             title: 'File',
             dataIndex: 'file',
             key: 'file',
+            width: 150,
             render: (file) => {
                 if (!file) return <Text type="secondary">-</Text>;
 
@@ -543,7 +547,7 @@ const TaskList = ({ onEdit, onDelete, onView, searchText = '', filters = {}, tas
                                     onClick={() => window.open(file, '_blank')}
                                     style={{ padding: 0, height: 'auto' }}
                                 >
-                                    Download
+                                    {/* Download */}
                                 </Button>
                             </div>
                         </div>

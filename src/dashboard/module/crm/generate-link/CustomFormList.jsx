@@ -13,7 +13,8 @@ import {
     message,
     Input,
     Divider,
-    Checkbox
+    Checkbox,
+    Dropdown
 } from 'antd';
 import {
     FiCalendar,
@@ -27,7 +28,8 @@ import {
     FiDownload,
     FiX,
     FiFileText,
-    FiAlertCircle
+    FiAlertCircle,
+    FiMoreVertical
 } from 'react-icons/fi';
 import { QRCodeCanvas } from 'qrcode.react';
 import dayjs from 'dayjs';
@@ -322,6 +324,14 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
         });
     };
 
+    const getActionItems = (form) => [
+        { key: 'view', label: 'View Submissions', icon: <EyeOutlined /> },
+        { key: 'edit', label: 'Edit Form', icon: <EditOutlined /> },
+        { key: 'copy', label: 'Copy Link', icon: <LinkOutlined /> },
+        { key: 'qr', label: 'QR Code', icon: <QrcodeOutlined /> },
+        { key: 'delete', label: 'Delete Form', icon: <DeleteOutlined />, danger: true }
+    ];
+
     if (!data || data.length === 0) {
         return (
             <Empty
@@ -357,7 +367,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
 
             <Row gutter={[24, 24]} className="custom-form-list">
                 {data.map((form) => (
-                    <Col xs={24} sm={12} lg={8} key={form.id}>
+                    <Col xs={24} sm={12} md={12} lg={12} xl={12} xxl={8} key={form.id}>
                         <Card
                             hoverable
                             className={`custom-form-card ${selectedForms.includes(form.id) ? 'selected' : ''}`}
@@ -406,13 +416,13 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
                                             <Text type="secondary">Event</Text>
                                             <Text strong ellipsis>{form.event_name}</Text>
                                         </div>
-                                    </div>
                                     <div className="detail-item">
                                         <FiMapPin className="icon" />
                                         <div className="detail-content">
                                             <Text type="secondary">Location</Text>
                                             <Text strong ellipsis>{form.event_location}</Text>
                                         </div>
+                                    </div>
                                     </div>
                                 </div>
 
@@ -443,56 +453,95 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
                                         </Text>
                                     </div>
                                     <div className="action-buttons">
-                                        <Tooltip title="View Submissions">
-                                            <Button
-                                                type="text"
-                                                icon={<EyeOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate(`/dashboard/crm/custom-form/${form.id}/submissions`);
+                                        <div className="desktop-actions">
+                                            <Tooltip title="View Submissions">
+                                                <Button
+                                                    type="text"
+                                                    icon={<EyeOutlined />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/dashboard/crm/custom-form/${form.id}/submissions`);
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip title="Edit Form">
+                                                <Button
+                                                    type="text"
+                                                    icon={<EditOutlined />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onEdit(form);
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip title="Copy Link">
+                                                <Button
+                                                    type="text"
+                                                    icon={<LinkOutlined />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        copyLink(form.id);
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip title="QR Code">
+                                                <Button
+                                                    type="text"
+                                                    icon={<QrcodeOutlined />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        showQrCode(form);
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                            <Tooltip title="Delete Form">
+                                                <Button
+                                                    type="text"
+                                                    icon={<DeleteOutlined />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDelete(form);
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        </div>
+                                        <div className="mobile-actions">
+                                            <Dropdown
+                                                menu={{
+                                                    items: getActionItems(form),
+                                                    onClick: ({ key, domEvent }) => {
+                                                        domEvent.stopPropagation();
+                                                        switch (key) {
+                                                            case 'view':
+                                                                navigate(`/dashboard/crm/custom-form/${form.id}/submissions`);
+                                                                break;
+                                                            case 'edit':
+                                                                onEdit(form);
+                                                                break;
+                                                            case 'copy':
+                                                                copyLink(form.id);
+                                                                break;
+                                                            case 'qr':
+                                                                showQrCode(form);
+                                                                break;
+                                                            case 'delete':
+                                                                onDelete(form);
+                                                                break;
+                                                            default:
+                                                                break;
+                                                        }
+                                                    }
                                                 }}
-                                            />
-                                        </Tooltip>
-                                        <Tooltip title="Edit Form">
-                                            <Button
-                                                type="text"
-                                                icon={<EditOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEdit(form);
-                                                }}
-                                            />
-                                        </Tooltip>
-                                        <Tooltip title="Copy Link">
-                                            <Button
-                                                type="text"
-                                                icon={<LinkOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    copyLink(form.id);
-                                                }}
-                                            />
-                                        </Tooltip>
-                                        <Tooltip title="QR Code">
-                                            <Button
-                                                type="text"
-                                                icon={<QrcodeOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    showQrCode(form);
-                                                }}
-                                            />
-                                        </Tooltip>
-                                        <Tooltip title="Delete Form">
-                                            <Button
-                                                type="text"
-                                                icon={<DeleteOutlined />}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onDelete(form);
-                                                }}
-                                            />
-                                        </Tooltip>
+                                                trigger={['click']}
+                                                placement="bottomRight"
+                                            >
+                                                <Button
+                                                    type="text"
+                                                    icon={<FiMoreVertical />}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </Dropdown>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

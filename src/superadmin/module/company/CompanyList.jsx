@@ -23,6 +23,7 @@ import { useAdminLoginMutation } from '../../../auth/services/authApi';
 import { useNavigate } from 'react-router-dom';
 import { useGetAllAssignedPlansQuery } from './services/companyApi';
 import CreateUpgradePlan from './CreateUpgradePlan';
+// import './company.scss';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText }) => {
     const [filteredInfo, setFilteredInfo] = useState({});
@@ -218,7 +219,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         {
             title: (
                 <div className="column-header">
-                    <FiBriefcase className="header-icon" />
+                    {/* <FiBriefcase className="header-icon" /> */}
                     <span>Company Name</span>
                 </div>
             ),
@@ -235,7 +236,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         {
             title: (
                 <div className="column-header">
-                    <FiMail className="header-icon" />
+                    {/* <FiMail className="header-icon" /> */}
                     <span>Email</span>
                 </div>
             ),
@@ -256,7 +257,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         {
             title: (
                 <div className="column-header">
-                    <FiPhone className="header-icon" />
+                    {/* <FiPhone className="header-icon" /> */}
                     <span>Phone</span>
                 </div>
             ),
@@ -273,7 +274,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         {
             title: (
                 <div className="column-header">
-                    <FiToggleRight className="header-icon" />
+                    {/* <FiToggleRight className="header-icon" /> */}
                     <span>Status</span>
                 </div>
             ),
@@ -297,7 +298,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         {
             title: (
                 <div className="column-header">
-                    <FiCalendar className="header-icon" />
+                    {/* <FiCalendar className="header-icon" /> */}
                     <span>Created</span>
                 </div>
             ),
@@ -354,7 +355,27 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
     ];
 
     return (
-        <div className="companies-table-wrapper">
+        <div className="companies-table-wrapper" style={{
+            maxHeight: 'calc(100vh - 200px)',
+            overflow: 'auto',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#888 #f1f1f1',
+            '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+                background: '#888',
+                borderRadius: '4px',
+                '&:hover': {
+                    background: '#555',
+                },
+            },
+        }}>
             <Table
                 columns={columns}
                 dataSource={companies}
@@ -363,7 +384,13 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                 onChange={handleTableChange}
                 rowKey="id"
                 className="companies-table"
-                scroll={{ x: 1200 }}
+                scroll={{ 
+                    x: 'max-content',
+                    y: ''
+                }}
+                style={{
+                    overflow: 'auto',
+                }}
             />
             <CreateUpgradePlan
                 open={upgradeModalVisible}

@@ -1,10 +1,10 @@
 @import '../../../styles/theme/theme.scss';
-
 @mixin hover-shadow {
     transition: all 0.3s ease;
 
     &:hover {
         transform: translateY(-2px);
+
     }
 }
 
@@ -62,265 +62,177 @@
     .page-header {
         @include hover-shadow;
         margin-bottom: 24px;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        gap: 24px;
-        border: 2px solid transparent;
         background: white;
-        padding: 24px 32px;
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba($primary-color, 0.08);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 
-        @media (max-width: 992px) {
-            padding: 20px 24px;
-            gap: 16px;
-        }
+        .header-content {
+            padding: 16px 24px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 24px;
 
-        @media (max-width: 768px) {
-            flex-direction: column;
-            padding: 24px;
-            gap: 20px;
-        }
-
-        @media (max-width: 576px) {
-            padding: 16px;
-            margin-bottom: 16px;
-        }
-
-        .page-title {
-            text-align: left;
-            margin-bottom: 0;
-            flex-shrink: 0;
-
-            @media (max-width: 768px) {
-                text-align: center;
-                width: 100%;
+            @media (max-width: 992px) {
+                padding: 12px 16px;
+                gap: 12px;
             }
 
-            h2 {
-                color: $text-color-dark;
-                margin-bottom: 4px;
-                font-size: 28px;
-                font-weight: 600;
-                line-height: 1.2;
+            @media (max-width: 767px) {
+                align-items: center;
+                text-align: center;
+                gap: 16px;
+            }
 
-                @media (max-width: 992px) {
-                    font-size: 24px;
-                }
+            @media (max-width: 576px) {
+                padding: 10px 12px;
+                gap: 12px;
+            }
 
-                @media (max-width: 576px) {
-                    font-size: 20px;
+            .page-title {
+                flex: 1;
+
+                .title-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 4px;
+
+                    @media (max-width: 1200px) {
+                        flex-direction: column;
+                        align-items: center;
+                        text-align: center;
+                        gap: 12px;
+                        width: 100%;
+                    }
+
+                    h2 {
+                        font-size: 24px;
+                        font-weight: 600;
+                        color: #1a1a1a;
+                        margin: 0;
+
+                        @media (max-width: 768px) {
+                            font-size: 20px;
+                        }
+
+                        @media (max-width: 480px) {
+                            font-size: 18px;
+                        }
+                    }
+
+                    .header-actions {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        gap: 12px;
+
+                        @media (max-width: 1200px) {
+                            width: 100%;
+                            justify-content: space-between;
+                        }
+
+                        .desktop-actions {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            flex-wrap: nowrap;
+
+                            @media (max-width: 1200px) {
+                                width: 100%;
+                                justify-content: space-between;
+                            }
+
+                            .search-container {
+                                position: relative;
+                                display: flex;
+                                align-items: center;
+                                width: 100%;
+
+                                .search-input {
+                                    width: 240px;
+
+                                    @media (max-width: 1200px) {
+                                        width: 100%;
+                                    }
+
+                                    @media (max-width: 992px) {
+                                        width: 100%;
+                                    }
+
+                                    @media (max-width: 767px) {
+                                        display: none;
+                                    }
+                                }
+                            }
+
+                            .action-buttons-group {
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+
+                                .search-icon-button {
+                                    display: none;
+                                    padding: 0 12px;
+                                    width: 38px;
+                                    height: 38px;
+                                    align-items: center;
+                                    justify-content: center;
+
+                                    @media (max-width: 767px) {
+                                        display: flex;
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        width: 34px;
+                                        height: 34px;
+                                        padding: 0 10px;
+                                    }
+                                }
+
+                                .export-button,
+                                .add-button {
+                                    height: 38px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+
+                                    @media (max-width: 767px) {
+                                        padding: 0 12px !important;
+                                        width: 38px;
+                                        height: 38px;
+
+                                        .button-text {
+                                            display: none;
+                                        }
+                                    }
+
+                                    @media (max-width: 576px) {
+                                        width: 34px;
+                                        height: 34px;
+                                        padding: 0 10px;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
             .ant-typography-secondary {
-                color: $text-color-light;
-                font-size: 15px;
-                display: block;
+                font-size: 14px;
+                color: #666;
 
-                @media (max-width: 576px) {
-                    font-size: 13px;
-                }
-            }
-        }
-
-        .header-actions-wrapper {
-            display: flex;
-            justify-content: flex-end;
-            flex: 1;
-            margin: 0;
-
-            @media (max-width: 768px) {
-                width: 100%;
-                margin: 0;
-            }
-
-            .header-actions {
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 16px;
-                width: 100%;
-                max-width: 800px;
-
-                @media (max-width: 992px) {
-                    gap: 12px;
+                @media (max-width: 767px) {
+                    text-align: center;
                 }
 
                 @media (max-width: 768px) {
-                    flex-direction: column;
-                    gap: 16px;
+                    font-size: 13px;
                 }
 
-                .search-input {
-                    flex: 1;
-                    max-width: 360px;
-                    min-width: 200px;
-
-                    @media (max-width: 768px) {
-                        max-width: 100%;
-                        width: 100%;
-                    }
-
-                    .ant-input-affix-wrapper {
-                        border-radius: 40px;
-                        height: 40px;
-                        padding: 4px 16px;
-                        transition: all 0.3s ease;
-                        border: 1px solid $border-color;
-                        width: 100%;
-
-                        .anticon {
-                            color: $text-color-light;
-                            margin-right: 8px;
-                            font-size: 16px;
-                        }
-
-                        .ant-input {
-                            font-size: 14px;
-                            background: transparent;
-                            border: none;
-                            padding: 0;
-                            margin: 0 4px;
-
-                            &::placeholder {
-                                color: rgba($text-color, 0.45);
-                            }
-                        }
-
-                        &:hover,
-                        &:focus,
-                        &-focused {
-                            border-color: #1677ff;
-                            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
-                        }
-                    }
-                }
-
-                .action-buttons {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    flex-shrink: 0;
-
-                    @media (max-width: 768px) {
-                        width: 100%;
-                        justify-content: center;
-                    }
-
-                    @media (max-width: 576px) {
-                        flex-wrap: wrap;
-                        gap: 8px;
-                    }
-
-                    .view-toggle {
-                        display: flex;
-                        align-items: center;
-
-                        .ant-btn {
-                            height: 40px;
-                            width: 40px;
-                            padding: 0;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                            transition: all 0.3s ease;
-
-                            @media (max-width: 576px) {
-                                height: 36px;
-                                width: 36px;
-                            }
-
-                            &:first-child {
-                                border-top-left-radius: 8px;
-                                border-bottom-left-radius: 8px;
-                            }
-
-                            &:last-child {
-                                border-top-right-radius: 8px;
-                                border-bottom-right-radius: 8px;
-                            }
-
-                            svg {
-                                font-size: 16px;
-                            }
-
-                            &.ant-btn-primary {
-                                background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                                border: none;
-
-                                &:hover {
-                                    background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                                }
-                            }
-
-                            &:hover {
-                                transform: translateY(-2px);
-                            }
-                        }
-                    }
-
-                    .export-button {
-                        height: 40px;
-                        padding: 0 20px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        border-radius: 8px;
-                        font-weight: 500;
-                        transition: all 0.3s ease;
-                        border: 1px solid $border-color;
-                        background: white;
-
-                        @media (max-width: 576px) {
-                            height: 36px;
-                            padding: 0 16px;
-                            font-size: 13px;
-                        }
-
-                        svg {
-                            font-size: 16px;
-                        }
-
-                        &:hover {
-                            color: #1677ff;
-                            border-color: #1677ff;
-                            transform: translateY(-2px);
-                        }
-                    }
-
-                    .add-button {
-                        height: 40px;
-                        padding: 0 20px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        border-radius: 8px;
-                        font-weight: 500;
-                        transition: all 0.3s ease;
-                        background: linear-gradient(135deg, #4096ff 0%, #1677ff 100%);
-                        border: none;
-                        color: white;
-
-                        @media (max-width: 576px) {
-                            height: 36px;
-                            padding: 0 16px;
-                            font-size: 13px;
-                        }
-
-                        svg {
-                            font-size: 16px;
-                        }
-
-                        &:hover {
-                            background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
-                            transform: translateY(-2px);
-                        }
-                    }
+                @media (max-width: 480px) {
+                    font-size: 12px;
                 }
             }
         }
@@ -1044,7 +956,7 @@
     .plans-page {
         .page-header {
             flex-direction: column;
-            padding: 24px;
+            // padding: 24px;
             gap: 20px;
 
             .page-title {
@@ -1082,7 +994,7 @@
 @media (max-width: 576px) {
     .plans-page {
         .page-header {
-            padding: 16px;
+            // padding: 16px;
             gap: 16px;
 
             .page-title {

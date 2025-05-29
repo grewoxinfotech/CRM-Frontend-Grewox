@@ -64,6 +64,8 @@ const CompanyContactList = () => {
       (contact) => contact.company_name === id
     );
 
+    console.log("contactsResponse", contactsResponse);
+
   const handleEdit = (record) => {
     setSelectedContact(record);
     setIsEditModalOpen(true);
