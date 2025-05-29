@@ -28,10 +28,14 @@ const LeadFollowup = ({ leadId }) => {
 
     const currentUser = useSelector(selectCurrentUser);
     const { data: usersResponse } = useGetUsersQuery();
-    const { data: rolesData } = useGetRolesQuery();
+    const { data: rolesData } = useGetRolesQuery({
+        page: 1,
+    pageSize: -1,
+    search: ''
+    });
 
     // Get subclient role ID to filter it out
-    const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+    const subclientRoleId = rolesData?.message?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
     // Filter users to get team members (excluding subclients)
     const users = usersResponse?.data?.filter(user =>
