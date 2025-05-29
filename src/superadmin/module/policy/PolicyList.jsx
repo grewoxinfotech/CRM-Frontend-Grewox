@@ -62,6 +62,7 @@ const PolicyList = ({
       title: "Title",
       dataIndex: "title",
       key: "title",
+      width: "25%",
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -94,6 +95,7 @@ const PolicyList = ({
       title: "Description",
       dataIndex: "description",
       key: "description",
+      width: "45%",
       sorter: (a, b) => (a.description || "").localeCompare(b.description || ""),
       ellipsis: true,
       render: (text) => text || "N/A",
@@ -103,6 +105,7 @@ const PolicyList = ({
       title: "Created Date",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: "20%",
       render: (date) => (date ? moment(date).format("DD-MM-YYYY") : "N/A"),
       sorter: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
     },
@@ -137,6 +140,8 @@ const PolicyList = ({
       rowKey="id"
       pagination={pagination}
       loading={loading}
+      scroll={{ x: 1100, y: '' }}
+      className="policy-table"
       locale={{
         emptyText: "No policies found",
       }}

@@ -12,6 +12,7 @@ import {
   Col,
   Breadcrumb,
   Table,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -63,6 +64,7 @@ const Notes = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const searchInputRef = useRef(null);
   const [viewMode, setViewMode] = useState("table");
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   useEffect(() => {
     if (notesData) {
@@ -188,7 +190,6 @@ const Notes = () => {
         "Description": note.description || 'N/A',
         "Employees": Array.isArray(note.employees) ? note.employees.join(', ') : note.employees || 'N/A',
         "Created Date": moment(note.created_at).format("DD-MM-YYYY") || 'N/A',
-
       }));
 
       switch (type) {
@@ -253,8 +254,22 @@ const Notes = () => {
     doc.save(`${filename}.pdf`);
   };
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search leads..."
+        allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
   return (
-    <div className="company-page">
+    <div className="notes-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>
@@ -272,40 +287,50 @@ const Notes = () => {
           <Title level={2}>Notes</Title>
           <Text type="secondary">Manage all notes in the system</Text>
         </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-            <div className="header-actions">
-              <Input
-                prefix={
-                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
-                }
-                placeholder="Search notes..."
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                ref={searchInputRef}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Dropdown overlay={exportMenu} trigger={["click"]}>
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={handleAddCompany}
-                  className="add-button"
+        <div className="header-actions">
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                  placeholder="Search notes..."
+                  allowClear
+                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchText}
+                  className="search-input"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
+                  placement="bottomRight"
+                  className="mobile-search-popover"
                 >
-                  Add Note
-                </Button>
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
               </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                  {/* <FiChevronDown size={14} /> */}
+                </Button>
+              </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleAddCompany}
+                className="add-button"
+              >
+                <span className="button-text">Add Note</span>
+              </Button>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
 
       <Card className="company-table-card">
@@ -362,7 +387,6 @@ const Notes = () => {
         initialValues={selectedCompany}
         loading={isLoadingNotes || isDeleting}
       />
-
 
     </div>
   );

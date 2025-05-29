@@ -96,6 +96,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
       title: "Type",
       dataIndex: "type",
       key: "type",
+      width: "20%",
       filters: noteTypes,
       onFilter: (value, record) => 
         (record.type?.toLowerCase() || '') === value.toLowerCase(),
@@ -103,15 +104,16 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         const color = (type?.toLowerCase() || '') === "important" ? "red" : "blue";
         return <Tag color={color}>{type?.toUpperCase() || 'N/A'}</Tag>;
       },
-      width: "10%",
+     
     },
     {
       title: "Description",
       dataIndex: "description",
+      width: "20%",
       key: "description",
       sorter: (a, b) => (a.description || '').localeCompare(b.description || ''),
       render: (text) => text || "N/A",
-      width: "30%",
+     
     },
     {
       title: "Created By",
@@ -160,7 +162,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
         columns={columns}
         rowKey={(record) => record.id}
         loading={loading}
-        scroll={{ x: 1100 }}
+        scroll={{ x: 1100, y: '' }}
         pagination={{
           current: currentPage,
           pageSize: 10,
@@ -168,7 +170,9 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
           showSizeChanger: false,
           showQuickJumper: false,
           onChange: (page) => setCurrentPage(page),
+          position: ['bottomCenter']
         }}
+        className="notes-table"
       />
 
       {editModalVisible && (

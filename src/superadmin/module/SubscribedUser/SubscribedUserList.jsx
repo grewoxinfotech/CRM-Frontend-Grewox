@@ -215,23 +215,25 @@ const SubscribedUserList = ({ data, loading }) => {
     }, [users]);
 
     return (
-        <Table
-            columns={columns}
-            dataSource={tableData}
-            loading={loading}
-            pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} items`,
-            }}
-            className="custom-table"
-            scroll={{ x: 1200, y: ''}}
-            style={{
-                background: '#ffffff',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-            }}
-        />
+        <div className="subscribed-user-table-scroll" style={{ overflowX: 'auto', width: '100%' }}>
+            <Table
+                columns={columns}
+                dataSource={tableData}
+                loading={loading}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                }}
+                className="custom-table"
+                scroll={{ x: 1200, y: '' }}
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                }}
+            />
+        </div>
     );
 };
 

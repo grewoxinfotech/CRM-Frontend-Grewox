@@ -14,6 +14,7 @@ import {
   Table,
   Spin,
   Empty,
+  Popover,
 } from "antd";
 import {
   FiPlus,
@@ -55,6 +56,7 @@ const Policy = () => {
   const [pageSize] = useState(10);
   const searchInputRef = useRef(null);
   const [viewMode, setViewMode] = useState("table");
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   // API hooks
   const {
@@ -305,6 +307,24 @@ const Policy = () => {
     doc.save(`${filename}.pdf`);
   };
 
+  const searchContent = (
+    <div className="search-popup">
+      <Input
+        prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+        placeholder="Search policies..."
+        allowClear
+        onChange={(e) => handleSearch(e.target.value)}
+        value={searchText}
+        className="search-input"
+        autoFocus
+      />
+    </div>
+  );
+
+  const exportMenu = (
+    <Menu items={exportMenuItems} />
+  );
+
   return (
     <div className="policy-page">
       <div className="page-breadcrumb">
@@ -324,56 +344,49 @@ const Policy = () => {
           <Title level={2}>Policies</Title>
           <Text type="secondary">Manage all policies in the system</Text>
         </div>
-        <Row justify="center" className="header-actions-wrapper">
-          <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-            <div className="header-actions">
-              <Input
-                prefix={
-                  <FiSearch style={{ color: "#8c8c8c", fontSize: "16px" }} />
-                }
-                placeholder="Search policies..."
-                allowClear
-                onChange={(e) => handleSearch(e.target.value)}
-                value={searchText}
-                ref={searchInputRef}
-                className="search-input"
-              />
-              <div className="action-buttons">
-                <Button.Group className="view-toggle">
-                  <Button
-                    type={viewMode === "table" ? "primary" : "default"}
-                    icon={<FiList size={16} />}
-                    onClick={() => setViewMode("table")}
-                  />
-                  <Button
-                    type={viewMode === "card" ? "primary" : "default"}
-                    icon={<FiGrid size={16} />}
-                    onClick={() => setViewMode("card")}
-                  />
-                </Button.Group>
-                <Dropdown
-                  menu={{ items: exportMenuItems }}
-                  trigger={["click"]}
+        <div className="header-actions">
+          <div className="desktop-actions">
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="search-container">
+                <Input
+                  prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                  placeholder="Search policies..."
+                  allowClear
+                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchText}
+                  className="search-input"
+                />
+                <Popover
+                  content={searchContent}
+                  trigger="click"
+                  open={isSearchVisible}
+                  onOpenChange={setIsSearchVisible}
                   placement="bottomRight"
+                  className="mobile-search-popover"
                 >
-                  <Button className="export-button">
-                    <FiDownload size={16} />
-                    <span>Export</span>
-                    <FiChevronDown size={14} />
-                  </Button>
-                </Dropdown>
-                <Button
-                  type="primary"
-                  icon={<FiPlus size={16} />}
-                  onClick={handleAddPolicy}
-                  className="add-button"
-                >
-                  Add Policy
-                </Button>
+                  <Button
+                    className="search-icon-button"
+                    icon={<FiSearch size={16} />}
+                  />
+                </Popover>
               </div>
+              <Dropdown overlay={exportMenu} trigger={["click"]}>
+                <Button className="export-button">
+                  <FiDownload size={16} />
+                  <span className="button-text">Export</span>
+                </Button>
+              </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleAddPolicy}
+                className="add-button"
+              >
+                <span className="button-text">Add Policy</span>
+              </Button>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
 
       <Card className="policy-table-card">
