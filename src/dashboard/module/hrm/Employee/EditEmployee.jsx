@@ -178,9 +178,12 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
-                        color: '#1890ff',
+                        color: "white",
+                        height: "44px",
+                        borderRadius: "8px",
+                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                         fontWeight: 500,
-                        gap: '8px'
+                        gap: '8px',
                     }}
                 >
                     Add New Branch
@@ -209,7 +212,10 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
-                        color: '#1890ff',
+                        color: "white",
+                        height: "44px",
+                        borderRadius: "8px",
+                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                         fontWeight: 500,
                         gap: '8px'
                     }}
@@ -234,7 +240,10 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
-                        color: '#1890ff',
+                        color: "white",
+                        height: "44px",
+                        borderRadius: "8px",
+                        background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
                         fontWeight: 500,
                         gap: '8px'
                     }}

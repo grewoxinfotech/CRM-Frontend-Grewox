@@ -328,14 +328,7 @@ const Invoice = () => {
                   <span className="button-texts">Export</span>
                 </Button>
               </Dropdown>
-              <Button
-                type="primary"
-                icon={<FiPlus size={16} />}
-                onClick={handleCreate}
-                className="add-buttons"
-              >
-                <span className="button-texts">Create Invoice</span>
-              </Button>
+              
               <Dropdown
                 overlay={filterMenu}
                 trigger={["click"]}
@@ -348,6 +341,14 @@ const Invoice = () => {
                   className="mobile-filter-buttons"
                 />
               </Dropdown>
+              <Button
+                type="primary"
+                icon={<FiPlus size={16} />}
+                onClick={handleCreate}
+                className="add-buttons"
+              >
+                <span className="button-texts">Create Invoice</span>
+              </Button>
             </div>
           </div>
         </div>

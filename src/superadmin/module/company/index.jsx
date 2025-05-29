@@ -52,8 +52,6 @@ const Company = () => {
     const { data: companiesData, isLoading: isLoadingCompanies, refetch } = useGetAllCompaniesQuery();
     const [deleteCompany, { isLoading: isDeleting }] = useDeleteCompanyMutation();
 
-    console.log(companiesData);
-
     useEffect(() => {
         if (companiesData?.data) {
             const transformedData = companiesData.data.map(company => ({
@@ -247,7 +245,7 @@ const Company = () => {
       );
 
     return (
-        <div className="company-page">
+        <div className="company-pages">
             <div className="page-breadcrumb">
                 <Breadcrumb>
                     <Breadcrumb.Item>

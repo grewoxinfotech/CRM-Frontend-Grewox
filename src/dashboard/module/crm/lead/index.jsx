@@ -313,21 +313,6 @@ const Lead = () => {
     </div>
   );
 
-  const filterMenu = (
-    <Menu className="filter-menu">
-      <Menu.Item key="export" className="filter-menu-item">
-        <div className="filter-section">
-          <Dropdown overlay={exportMenu} trigger={["click"]}>
-            <Button className="export-button">
-              <FiDownload size={16} />
-              Export
-            </Button>
-          </Dropdown>
-        </div>
-      </Menu.Item>
-    </Menu>
-  );
-
   return (
     <div className="lead-page">
       <div className="page-breadcrumb">

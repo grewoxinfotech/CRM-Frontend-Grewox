@@ -372,17 +372,19 @@ const LeadMembers = ({ leadId }) => {
                                 style={{
                                     width: '100%',
                                     height: 'auto',
-                                    minHeight: '48px'
-                                  }}
-                                listHeight={200}
-                                maxTagCount={2}
+                                    minHeight: '48px',
+                                    maxHeight: '120px',
+                                    // overflowY: 'auto'
+                                }}
+                                listHeight={300}
+                                maxTagCount="responsive"
                                 maxTagTextLength={15}
                                 dropdownStyle={{
-                                    maxHeight: '300px',
+                                    maxHeight: '400px',
                                     overflowY: 'auto',
                                     scrollbarWidth: 'thin',
                                     scrollBehavior: 'smooth'
-                                  }}
+                                }}
                                 popupClassName="team-members-dropdown"
                                 showSearch
                                 optionFilterProp="children"
@@ -467,7 +469,7 @@ const LeadMembers = ({ leadId }) => {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: '12px',
-                                                padding: '4px 0'
+                                                padding: '4px 0' 
                                             }}>
                                                 <div style={{
                                                     width: '40px',
@@ -640,9 +642,12 @@ const LeadMembers = ({ leadId }) => {
                         border: 1px solid #d1d5db !important;
                         border-radius: 8px !important;
                         min-height: 42px !important;
+                        height: auto !important;
+                        max-height: 120px !important;
+                        overflow-y: auto !important;
                         padding: 4px 8px !important;
                         display: flex !important;
-                        align-items: center !important;
+                        align-items: flex-start !important;
                         flex-wrap: wrap !important;
                         gap: 4px !important;
                     }
@@ -657,10 +662,13 @@ const LeadMembers = ({ leadId }) => {
                             flex-wrap: wrap !important;
                             gap: 4px !important;
                             padding: 2px !important;
+                            max-height: 110px !important;
+                            overflow-y: auto !important;
                         }
 
                         .ant-select-selection-overflow-item {
                             margin: 0 !important;
+                            height: 48px !important;
                         }
 
                         .ant-select-selection-placeholder {
@@ -678,6 +686,7 @@ const LeadMembers = ({ leadId }) => {
                             padding: 8px !important;
                             border-radius: 8px !important;
                             margin: 2px 0 !important;
+                            
                             
                             &-option-selected {
                                 background-color: #E6F4FF !important;

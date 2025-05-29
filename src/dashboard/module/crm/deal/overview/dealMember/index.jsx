@@ -438,8 +438,8 @@ const DealMember = ({ deal }) => {
                   height: "auto",
                   minHeight: "48px",
                 }}
-                listHeight={200}
-                maxTagCount={1}
+                listHeight={300}
+                maxTagCount="responsive"
                 maxTagTextLength={15}
                 dropdownStyle={{
                   maxHeight: "300px",

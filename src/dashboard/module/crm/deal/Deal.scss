@@ -3,7 +3,7 @@
 .project-page {
   padding: 24px;
   background-color: #f9fafb;
-  min-height: 100vh;
+  // min-height: 100vh;
 
   .page-breadcrumb {
     margin-bottom: 24px;
@@ -441,7 +441,8 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-
+    padding: 24px;
+    
     .ant-card-body {
       padding: 0;
       overflow-x: auto;

@@ -17,12 +17,6 @@ const FollowupTaskList = ({ dealId, users }) => {
         setEditModalVisible(true);
     };
 
-
-    console.log(followupTask, 'followupTask');
-    console.log(selectedTaskId, 'selectedTaskId');
-    console.log(dealId, 'dealId');
-    
-
     const handleDelete = (id) => {
         Modal.confirm({
             title: 'Delete Confirmation',

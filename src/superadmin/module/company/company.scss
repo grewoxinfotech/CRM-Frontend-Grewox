@@ -9,7 +9,7 @@
     }
 }
 
-.company-page {
+.company-pages {
     padding: 24px;
     background: $background-color;
 
@@ -737,10 +737,10 @@
 
 // Add responsive styles
 @media (max-width: 768px) {
-    .company-page {
+    .company-pages {
         .page-header {
             flex-direction: column;
-            padding: 24px;
+            // padding: 24px;
             gap: 20px;
 
             .page-title {

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
     Card, Typography, Button, Row, Col,
-    Breadcrumb, message, Spin
+    Breadcrumb, message, Spin, Modal
 } from 'antd';
 import {
-    FiHome, FiPlusCircle
+    FiHome, FiPlus
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import ESignatureList from './eSignatureList';
@@ -106,17 +106,17 @@ const ESignature = () => {
                     <Col xs={24} sm={24} md={24} lg={24} xl={24}>
                         <div className="header-actions">
                             <div className="page-title">
-                                <Title level={2}>E-Signatures</Title>
-                                <Text type="secondary">Create and manage your electronic signatures</Text>
+                                <Title level={2} className="responsive-title">E-Signatures</Title>
+                                <Text type="secondary" className="responsive-subtitle">Create and manage your electronic signatures</Text>
                             </div>
                             <div className="action-buttons">
                                 <Button
                                     type="primary"
-                                    icon={<FiPlusCircle size={16} />}
+                                    icon={<FiPlus size={16} className="add-icon" />}
                                     onClick={() => handleOpenModal()}
                                     className="add-button"
                                 >
-                                    Create New Signature
+                                    <span className="button-text">Create New Signature</span>
                                 </Button>
                             </div>
                         </div>

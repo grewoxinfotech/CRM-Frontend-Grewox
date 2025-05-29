@@ -156,6 +156,7 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             title: 'Username',
             dataIndex: 'username',
             key: 'username',
+            width: 150,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input

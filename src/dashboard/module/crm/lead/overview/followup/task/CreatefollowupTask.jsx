@@ -541,8 +541,8 @@ const CreatefollowupTask = ({
                 height: "auto",
                 minHeight: "48px",
               }}
-              listHeight={200}
-              maxTagCount={2}
+            listHeight={300}
+                 maxTagCount="responsive"
               maxTagTextLength={15}
               dropdownStyle={{
                 maxHeight: "300px",

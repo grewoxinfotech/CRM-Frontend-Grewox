@@ -674,9 +674,9 @@ const EditFollowupMeeting = ({
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
+            // display: "grid",
+            // gridTemplateColumns: "1fr 1fr",
+            // gap: "16px",
             marginBottom: "16px",
           }}
         >
@@ -692,12 +692,12 @@ const EditFollowupMeeting = ({
               mode="multiple"
               placeholder="Select team members"
               style={{
-                width: "200%",
+                width: "100%",
                 height: "auto",
                 minHeight: "48px",
               }}
-              listHeight={200}
-              maxTagCount={2}
+                listHeight={300}
+                maxTagCount="responsive"
               maxTagTextLength={15}
               dropdownStyle={{
                 maxHeight: "300px",

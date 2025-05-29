@@ -213,10 +213,14 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
             display: "flex",
             alignItems: "center",
             width: "100%",
-            color: "#1890ff",
             fontWeight: 500,
             gap: "8px",
+            color: "white",
+            height: "44px",
+            borderRadius: "8px",
+            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
           }}
+        
         >
           Add New Branch
         </Button>
@@ -238,9 +242,12 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
             display: "flex",
             alignItems: "center",
             width: "100%",
-            color: "#1890ff",
             fontWeight: 500,
             gap: "8px",
+            color: "white",
+            height: "44px",
+            borderRadius: "8px",
+            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
           }}
         >
           Add New Department
@@ -263,7 +270,10 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
             display: "flex",
             alignItems: "center",
             width: "100%",
-            color: "#1890ff",
+            color: "white",
+            height: "44px",
+            borderRadius: "8px",
+            background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
             fontWeight: 500,
             gap: "8px",
           }}

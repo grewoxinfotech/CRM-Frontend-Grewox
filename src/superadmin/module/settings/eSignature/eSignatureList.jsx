@@ -131,6 +131,8 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
         {
             title: 'Actions',
             key: 'actions',
+            width:80,
+            fixed: 'right',
             render: (_, record) => (
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start' }}>
                     <Dropdown
@@ -163,6 +165,7 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
                 }}
                 className="signatures-table"
                 loading={loading}
+                scroll={{x: 1000,y: ""}}
             />
         </div>
     );
