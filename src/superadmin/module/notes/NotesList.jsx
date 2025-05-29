@@ -13,9 +13,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete }) => {
   const noteTypes = [
     { text: 'General', value: 'general' },
     { text: 'Important', value: 'important' },
-    { text: 'Urgent', value: 'urgent' },
-   
-    
+    { text: 'Urgent', value: 'urgent' },  
   ];
 
   const handleEdit = (company) => {

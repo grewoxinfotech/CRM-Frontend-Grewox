@@ -35,8 +35,18 @@ const CreateNotes = ({ open, onCancel, isEditing, initialValues, loading }) => {
   );
 
     const { data: employeesData, isLoading: isLoadingEmployees } =
-    useGetEmployeesQuery();
-    const { data: rolesData } = useGetRolesQuery();
+    useGetEmployeesQuery({
+      page: 1,
+      pageSize: -1,
+      search: ''
+    });
+    const { data: rolesData } = useGetRolesQuery({
+      page: 1,
+      pageSize: -1,
+      search: ''
+    });
+
+
 
       const employees = React.useMemo(() => {
     if (!employeesData?.data || !rolesData?.data) return [];
