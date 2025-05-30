@@ -19,13 +19,25 @@ const LeadMembers = ({ leadId }) => {
     const [isCreateUserVisible, setIsCreateUserVisible] = useState(false);
 
     const loggedInUser = useSelector(selectCurrentUser);
-    const { data: leadData } = useGetLeadQuery(leadId);
-    const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
-    const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
+    const { data: leadData } = useGetLeadQuery(leadId,{
+        page: 1,
+        pageSize: -1,
+        search: '',
+    });
+    const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery({
+        page: 1,
+        pageSize: -1,
+        search: '',
+    });
+    const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: '',
+    });
     const [updateLead] = useUpdateLeadMutation();
 
     // Get subclient role ID to filter it out
-    const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
+    const subclientRoleId = rolesData?.message?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
     // Filter users to get team members (excluding subclients)
     const users = usersResponse?.data?.filter(user =>

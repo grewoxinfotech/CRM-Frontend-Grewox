@@ -467,7 +467,6 @@ const CreateUser = ({ visible, onCancel }) => {
                                 }
                             ]}
                             style={{ marginTop: '12px' }}
-                            extra={<span style={{ color: "#8c8c8c", fontSize: "12px" }}>Password must be at least 8 characters long</span>}
                         >
                             <Input.Password
                                 placeholder="Enter password"
