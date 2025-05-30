@@ -83,13 +83,21 @@ export default function Chat() {
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
 
     // Get real users data
-    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery();
+    const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery({
+        page: 1,
+        pageSize: -1,
+        search: ""
+    });
     // Get roles data
-    const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
+    const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: ""
+    });
     // Create a map of role IDs to role names
     const roleMap = useMemo(() => {
-        if (!rolesData?.data) return {};
-        return rolesData.data.reduce((acc, role) => {
+        if (!rolesData?.message?.data) return {};
+        return rolesData?.message?.data.reduce((acc, role) => {
             acc[role.id] = role.role_name;
             return acc;
         }, {});

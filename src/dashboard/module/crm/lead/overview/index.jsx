@@ -38,7 +38,7 @@ import {
   FiBriefcase,
   FiGlobe,
 } from "react-icons/fi";
-import { useGetLeadQuery, useUpdateLeadMutation } from "../services/LeadApi";
+import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation } from "../services/LeadApi";
 import {
   useGetAllCurrenciesQuery,
   useGetAllCountriesQuery,
@@ -298,7 +298,11 @@ const LeadOverviewContent = ({
   onStageUpdate,
   isUpdating,
 }) => { 
+
+console.log("leaddata", initialLeadData)
+  
   const loggedInUser = useSelector(selectCurrentUser);
+
   const [localLeadData, setLocalLeadData] = useState(initialLeadData);
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
   const { data: sourcesData = [] } = useGetSourcesQuery(loggedInUser?.id);
@@ -316,6 +320,7 @@ const LeadOverviewContent = ({
   React.useEffect(() => {
     setLocalLeadData(initialLeadData);
   }, [initialLeadData]);
+
 
   const formatCurrencyValue = (value, currencyId) => {
     const currencyDetails = currencies?.find(
@@ -970,7 +975,7 @@ const LeadOverviewContent = ({
                       try {
                         return typeof localLeadData.lead_members === 'string'
                           ? JSON.parse(localLeadData.lead_members)
-                          : localLeadData.lead_members;
+                          : localLeadData.lead_members || { lead_members: [] };
                       } catch (error) {
                         console.error('Error parsing lead members:', error);
                         return { lead_members: [] };
@@ -1067,7 +1072,13 @@ const LeadOverviewContent = ({
 const LeadOverview = () => {
   const { leadId } = useParams();
   const navigate = useNavigate();
-  const { data: lead, isLoading: isLoadingLead } = useGetLeadQuery(leadId);
+  const { data: lead, isLoading: isLoadingLead } = useGetLeadQuery(leadId,{
+    page: 1,
+    pageSize: -1,
+    search: "",
+  });
+
+
   const { data: pipelines = [] } = useGetPipelinesQuery();
   const { data: allStagesData, isLoading: isLoadingStages } =
     useGetLeadStagesQuery();
@@ -1076,6 +1087,8 @@ const LeadOverview = () => {
   const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
   const [localLeadData, setLocalLeadData] = useState(lead?.data);
   const savedStageOrder = useSelector(selectStageOrder);
+
+  console.log("asdsads",localLeadData)
 
   // Update local state when lead data changes
   React.useEffect(() => {
@@ -1135,9 +1148,13 @@ const LeadOverview = () => {
     // Parse lead_members safely
     const parsed = (() => {
       try {
+        if (!localLeadData.lead_members) {
+          return { lead_members: [] };
+        }
+        
         return typeof localLeadData.lead_members === 'string'
           ? JSON.parse(localLeadData.lead_members)
-          : localLeadData.lead_members;
+          : localLeadData.lead_members || { lead_members: [] };
       } catch (error) {
         console.error('Error parsing lead members:', error);
         return { lead_members: [] };
@@ -1157,7 +1174,7 @@ const LeadOverview = () => {
       category: localLeadData.category,
       status: localLeadData.status,
       interest_level: localLeadData.interest_level,
-      lead_members: parsed.lead_members,
+      lead_members: parsed?.lead_members || [],
       is_converted: localLeadData.is_converted,
     };
   }, [localLeadData]);
@@ -1226,7 +1243,7 @@ const LeadOverview = () => {
           <FiUsers /> Lead Members
         </span>
       ),
-      children: <LeadMembers leadId={leadId} />,
+      children: <LeadMembers leadId={leadId} leadData={localLeadData} />,
     },
     {
       key: "activity",

@@ -24,6 +24,8 @@ const LeadMembers = ({ leadId }) => {
         pageSize: -1,
         search: '',
     });
+
+    console.log("leadData", leadData)
     const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery({
         page: 1,
         pageSize: -1,
@@ -65,14 +67,17 @@ const LeadMembers = ({ leadId }) => {
     useEffect(() => {
         if (leadData?.data?.lead_members) {
             try {
-                const parsedMembers = typeof leadData?.data?.lead_members === 'string'
-                    ? JSON.parse(leadData?.data?.lead_members)
-                    : leadData?.data?.lead_members;
-                setSelectedMembers(parsedMembers.lead_members || []);
+                const parsedMembers = typeof leadData.data.lead_members === 'string'
+                    ? JSON.parse(leadData.data.lead_members)
+                    : leadData.data.lead_members;
+                setSelectedMembers(parsedMembers?.lead_members || []);
             } catch (error) {
                 console.error('Error parsing lead members:', error);
                 setSelectedMembers([]);
             }
+        } else {
+            // If lead_members doesn't exist, set empty array
+            setSelectedMembers([]);
         }
     }, [leadData]);
 
