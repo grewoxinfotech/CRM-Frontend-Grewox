@@ -53,7 +53,6 @@ const DealMember = ({ deal }) => {
       search: ''
     });
 
-  console.log("usersResponse", deal);
   const { refetch } = useGetDealsQuery();
   const { data: rolesData } = useGetRolesQuery(
     {
@@ -68,7 +67,7 @@ const DealMember = ({ deal }) => {
 
 
   // Get subclient role ID to filter it out
-  const subclientRoleId = rolesData?.data?.find(
+  const subclientRoleId = rolesData?.message?.data?.find(
     (role) => role?.role_name === "sub-client"
   )?.id;
 
