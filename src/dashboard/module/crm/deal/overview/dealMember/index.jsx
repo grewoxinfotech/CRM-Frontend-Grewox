@@ -81,7 +81,16 @@ const DealMember = ({ deal }) => {
 
   // Parse deal_members from deal
   const assignedMembers = deal?.deal_members
-    ? JSON.parse(deal.deal_members)?.deal_members || []
+    ? (() => {
+        try {
+          return typeof deal.deal_members === 'string'
+            ? JSON.parse(deal.deal_members)?.deal_members || []
+            : deal.deal_members?.deal_members || [];
+        } catch (error) {
+          console.error("Error parsing deal_members:", error);
+          return [];
+        }
+      })()
     : [];
 
   const getRoleColor = (role) => {
