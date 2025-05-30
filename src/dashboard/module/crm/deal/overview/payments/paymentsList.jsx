@@ -47,10 +47,15 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
   });
   // const { data: dealinvoicedata } = useGetInvoicesQuery(dealId);
 
-  const { data: invoicesData } = useGetInvoicesQuery();
+  const { data: invoicesData } = useGetInvoicesQuery({
+    page: 1,
+    pageSize: -1,
+    search: '',
+  });
   const dealinvoicedata = (invoicesData?.data || []).filter(
     (invoice) => invoice.related_id === dealId
   );
+
 
   // Ensure payments is always an array and filter by related_id
   const payments = React.useMemo(() => {
@@ -79,7 +84,7 @@ const PaymentsList = ({ deal, onEdit, onView }) => {
 
   // Function to get invoice details by ID
   const getInvoiceDetails = (invoiceId) => {
-    return dealinvoicedata?.data?.find((inv) => inv.id === invoiceId);
+    return dealinvoicedata?.find((inv) => inv.id === invoiceId);
   };
 
   const handleStatusChange = async (record, newStatus) => {
