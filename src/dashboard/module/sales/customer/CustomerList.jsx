@@ -137,7 +137,7 @@ const CustomerList = ({
     {
       title: "Customer Details",
       key: "name",
-      width: 200,
+      // width: 200,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -187,7 +187,7 @@ const CustomerList = ({
     {
       title: "Contact Info",
       key: "contact",
-      width: 150,
+      // width: 150,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -231,7 +231,7 @@ const CustomerList = ({
     {
       title: "Billing Address",
       key: "billing",
-      width: 300,
+      // width: 300,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -286,7 +286,7 @@ const CustomerList = ({
     {
       title: "Created Info",
       key: "created",
-      width: 150,
+      // width: 150,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -392,7 +392,7 @@ const CustomerList = ({
         // className="custom-table"
         pagination={paginationConfig}
         onChange={onChange}
-        scroll={{ x: 1000, y: '' }}
+        scroll={{ x: "max-content", y: '' }}
         onRow={(record) => ({
           onClick: (event) => handleRowClick(record, event),
           style: { cursor: 'pointer' }

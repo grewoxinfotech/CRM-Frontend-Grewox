@@ -56,20 +56,31 @@
             text-align: center;
             padding: 40px;
             grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            // min-height: 300px;
             background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
             border-radius: 12px;
             border: 1px dashed #e2e8f0;
 
             h5 {
-                margin: 12px 0 8px;
+                margin: 16px 0 8px;
                 color: #1f2937;
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 600;
             }
 
             .ant-typography {
                 color: #64748b;
                 font-size: 14px;
+                // max-width: 280px;
+                margin: 0 auto;
+            }
+
+            .ant-empty {
+                margin-bottom: 16px;
             }
         }
 

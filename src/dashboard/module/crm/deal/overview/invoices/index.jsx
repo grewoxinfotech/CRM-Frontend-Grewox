@@ -315,7 +315,7 @@ const Invoice = () => {
                   />
                 </Popover>
               </div>
-              <RangePicker
+              <RangePicker 
                 onChange={handleDateRangeChange}
                 value={filters.dateRange}
                 allowClear

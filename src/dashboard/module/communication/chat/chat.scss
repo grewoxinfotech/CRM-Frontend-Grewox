@@ -1782,3 +1782,296 @@
         }
     }
 }
+
+// Add this outside the media query to hide the mobile menu button on desktop
+.mobile-menu-button {
+    display: none !important;
+}
+
+// Mobile menu dropdown styles
+.mobile-menu-dropdown {
+    .ant-dropdown-menu {
+        min-width: 280px !important;
+        padding: 12px !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08),
+                    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+                    0 9px 28px 8px rgba(0, 0, 0, 0.05) !important;
+
+        .ant-dropdown-menu-item {
+            background: transparent !important;
+            transition: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+
+            &:hover {
+                background: transparent !important;
+            }
+        }
+
+        .mobile-search-container {
+            margin-bottom: 12px;
+            pointer-events: auto !important;
+
+            .theme-search-wrapper {
+                position: relative;
+                width: 100%;
+                height: 40px;
+                background: #f8fafc;
+                border: 1px solid #e6e8eb;
+                border-radius: 40px;
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                transition: all 0.2s ease;
+                pointer-events: auto !important;
+
+                &:hover,
+                &:focus-within {
+                    background: #fff;
+                    border-color: #1890ff;
+                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                }
+
+                .search-icon {
+                    color: #94a3b8;
+                    font-size: 16px;
+                    pointer-events: none;
+                }
+
+                .theme-search-input {
+                    flex: 1;
+                    border: none;
+                    outline: none;
+                    background: transparent;
+                    font-size: 14px;
+                    padding: 0 12px;
+                    color: #1f2937;
+                    pointer-events: auto !important;
+                    cursor: text !important;
+                    user-select: text !important;
+
+                    &::placeholder {
+                        color: #94a3b8;
+                    }
+
+                    &:focus {
+                        outline: none;
+                    }
+                }
+            }
+        }
+
+        .mobile-create-group {
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #1f2937;
+
+            svg {
+                font-size: 18px;
+                color: #1890ff;
+            }
+
+            span {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            &:hover {
+                background: #f0f7ff;
+                color: #1890ff;
+            }
+        }
+
+        .ant-dropdown-menu-item-divider {
+            background-color: #f0f0f0;
+            margin: 8px 0;
+        }
+
+        .mobile-tabs {
+            
+            .tab-item {
+                padding: 10px 12px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                margin-bottom: 4px;
+                color: #1f2937;
+
+                svg, .anticon {
+                    font-size: 18px;
+                    color: #64748b;
+                }
+
+                span {
+                    font-size: 14px;
+                    font-weight: 500;
+                }
+
+                &:hover {
+                    background: #f0f7ff;
+                    color: #1890ff;
+
+                    svg, .anticon {
+                        color: #1890ff;
+                    }
+                }
+
+                &.active {
+                    background: #e6f4ff;
+                    color: #1890ff;
+
+                    svg, .anticon {
+                        color: #1890ff;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .chat-container {
+        position: relative;
+        overflow: hidden;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-radius: 12px !important;
+
+        .chat-sider {
+            position: relative;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            min-width: 100% !important;
+            height: 100%;
+            z-index: 1;
+            background: #fff;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            .chat-list {
+                width: 100%;
+                padding: 0 24px 24px 24px !important;
+                
+                .chat-list-item {
+                    margin: 15px 0;
+                    border-radius: 12px !important;
+                    
+                }
+            }
+        }
+
+        .chat-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            min-width: 100% !important;
+            height: 100%;
+            z-index: 2;
+            background: #fff;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            margin: 0 !important;
+            padding: 0 !important;
+
+            &.visible {
+                transform: translateX(0);
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+                width: 100%;
+
+                .back-button {
+                    display: flex !important;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 8px;
+                    margin-right: 12px;
+                    color: #64748b;
+                    transition: all 0.2s ease;
+                    background: transparent;
+                    border: none;
+                    cursor: pointer;
+
+                    &:hover {
+                        background: #f0f7ff;
+                        color: #1890ff;
+                    }
+
+                    svg {
+                        font-size: 20px;
+                    }
+                }
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
+            .chat-input {
+                padding: 16px;
+            }
+        }
+    }
+
+    .mobile-menu-button {
+        display: flex !important;
+    }
+
+    .chat-container {
+        .chat-sider {
+            .chat-sider-header {
+                padding: 16px;
+                width: 100%;
+
+                .user-profile {
+                    margin: 0;
+                    width: 100%;
+
+                    .mobile-menu-button {
+                        display: flex !important;
+                        align-items: center;
+                        justify-content: center;
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 8px;
+                        margin-left: auto;
+                        color: #64748b;
+                        transition: all 0.2s ease;
+                        background: transparent;
+                        border: none;
+
+                        &:hover {
+                            background: #f0f7ff;
+                            color: #1890ff;
+                        }
+
+                        svg {
+                            font-size: 20px;
+                        }
+                    }
+                }
+            }
+
+            .search-container,
+            .chat-tabs {
+                display: none;
+            }
+        }
+    }
+}

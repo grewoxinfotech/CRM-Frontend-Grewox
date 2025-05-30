@@ -904,67 +904,86 @@ const LeadsAnalytics = ({ leads }) => {
                         }}>
                             Interest Level Distribution
                         </Title>
-                        <ResponsiveContainer width="100%" height={window.innerWidth < 576 ? 250 : 300}>
-                            <PieChart>
-                                <Pie
-                                    data={interestChartData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={window.innerWidth < 576 ? 50 : 70}
-                                    outerRadius={window.innerWidth < 576 ? 70 : 90}
-                                    startAngle={90}
-                                    endAngle={-270}
-                                    paddingAngle={8}
-                                    dataKey="value"
-                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, value, name, percent }) => {
-                                        const RADIAN = Math.PI / 180;
-                                        const radius = outerRadius + (window.innerWidth < 576 ? 20 : 30);
-                                        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                                        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                        {interestChartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height={window.innerWidth < 576 ? 250 : 300}>
+                                <PieChart>
+                                    <Pie
+                                        data={interestChartData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={window.innerWidth < 576 ? 50 : 70}
+                                        outerRadius={window.innerWidth < 576 ? 70 : 90}
+                                        startAngle={90}
+                                        endAngle={-270}
+                                        paddingAngle={8}
+                                        dataKey="value"
+                                        label={({ cx, cy, midAngle, innerRadius, outerRadius, value, name, percent }) => {
+                                            const RADIAN = Math.PI / 180;
+                                            const radius = outerRadius + (window.innerWidth < 576 ? 20 : 30);
+                                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                                        return (
-                                            <text
-                                                x={x}
-                                                y={y}
-                                                fill={COLORS.chart.leadCount.main}
-                                                textAnchor={x > cx ? 'start' : 'end'}
-                                                dominantBaseline="central"
-                                                style={{
-                                                    fontSize: window.innerWidth < 576 ? '12px' : '15px',
-                                                    fontWeight: 600,
-                                                    letterSpacing: '0.2px'
-                                                }}
-                                            >
-                                                {`${name} ${(percent * 100).toFixed(0)}%`}
-                                            </text>
-                                        );
-                                    }}
-                                >
-                                    {interestChartData.map((entry, index) => (
-                                        <Cell
-                                            key={`cell-${index}`}
-                                            fill={COLORS.chart.pie[index % COLORS.chart.pie.length]}
-                                            stroke="#ffffff"
-                                            strokeWidth={2}
-                                        />
-                                    ))}
-                                </Pie>
-                                <Legend
-                                    verticalAlign="bottom"
-                                    align="center"
-                                    layout="horizontal"
-                                    formatter={(value, entry) => (
-                                        <span style={{
-                                            color: '#262626',
-                                            fontSize: window.innerWidth < 576 ? '12px' : '14px',
-                                            fontWeight: 600
-                                        }}>
-                                            {value}
-                                        </span>
-                                    )}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
+                                            return (
+                                                <text
+                                                    x={x}
+                                                    y={y}
+                                                    fill={COLORS.chart.leadCount.main}
+                                                    textAnchor={x > cx ? 'start' : 'end'}
+                                                    dominantBaseline="central"
+                                                    style={{
+                                                        fontSize: window.innerWidth < 576 ? '12px' : '15px',
+                                                        fontWeight: 600,
+                                                        letterSpacing: '0.2px'
+                                                    }}
+                                                >
+                                                    {`${name} ${(percent * 100).toFixed(0)}%`}
+                                                </text>
+                                            );
+                                        }}
+                                    >
+                                        {interestChartData.map((entry, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={COLORS.chart.pie[index % COLORS.chart.pie.length]}
+                                                stroke="#ffffff"
+                                                strokeWidth={2}
+                                            />
+                                        ))}
+                                    </Pie>
+                                    <Legend
+                                        verticalAlign="bottom"
+                                        align="center"
+                                        layout="horizontal"
+                                        formatter={(value, entry) => (
+                                            <span style={{
+                                                color: '#262626',
+                                                fontSize: window.innerWidth < 576 ? '12px' : '14px',
+                                                fontWeight: 600
+                                            }}>
+                                                {value}
+                                            </span>
+                                        )}
+                                    />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div style={{
+                                height: window.innerWidth < 576 ? 250 : 300,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexDirection: 'column',
+                                gap: '12px'
+                            }}>
+                                <Typography.Text style={{
+                                    fontSize: window.innerWidth < 576 ? '16px' : '18px',
+                                    color: '#8c8c8c',
+                                    fontWeight: 500
+                                }}>
+                                    Data Not Found
+                                </Typography.Text>
+                            </div>
+                        )}
                     </Card>
                 </Col>
 

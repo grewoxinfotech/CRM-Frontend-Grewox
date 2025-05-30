@@ -167,15 +167,14 @@ const DealFiles = ({ deal }) => {
 
       <div className="files-grid">
         {files.length === 0 ? (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <div className="empty-state">
-                <Title level={5}>No Files Yet</Title>
-                <Text>Upload files by clicking the Upload New File button</Text>
-              </div>
-            }
-          />
+          <div className="empty-state">
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              imageStyle={{ height: 60 }}
+            />
+            <Title level={5}>No Files Yet</Title>
+            <Text>Upload files by clicking the Upload New File button</Text>
+          </div>
         ) : (
           files.map((file, index) => {
             const fileExt = file.filename.split(".").pop().toLowerCase();

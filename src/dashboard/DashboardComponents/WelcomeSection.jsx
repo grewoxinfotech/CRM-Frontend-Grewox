@@ -138,7 +138,7 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                         </motion.div>
                     </Col>
 
-                    <Col xs={24} sm={24} md={8} lg={8} xl={8}>
+                    <Col xs={24} sm={24} md={8} lg={8} xl={8} className="welcome-section-right">
                         <motion.div
                             initial={{ x: 20, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
@@ -165,7 +165,7 @@ const WelcomeSection = ({ user, companyName, showAnalytics, setShowAnalytics }) 
                                     maxWidth: '360px'
                                 }}
                             >
-                                <Badge dot color="#52c41a" offset={[-4, 4]}>
+                                <Badge dot color="#52c41a" offset={[-9, 10]}>
                                     <Avatar
                                         size={56}
                                         src={user?.profilePic}

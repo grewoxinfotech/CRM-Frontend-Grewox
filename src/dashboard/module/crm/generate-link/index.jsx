@@ -292,13 +292,13 @@ const CustomFormPage = () => {
                     <Breadcrumb.Item>
                         <Link to="/dashboard">
                             <FiHome style={{ marginRight: "4px" }} />
-                            Home
+                            <span style={{ color: "#6b7280", fontWeight: "500" }}>Home</span>
                         </Link>
                     </Breadcrumb.Item>
                     {/* <Breadcrumb.Item>
                         <Link to="/dashboard/crm">CRM</Link>
                     </Breadcrumb.Item> */}
-                    <Breadcrumb.Item>Custom Forms</Breadcrumb.Item>
+                    <Breadcrumb.Item style={{ color: "#1f2937", fontWeight: "500" }}>Custom Forms</Breadcrumb.Item>
                 </Breadcrumb>
             </div>
 

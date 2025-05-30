@@ -18,14 +18,18 @@ import {
     DownloadOutlined,
     DeleteOutlined,
     CheckOutlined,
-    EditOutlined
+    EditOutlined,
+    GlobalOutlined,
+    StarOutlined,
+    MenuOutlined,
+    ArrowLeftOutlined
 } from '@ant-design/icons';
 import { useGetUsersQuery } from '../../user-management/users/services/userApi';
 import { useGetRolesQuery } from '../../hrm/role/services/roleApi';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import "./chat.scss";
-import { FiX, FiUsers, FiUserPlus } from 'react-icons/fi';
+import { FiX, FiUsers, FiUserPlus, FiMoreVertical } from 'react-icons/fi';
 
 const { Content, Sider } = Layout;
 const { Text } = Typography;
@@ -81,6 +85,8 @@ export default function Chat() {
     const fileInputRef = useRef(null);
     const [editingMessage, setEditingMessage] = useState(null);
     const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 768);
+    const [showChatContent, setShowChatContent] = useState(false);
 
     // Get real users data
     const { data: userData, isLoading: isLoadingUsers } = useGetUsersQuery({
@@ -1043,30 +1049,13 @@ export default function Chat() {
     };
 
     const renderChatItem = (item) => {
-        const roleStyle = getRoleColor(item.role);
         const isTyping = typingUsers.has(item.id);
         const isChatOpen = selectedUser?.id === item.id;
         const showUnreadBadge = !isChatOpen && item.unread > 0;
 
-        const getMessagePreview = () => {
-            if (isTyping) {
-                return <span className="typing-indicator-sidebar">typing...</span>;
-            }
-
-            if (showUnreadBadge && item.unread > 1) {
-                return (
-                    <span className="new-messages-indicator">
-                        {item.unread}+ new messages
-                    </span>
-                );
-            }
-
-            return item.lastMessage;
-        };
-
         return (
             <List.Item
-                onClick={() => setSelectedUser(item)}
+                onClick={() => handleChatItemClick(item)}
                 className={`chat-list-item ${isChatOpen ? 'selected' : ''}`}
                 data-role={item.role?.toLowerCase()}
             >
@@ -1093,9 +1082,13 @@ export default function Chat() {
                         <div className="chat-item-description">
                             <Text
                                 type="secondary"
-                                className={`last-message ${isTyping ? 'typing' : ''} ${showUnreadBadge && item.unread > 1 ? 'new-messages' : ''}`}
+                                className={`last-message ${isTyping ? 'typing' : ''} ${showUnreadBadge ? 'new-messages' : ''}`}
                             >
-                                {getMessagePreview()}
+                                {isTyping ? (
+                                    <span className="typing-indicator-sidebar">typing...</span>
+                                ) : (
+                                    item.lastMessage
+                                )}
                             </Text>
                         </div>
                     }
@@ -1665,9 +1658,97 @@ export default function Chat() {
         </div>
     );
 
+    const mobileMenuItems = {
+        items: [
+            {
+                key: 'search',
+                label: (
+                    <div className="mobile-search-container" onClick={e => e.stopPropagation()}>
+                        <div className="theme-search-wrapper">
+                            <SearchOutlined className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Search conversations..."
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="theme-search-input"
+                                onClick={e => e.stopPropagation()}
+                            />
+                        </div>
+                    </div>
+                ),
+            },
+            {
+                key: 'create-group',
+                label: (
+                    <div className="mobile-create-group" onClick={() => setCreateGroupModalVisible(true)}>
+                        <FiUserPlus  />
+                        <span>Create New Group</span>
+                    </div>
+                ),
+            },
+            {
+                type: 'divider'
+            },
+            {
+                key: 'tabs',
+                label: (
+                    <div className="mobile-tabs">
+                        <div 
+                            className={`tab-item ${activeTab === 'all' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('all')}
+                        >
+                            <MenuOutlined />
+                            <span>All Chats</span>
+                        </div>
+                        <div 
+                            className={`tab-item ${activeTab === 'online' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('online')}
+                        >
+                            <GlobalOutlined />
+                            <span>Online</span>
+                        </div>
+                        <div 
+                            className={`tab-item ${activeTab === 'starred' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('starred')}
+                        >
+                            <StarOutlined />
+                            <span>Starred</span>
+                        </div>
+                    </div>
+                ),
+            }
+        ]
+    };
+
+    // Add resize listener
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobileView(window.innerWidth <= 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Modify chat item click handler
+    const handleChatItemClick = (item) => {
+        setSelectedUser(item);
+        if (isMobileView) {
+            setShowChatContent(true);
+        }
+    };
+
+    // Add back button handler
+    const handleBackToList = () => {
+        setShowChatContent(false);
+    };
+
     return (
         <Layout className="chat-container">
-            <Sider width={380} className="chat-sider">
+            <Sider 
+                width={380} 
+                className="chat-sider"
+            >
                 <div className="chat-sider-header">
                     <div className="user-profile">
                         <Avatar src={currentUser?.profilePic || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.username || 'User')}&background=1890ff&color=fff`} size={40}>
@@ -1682,6 +1763,14 @@ export default function Chat() {
                                 {roleMap[currentUser?.role_id] || currentUser?.Role?.role_name || 'Online'}
                             </Typography.Text>
                         </div>
+                        <Dropdown 
+                            menu={mobileMenuItems} 
+                            trigger={['click']}
+                            overlayClassName="mobile-menu-dropdown"
+                            destroyPopupOnHide={false}
+                        >
+                            <Button type="text" icon={<FiMoreVertical />} className="mobile-menu-button" />
+                        </Dropdown>
                     </div>
                     <div className="search-container">
                         <div className="theme-search-wrapper">
@@ -1696,6 +1785,7 @@ export default function Chat() {
                                 type="text"
                                 icon={<FiUserPlus />}
                                 onClick={() => setCreateGroupModalVisible(true)}
+                                className="create-group-button"
                                 style={{
                                     width: '32px',
                                     height: '32px',
@@ -1721,13 +1811,20 @@ export default function Chat() {
                     className="chat-list"
                     dataSource={getFilteredUsers()}
                     renderItem={renderChatItem}
-                    // loading={isLoadingUsers || isLoadingRoles}
                 />
             </Sider>
-            <Content className="chat-content">
+            <Content className={`chat-content ${isMobileView && showChatContent ? 'visible' : ''}`}>
                 {selectedUser ? (
                     <>
                         <div className="chat-header">
+                            {isMobileView && (
+                                <Button
+                                    type="text"
+                                    icon={<ArrowLeftOutlined />}
+                                    onClick={handleBackToList}
+                                    className="back-button"
+                                />
+                            )}
                             <div className="chat-user-info">
                                 <Avatar
                                     size={40}

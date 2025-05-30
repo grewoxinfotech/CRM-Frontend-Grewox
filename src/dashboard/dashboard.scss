@@ -862,3 +862,22 @@
         }
     }
 }
+
+.welcome-section-right {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 768px) {
+    .welcome-section-right {
+        align-items: center;
+    }
+    
+    .welcome-section-right > div {
+        align-items: center;
+    }
+    
+    .welcome-section-right > div > div {
+        justify-content: center !important;
+    }
+}

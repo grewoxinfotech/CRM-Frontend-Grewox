@@ -39,6 +39,7 @@
                 align-items: center;
                 gap: 8px;
                 transition: color 0.2s;
+                font-weight: 500;
 
                 &:hover {
                     color: #2563eb; // Link hover color
@@ -53,7 +54,8 @@
             // Style for the current page text in breadcrumb
             .ant-breadcrumb-link,
             .ant-breadcrumb-separator {
-                color: #6b7280; // Match link color
+                color: #1f2937; // Match link color
+                font-weight: 500;
             }
 
             >span:last-child .ant-breadcrumb-link {
