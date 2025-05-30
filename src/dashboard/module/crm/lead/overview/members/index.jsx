@@ -207,7 +207,7 @@ const LeadMembers = ({ leadId }) => {
                             {roleStyle.icon}
                             {userRole?.role_name || 'User'}
                         </Tag>
-                        <span className="role-indicator" style={{
+                        {/* <span className="role-indicator" style={{
                             position: 'absolute',
                             left: '10px',
                             transform: 'translateY(-50%)',
@@ -215,7 +215,7 @@ const LeadMembers = ({ leadId }) => {
                             height: '7px',
                             borderRadius: '50%',
                             background: roleStyle.color
-                        }} />
+                        }} /> */}
                     </div>
                 );
             }
