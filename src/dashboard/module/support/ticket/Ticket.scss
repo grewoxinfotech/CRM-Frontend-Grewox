@@ -244,81 +244,80 @@
                 gap: 0;
                 flex-wrap: wrap;
 
+                @media (max-width: 768px) {
+                    display: none !important;
+                }
+
                 .desktop-actions {
                     display: flex;
                     align-items: center;
                     gap: 8px;
                     flex-wrap: nowrap;
 
-                    @media (min-width: 769px) and (max-width: 1366px) {
-                        display: grid;
-                        grid-template-columns: 1fr 1.2fr 120px 120px;
-                        gap: 12px;
-                    }
+                    .search-container {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
 
-                    @media (max-width: 768px) {
-                        display: none;
-                    }
+                        .search-input {
+                            width: 300px;
 
-                    .search-input {
-                        width: 240px;
-
-                        @media (min-width: 769px) and (max-width: 1366px) {
-                            width: 100%;
-                            min-width: unset;
-                        }
-
-                        .ant-input-affix-wrapper {
-                            border-radius: 6px;
-                            height: 38px;
-                            border: 1px solid #e6e6e6;
-                            transition: all 0.3s ease;
-
-                            &:hover,
-                            &:focus {
-                                border-color: #1677ff;
-                                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                            @media (max-width: 1300px) {
+                                width: 250px;
                             }
 
-                            .anticon {
-                                color: #999;
-                            }
+                            .ant-input-affix-wrapper {
+                                border-radius: 6px;
+                                height: 38px;
+                                border: 1px solid #e6e6e6;
+                                transition: all 0.3s ease;
 
-                            input {
-                                font-size: 14px;
+                                &:hover,
+                                &:focus {
+                                    border-color: #1677ff;
+                                    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+                                }
 
-                                &::placeholder {
+                                .anticon {
                                     color: #999;
+                                }
+
+                                input {
+                                    font-size: 14px;
+
+                                    &::placeholder {
+                                        color: #999;
+                                    }
                                 }
                             }
                         }
                     }
 
                     .export-button {
-                        width: 56px;
-                        height: 56px;
-                        border-radius: 16px;
-                        display: flex;
+                        height: 38px;
+                        padding: 0 16px;
+                        display: inline-flex;
                         align-items: center;
-                        justify-content: center;
-                        font-size: 28px;
-                        padding: 0;
-                        background: #fff;
+                        gap: 8px;
+                        border-radius: 6px;
                         border: 1px solid #e6e6e6;
-                        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.06);
+                        background: white;
+                        color: #666;
+                        transition: all 0.3s ease;
+
+                        &:hover {
+                            color: #1677ff;
+                            border-color: #1677ff;
+                            background: #f0f5ff;
+                            transform: translateY(-2px);
+                        }
 
                         svg {
-                            font-size: 28px;
+                            font-size: 16px;
                         }
                     }
 
                     .add-button {
-                        @media (min-width: 769px) and (max-width: 1366px) {
-                            width: 100%;
-                            min-width: unset;
-                            justify-content: center;
-                        }
-
                         height: 38px;
                         padding: 0 16px;
                         display: inline-flex;
@@ -337,7 +336,21 @@
                             transform: translateY(-2px);
                             box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
                         }
+
+                        svg {
+                            font-size: 16px;
+                        }
                     }
+                }
+            }
+
+            .mobile-actions {
+                display: none;
+
+                @media (max-width: 768px) {
+                    display: flex !important;
+                    align-items: center;
+                    gap: 8px;
                 }
             }
         }
@@ -585,12 +598,110 @@
 }
 
 @media (max-width: 768px) {
-    .export-button {
-        width: 56px;
-        height: 56px;
-        font-size: 28px;
-        svg {
-            font-size: 28px;
+    .tickets-page {
+        .page-header {
+            .header-content {
+                .page-title {
+                    .title-row {
+                        .mobile-actions {
+                            .mobile-add-button,
+                            .mobile-search-button,
+                            .export-button {
+                                width: 38px;
+                                height: 38px;
+                                padding: 0;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border-radius: 6px;
+
+                                .button-text {
+                                    display: none;
+                                }
+
+                                svg {
+                                    font-size: 18px;
+                                }
+                            }
+
+                            .mobile-add-button {
+                                background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+                                border: none;
+                                color: white;
+                                box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+
+                                &:hover {
+                                    background: linear-gradient(135deg, #40a9ff 0%, #1677ff 100%);
+                                    transform: translateY(-2px);
+                                    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+                                }
+                            }
+
+                            .mobile-search-button,
+                            .export-button {
+                                border: 1px solid #e6e6e6;
+                                background: white;
+                                color: #666;
+
+                                &:hover {
+                                    color: #1677ff;
+                                    border-color: #1677ff;
+                                    background: #f0f5ff;
+                                    transform: translateY(-2px);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
+@media (max-width: 576px) {
+    .tickets-page {
+        .page-header {
+            .header-content {
+                .page-title {
+                    .title-row {
+                        h2 {
+                            font-size: 22px;
+                        }
+
+                        .mobile-actions {
+                            .mobile-add-button,
+                            .mobile-search-button,
+                            .export-button {
+                                width: 34px;
+                                height: 34px;
+
+                                svg {
+                                    font-size: 16px;
+                                }
+                            }
+                        }
+                    }
+
+                    .ant-typography-secondary {
+                        font-size: 11px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media (max-width: 400px) {
+    .tickets-page {
+        .page-header {
+            .header-content {
+                .page-title {
+                    .ant-typography-secondary {
+                        font-size: 10px;
+                    }
+                }
+            }
+        }
+    }
+}
+

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   List,
   Avatar,
@@ -12,6 +12,7 @@ import {
   Tag,
   Row,
   Col,
+  Dropdown,
 } from "antd";
 import {
   FiStar,
@@ -29,6 +30,7 @@ import {
   FiCalendar,
   FiFileText,
   FiImage,
+  FiMoreVertical,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 
@@ -42,8 +44,19 @@ const EmailList = ({
   handleRestore,
 }) => {
   const [selectedEmail, setSelectedEmail] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderEmailActions = (email) => {
+    // Desktop and Mobile view will now be same
     if (email.type === "trash") {
       return (
         <Space>
@@ -72,7 +85,7 @@ const EmailList = ({
     }
 
     return (
-      <Space>
+      <Space size={isMobile ? 4 : 8}>
         <Tooltip title={email.isStarred ? "Unstar" : "Star"}>
           <Button
             icon={<FiStar />}
@@ -83,9 +96,7 @@ const EmailList = ({
             }}
           />
         </Tooltip>
-        <Tooltip
-          title={email.isImportant ? "Not important" : "Mark as important"}
-        >
+        <Tooltip title={email.isImportant ? "Not important" : "Mark as important"}>
           <Button
             icon={<FiAlertCircle />}
             className={email.isImportant ? "important" : ""}
@@ -220,14 +231,23 @@ const EmailList = ({
               }
               description={
                 <div className="mail-item-content">
-                  <Space>
-                    <Text type="secondary">{email.from}</Text>
-                    <Text type="secondary">→</Text>
-                    <Text type="secondary">{email.to}</Text>
-                  </Space>
-                  <Text type="secondary" className="mail-date">
-                    {dayjs(email.createdAt).format("MMM D, YYYY h:mm A")}
-                  </Text>
+                  <div className="mail-details">
+                    <div className="mail-addresses">
+                      <Space direction={isMobile ? "vertical" : "horizontal"} size={isMobile ? 4 : 8} style={{ width: '100%' }}>
+                        <Text type="secondary">{email.from}</Text>
+                        {!isMobile && <Text type="secondary">→</Text>}
+                        <Text type="secondary">{email.to}</Text>
+                      </Space>
+                    </div>
+                    <div className="mail-datetime">
+                      <Text type="secondary" className="mail-date">
+                        {dayjs(email.createdAt).format("MMM D, YYYY")}
+                      </Text>
+                      <Text type="secondary" className="mail-time">
+                        {dayjs(email.createdAt).format("h:mm A")}
+                      </Text>
+                    </div>
+                  </div>
                 </div>
               }
             />
@@ -644,6 +664,64 @@ const EmailList = ({
         .email-view-modal .ant-modal-body {
           border-radius: 12px;
           overflow: hidden;
+        }
+        
+        .mail-item-content {
+          width: 100%;
+        }
+        
+        .mail-details {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+        }
+        
+        .mail-addresses {
+          width: 100%;
+        }
+        
+        .mail-datetime {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        
+        @media (max-width: 768px) {
+          .mail-item-content {
+            padding: 8px 0;
+          }
+          
+          .mail-details {
+            gap: 12px;
+          }
+          
+          .mail-datetime {
+            align-items: flex-start;
+          }
+          
+          .mail-date, .mail-time {
+            font-size: 12px;
+          }
+          
+          :global(.ant-list-item-meta-title) {
+            margin-bottom: 12px !important;
+          }
+          
+          :global(.ant-list-item) {
+            padding: 16px !important;
+          }
+
+          :global(.action-btn) {
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px !important;
+            padding: 0 !important;
+          }
+
+          :global(.ant-space) {
+            gap: 4px !important;
+          }
         }
       `}</style>
     </>

@@ -50,7 +50,7 @@
         @include hover-shadow;
         margin-bottom: 24px;
         display: flex;
-        flex-direction: row;
+        // flex-direction: row;
         justify-content: space-between;
         align-items: center;
         gap: 24px;
@@ -70,12 +70,19 @@
                 font-size: 28px;
                 font-weight: 600;
                 line-height: 1.2;
+                @media (max-width: 1197px) and (min-width: 769px) {
+                    // font-size: 20px;
+                    text-align: center;
+                }
             }
 
             .ant-typography-secondary {
                 color: $text-color-light;
                 font-size: 15px;
                 display: block;
+                @media (max-width: 1197px) and (min-width: 769px) {
+                    text-align: center;
+                }
             }
         }
 

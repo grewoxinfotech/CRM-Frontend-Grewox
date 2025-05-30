@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     Card, Typography, Button, Modal, Input, Avatar,
-    Dropdown, Menu, Row, Col, Breadcrumb, Table, Descriptions, Tooltip, message, Space
+    Dropdown, Menu, Row, Col, Breadcrumb, Table, Descriptions, Tooltip, message, Space, Popover
 } from 'antd';
 import {
     FiPlus, FiSearch, FiMessageSquare,
@@ -31,6 +31,7 @@ const Inquiry = () => {
     const [selectedInquiry, setSelectedInquiry] = useState(null);
     const [isViewModalVisible, setIsViewModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isSearchVisible, setIsSearchVisible] = useState(false);
 
     const { data: inquiriesData, isLoading, refetch } = useGetAllInquiriesQuery();
     const [deleteInquiryMutation, { isLoading: isDeleting }] = useDeleteInquiryMutation();
@@ -77,6 +78,7 @@ const Inquiry = () => {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
+            width: 150,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                   <Input
@@ -127,6 +129,7 @@ const Inquiry = () => {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            width: 300,
             sorter: (a, b) => (a.email || '').localeCompare(b.email || ''),
 
             render: (text) => (
@@ -140,6 +143,7 @@ const Inquiry = () => {
             title: 'Phone',
             dataIndex: 'phone',
             key: 'phone',
+            width: 200,
             sorter: (a, b) => (a.phone || '').localeCompare(b.phone || ''),
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -152,6 +156,7 @@ const Inquiry = () => {
             title: 'Subject',
             dataIndex: 'subject',
             key: 'subject',
+            width: 150,
             sorter: (a, b) => (a.subject || '').localeCompare(b.subject || ''),
             render: (text) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -164,6 +169,7 @@ const Inquiry = () => {
             title: 'Message',
             dataIndex: 'message',
             key: 'message',
+            width: 150,
             ellipsis: true,
             sorter: (a, b) => (a.message || '').localeCompare(b.message || ''),
             render: (text) => (
@@ -173,33 +179,35 @@ const Inquiry = () => {
                 </div>
             )
         },
-        {
-            title: 'Created Date',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
-            render: (date) => (
-                <Tooltip title={formatDateTime(date)}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        background: '#f5f5f5',
-                        padding: '4px 12px',
-                        borderRadius: '16px',
-                        width: 'fit-content'
-                    }}>
-                        <FiCalendar style={{ color: '#1890ff' }} />
-                        <span>{formatDate(date)}</span>
-                    </div>
-                </Tooltip>
-            ),
-            sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
-        },
+        // {
+        //     title: 'Created Date',
+        //     dataIndex: 'createdAt',
+        //     key: 'createdAt',
+        //     width: 150,
+        //     sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
+        //     render: (date) => (
+        //         <Tooltip title={formatDateTime(date)}>
+        //             <div style={{
+        //                 display: 'flex',
+        //                 alignItems: 'center',
+        //                 gap: '8px',
+        //                 background: '#f5f5f5',
+        //                 padding: '4px 12px',
+        //                 borderRadius: '16px',
+        //                 width: 'fit-content'
+        //             }}>
+        //                 <FiCalendar style={{ color: '#1890ff' }} />
+        //                 <span>{formatDate(date)}</span>
+        //             </div>
+        //         </Tooltip>
+        //     ),
+        //     sorter: (a, b) => moment(a.createdAt).unix() - moment(b.createdAt).unix(),
+        // },
         {
             title: 'Actions',
             key: 'actions',
             width: 80,
+            fixed: 'right',
             align: 'center',
             render: (_, record) => (
                 <Dropdown
@@ -261,6 +269,24 @@ const Inquiry = () => {
             }
         ]
     };
+
+    const exportMenu = {
+        items: exportMenuItems
+    };
+
+    const searchContent = (
+        <div className="search-popup">
+            <Input
+                prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                placeholder="Search inquiries..."
+                allowClear
+                onChange={(e) => handleSearch(e.target.value)}
+                value={searchText}
+                className="search-input"
+                autoFocus
+            />
+        </div>
+    );
 
     const handleExport = async (type) => {
         try {
@@ -345,7 +371,7 @@ const Inquiry = () => {
                 <Breadcrumb>
                     <Breadcrumb.Item>
                         <Link to="/superadmin">
-                            <FiHome style={{ marginRight: '4px' }} />
+                            <FiHome style={{ marginRight: "4px" }} />
                             Home
                         </Link>
                     </Breadcrumb.Item>
@@ -358,41 +384,49 @@ const Inquiry = () => {
                     <Title level={2}>Inquiries</Title>
                     <Text type="secondary">Manage all inquiries in the system</Text>
                 </div>
-                <Row justify="center" className="header-actions-wrapper">
-                    <Col xs={24} sm={24} md={20} lg={16} xl={14}>
-                        <div className="header-actions">
-                            <Input
-                                prefix={<FiSearch style={{ color: '#8c8c8c', fontSize: '16px' }} />}
-                                placeholder="Search inquiries..."
-                                allowClear
-                                value={searchText}
-                                onChange={(e) => setSearchText(e.target.value)}
-                                className="search-input"
-                            />
-                            <div className="action-buttons">
-                                <Dropdown 
-                                    menu={exportMenuItems}
-                                    trigger={['click']}
-                                    disabled={loading || !filteredInquiries?.length}
+                <div className="header-actions">
+                    <div className="desktop-actions">
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div className="search-container">
+                                <Input
+                                    prefix={<FiSearch style={{ color: "#8c8c8c" }} />}
+                                    placeholder="Search inquiries..."
+                                    allowClear
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    value={searchText}
+                                    className="search-input"
+                                />
+                                <Popover
+                                    content={searchContent}
+                                    trigger="click"
+                                    open={isSearchVisible}
+                                    onOpenChange={setIsSearchVisible}
+                                    placement="bottomRight"
+                                    className="mobile-search-popover"
                                 >
-                                    <Button className="export-button" loading={loading}>
-                                        <FiDownload size={16} />
-                                        <span>Export</span>
-                                        <FiChevronDown size={14} />
-                                    </Button>
-                                </Dropdown>
-                                <Button
-                                    type="primary"
-                                    icon={<FiPlus size={16} />}
-                                    onClick={() => setIsFormVisible(true)}
-                                    className="add-button"
-                                >
-                                    Add Inquiry
-                                </Button>
+                                    <Button
+                                        className="search-icon-button"
+                                        icon={<FiSearch size={16} />}
+                                    />
+                                </Popover>
                             </div>
+                            <Dropdown menu={exportMenuItems} trigger={["click"]}>
+                                <Button className="export-button">
+                                    <FiDownload size={16} />
+                                    <span className="button-text">Export</span>
+                                </Button>
+                            </Dropdown>
+                            <Button
+                                type="primary"
+                                icon={<FiPlus size={16} />}
+                                onClick={() => setIsFormVisible(true)}
+                                className="add-button"
+                            >
+                                <span className="button-text">Add Inquiry</span>
+                            </Button>
                         </div>
-                    </Col>
-                </Row>
+                    </div>
+                </div>
             </div>
 
             <Card
@@ -407,6 +441,10 @@ const Inquiry = () => {
                     dataSource={filteredInquiries}
                     rowKey="id"
                     loading={isLoading}
+                    scroll={{
+                        y: '',
+                        x: 1000
+                    }}
                     pagination={{
                         pageSize: 10,
                         showSizeChanger: false,

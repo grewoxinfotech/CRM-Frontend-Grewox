@@ -289,7 +289,6 @@ const Tickets = () => {
                                     onVisibleChange={setIsSearchVisible}
                                     placement="bottomRight"
                                     overlayClassName="search-popover"
-                                    getPopupContainer={(triggerNode) => triggerNode.parentNode}
                                 >
                                     <Button
                                         icon={<FiSearch size={18} />}
@@ -299,7 +298,6 @@ const Tickets = () => {
                                 <Dropdown overlay={exportMenu} trigger={["click"]}>
                                     <Button className="export-button">
                                         <FiDownload size={18} />
-                                        <span className="button-text">Export</span>
                                     </Button>
                                 </Dropdown>
                             </div>

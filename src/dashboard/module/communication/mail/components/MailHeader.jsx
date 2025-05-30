@@ -42,7 +42,6 @@ const MailHeader = ({ searchText, setSearchText, onRefresh, isRefreshing, select
         return <FiInbox />;
     }
   };
-
   return (
     <div className="mail-header">
       <div className="header-title">

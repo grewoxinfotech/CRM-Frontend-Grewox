@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Layout, Menu, Button, Badge, Avatar, Typography } from 'antd';
-import { FiEdit, FiInbox, FiStar, FiAlertCircle, FiSend, FiClock, FiTrash2, FiSettings, FiUser } from 'react-icons/fi';
+import { FiEdit, FiInbox, FiStar, FiAlertCircle, FiSend, FiClock, FiTrash2, FiSettings, FiUser, FiX } from 'react-icons/fi';
 import EmailSettingsModal from './EmailSettingsModal';
 
 const { Sider } = Layout;
@@ -15,13 +15,22 @@ const Sidebar = ({
   scheduledCount,
   trashCount,
   setComposeVisible,
-  className
+  className,
+  setSidebarVisible
 }) => {
   const [settingsVisible, setSettingsVisible] = useState(false);
 
   return (
     <Sider width={280} className={`mail-sider ${className || ''}`}>
       <div className="mail-filters">
+        <div className="mobile-close-button">
+          <Button
+            type="text"
+            icon={<FiX />}
+            onClick={() => setSidebarVisible(false)}
+          />
+        </div>
+
         {/* <div className="user-profile">
           <Avatar size={48} icon={<FiUser />} className="user-avatar" />
           <div className="user-info">

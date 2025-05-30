@@ -51,10 +51,15 @@ const Mail = () => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      setSidebarVisible(!mobile);
+      if (!mobile) {
+        setSidebarVisible(true);
+      } else {
+        setSidebarVisible(false);
+      }
     };
 
     window.addEventListener("resize", handleResize);
+    handleResize(); // Call it initially
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -253,15 +258,24 @@ const Mail = () => {
     }
   };
 
+  // Handle sidebar toggle
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
+  };
+
+  // Handle menu selection on mobile
+  const handleMenuSelect = (menu) => {
+    setSelectedMenu(menu);
+    if (isMobile) {
+      setSidebarVisible(false);
+    }
   };
 
   return (
     <Layout className="mail-layout">
       {isMobile && (
         <Button
-          className="mobile-menu-toggle"
+          className={`mobile-menu-toggle ${sidebarVisible ? 'sidebar-visible' : ''}`}
           icon={<FiMenu />}
           onClick={toggleSidebar}
         />
@@ -269,14 +283,15 @@ const Mail = () => {
 
       <Sidebar
         selectedMenu={selectedMenu}
-        setSelectedMenu={setSelectedMenu}
+        setSelectedMenu={handleMenuSelect}
         unreadCount={unreadCount}
         starredCount={starredCount}
         importantCount={importantCount}
         scheduledCount={scheduledCount}
         trashCount={trashCount}
         setComposeVisible={setComposeVisible}
-        className={sidebarVisible ? "visible" : ""}
+        className={`mail-sider ${sidebarVisible ? "visible" : ""}`}
+        setSidebarVisible={setSidebarVisible}
       />
 
       <Layout className="mail-content">
