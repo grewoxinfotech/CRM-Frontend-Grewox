@@ -65,9 +65,9 @@ const LeadMembers = ({ leadId }) => {
     useEffect(() => {
         if (leadData?.data?.lead_members) {
             try {
-                const parsedMembers = typeof leadData.data.lead_members === 'string'
-                    ? JSON.parse(leadData.data.lead_members)
-                    : leadData.data.lead_members;
+                const parsedMembers = typeof leadData?.data?.lead_members === 'string'
+                    ? JSON.parse(leadData?.data?.lead_members)
+                    : leadData?.data?.lead_members;
                 setSelectedMembers(parsedMembers.lead_members || []);
             } catch (error) {
                 console.error('Error parsing lead members:', error);
