@@ -72,12 +72,28 @@ const DealMember = ({ deal }) => {
   )?.id;
 
   // Filter users to get team members (excluding subclients)
-  const users =
-    usersResponse?.data?.filter(
-      (user) =>
-        user?.created_by === loggedInUser?.username &&
-        user?.role_id !== subclientRoleId
-    ) || [];
+  const users = (() => {
+    try {
+      return usersResponse?.data?.filter(
+        (user) => {
+          try {
+            // Make sure user data and created_by are valid
+            return user && 
+              (typeof user.created_by === 'string' ? 
+                user.created_by === loggedInUser?.username : 
+                false) && 
+              user?.role_id !== subclientRoleId;
+          } catch (error) {
+            console.error("Error parsing user data:", error);
+            return false;
+          }
+        }
+      ) || [];
+    } catch (error) {
+      console.error("Error filtering users data:", error);
+      return [];
+    }
+  })();
 
   // Parse deal_members from deal
   const assignedMembers = deal?.deal_members

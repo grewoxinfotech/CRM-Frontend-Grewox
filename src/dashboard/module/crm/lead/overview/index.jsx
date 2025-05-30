@@ -966,13 +966,18 @@ const LeadOverviewContent = ({
                   try {
                     if (!localLeadData?.lead_members) return "0";
                     
-                    if (typeof localLeadData.lead_members === "string") {
-                      const parsedMembers = JSON.parse(localLeadData.lead_members);
-                      return parsedMembers?.lead_members?.length || "0";
-                    } else if (typeof localLeadData.lead_members === "object") {
-                      return localLeadData.lead_members?.lead_members?.length || "0";
-                    }
-                    return "0";
+                    const parsedMembers = (() => {
+                      try {
+                        return typeof localLeadData.lead_members === 'string'
+                          ? JSON.parse(localLeadData.lead_members)
+                          : localLeadData.lead_members;
+                      } catch (error) {
+                        console.error('Error parsing lead members:', error);
+                        return { lead_members: [] };
+                      }
+                    })();
+                    
+                    return parsedMembers?.lead_members?.length || "0";
                   } catch (error) {
                     console.error("Error parsing lead members:", error);
                     return "0";
@@ -1128,19 +1133,16 @@ const LeadOverview = () => {
     if (!localLeadData) return null;
     
     // Parse lead_members safely
-    let leadMembers = [];
-    if (localLeadData.lead_members) {
+    const parsed = (() => {
       try {
-        if (typeof localLeadData.lead_members === 'string') {
-          const parsed = JSON.parse(localLeadData.lead_members);
-          leadMembers = parsed.lead_members || [];
-        } else if (typeof localLeadData.lead_members === 'object') {
-          leadMembers = localLeadData.lead_members.lead_members || [];
-        }
+        return typeof localLeadData.lead_members === 'string'
+          ? JSON.parse(localLeadData.lead_members)
+          : localLeadData.lead_members;
       } catch (error) {
-        console.error("Error parsing lead members:", error);
+        console.error('Error parsing lead members:', error);
+        return { lead_members: [] };
       }
-    }
+    })();
     
     return {
       id: localLeadData.id,
@@ -1155,7 +1157,7 @@ const LeadOverview = () => {
       category: localLeadData.category,
       status: localLeadData.status,
       interest_level: localLeadData.interest_level,
-      lead_members: leadMembers,
+      lead_members: parsed.lead_members,
       is_converted: localLeadData.is_converted,
     };
   }, [localLeadData]);
