@@ -49,15 +49,33 @@ export default function Dashboard() {
   const { data: stagesData } = useGetLeadStagesQuery(user?.id);
   const { data: meetings, isLoading: meetingsLoading } = useGetMeetingsQuery();
   const [leadsDateFilter, setLeadsDateFilter] = useState("all");
-  const { data: leadsData } = useGetLeadsQuery();
-  const { data: deal } = useGetDealsQuery();
-  const dealsData = deal || [];
+  const { data: leadsData } = useGetLeadsQuery({
+    page: 1,
+    pageSize: -1,
+    search: "",
+  });
+
+  console.log("leadsData", leadsData);
+
+  const { data: deal } = useGetDealsQuery({
+    page: 1,
+    pageSize: -1,
+    search: "",
+  });
+
+  console.log("deal", deal);
+
+  const dealsData = deal?.data || [];
   const [dealsDateFilter, setDealsDateFilter] = useState("all");
   const [tasksDateFilter, setTasksDateFilter] = useState("all");
   const [meetingsDateFilter, setMeetingsDateFilter] = useState("all");
   const [showAnalytics, setShowAnalytics] = useState(false);
 
-  const { data: revenueData } = useGetRevenueQuery();
+  const { data: revenueData } = useGetRevenueQuery({
+    page: 1,
+    pageSize: -1,
+    search: "",
+  });
 
   // Calculate real revenue data
   const calculateRevenue = () => {

@@ -188,13 +188,24 @@ const MeetingsTable = ({
             dataIndex: "employee",
             key: "employee",
             render: (employees) => {
-                const employeeArray = employees ? JSON.parse(employees) : [];
+                let employeeArray = [];
+                
+                try {
+                    employeeArray = employees ? (typeof employees === 'string' ? JSON.parse(employees) : employees) : [];
+                    // Make sure employeeArray is actually an array
+                    employeeArray = Array.isArray(employeeArray) ? employeeArray : [];
+                } catch (error) {
+                    console.error("Error parsing employees JSON:", error);
+                    // If there's a parsing error, try to handle it gracefully
+                    employeeArray = [];
+                }
+
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
                         <Avatar.Group maxCount={3}>
                             {employeeArray.map((emp, index) => (
                                 <Avatar key={index} style={{ backgroundColor: '#1890ff' }}>
-                                    {emp.slice(0, 2).toUpperCase()}
+                                    {typeof emp === 'string' ? emp.slice(0, 2).toUpperCase() : '?'}
                                 </Avatar>
                             ))}
                         </Avatar.Group>
