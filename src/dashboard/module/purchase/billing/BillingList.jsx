@@ -263,7 +263,6 @@ const BillingList = ({
             </div>
             <div className="info-wrapper">
               <div className="name">{billNumber || "N/A"}</div>
-              <div className="meta">Bill ID</div>
             </div>
           </div>
         </div>

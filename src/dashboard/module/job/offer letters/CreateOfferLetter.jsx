@@ -86,8 +86,6 @@ const CreateOfferLetter = ({ open, onCancel, loading, initialValues }) => {
                     expectedSalary: initialValues.expectedSalary,
                     description: initialValues.description
                 };
-
-                console.log(formattedValues);
                 
                 form.setFieldsValue(formattedValues);
             } else {

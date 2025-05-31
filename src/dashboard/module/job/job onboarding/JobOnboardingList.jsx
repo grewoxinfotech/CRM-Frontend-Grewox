@@ -370,7 +370,7 @@ const JobOnboardingList = ({ onboardings = [], onEdit, onDelete, loading, pagina
                     showTotal: (total) => `Total ${total} items`,
                     ...pagination
                 }}
-                className="custom-table"
+                // className="custom-table"
             />
         </div>
     );

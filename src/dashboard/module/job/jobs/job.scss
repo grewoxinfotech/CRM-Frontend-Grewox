@@ -437,10 +437,10 @@
                     overflow-y: hidden;
                 }
 
-                .ant-table-body {
-                    @include custom-scrollbar;
-                    overflow-y: auto !important;
-                }
+                // .ant-table-body {
+                //     @include custom-scrollbar;
+                //     overflow-y: auto !important;
+                // }
 
                 .ant-table-header {
                     @include custom-scrollbar;
@@ -803,8 +803,8 @@
     }
 }
 
-.job-list-container {
-  .ant-table-body, .ant-table-content {
-    @include custom-scrollbar;
-  }
-}
+// .job-list-container {
+//   .ant-table-body, .ant-table-content {
+//     @include custom-scrollbar;
+//   }
+// }

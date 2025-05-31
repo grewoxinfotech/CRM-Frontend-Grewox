@@ -733,7 +733,7 @@ const CreateProduct = ({
             }
             rules={[{ required: true, message: "Please enter HSN/SAC code" }]}
           >
-            <Input placeholder="Enter HSN/SAC code" style={{ width: "100%" }} />
+            <Input placeholder="Enter HSN/SAC code" style={{ width: "100%",height:"48px" }} />
           </Form.Item>
           
           <Form.Item
@@ -744,7 +744,7 @@ const CreateProduct = ({
               </span>
             }
           >
-            <Input placeholder="Enter tax name (e.g. GST, VAT)" style={{ width: "100%" }} />
+            <Input placeholder="Enter tax name (e.g. GST, VAT)" style={{ width: "100%",height:"48px" }} />
           </Form.Item>
           
           <Form.Item
@@ -770,7 +770,7 @@ const CreateProduct = ({
               min={0}
               max={100}
               addonAfter="%"
-              style={{ width: "100%" }}
+              style={{ width: "100%",height:"48px" }}
             />
           </Form.Item>
           
@@ -781,7 +781,7 @@ const CreateProduct = ({
             }
             rules={[{ required: true, message: "Please enter SKU" }]}
           >
-            <Input placeholder="Enter SKU" style={{ width: "100%" }} />
+            <Input placeholder="Enter SKU" style={{ width: "100%",height:"48px" }} />
           </Form.Item>
         </div>
 

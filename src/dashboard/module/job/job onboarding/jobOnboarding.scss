@@ -382,9 +382,9 @@
             .ant-table {
                 background: transparent;
 
-                .ant-table-body {
-                    @include custom-scrollbar;
-                }
+                // .ant-table-body {
+                //     @include custom-scrollbar;
+                // }
 
                 .ant-table-thead > tr > th {
                     background: #fafafa;
@@ -742,9 +742,9 @@
                 border-radius: 16px;
                 overflow: hidden;
             }
-            .ant-table-body, .ant-table-content {
-                @include custom-scrollbar;
-            }
+            // .ant-table-body, .ant-table-content {
+            //     @include custom-scrollbar;
+            // }
             .ant-table-thead > tr > th {
                 background: #fafafa;
                 font-weight: 600;

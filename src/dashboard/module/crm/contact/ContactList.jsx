@@ -122,6 +122,10 @@ const ContactList = ({
     }
     navigate(`/dashboard/crm/contact/${record.id}`);
   };
+  const handleView = (record) => {
+  
+    navigate(`/dashboard/crm/contact/${record.id}`);
+  };
 
   const filteredContacts = React.useMemo(() => {
     if (!enhancedContacts || !Array.isArray(enhancedContacts)) {
@@ -162,56 +166,52 @@ const ContactList = ({
     setCreateModalVisible(false);
   };
 
-  const getDropdownItems = (record) => ({
-    items: [
-      {
-        key: "view",
-        label: (
-          <Button
-            type="text"
-            className="dropdown-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRowClick(e, record);
-            }}
-          >
-            <FiEye className="dropdown-icon" /> View Details
-          </Button>
-        ),
-      },
-      {
-        key: "edit",
-        label: (
-          <Button
-            type="text"
-            className="dropdown-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit(record);
-            }}
-          >
-            <FiEdit2 className="dropdown-icon" /> Edit Contact
-          </Button>
-        ),
-      },
-      {
-        key: "delete",
-        label: (
-          <Button
-            type="text"
-            danger
-            className="dropdown-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(record.id);
-            }}
-          >
-            <FiTrash2 className="dropdown-icon" /> Delete Contact
-          </Button>
-        ),
-      },
-    ],
-  });
+  // const getDropdownItems = (record) => ({
+  //   items: [
+  //     {
+  //       key: "view",
+  //       label: (
+  //         <Button
+  //           type="text"
+  //           onClick={(e) => {
+  //             e.stopPropagation();
+  //             handleRowClick(e, record);
+  //           }}
+  //         >
+  //           View Details
+  //         </Button>
+  //       ),
+  //     },
+  //     {
+  //       key: "edit",
+  //       label: (
+  //         <Button
+  //           type="text"
+  //           onClick={(e) => {
+  //             e.stopPropagation();
+  //             handleEdit(record);
+  //           }}
+  //         >
+  //           Edit Contact
+  //         </Button>
+  //       ),
+  //     },
+  //     {
+  //       key: "delete",
+  //       label: (
+  //         <Button
+  //           type="text"
+  //           onClick={(e) => {
+  //             e.stopPropagation();
+  //             handleDelete(record.id);
+  //           }}
+  //         >
+  //           Delete Contact
+  //         </Button>
+  //       ),
+  //     },
+  //   ],
+  // });
 
   const columns = [
     {
@@ -298,21 +298,68 @@ const ContactList = ({
       key: "actions",
       width: 80,
       fixed: 'right',
-      render: (_, record) => (
-        <Dropdown
-          menu={getDropdownItems(record)}
-          trigger={['click']}
-          placement="bottomRight"
-          overlayClassName="contact-actions-dropdown"
-        >
-          <Button
-            type="text"
-            icon={<FiMoreVertical />}
-            className="action-button"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </Dropdown>
-      ),
+      // render: (_, record) => (
+      //   <Dropdown
+      //     menu={getDropdownItems(record)}
+      //     trigger={['click']}
+      //     placement="bottomRight"
+      //   >
+      //     <Button
+      //       type="text"
+      //       icon={<FiMoreVertical />}
+      //       className="action-button"
+      //       onClick={(e) => e.stopPropagation()}
+      //     />
+      //   </Dropdown>
+      // ),
+      render: (_, record) => {
+        const items = [
+          {
+            key: 'view',
+            icon: <FiEye style={{ fontSize: '16px' }} />,
+            label: 'View',
+            onClick: () => {
+           
+              handleView(record);
+            }
+          },
+          {
+            key: 'edit',
+            icon: <FiEdit2 style={{ fontSize: '16px' }} />,
+            label: 'Edit',
+            onClick: () => {
+              handleEdit(record);
+            }
+          },
+          {
+            key: 'delete',
+            icon: <FiTrash2 style={{ fontSize: '16px', color: '#ff4d4f' }} />,
+            label: 'Delete',
+            danger: true,
+            onClick: () => {
+              handleDelete(record.id);
+            }
+          }
+        ];
+
+        return (
+          <Dropdown
+            menu={{ items }}
+            trigger={['click']}
+            placement="bottomRight"
+            overlayClassName="action-dropdown"
+          >
+            <Button
+              type="text"
+              icon={<FiMoreVertical size={16} />}
+              className="action-button"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+          </Dropdown>
+        );
+      }
     },
   ];
 

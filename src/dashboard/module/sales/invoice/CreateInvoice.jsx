@@ -1328,7 +1328,7 @@ const CreateInvoice = ({
                                 },
                               ]}
                               initialValue={1}
-                              style={{ height: "48px",marginTop:"-10px",width:"100px" }}
+                              style={{ height: "48px",marginTop:"-10px",width:"70px" }}
                             >
                               <InputNumber
                                 min={1}
@@ -1345,7 +1345,7 @@ const CreateInvoice = ({
                             <Form.Item
                               {...restField}
                               name={[name, "unit_price"]}
-                              style={{width:"150px"}}
+                              style={{width:"120px"}}
                             >
                               <InputNumber
                                 className="price-input"
@@ -1366,7 +1366,7 @@ const CreateInvoice = ({
                             </Form.Item>
                           </td>
                           <td>
-                            <Form.Item {...restField} name={[name, "hsn_sac"]} style={{width:"150px"}}>
+                            <Form.Item {...restField} name={[name, "hsn_sac"]} style={{width:"120px"}}>
                               <Input
                                 placeholder="HSN/SAC"
                                 className="hsn-input"
@@ -1378,7 +1378,7 @@ const CreateInvoice = ({
                             <Form.Item
                               {...restField}
                               name={[name, "discount"]}
-                              style={{ marginTop: "-8px" }}
+                              style={{ marginTop: "-8px"}}
                             >
                               <Space>
                                 <Form.Item
@@ -1415,12 +1415,12 @@ const CreateInvoice = ({
                                   >
                                     <InputNumber
                                       className="item-discount-input"
-                                      placeholder={
-                                        form.getFieldValue("items")?.[index]
-                                          ?.discount_type === "fixed"
-                                          ? "Amount"
-                                          : "%"
-                                      }
+                                      // placeholder={
+                                      //   form.getFieldValue("items")?.[index]
+                                      //     ?.discount_type === "fixed"
+                                      //     ? "₹"
+                                      //     : "%"
+                                      // }
                                       formatter={(value) => {
                                         if (!value && value !== 0) return "";
                                         return value
@@ -1456,7 +1456,7 @@ const CreateInvoice = ({
                                         );
                                       }}
                                       style={{
-                                        width: "150px",
+                                        width: "100px",
                                         borderRadius: "8px",
                                         height: "40px",
                                         padding:"0px"
@@ -1477,7 +1477,7 @@ const CreateInvoice = ({
                             <Form.Item
                               {...restField}
                               name={[name, "tax_info"]}
-                              style={{ marginTop: "-15px" }}
+                              style={{ marginTop: "-8px" }}
                             >
                               <div style={{ display: "flex", alignItems: "center", gap: "4px", whiteSpace: "nowrap" }}>
                                 <Input
@@ -1489,7 +1489,7 @@ const CreateInvoice = ({
                                   placeholder="No Tax"
                                   readOnly
                                   disabled={!isTaxEnabled}
-                                  style={{ width: "120px" }}
+                                  style={{ width: "120px",height:"48px" }}
                                 />
                                 {isTaxEnabled && (
                                   <>

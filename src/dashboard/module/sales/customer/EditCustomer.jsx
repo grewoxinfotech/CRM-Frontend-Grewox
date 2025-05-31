@@ -72,29 +72,45 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
       let shippingAddress = {};
 
       try {
-        billingAddress =
-          typeof initialValues.billing_address === "string"
+        if (initialValues.billing_address) {
+          billingAddress = typeof initialValues.billing_address === "string"
             ? JSON.parse(initialValues.billing_address)
-            : initialValues.billing_address || {};
+            : initialValues.billing_address;
+        }
       } catch (error) {
-        console.error("Error parsing billing address:", error);
+        // If parsing fails, try to use the value as is
+        billingAddress = initialValues.billing_address || {};
       }
 
       try {
-        shippingAddress =
-          typeof initialValues.shipping_address === "string"
+        if (initialValues.shipping_address) {
+          shippingAddress = typeof initialValues.shipping_address === "string"
             ? JSON.parse(initialValues.shipping_address)
-            : initialValues.shipping_address || {};
+            : initialValues.shipping_address;
+        }
       } catch (error) {
-        console.error("Error parsing shipping address:", error);
+        // If parsing fails, try to use the value as is
+        shippingAddress = initialValues.shipping_address || {};
       }
 
       const formattedValues = {
         ...initialValues,
         phoneCode: phoneCode || "+91", // Ensure phoneCode is never null
         phoneNumber,
-        billing_address: billingAddress,
-        shipping_address: shippingAddress,
+        billing_address: {
+          street: billingAddress.street || "",
+          city: billingAddress.city || "",
+          state: billingAddress.state || "",
+          country: billingAddress.country || "",
+          postal_code: billingAddress.postal_code || "",
+        },
+        shipping_address: {
+          street: shippingAddress.street || "",
+          city: shippingAddress.city || "",
+          state: shippingAddress.state || "",
+          country: shippingAddress.country || "",
+          postal_code: shippingAddress.postal_code || "",
+        }
       };
       form.setFieldsValue(formattedValues);
 
@@ -136,11 +152,9 @@ const EditCustomer = ({ open, onCancel, onSubmit, initialValues, loading }) => {
         status: otherValues.status || "active",
         phonecode: selectedCountry.id,
 
-        // Address Information - stringify objects
-        billing_address: JSON.stringify(billingAddress),
-        shipping_address: JSON.stringify(shippingAddress),
-
-      
+        // Address Information - send as objects instead of stringified JSON
+        billing_address: billingAddress,
+        shipping_address: shippingAddress,
       };
 
       // If there's a profile image, append it to the data

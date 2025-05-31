@@ -48,7 +48,7 @@ const InvoiceList = ({
   loading,
   deals = [],
   onEdit,
-  onDelete,
+  // onDelete,
   onView,
   searchText = "",
   pagination = {}
@@ -307,7 +307,7 @@ const InvoiceList = ({
       ),
       onFilter: (value, record) => record.salesInvoiceNumber?.toLowerCase().includes(value.toLowerCase()),
       render: (_, record) => (
-        <div className="item-wrapper">
+        <div className="item-wrapper" onClick={() => handleView(record)} >
           <div className="item-content">
             <div className="icon-wrapper" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
               <FiFileText className="item-icon" />
@@ -389,7 +389,7 @@ const InvoiceList = ({
                   Edit Invoice
                 </Menu.Item>
               )}
-              <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record.id)}>
+              <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => handleDelete(record.id)}>
                 Delete Invoice
               </Menu.Item>
             </Menu>

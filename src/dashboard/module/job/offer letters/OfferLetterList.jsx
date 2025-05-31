@@ -32,9 +32,6 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
     // Fetch currency data
     const { data: currencyData } = useGetAllCurrenciesQuery();
 
-    console.log('Jobs Data:', jobsData);
-    console.log('Applications Data:', applicationsData);
-    console.log('Offer Letters:', offerLetters);
 
     // Create memoized maps for jobs and applications
     const jobMap = useMemo(() => {
@@ -121,12 +118,6 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
 
     // Function to get menu items for each row
     const getActionItems = (record) => [
-        {
-            key: 'view',
-            icon: <FiEye style={{ fontSize: '16px' }} />,
-            label: 'View',
-            onClick: () => onView(record)
-        },
         {
             key: 'edit',
             icon: <FiEdit2 style={{ fontSize: '16px' }} />,

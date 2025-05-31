@@ -143,7 +143,7 @@ const JobList = ({ jobs = [], onEdit, onDelete, loading, pagination }) => {
             title: "Job Title",
             dataIndex: "title",
             key: "title",
-            width: 200,
+            // width: 300,
             filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
                 <div style={{ padding: 8 }}>
                     <Input

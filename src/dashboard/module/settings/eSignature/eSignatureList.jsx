@@ -142,12 +142,6 @@ const ESignatureList = ({ signatures, onEdit, onDelete, onDownload, loading }) =
             render: (_, record) => {
                 const items = [
                     {
-                        key: 'view',
-                        icon: <FiEye style={{ fontSize: '14px' }} />,
-                        label: 'View',
-                        onClick: () => onDownload(record),
-                    },
-                    {
                         key: 'delete',
                         icon: <FiTrash2 style={{ fontSize: '14px', color: '#ff4d4f' }} />,
                         label: 'Delete',

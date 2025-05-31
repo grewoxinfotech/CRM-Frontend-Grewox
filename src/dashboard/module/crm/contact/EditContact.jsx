@@ -115,8 +115,6 @@ const EditContact = ({ open, onCancel, contactData }) => {
     return [];
   }, [companyAccountsResponse]);
 
-
-  // console.log("companyAccountsResponse", companyAccountsResponse);
   React.useEffect(() => {
     if (contactData) {
       // Find the contact owner's name from users data

@@ -115,8 +115,6 @@ const CreateJobOnboarding = ({ open, onCancel, isEditing, initialValues }) => {
                 created_by: localStorage.getItem('user_id')
             };
 
-            console.log('FormData being sent:', formData);
-
             const data = {
                 ...formData,
                 created_by: localStorage.getItem('user_id')

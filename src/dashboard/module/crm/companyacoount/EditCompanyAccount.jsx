@@ -133,7 +133,6 @@ const EditCompanyAccount = ({ open, onCancel, companyData, loggedInUser,categori
 
   React.useEffect(() => {
     if (companyData) {
-      console.log("companyData", companyData);
 
       // Find the account owner's name from users data
       let accountOwnerName = companyData?.account_owner;
