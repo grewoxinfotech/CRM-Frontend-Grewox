@@ -466,7 +466,7 @@ const DealMember = ({ deal }) => {
                 maxTagCount="responsive"
                 maxTagTextLength={15}
                 dropdownStyle={{
-                  maxHeight: "300px",
+                  maxHeight: "500px",
                   overflowY: "auto",
                   scrollbarWidth: "thin",
                   scrollBehavior: "smooth",
