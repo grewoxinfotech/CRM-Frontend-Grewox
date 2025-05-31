@@ -7,16 +7,20 @@ import { useSelector } from 'react-redux';
 const EditUser = ({ visible, onCancel, initialValues }) => {
     const [form] = Form.useForm();
     const [updateUser, { isLoading }] = useUpdateUserMutation();
-    const { data: rolesData } = useGetRolesQuery();
+    const { data: rolesData } = useGetRolesQuery({
+        page: 1,
+        pageSize: -1,
+        search: ''
+    });
 
     const currentUser = useSelector(state => state.auth.user);
 
-    const filteredRoles = rolesData?.data?.filter(role =>
+    const filteredRoles = rolesData?.message?.data?.filter(role =>
         role.created_by === currentUser?.username
     ) || [];
 
     const handleSubmit = async (values) => {
-        console.log(values);
+        console.log("values", values);
         try {
             const response = await updateUser({
                 id: initialValues.id,

@@ -86,13 +86,13 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
 
     const getActionMenu = (record) => (
         <Menu className="action-menu">
-            <Menu.Item
+            {/* <Menu.Item
                 key="view"
                 icon={<FiEye />}
                 onClick={() => onView(record)}
             >
                 View Details
-            </Menu.Item>
+            </Menu.Item> */}
             <Menu.Item
                 key="edit"
                 icon={<FiEdit2 />}
@@ -100,20 +100,20 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             >
                 Edit User
             </Menu.Item>
-            <Menu.Item
+            {/* <Menu.Item
                 key="resetPassword"
                 icon={<FiLock />}
                 onClick={() => console.log('Reset password')}
             >
                 Reset Password
-            </Menu.Item>
-            <Menu.Item
+            </Menu.Item> */}
+            {/* <Menu.Item
                 key="status"
                 icon={<FiUserCheck />}
                 onClick={() => console.log('Change status')}
             >
                 Change Status
-            </Menu.Item>
+            </Menu.Item> */}
             {record.role_name !== 'super-admin' && (
                 <Menu.Item
                     key="delete"

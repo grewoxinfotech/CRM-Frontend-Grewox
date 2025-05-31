@@ -118,6 +118,7 @@ const OfferLetterList = ({ offerLetters = [], onEdit, onDelete, onView, loading,
 
     // Function to get menu items for each row
     const getActionItems = (record) => [
+      
         {
             key: 'edit',
             icon: <FiEdit2 style={{ fontSize: '16px' }} />,

@@ -414,6 +414,7 @@ const LeadList = ({
       title: "Source",
       dataIndex: "source",
       key: "source",
+      width: 150,
       filters: sources.map((source) => ({
         text: source.name,
         value: source.id,
@@ -519,6 +520,7 @@ const LeadList = ({
       title: "Lead Value",
       dataIndex: "leadValue",
       key: "leadValue",
+      width: 150,
       sorter: (a, b) => (a.leadValue || 0) - (b.leadValue || 0),
       render: (value, record) => {
         return (
@@ -605,7 +607,7 @@ const LeadList = ({
         dataSource={leads?.data || []}
         rowKey="id"
         pagination={paginationConfig}
-        scroll={{ x: 1000, y: '' }}
+        scroll={{ x: 'max-content', y: '' }}
         loading={loading}
         onChange={onTableChange}
         onRow={(record) => ({

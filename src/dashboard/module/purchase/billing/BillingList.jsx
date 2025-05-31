@@ -229,6 +229,7 @@ const BillingList = ({
       title: "Bill Number",
       dataIndex: "billNumber",
       key: "billNumber",
+      width: 150,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
@@ -272,6 +273,7 @@ const BillingList = ({
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
+      width: 150,
       render: (amount, record) => {
         const items = typeof record.items === 'string' ? JSON.parse(record.items) : record.items;
         const currencyIcon = items?.[0]?.currencyIcon || '₹';
@@ -291,6 +293,7 @@ const BillingList = ({
       title: "Bill Date",
       dataIndex: "billDate",
       key: "billDate",
+      width: 150,
       render: (date) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -306,6 +309,7 @@ const BillingList = ({
       title: "Description",
       dataIndex: "discription",
       key: "discription",
+      width: 150,
       render: (description) => (
         <div className="item-wrapper">
           <div className="item-content">
@@ -319,6 +323,7 @@ const BillingList = ({
     {
       title: "Status",
       key: "status",
+      width: 150,
       render: (_, record) => getStatusTags(record.status, record.bill_status),
     },
     {
