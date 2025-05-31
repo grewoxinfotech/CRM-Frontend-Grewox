@@ -302,6 +302,7 @@ const DealList = ({
       title: "Source",
       dataIndex: "source",
       key: "source",
+      width: "150px",
       filters: sources.map((source) => ({
         text: source.name,
         value: source.id,
@@ -337,6 +338,7 @@ const DealList = ({
       title: "Stage",
       dataIndex: "stage",
       key: "stage",
+      width: "200px",
       filters: dealStages.map((stage) => ({
         text: stage.stageName,
         value: stage.id,
@@ -365,7 +367,7 @@ const DealList = ({
       title: "Expected Date",
       dataIndex: "closedDate",
       key: "closedDate",
-      width: "15%",
+      width: "200px",
       render: (date) => dayjs(date).format("DD-MM-YYYY"),
       filterDropdown: ({
         setSelectedKeys,
@@ -413,6 +415,7 @@ const DealList = ({
       title: "Value",
       dataIndex: "value",
       key: "value",
+      width: "150px",
       sorter: (a, b) => (a.value || 0) - (b.value || 0),
       render: (value, record) => (
         <Text strong style={{ fontSize: "14px", color: "#52c41a" }}>
@@ -517,7 +520,7 @@ const DealList = ({
           dataSource={deals}
           rowKey="id"
           pagination={paginationConfig}
-          scroll={{ x: 1000, y: '' }}
+          scroll={{ x: "max-content", y: '' }}
           loading={loading}
           onChange={onTableChange}
           onRow={(record) => ({
