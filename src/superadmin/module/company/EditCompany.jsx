@@ -82,7 +82,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
     const handleSubmit = async () => {
         try {
             setSubmitting(true);
-            const values = await form.validateFields();
+            const values = await form.getFieldsValue(); // Get all field values without validation
 
             const formData = new FormData();
 
@@ -114,11 +114,7 @@ const EditCompany = ({ visible, onCancel, initialValues, loading, onSubmit, isPr
                 onCancel();
             }
         } catch (error) {
-            if (error.errorFields) {
-                message.error('Please fill in all required fields correctly.');
-            } else {
-                message.error('An error occurred while saving. Please try again.');
-            }
+            message.error('An error occurred while saving. Please try again.');
             console.error('Form submission error:', error);
         } finally {
             setSubmitting(false);

@@ -20,17 +20,27 @@ const FollowupMeetingList = ({ dealId, users }) => {
     const [deleteFollowupMeeting] = useDeleteFollowupMeetingMutation();
 
    
-  const handleEdit = (callId) => {
-    const call = followupCall?.data?.find((c) => c.id === callId);
-    setSelectedCallId(callId);
-    setSelectedCallData(call);
+//   const handleEdit = (callId) => {
+//     const call = followupCall?.data?.find((c) => c.id === callId);
+//     setSelectedCallId(callId);
+//     setSelectedCallData(call);
 
-    if (call?.call_type === "scheduled") {
-      setEditModalVisible(true);
-    } else if (call?.call_type === "log") {
-      setEditLogModalVisible(true);
-    }
-  };
+//     if (call?.call_type === "scheduled") {
+//       setEditModalVisible(true);
+//     } else if (call?.call_type === "log") {
+//       setEditLogModalVisible(true);
+//     }
+//   };
+
+
+
+const handleEdit = (meetingId) => {
+    // Find the meeting data from the followupMeeting data
+    const meetingData = followupMeeting?.data?.find((meeting) => meeting.id === meetingId);
+    setSelectedCallId(meetingId);
+    setSelectedCallData(meetingData); // Store the found meeting data
+    setEditModalVisible(true);
+};
 
     const handleDelete = (id) => {
         Modal.confirm({
@@ -241,18 +251,19 @@ const FollowupMeetingList = ({ dealId, users }) => {
                 scroll={{ x: 'max-content', y: '100%' }}
             />
              {editModalVisible && (
-        <EditFollowupCall
+        <EditFollowupMeeting
           open={editModalVisible}
           onCancel={() => {
             setEditModalVisible(false);
             setSelectedCallId(null);
+            setSelectedCallData(null);
           }}
-          callId={selectedCallId}
-          callData={selectedCallData}
-          rtiId={rtiId}
+          meetingId={selectedCallId}
+          meetingData={selectedCallData}
           onSubmit={() => {
             setEditModalVisible(false);
             setSelectedCallId(null);
+            setSelectedCallData(null);
           }}
         />
       )}
@@ -265,7 +276,7 @@ const FollowupMeetingList = ({ dealId, users }) => {
           }}
           callId={selectedCallId}
           callData={selectedCallData}
-          rtiId={rtiId}
+        //   rtiId={rtiId}
           onSubmit={() => {
             setEditLogModalVisible(false);
             setSelectedCallId(null);

@@ -180,13 +180,14 @@ const DealFiles = ({ deal }) => {
             const fileExt = file.filename.split(".").pop().toLowerCase();
             return (
               <div key={index} className={`file-item ${fileExt}`}>
-                <div className="file-preview">
+                <div className="file-preview" onClick={() => window.open(file.url, "_blank")}
+                style={{ cursor: 'pointer' }}>
                   <div className="file-type-label">.{fileExt}</div>
                   <div className="file-icon">{getFileIcon(file.filename)}</div>
                 </div>
                 <div className="file-content">
                   <div className="file-info">
-                    <Text className="file-name" ellipsis>
+                    <Text className="file-name" ellipsis >
                       {file.filename}
                     </Text>
                     <Text className="file-date">

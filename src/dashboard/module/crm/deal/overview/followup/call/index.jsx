@@ -100,11 +100,13 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Status",
       dataIndex: "call_status",
       key: "call_status",
+      width: 100,
       render: (status) => getStatusTag(status),
     },
     {
       title: "Date & Time",
       key: "datetime",
+      width: 150,
       render: (_, record) => {
         try {
           if (!record.call_start_date || !record.call_start_time) return "-";
@@ -134,13 +136,14 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Purpose",
       dataIndex: "call_purpose",
       key: "call_purpose",
+      width: 150,
       render: (purpose) => purpose || "-",
     },
     {
       title: "Assigned To",
       dataIndex: "assigned_to",
       key: "assigned_to",
-      width: 200,
+      width: 150,
       render: (assignedTo) => {
         try {
           if (!assignedTo) return "-";
@@ -182,6 +185,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Reminder",
       dataIndex: "call_reminder",
       key: "call_reminder",
+      width: 100,
       render: (reminder) => {
         const reminderMap = {
           "5_min": "5 minutes before",
@@ -197,7 +201,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Notes",
       dataIndex: "call_notes",
       key: "call_notes",
-      width: 150,
+      width: 100,
       render: (notes) => notes || "-",
       ellipsis: true,
     },
@@ -205,7 +209,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Priority",
       dataIndex: "priority",
       key: "priority",
-      width: 150,
+      width: 100,
       render: (priority) => {
         const priorityMap = {
           highest: "High",
@@ -220,6 +224,7 @@ const FollowupCallList = ({ dealId, users }) => {
       title: "Call Type",
       dataIndex: "call_type",
       key: "call_type",
+      width: 120,
       render: (callType) => {
         if (!callType) return "-";
         return callType;

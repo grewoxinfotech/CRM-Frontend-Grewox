@@ -1598,6 +1598,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         <Input
                           style={{
                             width: "calc(100% - 120px)",
+                            height: "48px",
                             padding: "0 16px",
                           }}
                           placeholder="Enter phone number"

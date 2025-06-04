@@ -37,6 +37,7 @@ import {
   useUpdateFollowupMeetingMutation,
   useGetFollowupMeetingByIdQuery,
 } from "./services/followupMettingApi";
+import CreateUser from "../../../../../user-management/users/CreateUser";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -84,7 +85,7 @@ const EditFollowupMeeting = ({
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
   };
-
+  
   const getRoleColor = (role) => {
     const roleColors = {
       employee: {
@@ -123,6 +124,12 @@ const EditFollowupMeeting = ({
             assignedTo = { assigned_to: [] };
           }
         }
+
+        // Get usernames from assigned_to IDs
+        const assignedUsernames = assignedTo?.assigned_to?.map(userId => {
+          const user = usersResponse?.data?.find(u => u.id === userId);
+          return user?.username;
+        }).filter(username => username) || [currentUser?.username];
 
         // Parse reminder data
         let reminderData = meetingData.reminder;
@@ -176,33 +183,22 @@ const EditFollowupMeeting = ({
           venue: meetingData.venue || undefined,
           location: meetingData.location || undefined,
           meeting_link: meetingData.meeting_link || undefined,
-          from_date: meetingData.from_date
-            ? dayjs(meetingData.from_date)
-            : null,
-          from_time: meetingData.from_time
-            ? dayjs(meetingData.from_time, "HH:mm:ss")
-            : null,
+          from_date: meetingData.from_date ? dayjs(meetingData.from_date) : null,
+          from_time: meetingData.from_time ? dayjs(meetingData.from_time, "HH:mm:ss") : null,
           to_date: meetingData.to_date ? dayjs(meetingData.to_date) : null,
-          to_time: meetingData.to_time
-            ? dayjs(meetingData.to_time, "HH:mm:ss")
-            : null,
-          host: meetingData.host || undefined,
-          assigned_to: assignedTo?.assigned_to || [], // Set parsed participants
+          to_time: meetingData.to_time ? dayjs(meetingData.to_time, "HH:mm:ss") : null,
+          assigned_to: assignedUsernames,
           participants_reminder: meetingData.participants_reminder || undefined,
-          reminder_date: reminderData
-            ? dayjs(reminderData.reminder_date)
-            : null,
-          reminder_time: reminderData
-            ? dayjs(reminderData.reminder_time, "HH:mm:ss")
-            : null,
-          repeat: repeatData?.repeat_type || "none", // Set repeat type in form
+          reminder_date: reminderData ? dayjs(reminderData.reminder_date) : null,
+          reminder_time: reminderData ? dayjs(reminderData.reminder_time, "HH:mm:ss") : null,
+          repeat: repeatData?.repeat_type || "none",
         });
       } catch (error) {
         console.error("Error setting form values:", error);
         message.error("Error loading meeting data");
       }
     }
-  }, [meetingData, form]);
+  }, [meetingData, form, usersResponse?.data, currentUser]);
 
   // Update handleSubmit for editing
   const handleSubmit = async (values) => {
@@ -252,11 +248,14 @@ const EditFollowupMeeting = ({
         from_time: values.from_time.format("HH:mm:ss"),
         to_date: values.to_date.format("YYYY-MM-DD"),
         to_time: values.to_time.format("HH:mm:ss"),
-        host: values.host,
+        meeting_status: "in_progress",
         assigned_to: {
-          assigned_to: Array.isArray(values.assigned_to)
-            ? values.assigned_to
-            : [values.assigned_to],
+          assigned_to: values.assigned_to && values.assigned_to.length > 0
+            ? values.assigned_to.map(username => {
+                const user = usersResponse?.data?.find(u => u.username === username);
+                return user?.id;
+              }).filter(id => id)
+            : [currentUser?.id]
         },
         reminder: reminderData,
         repeat: repeatData,
@@ -320,6 +319,12 @@ const EditFollowupMeeting = ({
     }
   };
 
+  const handleCreateUserSuccess = (newUser) => {
+    setIsCreateUserVisible(false);
+    const currentAssignees = form.getFieldValue("assigned_to") || [];
+    form.setFieldValue("assigned_to", [...currentAssignees, newUser.id]);
+  };
+
   const handleRepeatToggle = (checked) => {
     setRepeatType(checked ? "daily" : "none");
   };
@@ -347,6 +352,7 @@ const EditFollowupMeeting = ({
 
   // Return the same form structure as CreateFollowupMeeting, but with updated title
   return (
+    <>
     <Modal
       title={null}
       open={open}
@@ -619,29 +625,12 @@ const EditFollowupMeeting = ({
         </div>
 
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-            marginBottom: "16px",
-          }}
+        
         >
-          {/* <Form.Item
-                        name="host"
-                        label={<span style={formItemStyle}>Host</span>}
-                        initialValue={currentUser?.username}
-                    >
-                        <Input
-                            value={currentUser?.username}
-                            disabled
-                            style={{
-                                ...inputStyle,
-                                backgroundColor: '#f3f4f6'
-                            }}
-                        />
-                    </Form.Item> */}
+         
+         
 
-          <div style={{ marginBottom: "24px" }}>
+         <div style={{ marginBottom: "24px" }}>
             <Text
               strong
               style={{
@@ -657,15 +646,16 @@ const EditFollowupMeeting = ({
               name="assigned_to"
               label={
                 <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                  Participants
+                  Assign To
                 </span>
               }
+              initialValue={[currentUser?.username]}
             >
               <Select
                 mode="multiple"
                 placeholder="Select team members"
                 style={{
-                  width: "205%",
+                  width: "100%", 
                   height: "auto",
                   minHeight: "48px",
                 }}
@@ -673,7 +663,7 @@ const EditFollowupMeeting = ({
                 maxTagCount="responsive"
                 maxTagTextLength={15}
                 dropdownStyle={{
-                  maxHeight: "300px",
+                  maxHeight: "400px",
                   overflowY: "auto",
                   scrollbarWidth: "thin",
                   scrollBehavior: "smooth",
@@ -765,6 +755,98 @@ const EditFollowupMeeting = ({
                   </>
                 )}
               >
+                <Option key={currentUser?.username} value={currentUser?.username}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "4px 0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        background: "#e6f4ff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#1890ff",
+                        fontSize: "16px",
+                        fontWeight: "500",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {currentUser?.profilePic ? (
+                        <img
+                          src={currentUser.profilePic}
+                          alt={currentUser.username}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        currentUser?.username?.charAt(0) || <FiUser />
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "4px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: 500,
+                          color: "rgba(0, 0, 0, 0.85)",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {currentUser?.username}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginLeft: "auto",
+                      }}
+                    >
+                      <div
+                        className="role-indicator"
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: getRoleColor(currentUser?.roleName).color,
+                          boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                          animation: "pulse 2s infinite",
+                        }}
+                      />
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "12px",
+                          background: getRoleColor(currentUser?.roleName).bg,
+                          color: getRoleColor(currentUser?.roleName).color,
+                          border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                          fontWeight: 500,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {currentUser?.roleName || "User"}
+                      </span>
+                    </div>
+                  </div>
+                </Option>
                 {Array.isArray(users) &&
                   users.map((user) => {
                     const userRole = rolesData?.data?.find(
@@ -773,7 +855,7 @@ const EditFollowupMeeting = ({
                     const roleStyle = getRoleColor(userRole?.role_name);
 
                     return (
-                      <Option key={user.id} value={user.id}>
+                      <Option key={user.username} value={user.username}>
                         <div
                           style={{
                             display: "flex",
@@ -1236,10 +1318,94 @@ const EditFollowupMeeting = ({
           )}
         </div>
 
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+            marginTop: "20px",
+          }}
+        >
+        <Form.Item
+
+            name="priority"
+            label={<span style={formItemStyle}>Priority <span style={{ color: "#ff4d4f" }}></span></span>}
+            rules={[{ required: true, message: "Please select priority" }]}
+            initialValue="medium"
+          >
+            <Select
+              placeholder="Select priority"
+              style={selectStyle}
+              suffixIcon={<FiChevronDown size={14} />}
+              defaultValue="medium"
+            >
+              <Option value="highest">
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ff4d4f",
+                    }}
+                  />
+                  Highest - Urgent and Critical
+                </div>
+              </Option>
+              <Option value="high">
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#faad14",
+                    }}
+                  />
+                  High - Important
+                </div>
+              </Option>
+              <Option value="medium">
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#1890ff",
+                    }}
+                  />
+                  Medium - Normal
+                </div>
+              </Option>
+              <Option value="low">
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: "#52c41a",
+                    }}
+                  />
+                  Low - Can Wait
+                </div>
+              </Option>
+            </Select>
+          </Form.Item>
+
         <Form.Item
           name="participants_reminder"
           label="Participants Reminder"
-          style={{ marginTop: "20px" }}
+          // style={{ marginTop: "20px" }}
         >
           <Select
             placeholder="Select reminder option"
@@ -1260,6 +1426,7 @@ const EditFollowupMeeting = ({
             <Option value="1_hour">1 hour before</Option>
           </Select>
         </Form.Item>
+        </div>
 
         <div
           style={{
@@ -1297,6 +1464,15 @@ const EditFollowupMeeting = ({
         </div>
       </Form>
     </Modal>
+    <CreateUser
+        visible={isCreateUserVisible}
+        onCancel={() => {
+          setIsCreateUserVisible(false);
+          setTeamMembersOpen(true);
+        }}
+        onSuccess={handleCreateUserSuccess}
+      />
+    </>
   );
 };
 

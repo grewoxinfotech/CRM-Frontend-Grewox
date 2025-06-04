@@ -228,12 +228,12 @@ const ContactList = ({
               )}
             </div>
             <div className="info-wrapper">
-              <div className="name">
+              <div className="name" >
                 {record.first_name} {record.last_name}
               </div>
-              <div className="meta">
-                <FiMail size={12} />
-                {record.email}
+              <div className="meta" style={{ display: 'flex', alignItems: 'center' }}>
+                <FiMail size={12} style={{  marginRight: '5px' }} />
+                {record.email }
               </div>
             </div>
           </div>
@@ -252,7 +252,7 @@ const ContactList = ({
             <div className="info-wrapper">
               <div className="name">{record.company_display_name}</div>
               <div className="meta">
-                <FiPhone size={12} />
+                <FiPhone size={12}   />
                 {record.phone}
               </div>
             </div>

@@ -1522,6 +1522,39 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   width: "100%",
                   minHeight: "48px",
                 }}
+                tagRender={(props) => {
+                  const { value, closable, onClose } = props;
+                  let displayName = users.find(u => u.id === value)?.name || users.find(u => u.id === value)?.username || value;
+                  if (value === loggedInUser?.id) {
+                    displayName = loggedInUser?.name || loggedInUser?.username || value;
+                  }
+                  return (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        background: '#e6f4ff',
+                        color: '#1890ff',
+                        borderRadius: '6px',
+                        padding: '2px 8px',
+                        marginRight: 4,
+                        fontWeight: 500,
+                        fontSize: 13,
+                        gap: 4,
+                      }}
+                    >
+                      {displayName}
+                      {closable && (
+                        <span
+                          style={{ marginLeft: 4, cursor: 'pointer' }}
+                          onClick={onClose}
+                        >
+                          ×
+                        </span>
+                      )}
+                    </div>
+                  );
+                }}
                 dropdownRender={(menu) => (
                   <>
                     {menu}
@@ -1875,16 +1908,25 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                       <Select
                         style={{ width: "120px" }}
                         className="phone-code-select"
-                        dropdownMatchSelectWidth={120}
+                        dropdownMatchSelectWidth={false}
                         suffixIcon={<FiChevronDown size={14} />}
-                        popupClassName="custom-select-dropdown sticky-add-button"
+                        popupClassName="custom-select-dropdown"
                         showSearch
                         optionFilterProp="children"
-                        filterOption={(input, option) =>
-                          option?.children?.props?.children[0]?.props?.children
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
+                        filterOption={(input, option) => {
+                          const country = countries?.find(
+                            (c) => c.id === option.value
+                          );
+                          return (
+                            country?.countryName
+                              ?.toLowerCase()
+                              .includes(input.toLowerCase()) ||
+                            country?.countryCode
+                              ?.toLowerCase()
+                              .includes(input.toLowerCase()) ||
+                            country?.phoneCode?.includes(input)
+                          );
+                        }}
                       >
                         {countries?.map((country) => (
                           <Option key={country.id} value={country.id}>
@@ -1892,7 +1934,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                               style={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: "6px",
+                                gap: "8px",
                               }}
                             >
                               <span style={{ fontSize: "14px" }}>
@@ -1907,9 +1949,10 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                       </Select>
                     </Form.Item>
                     <Form.Item name="telephone" noStyle>
-                      <InputNumber
+                      <Input
                         style={{
-                          width: "calc(100% - 100px)",
+                          width: "calc(100% - 120px)",
+                          height: "48px",
                           padding: "0 16px",
                         }}
                         placeholder="Enter phone number"
