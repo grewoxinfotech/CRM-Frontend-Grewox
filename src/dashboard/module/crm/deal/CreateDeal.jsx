@@ -893,7 +893,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                               gap: "8px",
                             }}
                           >
-                            <span style={{ fontSize: "14px" }}>
+                            <span style={{ fontSize: "14px" }}> 
                               {currency.currencyIcon}
                             </span>
                             <span style={{ fontSize: "14px" }}>

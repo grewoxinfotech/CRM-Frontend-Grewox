@@ -37,6 +37,7 @@ import {
   FiBox,
   FiBriefcase,
   FiGlobe,
+  FiEdit2,
 } from "react-icons/fi";
 import { useGetLeadQuery, useGetLeadsQuery, useUpdateLeadMutation } from "../services/LeadApi";
 import {
@@ -46,6 +47,7 @@ import {
 import { useGetCompanyAccountsQuery } from "../../companyacoount/services/companyAccountApi";
 import { useGetContactsQuery } from "../../contact/services/contactApi";
 import CreateDeal from "../../deal/CreateDeal";
+import EditLead from "../EditLead";
 import { useGetPipelinesQuery } from "../../crmsystem/pipeline/services/pipelineApi";
 import { useGetLeadStagesQuery } from "../../crmsystem/leadstage/services/leadStageApi";
 import { useSelector } from "react-redux";
@@ -297,6 +299,7 @@ const LeadOverviewContent = ({
   pipelineStages,
   onStageUpdate,
   isUpdating,
+  setIsEditModalOpen
 }) => { 
 
 console.log("leaddata", initialLeadData)
@@ -394,7 +397,27 @@ console.log("leaddata", initialLeadData)
               )}
             </div>
             <div className="profile-info">
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
               <h2 className="company-names">{localLeadData?.leadTitle}</h2>
+               <Button
+              type="primary"
+              icon={<FiEdit2 />}
+              onClick={() => setIsEditModalOpen(true)}
+              style={{
+                background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                border: "none",
+                height: "44px",
+                padding: "0 24px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                borderRadius: "10px",
+                fontWeight: "500",
+              }}
+            >
+              Edit
+            </Button>
+            </div>
               <div className="contact-details">
                 {localLeadData?.company_id &&
                   companyData?.data?.[0] &&
@@ -1092,8 +1115,14 @@ const LeadOverview = () => {
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
   const currentUser = useSelector(selectCurrentUser);
   const [isCreateDealModalOpen, setIsCreateDealModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [localLeadData, setLocalLeadData] = useState(lead?.data);
   const savedStageOrder = useSelector(selectStageOrder);
+  const { data: currencies = [] } = useGetAllCurrenciesQuery();
+  const { data: countries = [] } = useGetAllCountriesQuery();
+  const { data: sourcesData = [] } = useGetSourcesQuery(currentUser?.id);
+  const { data: categoriesData = [] } = useGetCategoriesQuery(currentUser?.id);
+  const { data: statusesData = [] } = useGetStatusesQuery(currentUser?.id);
 
   console.log("asdsads",localLeadData)
 
@@ -1233,7 +1262,7 @@ const LeadOverview = () => {
     }
   };
 
-  const items = [
+  const items = useMemo(() => [
     {
       key: "overview",
       label: (
@@ -1247,6 +1276,7 @@ const LeadOverview = () => {
           pipelineStages={pipelineStages}
           onStageUpdate={handleStageUpdate}
           isUpdating={isUpdatingLead}
+          setIsEditModalOpen={setIsEditModalOpen}
         />
       ),
     },
@@ -1295,7 +1325,7 @@ const LeadOverview = () => {
       ),
       children: <LeadFollowup leadId={leadId} />,
     },
-  ];
+  ], [localLeadData, pipelineStages, handleStageUpdate, isUpdatingLead, setIsEditModalOpen]);
 
   const isLoading = isLoadingLead || isLoadingStages;
 
@@ -1336,6 +1366,7 @@ const LeadOverview = () => {
         </div>
         <div className="header-right">
           <Space>
+           
             <Button
               type="primary"
               icon={<FiArrowLeft />}
@@ -1399,6 +1430,20 @@ const LeadOverview = () => {
         leadData={formattedLeadData}
         pipelines={pipelines}
       />
+
+      {isEditModalOpen && (
+        <EditLead
+          open={isEditModalOpen}
+          onCancel={() => setIsEditModalOpen(false)}
+          initialValues={localLeadData}
+          pipelines={pipelines}
+          currencies={currencies}
+          countries={countries}
+          categoriesData={categoriesData}
+          sourcesData={sourcesData}
+          statusesData={statusesData}
+        />
+      )}
     </div>
   );
 };

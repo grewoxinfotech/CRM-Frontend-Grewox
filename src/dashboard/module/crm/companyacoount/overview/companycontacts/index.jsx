@@ -40,6 +40,8 @@ const CompanyContactList = () => {
   const [selectedContact, setSelectedContact] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { data: contactsResponsee, isLoading, error } = useGetContactsQuery({
     page: 1,
@@ -60,9 +62,11 @@ const CompanyContactList = () => {
   const idd = useParams();
   const id = idd.accountId;
 
-    const contactsResponse = contactsResponsee?.data?.filter(
-      (contact) => contact.company_name === id
-    );
+  const { data: contactsResponse, isLoading: isContactsLoading } = useGetContactsQuery({
+    page: currentPage,
+    pageSize,
+    search: searchText
+  });
 
     console.log("contactsResponse", contactsResponse);
 

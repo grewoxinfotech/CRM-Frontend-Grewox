@@ -206,12 +206,12 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
   useEffect(() => {
     if (initialValues) {
       // Parse assigned_to if it's a string
-      let assignedTo = initialValues.assigned_to;
+      let assignedTo = initialValues.deal_members;
       if (typeof assignedTo === "string") {
         try {
           assignedTo = JSON.parse(assignedTo);
         } catch (e) {
-          assignedTo = { assigned_to: [] };
+          assignedTo = { deal_members: [] };
         }
       }
 
@@ -258,7 +258,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         products: selectedProducts,
         closedDate: initialValues.closedDate ? dayjs(initialValues.closedDate) : null,
         status: initialValues.status || "pending",
-        assigned_to: dealMembers,
+        deal_members: dealMembers,
         is_won: initialValues.is_won,
         // Add contact details for 'new' mode
         firstName: initialValues.firstName || "",
@@ -390,6 +390,9 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         (c) => c.id === values.currency
       );
 
+      // Get all selected team members
+      const selectedMembers = values.deal_members || [];
+
       // Prepare deal update data
       const dealData = {
         id: initialValues.id,
@@ -407,7 +410,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
         category: values.category,
         source: values.source,
         products: { products: values.products || [] },
-        assigned_to: { assigned_to: values.assigned_to || [] },
+        deal_members: { deal_members: selectedMembers }, // Send all selected members
         is_won:
           values.status === "won"
             ? true
@@ -1514,7 +1517,7 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
             </Text>
           </div>
           <div style={{ marginBottom: "32px" }}>
-            <Form.Item name="assigned_to" style={{ marginBottom: "16px" }}>
+            <Form.Item name="deal_members" style={{ marginBottom: "16px" }}>
               <Select
                 mode="multiple"
                 placeholder="Select team members"
@@ -1522,6 +1525,10 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   width: "100%",
                   minHeight: "48px",
                 }}
+                // maxTagCount={2}
+                // maxTagTextLength={15}
+                open={teamMembersOpen}
+                onDropdownVisibleChange={setTeamMembersOpen}
                 tagRender={(props) => {
                   const { value, closable, onClose } = props;
                   let displayName = users.find(u => u.id === value)?.name || users.find(u => u.id === value)?.username || value;
@@ -1559,14 +1566,66 @@ const EditDeal = ({ open, onCancel, initialValues }) => {
                   <>
                     {menu}
                     <Divider style={{ margin: "8px 0" }} />
-                    <Button
-                      type="text"
-                      icon={<FiUserPlus />}
-                      onClick={handleCreateUser}
-                      style={{ width: "100%", textAlign: "left" }}
-                    >
-                      Add New User
-                    </Button>
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                      padding: '0 8px',
+                      justifyContent: 'flex-end'
+                    }}>
+                      <Button
+                        type="text"
+                        icon={<FiUserPlus style={{ fontSize: '16px', color: '#ffffff' }} />}
+                        onClick={handleCreateUser}
+                        style={{
+                          height: '36px',
+                          padding: '8px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)';
+                        }}
+                      >
+                        Add New User
+                      </Button>
+                      <Button
+                        type="text"
+                        icon={<FiShield style={{ fontSize: '16px', color: '#1890ff' }} />}
+                        onClick={() => {
+                          setTeamMembersOpen(false);
+                        }}
+                        style={{
+                          height: '36px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          background: '#ffffff',
+                          border: '1px solid #1890ff',
+                          color: '#1890ff',
+                          fontWeight: '500'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#e6f4ff';
+                          e.currentTarget.style.borderColor = '#69b1ff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#ffffff';
+                          e.currentTarget.style.borderColor = '#1890ff';
+                        }}
+                      >
+                        Done
+                      </Button>
+                    </div>
                   </>
                 )}
               >

@@ -185,56 +185,97 @@ const CreateTask = ({
           ? dayjs(initialValues.reminder_date)
           : null,
         assignTo: initialValues.assignTo || [],
+        task_reporter: initialValues.task_reporter || currentUser?.username,
+        status: initialValues.status || "in_progress",
+        priority: initialValues.priority || "medium"
       };
       form.setFieldsValue(formattedValues);
+    } else {
+      // Set default values when no initial values are provided
+      form.setFieldsValue({
+        assignTo: [currentUser?.username],
+        task_reporter: currentUser?.username,
+        status: "in_progress",
+        priority: "medium"
+      });
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, currentUser]);
 
   const handleSubmit = async (values) => {
     try {
-      const formData = new FormData();
+      // Convert usernames to IDs for assigned_to and ensure current user is included if empty
+      const assignedUsers = values.assignTo && values.assignTo.length > 0
+        ? values.assignTo.map(username => {
+            const user = teamMembers.find(u => u.username === username);
+            return user?.id;
+          }).filter(id => id)
+        : [currentUser?.id];  // Default to current user if no selections
 
-      formData.append("taskName", values.taskName || "");
-      formData.append("section", "task");
-      formData.append("task_reporter", values.task_reporter || "");
-      formData.append(
-        "startDate",
-        values.startDate?.format("YYYY-MM-DD") || ""
-      );
-      formData.append("dueDate", values.dueDate?.format("YYYY-MM-DD") || "");
-      formData.append(
-        "reminder_date",
-        values.reminder_date?.format("YYYY-MM-DD") || ""
-      );
-      formData.append("priority", values.priority || "");
-      formData.append("status", values.status || "");
-      formData.append("description", values.description || "");
+      // Convert username to ID for task_reporter
+      const task_reporter = values.task_reporter
+        ? teamMembers.find(u => u.username === values.task_reporter)?.id || currentUser?.id
+        : currentUser?.id;
 
-      if (Array.isArray(values.assignTo) && values.assignTo.length > 0) {
-        values.assignTo.forEach((userId, index) => {
-          if (userId && userId.trim() !== "") {
-            formData.append(`assignTo[assignedusers][${index}]`, userId);
-          }
-        });
-      }
+      // Create the request data
+      const requestData = {
+        taskName: values.taskName || "",
+        section: "task",
+        task_reporter: task_reporter,
+        assignTo: {
+          assignedusers: assignedUsers.length > 0 ? assignedUsers : [currentUser?.id] // Ensure we always have at least current user
+        },
+        startDate: values.startDate?.format("YYYY-MM-DD") || "",
+        dueDate: values.dueDate?.format("YYYY-MM-DD") || "",
+        reminder_date: values.reminder_date?.format("YYYY-MM-DD") || "",
+        priority: values.priority || "medium",
+        status: values.status || "in_progress",
+        description: values.description || ""
+      };
 
+      // If there's a file, handle it with FormData
       if (fileList.length > 0 && fileList[0].originFileObj) {
+        const formData = new FormData();
+        Object.keys(requestData).forEach(key => {
+          formData.append(key, key === 'assignTo' ? JSON.stringify(requestData[key]) : requestData[key]);
+        });
         formData.append("file", fileList[0].originFileObj);
+
+        const response = await createTask({
+          id: relatedId,
+          data: formData,
+        }).unwrap();
+
+        form.resetFields();
+        setFileList([]);
+        onSubmit(response); 
+        onCancel();
+      } else {
+        // If no file, send data directly as JSON
+        const response = await createTask({
+          id: relatedId,
+          data: requestData,
+        }).unwrap();
+
+        form.resetFields();
+        setFileList([]);
+        onSubmit(response);
+        onCancel();
       }
-
-      const response = await createTask({
-        id: relatedId,
-        data: formData,
-      }).unwrap();
-
-      // message.success("Task created successfully");
-      form.resetFields();
-      setFileList([]);
-      onSubmit(response);
-      onCancel();
     } catch (error) {
       console.error("Submit Error:", error);
       message.error(error?.data?.message || "Failed to create task");
+    }
+  };
+
+  // Add validation for dates
+  const validateDates = {
+    validator: async (_, value) => {
+      const startDate = form.getFieldValue('startDate');
+      const dueDate = form.getFieldValue('dueDate');
+      
+      if (startDate && dueDate && dueDate.isBefore(startDate)) {
+        throw new Error('Due date cannot be before start date');
+      }
     }
   };
 
@@ -350,6 +391,12 @@ const CreateTask = ({
         layout="vertical"
         onFinish={handleSubmit}
         requiredMark={false}
+        initialValues={{
+          status: "in_progress",
+          priority: "medium",
+          assignTo: [currentUser?.username],
+          task_reporter: currentUser?.username
+        }}
         style={{
           padding: "24px",
         }}
@@ -401,7 +448,10 @@ const CreateTask = ({
                   Start Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select start date" }]}
+              rules={[
+                { required: true, message: "Please select start date" },
+                validateDates
+              ]}
               style={{ marginTop: "22px" }}
             >
               <DatePicker
@@ -425,7 +475,10 @@ const CreateTask = ({
                   Due Date <span style={{ color: "#ff4d4f" }}>*</span>
                 </span>
               }
-              rules={[{ required: true, message: "Please select due date" }]}
+              rules={[
+                { required: true, message: "Please select due date" },
+                validateDates
+              ]}
               style={{ marginTop: "22px" }}
             >
               <DatePicker
@@ -447,14 +500,15 @@ const CreateTask = ({
           <Col span={12}>
             <Form.Item
               name="priority"
-              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
-              rules={[{ required: true, message: "Please select priority" }]}
+              label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Priority</span>}
+              initialValue="medium"
               style={{ marginTop: "22px" }}
             >
               <Select
                 placeholder="Select priority"
                 style={selectStyle}
                 suffixIcon={<FiChevronDown size={14} />}
+                defaultValue="medium"
               >
                 <Option value="highest">
                   <div
@@ -541,11 +595,13 @@ const CreateTask = ({
               label={<span style={{ fontSize: "14px", fontWeight: "500" }}>Status <span style={{ color: "#ff4d4f" }}>*</span></span>}
               rules={[{ required: true, message: "Please select status" }]}
               style={{ marginTop: "22px" }}
+              initialValue="in_progress"
             >
               <Select
                 placeholder="Select status"
                 style={selectStyle}
                 suffixIcon={<FiChevronDown size={14} />}
+                defaultValue="in_progress"
               >
                 <Option value="not_started">
                   <div
@@ -656,6 +712,7 @@ const CreateTask = ({
           }
           rules={[{ required: true, message: "Please select assignees" }]}
           style={{ marginTop: "22px" }}
+          initialValue={[currentUser?.username]}
         >
           <Select
             mode="multiple"
@@ -665,102 +722,195 @@ const CreateTask = ({
               height: "auto",
               minHeight: "48px",
             }}
-           listHeight={300}
-                 maxTagCount="responsive"
-            maxTagTextLength={15}
-            dropdownStyle={{
-              maxHeight: "300px",
-              overflowY: "auto",
-              scrollbarWidth: "thin",
-              scrollBehavior: "smooth",
-            }}
-            popupClassName="team-members-dropdown"
-            showSearch
-            optionFilterProp="children"
-            loading={usersLoading}
-            open={teamMembersOpen}
-            onDropdownVisibleChange={setTeamMembersOpen}
-            dropdownRender={(menu) => (
-              <>
-                {menu}
-                <Divider style={{ margin: "8px 0" }} />
+            defaultValue={currentUser?.username ? [currentUser?.username] : []}
+            listHeight={300}
+            maxTagCount="responsive"
+         maxTagTextLength={15}
+         dropdownStyle={{
+           maxHeight: "800px",
+           overflowY: "auto",
+           scrollbarWidth: "thin",
+           scrollBehavior: "smooth",
+         }}
+         popupClassName="team-members-dropdown"
+         showSearch
+         optionFilterProp="children"
+         loading={usersLoading}
+         open={teamMembersOpen}
+         onDropdownVisibleChange={setTeamMembersOpen}
+         dropdownRender={(menu) => (
+           <>
+             {menu}
+             <Divider style={{ margin: "8px 0" }} />
+             <div
+               style={{
+                 display: "flex",
+                 gap: "8px",
+                 padding: "0 8px",
+                 justifyContent: "flex-end",
+               }}
+             >
+               <Button
+                 type="text"
+                 icon={
+                   <FiUserPlus
+                     style={{ fontSize: "16px", color: "#ffffff" }}
+                   />
+                 }
+                 onClick={handleCreateUser}
+                 style={{
+                   height: "36px",
+                   padding: "8px 12px",
+                   display: "flex",
+                   alignItems: "center",
+                   gap: "8px",
+                   background:
+                     "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                   color: "#ffffff",
+                   border: "none",
+                   borderRadius: "6px",
+                 }}
+                 onMouseEnter={(e) => {
+                   e.currentTarget.style.background =
+                     "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
+                 }}
+                 onMouseLeave={(e) => {
+                   e.currentTarget.style.background =
+                     "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
+                 }}
+               >
+                 Add New User
+               </Button>
+               <Button
+                 type="text"
+                 icon={
+                   <FiShield
+                     style={{ fontSize: "16px", color: "#1890ff" }}
+                   />
+                 }
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   setTeamMembersOpen(false);
+                 }}
+                 style={{
+                   height: "36px",
+                   borderRadius: "6px",
+                   display: "flex",
+                   alignItems: "center",
+                   justifyContent: "center",
+                   gap: "8px",
+                   background: "#ffffff",
+                   border: "1px solid #1890ff",
+                   color: "#1890ff",
+                   fontWeight: "500",
+                 }}
+                 onMouseEnter={(e) => {
+                   e.currentTarget.style.background = "#e6f4ff";
+                   e.currentTarget.style.borderColor = "#69b1ff";
+                 }}
+                 onMouseLeave={(e) => {
+                   e.currentTarget.style.background = "#ffffff";
+                   e.currentTarget.style.borderColor = "#1890ff";
+                 }}
+               >
+                 Done
+               </Button>
+             </div>
+           </>
+         )}
+          >
+            <Option key={currentUser?.id} value={currentUser?.username}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "#e6f4ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1890ff",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentUser?.profilePic ? (
+                    <img
+                      src={currentUser?.profilePic}
+                      alt={currentUser?.username}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    currentUser?.username?.charAt(0) || <FiUser />
+                  )}
+                </div>
                 <div
                   style={{
                     display: "flex",
-                    gap: "8px",
-                    padding: "0 8px",
-                    justifyContent: "flex-end",
+                    flexDirection: "row",
+                    gap: "4px",
                   }}
                 >
-                  <Button
-                    type="text"
-                    icon={
-                      <FiUserPlus
-                        style={{ fontSize: "16px", color: "#ffffff" }}
-                      />
-                    }
-                    onClick={handleCreateUser}
+                  <span
                     style={{
-                      height: "36px",
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      background:
-                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: "6px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
+                      fontWeight: 500,
+                      color: "rgba(0, 0, 0, 0.85)",
+                      fontSize: "14px",
                     }}
                   >
-                    Add New User
-                  </Button>
-                  <Button
-                    type="text"
-                    icon={
-                      <FiShield
-                        style={{ fontSize: "16px", color: "#1890ff" }}
-                      />
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTeamMembersOpen(false);
-                    }}
-                    style={{
-                      height: "36px",
-                      borderRadius: "6px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      background: "#ffffff",
-                      border: "1px solid #1890ff",
-                      color: "#1890ff",
-                      fontWeight: "500",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "#e6f4ff";
-                      e.currentTarget.style.borderColor = "#69b1ff";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "#ffffff";
-                      e.currentTarget.style.borderColor = "#1890ff";
-                    }}
-                  >
-                    Done
-                  </Button>
+                    {currentUser?.username}
+                  </span>
                 </div>
-              </>
-            )}
-          >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div
+                    className="role-indicator"
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: getRoleColor(currentUser?.roleName).color,
+                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      background: getRoleColor(currentUser?.roleName).bg,
+                      color: getRoleColor(currentUser?.roleName).color,
+                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {currentUser?.roleName || "User"}
+                  </span>
+                </div>
+              </div>
+            </Option>
             {teamMembers.map((user) => {
               const userRole = rolesData?.message?.data?.find(
                 (role) => role.id === user.role_id
@@ -770,7 +920,7 @@ const CreateTask = ({
                 roleStyles.default;
 
               return (
-                <Option key={user.id} value={user.id}>
+                <Option key={user.id} value={user.username}>
                   <div
                     style={{
                       display: "flex",
@@ -876,6 +1026,7 @@ const CreateTask = ({
           }
           rules={[{ required: true, message: "Please select task reporter" }]}
           style={{ marginTop: "22px" }}
+          initialValue={currentUser?.username}
         >
           <Select
             showSearch
@@ -885,18 +1036,100 @@ const CreateTask = ({
               height: "auto",
               minHeight: "48px",
             }}
-            listHeight={200}
-            maxTagCount={1}
-            maxTagTextLength={15}
-            dropdownStyle={{
-              maxHeight: "320px",
-              overflowY: "auto",
-              scrollbarWidth: "thin",
-              scrollBehavior: "smooth",
-            }}
-            popupClassName="team-members-dropdown"
-            optionFilterProp="children"
+            defaultValue={currentUser?.username}
           >
+            <Option key={currentUser?.id} value={currentUser?.username}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "#e6f4ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1890ff",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentUser?.profilePic ? (
+                    <img
+                      src={currentUser?.profilePic}
+                      alt={currentUser?.username}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    currentUser?.username?.charAt(0) || <FiUser />
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "4px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      color: "rgba(0, 0, 0, 0.85)",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {currentUser?.username}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div
+                    className="role-indicator"
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: getRoleColor(currentUser?.roleName).color,
+                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      background: getRoleColor(currentUser?.roleName).bg,
+                      color: getRoleColor(currentUser?.roleName).color,
+                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {currentUser?.roleName || "User"}
+                  </span>
+                </div>
+              </div>
+            </Option>
             {teamMembers.map((user) => {
               const userRole = rolesData?.message?.data?.find(
                 (role) => role.id === user.role_id
@@ -904,7 +1137,7 @@ const CreateTask = ({
               const roleStyle = getRoleColor(userRole?.role_name);
 
               return (
-                <Option key={user.id} value={user.id}>
+                <Option key={user.id} value={user.username}>
                   <div
                     style={{
                       display: "flex",

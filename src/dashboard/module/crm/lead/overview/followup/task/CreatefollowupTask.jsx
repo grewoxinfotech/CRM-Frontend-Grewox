@@ -124,6 +124,11 @@ const CreatefollowupTask = ({
         bg: "#E6F7FF",
         border: "#91D5FF",
       },
+      company: {
+        color: "#531CAD",
+        bg: "#F9F0FF",
+        border: "#D3ADF7",
+      },
       manager: {
         color: "#08979C",
         bg: "#E6FFFB",
@@ -198,6 +203,15 @@ const CreatefollowupTask = ({
     return current && current.isBefore(dayjs(), "day");
   };
 
+  // Set initial values based on currentUser existence
+  // useEffect(() => {
+  //   if (currentUser?.username && currentUser?.created_by) {
+  //     form.setFieldsValue({
+  //       assigned_to: [currentUser.username]
+  //     });
+  //   }
+  // }, [currentUser, form]);
+
   const handleSubmit = async (values) => {
     try {
       // Prepare reminder data
@@ -235,11 +249,13 @@ const CreatefollowupTask = ({
             }
           : null;
 
-      // If no assignee is selected, assign to current user
-      const assignedTo =
-        values.assigned_to && values.assigned_to.length > 0
-          ? values.assigned_to
-          : [currentUser?.id];
+      // Only use current user as default if they are properly created
+      const assignedTo = values.assigned_to && values.assigned_to.length > 0
+        ? values.assigned_to.map(username => {
+            const user = usersResponse?.data?.find(u => u.username === username);
+            return user?.id;
+          }).filter(id => id)
+        : [currentUser?.id];
 
       // Format the final payload
       const formattedValues = {
@@ -424,13 +440,14 @@ const CreatefollowupTask = ({
 
             <Form.Item
               name="priority"
-              label={<span style={formItemStyle}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
-              rules={[{ required: true, message: "Please select priority" }]}
+              label={<span style={formItemStyle}>Priority </span>}
+              initialValue="medium"
             >
               <Select
                 placeholder="Select priority"
                 style={selectStyle}
                 suffixIcon={<FiChevronDown size={14} />}
+                defaultValue="medium"
               >
                 <Option value="highest">
                   <div
@@ -536,6 +553,7 @@ const CreatefollowupTask = ({
             <Select
               mode="multiple"
               placeholder="Select team members"
+              defaultValue={currentUser?.username ? [currentUser.username] : []}
               style={{
                 width: "100%",
                 height: "auto",
@@ -545,7 +563,7 @@ const CreatefollowupTask = ({
                  maxTagCount="responsive"
               maxTagTextLength={15}
               dropdownStyle={{
-                maxHeight: "300px",
+                maxHeight: "800px",
                 overflowY: "auto",
                 scrollbarWidth: "thin",
                 scrollBehavior: "smooth",
@@ -637,6 +655,98 @@ const CreatefollowupTask = ({
                 </>
               )}
             >
+                <Option key={currentUser?.id} value={currentUser?.username}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "#e6f4ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1890ff",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentUser?.profilePic ? (
+                    <img
+                      src={currentUser?.profilePic}
+                      alt={currentUser?.username}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    currentUser?.username?.charAt(0) || <FiUser />
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "4px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      color: "rgba(0, 0, 0, 0.85)",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {currentUser?.username}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div
+                    className="role-indicator"
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: getRoleColor(currentUser?.roleName).color,
+                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      background: getRoleColor(currentUser?.roleName).bg,
+                      color: getRoleColor(currentUser?.roleName).color,
+                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {currentUser?.roleName || "User"}
+                  </span>
+                </div>
+              </div>
+            </Option>
               {Array.isArray(users) &&
                 users.map((user) => {
                   const userRole = rolesData?.data?.find(
@@ -645,7 +755,7 @@ const CreatefollowupTask = ({
                   const roleStyle = getRoleColor(userRole?.role_name);
 
                   return (
-                    <Option key={user.id} value={user.id}>
+                    <Option key={user.username} value={user.username}>
                       <div
                         style={{
                           display: "flex",
