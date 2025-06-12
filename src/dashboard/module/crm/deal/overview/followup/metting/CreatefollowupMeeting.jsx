@@ -39,6 +39,7 @@ import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
 import { message } from "antd";
 import { useCreateFollowupMeetingMutation } from "./services/followupMettingApi";
+import CreateUser from "../../../../../user-management/users/CreateUser";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -124,6 +125,12 @@ const CreateMeeting = ({
 
   const handleCreateUser = () => {
     setIsCreateUserVisible(true);
+  };
+
+  const handleCreateUserSuccess = (newUser) => {
+    setIsCreateUserVisible(false);
+    const currentAssignees = form.getFieldValue("assigned_to") || [];
+    form.setFieldValue("assigned_to", [...currentAssignees, newUser.id]);
   };
 
   // Watch from_date field to enable repeat option
@@ -234,12 +241,8 @@ const CreateMeeting = ({
             }
           : null;
 
-      // Ensure assigned_to is always an array
-      const assignedToArray = Array.isArray(values.assigned_to)
-        ? values.assigned_to
-        : [values.assigned_to].filter(Boolean);
 
-      // Format the final payload
+          // Format the final payload
       const formattedValues = {
         title: values.title,
         section: "deal",
@@ -253,7 +256,12 @@ const CreateMeeting = ({
         to_time: values.to_time.format("HH:mm:ss"),
         meeting_status: "in_progress",
         assigned_to: {
-          assigned_to: assignedToArray,
+          assigned_to: values.assigned_to && values.assigned_to.length > 0
+            ? values.assigned_to.map(username => {
+                const user = usersResponse?.data?.find(u => u.username === username);
+                return user?.id;
+              }).filter(id => id)
+            : [currentUser?.id]
         },
         reminder: reminderData,
         repeat: repeatData,
@@ -340,6 +348,7 @@ const CreateMeeting = ({
   };
 
   return (
+    <>
     <Modal
       title={null}
       open={open}
@@ -443,6 +452,8 @@ const CreateMeeting = ({
           from_time: initialTime,
           to_date: initialDate,
           to_time: initialTime,
+          assigned_to: currentUser?.username ? [currentUser.username] : [],
+          priority: "medium"
         }}
         style={{ padding: "24px" }}
       >
@@ -683,235 +694,327 @@ const CreateMeeting = ({
         </div>
 
         <div style={{ marginBottom: "24px" }}>
-          <Text
-            strong
-            style={{
-              fontSize: "16px",
-              color: "#1f2937",
-              display: "block",
-              marginBottom: "16px",
-            }}
-          >
-            Assignment 
-          </Text>
-          <Form.Item
-            name="assigned_to"
-            label={
-              <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Participants <span style={{ color: "#ff4d4f" }}>*</span>
-              </span>
-            }
-            rules={[{ required: true, message: "Please select participants" }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select team members"
+            <Text
+              strong
               style={{
-                width: "100%",
-                height: "auto",
-                minHeight: "48px",
+                fontSize: "16px",
+                color: "#1f2937",
+                display: "block",
+                marginBottom: "16px",
               }}
-              listHeight={300}
-              maxTagCount="responsive"
-              maxTagTextLength={15}
-              dropdownStyle={{
-                maxHeight: "300px",
-                overflowY: "auto",
-                scrollbarWidth: "thin",
-                scrollBehavior: "smooth",
-              }}
-              popupClassName="team-members-dropdown"
-              showSearch
-              optionFilterProp="children"
-              loading={usersLoading}
-              open={teamMembersOpen}
-              onDropdownVisibleChange={setTeamMembersOpen}
-              dropdownRender={(menu) => (
-                <>
-                  {menu}
-                  <Divider style={{ margin: "8px 0" }} />
+            >
+              Assignment
+            </Text>
+            <Form.Item
+              name="assigned_to"
+              label={
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  Assign To
+                </span>
+              }
+              initialValue={[currentUser?.username]}
+            >
+              <Select
+                mode="multiple"
+                placeholder="Select team members"
+                style={{
+                  width: "100%", 
+                  height: "auto",
+                  minHeight: "48px",
+                }}
+                listHeight={300}
+                maxTagCount="responsive"
+                maxTagTextLength={15}
+                dropdownStyle={{
+                  maxHeight: "400px",
+                  overflowY: "auto",
+                  scrollbarWidth: "thin",
+                  scrollBehavior: "smooth",
+                }}
+                popupClassName="team-members-dropdown"
+                showSearch
+                optionFilterProp="children"
+                loading={usersLoading}
+                open={teamMembersOpen}
+                onDropdownVisibleChange={setTeamMembersOpen}
+                dropdownRender={(menu) => (
+                  <>
+                    {menu}
+                    <Divider style={{ margin: "8px 0" }} />
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "8px",
+                        padding: "0 8px",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      <Button
+                        type="text"
+                        icon={
+                          <FiUserPlus
+                            style={{ fontSize: "16px", color: "#ffffff" }}
+                          />
+                        }
+                        onClick={handleCreateUser}
+                        style={{
+                          height: "36px",
+                          padding: "8px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background:
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          borderRadius: "6px",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background =
+                            "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background =
+                            "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
+                        }}
+                      >
+                        Add New User
+                      </Button>
+                      <Button
+                        type="text"
+                        icon={
+                          <FiShield
+                            style={{ fontSize: "16px", color: "#1890ff" }}
+                          />
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTeamMembersOpen(false);
+                        }}
+                        style={{
+                          height: "36px",
+                          borderRadius: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          background: "#ffffff",
+                          border: "1px solid #1890ff",
+                          color: "#1890ff",
+                          fontWeight: "500",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#e6f4ff";
+                          e.currentTarget.style.borderColor = "#69b1ff";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#ffffff";
+                          e.currentTarget.style.borderColor = "#1890ff";
+                        }}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </>
+                )}
+              >
+                <Option key={currentUser?.username} value={currentUser?.username}>
                   <div
                     style={{
                       display: "flex",
-                      gap: "8px",
-                      padding: "0 8px",
-                      justifyContent: "flex-end",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "4px 0",
                     }}
                   >
-                    <Button
-                      type="text"
-                      icon={
-                        <FiUserPlus
-                          style={{ fontSize: "16px", color: "#ffffff" }}
-                        />
-                      }
-                      onClick={handleCreateUser}
+                    <div
                       style={{
-                        height: "36px",
-                        padding: "8px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        background:
-                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "6px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background =
-                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
-                      }}
-                    >
-                      Add New User
-                    </Button>
-                    <Button
-                      type="text"
-                      icon={
-                        <FiShield
-                          style={{ fontSize: "16px", color: "#1890ff" }}
-                        />
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTeamMembersOpen(false);
-                      }}
-                      style={{
-                        height: "36px",
-                        borderRadius: "6px",
+                        width: "40px",
+                        height: "40px",
+                        borderRadius: "50%",
+                        background: "#e6f4ff",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "8px",
-                        background: "#ffffff",
-                        border: "1px solid #1890ff",
                         color: "#1890ff",
+                        fontSize: "16px",
                         fontWeight: "500",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#e6f4ff";
-                        e.currentTarget.style.borderColor = "#69b1ff";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#ffffff";
-                        e.currentTarget.style.borderColor = "#1890ff";
+                        textTransform: "uppercase",
                       }}
                     >
-                      Done
-                    </Button>
-                  </div>
-                </>
-              )}
-            >
-              {Array.isArray(users) &&
-                users.map((user) => {
-                  const userRole = rolesData?.data?.find(
-                    (role) => role.id === user.role_id
-                  );
-                  const roleStyle = getRoleColor(userRole?.role_name);
-
-                  return (
-                    <Option key={user.id} value={user.id}>
-                      <div
+                      {currentUser?.profilePic ? (
+                        <img
+                          src={currentUser.profilePic}
+                          alt={currentUser.username}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        currentUser?.username?.charAt(0) || <FiUser />
+                      )}
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "4px",
+                      }}
+                    >
+                      <span
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "12px",
-                          padding: "4px 0",
+                          fontWeight: 500,
+                          color: "rgba(0, 0, 0, 0.85)",
+                          fontSize: "14px",
                         }}
                       >
+                        {currentUser?.username}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginLeft: "auto",
+                      }}
+                    >
+                      <div
+                        className="role-indicator"
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: getRoleColor(currentUser?.roleName).color,
+                          boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                          animation: "pulse 2s infinite",
+                        }}
+                      />
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontSize: "12px",
+                          background: getRoleColor(currentUser?.roleName).bg,
+                          color: getRoleColor(currentUser?.roleName).color,
+                          border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                          fontWeight: 500,
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {currentUser?.roleName || "User"}
+                      </span>
+                    </div>
+                  </div>
+                </Option>
+                {Array.isArray(users) &&
+                  users.map((user) => {
+                    const userRole = rolesData?.data?.find(
+                      (role) => role.id === user.role_id
+                    );
+                    const roleStyle = getRoleColor(userRole?.role_name);
+
+                    return (
+                      <Option key={user.username} value={user.username}>
                         <div
                           style={{
-                            width: "40px",
-                            height: "40px",
-                            borderRadius: "50%",
-                            background: "#e6f4ff",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            color: "#1890ff",
-                            fontSize: "16px",
-                            fontWeight: "500",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {user.profilePic ? (
-                            <img
-                              src={user.profilePic}
-                              alt={user.username}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          ) : (
-                            user.username?.charAt(0) || <FiUser />
-                          )}
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: "4px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontWeight: 500,
-                              color: "rgba(0, 0, 0, 0.85)",
-                              fontSize: "14px",
-                            }}
-                          >
-                            {user.username}
-                          </span>
-                        </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            marginLeft: "auto",
+                            gap: "12px",
+                            padding: "4px 0",
                           }}
                         >
                           <div
-                            className="role-indicator"
                             style={{
-                              width: "8px",
-                              height: "8px",
+                              width: "40px",
+                              height: "40px",
                               borderRadius: "50%",
-                              background: roleStyle.color,
-                              boxShadow: `0 0 8px ${roleStyle.color}`,
-                              animation: "pulse 2s infinite",
-                            }}
-                          />
-                          <span
-                            style={{
-                              padding: "2px 8px",
-                              borderRadius: "4px",
-                              fontSize: "12px",
-                              background: roleStyle.bg,
-                              color: roleStyle.color,
-                              border: `1px solid ${roleStyle.border}`,
-                              fontWeight: 500,
-                              textTransform: "capitalize",
+                              background: "#e6f4ff",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#1890ff",
+                              fontSize: "16px",
+                              fontWeight: "500",
+                              textTransform: "uppercase",
                             }}
                           >
-                            {userRole?.role_name || "User"}
-                          </span>
+                            {user.profilePic ? (
+                              <img
+                                src={user.profilePic}
+                                alt={user.username}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  borderRadius: "50%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            ) : (
+                              user.username?.charAt(0) || <FiUser />
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "row",
+                              gap: "4px",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: 500,
+                                color: "rgba(0, 0, 0, 0.85)",
+                                fontSize: "14px",
+                              }}
+                            >
+                              {user.username}
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              marginLeft: "auto",
+                            }}
+                          >
+                            <div
+                              className="role-indicator"
+                              style={{
+                                width: "8px",
+                                height: "8px",
+                                borderRadius: "50%",
+                                background: roleStyle.color,
+                                boxShadow: `0 0 8px ${roleStyle.color}`,
+                                animation: "pulse 2s infinite",
+                              }}
+                            />
+                            <span
+                              style={{
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                fontSize: "12px",
+                                background: roleStyle.bg,
+                                color: roleStyle.color,
+                                border: `1px solid ${roleStyle.border}`,
+                                fontWeight: 500,
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {userRole?.role_name || "User"}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </Option>
-                  );
-                })}
-            </Select>
-          </Form.Item>
-        </div>
+                      </Option>
+                    );
+                  })}
+              </Select>
+            </Form.Item>
+          </div>
 
         <div style={{ marginBottom: "24px" }}>
           <div
@@ -1263,13 +1366,15 @@ const CreateMeeting = ({
         >
           <Form.Item
             name="priority"
-            label={<span style={formItemStyle}>Priority <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Priority <span style={{ color: "#ff4d4f" }}></span></span>}
             rules={[{ required: true, message: "Please select priority" }]}
+            initialValue="medium"
           >
             <Select
               placeholder="Select priority"
               style={selectStyle}
               suffixIcon={<FiChevronDown size={14} />}
+              defaultValue="medium"
             >
               <Option value="highest">
                 <div
@@ -1392,6 +1497,15 @@ const CreateMeeting = ({
         </div>
       </Form>
     </Modal>
+    <CreateUser
+        visible={isCreateUserVisible}
+        onCancel={() => {
+          setIsCreateUserVisible(false);
+          setTeamMembersOpen(true);
+        }}
+        onSuccess={handleCreateUserSuccess}
+      />
+    </>
   );
 };
 

@@ -79,9 +79,12 @@ const DealMember = ({ deal }) => {
           try {
             // Make sure user data and created_by are valid
             return user && 
-              (typeof user.created_by === 'string' ? 
+              ((typeof user.created_by === 'string' ? 
                 user.created_by === loggedInUser?.username : 
-                false) && 
+                false) || 
+              (typeof user.username === 'string' ?
+                user.username === loggedInUser?.username :
+                false)) &&
               user?.role_id !== subclientRoleId;
           } catch (error) {
             console.error("Error parsing user data:", error);
@@ -308,7 +311,7 @@ const DealMember = ({ deal }) => {
               borderRadius: "8px",
             }}
           >
-            Add Members
+            Update Members
           </Button>
         </div>
 

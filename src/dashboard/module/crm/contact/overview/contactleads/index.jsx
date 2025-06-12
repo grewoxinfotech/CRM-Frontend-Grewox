@@ -133,7 +133,7 @@ const ContactLeadsList = () => {
   }, [leads, searchText]);
 
   const handleLeadClick = (lead) => {
-    navigate(`/dashboard/crm/lead/${lead.id}`);
+    navigate(`/dashboard/crm/leads/${lead.id}`);
   };
 
   const handleEdit = (lead) => {

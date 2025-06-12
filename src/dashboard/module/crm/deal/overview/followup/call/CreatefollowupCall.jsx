@@ -33,6 +33,7 @@ import { useGetRolesQuery } from "../../../../../hrm/role/services/roleApi";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../../../../auth/services/authSlice";
 import { useCreateFollowupCallMutation } from "./services/followupCallApi";
+import CreateUser from "../../../../../user-management/users/CreateUser";
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -60,6 +61,12 @@ const CreateFollowupCall = ({
   const subclientRoleId = rolesData?.data?.find(
     (role) => role?.role_name === "sub-client"
   )?.id;
+
+  const handleCreateUserSuccess = (newUser) => {
+    setIsCreateUserVisible(false);
+    const currentAssignees = form.getFieldValue("assigned_to") || [];
+    form.setFieldValue("assigned_to", [...currentAssignees, newUser.id]);
+  };
 
   // Filter users to get team members (excluding subclients)
   const users =
@@ -108,15 +115,16 @@ const CreateFollowupCall = ({
   };
 
   const handleSubmit = async (values) => {
-    const assignedToArray = Array.isArray(values.assigned_to)
-      ? values.assigned_to
-      : [values.assigned_to].filter(Boolean);
-
     try {
       const formattedValues = {
         ...values,
         assigned_to: {
-          assigned_to: assignedToArray,
+          assigned_to: values.assigned_to && values.assigned_to.length > 0
+            ? values.assigned_to.map(username => {
+                const user = usersResponse?.data?.find(u => u.username === username);
+                return user?.id;
+              }).filter(id => id)
+            : [currentUser?.id]
         },
         call_type: "scheduled",
         section: "deal",
@@ -145,6 +153,7 @@ const CreateFollowupCall = ({
   };
 
   return (
+    <>
     <Modal
       title={null}
       open={open}
@@ -353,14 +362,17 @@ const CreateFollowupCall = ({
             name="priority"
             label={
               <span style={formItemStyle}>
-                Priority <span style={{ color: "#ff4d4f" }}>*</span>
+                Priority <span style={{ color: "#ff4d4f" }}></span>
               </span>
+            
             }
             rules={[{ required: true, message: "Please select priority" }]}
+            initialValue="medium"
           >
             <Select
               placeholder="Select priority"
               style={{ width: "100%", borderRadius: "10px", height: "48px" }}
+              defaultValue="medium"
             >
               <Option value="highest">
                 <div
@@ -462,13 +474,16 @@ const CreateFollowupCall = ({
             name="assigned_to"
             label={
               <span style={{ fontSize: "14px", fontWeight: "500" }}>
-                Assign To
+                Assign To <span style={{ color: "#ff4d4f" }}>*</span>
               </span>
             }
+            rules={[{ required: true, message: "Please select team members" }]}
+            initialValue={currentUser?.username ? [currentUser.username] : []}
           >
             <Select
               mode="multiple"
-              placeholder="Select team members"
+              placeholder={`${currentUser?.username || 'Select team members'}`}
+              defaultValue={currentUser?.username ? [currentUser.username] : []}
               style={{
                 width: "100%",
                 height: "auto",
@@ -478,7 +493,7 @@ const CreateFollowupCall = ({
               maxTagCount="responsive"
               maxTagTextLength={15}
               dropdownStyle={{
-                maxHeight: "300px",
+                maxHeight: "400px",
                 overflowY: "auto",
                 scrollbarWidth: "thin",
                 scrollBehavior: "smooth",
@@ -570,6 +585,86 @@ const CreateFollowupCall = ({
                 </>
               )}
             >
+                <Option key={currentUser?.username} value={currentUser?.username}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '4px 0'
+                  }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: '#e6f4ff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#1890ff',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      textTransform: 'uppercase'
+                    }}>
+                      {currentUser?.profilePic ? (
+                        <img
+                          src={currentUser.profilePic}
+                          alt={currentUser.username}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '50%',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      ) : (
+                        currentUser?.username?.charAt(0) || <FiUser />
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      gap: '4px'
+                    }}>
+                      <span style={{
+                        fontWeight: 500,
+                        color: 'rgba(0, 0, 0, 0.85)',
+                        fontSize: '14px'
+                      }}>
+                        {currentUser?.username}
+                      </span>
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginLeft: 'auto'
+                    }}>
+                      <div
+                        className="role-indicator"
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          background: getRoleColor(currentUser?.roleName).color,
+                          boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                          animation: 'pulse 2s infinite'
+                        }}
+                      />
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        background: getRoleColor(currentUser?.roleName).bg,
+                        color: getRoleColor(currentUser?.roleName).color,
+                        border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                        fontWeight: 500,
+                        textTransform: 'capitalize'
+                      }}>
+                        {currentUser?.roleName || 'User'}
+                      </span>
+                    </div>
+                  </div>
+                </Option>
               {Array.isArray(users) &&
                 users.map((user) => {
                   const userRole = rolesData?.data?.find(
@@ -578,7 +673,7 @@ const CreateFollowupCall = ({
                   const roleStyle = getRoleColor(userRole?.role_name);
 
                   return (
-                    <Option key={user.id} value={user.id}>
+                    <Option key={user.username} value={user.username}>
                       <div
                         style={{
                           display: "flex",
@@ -763,6 +858,15 @@ const CreateFollowupCall = ({
         </div>
       </Form>
     </Modal>
+    <CreateUser
+        visible={isCreateUserVisible}
+        onCancel={() => {
+          setIsCreateUserVisible(false);
+          setTeamMembersOpen(true);
+        }}
+        onSuccess={handleCreateUserSuccess}
+      />
+    </>
   );
 };
 

@@ -15,7 +15,8 @@ import {
     FiCalendar,
     FiToggleRight,
     FiCheck,
-    FiX as FiXCircle
+    FiX as FiXCircle,   
+    FiLock
 } from 'react-icons/fi';
 import { PiRocketBold } from 'react-icons/pi';
 import moment from 'moment';
@@ -23,6 +24,7 @@ import { useAdminLoginMutation } from '../../../auth/services/authApi';
 import { useNavigate } from 'react-router-dom';
 import { useGetAllAssignedPlansQuery } from './services/companyApi';
 import CreateUpgradePlan from './CreateUpgradePlan';
+import ResetPasswordModal from './ResetPasswordModal';
 // import './company.scss';
 
 const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination, onPageChange, searchText }) => {
@@ -30,6 +32,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
     const [adminLogin] = useAdminLoginMutation();
     const navigate = useNavigate();
     const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+    const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState(null);
 
     const handleTableChange = (pagination, filters, sorter) => {
@@ -152,6 +155,16 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         setSelectedCompany(null);
     };
 
+    const handleResetPasswordClick = (company) => {
+        setSelectedCompany(company);
+        setResetPasswordModalVisible(true);
+    };
+
+    const handleResetPasswordModalClose = () => {
+        setResetPasswordModalVisible(false);
+        setSelectedCompany(null);
+    };
+
     const getDropdownItems = (record) => ({
         items: [
             {
@@ -160,6 +173,13 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                 label: 'Upgrade Plan',
                 onClick: () => handleUpgradeClick(record),
                 className: 'ant-dropdown-menu-item-upgrade'
+            },
+            {
+                key: 'reset',
+                icon: <FiLock />,
+                label: 'Reset Password',
+                onClick: () => handleResetPasswordClick(record),
+                className: 'ant-dropdown-menu-item-reset'
             },
             {
                 key: 'edit',
@@ -314,7 +334,7 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
         {
             title: 'Actions',
             key: 'actions',
-            width: '100px',
+            width: '160px',
             fixed: 'right',
             render: (_, record) => (
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -336,6 +356,23 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                         }}
                     >
                         Login
+                    </Button>
+                    <Button
+                        type="default"
+                        icon={<FiLock />}
+                        onClick={() => handleResetPasswordClick(record)}
+                        className="reset-button"
+                        style={{
+                            borderRadius: '8px',
+                            height: '32px',
+                            width: 'auto',
+                            padding: '0 12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}
+                    >
+                        Reset
                     </Button>
                     <Dropdown
                         menu={getDropdownItems(record)}
@@ -398,6 +435,11 @@ const CompanyList = ({ companies, loading, onView, onEdit, onDelete, pagination,
                 companyId={selectedCompany?.id}
                 isEditing={false}
                 initialValues={null}
+            />
+            <ResetPasswordModal
+                visible={resetPasswordModalVisible}
+                onCancel={handleResetPasswordModalClose}
+                company={selectedCompany}
             />
         </div>
     );

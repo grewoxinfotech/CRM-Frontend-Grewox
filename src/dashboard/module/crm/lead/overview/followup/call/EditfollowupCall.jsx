@@ -125,6 +125,11 @@ const EditFollowupCall = ({
         }
       }
 
+      const assignedUsernames = assignedTo?.assigned_to?.map(userId => {
+        const user = usersResponse?.data?.find(u => u.id === userId);
+        return user?.username;
+      }).filter(username => username) || [currentUser?.username];
+
       // Set form values
       const formValues = {
         subject: call.subject || "",
@@ -139,7 +144,7 @@ const EditFollowupCall = ({
           : null,
         call_duration: call.call_duration || "",
         call_reminder: call.call_reminder || null,
-        assigned_to: assignedTo.assigned_to || [],
+        assigned_to: assignedUsernames,
         call_purpose: call.call_purpose || "",
         call_notes: call.call_notes || "",
         call_type: call.call_type || "scheduled",
@@ -152,7 +157,7 @@ const EditFollowupCall = ({
     } else {
       message.error("Failed to load call data");
     }
-  }, [call, form, rtiId]);
+  }, [call, form, rtiId, usersResponse?.data, currentUser]);
 
   const handleSubmit = async (values) => {
     const assignedToArray = Array.isArray(values.assigned_to)
@@ -163,7 +168,12 @@ const EditFollowupCall = ({
       const formattedValues = {
         ...values,
         assigned_to: {
-          assigned_to: assignedToArray,
+          assigned_to: values.assigned_to && values.assigned_to.length > 0
+            ? values.assigned_to.map(username => {
+                const user = usersResponse?.data?.find(u => u.username === username);
+                return user?.id;
+              }).filter(id => id)
+            : [currentUser?.id]
         },
         call_type: "scheduled",
         section: "lead",
@@ -459,11 +469,12 @@ const EditFollowupCall = ({
                 height: "auto",
                 minHeight: "48px",
               }}
+              defaultValue={currentUser?.username ? [currentUser.username] : []}
               listHeight={300}
               maxTagCount="responsive"
               maxTagTextLength={15}
               dropdownStyle={{
-                maxHeight: "300px",
+                maxHeight: "400px",
                 overflowY: "auto",
                 scrollbarWidth: "thin",
                 scrollBehavior: "smooth",
@@ -555,6 +566,98 @@ const EditFollowupCall = ({
                 </>
               )}
             >
+                <Option key={currentUser?.id} value={currentUser?.username}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "#e6f4ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1890ff",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentUser?.profilePic ? (
+                    <img
+                      src={currentUser?.profilePic}
+                      alt={currentUser?.username}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    currentUser?.username?.charAt(0) || <FiUser />
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "4px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      color: "rgba(0, 0, 0, 0.85)",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {currentUser?.username}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div
+                    className="role-indicator"
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: getRoleColor(currentUser?.roleName).color,
+                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      background: getRoleColor(currentUser?.roleName).bg,
+                      color: getRoleColor(currentUser?.roleName).color,
+                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {currentUser?.roleName || "User"}
+                  </span>
+                </div>
+              </div>
+            </Option>
               {Array.isArray(users) &&
                 users.map((user) => {
                   const userRole = rolesData?.data?.find(
@@ -563,7 +666,7 @@ const EditFollowupCall = ({
                   const roleStyle = getRoleColor(userRole?.role_name);
 
                   return (
-                    <Option key={user.id} value={user.id}>
+                    <Option key={user.username} value={user.username}>
                       <div
                         style={{
                           display: "flex",

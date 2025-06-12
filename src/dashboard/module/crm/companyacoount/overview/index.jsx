@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Tag, Space } from 'antd';
+import { Card, Row, Col, Typography, Tag, Space, Button } from 'antd';
 import {
     FiUser,
     FiMail,
@@ -16,6 +16,7 @@ import {
     FiX,
     FiBriefcase,
     FiGlobe,
+    FiEdit2,
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -27,6 +28,7 @@ import { useGetSourcesQuery, useGetCategoriesQuery } from '../../crmsystem/souce
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 import './companyoverview.scss';
+import EditCompanyAccount from '../EditCompanyAccount';
 
 const { Title, Text } = Typography;
 
@@ -40,6 +42,7 @@ const CompanyDetails = () => {
     const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
     const loggedInUser = useSelector(selectCurrentUser);
     const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
+    const [editModalVisible, setEditModalVisible] = useState(false);
 
     const companies = Array.isArray(companyAccountsResponse?.data)
         ? companyAccountsResponse.data
@@ -93,7 +96,28 @@ const CompanyDetails = () => {
                             {company?.company_name ? company.company_name[0].toUpperCase() : 'C'}
                         </div>
                         <div className="profile-info">
-                            <h2 className="company-name">{company?.company_name || 'Company Name'}</h2>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <h2 className="company-name">{company?.company_name || 'Company Name'}</h2>
+                                <Button
+                                    type="primary"
+                                    icon={<FiEdit2 />}
+                                    onClick={() => setEditModalVisible(true)}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        height: '40px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '0 16px',
+                                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                        fontWeight: '500',
+                                    }}
+                                >
+                                    Edit
+                                </Button>
+                            </div>
                             <div className="contact-name">
                                 <FiMail className="icon" />
                                 <a href={company?.email} target="_blank">
@@ -162,7 +186,7 @@ const CompanyDetails = () => {
                             right: '-15px',
                             width: '80px',
                             height: '80px',
-                            background: 'linear-gradient(135deg, #fecdd3 0%, #fecdd3 100%)',
+                                ground: 'linear-gradient(135deg, #fecdd3 0%, #fecdd3 100%)',
                             borderRadius: '50%',
                             opacity: '0.15'
                         }} />
@@ -554,6 +578,18 @@ const CompanyDetails = () => {
                     </Col>
                 </Row>
             </div>
+
+            {/* Edit Modal */}
+            {editModalVisible && (
+                <EditCompanyAccount
+                    open={editModalVisible}
+                    onCancel={() => setEditModalVisible(false)}
+                    companyData={company}
+                    isLoading={isLoading}
+                    loggedInUser={loggedInUser}
+                    companyAccountsResponse={companyAccountsResponse}
+                />
+            )}
         </div >
     );
 };

@@ -16,7 +16,7 @@ export const forgotPasswordApi = createApi({
                 if (response.data?.sessionToken) {
                     const tokenWithBearer = `Bearer ${response.data.sessionToken}`;
                     localStorage.setItem('resetToken', tokenWithBearer);
-                }
+                }   
                 return {
                     success: true,
                     message: response.message || 'Reset instructions sent successfully',
@@ -40,13 +40,17 @@ export const forgotPasswordApi = createApi({
                 if (!resetToken) {
                     throw new Error('Session token not found. Please try again.');
                 }
+                console.log('resetToken for verification:', resetToken);
                 return {
                     url: '/auth/verify-otp',
                     method: 'POST',
                     body: data,
-                    headers: {
+                    headers: {  
                         'Authorization': resetToken
                     }
+                    // headers: {
+                    //     'Authorization': resetToken
+                    // }
                 };
             },
             transformResponse: (response) => {

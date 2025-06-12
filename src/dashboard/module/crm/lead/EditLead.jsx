@@ -189,8 +189,27 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
         } else if (initialValues.lead_members?.lead_members) {
           leadMembers = initialValues.lead_members.lead_members;
         }
+
+        // Convert user IDs to usernames
+        const usernames = leadMembers.map(userId => {
+          const user = usersResponse?.data?.find(u => u.id === userId);
+          return user?.username;
+        }).filter(username => username);
+
+        // Add logged in user's username if not already present
+        const loggedInUserDetails = usersResponse?.data?.find(user => user.id === loggedInUser?.id);
+        if (loggedInUserDetails && !usernames.includes(loggedInUserDetails.username)) {
+          usernames.push(loggedInUserDetails.username);
+        }
+
+        leadMembers = usernames;
       } catch (error) {
         console.error('Error parsing lead_members:', error);
+        // If there's an error, at least add the logged in user
+        const loggedInUserDetails = usersResponse?.data?.find(user => user.id === loggedInUser?.id);
+        if (loggedInUserDetails) {
+          leadMembers = [loggedInUserDetails.username];
+        }
       }
 
       // Find contact and its company if contact_id exists
@@ -226,7 +245,7 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       // Set contact mode based on whether we have a contact
       setContactMode(initialValues.contact_id ? 'existing' : 'new');
     }
-  }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies, contactsData]);
+  }, [initialValues, form, defaultPhoneCode, defaultCurrency, countries, currencies, contactsData, usersResponse, loggedInUser]);
 
   const handleSubmit = async (values) => {
     try {
@@ -244,9 +263,22 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
       // Format lead value
       const leadValue = values.leadValue || 0;
 
-      // Format lead_members as an object (not a string)
+      const memberIds = values.lead_members || [];
+
+      // Get all selected members (including logged-in user)
+      // const memberIds = values.lead_members?.map(username => {
+      //   const user = usersResponse?.data?.find(u => u.username === username);
+      //   return user?.id;
+      // }).filter(id => id) || [];
+
+      // Add logged-in user's ID if not already present
+      if (loggedInUser?.id && !memberIds.includes(loggedInUser.id)) {
+        memberIds.push(loggedInUser.id);
+      }
+
+      // Format lead_members as an object with all member IDs
       const leadMembers = {
-        lead_members: values.lead_members || []
+        lead_members: memberIds
       };
 
       // Get company_id from contact if available

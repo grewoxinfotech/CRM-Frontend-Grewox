@@ -184,14 +184,18 @@ const LeadFiles = ({ leadId }) => {
           files.map((file, index) => {
             const fileExt = file.filename.split(".").pop().toLowerCase();
             return (
-              <div key={index} className={`file-item ${fileExt}`}>
+              <div 
+                key={index} 
+                className={`file-item ${fileExt}`}
+                onClick={() => window.open(file.url, "_blank")} style={{ cursor: 'pointer' }}
+              >
                 <div className="file-preview">
                   <div className="file-type-label">.{fileExt}</div>
                   <div className="file-icon">{getFileIcon(file.filename)}</div>
                 </div>
                 <div className="file-content">
                   <div className="file-info">
-                    <Text className="file-name" ellipsis>
+                    <Text className="file-name" ellipsis >
                       {file.filename}
                     </Text>
                     <Text className="file-date">
@@ -211,7 +215,10 @@ const LeadFiles = ({ leadId }) => {
                     <Button
                       type="link"
                       icon={<FiTrash2 />}
-                      onClick={() => handleDelete(file.filename)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(file.filename);
+                      }}
                       className="action-btn delete"
                     />
                   </div>

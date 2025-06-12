@@ -41,7 +41,6 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
         limit: 100
     });
 
-    // Find INR currency ID for default value
     const getDefaultCurrencyId = () => {
         if (currencies) {
             const inrCurrency = currencies.find(c => c.currencyCode === 'INR');
@@ -50,17 +49,23 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
         return undefined;
     };
 
-    // Set default values when currencies are loaded
     React.useEffect(() => {
         if (currencies) {
             const defaultCurrencyId = getDefaultCurrencyId();
             if (defaultCurrencyId) {
                 form.setFieldValue('currency', defaultCurrencyId);
-                // Validate the field after setting default value
                 form.validateFields(['currency']);
             }
         }
     }, [currencies, form]);
+
+    React.useEffect(() => {
+        const initialStorageValue = form.getFieldValue('storage_limit');
+        if (initialStorageValue) {
+            const storageInMB = storageUnit === 'GB' ? initialStorageValue * 1024 : initialStorageValue;
+            form.setFieldValue('_storage_limit_mb', storageInMB.toString());
+        }
+    }, [form, storageUnit]);
 
     const handleSubmit = async (values) => {
         try {
@@ -97,10 +102,8 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
             }
         } catch (error) {
             console.error('Create plan error:', error);
-            // Display the exact error message from the backend
             message.error(error?.data?.message || error?.message || 'Failed to create plan');
 
-            // If it's a plan already exists error, focus the name field
             if (error?.data?.message === 'Plan already exists') {
                 form.setFields([{
                     name: 'name',
@@ -133,9 +136,10 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
 
     const handleStorageChange = (value) => {
         if (value) {
-            // Convert to MB for storage
             const storageInMB = storageUnit === 'GB' ? value * 1024 : value;
             form.setFieldValue('_storage_limit_mb', storageInMB.toString());
+            
+            form.setFieldValue('storage_limit', value);
         }
     };
 
@@ -571,7 +575,6 @@ const AddPlan = ({ visible, onCancel, isEditing, initialValues }) => {
                                 onChange={handleStorageChange}
                                 parser={value => value.replace(/[^0-9.]/g, '')}
                                 formatter={value => value ? `${value}` : ''}
-                                value={form.getFieldValue('storage_limit')}
                                 className="storage-input"
                             />
                             <Select

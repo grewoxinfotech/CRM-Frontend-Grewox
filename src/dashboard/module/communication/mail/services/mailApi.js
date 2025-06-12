@@ -24,7 +24,7 @@ export const mailApi = createApi({
 
     sendEmail: builder.mutation({
       query: (formData) => {
-        console.log('Sending email with attachments:', formData.getAll('attachments').length);
+       
         return {
           url: "/mail",
           method: "POST",

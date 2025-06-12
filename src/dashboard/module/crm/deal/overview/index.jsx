@@ -29,6 +29,7 @@ import {
   FiGlobe,
   FiHome,
   FiArrowLeft,
+  FiEdit2,
 } from "react-icons/fi";
 import dayjs from "dayjs";
 import {
@@ -48,6 +49,7 @@ import {
 import { useGetContactsQuery } from "../../contact/services/contactApi";
 import { useGetCompanyAccountsQuery } from "../../companyacoount/services/companyAccountApi";
 import "../../lead/overview/LeadOverview.scss";
+import EditDeal from "../EditDeal";
 
 const { Title, Text } = Typography;
 
@@ -244,6 +246,7 @@ const DealStageProgress = ({
 };
 
 const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
+  const [editModalVisible, setEditModalVisible] = useState(false);
 
   console.log("initialDeal", initialDeal);
 
@@ -507,7 +510,28 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
               )}
             </div>
             <div className="profile-info">
-              <h2 className="company-name">{localDeal?.dealTitle}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 className="company-name">{localDeal?.dealTitle}</h2>
+                <Button
+                  type="primary"
+                  icon={<FiEdit2 />}
+                  onClick={() => setEditModalVisible(true)}
+                  style={{
+                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '0 16px',
+                    boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                    fontWeight: '500',
+                  }}
+                >
+                  Edit
+                </Button>
+              </div>
               <div className="contact-details">
                 {localDeal?.company_id &&
                   companyData?.data?.[0] &&
@@ -1158,6 +1182,15 @@ const DealOverview = ({ deal: initialDeal, currentStatus, onStageUpdate }) => {
           </Col>
         </Row>
       </div>
+
+      {/* Edit Modal */}
+      {editModalVisible && (
+        <EditDeal 
+          open={editModalVisible}
+          onCancel={() => setEditModalVisible(false)}
+          initialValues={localDeal}
+        />
+      )}
 
       <style jsx>{`
         .sub-value {

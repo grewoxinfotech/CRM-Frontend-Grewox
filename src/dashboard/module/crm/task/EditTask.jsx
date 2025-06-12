@@ -73,15 +73,21 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
     try {
       if (typeof assignTo === "string") {
         const parsed = JSON.parse(assignTo);
-        return parsed?.assignedusers || [];
+        return parsed?.assignedusers?.map(id => {
+          const user = users.find(u => u.id === id);
+          return user?.username;
+        }).filter(username => username) || [currentUser?.username];
       }
       if (assignTo?.assignedusers) {
-        return assignTo.assignedusers;
+        return assignTo.assignedusers.map(id => {
+          const user = users.find(u => u.id === id);
+          return user?.username;
+        }).filter(username => username) || [currentUser?.username];
       }
-      return [];
+      return [currentUser?.username];
     } catch (error) {
       console.error("Error parsing assignTo:", error);
-      return Array.isArray(assignTo) ? assignTo : [];
+      return [currentUser?.username];
     }
   };
 
@@ -101,9 +107,19 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
   useEffect(() => {
     if (initialValues) {
       console.log("Initial Values in EditTask:", initialValues);
+
+      // Parse assignTo from initialValues and convert IDs to usernames
+      const assignTo = filterAssignTo(initialValues.assignTo);
+      console.log("Parsed assignTo:", assignTo);
+
+      // Find task reporter username from ID
+      const task_reporter_username = teamMembers.find(
+        user => user.id === initialValues.task_reporter
+      )?.username || currentUser?.username;
+
       const formattedValues = {
         taskName: initialValues.taskName || initialValues.task_name || "",
-        task_reporter: initialValues.task_reporter || "",
+        task_reporter: task_reporter_username,
         startDate: initialValues.startDate
           ? moment(initialValues.startDate)
           : null,
@@ -114,12 +130,20 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
         priority: initialValues.priority || "",
         status: initialValues.status || "",
         description: initialValues.description || "",
-        assignTo: filterAssignTo(initialValues.assignTo),
+        assignTo: assignTo.length > 0 ? assignTo : [currentUser?.username],
       };
       console.log("Formatted Values in EditTask:", formattedValues);
       form.setFieldsValue(formattedValues);
+    } else {
+      // Set default values when no initial values
+      form.setFieldsValue({
+        assignTo: [currentUser?.username],
+        task_reporter: currentUser?.username,
+        status: "in_progress",
+        priority: "medium"
+      });
     }
-  }, [initialValues, form]);
+  }, [initialValues, form, teamMembers, currentUser]);
 
   const handleSubmit = async (values) => {
     try {
@@ -129,59 +153,83 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
         return;
       }
 
-      const formData = new FormData();
+      // Convert usernames to IDs for assigned_to and ensure current user is included if empty
+      let assignedUsers = [];
+      if (!values.assignTo || values.assignTo.length === 0) {
+        // If assignTo is empty, use current user's ID
+        assignedUsers = [currentUser?.id];
+      } else {
+        // Convert usernames to IDs and filter out any undefined values
+        assignedUsers = values.assignTo
+          .map(username => {
+            const user = teamMembers.find(u => u.username === username);
+            return user?.id;
+          })
+          .filter(id => id);
+        
+        // If all conversions failed, use current user's ID
+        if (assignedUsers.length === 0) {
+          assignedUsers = [currentUser?.id];
+        }
+      }
 
-      formData.append("taskName", values.taskName || "");
-      formData.append("section", "task");
-      formData.append("task_reporter", values.task_reporter || "");
-      formData.append(
-        "startDate",
-        values.startDate?.format("YYYY-MM-DD") || ""
-      );
-      formData.append("dueDate", values.dueDate?.format("YYYY-MM-DD") || "");
-      formData.append(
-        "reminder_date",
-        values.reminder_date?.format("YYYY-MM-DD") || ""
-      );
-      formData.append("priority", values.priority || "");
-      formData.append("status", values.status || "");
-      formData.append("description", values.description || "");
+      // Create request data object
+      const requestData = {
+        taskName: values.taskName || "",
+        section: "task",
+        task_reporter: values.task_reporter
+          ? teamMembers.find(u => u.username === values.task_reporter)?.id || currentUser?.id
+          : currentUser?.id,
+        startDate: values.startDate?.format("YYYY-MM-DD") || "",
+        dueDate: values.dueDate?.format("YYYY-MM-DD") || "",
+        reminder_date: values.reminder_date?.format("YYYY-MM-DD") || "",
+        priority: values.priority || "",
+        status: values.status || "",
+        description: values.description || "",
+        assignTo: {
+          assignedusers: assignedUsers
+        }
+      };
 
-      if (Array.isArray(values.assignTo) && values.assignTo.length > 0) {
-        values.assignTo.forEach((userId, index) => {
-          if (userId && userId.trim() !== "") {
-            formData.append(`assignTo[assignedusers][${index}]`, userId);
+      // If there's a file, use FormData
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        const formData = new FormData();
+        
+        // Append all fields to FormData
+        Object.keys(requestData).forEach(key => {
+          if (key === 'assignTo') {
+            formData.append(key, JSON.stringify(requestData[key]));
+          } else {
+            formData.append(key, requestData[key]);
           }
         });
-      }
-
-      if (fileList.length > 0 && fileList[0].originFileObj) {
+        
         formData.append("file", fileList[0].originFileObj);
+
+        // Send the update request with FormData
+        const response = await updateTask({
+          id: initialValues.id,
+          data: formData,
+        }).unwrap();
+
+        message.success("Task updated successfully");
+        form.resetFields();
+        setFileList([]);
+        onSubmit?.(response);
+        onCancel();
+      } else {
+        // Send the update request with JSON data directly
+        const response = await updateTask({
+          id: initialValues.id,
+          data: requestData,
+        }).unwrap();
+
+        message.success("Task updated successfully");
+        form.resetFields();
+        setFileList([]);
+        onSubmit?.(response);
+        onCancel();
       }
-
-      console.log("Form data being sent:", {
-        taskName: values.taskName,
-        task_reporter: values.task_reporter,
-        startDate: values.startDate?.format("YYYY-MM-DD"),
-        dueDate: values.dueDate?.format("YYYY-MM-DD"),
-        reminder_date: values.reminder_date?.format("YYYY-MM-DD"),
-        priority: values.priority,
-        status: values.status,
-        description: values.description,
-        assignTo: values.assignTo,
-      });
-
-      // Send the update request
-      const response = await updateTask({
-        id: initialValues.id,
-        data: formData,
-      }).unwrap();
-
-      message.success("Task updated successfully");
-      form.resetFields();
-      setFileList([]);
-      onSubmit?.(response);
-      onCancel();
     } catch (error) {
       console.error("Update Error:", error);
       message.error(error?.data?.message || "Failed to update task");
@@ -368,11 +416,13 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               Task Reporter
             </span>
           }
+          initialValue={currentUser?.username}
           rules={[{ required: true, message: "Please select task reporter" }]}
           style={{ marginTop: "22px" }}
         >
           <Select
             showSearch
+            defaultValue={currentUser?.username}
             placeholder="Select task reporter"
             style={{
               width: "100%",
@@ -383,7 +433,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             maxTagCount={1}
             maxTagTextLength={15}
             dropdownStyle={{
-              maxHeight: "320px",
+              maxHeight: "500px",
               overflowY: "auto",
               scrollbarWidth: "thin",
               scrollBehavior: "smooth",
@@ -391,6 +441,98 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
             popupClassName="team-members-dropdown"
             optionFilterProp="children"
           >
+            <Option key={currentUser?.id} value={currentUser?.username}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "#e6f4ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1890ff",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentUser?.profilePic ? (
+                    <img
+                      src={currentUser?.profilePic}
+                      alt={currentUser?.username}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    currentUser?.username?.charAt(0) || <FiUser />
+                  )}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    gap: "4px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      color: "rgba(0, 0, 0, 0.85)",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {currentUser?.username}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div
+                    className="role-indicator"
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: getRoleColor(currentUser?.roleName).color,
+                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      background: getRoleColor(currentUser?.roleName).bg,
+                      color: getRoleColor(currentUser?.roleName).color,
+                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {currentUser?.roleName || "User"}
+                  </span>
+                </div>
+              </div>
+            </Option>
             {teamMembers.map((user) => {
               const userRole = rolesData?.data?.find(
                 (role) => role.id === user.role_id
@@ -745,11 +887,12 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
           name="assignTo"
           label={
             <span style={{ fontSize: "14px", fontWeight: "500" }}>
-              Assign To
+              Assign To <span style={{ color: "#ff4d4f" }}>*</span>
             </span>
           }
           rules={[{ required: true, message: "Please select assignees" }]}
           style={{ marginTop: "22px" }}
+          initialValue={[currentUser?.username]}
         >
           <Select
             mode="multiple"
@@ -759,101 +902,194 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               height: "auto",
               minHeight: "48px",
             }}
+            defaultValue={currentUser?.username ? [currentUser?.username] : []}
             listHeight={300}
-            maxTagCount="responsive"
-            maxTagTextLength={15}
-            dropdownStyle={{
-              maxHeight: "320px",
-              overflowY: "auto",
-              scrollbarWidth: "thin",
-              scrollBehavior: "smooth",
-            }}
-            popupClassName="team-members-dropdown"
-            showSearch
-            optionFilterProp="children"
-            open={teamMembersOpen}
-            onDropdownVisibleChange={setTeamMembersOpen}
-            dropdownRender={(menu) => (
-              <>
-                {menu}
-                <Divider style={{ margin: "8px 0" }} />
+                  maxTagCount="responsive"
+              maxTagTextLength={15}
+              dropdownStyle={{
+                maxHeight: "800px",
+                overflowY: "auto",
+                scrollbarWidth: "thin",
+                scrollBehavior: "smooth",
+              }}
+              popupClassName="team-members-dropdown"
+              showSearch
+              optionFilterProp="children"
+              open={teamMembersOpen}
+              onDropdownVisibleChange={setTeamMembersOpen}
+              dropdownRender={(menu) => (
+                <>
+                  {menu}
+                  <Divider style={{ margin: "8px 0" }} />
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      padding: "0 8px",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <Button
+                      type="text"
+                      icon={
+                        <FiUserPlus
+                          style={{ fontSize: "16px", color: "#ffffff" }}
+                        />
+                      }
+                      onClick={handleCreateUser}
+                      style={{
+                        height: "36px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        background:
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "6px",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background =
+                          "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
+                      }}
+                    >
+                      Add New User
+                    </Button>
+                    <Button
+                      type="text"
+                      icon={
+                        <FiShield
+                          style={{ fontSize: "16px", color: "#1890ff" }}
+                        />
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTeamMembersOpen(false);
+                      }}
+                      style={{
+                        height: "36px",
+                        borderRadius: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        background: "#ffffff",
+                        border: "1px solid #1890ff",
+                        color: "#1890ff",
+                        fontWeight: "500",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#e6f4ff";
+                        e.currentTarget.style.borderColor = "#69b1ff";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#ffffff";
+                        e.currentTarget.style.borderColor = "#1890ff";
+                      }}
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </>
+              )}
+          >
+             <Option key={currentUser?.id} value={currentUser?.username}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    background: "#e6f4ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1890ff",
+                    fontSize: "16px",
+                    fontWeight: "500",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {currentUser?.profilePic ? (
+                    <img
+                      src={currentUser?.profilePic}
+                      alt={currentUser?.username}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    currentUser?.username?.charAt(0) || <FiUser />
+                  )}
+                </div>
                 <div
                   style={{
                     display: "flex",
-                    gap: "8px",
-                    padding: "0 8px",
-                    justifyContent: "flex-end",
+                    flexDirection: "row",
+                    gap: "4px",
                   }}
                 >
-                  <Button
-                    type="text"
-                    icon={
-                      <FiUserPlus
-                        style={{ fontSize: "16px", color: "#ffffff" }}
-                      />
-                    }
-                    onClick={handleCreateUser}
+                  <span
                     style={{
-                      height: "36px",
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      background:
-                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: "6px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(135deg, #40a9ff 0%, #1890ff 100%)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background =
-                        "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)";
+                      fontWeight: 500,
+                      color: "rgba(0, 0, 0, 0.85)",
+                      fontSize: "14px",
                     }}
                   >
-                    Add New User
-                  </Button>
-                  <Button
-                    type="text"
-                    icon={
-                      <FiShield
-                        style={{ fontSize: "16px", color: "#1890ff" }}
-                      />
-                    }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setTeamMembersOpen(false);
-                    }}
-                    style={{
-                      height: "36px",
-                      borderRadius: "6px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      background: "#ffffff",
-                      border: "1px solid #1890ff",
-                      color: "#1890ff",
-                      fontWeight: "500",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "#e6f4ff";
-                      e.currentTarget.style.borderColor = "#69b1ff";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "#ffffff";
-                      e.currentTarget.style.borderColor = "#1890ff";
-                    }}
-                  >
-                    Done
-                  </Button>
+                    {currentUser?.username}
+                  </span>
                 </div>
-              </>
-            )}
-          >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginLeft: "auto",
+                  }}
+                >
+                  <div
+                    className="role-indicator"
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: getRoleColor(currentUser?.roleName).color,
+                      boxShadow: `0 0 8px ${getRoleColor(currentUser?.roleName).color}`,
+                      animation: "pulse 2s infinite",
+                    }}
+                  />
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      background: getRoleColor(currentUser?.roleName).bg,
+                      color: getRoleColor(currentUser?.roleName).color,
+                      border: `1px solid ${getRoleColor(currentUser?.roleName).border}`,
+                      fontWeight: 500,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {currentUser?.roleName || "User"}
+                  </span>
+                </div>
+              </div>
+            </Option>
             {teamMembers.map((user) => {
               const userRole = rolesData?.data?.find(
                 (role) => role.id === user.role_id
@@ -861,7 +1097,7 @@ const EditTask = ({ open, onCancel, onSubmit, initialValues, users = [] }) => {
               const roleStyle = getRoleColor(userRole?.role_name);
 
               return (
-                <Option key={user.id} value={user.id}>
+                <Option key={user.id} value={user.username}>
                   <div
                     style={{
                       display: "flex",

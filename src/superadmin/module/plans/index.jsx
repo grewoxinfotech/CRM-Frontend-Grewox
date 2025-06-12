@@ -100,6 +100,7 @@ const Plans = () => {
             max_clients: plan.max_clients?.toString(),
             max_vendors: plan.max_vendors?.toString(),
             max_customers: plan.max_customers?.toString(),
+            is_default: plan.is_default,
             status: plan.status
         };
         console.log('Edit data being set:', editData);

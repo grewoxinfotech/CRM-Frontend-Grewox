@@ -44,24 +44,29 @@ const LeadMembers = ({ leadId }) => {
     // Filter users to get team members (excluding subclients)
     const users = (() => {
         try {
-            return usersResponse?.data?.filter(user => {
-                try {
-                    // Make sure user data and created_by are valid
-                    return user && 
-                        (typeof user.created_by === 'string' ? 
-                            user.created_by === loggedInUser?.username : 
-                            false) && 
-                        user?.role_id !== subclientRoleId;
-                } catch (error) {
-                    console.error("Error parsing user data:", error);
-                    return false;
-                }
-            }) || [];
+          return usersResponse?.data?.filter(
+            (user) => {
+              try {
+                // Make sure user data and created_by are valid
+                return user && 
+                  ((typeof user.created_by === 'string' ? 
+                    user.created_by === loggedInUser?.username : 
+                    false) || 
+                  (typeof user.username === 'string' ?
+                    user.username === loggedInUser?.username :
+                    false)) &&
+                  user?.role_id !== subclientRoleId;
+              } catch (error) {
+                console.error("Error parsing user data:", error);
+                return false;
+              }
+            }
+          ) || [];
         } catch (error) {
-            console.error("Error filtering users data:", error);
-            return [];
+          console.error("Error filtering users data:", error);
+          return [];
         }
-    })();
+      })();
 
     // Parse lead members from string
     useEffect(() => {

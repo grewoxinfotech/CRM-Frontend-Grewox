@@ -156,7 +156,7 @@ const ContactDetails = () => {
   ];
 
   return (
-    <div className="contact-page">
+    <div className="project-page">
       <div className="page-breadcrumb">
         <Breadcrumb>
           <Breadcrumb.Item>

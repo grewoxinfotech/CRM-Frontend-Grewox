@@ -39,7 +39,7 @@ const LeadFollowup = ({ leadId }) => {
 
     // Filter users to get team members (excluding subclients)
     const users = usersResponse?.data?.filter(user =>
-        user?.created_by === currentUser?.username &&
+        (user?.created_by === currentUser?.username || user?.username === currentUser?.username) &&
         user?.role_id !== subclientRoleId
     ) || [];
 

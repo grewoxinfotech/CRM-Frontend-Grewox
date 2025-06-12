@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Tag, Space } from 'antd';
+import { Card, Row, Col, Typography, Tag, Space, Button } from 'antd';
 import {
     FiUser,
     FiMail,
@@ -14,6 +14,7 @@ import {
     FiGlobe,
     FiBriefcase,
     FiDollarSign,
+    FiEdit2,
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -28,6 +29,7 @@ import {
 } from "../../crmsystem/souce/services/SourceApi.js";
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
+import EditContact from '../EditContact';
 
 const { Title, Text } = Typography;
 
@@ -42,6 +44,7 @@ const ContactDetails = () => {
     const { data: usersData } = useGetUsersQuery();
     const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
     const [updateContact] = useUpdateContactMutation();
+    const [editModalVisible, setEditModalVisible] = useState(false);
 
     const leadsData = lead?.data || [];
     const sources = sourcesData?.data || [];
@@ -91,9 +94,30 @@ const ContactDetails = () => {
                             {contact?.last_name ? contact.last_name[0].toUpperCase() : ''}
                         </div>
                         <div className="profile-info">
-                            <h2 className="company-name">
-                                {contact?.first_name} {contact?.last_name}
-                            </h2>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <h2 className="company-name">
+                                    {contact?.first_name} {contact?.last_name}
+                                </h2>
+                                <Button
+                                    type="primary"
+                                    icon={<FiEdit2 />}
+                                    onClick={() => setEditModalVisible(true)}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        height: '40px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '0 16px',
+                                        boxShadow: '0 2px 8px rgba(24, 144, 255, 0.15)',
+                                        fontWeight: '500',
+                                    }}
+                                >
+                                    Edit
+                                </Button>
+                            </div>
                             <div className="contact-name">
                                 <FiUser className="icon" />
                                 {contact?.email || 'No Email'}
@@ -562,6 +586,20 @@ const ContactDetails = () => {
                     </Col>
                 </Row>
             </div>
+
+            {/* Edit Modal */}
+            {editModalVisible && (
+                <EditContact
+                    open={editModalVisible}
+                    onCancel={() => setEditModalVisible(false)}
+                    contactData={contact}
+                    isLoading={isLoading}
+                    loggedInUser={loggedInUser}
+                    contactsResponse={contactsResponse}
+                    companyAccountsResponse={companyAccounts}
+                    isCompanyAccountsLoading={false}
+                />
+            )}
         </div>
     );
 };

@@ -12,10 +12,9 @@ const CompanyInquiryList = ({
     onDelete,
     searchText
 }) => {
-    console.log('CompanyInquiryList Data:', data); // Debug log
 
     const getDropdownItems = (record) => {
-        console.log('Record in dropdown:', record); // Debug log
+       
         return {
             items: [
                 {
@@ -35,7 +34,7 @@ const CompanyInquiryList = ({
                     icon: <FiTrash2 />,
                     label: 'Delete',
                     onClick: () => {
-                        console.log('Delete record:', record); // Debug log
+                       
                         onDelete?.(record);
                     },
                     danger: true,
@@ -43,7 +42,7 @@ const CompanyInquiryList = ({
             ],
         };
     };
-    console.log(data)
+   
     const columns = [
         {
             title: "Full Name",

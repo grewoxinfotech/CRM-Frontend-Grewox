@@ -103,11 +103,17 @@ const DraggableCard = ({ lead, stage, currencies = [], onLeadClick }) => {
           ? '0 12px 24px rgba(0, 0, 0, 0.12)'
           : '0 1px 3px rgba(0, 0, 0, 0.1)',
         position: 'relative',
-        transition: isDragging ? 'none' : 'transform 0.2s ease, box-shadow 0.2s ease',
+        transition: isDragging ? 'none' : 'all 0.2s ease',
         transform: isDragging ? 'scale(1.02)' : 'scale(1)',
         zIndex: isDragging ? 1200 : 1,
         overflow: 'hidden',
-        opacity: lead.is_converted ? 0.85 : 1
+        opacity: lead.is_converted ? 0.85 : 1,
+        marginBottom: '8px',
+        border: '1px solid #e5e7eb',
+        '&:hover': {
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+          borderColor: '#d1d5db'
+        }
       }}
     >
       {/* Interest Level Top Indicator */}
@@ -124,7 +130,8 @@ const DraggableCard = ({ lead, stage, currencies = [], onLeadClick }) => {
       <div className="card-content" style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px'
+        gap: '12px',
+        padding: '16px'
       }}>
         {/* Top Row with Status and Interest Level */}
         <div style={{
@@ -381,7 +388,7 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
       ref={setNodeRef}
       className="kanban-column-content"
       style={{
-        padding: '8px',
+        padding: '12px',
         maxHeight: 'calc(100vh - 240px)',
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -389,42 +396,51 @@ const DroppableColumn = ({ stage, leads, isColumnDragging }) => {
         borderRadius: '0 0 8px 8px',
         width: '350px',
         position: 'relative',
-        transition: 'background-color 0.2s ease',
-        willChange: 'background-color'
+        transition: 'all 0.2s ease',
+        willChange: 'background-color',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
       }}
     >
       <SortableContext items={leads.map(lead => lead.id)} strategy={verticalListSortingStrategy}>
-        {leads.length > 0 ? (
-          leads.map((lead) => (
-            <DraggableCard
-              key={lead.id}
-              lead={lead}
-              stage={stage}
-              currencies={currencies}
-              onLeadClick={(lead) => {
-                console.log('Lead clicked:', lead);
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+          {leads.length > 0 ? (
+            leads.map((lead) => (
+              <DraggableCard
+                key={lead.id}
+                lead={lead}
+                stage={stage}
+                currencies={currencies}
+                onLeadClick={(lead) => {
+                  console.log('Lead clicked:', lead);
+                }}
+              />
+            ))
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <Text style={{ color: '#9CA3AF', fontSize: '13px' }}>
+                  {isOver ? "Drop lead here" : "No leads"}
+                </Text>
+              }
+              style={{
+                margin: '20px 0',
+                padding: '24px',
+                background: '#FAFAFA',
+                borderRadius: '8px',
+                border: '1px dashed #E5E7EB',
+                transition: 'all 0.2s ease',
+                opacity: isOver ? 1 : 0.75
+              }}
+              imageStyle={{
+                height: 40,
+                opacity: 0.5
               }}
             />
-          ))
-        ) : (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <Text style={{ color: '#9CA3AF', fontSize: '13px' }}>No leads</Text>
-            }
-            style={{
-              margin: '20px 0',
-              padding: '24px',
-              background: '#FAFAFA',
-              borderRadius: '8px',
-              border: '1px dashed #E5E7EB'
-            }}
-            imageStyle={{
-              height: 40,
-              opacity: 0.5
-            }}
-          />
-        )}
+          )}
+        </div>
       </SortableContext>
     </div>
   );
@@ -447,6 +463,29 @@ const SortableColumn = ({ stage, leads, children, index }) => {
 
   const { data: currencies = [] } = useGetAllCurrenciesQuery();
 
+  // Calculate total value by currency
+  const totalsByCurrency = React.useMemo(() => {
+    return leads.reduce((acc, lead) => {
+      const value = parseFloat(lead.leadValue) || 0;
+      const currencyId = lead.currency;
+      
+      if (!acc[currencyId]) {
+        acc[currencyId] = 0;
+      }
+      acc[currencyId] += value;
+      return acc;
+    }, {});
+  }, [leads]);
+
+  // Format totals for display
+  const formattedTotals = React.useMemo(() => {
+    return Object.entries(totalsByCurrency).map(([currencyId, total]) => {
+      const currencyDetails = currencies?.find(c => c.id === currencyId);
+      const currencySymbol = currencyDetails?.currencyIcon || '₹';
+      return `${currencySymbol}${total.toLocaleString('en-IN')}`;
+    });
+  }, [totalsByCurrency, currencies]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0, 0, 1)',
@@ -461,31 +500,33 @@ const SortableColumn = ({ stage, leads, children, index }) => {
     <div ref={setNodeRef} style={style} className={`kanban-column ${isDragging ? 'is-dragging' : ''}`}>
       <div className="kanban-column-inner" style={{
         background: '#ffffff',
-        borderRadius: '8px',
+        borderRadius: '12px',
         height: '100%',
         width: '100%',
         boxShadow: isDragging
           ? '0 8px 16px rgba(0, 0, 0, 0.08)'
           : '0 1px 3px rgba(0, 0, 0, 0.08)',
-        transition: 'box-shadow 0.2s ease',
+        transition: 'all 0.2s ease',
         position: 'relative',
-        zIndex: 1
+        zIndex: 1,
+        border: '1px solid #e5e7eb'
       }}>
         <div
           className="column-header"
           {...attributes}
           {...listeners}
           style={{
-            padding: '16px 12px',
-            borderBottom: '1px solid #f0f0f0',
+            padding: '16px',
+            borderBottom: '1px solid #e5e7eb',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             cursor: isDragging ? 'grabbing' : 'grab',
-            borderTopLeftRadius: '8px',
-            borderTopRightRadius: '8px',
+            borderTopLeftRadius: '12px',
+            borderTopRightRadius: '12px',
             background: '#ffffff',
-            userSelect: 'none'
+            userSelect: 'none',
+            pointerEvents: 'auto'
           }}
         >
           <div style={{
@@ -534,28 +575,29 @@ const SortableColumn = ({ stage, leads, children, index }) => {
             gap: '4px',
             flexShrink: 0
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: '#f0fdf4',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              border: '1px solid #dcfce7'
-            }}>
-              <span style={{
-                fontSize: '12px',
-                fontWeight: '600',
-                color: '#16a34a',
-                whiteSpace: 'nowrap'
+            {formattedTotals.length > 0 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#f0fdf4',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid #dcfce7'
               }}>
-                {leads.reduce((sum, lead) => {
-                  const value = parseFloat(lead.leadValue) || 0;
-                  const currencyDetails = currencies?.find(c => c.id === lead.currency);
-                  return `${currencyDetails?.currencyIcon || '₹'}${value.toLocaleString('en-IN')}`;
-                }, '')}
-              </span>
-            </div>
+                {formattedTotals.map((total, index) => (
+                  <span key={index} style={{
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: '#16a34a',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {total}
+                    {index < formattedTotals.length - 1 ? ' + ' : ''}
+                  </span>
+                ))}
+              </div>
+            )}
             <Tag style={{
               minWidth: '20px',
               marginLeft: '4px',
@@ -568,7 +610,7 @@ const SortableColumn = ({ stage, leads, children, index }) => {
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              {(leads || []).length}
+              {leads.length}
             </Tag>
           </div>
         </div>
@@ -589,9 +631,17 @@ const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, cat
   const [orderedStages, setOrderedStages] = useState([]);
   const [selectedPipeline, setSelectedPipeline] = useState(null);
   const [isStageModalVisible, setIsStageModalVisible] = useState(false);
-
+  
+  // Ensure leads data is always an array
+  const [leadsData, setLeads] = useState([]);
   const pipelines = pipelinesData || [];
-  const leadsData = leads?.data || [];
+
+  // Update leadsData when leads prop changes
+  useEffect(() => {
+    // Ensure we always have an array
+    const newLeadsData = Array.isArray(leads?.data) ? leads.data : [];
+    setLeads(newLeadsData);
+  }, [leads]);
 
   // Initialize selected pipeline if not set
   useEffect(() => {
@@ -636,7 +686,9 @@ const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, cat
     }
   }, [stages, dispatch, savedStageOrder.length]);
 
-  const leadsByStage = React.useMemo(() => {
+  const dealsByStage = React.useMemo(() => {
+    if (!Array.isArray(leadsData)) return {};
+    
     return orderedStages.reduce((acc, stage) => {
       acc[stage.id] = leadsData.filter(lead => lead.leadStage === stage.id);
       return acc;
@@ -685,16 +737,49 @@ const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, cat
       }
     } else if (isCard && over.id !== active.id) {
       const draggedId = active.id;
-      const destinationId = over.id;
+      let destinationId = over.id;
 
-      const draggedLead = leadsData.find(lead => lead.id === draggedId);
+      // Get correct destination ID based on drop target type
+      if (over.data?.current?.type === 'card') {
+        // If dropped on another card, use its stage
+        destinationId = over.data.current.lead.leadStage;
+      } else if (over.data?.current?.type === 'stage') {
+        // If dropped directly on a stage
+        destinationId = over.id;
+      } else if (typeof destinationId === 'string' && destinationId.startsWith('column-')) {
+        // If dropped on column header
+        destinationId = destinationId.replace('column-', '');
+      }
+
+      const draggedLead = active.data.current.lead;
+      const originalStage = draggedLead.leadStage;
+
 
       if (draggedLead?.is_converted) {
         message.error("Cannot move a converted lead");
         return;
       }
 
+      // Check if the destination is the same as the original stage
+      if (originalStage === destinationId) {
+        return;
+      }
+
       try {
+        // Optimistically update the UI
+        const updatedLeads = leadsData.map(lead =>
+          lead.id === draggedId
+            ? { ...lead, leadStage: destinationId }
+            : lead
+        );
+        
+        // Update local state
+        setLeads(prevState => ({
+          ...prevState,
+          data: updatedLeads
+        }));
+
+        // Make the API call
         await updateLead({
           id: draggedId,
           data: {
@@ -705,6 +790,14 @@ const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, cat
 
         message.success('Lead stage updated successfully');
       } catch (error) {
+        console.error("Error updating lead stage:", error);
+        
+        // Revert the optimistic update on error
+        setLeads(prevState => ({
+          ...prevState,
+          data: leadsData
+        }));
+        
         message.error('Failed to update lead stage');
       }
     }
@@ -877,12 +970,12 @@ const LeadCard = ({ leads, currencies, countries, sourcesData, statusesData, cat
                 <div key={stage.id} style={{ transform: 'translateZ(0)' }}>
                   <SortableColumn
                     stage={stage}
-                    leads={leadsByStage[stage.id] || []}
+                    leads={dealsByStage[stage.id] || []}
                     index={index}
                   >
                     <DroppableColumn
                       stage={stage}
-                      leads={leadsByStage[stage.id] || []}
+                      leads={dealsByStage[stage.id] || []}
                       isColumnDragging={activeId === `column-${stage.id}`}
                     />
                   </SortableColumn>

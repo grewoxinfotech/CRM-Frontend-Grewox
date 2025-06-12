@@ -644,9 +644,8 @@ const CreateLead = ({
 
           <Form.Item
             name="leadValueGroup"
-            label={<span style={formItemStyle}>Lead Value <span style={{ color: "#ff4d4f" }}>*</span></span>}
+            label={<span style={formItemStyle}>Lead Value</span>}
             className="combined-input-item"
-            required
           >
             <Input.Group compact className="value-input-group">
               <Form.Item
@@ -680,8 +679,8 @@ const CreateLead = ({
               <Form.Item
                 name="leadValue"
                 noStyle
+                initialValue={0}
                 rules={[
-                  { required: true, message: 'Please enter lead value' },
                   { type: 'number', min: 0, message: 'Value must be greater than or equal to 0' }
                 ]}
               >
@@ -1224,7 +1223,7 @@ const CreateLead = ({
                     noStyle
                   >
                     <InputNumber
-                      style={{ width: 'calc(100% - 100px)', padding: '0 16px' }}
+                      style={{ width: 'calc(100% - 100px)', padding: '0 16px', height: '48px' }}
                       placeholder="Enter phone number"
                     />
                   </Form.Item>

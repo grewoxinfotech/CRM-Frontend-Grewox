@@ -52,6 +52,15 @@ export const companyApi = createApi({
             }),
             invalidatesTags: ['Companies', 'Subscriptions'],
         }),
+
+        updateAssignedPlan: builder.mutation({
+            query: ({ id, data }) => ({
+                url: `/subscriptions/assign/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: ['Companies', 'Subscriptions'],
+        }),
         removePlan: builder.mutation({
             query: (id) => ({
                 url: `/subscriptions/remove/${id}`,
@@ -93,4 +102,5 @@ export const {
     useRemovePlanMutation,
     useVerifySignupMutation,
     useResendSignupOtpMutation,
+    useUpdateAssignedPlanMutation,
 } = companyApi;

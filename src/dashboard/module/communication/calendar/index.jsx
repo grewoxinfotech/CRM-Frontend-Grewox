@@ -19,7 +19,6 @@ const CalendarPage = () => {
     const [showAllEvents, setShowAllEvents] = useState(false);
     const [moreEvents, setMoreEvents] = useState({ visible: false, events: [], date: null });
 
-    console.log('Upcoming Events:', upcomingEvents);
 
     const { data: calendarEvents, isLoading, isError } = useGetAllCalendarEventsQuery();
     const [deleteCalendarEvent, { isLoading: isDeleting }] = useDeleteCalendarEventMutation();

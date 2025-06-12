@@ -40,7 +40,7 @@ const FollowupTaskList = ({ dealId, users }) => {
             title: 'Subject',
             dataIndex: 'subject',
             key: 'subject',
-            width: 300,
+            // width: 300,
             render: (text, record) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiCheckSquare style={{ color: '#1890ff' }} />

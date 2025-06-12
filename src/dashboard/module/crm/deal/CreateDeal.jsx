@@ -893,7 +893,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                               gap: "8px",
                             }}
                           >
-                            <span style={{ fontSize: "14px" }}>
+                            <span style={{ fontSize: "14px" }}> 
                               {currency.currencyIcon}
                             </span>
                             <span style={{ fontSize: "14px" }}>
@@ -1598,6 +1598,7 @@ const CreateDeal = ({ open, onCancel, leadData }) => {
                         <Input
                           style={{
                             width: "calc(100% - 120px)",
+                            height: "48px",
                             padding: "0 16px",
                           }}
                           placeholder="Enter phone number"
