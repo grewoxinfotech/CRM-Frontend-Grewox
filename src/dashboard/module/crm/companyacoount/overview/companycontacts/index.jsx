@@ -68,7 +68,6 @@ const CompanyContactList = () => {
     search: searchText
   });
 
-    console.log("contactsResponse", contactsResponse);
 
   const handleEdit = (record) => {
     setSelectedContact(record);
@@ -76,7 +75,6 @@ const CompanyContactList = () => {
   };
 
   const handleView = (record) => {
-    console.log("View contact:", record);
   };
 
   // const handleDelete = (id) => {

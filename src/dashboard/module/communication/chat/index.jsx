@@ -146,7 +146,6 @@ export default function Chat() {
             ? import.meta.env.VITE_API_URL.split('/api/')[0]
             : 'http://localhost:5000';
 
-        console.log('Connecting to socket server:', baseUrl);
 
         socketRef.current = io(baseUrl, {
             withCredentials: true,
@@ -155,11 +154,9 @@ export default function Chat() {
 
         // Connect and send user ID
         socketRef.current.emit('user_connected', currentUser.id);
-        console.log('Emitted user_connected with ID:', currentUser.id);
 
         // Listen for online users updates
         socketRef.current.on('users_status', ({ activeUsers, userStatus }) => {
-            console.log('Received users_status update:', { activeUsers, userStatus });
             setOnlineUsers(new Set(activeUsers));
         });
 
@@ -225,7 +222,6 @@ export default function Chat() {
 
         // Listen for group messages with deduplication
         socketRef.current.on('receive_group_message', ({ group_id, message, group }) => {
-            console.log('Received group message:', { group_id, message, group });
 
             setConversations(prev => {
                 const newConversations = { ...prev };
@@ -310,7 +306,6 @@ export default function Chat() {
 
         // Add typing status listener with debug logs
         socketRef.current.on('user_typing', ({ userId, isTyping }) => {
-            console.log('Received typing status:', { userId, isTyping });
             setTypingUsers(prev => {
                 const newTypingUsers = new Map(prev);
                 if (isTyping) {
@@ -422,11 +417,6 @@ export default function Chat() {
     // Add typing handler with debug logs
     const handleTyping = () => {
         if (socketRef.current && selectedUser) {
-            console.log('Emitting typing event:', {
-                sender_id: currentUser?.id,
-                receiver_id: selectedUser.id,
-                isTyping: true
-            });
 
             // Clear existing timeout
             if (typingTimeoutRef.current) {
@@ -441,8 +431,7 @@ export default function Chat() {
             });
 
             // Set timeout to stop typing
-            typingTimeoutRef.current = setTimeout(() => {
-                console.log('Emitting typing stop event');
+            typingTimeoutRef.current = setTimeout(() => {   
                 socketRef.current.emit('typing', {
                     sender_id: currentUser?.id,
                     receiver_id: selectedUser.id,

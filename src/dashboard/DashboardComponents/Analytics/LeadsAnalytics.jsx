@@ -136,7 +136,6 @@ const LeadsAnalytics = ({ leads }) => {
     const stages = stagesData || [];
     const pipelines = pipelinesData || [];
 
-    console.log(pipelines);
 
     // Set initial pipeline when data is loaded
     React.useEffect(() => {

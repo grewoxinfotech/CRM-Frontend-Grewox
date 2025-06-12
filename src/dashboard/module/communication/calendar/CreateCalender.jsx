@@ -50,7 +50,6 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
     }, [open, selectedDate, form]);
 
     const handleStartTimeChange = (time) => {
-        console.log('Start Time Selected:', time ? time.format('HH:mm:ss') : null);
         form.setFieldsValue({ endDate: null }); // Reset end time when start time changes
         form.validateFields(['endDate']); // Revalidate end time
     };
@@ -354,7 +353,7 @@ const CreateEvent = ({ open, onCancel, selectedDate }) => {
                                         };
                                     }}
                                     onChange={(time) => {
-                                        console.log('End Time Selected:', time ? time.format('HH:mm:ss') : null);
+                                       
                                         form.setFieldsValue({ endDate: time });
                                     }}
                                 />

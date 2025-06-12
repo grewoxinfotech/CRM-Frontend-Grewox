@@ -22,7 +22,6 @@ const EditPlan = ({ open, onCancel, initialValues, idd }) => {
 
     React.useEffect(() => {
         if (initialValues && currencies) {
-            console.log('Initial values received:', initialValues);
 
             // Convert storage limit to appropriate unit for display
             const storageLimitMB = parseFloat(initialValues.storage_limit || 0);

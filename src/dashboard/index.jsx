@@ -55,7 +55,6 @@ export default function Dashboard() {
     search: "",
   });
 
-  console.log("leadsData", leadsData);
 
   const { data: deal } = useGetDealsQuery({
     page: 1,
@@ -63,7 +62,6 @@ export default function Dashboard() {
     search: "",
   });
 
-  console.log("deal", deal);
 
   const dealsData = deal?.data || [];
   const [dealsDateFilter, setDealsDateFilter] = useState("all");

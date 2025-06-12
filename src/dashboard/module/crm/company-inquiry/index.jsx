@@ -100,7 +100,6 @@ const CompanyInquiry = () => {
     };
 
     const handleDelete = (record) => {
-        console.log('Delete handler received record:', record); // Debug log
 
         // Check the complete record structure
         if (!record) {
@@ -110,12 +109,11 @@ const CompanyInquiry = () => {
 
         // Get the ID from either _id or id field
         const recordId = record._id || record.id;
-        console.log('Record ID:', recordId); // Debug log
 
         if (!recordId) {
             message.error("No ID found in record");
             return;
-        }
+        }   
 
         Modal.confirm({
             title: "Delete Company Inquiry",
@@ -137,7 +135,6 @@ const CompanyInquiry = () => {
     };
 
     const handleView = (record) => {
-        console.log("View record:", record);
     };
 
     const handleExport = async (type) => {

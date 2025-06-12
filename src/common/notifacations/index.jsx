@@ -68,7 +68,6 @@ const NotificationsComponent = () => {
     refetch,
   } = useGetAllNotificationsQuery(id);
 
-  // console.log("notification", notificationsData);
 
   const [markAsRead] = useMarkAsReadMutation();
   const [clearAll] = useClearAllNotificationsMutation();
@@ -111,12 +110,6 @@ const NotificationsComponent = () => {
     (n) => n.notification_type === "reminder"
   );
 
-  // console.log('Notification Status:', {
-  //     total: notifications.length,
-  //     unread: unreadNotifications.length,
-  //     normal: normalNotifications.length,
-  //     reminders: reminders.length
-  // });
 
   // Show notifications
   const getPriorityColor = (priority) => {
@@ -181,13 +174,7 @@ const NotificationsComponent = () => {
         // Helper function to get color based on priority
 
         processedNotifications.add(notif.id);
-        // console.log('Showing notification:', {
-        //     id: notif.id,
-        //     type: notif.notification_type,
-        //     title: notif.title,
-        //     time: notif.time,
-        //     date: notif.date
-        // });
+      
       }
     });
   }, [notifications, unreadNotifications]);

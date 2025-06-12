@@ -6,12 +6,15 @@ import moment from 'moment'; // Import moment for date formatting
 import { useGetAllPlansQuery } from '../plans/services/planApi';
 import { useGetAllCompaniesQuery, useRemovePlanMutation } from '../company/services/companyApi';
 import StorageUsageDisplay from './components/StorageUsageDisplay';
+import UpdateUpgradePlan from '../company/UpdateUpgradePlan';
 
 const SubscribedUserList = ({ data, loading }) => {
     const { data: companiesData } = useGetAllCompaniesQuery();
     const [filters, setFilters] = useState({ search: '', page: 1, limit: 10 });
     const { data: plansData } = useGetAllPlansQuery(filters);
     const [removePlan] = useRemovePlanMutation();
+    const [updateUpgradePlanModalVisible, setUpdateUpgradePlanModalVisible] = useState(false);
+    const [selectedSubscription, setSelectedSubscription] = useState(null);
 
     // Define payment status options
     const paymentStatuses = [
@@ -47,6 +50,16 @@ const SubscribedUserList = ({ data, loading }) => {
         } catch (error) {
             message.error(error?.data?.message || 'Failed to update subscription status');
         }
+    };
+
+    const handleUpdateUpgradePlanClick = (record) => {
+        setSelectedSubscription(record);
+        setUpdateUpgradePlanModalVisible(true);
+    };
+
+    const handleUpdateUpgradePlanModalClose = () => {
+        setUpdateUpgradePlanModalVisible(false);
+        setSelectedSubscription(null);
     };
 
     const columns = [
@@ -203,6 +216,27 @@ const SubscribedUserList = ({ data, loading }) => {
             key: 'end_date',
             sorter: (a, b) => new Date(a.end_date) - new Date(b.end_date),
             render: (date) => moment(date).format('DD MMM YYYY')
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_, record) => (
+                <Button
+                    type="primary"
+                    icon={<FiEdit2 />}
+                    onClick={() => handleUpdateUpgradePlanClick(record)}
+                    style={{
+                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                    }}
+                >
+                    Update Plan
+                </Button>
+            )
         }
     ];
 
@@ -232,6 +266,12 @@ const SubscribedUserList = ({ data, loading }) => {
                     borderRadius: '8px',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
                 }}
+            />
+            <UpdateUpgradePlan
+                open={updateUpgradePlanModalVisible}
+                onCancel={handleUpdateUpgradePlanModalClose}
+                companyId={selectedSubscription?.client_id}
+                planId={selectedSubscription?.id}
             />
         </div>
     );

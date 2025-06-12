@@ -116,7 +116,6 @@ const CompanyAccount = () => {
   };
 
   const handleView = (record) => {
-    console.log("View company:", record);
   };
 
   const handleDelete = (recordOrIds) => {
