@@ -12,6 +12,15 @@ const baseQuery = fetchBaseQuery({
                 return headers;
             }
         }
+        
+        // For reset password flow endpoints, use resetToken from localStorage
+        if (endpoint === 'verifyOtp' || endpoint === 'resetPassword') {
+            const resetToken = localStorage.getItem('resetToken');
+            if (resetToken) {
+                headers.set('authorization', resetToken); // resetToken already has 'Bearer ' prefix
+                return headers;
+            }
+        }
 
         // For all other endpoints, use auth token from Redux state
         const token = getState()?.auth?.token;
@@ -23,8 +32,9 @@ const baseQuery = fetchBaseQuery({
 });
 
 export const baseQueryWithReauth = async (args, api, extraOptions) => {
-    // Skip reauth for verification endpoints
-    if (api.endpoint === 'verifySignup' || api.endpoint === 'resendSignupOtp') {
+    // Skip reauth for verification and reset password endpoints
+    if (api.endpoint === 'verifySignup' || api.endpoint === 'resendSignupOtp' || 
+        api.endpoint === 'verifyOtp' || api.endpoint === 'resetPassword') {
         return await baseQuery(args, api, extraOptions);
     }
 

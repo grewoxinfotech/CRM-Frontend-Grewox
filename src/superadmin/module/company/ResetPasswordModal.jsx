@@ -98,6 +98,12 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
 
             const response = await sendResetEmail({ email }).unwrap();
 
+            // Ensure the session token is stored properly
+            if (response.sessionToken) {
+                const tokenWithBearer = `Bearer ${response.sessionToken}`;
+                localStorage.setItem('resetToken', tokenWithBearer);
+            }
+
             message.success({
                 content: response.message || 'Verification code sent successfully!',
                 icon: <span className="success-icon">✓</span>
@@ -130,12 +136,27 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
         setLoading(true);
         try {
             const email = company?.email || form.getFieldValue('email');
+            
+            // Check if resetToken exists
+            const resetToken = localStorage.getItem('resetToken');
+            if (!resetToken) {
+                message.error('Session token not found. Please try again.');
+                setCurrentStep(0);
+                return;
+            }
+
             const response = await verifyOtp({
                 email,
                 otp: otpString
             }).unwrap();
 
             if (response.success) {
+                // Update token if provided in response
+                if (response.sessionToken) {
+                    const tokenWithBearer = `Bearer ${response.sessionToken}`;
+                    localStorage.setItem('resetToken', tokenWithBearer);
+                }
+
                 message.success({
                     content: response.message || 'OTP verified successfully!',
                     icon: <span className="success-icon">✓</span>
@@ -183,6 +204,14 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
             return;
         }
 
+        // Check if resetToken exists
+        const resetToken = localStorage.getItem('resetToken');
+        if (!resetToken) {
+            message.error('Session token not found. Please restart the reset process.');
+            setCurrentStep(0);
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await resetPassword({
@@ -200,10 +229,20 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
             }
         } catch (error) {
             const errorMsg = error?.error || error?.data?.message || 'Failed to reset password';
-            message.error({
-                content: errorMsg,
-                icon: <span className="error-icon">×</span>
-            });
+            
+            if (errorMsg.includes('Invalid authorization') || errorMsg.includes('token')) {
+                message.error({
+                    content: 'Your reset session has expired. Please restart the reset process.',
+                    icon: <span className="error-icon">×</span>
+                });
+                localStorage.removeItem('resetToken');
+                setCurrentStep(0);
+            } else {
+                message.error({
+                    content: errorMsg,
+                    icon: <span className="error-icon">×</span>
+                });
+            }
         } finally {
             setLoading(false);
         }

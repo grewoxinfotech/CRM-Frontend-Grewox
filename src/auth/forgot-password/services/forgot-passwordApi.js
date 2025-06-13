@@ -12,7 +12,6 @@ export const forgotPasswordApi = createApi({
                 body: data,
             }),
             transformResponse: (response) => {
-                // Store the session token from the response
                 if (response.data?.sessionToken) {
                     const tokenWithBearer = `Bearer ${response.data.sessionToken}`;
                     localStorage.setItem('resetToken', tokenWithBearer);
@@ -24,8 +23,6 @@ export const forgotPasswordApi = createApi({
                 };
             },
             transformErrorResponse: (response) => {
-                localStorage.removeItem('resetToken');
-                // Get the exact error message from the backend response
                 const errorMessage = response.data?.message || response.error || response.data?.error;
                 return {
                     success: false,
@@ -40,7 +37,6 @@ export const forgotPasswordApi = createApi({
                 if (!resetToken) {
                     throw new Error('Session token not found. Please try again.');
                 }
-                console.log('resetToken for verification:', resetToken);
                 return {
                     url: '/auth/verify-otp',
                     method: 'POST',
@@ -48,32 +44,26 @@ export const forgotPasswordApi = createApi({
                     headers: {  
                         'Authorization': resetToken
                     }
-                    // headers: {
-                    //     'Authorization': resetToken
-                    // }
                 };
             },
             transformResponse: (response) => {
-                // Update token if a new one is provided
-                if (response.data?.sessionToken) {
-                    const tokenWithBearer = `Bearer ${response.data.sessionToken}`;
+                if (response.data?.token) {
+                    const tokenWithBearer = `Bearer ${response.data.token}`;
                     localStorage.setItem('resetToken', tokenWithBearer);
                 }
                 return {
                     success: true,
-                    message: response.message || 'OTP verified successfully'
+                    message: response.message || 'OTP verified successfully',
+                    sessionToken: response.data?.token
                 };
             },
             transformErrorResponse: (response) => {
-                // Handle specific OTP error cases
                 if (response.status === 400 || response.status === 401) {
-                    // Clear token only if it's expired or invalid
                     if (response.data?.message?.toLowerCase().includes('expired') ||
                         response.data?.message?.toLowerCase().includes('invalid token')) {
                         localStorage.removeItem('resetToken');
                     }
 
-                    // Get specific error message
                     const errorMessage = response.data?.message || response.error;
                     if (errorMessage?.toLowerCase().includes('invalid otp') ||
                         errorMessage?.toLowerCase().includes('incorrect otp')) {
@@ -91,7 +81,6 @@ export const forgotPasswordApi = createApi({
                     }
                 }
 
-                // Default error handling
                 const errorMessage = response.data?.message || response.error || response.data?.error;
                 return {
                     success: false,
@@ -116,7 +105,7 @@ export const forgotPasswordApi = createApi({
                 };
             },
             transformResponse: (response) => {
-                localStorage.removeItem('resetToken'); // Clear token after successful reset
+                localStorage.removeItem('resetToken');
                 return {
                     success: true,
                     message: response.message || 'Password reset successfully'
@@ -126,7 +115,6 @@ export const forgotPasswordApi = createApi({
                 if (response.status === 401) {
                     localStorage.removeItem('resetToken');
                 }
-                // Get the exact error message from the backend response
                 const errorMessage = response.data?.message || response.error || response.data?.error;
                 return {
                     success: false,
