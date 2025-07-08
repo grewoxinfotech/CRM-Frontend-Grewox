@@ -221,7 +221,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
                     ctx.fillStyle = gradient;
                     ctx.font = '600 13px "Poppins"';
                     ctx.textAlign = 'left';
-                    ctx.fillText(companyName || 'Grewox CRM', 245, 630);
+                    ctx.fillText(companyName || 'Raiser CRM', 245, 630);
 
                     // Convert to PDF with maximum quality
                     pdf.addImage(
@@ -784,7 +784,7 @@ const CustomFormList = ({ data = [], onEdit, onDelete, onBulkDelete }) => {
                                 alignItems: "center",
                                 gap: "4px"
                             }}>
-                                Powered by <span style={{ fontWeight: 600, background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{companyName || 'Grewox CRM'}</span>
+                                Powered by <span style={{ fontWeight: 600, background: "linear-gradient(135deg, #1890ff 0%, #096dd9 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{companyName || 'Raiser CRM'}</span>
                             </Text>
                         </div>
                     </div>
