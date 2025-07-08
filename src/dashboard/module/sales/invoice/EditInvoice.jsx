@@ -408,12 +408,10 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         category: selectedCategory || "",
         customer: values.customer || "",
         section: "sales-invoice",
-        issueDate: values.issueDate?.format("YYYY-MM-DD"),
-        dueDate: values.dueDate?.format("YYYY-MM-DD"),
-        currency: selectedCurrencyId || values.currency,
-        items: JSON.stringify(Array.isArray(formattedItems)
-          ? formattedItems
-          : [formattedItems]), // Stringify items array for backend
+        issueDate: values.issueDate ? values.issueDate.format("YYYY-MM-DD") : "",
+        dueDate: values.dueDate ? values.dueDate.format("YYYY-MM-DD") : "",
+        currency: selectedCurrencyId || values.currency || "",
+        items: Array.isArray(formattedItems) ? formattedItems : [],
         subtotal: Number(values.subtotal) || 0,
         tax: Number(totalTaxAmount) || 0,
         discount: Number(totalDiscountAmount) || 0,
