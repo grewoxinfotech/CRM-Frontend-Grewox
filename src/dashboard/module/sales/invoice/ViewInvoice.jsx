@@ -581,17 +581,30 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         address: customerData.billing_address || customerData.address,
       };
 
-      // Clean up the invoice data
+      // Clean up the invoice data - ensure all values are serializable
       const cleanInvoice = {
-        ...invoice,
+        id: invoice.id,
+        salesInvoiceNumber: invoice.salesInvoiceNumber || "",
+        issueDate: invoice.issueDate || "",
+        dueDate: invoice.dueDate || "",
         currency: "INR",
-        items:
-          invoice.items?.map((item) => ({
-            ...item,
-            unit_price: Number(item.unit_price || item.rate || 0),
-            quantity: Number(item.quantity || 0),
-            amount: Number(item.amount || 0),
-          })) || [],
+        status: invoice.status || "",
+        payment_status: invoice.payment_status || "",
+        // Only include primitive values and simple arrays
+        items: Array.isArray(invoice.items) 
+          ? invoice.items.map(item => ({
+              name: item.name || item.description || "",
+              description: item.description || "",
+              unit_price: Number(item.unit_price || item.rate || 0),
+              quantity: Number(item.quantity || 0),
+              amount: Number(item.amount || 0),
+              tax_rate: Number(item.tax_rate || 0),
+              tax_amount: Number(item.tax_amount || 0),
+              discount: Number(item.discount || 0),
+              discount_type: item.discount_type || "amount",
+              hsn_sac: item.hsn_sac || "",
+            }))
+          : [],
         total: Number(invoice.total || 0),
         tax: Number(invoice.tax || 0),
         discount: Number(invoice.discount || 0),
@@ -603,6 +616,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
         customer: customer,
         htmlContent: htmlContent,
       };
+
+      // For debugging
+      console.log("Sending payload:", JSON.stringify(payload));
 
       await sendInvoiceEmail({
         id: invoice.id,

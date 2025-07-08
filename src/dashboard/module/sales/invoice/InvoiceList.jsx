@@ -290,6 +290,7 @@ const InvoiceList = ({
     {
       title: "Invoice Details",
       key: "details",
+      width: 200,
       filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
         <div style={{ padding: 8 }}>
           <Input
