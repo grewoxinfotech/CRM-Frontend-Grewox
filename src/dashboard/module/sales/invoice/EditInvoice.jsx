@@ -368,13 +368,13 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       const formattedItems = values.items?.map((item) => {
         const itemTaxAmount = isTaxEnabled ? calculateItemTaxAmount(item) : 0;
         return {
-          product_id: item.id,
-          name: item.item_name,
+          product_id: item.id || "",
+          name: item.item_name || "",
           quantity: Number(item.quantity) || 0,
           unit_price: Number(item.unit_price) || 0,
           tax: null, // Not using tax ID anymore
-          tax_name: isTaxEnabled ? item.tax_name || "" : "",
-          tax_percentage: isTaxEnabled ? Number(item.tax) || 0 : 0,
+          tax_name: isTaxEnabled ? (item.tax_name || "") : "",
+          tax_percentage: isTaxEnabled ? (Number(item.tax) || 0) : 0,
           tax_amount: Number(itemTaxAmount) || 0,
           discount: Number(item.discount) || 0,
           discount_type: item.discount_type || "percentage",
@@ -384,33 +384,34 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
       });
 
       // Calculate total tax amount from all items
-      const totalTaxAmount = formattedItems.reduce(
-        (sum, item) => sum + (Number(item.tax_amount) || 0),
-        0
-      );
+      const totalTaxAmount = Array.isArray(formattedItems) ? 
+        formattedItems.reduce(
+          (sum, item) => sum + (Number(item.tax_amount) || 0),
+          0
+        ) : 0;
 
       // Calculate total discount amount from all items
-      const totalDiscountAmount = formattedItems.reduce((sum, item) => {
-        const itemAmount = Number(item.quantity) * Number(item.unit_price);
-        let discountAmount = 0;
-        if (item.discount_type === "percentage") {
-          discountAmount = (itemAmount * (Number(item.discount) || 0)) / 100;
-        } else {
-          discountAmount = Number(item.discount) || 0;
-        }
-        return sum + discountAmount;
-      }, 0);
+      const totalDiscountAmount = Array.isArray(formattedItems) ?
+        formattedItems.reduce((sum, item) => {
+          const itemAmount = Number(item.quantity) * Number(item.unit_price);
+          let discountAmount = 0;
+          if (item.discount_type === "percentage") {
+            discountAmount = (itemAmount * (Number(item.discount) || 0)) / 100;
+          } else {
+            discountAmount = Number(item.discount) || 0;
+          }
+          return sum + discountAmount;
+        }, 0) : 0;
 
+      // Ensure all values are serializable
       const payload = {
-        category: selectedCategory,
-        customer: values.customer,
+        category: selectedCategory || "",
+        customer: values.customer || "",
         section: "sales-invoice",
-        issueDate: values.issueDate?.format("YYYY-MM-DD"),
-        dueDate: values.dueDate?.format("YYYY-MM-DD"),
-        currency: selectedCurrencyId || values.currency,
-        items: Array.isArray(formattedItems)
-          ? formattedItems
-          : [formattedItems], // Ensure items is always an array
+        issueDate: values.issueDate ? values.issueDate.format("YYYY-MM-DD") : "",
+        dueDate: values.dueDate ? values.dueDate.format("YYYY-MM-DD") : "",
+        currency: selectedCurrencyId || values.currency || "",
+        items: Array.isArray(formattedItems) ? formattedItems : [],
         subtotal: Number(values.subtotal) || 0,
         tax: Number(totalTaxAmount) || 0,
         discount: Number(totalDiscountAmount) || 0,
@@ -419,13 +420,18 @@ const EditInvoice = ({ open, onCancel, onSubmit, initialValues }) => {
         additional_notes: values.additionalNotes || "",
       };
 
+      // For debugging
+      console.log("Sending payload:", JSON.stringify(payload));
+
       const response = await updateInvoice({
         id: initialValues.id,
         data: payload,
       }).unwrap();
+      
       if (response.success === false) {
         throw new Error(response.message);
       }
+      
       message.success("Invoice updated successfully");
       onCancel();
     } catch (error) {
