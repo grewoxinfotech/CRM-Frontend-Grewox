@@ -635,7 +635,7 @@ const CreateProduct = ({
               { required: true, message: "Please enter selling price" },
               ({ getFieldValue }) => ({
                 async validator(_, value) {
-                  if (!value) return Promise.reject('Please enter selling price');
+                  // if (!value) return Promise.reject('Please enter selling price');
                   if (value <= 0) {
                     return Promise.reject('Selling price must be greater than 0');
                   }
