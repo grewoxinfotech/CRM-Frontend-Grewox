@@ -24,6 +24,7 @@ import {
   FiGitBranch,
   FiGrid,
   FiAward,
+  FiLock,
 } from "react-icons/fi";
 import moment from "moment";
 import { useGetAllBranchesQuery } from "../Branch/services/branchApi";
@@ -37,6 +38,7 @@ import {
   useUpdateSalaryMutation,
 } from "../payRoll/services/salaryApi";
 import { useDeleteEmployeeMutation } from "./services/employeeApi";
+import ResetPasswordModal from "../../../../superadmin/module/company/ResetPasswordModal";
 
 // Define styles outside the component
 const switchStyles = `
@@ -90,6 +92,8 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
   const [deleteEmployee] = useDeleteEmployeeMutation();
   const [isMobile, setIsMobile] = useState(false);
   const [salaryUpdateLoading, setSalaryUpdateLoading] = useState({});
+  const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   // Add branch data fetch
   const { data: branchesData } = useGetAllBranchesQuery({
@@ -246,6 +250,11 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
     };
   };
 
+  const handleResetPassword = (employee) => {
+    setSelectedEmployee(employee);
+    setResetPasswordModalVisible(true);
+  };
+
   const getActionMenu = (record) => (
     <Menu className="action-menu">
       <Menu.Item key="edit" icon={<FiEdit2 />} onClick={() => onEdit(record)}>
@@ -257,6 +266,13 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         onClick={() => handleEmployeeLogin(record)}
       >
         Login as Employee
+      </Menu.Item>
+      <Menu.Item
+        key="reset-password"
+        icon={<FiLock />}
+        onClick={() => handleResetPassword(record)}
+      >
+        Reset Password
       </Menu.Item>
       <Menu.Item
         key="status"
@@ -604,15 +620,29 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
   // Transform the employees data without role names
   const transformedEmployees = useMemo(() => {
     if (!employees) return [];
-    return employees.map((emp) => ({
-      ...emp,
-      key: emp.id,
-      employeeId: emp.employeeId || emp.id,
-      name: emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim(),
-      branchName: getBranchName(emp.branch),
-      departmentName: getDepartmentName(emp.department),
-      designationName: getDesignationName(emp.designation),
-    }));
+    return employees.map((emp) => {
+      try {
+        return {
+          ...emp,
+          key: emp.id,
+          employeeId: emp.employeeId || emp.id,
+          name: emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim(),
+          branchName: getBranchName(emp.branch),
+          departmentName: getDepartmentName(emp.department),
+          designationName: getDesignationName(emp.designation),
+        };
+      } catch (error) {
+        console.error("Error transforming employee data:", error, emp);
+        // Return a safe fallback version
+        return {
+          id: emp.id || "unknown",
+          key: emp.id || "unknown",
+          name: "Error in data",
+          email: "error",
+          status: "error"
+        };
+      }
+    });
   }, [employees, branchesData, departmentsData, designationsData]);
 
   useEffect(() => {
@@ -756,6 +786,13 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
           }}
         />
       </div>
+
+      {/* Reset Password Modal */}
+      <ResetPasswordModal
+        visible={resetPasswordModalVisible}
+        onCancel={() => setResetPasswordModalVisible(false)}
+        company={selectedEmployee}
+      />
     </>
   );
 };

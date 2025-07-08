@@ -22,6 +22,7 @@ import {
   FiChevronDown,
   FiGrid,
   FiList,
+  FiLock,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import {
@@ -42,6 +43,7 @@ import "jspdf-autotable";
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../../../auth/services/authSlice";
 import EditEmployee from "./EditEmployee";
+import ResetPasswordModal from "../../../../superadmin/module/company/ResetPasswordModal";
 
 const { Title, Text } = Typography;
 
@@ -54,6 +56,7 @@ const Employee = () => {
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [resetPasswordVisible, setResetPasswordVisible] = useState(false);
   const loggedInUser = useSelector(selectCurrentUser);
   const [createEmployee, { isLoading: isCreating }] =
     useCreateEmployeeMutation();
@@ -74,67 +77,93 @@ const Employee = () => {
 
   useEffect(() => {
     if (employeesData?.data) {
-      const filteredData = employeesData.data.filter(
-        (employee) =>
-          employee?.created_by === loggedInUser?.username ||
-          employee?.client_id === loggedInUser?.id
-      );
+      try {
+        const filteredData = employeesData.data.filter(
+          (employee) =>
+            employee?.created_by === loggedInUser?.username ||
+            employee?.client_id === loggedInUser?.id
+        );
 
-      const transformedData = filteredData.map((employee) => ({
-        id: employee.id,
-        employeeId: employee.employeeId,
-        firstName: employee.firstName || "N/A",
-        lastName: employee.lastName || "N/A",
-        name: employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || "N/A",
-        username: employee.username || "N/A",
-        phoneCode: employee.phoneCode || "N/A",
-        address: employee.address || "N/A",
-        state: employee.state || "N/A",
-        city: employee.city || "N/A",
-        country: employee.country || "N/A",
-        zipcode: employee.zipcode || "N/A",
-        website: employee.website || "N/A",
-        gstIn: employee.gstIn || "N/A",
-        gender: employee.gender || "N/A",
-        joiningDate: employee.joiningDate || "N/A",
-        leaveDate: employee.leaveDate || "N/A",
-        salary: employee.salary || "0.00",
-        currency: employee.currency || "N/A",
-        accountholder: employee.accountholder || "N/A",
-        accountnumber: employee.accountnumber || "N/A",
-        bankname: employee.bankname || "N/A",
-        email: employee.email || "N/A",
-        phone: employee.phone || "N/A",
-        branch: employee.branch || "N/A",
-        department: employee.department || "N/A",
-        designation: employee.designation || "N/A",
-        designation_name: employee.designation_name || "N/A",
-        status: employee.status || "inactive",
-        created_at: employee.createdAt || "-",
-        updated_at: employee.updatedAt || null,
-        created_by: employee.created_by,
-        updated_by: employee.updated_by,
-        profilePic: employee.profilePic || null,
-        ifsc: employee.ifsc || null,
-        banklocation: employee.banklocation || null,
-        role_id: employee.role_id,
-        key: employee.id
-      }));
-      setEmployees(transformedData);
-      setFilteredEmployees(transformedData);
+        const transformedData = filteredData.map((employee) => {
+          try {
+            return {
+              id: employee.id,
+              employeeId: employee.employeeId,
+              firstName: employee.firstName || "N/A",
+              lastName: employee.lastName || "N/A",
+              name: employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || "N/A",
+              username: employee.username || "N/A",
+              phoneCode: employee.phoneCode || "N/A",
+              address: employee.address || "N/A",
+              state: employee.state || "N/A",
+              city: employee.city || "N/A",
+              country: employee.country || "N/A",
+              zipcode: employee.zipcode || "N/A",
+              website: employee.website || "N/A",
+              gstIn: employee.gstIn || "N/A",
+              gender: employee.gender || "N/A",
+              joiningDate: employee.joiningDate || "N/A",
+              leaveDate: employee.leaveDate || "N/A",
+              salary: employee.salary || "0.00",
+              currency: employee.currency || "N/A",
+              accountholder: employee.accountholder || "N/A",
+              accountnumber: employee.accountnumber || "N/A",
+              bankname: employee.bankname || "N/A",
+              email: employee.email || "N/A",
+              phone: employee.phone || "N/A",
+              branch: employee.branch || "N/A",
+              department: employee.department || "N/A",
+              designation: employee.designation || "N/A",
+              designation_name: employee.designation_name || "N/A",
+              status: employee.status || "inactive",
+              created_at: employee.createdAt || "-",
+              updated_at: employee.updatedAt || null,
+              created_by: employee.created_by,
+              updated_by: employee.updated_by,
+              profilePic: employee.profilePic || null,
+              ifsc: employee.ifsc || null,
+              banklocation: employee.banklocation || null,
+              role_id: employee.role_id,
+              key: employee.id
+            };
+          } catch (error) {
+            console.error("Error transforming employee data:", error, employee);
+            // Return a safe version with minimal data
+            return {
+              id: employee.id || "unknown",
+              key: employee.id || "unknown",
+              name: "Data Error",
+              email: "error",
+              status: "error"
+            };
+          }
+        });
+        setEmployees(transformedData);
+        setFilteredEmployees(transformedData);
+      } catch (error) {
+        console.error("Error processing employees data:", error);
+        message.error("Error loading employee data. Please refresh the page.");
+        setEmployees([]);
+        setFilteredEmployees([]);
+      }
     }
   }, [employeesData, loggedInUser]);
 
   useEffect(() => {
-    const filtered = employees.filter(
-      (employee) =>
-        employee.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        employee.email?.toLowerCase().includes(searchText.toLowerCase()) ||
-        employee.department?.toLowerCase().includes(searchText.toLowerCase()) ||
-        employee.designation_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        employee.role_id?.toString().toLowerCase().includes(searchText.toLowerCase())
-    );
-    setFilteredEmployees(filtered);
+    try {
+      const filtered = employees.filter(
+        (employee) =>
+          employee.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+          employee.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+          employee.department?.toLowerCase().includes(searchText.toLowerCase()) ||
+          employee.designation_name?.toLowerCase().includes(searchText.toLowerCase()) ||
+          (employee.role_id && employee.role_id.toString().toLowerCase().includes(searchText.toLowerCase()))
+      );
+      setFilteredEmployees(filtered);
+    } catch (error) {
+      console.error("Error filtering employees:", error);
+      // Keep the current filtered list
+    }
   }, [employees, searchText]);
 
   useEffect(() => {
@@ -246,6 +275,11 @@ const Employee = () => {
     } catch (error) {
       message.error(error?.data?.message || "Failed to update employee");
     }
+  };
+
+  const handleResetPassword = (employee) => {
+    setSelectedEmployee(employee);
+    setResetPasswordVisible(true);
   };
 
   const exportMenu = (
@@ -488,6 +522,13 @@ const Employee = () => {
         onCancel={() => setIsEditFormVisible(false)}
         initialValues={selectedEmployee}
         onSuccess={handleEditSuccess}
+      />
+      
+      {/* Reset Password Modal */}
+      <ResetPasswordModal
+        visible={resetPasswordVisible}
+        onCancel={() => setResetPasswordVisible(false)}
+        company={selectedEmployee}
       />
     </div>
   );

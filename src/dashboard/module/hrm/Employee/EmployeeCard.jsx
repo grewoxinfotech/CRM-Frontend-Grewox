@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, Avatar, Tag, Button, Dropdown, Menu, message } from 'antd';
-import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiUser, FiEye, FiMail, FiCalendar, FiBriefcase, FiLogIn, FiUsers } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiUser, FiEye, FiMail, FiCalendar, FiBriefcase, FiLogIn, FiUsers, FiLock } from 'react-icons/fi';
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { useAdminLoginMutation } from '../../../../auth/services/authApi';
 import { useGetRolesQuery } from '../role/services/roleApi';
+import ResetPasswordModal from '../../../../superadmin/module/company/ResetPasswordModal';
 
 const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
     const { data: rolesData } = useGetRolesQuery();
+    const [resetPasswordVisible, setResetPasswordVisible] = useState(false);
 
     const getRoleName = (role_id) => {
         if (!rolesData?.data) return 'Employee';
@@ -73,6 +75,10 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
         }
     };
 
+    const handleResetPassword = () => {
+        setResetPasswordVisible(true);
+    };
+
     const getActionMenu = (record) => (
         <Menu className="action-menu">
             <Menu.Item key="view" icon={<FiEye />} onClick={() => onView(record)}>
@@ -83,6 +89,9 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
             </Menu.Item>
             <Menu.Item key="status" icon={<FiUserCheck />}>
                 Change Status
+            </Menu.Item>
+            <Menu.Item key="reset" icon={<FiLock />} onClick={handleResetPassword}>
+                Reset Password
             </Menu.Item>
             <Menu.Item key="delete" icon={<FiTrash2 />} danger onClick={() => onDelete(record)}>
                 Delete Employee
@@ -104,139 +113,147 @@ const EmployeeCard = ({ employee, onEdit, onDelete, onView }) => {
     };
 
     return (
-        <Card
-            className="employee-card modern-card"
-            bordered={false}
-            style={{
-                borderRadius: '16px',
-                overflow: 'hidden',
-                background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
-                height: '100%',
-                position: 'relative'
-            }}
-            actions={[
-                <Button
-                    type="primary"
-                    icon={<FiLogIn />}
-                    className="login-as-button"
-                    block
-                    onClick={handleAdminLogin}
-                    style={{
-                        background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-                        border: 'none',
-                        height: '40px',
-                        borderRadius: '0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                    }}
-                >
-                    {getLoginButtonText(roleName)}
-                </Button>
-            ]}
-        >
-            <div className="card-top-pattern" />
-
-            <div className="employee-card-header">
-                <div className="employee-main-info">
-                    <Avatar
-                        size={56}
-                        src={employee.profilePic}
-                        icon={!employee.profilePic && <FiUser />}
-                        className="employee-avatar"
+        <>
+            <Card
+                className="employee-card modern-card"
+                bordered={false}
+                style={{
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+                    boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
+                    height: '100%',
+                    position: 'relative'
+                }}
+                actions={[
+                    <Button
+                        type="primary"
+                        icon={<FiLogIn />}
+                        className="login-as-button"
+                        block
+                        onClick={handleAdminLogin}
                         style={{
-                            backgroundColor: !employee.profilePic ? '#1890ff' : 'transparent',
+                            background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                            border: 'none',
+                            height: '40px',
+                            borderRadius: '0',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '24px'
+                            gap: '8px',
+                            fontSize: '14px',
+                            fontWeight: '500'
                         }}
                     >
-                        {!employee.profilePic && getInitials(employee.name)}
-                    </Avatar>
-                    <div className="employee-info">
-                        <h3>{employee.name}</h3>
-                        <div className="role-wrapper">
-                            <div
-                                className="role-indicator"
-                                style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    borderRadius: '50%',
-                                    background: roleStyle.color,
-                                    boxShadow: `0 0 8px ${roleStyle.color}`
-                                }}
-                            />
-                            <Tag
-                                style={{
-                                    textTransform: 'capitalize',
-                                    padding: '4px 12px',
-                                    borderRadius: '6px',
-                                    fontSize: '13px',
-                                    margin: 0,
-                                    background: roleStyle.bg,
-                                    border: `1px solid ${roleStyle.border}`,
-                                    color: roleStyle.color,
-                                    fontWeight: 500,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px'
-                                }}
-                            >
-                                <FiUsers size={12} />
-                                {roleName}
-                            </Tag>
+                        {getLoginButtonText(roleName)}
+                    </Button>
+                ]}
+            >
+                <div className="card-top-pattern" />
+
+                <div className="employee-card-header">
+                    <div className="employee-main-info">
+                        <Avatar
+                            size={56}
+                            src={employee.profilePic}
+                            icon={!employee.profilePic && <FiUser />}
+                            className="employee-avatar"
+                            style={{
+                                backgroundColor: !employee.profilePic ? '#1890ff' : 'transparent',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '24px'
+                            }}
+                        >
+                            {!employee.profilePic && getInitials(employee.name)}
+                        </Avatar>
+                        <div className="employee-info">
+                            <h3>{employee.name}</h3>
+                            <div className="role-wrapper">
+                                <div
+                                    className="role-indicator"
+                                    style={{
+                                        width: '8px',
+                                        height: '8px',
+                                        borderRadius: '50%',
+                                        background: roleStyle.color,
+                                        boxShadow: `0 0 8px ${roleStyle.color}`
+                                    }}
+                                />
+                                <Tag
+                                    style={{
+                                        textTransform: 'capitalize',
+                                        padding: '4px 12px',
+                                        borderRadius: '6px',
+                                        fontSize: '13px',
+                                        margin: 0,
+                                        background: roleStyle.bg,
+                                        border: `1px solid ${roleStyle.border}`,
+                                        color: roleStyle.color,
+                                        fontWeight: 500,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <FiUsers size={12} />
+                                    {roleName}
+                                </Tag>
+                            </div>
                         </div>
                     </div>
+                    <Dropdown
+                        overlay={getActionMenu(employee)}
+                        trigger={['click']}
+                        placement="bottomRight"
+                    >
+                        <Button
+                            type="text"
+                            icon={<FiMoreVertical />}
+                            className="action-dropdown-button"
+                        />
+                    </Dropdown>
                 </div>
-                <Dropdown
-                    overlay={getActionMenu(employee)}
-                    trigger={['click']}
-                    placement="bottomRight"
-                >
-                    <Button
-                        type="text"
-                        icon={<FiMoreVertical />}
-                        className="action-dropdown-button"
-                    />
-                </Dropdown>
-            </div>
 
-            <div className="employee-details">
-                <div className="detail-item">
-                    <FiMail className="detail-icon" />
-                    <span className="detail-text">{employee.email || 'N/A'}</span>
-                </div>
-                <div className="detail-item">
-                    <FiCalendar className="detail-icon" />
-                    <div className="date-cell">
-                        <span className="date">
-                            {moment(employee.created_at).format('MMM DD, YYYY')}
-                        </span>
-                        <span className="time">
-                            {moment(employee.created_at).format('h:mm A')}
-                        </span>
+                <div className="employee-details">
+                    <div className="detail-item">
+                        <FiMail className="detail-icon" />
+                        <span className="detail-text">{employee.email || 'N/A'}</span>
                     </div>
-                </div>
-                {employee.updated_at && (
                     <div className="detail-item">
                         <FiCalendar className="detail-icon" />
                         <div className="date-cell">
                             <span className="date">
-                                {moment(employee.updated_at).format('MMM DD, YYYY')}
+                                {moment(employee.created_at).format('MMM DD, YYYY')}
                             </span>
                             <span className="time">
-                                {moment(employee.updated_at).format('h:mm A')}
+                                {moment(employee.created_at).format('h:mm A')}
                             </span>
                         </div>
                     </div>
-                )}
-            </div>
-        </Card>
+                    {employee.updated_at && (
+                        <div className="detail-item">
+                            <FiCalendar className="detail-icon" />
+                            <div className="date-cell">
+                                <span className="date">
+                                    {moment(employee.updated_at).format('MMM DD, YYYY')}
+                                </span>
+                                <span className="time">
+                                    {moment(employee.updated_at).format('h:mm A')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </Card>
+
+            <ResetPasswordModal
+                visible={resetPasswordVisible}
+                onCancel={() => setResetPasswordVisible(false)}
+                company={employee}
+            />
+        </>
     );
 };
 

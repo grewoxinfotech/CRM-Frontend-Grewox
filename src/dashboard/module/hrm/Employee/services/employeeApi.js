@@ -19,30 +19,49 @@ export const employeeApi = createApi({
       transformResponse: (response) => {
         if (!response?.message?.data) return { data: [], total: 0 };
 
-        const employees = response.message.data.map(employee => ({
-          ...employee,
-          id: employee.id,
-          key: employee.id,
-          employeeId: employee.employeeId,
-          name: employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A',
-          role_id: employee.role_id,
-          branch: employee.branch,
-          department: employee.department,
-          designation: employee.designation,
-          designation_name: employee.designation_name || 'N/A',
-          designation_id: employee.designation,
-          email: employee.email,
-          phone: employee.phone,
-          status: employee.status || 'active',
-          salary: employee.salary || '0.00',
-          profilePic: employee.profilePic
-        }));
+        try {
+          const employees = response.message.data.map(employee => {
+            try {
+              return {
+                ...employee,
+                id: employee.id,
+                key: employee.id,
+                employeeId: employee.employeeId,
+                name: employee.name || `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 'N/A',
+                role_id: employee.role_id,
+                branch: employee.branch,
+                department: employee.department,
+                designation: employee.designation,
+                designation_name: employee.designation_name || 'N/A',
+                designation_id: employee.designation,
+                email: employee.email,
+                phone: employee.phone,
+                status: employee.status || 'active',
+                salary: employee.salary || '0.00',
+                profilePic: employee.profilePic
+              };
+            } catch (error) {
+              console.error("Error transforming individual employee data:", error, employee);
+              // Return a safe fallback for this employee
+              return {
+                id: employee.id || "error",
+                key: employee.id || "error",
+                name: "Error in data",
+                email: "error",
+                status: "error"
+              };
+            }
+          });
 
-        return {
-          data: employees,
-          total: response.message.pagination.total || employees.length,
-          pagination: response.message.pagination
-        };
+          return {
+            data: employees,
+            total: response.message.pagination.total || employees.length,
+            pagination: response.message.pagination
+          };
+        } catch (error) {
+          console.error("Error transforming employees response:", error);
+          return { data: [], total: 0, error: true };
+        }
       }
     }),
     createEmployee: builder.mutation({

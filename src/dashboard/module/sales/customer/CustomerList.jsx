@@ -249,7 +249,21 @@ const CustomerList = ({
       ),
       onFilter: (value, record) => {
         const searchValue = value.toLowerCase();
-        const billing = record.billing_address ? JSON.parse(record.billing_address) : {};
+        
+        // Safely handle billing_address parsing
+        let billing = {};
+        if (record.billing_address) {
+          if (typeof record.billing_address === 'string') {
+            try {
+              billing = JSON.parse(record.billing_address);
+            } catch (error) {
+              console.error('Error parsing billing address:', error);
+            }
+          } else if (typeof record.billing_address === 'object') {
+            billing = record.billing_address;
+          }
+        }
+        
         return (
           billing.city?.toLowerCase().includes(searchValue) ||
           billing.state?.toLowerCase().includes(searchValue) ||
@@ -258,7 +272,20 @@ const CustomerList = ({
         );
       },
       render: (_, record) => {
-        const billing = record.billing_address ? JSON.parse(record.billing_address) : {};
+        // Safely handle billing_address parsing
+        let billing = {};
+        if (record.billing_address) {
+          if (typeof record.billing_address === 'string') {
+            try {
+              billing = JSON.parse(record.billing_address);
+            } catch (error) {
+              console.error('Error parsing billing address:', error);
+            }
+          } else if (typeof record.billing_address === 'object') {
+            billing = record.billing_address;
+          }
+        }
+        
         return (
           <div className="item-wrapper">
             <div className="item-content">

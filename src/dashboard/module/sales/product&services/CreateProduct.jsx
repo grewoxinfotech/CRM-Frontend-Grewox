@@ -1029,10 +1029,9 @@ const CreateProduct = ({
           name="image"
           label={
             <span style={{ color: "#374151", fontWeight: 500 }}>
-              Product Image <span style={{ color: "#ff4d4f" }}>*</span>
+              Product Image 
             </span>
           }
-          rules={[{ required: true, message: "Please upload product image" }]}
         >
           <Upload {...uploadProps}>
             <Button icon={<FiUpload />}>Click to upload</Button>

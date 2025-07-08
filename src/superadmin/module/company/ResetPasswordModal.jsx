@@ -238,10 +238,10 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
                 localStorage.removeItem('resetToken');
                 setCurrentStep(0);
             } else {
-                message.error({
-                    content: errorMsg,
-                    icon: <span className="error-icon">×</span>
-                });
+            message.error({
+                content: errorMsg,
+                icon: <span className="error-icon">×</span>
+            });
             }
         } finally {
             setLoading(false);
