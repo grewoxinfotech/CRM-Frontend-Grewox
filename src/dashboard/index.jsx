@@ -42,7 +42,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const user = useSelector(selectCurrentUser);
   const id = user?.client_id;
-  const companyName = "Raiser Software";
+  const companyName = "Grewox Software";
   const { data: currencies } = useGetAllCurrenciesQuery();
   const { data: tasksData, isLoading: tasksLoading } = useGetAllTasksQuery(id);
   const { data: statusesData } = useGetStatusesQuery(user?.id);

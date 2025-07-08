@@ -71,9 +71,9 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
   const [sendInvoiceEmail] = useSendInvoiceEmailMutation();
   // State for company information
   const [companyLogo, setCompanyLogo] = useState(null);
-  const [companyName, setCompanyName] = useState("Raiser CRM");
-  const [companyEmail, setCompanyEmail] = useState("contact@raiser.com");
-  const [companyWebsite, setCompanyWebsite] = useState("www.raiser.com");
+  const [companyName, setCompanyName] = useState("Grewox CRM");
+  const [companyEmail, setCompanyEmail] = useState("contact@grewox.com");
+  const [companyWebsite, setCompanyWebsite] = useState("www.grewox.com");
   const [merchantUpiId, setMerchantUpiId] = useState("");
 
   // Get company settings from general settings
@@ -1174,7 +1174,7 @@ const ViewInvoice = ({ open, onCancel, invoice, onDownload }) => {
                           color: "#1890ff",
                         }}
                       >
-                        Raiser CRM
+                        Grewox CRM
                       </span>
                     </div>
                   </div>

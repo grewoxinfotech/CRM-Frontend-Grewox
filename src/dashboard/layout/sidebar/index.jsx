@@ -757,8 +757,8 @@ const Sidebar = ({
       <aside className={`sidebar ${!isMobileView && isCollapsed ? 'collapsed' : ''} ${localMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
-            {(!isMobileView && !isCollapsed) && <span className="full-text">Raiser CRM</span>}
-            {isMobileView && <span className="full-text">Raiser CRM</span>}
+            {(!isMobileView && !isCollapsed) && <span className="full-text">Grewox CRM</span>}
+            {isMobileView && <span className="full-text">Grewox CRM</span>}
           </div>
           {!isMobileView ? (
             <button className="collapse-btn" onClick={handleToggleCollapse}>

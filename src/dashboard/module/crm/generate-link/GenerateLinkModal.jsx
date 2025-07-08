@@ -14,7 +14,7 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
     const endDate = dayjs().add(1, 'month').format('MMM DD, YYYY');
     const { data: settingsData } = useGetAllSettingsQuery();
     const [companyLogo, setCompanyLogo] = useState(null);
-    const [companyName, setCompanyName] = useState('Raiser CRM');
+    const [companyName, setCompanyName] = useState('Grewox CRM');
 
     useEffect(() => {
         try {
@@ -28,12 +28,12 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
                 if (name && typeof name === 'string' && name.trim() !== '' && name !== 'undefined') {
                     setCompanyName(name.trim());
                 } else {
-                    setCompanyName('Raiser CRM');
+                    setCompanyName('Grewox CRM');
                 }
             }
         } catch (error) {
             console.error('Error setting company details:', error);
-            setCompanyName('Raiser CRM');
+            setCompanyName('Grewox CRM');
         }
     }, [settingsData]);
 
@@ -171,7 +171,7 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
             <div className="qr-preview-container">
                 <div className="wave-bg" />
                 <div className="preview-header">
-                    <img src={companyLogo || "/logo.png"} alt="Raiser CRM" className="header-logo" />
+                    <img src={companyLogo || "/logo.png"} alt="Grewox CRM" className="header-logo" />
                     <h2>{formData?.title || 'CRM Software Inquiry Session'}</h2>
                     <div className="event-type">Online/Virtual Meeting</div>
                     <div className="date-range">
@@ -180,11 +180,11 @@ const GenerateLinkModal = ({ open, onCancel, formData }) => {
                 </div>
                 <div className="qr-card">
                     <canvas ref={qrCanvasRef} />
-                    <img src={companyLogo || "/logo.png"} alt="Raiser CRM" className="qr-logo" />
+                    <img src={companyLogo || "/logo.png"} alt="Grewox CRM" className="qr-logo" />
                 </div>
                 <div className="scan-text">Scan to access form</div>
                 <div className="powered-by">
-                    Powered by <span className="Raiser">{companyName === 'undefined' ? 'Raiser CRM' : companyName}</span>
+                    Powered by <span className="Grewox">{companyName === 'undefined' ? 'Grewox CRM' : companyName}</span>
                 </div>
             </div>
 

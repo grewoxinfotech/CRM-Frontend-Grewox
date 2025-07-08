@@ -87,7 +87,7 @@ export default function ResetPassword() {
                 >
                     <div className="brand">
                         <FiLock className="logo" />
-                        <span className="brand-name">Raiser CRM</span>
+                        <span className="brand-name">Grewox CRM</span>
                     </div>
                     <motion.img
                         src={form_graphic}
