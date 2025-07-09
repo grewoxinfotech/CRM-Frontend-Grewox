@@ -4,10 +4,16 @@ import { FiEdit2, FiTrash2, FiMoreVertical, FiUserCheck, FiLock, FiShield, FiUse
 import moment from 'moment';
 import { useNavigate } from 'react-router-dom';
 import { useAdminLoginMutation } from '../../../../auth/services/authApi';
+import ResetPasswordModal from '../../../../superadmin/module/company/ResetPasswordModal';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../../auth/services/authSlice';
 
 const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }) => {
     const navigate = useNavigate();
     const [adminLogin] = useAdminLoginMutation();
+    const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const currentUser = useSelector(selectCurrentUser);
     
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -42,6 +48,11 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             console.error('Admin login error:', error);
             message.error(error?.data?.message || 'Failed to login as user');
         }
+    };
+
+    const handleResetPassword = (user) => {
+        setSelectedUser(user);
+        setResetPasswordModalVisible(true);
     };
 
     const getRoleColor = (role) => {
@@ -100,13 +111,13 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
             >
                 Edit User
             </Menu.Item>
-            {/* <Menu.Item
+            <Menu.Item
                 key="resetPassword"
                 icon={<FiLock />}
-                onClick={() => console.log('Reset password')}
+                onClick={() => handleResetPassword(record)}
             >
                 Reset Password
-            </Menu.Item> */}
+            </Menu.Item>
             {/* <Menu.Item
                 key="status"
                 icon={<FiUserCheck />}
@@ -412,6 +423,14 @@ const UserList = ({ users, onEdit, onDelete, onView, currentPage, onPageChange }
                 rowKey="id"
                 scroll={{ x: 'max-content', y: "100%" }}
                 pagination={paginationConfig}
+            />
+            
+            {/* Reset Password Modal */}
+            <ResetPasswordModal
+                visible={resetPasswordModalVisible}
+                onCancel={() => setResetPasswordModalVisible(false)}
+                company={selectedUser}
+                currentUserEmail={currentUser?.email}
             />
         </div>
     );

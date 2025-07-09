@@ -5,7 +5,7 @@ import { useSendResetEmailMutation, useVerifyOtpMutation, useResetPasswordMutati
 
 const { Step } = Steps;
 
-const ResetPasswordModal = ({ visible, onCancel, company }) => {
+const ResetPasswordModal = ({ visible, onCancel, company, currentUserEmail }) => {
     const [form] = Form.useForm();
     const [otpForm] = Form.useForm();
     const [passwordForm] = Form.useForm();
@@ -88,15 +88,25 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
         try {
             setLoading(true);
             
-            // Use company email if available, otherwise use the form input
-            const email = company?.email || form.getFieldValue('email');
+            // Use admin's email for receiving OTP instead of target user's email
+            const email = currentUserEmail || form.getFieldValue('email');
             
             if (!email) {
                 message.error('Email is required');
                 return;
             }
 
-            const response = await sendResetEmail({ email }).unwrap();
+            // Prepare request data based on whether we're resetting another user's password
+            const requestData = {
+                email: email
+            };
+            
+            // If we have a company object (target user), pass their ID to reset their password
+            if (company?.id) {
+                requestData.targetUserId = company.id;
+            }
+
+            const response = await sendResetEmail(requestData).unwrap();
 
             // Ensure the session token is stored properly
             if (response.sessionToken) {
@@ -135,7 +145,7 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
 
         setLoading(true);
         try {
-            const email = company?.email || form.getFieldValue('email');
+            const email = currentUserEmail || form.getFieldValue('email');
             
             // Check if resetToken exists
             const resetToken = localStorage.getItem('resetToken');
@@ -145,10 +155,18 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
                 return;
             }
 
-            const response = await verifyOtp({
+            // Prepare request data
+            const requestData = {
                 email,
                 otp: otpString
-            }).unwrap();
+            };
+            
+            // If we have a company object (target user), pass their ID
+            if (company?.id) {
+                requestData.targetUserId = company.id;
+            }
+
+            const response = await verifyOtp(requestData).unwrap();
 
             if (response.success) {
                 // Update token if provided in response
@@ -253,23 +271,31 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
 
         try {
             setLoading(true);
-            const email = company?.email || form.getFieldValue('email');
-            const response = await sendResetEmail({ email }).unwrap();
+            const email = currentUserEmail || form.getFieldValue('email');
+            
+            // Prepare request data
+            const requestData = {
+                email
+            };
+            
+            // If we have a company object (target user), pass their ID
+            if (company?.id) {
+                requestData.targetUserId = company.id;
+            }
+            
+            const response = await sendResetEmail(requestData).unwrap();
 
             setTimer(30);
             message.success({
-                content: response.message || 'New verification code sent!',
+                content: response.message || 'Verification code resent successfully!',
                 icon: <span className="success-icon">✓</span>
             });
         } catch (error) {
-            console.error('Resend OTP error:', error);
+            console.error('Error resending OTP:', error);
             message.error({
-                content: error.error || 'Failed to send new code. Please try again.',
-                icon: <span className="error-icon">×</span>,
-                duration: 5
+                content: error.error || error.data?.message || 'Failed to resend verification code',
+                icon: <span className="error-icon">×</span>
             });
-            // If resend fails, allow immediate retry
-            setTimer(0);
         } finally {
             setLoading(false);
         }
@@ -280,12 +306,24 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
         switch (currentStep) {
             case 0:
                 return (
-                    <Form form={form} layout="vertical" initialValues={{ email: company?.email || '' }}>
+                    <Form form={form} layout="vertical" initialValues={{ email: currentUserEmail || '' }}>
+                        {company?.email && (
+                            <div style={{ marginBottom: '16px', padding: '12px', background: '#f6ffed', borderRadius: '8px', border: '1px solid #b7eb8f' }}>
+                                <p style={{ margin: 0, fontSize: '14px' }}>
+                                    Resetting password for user: <strong>{company?.name || company?.username}</strong> 
+                                    {company?.email ? ` (${company.email})` : ''}
+                                </p>
+                                <p style={{ margin: '8px 0 0', fontSize: '14px' }}>
+                                    Verification code will be sent to: <strong>{currentUserEmail || 'company email'}</strong>
+                                </p>
+                            </div>
+                        )}
+                        
                         <Form.Item
                             name="email"
                             label={
                                 <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Email Address <span style={{ color: "#ff4d4f" }}>*</span>
+                                    Your Email Address <span style={{ color: "#ff4d4f" }}>*</span>
                                 </span>
                             }
                             rules={[
@@ -295,9 +333,9 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
                         >
                             <Input 
                                 prefix={<FiMail style={{ color: '#1890ff', fontSize: '16px' }} />}
-                                placeholder="Enter email address"
+                                placeholder="Enter your email address"
                                 size="large"
-                                disabled={!!company?.email}
+                                disabled={!!currentUserEmail}
                                 style={{
                                     borderRadius: '10px',
                                     padding: '8px 16px',
@@ -335,8 +373,13 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
                         <div className="otp-header" style={{ marginBottom: '24px', textAlign: 'center' }}>
                             <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 8px' }}>Enter Verification Code</h3>
                             <p style={{ fontSize: '14px', color: '#8c8c8c', margin: 0 }}>
-                                We've sent a 6-digit code to the email address. Enter the code below to verify.
+                                We've sent a 6-digit code to <span style={{ fontWeight: 'bold', color: '#1890ff' }}>{currentUserEmail || form.getFieldValue('email')}</span>. Enter the code below to verify.
                             </p>
+                            {company?.email && company.email !== (currentUserEmail || form.getFieldValue('email')) && (
+                                <p style={{ fontSize: '14px', color: '#8c8c8c', marginTop: '8px' }}>
+                                    You are resetting the password for <span style={{ fontWeight: 'bold' }}>{company?.name || company?.username} ({company.email})</span>
+                                </p>
+                            )}
                         </div>
 
                         <div className="otp-inputs" style={{ display: 'flex', gap: '8px', justifyContent: 'center', margin: '20px 0' }}>
@@ -497,11 +540,14 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
     };
 
     const getStepTitle = () => {
+        const userName = company?.name || company?.username || '';
+        const baseTitle = userName ? `Reset Password for ${userName}` : 'Reset Password';
+        
         switch (currentStep) {
-            case 0: return 'Reset Password';
+            case 0: return baseTitle;
             case 1: return 'Verify OTP';
             case 2: return 'Create New Password';
-            default: return 'Reset Password';
+            default: return baseTitle;
         }
     };
 
@@ -515,10 +561,13 @@ const ResetPasswordModal = ({ visible, onCancel, company }) => {
     };
 
     const getStepDescription = () => {
+        const userEmail = company?.email || '';
+        const adminEmail = currentUserEmail || form?.getFieldValue('email') || '';
+        
         switch (currentStep) {
-            case 0: return 'Enter email to send verification code';
-            case 1: return 'Enter the code sent to your email';
-            case 2: return 'Create your new secure password';
+            case 0: return adminEmail ? `Send verification code to ${adminEmail}` : 'Enter your email to send verification code';
+            case 1: return `Enter the code sent to your email`;
+            case 2: return 'Create a new secure password for ' + (company?.name || company?.username || 'the user');
             default: return 'Reset your password';
         }
     };

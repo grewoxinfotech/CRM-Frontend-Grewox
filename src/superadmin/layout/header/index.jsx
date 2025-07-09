@@ -231,7 +231,7 @@ const Header = () => {
                     >
                         <div className="user-avatar">
                             <Avatar size={40}>
-                                {getInitials(user?.name)}
+                                {getInitials(user?.username)}
                             </Avatar>
                         </div>
                     </Dropdown>

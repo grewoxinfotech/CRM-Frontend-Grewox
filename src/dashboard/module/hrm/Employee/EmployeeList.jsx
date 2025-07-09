@@ -39,6 +39,8 @@ import {
 } from "../payRoll/services/salaryApi";
 import { useDeleteEmployeeMutation } from "./services/employeeApi";
 import ResetPasswordModal from "../../../../superadmin/module/company/ResetPasswordModal";
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from "../../../../auth/services/authSlice";
 
 // Define styles outside the component
 const switchStyles = `
@@ -94,6 +96,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
   const [salaryUpdateLoading, setSalaryUpdateLoading] = useState({});
   const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const currentUser = useSelector(selectCurrentUser);
 
   // Add branch data fetch
   const { data: branchesData } = useGetAllBranchesQuery({
@@ -792,6 +795,7 @@ const EmployeeList = ({ employees, onEdit, onDelete, onView }) => {
         visible={resetPasswordModalVisible}
         onCancel={() => setResetPasswordModalVisible(false)}
         company={selectedEmployee}
+        currentUserEmail={currentUser?.email}
       />
     </>
   );
