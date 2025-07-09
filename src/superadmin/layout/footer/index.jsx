@@ -7,7 +7,7 @@ const Footer = () => {
         <footer className="superadmin-footer">
             <div className="footer-content">
                 <div className="footer-left">
-                    © 2025 Raiser Software. All rights reserved.
+                    © 2025 Grewox Software. All rights reserved.
                 </div>
                 <div className="footer-right">
                     <Link to="/privacy-policy">Privacy Policy</Link>

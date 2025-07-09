@@ -103,7 +103,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
   // Set company information from logged in user
   useEffect(() => {
     if (loggedInUser) {
-      setCompanyName(loggedInUser.username || "Raiser CRM");
+      setCompanyName(loggedInUser.username || "Grewox CRM");
       setCompanyEmail(loggedInUser.email || "");
       setCompanyWebsite(loggedInUser.website || "");
       setCompanyAddress(loggedInUser.address || "");
@@ -206,7 +206,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
     }
 
     // Fallback to bill link if no UPI ID
-    return data.upiLink || `https://Raiser.com/bill/${data.billNumber}`;
+    return data.upiLink || `https://Grewox.com/bill/${data.billNumber}`;
   };
 
   // Handle share via email
@@ -385,7 +385,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
             img.onload = resolve;
             img.onerror = () => {
               if (img.classList.contains("company-logo")) {
-                img.src = "https://raiser.com/assets/logo.png";
+                img.src = "https://grewox.com/assets/logo.png";
                 resolve();
               } else {
                 reject();
@@ -972,7 +972,7 @@ const ViewBilling = ({ data, isOpen, onClose }) => {
                         color: "#1890ff",
                       }}
                     >
-                      Raiser CRM
+                      Grewox CRM
                     </span>
                   </div>
                 </div>

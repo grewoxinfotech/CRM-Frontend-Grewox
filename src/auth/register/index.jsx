@@ -116,7 +116,7 @@ export default function Register() {
         >
           <div className="brand">
             <FiBox className="logo" />
-            <span className="brand-name">Raiser CRM</span>
+            <span className="brand-name">Grewox CRM</span>
           </div>
           <motion.img
             src={form_graphic}
@@ -142,7 +142,7 @@ export default function Register() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="register-header">
-            <h1>Sign Up to Raiser CRM</h1>
+            <h1>Sign Up to Grewox CRM</h1>
             <p>Enter your details to create an account</p>
           </div>
 

@@ -110,7 +110,7 @@ export default function Login() {
         >
           <div className="brand">
             <FiBox className="logo" />
-            <span className="brand-name">Raiser CRM</span>
+            <span className="brand-name">Grewox CRM</span>
           </div>
           <motion.img
             src={form_graphic}
@@ -136,7 +136,7 @@ export default function Login() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="login-header">
-            <h1>Sign In to Raiser CRM</h1>
+            <h1>Sign In to Grewox CRM</h1>
             <p>Enter your details to access your account</p>
           </div>
 
