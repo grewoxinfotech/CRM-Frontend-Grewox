@@ -42,8 +42,18 @@ import { useGetAllCountriesQuery } from "../../../../superadmin/module/settings/
 import { useGetAllCurrenciesQuery } from "../../../../superadmin/module/settings/services/settingsApi";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import localeData from 'dayjs/plugin/localeData';
+import weekday from 'dayjs/plugin/weekday';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 
 dayjs.extend(customParseFormat);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(localeData);
+dayjs.extend(weekday);
+dayjs.extend(advancedFormat);
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -783,20 +793,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     Last Name
                   </span>
                 }
-                rules={[
-                  { required: true, message: "Please enter last name" },
-                  {
-                    validator: (_, value) => {
-                      if (!value) return Promise.resolve();
-                      if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                        return Promise.reject(
-                          new Error('Last name must contain both uppercase and lowercase English letters')
-                        );
-                      }
-                      return Promise.resolve();
-                    }
-                  }
-                ]}
               >
                 <Input
                   prefix={
@@ -941,7 +937,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     Phone Number
                   </span>
                 }
-                required
                 className="combined-input-item"
               >
                 <Input.Group
@@ -959,7 +954,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   <Form.Item
                     name="phoneCode"
                     noStyle
-                    rules={[{ required: true, message: "Required" }]}
                     initialValue="+91"
                   >
                     <Select
@@ -1008,17 +1002,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   <Form.Item
                     name="phone"
                     noStyle
-                    rules={[
-                      { required: true, message: "Please enter phone number" },
-                      {
-                        validator: (_, value) => {
-                          if (value && !/^\d+$/.test(value)) {
-                            return Promise.reject("Please enter only numbers");
-                          }
-                          return Promise.resolve();
-                        },
-                      },
-                    ]}
                   >
                     <Input
                       size="large"
@@ -1105,9 +1088,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     Joining Date
                   </span>
                 }
-                rules={[
-                  { required: true, message: "Please select joining date" },
-                ]}
               >
                 <DatePicker
                   size="large"
@@ -1122,6 +1102,10 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     transition: "all 0.3s ease",
                   }}
                   placeholder="Select joining date"
+                  showToday
+                  allowClear
+                  inputReadOnly={false}
+                  popupStyle={{ zIndex: 1050 }}
                 />
               </Form.Item>
 
@@ -1132,7 +1116,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     Branch
                   </span>
                 }
-                rules={[{ required: true, message: "Please select a branch" }]}
               >
                 <Select
                   listHeight={100}
@@ -1149,6 +1132,10 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   style={{
                     width: "100%",
                     borderRadius: "10px",
+                    height: "48px",
+                    backgroundColor: "#F8FAFC",
+                    border: "1px solid #E6E8EB",
+                    transition: "all 0.3s ease",
                   }}
                   onChange={handleBranchChange}
                   filterOption={(input, option) =>
@@ -1172,9 +1159,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     Department
                   </span>
                 }
-                rules={[
-                  { required: true, message: "Please select a department" },
-                ]}
               >
                 <Select
                   listHeight={100}
@@ -1196,6 +1180,10 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   style={{
                     width: "100%",
                     borderRadius: "10px",
+                    height: "48px",
+                    backgroundColor: "#F8FAFC",
+                    border: "1px solid #E6E8EB",
+                    transition: "all 0.3s ease",
                   }}
                   filterOption={(input, option) =>
                     option.children
@@ -1218,9 +1206,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                     Designation
                   </span>
                 }
-                rules={[
-                  { required: true, message: "Please select a designation" },
-                ]}
               >
                 <Select
                   listHeight={100}
@@ -1242,6 +1227,10 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   style={{
                     width: "100%",
                     borderRadius: "10px",
+                    height: "48px",
+                    backgroundColor: "#F8FAFC",
+                    border: "1px solid #E6E8EB",
+                    transition: "all 0.3s ease",
                   }}
                   filterOption={(input, option) =>
                     option.children
@@ -1282,7 +1271,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   <Form.Item
                     name="currency"
                     noStyle
-                    rules={[{ required: true }]}
                     initialValue={defaultCurrency}
                   >
                     <Select
@@ -1323,7 +1311,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
                   <Form.Item
                     name="salary"
                     noStyle
-                    rules={[{ required: true, message: 'Please enter salary' }]}
                   >
                     <InputNumber
                       placeholder="Enter salary"
@@ -1388,7 +1375,6 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
               >
                 <Input
                   placeholder="Enter account number"
-                  type="number"
                   style={{
                     borderRadius: "8px",
                     border: "1px solid #d9d9d9",
@@ -1630,6 +1616,41 @@ const CreateEmployee = ({ visible, onCancel, onSuccess }) => {
           }
 
           .ant-select-item-option-content {
+            font-size: 14px !important;
+          }
+        }
+
+        /* DatePicker styling */
+        .ant-picker-dropdown {
+          .ant-picker-panel-container {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+            border-radius: 8px !important;
+          }
+          
+          .ant-picker-cell {
+            &-in-view {
+              color: rgba(0, 0, 0, 0.85) !important;
+            }
+            
+            &-today .ant-picker-cell-inner::before {
+              border: 1px solid #1890ff !important;
+            }
+            
+            &-selected .ant-picker-cell-inner {
+              background-color: #1890ff !important;
+              color: #fff !important;
+            }
+          }
+          
+          .ant-picker-today-btn {
+            color: #1890ff !important;
+          }
+        }
+        
+        .ant-picker {
+          width: 100% !important;
+          
+          .ant-picker-input > input {
             font-size: 14px !important;
           }
         }

@@ -15,8 +15,18 @@ import CreateDesignation from '../Designation/CreateDesignation';
 import { useGetAllCountriesQuery, useGetAllCurrenciesQuery } from '../../../../superadmin/module/settings/services/settingsApi';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import localeData from 'dayjs/plugin/localeData';
+import weekday from 'dayjs/plugin/weekday';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
 
 dayjs.extend(customParseFormat);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(localeData);
+dayjs.extend(weekday);
+dayjs.extend(advancedFormat);
 
 const { Text } = Typography;
 const { Option } = Select;
@@ -28,6 +38,13 @@ const findIndianDefaults = (currencies, countries) => {
         defaultCurrency: inrCurrency?.id || '',
         defaultPhoneCode: indiaCountry?.id || ''
     };
+};
+
+const formatDateSafely = (dateString) => {
+    if (!dateString) return null;
+    
+    const parsed = dayjs(dateString);
+    return parsed.isValid() ? parsed : null;
 };
 
 const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
@@ -73,7 +90,8 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                 gender: initialValues.gender || '',
                 
                 // Employment Details
-                joiningDate: initialValues.joiningDate ? dayjs(initialValues.joiningDate) : undefined,
+                joiningDate: formatDateSafely(initialValues.joiningDate),
+                leaveDate: formatDateSafely(initialValues.leaveDate),
                 branch: initialValues.branch || null,
                 department: initialValues.department || null, // Map department ID
                 designation: initialValues.designation || null, // Map designation ID
@@ -407,8 +425,8 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                 phone: initialValues.phone || '',
                 address: initialValues.address || '',
                 gender: initialValues.gender || '',
-                joiningDate: initialValues.joiningDate ? dayjs(initialValues.joiningDate) : undefined,
-                leaveDate: initialValues.leaveDate ? dayjs(initialValues.leaveDate) : undefined,
+                joiningDate: formatDateSafely(initialValues.joiningDate),
+                leaveDate: formatDateSafely(initialValues.leaveDate),
                 salary: initialValues.salary || 0,
                 accountholder: initialValues.accountholder || '',
                 accountnumber: initialValues.accountnumber || '',
@@ -679,20 +697,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="lastName"
                                 label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Last Name</span>}
-                            rules={[
-                                { required: true, message: "Please enter last name" },
-                                {
-                                    validator: (_, value) => {
-                                        if (!value) return Promise.resolve();
-                                        if (!/[a-z]/.test(value) && !/[A-Z]/.test(value)) {
-                                            return Promise.reject(
-                                                new Error('Last name must contain both uppercase and lowercase English letters')
-                                            );
-                                        }
-                                        return Promise.resolve();
-                                    }
-                                }
-                            ]}
                         >
                             <Input
                                 prefix={<FiUser style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -744,6 +748,10 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="email"
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Email</span>}
+                            rules={[
+                                { required: true, message: "Please enter email" },
+                                { type: "email", message: "Please enter a valid email" }
+                            ]}
                         >
                             <Input
                                 prefix={<FiMail style={{ color: '#1890ff', fontSize: '16px' }} />}
@@ -763,7 +771,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             name="password"
                             label={<span style={{ color: "#262626", fontWeight: 500, fontSize: "14px" }}>Password</span>}
                             rules={[
-                                { required: true, message: 'Please enter password' },
                                 { min: 8, message: 'Password must be at least 8 characters' },
                                 {
                                     pattern: /^[a-zA-Z0-9!@#$%^&*]{8,30}$/,
@@ -794,7 +801,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     Phone Number
                                 </span>
                             }
-                            required
                         >
                             <Input.Group compact className="phone-input-group" style={{
                                 display: 'flex',
@@ -807,7 +813,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                 <Form.Item
                                     name="phoneCode"
                                     noStyle
-                                    rules={[{ required: true }]}
                                     initialValue={defaultPhoneCode}
                                 >
                                     <Select
@@ -847,32 +852,19 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                 <Form.Item
                                     name="phone"
                                     noStyle
-                                    rules={[
-                                        { required: true, message: 'Please enter phone number' },
-                                        {
-                                            validator: (_, value) => {
-                                                if (value && !/^\d+$/.test(value)) {
-                                                    return Promise.reject('Please enter only numbers');
-                                                }
-                                                return Promise.resolve();
-                                            }
-                                        }
-                                    ]}
                                 >
-                                    <InputNumber
-                                        placeholder="Enter phone number"
+                                    <Input
                                         size="large"
+                                        type="number"
                                         style={{
                                             flex: 1,
-                                            width: 'calc(100% - 100px)',
                                             border: 'none',
                                             borderLeft: '1px solid #e6e8eb',
                                             borderRadius: 0,
-                                            height: '48px',
-                                            padding: '0 16px'
+                                            height: '46px',
+                                            backgroundColor: 'transparent'
                                         }}
-                                        min={0}
-                                        className="phone-input"
+                                        placeholder="Enter phone number"
                                     />
                                 </Form.Item>
                             </Input.Group>
@@ -920,6 +912,9 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         <Form.Item
                             name="joiningDate"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Joining Date</span>}
+                            getValueProps={(value) => {
+                                return { value: value ? value : null };
+                            }}
                         >
                             <DatePicker
                                 size="large"
@@ -934,6 +929,15 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     transition: 'all 0.3s ease',
                                 }}
                                 placeholder="Select joining date"
+                                showToday
+                                allowClear
+                                inputReadOnly={false}
+                                popupStyle={{ zIndex: 1050 }}
+                                onChange={(date) => {
+                                    if (!date) {
+                                        form.setFieldsValue({ joiningDate: null });
+                                    }
+                                }}
                             />
                         </Form.Item>
 
@@ -941,6 +945,9 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             name="leaveDate"
                             label={<span style={{ fontSize: '14px', fontWeight: '500' }}>Leave Date</span>}
                             dependencies={['joiningDate']}
+                            getValueProps={(value) => {
+                                return { value: value ? value : null };
+                            }}
                             rules={[
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
@@ -969,6 +976,15 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                                     transition: 'all 0.3s ease',
                                 }}
                                 placeholder="Select leave date"
+                                showToday
+                                allowClear
+                                inputReadOnly={false}
+                                popupStyle={{ zIndex: 1050 }}
+                                onChange={(date) => {
+                                    if (!date) {
+                                        form.setFieldsValue({ leaveDate: null });
+                                    }
+                                }}
                             />
                         </Form.Item>
 
@@ -1099,8 +1115,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             <Form.Item
                                 name="currency"
                                 noStyle
-                                rules={[{ required: true }]}
-                                initialValue={defaultCurrency}
                             >
                                 <Select
                                     size="large"
@@ -1139,7 +1153,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                             <Form.Item
                                 name="salary"
                                 noStyle
-                                rules={[{ required: true, message: 'Please enter salary' }]}
                             >
                                 <InputNumber
                                     placeholder="Enter salary"
@@ -1184,7 +1197,6 @@ const EditEmployee = ({ visible, onCancel, initialValues, onSuccess }) => {
                         >
                             <Input
                                 placeholder="Enter account number"
-                                type="number"
                                 style={{
                                     borderRadius: "8px",
                                     border: "1px solid #d9d9d9",
@@ -1393,6 +1405,41 @@ export default EditEmployee;
     }
 
     .ant-select-item-option-content {
+      font-size: 14px !important;
+    }
+  }
+
+  /* DatePicker styling */
+  .ant-picker-dropdown {
+    .ant-picker-panel-container {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+      border-radius: 8px !important;
+    }
+    
+    .ant-picker-cell {
+      &-in-view {
+        color: rgba(0, 0, 0, 0.85) !important;
+      }
+      
+      &-today .ant-picker-cell-inner::before {
+        border: 1px solid #1890ff !important;
+      }
+      
+      &-selected .ant-picker-cell-inner {
+        background-color: #1890ff !important;
+        color: #fff !important;
+      }
+    }
+    
+    .ant-picker-today-btn {
+      color: #1890ff !important;
+    }
+  }
+  
+  .ant-picker {
+    width: 100% !important;
+    
+    .ant-picker-input > input {
       font-size: 14px !important;
     }
   }
