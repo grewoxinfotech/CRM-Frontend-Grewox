@@ -86,40 +86,32 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
   const statusSelectRef = React.useRef(null);
   const [isAddStatusVisible, setIsAddStatusVisible] = useState(false);
 
-  // Replace the hardcoded statuses with API data
   const statuses = statusesData?.data || [];
   const sources = sourcesData?.data || [];
   const categories = categoriesData?.data || [];
-  // Fetch users data with roles
   const { data: usersResponse, isLoading: usersLoading } = useGetUsersQuery();
   const { data: rolesData, isLoading: rolesLoading } = useGetRolesQuery();
 
-  // Filter stages to only show lead type stages
   const stages = stagesData?.filter(stage => stage.stageType === "lead") || [];
 
-  // Get subclient role ID to filter it out
   const subclientRoleId = rolesData?.data?.find(role => role?.role_name === 'sub-client')?.id;
 
-  // Filter users to get team members (excluding subclients)
   const users = usersResponse?.data?.filter(user =>
     user?.created_by === loggedInUser?.username &&
     user?.role_id !== subclientRoleId
   ) || [];
 
-  // Find default currency and phone code
   const inrCurrency = currencies?.find(c => c.currencyCode === 'INR');
   const indiaCountry = countries?.find(c => c.countryCode === 'IN');
   const defaultCurrency = inrCurrency?.id || 'JJXdfl6534FX7PNEIC3qJTK';
   const defaultPhoneCode = indiaCountry?.id || 'K9GxyQ8rrXQycdLQNkGhczL';
 
-  // Interest level options
   const interestLevels = [
     { value: "high", label: "High Interest", color: "#52c41a" },
     { value: "medium", label: "Medium Interest", color: "#faad14" },
     { value: "low", label: "Low Interest", color: "#ff4d4f" },
   ];
 
-  // Add getRoleColor function
   const getRoleColor = (role) => {
     const roleColors = {
       'employee': {
@@ -136,21 +128,17 @@ const EditLead = ({ open, onCancel, initialValues, pipelines, currencies, countr
     return roleColors[role?.toLowerCase()] || roleColors.default;
   };
 
-  // Filter stages based on selected pipeline
   const filteredStages = stagesData?.filter(
     stage => stage.stageType === "lead" && stage.pipeline === selectedPipeline
   ) || [];
 
-  // Add getPipelineName function
   const getPipelineName = (pipelineId) => {
     const pipeline = pipelines.find(p => p.id === pipelineId);
     return pipeline?.pipeline_name || 'Not assigned';
   };
 
-  // Handle pipeline selection change
   const handlePipelineChange = (value) => {
     setSelectedPipeline(value);
-    // Clear stage selection when pipeline changes
     form.setFieldValue('leadStage', undefined);
   };
 
