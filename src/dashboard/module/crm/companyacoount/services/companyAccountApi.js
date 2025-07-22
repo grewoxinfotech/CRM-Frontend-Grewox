@@ -51,6 +51,13 @@ export const companyAccountApi = createApi({
       }),
       invalidatesTags: ["CompanyAccounts"],
     }),
+    getCompanyAccountById: builder.query({
+      query: (id) => ({
+        url: `company-accounts/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["CompanyAccounts"],
+    }),
   }),
 });
 
@@ -59,4 +66,5 @@ export const {
   useCreateCompanyAccountMutation,
   useUpdateCompanyAccountMutation,
   useDeleteCompanyAccountMutation,
+  useGetCompanyAccountByIdQuery,
 } = companyAccountApi;

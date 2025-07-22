@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Tag, Space, Button } from 'antd';
+import { Card, Row, Col, Typography, Button } from 'antd';
 import {
-    FiUser,
     FiMail,
     FiPhone,
     FiMapPin,
@@ -11,16 +10,13 @@ import {
     FiUsers,
     FiActivity,
     FiFolder,
-    FiClock,
-    FiCheck,
-    FiX,
     FiBriefcase,
     FiGlobe,
     FiEdit2,
 } from 'react-icons/fi';
 import dayjs from 'dayjs';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useGetCompanyAccountsQuery, useUpdateCompanyAccountMutation } from '../services/companyAccountApi';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useGetCompanyAccountByIdQuery } from '../services/companyAccountApi';
 import { useGetUsersQuery } from '../../../user-management/users/services/userApi';
 import { useGetLeadsQuery } from '../../lead/services/LeadApi';
 import { useGetDealsQuery } from '../../deal/services/DealApi';
@@ -30,29 +26,21 @@ import { selectCurrentUser } from "../../../../../auth/services/authSlice.js";
 import './companyoverview.scss';
 import EditCompanyAccount from '../EditCompanyAccount';
 
-const { Title, Text } = Typography;
-
 const CompanyDetails = () => {
     const { accountId } = useParams();
     const navigate = useNavigate();
-    const { data: companyAccountsResponse, isLoading } = useGetCompanyAccountsQuery();
+    const { data: companyAccountsResponse, isLoading } = useGetCompanyAccountByIdQuery(accountId);
     const { data: usersData } = useGetUsersQuery();
     const { data: lead } = useGetLeadsQuery();
     const { data: deal } = useGetDealsQuery();
-    const [updateCompanyAccount] = useUpdateCompanyAccountMutation();
     const loggedInUser = useSelector(selectCurrentUser);
     const { data: sourcesData } = useGetSourcesQuery(loggedInUser?.id);
     const [editModalVisible, setEditModalVisible] = useState(false);
 
-    const companies = Array.isArray(companyAccountsResponse?.data)
-        ? companyAccountsResponse.data
-        : Array.isArray(companyAccountsResponse)
-            ? companyAccountsResponse
-            : [];
+
+    const company = companyAccountsResponse?.data;
 
     const sources = sourcesData?.data || [];
-
-    const company = companies.find(company => company.id === accountId);
 
     const { data: categoriesData } = useGetCategoriesQuery(loggedInUser?.id);
     const categories = categoriesData?.data || [];
